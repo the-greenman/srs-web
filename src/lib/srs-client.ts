@@ -21,6 +21,19 @@ export interface SrsRepository {
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised to SrsRecord | null in getRecord()
   get_record(id: string): any;
   list_notes(): ListNotesResult;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in createRecord()
+  create_record(type_id: string, type_version: number, input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in updateRecord()
+  update_record(instance_id: string, input_json: string): any;
+  delete_record(instance_id: string): void;
+  export_srsj(): string;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; relations are untyped at this boundary
+  list_relations(filter_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`
+  create_relation(input_json: string): any;
+  delete_relation(relation_id: string): void;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in setLifecycleState()
+  set_lifecycle_state(instance_id: string, state: string): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -80,6 +93,51 @@ export interface RecordListFilter {
   typeNamespace?: string;
   typeName?: string;
   containerId?: string;
+}
+
+export interface CreateRecordInput {
+  fieldValues: FieldValue[];
+  groupValues?: GroupFieldValue[];
+  tags?: string[];
+}
+
+export interface UpdateRecordInput {
+  fieldValues: FieldValue[];
+  groupValues?: GroupFieldValue[] | null;
+  tags?: string[];
+}
+
+export interface GroupFieldValue {
+  groupId: string;
+  values: FieldValue[];
+}
+
+export interface SrsRelation {
+  relationId: string;
+  relationType: string;
+  sourceInstanceId: string;
+  targetInstanceId: string;
+  assertedBy?: string;
+  confidence?: number;
+  status?: string;
+  createdAt?: string;
+}
+
+export interface RelationListFilter {
+  source?: string;
+  target?: string;
+  relationType?: string;
+  containerId?: string;
+}
+
+export interface CreateRelationInput {
+  relationId?: string;
+  relationType: string;
+  sourceInstanceId: string;
+  targetInstanceId: string;
+  assertedBy?: string;
+  confidence?: number;
+  status?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -173,4 +231,106 @@ export function listRecords(repo: SrsRepository, filter: RecordListFilter = {}):
  */
 export function countRecords(repo: SrsRepository): number {
   return listRecords(repo).length;
+}
+
+/**
+ * Get a single record by instance ID. Returns null if not found.
+ */
+export function getRecord(repo: SrsRepository, instanceId: string): SrsRecord | null {
+  const raw = repo.get_record(instanceId);
+  if (raw === null || raw === undefined) return null;
+  return normalizeRecord(raw);
+}
+
+/**
+ * Create a new record of the given type.
+ */
+export function createRecord(
+  repo: SrsRepository,
+  typeId: string,
+  typeVersion: number,
+  input: CreateRecordInput
+): SrsRecord {
+  const raw = repo.create_record(typeId, typeVersion, JSON.stringify(input));
+  return normalizeRecord(raw);
+}
+
+/**
+ * Update an existing record's field values.
+ */
+export function updateRecord(
+  repo: SrsRepository,
+  instanceId: string,
+  input: UpdateRecordInput
+): SrsRecord {
+  const raw = repo.update_record(instanceId, JSON.stringify(input));
+  return normalizeRecord(raw);
+}
+
+/**
+ * Delete a record by instance ID.
+ */
+export function deleteRecord(repo: SrsRepository, instanceId: string): void {
+  repo.delete_record(instanceId);
+}
+
+/**
+ * Export the repository as a `.srsj` JSON string for download.
+ */
+export function exportSrsj(repo: SrsRepository): string {
+  return repo.export_srsj();
+}
+
+/**
+ * List relations in the repository, optionally filtered.
+ */
+export function listRelations(repo: SrsRepository, filter: RelationListFilter = {}): SrsRelation[] {
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary
+  const raw: any[] = repo.list_relations(JSON.stringify(filter));
+  return raw.map((r) => ({
+    relationId: r.relationId ?? r.relation_id,
+    relationType: r.relationType ?? r.relation_type,
+    sourceInstanceId: r.sourceInstanceId ?? r.source_instance_id,
+    targetInstanceId: r.targetInstanceId ?? r.target_instance_id,
+    assertedBy: r.assertedBy ?? r.asserted_by,
+    confidence: r.confidence,
+    status: r.status,
+    createdAt: r.createdAt ?? r.created_at,
+  }));
+}
+
+/**
+ * Create a relation between two instances.
+ */
+export function createRelation(repo: SrsRepository, input: CreateRelationInput): SrsRelation {
+  const raw = repo.create_relation(JSON.stringify(input));
+  return {
+    relationId: raw.relationId ?? raw.relation_id,
+    relationType: raw.relationType ?? raw.relation_type,
+    sourceInstanceId: raw.sourceInstanceId ?? raw.source_instance_id,
+    targetInstanceId: raw.targetInstanceId ?? raw.target_instance_id,
+    assertedBy: raw.assertedBy ?? raw.asserted_by,
+    confidence: raw.confidence,
+    status: raw.status,
+    createdAt: raw.createdAt ?? raw.created_at,
+  };
+}
+
+/**
+ * Delete a relation by ID.
+ */
+export function deleteRelation(repo: SrsRepository, relationId: string): void {
+  repo.delete_relation(relationId);
+}
+
+/**
+ * Transition a record to a new lifecycle state.
+ */
+export function setLifecycleState(
+  repo: SrsRepository,
+  instanceId: string,
+  state: LifecycleState
+): SrsRecord {
+  const raw = repo.set_lifecycle_state(instanceId, state);
+  return normalizeRecord(raw);
 }
