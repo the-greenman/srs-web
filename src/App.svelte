@@ -8,14 +8,18 @@
     error:  unrecoverable error
 
   B4 read-only governance viewer: https://github.com/the-greenman/srs-web/issues/3
+  B9 edit forms:                  https://github.com/the-greenman/srs-web/issues/5
 -->
 <script lang="ts">
   import {
     initWasm,
     loadRepo,
     listRecords,
+    createRecord,
+    updateRecord,
+    deleteRecord,
   } from "$lib/srs-client.js";
-  import type { SrsRepository, SrsRecord, Diagnostic as WasmDiagnostic } from "$lib/srs-client.js";
+  import type { SrsRepository, SrsRecord, Diagnostic as WasmDiagnostic, CreateRecordInput, UpdateRecordInput } from "$lib/srs-client.js";
   import type { Diagnostic, Status } from "$lib/types.js";
 
   import AppShell from "$lib/components/AppShell.svelte";
@@ -31,10 +35,13 @@
   import CardField from "$lib/components/CardField.svelte";
   import Diagnostics from "$lib/components/Diagnostics.svelte";
   import Field from "$lib/components/Field.svelte";
+  import RecordForm from "$lib/components/RecordForm.svelte";
 
   import { SECTIONS } from "$lib/governance/sections.js";
   import type { SectionKey } from "$lib/governance/sections.js";
   import { getStringField, getFieldValue } from "$lib/governance/field-utils.js";
+  import { GOVERNANCE_FORMS } from "$lib/governance/form-schema.js";
+  import type { TypeFormDef } from "$lib/governance/form-schema.js";
 
   // ---------------------------------------------------------------------------
   // State
@@ -59,6 +66,15 @@
   /** Validation diagnostics mapped to types.ts shape */
   let diagnostics = $state<Diagnostic[]>([]);
   let instanceCount = $state<number>(0);
+
+  /** The loaded repository — needed for mutations. */
+  let repo = $state<SrsRepository | null>(null);
+
+  /** Form mode: null = list view, 'create' = new record, 'edit' = edit existing. */
+  let formMode = $state<"create" | "edit" | null>(null);
+  let editingRecord = $state<SrsRecord | null>(null);
+  let formSaving = $state(false);
+  let formError = $state<string | null>(null);
 
   // ---------------------------------------------------------------------------
   // WASM initialisation
@@ -112,16 +128,16 @@
 
     try {
       const text = await file.text();
-      const loaded = loadRepo(text);
+      repo = loadRepo(text);
 
       // Derive a display name from the filename (strip extension)
       repoName = file.name.replace(/\.(srsj|json)$/i, "");
 
       // Populate section record lists
-      loadSectionRecords(loaded);
+      loadSectionRecords(repo);
 
       // Run validation
-      const report = loaded.validate();
+      const report = repo.validate();
       instanceCount = report.instanceCount;
       diagnostics = report.diagnostics.map(mapDiagnostic);
 
@@ -130,6 +146,54 @@
       errorMsg = `Failed to load repository: ${e instanceof Error ? e.message : String(e)}`;
       appState = "error";
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Form handlers
+  // ---------------------------------------------------------------------------
+
+  function handleFormSave(input: CreateRecordInput | UpdateRecordInput) {
+    if (!repo) return;
+    formSaving = true;
+    formError = null;
+    try {
+      if (formMode === "create") {
+        const typeDef = GOVERNANCE_FORMS[activeSection];
+        if (!typeDef) return;
+        const created = createRecord(repo, typeDef.typeId, typeDef.typeVersion, input as CreateRecordInput);
+        formMode = null;
+        loadSectionRecords(repo);
+        selectedId = created.instanceId;
+      } else if (formMode === "edit" && editingRecord) {
+        updateRecord(repo, editingRecord.instanceId, input as UpdateRecordInput);
+        formMode = null;
+        editingRecord = null;
+        loadSectionRecords(repo);
+      }
+    } catch (e: unknown) {
+      formError = e instanceof Error ? e.message : String(e);
+    } finally {
+      formSaving = false;
+    }
+  }
+
+  function handleFormCancel() {
+    formMode = null;
+    editingRecord = null;
+    formError = null;
+  }
+
+  function handleEditRecord() {
+    if (!selectedRecord) return;
+    editingRecord = selectedRecord;
+    formMode = "edit";
+  }
+
+  function handleDeleteRecord() {
+    if (!repo || !selectedRecord) return;
+    deleteRecord(repo, selectedRecord.instanceId);
+    selectedId = null;
+    loadSectionRecords(repo);
   }
 
   // ---------------------------------------------------------------------------
@@ -231,6 +295,9 @@
                   e.preventDefault();
                   activeSection = section.key as SectionKey;
                   selectedId = null;
+                  formMode = null;
+                  editingRecord = null;
+                  formError = null;
                 }}
               >
                 <NavItem
@@ -261,12 +328,22 @@
             <span class="topbar__section">{activeSection_.label}</span>
           {/snippet}
           {#snippet actions()}
+            {#if formMode === null && GOVERNANCE_FORMS[activeSection]}
+              <button
+                class="topbar__new"
+                onclick={() => { formMode = "create"; editingRecord = null; }}
+              >New {GOVERNANCE_FORMS[activeSection].label}</button>
+            {/if}
             <button
               class="topbar__reset"
               onclick={() => {
                 sectionRecords = {};
                 diagnostics = [];
                 selectedId = null;
+                repo = null;
+                formMode = null;
+                editingRecord = null;
+                formError = null;
                 appState = "idle";
               }}
             >Open another file</button>
@@ -274,41 +351,52 @@
         </Topbar>
 
         <Workspace>
-          <div class="section-heading">
-            <h2 class="section-heading__title">{activeSection_.label}</h2>
-            <span class="section-heading__count">{activeRecords.length}</span>
-          </div>
-
-          {#if activeRecords.length === 0}
-            <p class="empty-state">No {activeSection_.label.toLowerCase()} records in this repository.</p>
+          {#if formMode !== null && GOVERNANCE_FORMS[activeSection]}
+            <RecordForm
+              schema={GOVERNANCE_FORMS[activeSection] as TypeFormDef}
+              record={editingRecord}
+              onSave={handleFormSave}
+              onCancel={handleFormCancel}
+              saving={formSaving}
+              saveError={formError}
+            />
           {:else}
-            <div class="record-list">
-              {#each activeRecords as record (record.instanceId)}
-                {@const title =
-                  getStringField(record, "title") ??
-                  getStringField(record, "decision_statement") ??
-                  record.instanceId}
-                {@const articleNumber = getStringField(record, "article_number")}
-                {@const status = getStringField(record, "status") as Status | undefined}
-                {@const isSelected = selectedId === record.instanceId}
-
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div
-                  class="record-list__item"
-                  class:record-list__item--selected={isSelected}
-                  onclick={() => {
-                    selectedId = isSelected ? null : record.instanceId;
-                  }}
-                >
-                  <Card
-                    id={articleNumber}
-                    title={title}
-                    status={status}
-                  />
-                </div>
-              {/each}
+            <div class="section-heading">
+              <h2 class="section-heading__title">{activeSection_.label}</h2>
+              <span class="section-heading__count">{activeRecords.length}</span>
             </div>
+
+            {#if activeRecords.length === 0}
+              <p class="empty-state">No {activeSection_.label.toLowerCase()} records in this repository.</p>
+            {:else}
+              <div class="record-list">
+                {#each activeRecords as record (record.instanceId)}
+                  {@const title =
+                    getStringField(record, "title") ??
+                    getStringField(record, "decision_statement") ??
+                    record.instanceId}
+                  {@const articleNumber = getStringField(record, "article_number")}
+                  {@const status = getStringField(record, "status") as Status | undefined}
+                  {@const isSelected = selectedId === record.instanceId}
+
+                  <!-- svelte-ignore a11y_click_events_have_key_events -->
+                  <!-- svelte-ignore a11y_no_static_element_interactions -->
+                  <div
+                    class="record-list__item"
+                    class:record-list__item--selected={isSelected}
+                    onclick={() => {
+                      selectedId = isSelected ? null : record.instanceId;
+                    }}
+                  >
+                    <Card
+                      id={articleNumber}
+                      title={title}
+                      status={status}
+                    />
+                  </div>
+                {/each}
+              </div>
+            {/if}
           {/if}
         </Workspace>
       </Main>
@@ -316,7 +404,7 @@
 
     {#snippet inspector()}
       <Inspector label="Inspector">
-        {#if selectedRecord}
+        {#if selectedRecord && formMode === null}
           <InspectorSection title={activeSection_.label.replace(/s$/, "")} aside={selectedRecord.typeName}>
             {#if activeSection === "articles"}
               {@const body = getFieldValue(selectedRecord, "article_text")}
@@ -428,6 +516,10 @@
                 <span class="inspector__v">{selectedRecord.createdAt.slice(0, 10)}</span>
               </div>
             {/if}
+            <div class="inspector__record-actions">
+              <button class="inspector__btn" onclick={handleEditRecord}>Edit</button>
+              <button class="inspector__btn inspector__btn--danger" onclick={handleDeleteRecord}>Delete</button>
+            </div>
           </InspectorSection>
         {/if}
         <InspectorSection title="Validation" aside={validationAside}>
@@ -567,6 +659,15 @@
     opacity: 1;
   }
 
+  .topbar__new {
+    font-size: 0.75rem;
+    background: none;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+  }
+
   /* ---- Inspector KV ---- */
   .inspector__kv {
     display: flex;
@@ -605,6 +706,29 @@
     font-size: 0.8125rem;
     line-height: 1.5;
   }
+
+  /* ---- Inspector record actions ---- */
+  .inspector__record-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  }
+
+  .inspector__btn {
+    font-size: 0.75rem;
+    background: none;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+    opacity: 0.7;
+  }
+
+  .inspector__btn:hover { opacity: 1; }
+
+  .inspector__btn--danger { color: #c00; border-color: #c00; }
 
   /* ---- Nav footer ---- */
   .nav__footer-stat {
