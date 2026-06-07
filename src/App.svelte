@@ -1,16 +1,64 @@
+<!--
+  App.svelte — Governance viewer root.
+
+  States: boot → idle → loaded | error
+    boot:   WASM initialising
+    idle:   WASM ready, no repo loaded — show file picker
+    loaded: repo loaded — show three-pane viewer
+    error:  unrecoverable error
+
+  B4 read-only governance viewer: https://github.com/the-greenman/srs-web/issues/3
+-->
 <script lang="ts">
-  import { initWasm, loadRepo, countRecords } from "$lib/srs-client.js";
-  import type { SrsRepository } from "$lib/srs-client.js";
+  import {
+    initWasm,
+    loadRepo,
+    listRecords,
+  } from "$lib/srs-client.js";
+  import type { SrsRepository, SrsRecord, Diagnostic as WasmDiagnostic } from "$lib/srs-client.js";
+  import type { Diagnostic, Status } from "$lib/types.js";
+
+  import AppShell from "$lib/components/AppShell.svelte";
+  import Main from "$lib/components/Main.svelte";
+  import Topbar from "$lib/components/Topbar.svelte";
+  import Workspace from "$lib/components/Workspace.svelte";
+  import Nav from "$lib/components/Nav.svelte";
+  import NavGroup from "$lib/components/NavGroup.svelte";
+  import NavItem from "$lib/components/NavItem.svelte";
+  import Inspector from "$lib/components/Inspector.svelte";
+  import InspectorSection from "$lib/components/InspectorSection.svelte";
+  import Card from "$lib/components/Card.svelte";
+  import CardField from "$lib/components/CardField.svelte";
+  import Diagnostics from "$lib/components/Diagnostics.svelte";
+  import Field from "$lib/components/Field.svelte";
+
+  import { SECTIONS } from "$lib/governance/sections.js";
+  import type { SectionKey } from "$lib/governance/sections.js";
+  import { getStringField } from "$lib/governance/field-utils.js";
 
   // ---------------------------------------------------------------------------
-  // State (Svelte 5 runes)
+  // State
   // ---------------------------------------------------------------------------
 
-  let repo = $state<SrsRepository | null>(null);
-  let recordCount = $state<number | null>(null);
-  let error = $state<string | null>(null);
-  let loading = $state(false);
-  let wasmReady = $state(false);
+  type AppState = "boot" | "idle" | "loaded" | "error";
+
+  let appState = $state<AppState>("boot");
+  let errorMsg = $state<string | null>(null);
+
+  let repoName = $state<string>("Untitled repository");
+
+  /** Records per section, keyed by section key. */
+  let sectionRecords = $state<Record<string, SrsRecord[]>>({});
+
+  /** Active sidebar section */
+  let activeSection = $state<SectionKey>("articles");
+
+  /** Selected record instance ID */
+  let selectedId = $state<string | null>(null);
+
+  /** Validation diagnostics mapped to types.ts shape */
+  let diagnostics = $state<Diagnostic[]>([]);
+  let instanceCount = $state<number>(0);
 
   // ---------------------------------------------------------------------------
   // WASM initialisation
@@ -19,15 +67,37 @@
   $effect(() => {
     initWasm()
       .then(() => {
-        wasmReady = true;
+        appState = "idle";
       })
       .catch((e: unknown) => {
-        error = `Failed to load WASM module: ${e instanceof Error ? e.message : String(e)}`;
+        errorMsg = `Failed to load WASM engine: ${e instanceof Error ? e.message : String(e)}`;
+        appState = "error";
       });
   });
 
   // ---------------------------------------------------------------------------
-  // File picker handler
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  /** Map WASM diagnostic severity to types.ts shape (warning → warn). */
+  function mapDiagnostic(d: WasmDiagnostic): Diagnostic {
+    const sev = d.severity === "warning" ? "warn" : d.severity;
+    return { severity: sev, message: d.message };
+  }
+
+  function loadSectionRecords(loadedRepo: SrsRepository): void {
+    const result: Record<string, SrsRecord[]> = {};
+    for (const section of SECTIONS) {
+      result[section.key] = listRecords(loadedRepo, {
+        typeNamespace: section.typeNamespace,
+        typeName: section.typeName,
+      });
+    }
+    sectionRecords = result;
+  }
+
+  // ---------------------------------------------------------------------------
+  // File import
   // ---------------------------------------------------------------------------
 
   async function onFileChange(event: Event) {
@@ -35,105 +105,379 @@
     const file = input.files?.[0];
     if (!file) return;
 
-    error = null;
-    repo = null;
-    recordCount = null;
-    loading = true;
+    errorMsg = null;
+    sectionRecords = {};
+    selectedId = null;
+    diagnostics = [];
 
     try {
       const text = await file.text();
       const loaded = loadRepo(text);
-      repo = loaded;
-      recordCount = countRecords(loaded);
+
+      // Derive a display name from the filename (strip extension)
+      repoName = file.name.replace(/\.(srsj|json)$/i, "");
+
+      // Populate section record lists
+      loadSectionRecords(loaded);
+
+      // Run validation
+      const report = loaded.validate();
+      instanceCount = report.instanceCount;
+      diagnostics = report.diagnostics.map(mapDiagnostic);
+
+      appState = "loaded";
     } catch (e: unknown) {
-      error = `Failed to load repository: ${e instanceof Error ? e.message : String(e)}`;
-    } finally {
-      loading = false;
+      errorMsg = `Failed to load repository: ${e instanceof Error ? e.message : String(e)}`;
+      appState = "error";
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Derived
+  // ---------------------------------------------------------------------------
+
+  let activeRecords = $derived(sectionRecords[activeSection] ?? []);
+
+  let activeSection_ = $derived(
+    SECTIONS.find((s) => s.key === activeSection)!,
+  );
+
+  /** Count of validation errors */
+  let errorCount = $derived(diagnostics.filter((d) => d.severity === "error").length);
+
+  /** Inspector aside: "clean" or error count */
+  let validationAside = $derived(
+    errorCount === 0
+      ? "clean"
+      : `${errorCount} error${errorCount === 1 ? "" : "s"}`,
+  );
 </script>
 
-<main>
-  <header>
-    <h1>SRS Web</h1>
-    <p>Open a <code>.srsj</code> file to inspect a repository.</p>
-  </header>
+<!-- =========================================================================
+     SVG filter — required by Nav (ink surface effect)
+     ========================================================================= -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <defs>
+    <filter id="ink-surface" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" result="noise" />
+      <feColorMatrix type="saturate" values="0" in="noise" result="grey" />
+      <feBlend in="SourceGraphic" in2="grey" mode="multiply" result="blended" />
+      <feComposite in="blended" in2="SourceGraphic" operator="in" />
+    </filter>
+  </defs>
+</svg>
 
-  <section class="file-picker">
-    <label for="srsj-file">Repository file (.srsj)</label>
-    <input
-      id="srsj-file"
-      type="file"
-      accept=".srsj,.json"
-      disabled={!wasmReady || loading}
-      onchange={onFileChange}
-    />
-    {#if !wasmReady && !error}
-      <p class="status status--loading">Loading WASM engine…</p>
-    {/if}
-  </section>
+<!-- =========================================================================
+     Boot state
+     ========================================================================= -->
+{#if appState === "boot"}
+  <div class="splash">
+    <p class="splash__status">Loading engine…</p>
+  </div>
 
-  {#if loading}
-    <p class="status status--loading">Loading repository…</p>
-  {/if}
+<!-- =========================================================================
+     Error state
+     ========================================================================= -->
+{:else if appState === "error"}
+  <div class="splash">
+    <p class="splash__error" role="alert">{errorMsg}</p>
+    <button
+      class="splash__retry"
+      onclick={() => {
+        errorMsg = null;
+        appState = "idle";
+      }}
+    >Try again</button>
+  </div>
 
-  {#if error}
-    <p class="status status--error" role="alert">{error}</p>
-  {/if}
+<!-- =========================================================================
+     Idle state — file picker
+     ========================================================================= -->
+{:else if appState === "idle"}
+  <div class="splash">
+    <h1 class="splash__title">SRS Governance Viewer</h1>
+    <p class="splash__sub">Open a <code>.srsj</code> repository file to explore its governance records.</p>
+    <div class="splash__field">
+      <Field label="Repository file" typeHint=".srsj">
+        <input
+          id="srsj-file"
+          type="file"
+          accept=".srsj,.json"
+          onchange={onFileChange}
+          class="splash__input"
+        />
+      </Field>
+    </div>
+  </div>
 
-  {#if repo !== null && recordCount !== null}
-    <section class="repo-summary">
-      <p class="record-count">
-        <strong>{recordCount}</strong>
-        {recordCount === 1 ? "record" : "records"}
-      </p>
-    </section>
-  {/if}
-</main>
+<!-- =========================================================================
+     Loaded state — three-pane viewer
+     ========================================================================= -->
+{:else}
+  <AppShell>
+    {#snippet nav()}
+      <Nav repo={repoName} eyebrow="srs · governance">
+        {#snippet children()}
+          <NavGroup label="Governance">
+            {#each SECTIONS as section (section.key)}
+              <!-- svelte-ignore a11y_click_events_have_key_events -->
+              <!-- svelte-ignore a11y_no_static_element_interactions -->
+              <div
+                onclick={(e) => {
+                  e.preventDefault();
+                  activeSection = section.key as SectionKey;
+                  selectedId = null;
+                }}
+              >
+                <NavItem
+                  label={section.label}
+                  id={section.icon}
+                  count={sectionRecords[section.key]?.length ?? 0}
+                  active={activeSection === section.key}
+                  href="#"
+                />
+              </div>
+            {/each}
+          </NavGroup>
+        {/snippet}
+        {#snippet footer()}
+          <div class="nav__footer-stat">
+            {instanceCount} record{instanceCount === 1 ? "" : "s"}
+          </div>
+        {/snippet}
+      </Nav>
+    {/snippet}
+
+    {#snippet main()}
+      <Main>
+        <Topbar>
+          {#snippet crumb()}
+            <span class="topbar__repo">{repoName}</span>
+            <span class="topbar__sep">›</span>
+            <span class="topbar__section">{activeSection_.label}</span>
+          {/snippet}
+          {#snippet actions()}
+            <button
+              class="topbar__reset"
+              onclick={() => {
+                sectionRecords = {};
+                diagnostics = [];
+                selectedId = null;
+                appState = "idle";
+              }}
+            >Open another file</button>
+          {/snippet}
+        </Topbar>
+
+        <Workspace>
+          <div class="section-heading">
+            <h2 class="section-heading__title">{activeSection_.label}</h2>
+            <span class="section-heading__count">{activeRecords.length}</span>
+          </div>
+
+          {#if activeRecords.length === 0}
+            <p class="empty-state">No {activeSection_.label.toLowerCase()} records in this repository.</p>
+          {:else}
+            <div class="record-list">
+              {#each activeRecords as record (record.instanceId)}
+                {@const title =
+                  getStringField(record, "title") ??
+                  getStringField(record, "decision_statement") ??
+                  record.instanceId}
+                {@const articleNumber = getStringField(record, "article_number")}
+                {@const status = getStringField(record, "status") as Status | undefined}
+                {@const isSelected = selectedId === record.instanceId}
+
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <div
+                  class="record-list__item"
+                  class:record-list__item--selected={isSelected}
+                  onclick={() => {
+                    selectedId = isSelected ? null : record.instanceId;
+                  }}
+                >
+                  <Card
+                    id={articleNumber}
+                    title={title}
+                    status={status}
+                  >
+                    {#if isSelected}
+                      <CardField label="Coming in B5">
+                        Detail view not yet implemented — select a record to highlight it.
+                      </CardField>
+                    {/if}
+                  </Card>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </Workspace>
+      </Main>
+    {/snippet}
+
+    {#snippet inspector()}
+      <Inspector label="Validation">
+        <InspectorSection title="Validation" aside={validationAside}>
+          <Diagnostics {diagnostics} />
+        </InspectorSection>
+        <InspectorSection title="Repository" aside={String(instanceCount)}>
+          <div class="inspector__kv">
+            <span class="inspector__k">File</span>
+            <span class="inspector__v">{repoName}</span>
+          </div>
+          <div class="inspector__kv">
+            <span class="inspector__k">Records</span>
+            <span class="inspector__v">{instanceCount}</span>
+          </div>
+        </InspectorSection>
+      </Inspector>
+    {/snippet}
+  </AppShell>
+{/if}
 
 <style>
-  main {
-    max-width: 40rem;
-    margin: 4rem auto;
-    padding: 0 1rem;
+  /* ---- Splash / idle ---- */
+  .splash {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
+    gap: 1rem;
+    padding: 2rem;
+    text-align: center;
     font-family: inherit;
   }
 
-  header {
-    margin-bottom: 2rem;
+  .splash__title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
   }
 
-  h1 {
-    margin: 0 0 0.5rem;
+  .splash__sub {
+    margin: 0;
+    opacity: 0.65;
+    max-width: 28rem;
   }
 
-  .file-picker {
+  .splash__field {
+    margin-top: 1rem;
+    min-width: 18rem;
+    text-align: left;
+  }
+
+  .splash__input {
+    display: block;
+    width: 100%;
+  }
+
+  .splash__status {
+    opacity: 0.55;
+    margin: 0;
+  }
+
+  .splash__error {
+    color: #c00;
+    margin: 0;
+  }
+
+  .splash__retry {
+    margin-top: 0.5rem;
+    cursor: pointer;
+  }
+
+  /* ---- Section heading ---- */
+  .section-heading {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    align-items: baseline;
+    gap: 0.75rem;
     margin-bottom: 1.5rem;
   }
 
-  .status {
+  .section-heading__title {
     margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  .section-heading__count {
+    font-size: 0.8125rem;
+    opacity: 0.5;
+  }
+
+  /* ---- Record list ---- */
+  .record-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .record-list__item {
+    cursor: pointer;
+    border-radius: 2px;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition: outline-color 0.1s;
+  }
+
+  .record-list__item--selected {
+    outline-color: currentColor;
+  }
+
+  .empty-state {
+    opacity: 0.5;
     font-size: 0.875rem;
   }
 
-  .status--loading {
+  /* ---- Topbar extras ---- */
+  .topbar__sep {
+    margin: 0 0.35rem;
+    opacity: 0.4;
+  }
+
+  .topbar__section {
+    font-weight: 500;
+  }
+
+  .topbar__reset {
+    font-size: 0.75rem;
+    background: none;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
     opacity: 0.6;
   }
 
-  .status--error {
-    color: #c00;
+  .topbar__reset:hover {
+    opacity: 1;
   }
 
-  .repo-summary {
-    border-top: 1px solid currentColor;
-    padding-top: 1rem;
+  /* ---- Inspector KV ---- */
+  .inspector__kv {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    padding: 0.2rem 0;
   }
 
-  .record-count {
-    margin: 0;
-    font-size: 1.125rem;
+  .inspector__k {
+    opacity: 0.55;
+  }
+
+  .inspector__v {
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ---- Nav footer ---- */
+  .nav__footer-stat {
+    font-size: 0.6875rem;
+    opacity: 0.4;
+    padding: 0.5rem 0;
   }
 </style>
