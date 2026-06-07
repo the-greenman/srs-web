@@ -1,0 +1,79 @@
+/* ============================================================================
+   tokens — design variables
+   ----------------------------------------------------------------------------
+   The single source of palette, type, spacing, and layout dimensions. Nothing
+   here paints; every other layer references these custom properties so a brand
+   change is a one-file change.
+
+   Palette + type ported verbatim from the muDemocracy brand
+   (muDemocracy.org/src/styles/tokens.css, v3) to keep the two surfaces in lockstep.
+   Foundation for the whole editor — B1 scaffold:
+     https://github.com/the-greenman/srs-web/issues/2
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ── Palette ────────────────────────────────────────────────────────────
+     No accent colour by design. Greys do the work. */
+  --black: #1a1a1a;
+  --paper: #f4f2ee;
+  --grey-1: #e8e5df;
+  --grey-2: #c8c4bc;
+  --grey-3: #8a8680;
+  --grey-4: #4a4744;
+  --ink: #2b2926;
+
+  /* ── Semantic aliases ───────────────────────────────────────────────────
+     Reference these in components, not the raw scale, where intent matters. */
+  --color-bg: var(--paper);
+  --color-surface: var(--paper);
+  --color-text: var(--ink);
+  --color-muted: var(--grey-3);
+  --color-line: var(--grey-2);
+  --color-line-soft: var(--grey-1);
+  --color-line-strong: var(--black);
+
+  /* on-dark (the nav rail + record headers sit on --black) */
+  --color-on-dark: var(--paper);
+  --color-on-dark-muted: rgba(244, 242, 238, 0.5);
+  --color-on-dark-faint: rgba(244, 242, 238, 0.3);
+  --color-on-dark-line: rgba(244, 242, 238, 0.1);
+  --color-on-dark-hover: rgba(244, 242, 238, 0.06);
+
+  /* ── Typography ─────────────────────────────────────────────────────────
+     Distinctive brand pairing — sans for prose, mono for every label/metadata. */
+  --font-sans: "IBM Plex Sans", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", "Courier New", monospace;
+
+  --size-xs: 11px;
+  --size-sm: 13px;
+  --size-base: 16px;
+  --size-md: 20px;
+  --size-lg: 28px;
+  --size-xl: 42px;
+
+  --leading-tight: 1.1;
+  --leading-body: 1.6;
+
+  --tracking-label: 0.08em;   /* mono uppercase labels */
+  --tracking-eyebrow: 0.14em; /* loudest mono lockup */
+
+  /* ── Spacing scale ──────────────────────────────────────────────────────── */
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 32px;
+  --space-lg: 64px;
+  --space-xl: 96px;
+
+  /* ── Borders ────────────────────────────────────────────────────────────── */
+  --rule: 1px solid var(--color-line);
+  --rule-soft: 1px solid var(--color-line-soft);
+  --rule-strong: 2px solid var(--color-line-strong);
+
+  /* ── App layout dimensions ──────────────────────────────────────────────── */
+  --nav-width: 264px;
+  --inspector-width: 320px;
+  --topbar-height: 56px;
+  --content-max: 820px;
+}

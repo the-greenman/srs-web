@@ -1,0 +1,61 @@
+/* ============================================================================
+   component: button (.btn)
+   ----------------------------------------------------------------------------
+   Reusable action control. One filled variant (primary); everything else is
+   outlined or flat to keep the surface quiet. The mono variant is for
+   utility/format actions (view toggles, "Export .srsj").
+
+   Variants: --primary --secondary --ghost --mono  (+ --on-dark for the nav)
+   Used everywhere; import/export actions land in B10:
+     https://github.com/the-greenman/srs-web/issues/6
+   Ported from the muDemocracy button system.
+   ========================================================================== */
+
+.btn {
+  font-family: var(--font-sans);
+  font-size: var(--size-base);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  padding: 12px 32px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  -webkit-appearance: none;
+}
+.btn:disabled,
+.btn[aria-disabled="true"] { opacity: 0.4; cursor: not-allowed; }
+
+/* Primary — solid ink, the only filled button */
+.btn--primary { background: var(--black); color: var(--paper); border-color: var(--black); }
+.btn--primary:hover { background: var(--grey-4); border-color: var(--grey-4); }
+
+/* Secondary — outlined */
+.btn--secondary { color: var(--ink); border-color: var(--grey-4); font-weight: 400; }
+.btn--secondary:hover { border-color: var(--black); color: var(--black); }
+
+/* Ghost — low-contrast, tertiary */
+.btn--ghost { color: var(--grey-3); border-color: var(--grey-2); font-weight: 400; }
+.btn--ghost:hover { border-color: var(--grey-4); color: var(--grey-4); }
+
+/* Mono — utility/format actions: flat, small, all-caps */
+.btn--mono {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 400;
+  color: var(--grey-3);
+  border-color: var(--grey-2);
+  padding: 7px 14px;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+.btn--mono:hover { border-color: var(--grey-4); color: var(--grey-4); }
+.btn--mono.is-active { color: var(--ink); border-color: var(--black); background: var(--grey-1); }
+
+/* On-dark — for buttons placed on the nav rail / ink headers */
+.btn--on-dark.btn--primary { background: var(--paper); color: var(--black); border-color: var(--paper); }
+.btn--on-dark.btn--primary:hover { background: var(--grey-1); border-color: var(--grey-1); }
+.btn--on-dark.btn--mono { color: var(--color-on-dark-muted); border-color: var(--color-on-dark-line); }
+.btn--on-dark.btn--mono:hover { color: var(--paper); border-color: var(--color-on-dark-muted); }

@@ -1,0 +1,68 @@
+/* ============================================================================
+   component: repeatable (.repeat) — array-valued field widget
+   ----------------------------------------------------------------------------
+   A list of value entries for a FieldAssignment marked `repeatable: true`
+   (ext:repeatable-fields). Each entry is index + control + remove; a footer
+   adds entries and shows the min/max-items constraint. The widget logic is
+   ported from srs-vscode/src/webview/forms.ts (REPEAT_ENTRY_JS, .repeat-list,
+   collectFormData branching) per the plan — this file is only its skin.
+
+   Repeatable editing — B9:
+     https://github.com/the-greenman/srs-web/issues/5
+   Repeatable rendering (read-only) — B5:
+     https://github.com/the-greenman/srs-web/issues/4
+   ========================================================================== */
+
+.repeat {
+  border: 1px solid var(--grey-2);
+  background: color-mix(in srgb, var(--grey-1) 40%, var(--paper));
+}
+
+.repeat__list { display: flex; flex-direction: column; }
+
+.repeat__entry {
+  display: grid;
+  grid-template-columns: 1.6em 1fr 28px;
+  align-items: start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: var(--rule-soft);
+}
+.repeat__entry:last-child { border-bottom: none; }
+.repeat__index {
+  padding-top: 12px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--grey-3);
+}
+/* entry controls sit on paper so they read as inputs against the tinted body */
+.repeat__entry .input,
+.repeat__entry .textarea { background: var(--color-surface); }
+
+.repeat__remove {
+  width: 28px; height: 28px;
+  margin-top: 4px;
+  line-height: 1;
+  font-family: var(--font-mono);
+  color: var(--grey-3);
+  background: transparent;
+  border: 1px solid var(--grey-2);
+  cursor: pointer;
+}
+.repeat__remove:hover { border-color: var(--ink); color: var(--ink); }
+.repeat__remove:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.repeat__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 8px 12px;
+  border-top: 1px solid var(--grey-2);
+  background: var(--color-surface);
+}
+.repeat__hint {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--grey-3);
+}

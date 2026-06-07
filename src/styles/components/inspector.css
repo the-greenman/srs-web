@@ -1,0 +1,53 @@
+/* ============================================================================
+   component: inspector (.inspector) — the right rail container
+   ----------------------------------------------------------------------------
+   A scrolling rail of stacked, titled sections. It hosts the validation
+   panel (diagnostics.css), the lifecycle control (lifecycle.css), and a
+   provenance/metadata block — but owns none of their internals; it only
+   provides the consistent section frame and the key/value metadata list.
+
+   Rail belongs to the read-only viewer — B4:
+     https://github.com/the-greenman/srs-web/issues/3
+   ========================================================================== */
+
+.inspector {
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+  padding: var(--space-md) var(--space-sm);
+  border-left: var(--rule);
+  background: var(--color-surface);
+}
+
+.inspector__section + .inspector__section { margin-top: var(--space-md); }
+
+.inspector__title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: var(--space-sm);
+  padding-bottom: 8px;
+  border-bottom: var(--rule-strong);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--grey-3);
+}
+.inspector__title-aside { margin-left: auto; color: var(--ink); }
+
+/* ── Key/value metadata list (provenance, ids, timestamps) ────────────────── */
+.meta { margin: 0; }
+.meta__row {
+  display: grid;
+  grid-template-columns: 6.5em 1fr;
+  gap: var(--space-sm);
+  padding: 6px 0;
+  border-bottom: var(--rule-soft);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+}
+.meta__row:last-child { border-bottom: none; }
+.meta__key { color: var(--grey-3); letter-spacing: 0.04em; }
+.meta__val { margin: 0; color: var(--ink); word-break: break-word; }

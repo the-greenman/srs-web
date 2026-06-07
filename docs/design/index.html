@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>srs-web · design canvas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../src/styles/index.css" />
+  <style>
+    /* Page-local chrome for this canvas index — NOT part of the reusable library. */
+    .doc { max-width: 880px; margin: 0 auto; padding: var(--space-xl) var(--space-md); }
+    .doc h1 { font-size: var(--size-xl); margin: 0 0 var(--space-sm); }
+    .doc .lede { font-size: var(--size-md); color: var(--grey-4); max-width: 60ch; margin: 0 0 var(--space-lg); }
+    .doc h2 { font-size: var(--size-lg); font-weight: 500; margin: var(--space-lg) 0 var(--space-sm); }
+    .screen-links { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm); margin: var(--space-md) 0; }
+    .screen-link { display: block; padding: var(--space-md); border: 1px solid var(--grey-2); text-decoration: none; color: var(--ink); }
+    .screen-link:hover { border-color: var(--ink); }
+    .screen-link .eyebrow { display: block; margin-bottom: 8px; }
+    .screen-link h3 { margin: 0 0 6px; font-size: var(--size-md); font-weight: 500; }
+    .screen-link p { margin: 0; font-size: var(--size-sm); color: var(--grey-3); }
+    .note-list { list-style: none; padding: 0; margin: 0; }
+    .note-list li { display: grid; grid-template-columns: 9em 1fr; gap: var(--space-sm); padding: 12px 0; border-bottom: 1px solid var(--grey-1); }
+    .note-list li b { font-family: var(--font-mono); font-size: var(--size-xs); font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em; color: var(--grey-3); padding-top: 2px; }
+    .note-list li span { font-size: var(--size-sm); color: var(--ink); }
+    @media (max-width: 720px) { .screen-links { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="doc">
+    <p class="eyebrow">srs-web · track b · design foundation</p>
+    <h1>The governance editor, in paper&nbsp;and&nbsp;ink.</h1>
+    <p class="lede">A modular, reusable CSS system for the SRS governance web editor — extending the
+      muDemocracy design language into an application shell. No accent colour; hierarchy comes from
+      weight, size, and mono/sans contrast.</p>
+
+    <h2>Screens</h2>
+    <div class="screen-links">
+      <a class="screen-link" href="viewer.html">
+        <span class="eyebrow">B4 · B5</span>
+        <h3>Read-only viewer →</h3>
+        <p>Nav rail, decision deliberation card, decision-log table, validation &amp; lifecycle inspector.</p>
+      </a>
+      <a class="screen-link" href="editor.html">
+        <span class="eyebrow">B9 · B13</span>
+        <h3>Edit form →</h3>
+        <p>Generated form with field groups, a repeatable-field widget, the status enum, and validate-on-save diagnostics.</p>
+      </a>
+    </div>
+
+    <h2>Design decisions</h2>
+    <ul class="note-list">
+      <li><b>No accent</b><span>Status and severity are signalled by fill, border style, and weight — never hue. Errors are ink-filled chips; superseded records strike through; drafts use a dashed border.</span></li>
+      <li><b>Mono = system</b><span>Every label, id, count, and piece of metadata is IBM Plex Mono. Human prose is IBM Plex Sans. The contrast does the wayfinding.</span></li>
+      <li><b>Layered cascade</b><span>tokens → base → layout → components → utilities, locked with <span class="t-mono">@layer</span>. Order is independent of import order.</span></li>
+      <li><b>BEM blocks</b><span>Each component is a self-contained <span class="t-mono">.block__element--modifier</span> file, reusable in isolation and mapped to its Track&nbsp;B issue.</span></li>
+      <li><b>Tokens only</b><span>Components reference custom properties, never literal colours or sizes. A rebrand is a single-file change in <span class="t-mono">tokens.css</span>.</span></li>
+      <li><b>Thin client</b><span>Per ADR-001 these styles only render what the WASM engine produces — no SRS semantics live in the presentation layer.</span></li>
+    </ul>
+
+    <h2>Component library</h2>
+    <p class="t-muted">See <span class="t-mono">../../src/styles/README.md</span> for the full file map and the component → issue table.</p>
+
+    <div class="cluster" style="margin-top:var(--space-md)">
+      <span class="tag tag--draft">draft</span>
+      <span class="tag tag--proposed">proposed</span>
+      <span class="tag tag--active">active</span>
+      <span class="tag tag--deferred">deferred</span>
+      <span class="tag tag--superseded">superseded</span>
+      <span class="tag tag--closed">closed</span>
+      <span class="tag tag--rejected">rejected</span>
+      <span class="tag tag--archived">archived</span>
+    </div>
+    <div class="cluster" style="margin-top:var(--space-sm)">
+      <button class="btn btn--primary">Primary</button>
+      <button class="btn btn--secondary">Secondary</button>
+      <button class="btn btn--ghost">Ghost</button>
+      <button class="btn btn--mono">Mono action</button>
+    </div>
+  </div>
+</body>
+</html>

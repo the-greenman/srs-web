@@ -1,0 +1,56 @@
+/* ============================================================================
+   component: log-table (.log-table) — tabular profile view
+   ----------------------------------------------------------------------------
+   The compact decision-log shape (governance/decision-log document view):
+   id · decision · type · date · status, one row per record. Mono metadata
+   columns, sans for the decision text so the human content stands out. Rows
+   are navigable into the full deliberation view.
+
+   Backs the profile view shapes in B5:
+     https://github.com/the-greenman/srs-web/issues/4
+   and the Decision Log / Summary Card output in B12:
+     https://github.com/the-greenman/srs-web/issues/8
+   Ported from the muDemocracy .log-table specimen.
+   ========================================================================== */
+
+.log-table { width: 100%; border-collapse: collapse; }
+
+.log-table th {
+  padding: 6px 16px 10px 0;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--grey-3);
+  border-bottom: var(--rule-strong);
+}
+.log-table th:last-child { padding-right: 0; }
+
+.log-table td {
+  padding: 14px 16px;
+  vertical-align: middle;
+  line-height: 1.5;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--grey-3);
+  border-bottom: var(--rule-soft);
+}
+.log-table td:first-child { padding-left: 0; }
+.log-table td:last-child { padding-right: 0; }
+.log-table tbody tr:last-child td { border-bottom: none; }
+
+/* Navigable rows */
+.log-table tbody tr { cursor: pointer; }
+.log-table tbody tr:hover td { background: var(--grey-1); }
+
+/* Cell variants */
+.log-table__decision {
+  font-family: var(--font-sans);
+  font-size: var(--size-sm);
+  color: var(--ink);
+  line-height: 1.45;
+}
+.log-table__id { opacity: 0.7; }
+.log-table__nowrap { white-space: nowrap; }

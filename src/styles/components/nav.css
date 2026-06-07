@@ -1,0 +1,108 @@
+/* ============================================================================
+   component: nav (.nav) — the dark navigation rail
+   ----------------------------------------------------------------------------
+   Sidebar listing the governance sections (Articles / Roles / Decisions /
+   Exercise Book / Decision Log) sourced from list_records, with per-section
+   counts and a repository-health footer fed by validate().
+
+   The `ink-surface` SVG turbulence filter (defined once in each HTML host)
+   gives the dark block a printed-ink texture, matching the muDemocracy brand.
+
+   Sidebar is the core of the read-only viewer — B4:
+     https://github.com/the-greenman/srs-web/issues/3
+   ========================================================================== */
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  background: var(--black);
+  color: var(--color-on-dark);
+  filter: url(#ink-surface);
+}
+
+/* ── Brand lockup ─────────────────────────────────────────────────────────── */
+.nav__brand {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-on-dark-line);
+}
+.nav__brand .eyebrow { color: var(--color-on-dark-muted); }
+.nav__repo {
+  margin-top: 4px;
+  font-size: var(--size-md);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.nav__repo-id {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--color-on-dark-faint);
+}
+
+/* ── Scrolling section list ───────────────────────────────────────────────── */
+.nav__scroll { flex: 1; overflow-y: auto; padding: var(--space-sm) 0; }
+
+.nav__group { padding: var(--space-sm) 0 4px; }
+.nav__group-label {
+  padding: 0 var(--space-md) 6px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-on-dark-faint);
+}
+
+.nav__item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px var(--space-md);
+  border-left: 2px solid transparent;
+  color: rgba(244, 242, 238, 0.7);
+  font-size: var(--size-sm);
+  text-decoration: none;
+}
+.nav__item:hover { color: var(--paper); background: var(--color-on-dark-hover); }
+.nav__item--active {
+  color: var(--paper);
+  border-left-color: var(--paper);
+  background: var(--color-on-dark-hover);
+}
+.nav__item-id {
+  min-width: 3.2em;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: rgba(244, 242, 238, 0.4);
+}
+.nav__item-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: rgba(244, 242, 238, 0.4);
+}
+
+/* ── Repository-health footer (validate() summary) ────────────────────────── */
+.nav__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--color-on-dark-line);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--color-on-dark-muted);
+}
+.nav__health-dot {
+  flex: none;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--paper);
+}
+.nav__health-dot--warn { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(244, 242, 238, 0.6); }
+
+@media (max-width: 720px) {
+  .nav { position: relative; height: auto; }
+}

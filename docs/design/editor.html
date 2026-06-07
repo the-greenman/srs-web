@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>srs-web · edit form (design canvas)</title>
+  <!--
+    Showcase screen — generated edit form (B9 #5) with validate-on-save (B13 #9).
+    Demonstrates field / repeatable / field-group / select / invalid-state
+    components. Editing the LiMoMa decision "Pilot duration and review".
+    NOTE: repeatable + field-group are shown on this decision to exercise the
+    widgets; the live form shape comes from `type schema` at runtime.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../src/styles/index.css" />
+</head>
+<body>
+  <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="ink-surface" x="-2%" y="-2%" width="104%" height="104%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="4" seed="42" result="noise-coarse" />
+        <feTurbulence type="fractalNoise" baseFrequency="0.9 0.7" numOctaves="2" seed="17" result="noise-fine" />
+        <feMerge result="noise-combined"><feMergeNode in="noise-coarse" /><feMergeNode in="noise-fine" /></feMerge>
+        <feColorMatrix in="noise-combined" type="matrix"
+          values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -10 1.8" result="toner-mask" />
+        <feComposite in="SourceGraphic" in2="toner-mask" operator="arithmetic" k1="0" k2="1" k3="0.06" k4="0" result="surface-textured" />
+        <feTurbulence type="turbulence" baseFrequency="0.03 0.015" numOctaves="2" seed="7" result="edge-noise" />
+        <feDisplacementMap in="surface-textured" in2="edge-noise" scale="0.6" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="app">
+    <!-- ── NAV RAIL ──────────────────────────────────────────────────────── -->
+    <nav class="nav app__nav" aria-label="Repository sections">
+      <div class="nav__brand">
+        <p class="eyebrow" style="margin:0">srs · governance</p>
+        <div class="nav__repo">LiMoMa Foundation</div>
+        <div class="nav__repo-id">com.limoma · 8ae058dc</div>
+      </div>
+      <div class="nav__scroll">
+        <div class="nav__group">
+          <div class="nav__group-label">Records</div>
+          <a class="nav__item" href="#"><span class="nav__item-id">A</span>Articles<span class="nav__item-count">6</span></a>
+          <a class="nav__item" href="#"><span class="nav__item-id">R</span>Roles<span class="nav__item-count">3</span></a>
+          <a class="nav__item nav__item--active" href="#"><span class="nav__item-id">D</span>Decisions<span class="nav__item-count">7</span></a>
+          <a class="nav__item" href="#"><span class="nav__item-id">E</span>Exercise Book<span class="nav__item-count">0</span></a>
+        </div>
+      </div>
+      <div class="nav__foot">
+        <span class="nav__health-dot nav__health-dot--warn"></span> editing · 1 unsaved
+      </div>
+    </nav>
+
+    <!-- ── MAIN: the form ────────────────────────────────────────────────── -->
+    <main class="app__main">
+      <div class="topbar">
+        <div class="topbar__crumb">
+          <span>Decisions</span><span class="topbar__crumb-sep">/</span>
+          <span class="topbar__crumb-current">Edit — Pilot duration and review</span>
+        </div>
+        <div class="topbar__actions">
+          <span class="t-muted">governance/decision@1</span>
+        </div>
+      </div>
+
+      <div class="workspace">
+        <div class="canvas">
+          <form class="form" onsubmit="return false">
+
+            <div class="field">
+              <label class="field__label" for="f-title">Title <span class="req">required</span><span class="field__type-hint">string</span></label>
+              <input class="input" id="f-title" value="Pilot duration and review" />
+            </div>
+
+            <!-- Field group: bundle the two core decision fields -->
+            <fieldset class="field-group">
+              <legend class="field-group__legend">The Decision</legend>
+              <p class="field-group__help">The settled commitment and the reasoning that justifies it.</p>
+              <div class="field-group__body">
+                <div class="field">
+                  <label class="field__label" for="f-stmt">Decision Statement <span class="req">required</span><span class="field__type-hint">text</span></label>
+                  <textarea class="textarea" id="f-stmt">Six-month pilot, June to December 2026. At the end of that period the group meets to decide what comes next: continue, extend, change scope, or close.</textarea>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="f-rat">Rationale<span class="field__type-hint">text</span></label>
+                  <textarea class="textarea" id="f-rat">A defined lifespan makes the review real rather than optional. Open-ended pilots drift without a moment of explicit recommitment.</textarea>
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- Repeatable field widget -->
+            <div class="field">
+              <label class="field__label">Key Requirements <span class="field__type-hint">text · repeatable · 0–∞</span></label>
+              <p class="field__help">One requirement per entry. Reorder or remove as the decision is refined.</p>
+              <div class="repeat">
+                <div class="repeat__list">
+                  <div class="repeat__entry">
+                    <span class="repeat__index">1</span>
+                    <input class="input" value="A review meeting must be scheduled before the pilot ends." />
+                    <button class="repeat__remove" title="Remove entry">×</button>
+                  </div>
+                  <div class="repeat__entry">
+                    <span class="repeat__index">2</span>
+                    <input class="input" value="The outcome is recorded as a new decision (continue / extend / close)." />
+                    <button class="repeat__remove" title="Remove entry">×</button>
+                  </div>
+                </div>
+                <div class="repeat__foot">
+                  <button class="btn btn--mono">+ Add requirement</button>
+                  <span class="repeat__hint">2 entries</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Invalid state: required field flagged by validate-on-save (B13) -->
+            <div class="field field--invalid">
+              <label class="field__label" for="f-context">Context<span class="field__type-hint">text</span></label>
+              <textarea class="textarea" id="f-context" placeholder="What situation prompted this decision?"></textarea>
+              <span class="field__error">Required by the deliberation protocol before status can move to “active”.</span>
+            </div>
+
+            <!-- Select bound to the governance/status enum -->
+            <div class="field">
+              <label class="field__label" for="f-status">Status <span class="req">required</span><span class="field__type-hint">select</span></label>
+              <select class="select" id="f-status">
+                <option>draft</option><option>proposed</option>
+                <option selected>active</option><option>deferred</option>
+                <option>superseded</option><option>closed</option>
+                <option>rejected</option><option>archived</option>
+              </select>
+            </div>
+
+            <!-- Sticky save bar -->
+            <div class="save-bar">
+              <span class="save-bar__dirty">1 unsaved change</span>
+              <span class="save-bar__spacer"></span>
+              <button class="btn btn--ghost" style="padding:10px 24px">Cancel</button>
+              <button class="btn btn--secondary" style="padding:10px 24px">Save draft</button>
+              <button class="btn btn--primary" style="padding:10px 24px">Save &amp; validate</button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <!-- ── INSPECTOR: validate-on-save diagnostics ───────────────────────── -->
+    <aside class="inspector app__inspector" aria-label="Validation">
+      <section class="inspector__section">
+        <div class="inspector__title">Validation <span class="inspector__title-aside">on save</span></div>
+        <div class="diag-summary">
+          <span class="diag-summary__strong">1 error</span>
+          <span class="diag-summary__dim">1 warning</span>
+          <span class="diag-summary__dim">0 info</span>
+        </div>
+        <div class="diag-list">
+          <div class="diag diag--error">
+            <span class="diag__sev">err</span>
+            <div>
+              <div class="diag__msg">Required field “Context” is empty.</div>
+              <div class="diag__where">field: governance/context · save blocked</div>
+            </div>
+          </div>
+          <div class="diag diag--warn">
+            <span class="diag__sev">warn</span>
+            <div>
+              <div class="diag__msg">No “Revisit When” set on an active decision.</div>
+              <div class="diag__where">field: governance/revisit_when</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="inspector__section">
+        <div class="inspector__title">Type</div>
+        <dl class="meta">
+          <div class="meta__row"><dt class="meta__key">type</dt><dd class="meta__val">governance/decision@1</dd></div>
+          <div class="meta__row"><dt class="meta__key">required</dt><dd class="meta__val">title · statement · status</dd></div>
+          <div class="meta__row"><dt class="meta__key">fields</dt><dd class="meta__val">12</dd></div>
+        </dl>
+      </section>
+    </aside>
+  </div>
+</body>
+</html>

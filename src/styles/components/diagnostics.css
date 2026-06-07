@@ -1,0 +1,86 @@
+/* ============================================================================
+   component: diagnostics (.diag) — the validation panel
+   ----------------------------------------------------------------------------
+   Renders the CLI/WASM diagnostics[] array: a summary count line plus one row
+   per finding (severity chip + message + location), with an all-clear state.
+
+   BRAND RULE — no accent colour. Severity is encoded by FILL + WEIGHT only:
+     error   -> ink-filled chip, medium-weight message (loudest)
+     warning -> ink-outline chip
+     info    -> dim outline chip
+   This keeps the strict monochrome palette while staying scannable.
+
+   Validation panel in the viewer — B4:
+     https://github.com/the-greenman/srs-web/issues/3
+   Validate-on-save / preflight gating — B13:
+     https://github.com/the-greenman/srs-web/issues/9
+   ========================================================================== */
+
+.diag-summary {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+}
+.diag-summary__strong { color: var(--ink); font-weight: 600; }
+.diag-summary__dim { color: var(--grey-3); }
+
+.diag-list { display: flex; flex-direction: column; }
+
+.diag {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: var(--rule-soft);
+}
+.diag:last-child { border-bottom: none; }
+
+.diag__sev {
+  height: fit-content;
+  padding: 3px 6px;
+  line-height: 1;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  border: 1px solid var(--grey-2);
+  color: var(--grey-3);
+}
+.diag__msg {
+  font-family: var(--font-sans);
+  font-size: var(--size-sm);
+  line-height: 1.4;
+  color: var(--ink);
+}
+.diag__where {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--grey-3);
+}
+
+/* Severity modifiers — fill/weight only */
+.diag--error .diag__sev { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.diag--error .diag__msg { font-weight: 500; }
+.diag--warn  .diag__sev { color: var(--ink); border-color: var(--ink); }
+.diag--info  .diag__sev { color: var(--grey-3); border-color: var(--grey-2); }
+
+/* All-clear */
+.diag-clear {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--space-sm) 0;
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+  color: var(--ink);
+}
+.diag-clear__check {
+  flex: none;
+  width: 16px; height: 16px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--ink);
+}

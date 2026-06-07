@@ -1,0 +1,39 @@
+/* ============================================================================
+   component: field-group (.field-group) — labelled cluster of fields
+   ----------------------------------------------------------------------------
+   A <fieldset>-based boundary that groups related FieldAssignments
+   (ext:field-groups) under one mono legend with optional helper text — e.g.
+   bundling "Decision Statement" + "Rationale" as "The Decision". Purely a
+   presentational container: it nests .field / .repeat children unchanged.
+
+   Field-group editing — B9:
+     https://github.com/the-greenman/srs-web/issues/5
+   Field-group rendering — B5:
+     https://github.com/the-greenman/srs-web/issues/4
+   ========================================================================== */
+
+.field-group {
+  margin: 0;
+  padding: var(--space-sm) var(--space-md) var(--space-md);
+  border: 1px solid var(--grey-2);
+}
+
+.field-group__legend {
+  padding: 0 8px;
+  margin-left: -8px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+}
+
+.field-group__help {
+  margin: -4px 0 var(--space-sm);
+  font-family: var(--font-sans);
+  font-size: var(--size-sm);
+  color: var(--grey-3);
+}
+
+/* Children stack with the tighter inner rhythm */
+.field-group__body { display: flex; flex-direction: column; gap: var(--space-sm); }

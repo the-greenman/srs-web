@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>srs-web · governance viewer (design canvas)</title>
+  <!--
+    Showcase screen — read-only governance viewer (B4 #3, B5 #4).
+    Built entirely from the modular components in ../../src/styles/.
+    Data is the LiMoMa gallery fixture (srs/docs/spec/examples/gallery-project-v2).
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../src/styles/index.css" />
+</head>
+<body>
+  <!-- ink-surface: printed-ink texture for dark blocks (ported from muDemocracy Base.astro) -->
+  <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="ink-surface" x="-2%" y="-2%" width="104%" height="104%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="4" seed="42" result="noise-coarse" />
+        <feTurbulence type="fractalNoise" baseFrequency="0.9 0.7" numOctaves="2" seed="17" result="noise-fine" />
+        <feMerge result="noise-combined">
+          <feMergeNode in="noise-coarse" /><feMergeNode in="noise-fine" />
+        </feMerge>
+        <feColorMatrix in="noise-combined" type="matrix"
+          values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -10 1.8" result="toner-mask" />
+        <feComposite in="SourceGraphic" in2="toner-mask" operator="arithmetic" k1="0" k2="1" k3="0.06" k4="0" result="surface-textured" />
+        <feTurbulence type="turbulence" baseFrequency="0.03 0.015" numOctaves="2" seed="7" result="edge-noise" />
+        <feDisplacementMap in="surface-textured" in2="edge-noise" scale="0.6" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="app">
+    <!-- ── NAV RAIL ──────────────────────────────────────────────────────── -->
+    <nav class="nav app__nav" aria-label="Repository sections">
+      <div class="nav__brand">
+        <p class="eyebrow" style="margin:0">srs · governance</p>
+        <div class="nav__repo">LiMoMa Foundation</div>
+        <div class="nav__repo-id">com.limoma · 8ae058dc</div>
+      </div>
+      <div class="nav__scroll">
+        <div class="nav__group">
+          <div class="nav__group-label">Records</div>
+          <a class="nav__item" href="#"><span class="nav__item-id">A</span>Articles<span class="nav__item-count">6</span></a>
+          <a class="nav__item" href="#"><span class="nav__item-id">R</span>Roles<span class="nav__item-count">3</span></a>
+          <a class="nav__item nav__item--active" href="#"><span class="nav__item-id">D</span>Decisions<span class="nav__item-count">7</span></a>
+          <a class="nav__item" href="#"><span class="nav__item-id">E</span>Exercise Book<span class="nav__item-count">0</span></a>
+        </div>
+        <div class="nav__group">
+          <div class="nav__group-label">Views</div>
+          <a class="nav__item" href="#"><span class="nav__item-id">▤</span>Decision Log</a>
+          <a class="nav__item" href="#"><span class="nav__item-id">▤</span>Articles &amp; Roles</a>
+          <a class="nav__item" href="#"><span class="nav__item-id">▤</span>Deliberation</a>
+        </div>
+        <div class="nav__group">
+          <div class="nav__group-label">Notes</div>
+          <a class="nav__item" href="#"><span class="nav__item-id">·</span>Initial brain dump</a>
+        </div>
+      </div>
+      <div class="nav__foot">
+        <span class="nav__health-dot"></span> 17 records · valid
+      </div>
+    </nav>
+
+    <!-- ── MAIN ──────────────────────────────────────────────────────────── -->
+    <main class="app__main">
+      <div class="topbar">
+        <div class="topbar__crumb">
+          <span>Decisions</span><span class="topbar__crumb-sep">/</span>
+          <span class="topbar__crumb-current">Pilot duration and review</span>
+        </div>
+        <div class="topbar__actions">
+          <button class="btn btn--mono is-active">Deliberation</button>
+          <button class="btn btn--mono">Log</button>
+          <button class="btn btn--mono">Export .srsj</button>
+          <button class="btn btn--primary" style="padding:8px 20px">Edit</button>
+        </div>
+      </div>
+
+      <div class="workspace">
+        <div class="canvas">
+
+          <!-- Full deliberation reading view of one Decision record -->
+          <article class="card">
+            <header class="card__header">
+              <span class="card__id">9054911c</span>
+              <span class="card__title">Pilot duration and review</span>
+              <span class="card__status"><span class="tag tag--active tag--on-dark">active</span></span>
+            </header>
+            <div class="card__body">
+              <div class="card__field">
+                <div class="card__field-label">Decision Statement <span class="req">required</span></div>
+                <div class="card__field-value">Six-month pilot, June to December 2026. At the end of that period the group meets to decide what comes next: continue, extend, change scope, or close.</div>
+              </div>
+              <div class="card__field">
+                <div class="card__field-label">Rationale</div>
+                <div class="card__field-value">A defined lifespan makes the review real rather than optional. Open-ended pilots drift without a moment of explicit recommitment.</div>
+              </div>
+              <div class="card__field">
+                <div class="card__field-label">Alternatives Considered</div>
+                <div class="card__field-value">Open-ended pilot with no fixed review date — judged too likely to drift.</div>
+              </div>
+              <div class="card__field">
+                <div class="card__field-label">Decision Question</div>
+                <div class="card__field-value card__field-value--empty">Not recorded</div>
+              </div>
+              <div class="card__field">
+                <div class="card__field-label">Revisit When</div>
+                <div class="card__field-value">December 2026. The review meeting produces a new decision that either supersedes this one or records closure.</div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Profile view: the compact decision log table -->
+          <div class="section-head" style="margin-top:var(--space-lg)">
+            <span class="section-head__title">Decision Log</span>
+            <span class="section-head__count">7 decisions</span>
+          </div>
+          <table class="log-table">
+            <colgroup><col style="width:10%"><col style="width:50%"><col style="width:14%"><col style="width:12%"><col style="width:14%"></colgroup>
+            <thead>
+              <tr><th>ID</th><th>Decision</th><th>Owner</th><th>Revisit</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="log-table__id">9054911c</td>
+                <td class="log-table__decision">Pilot duration and review</td>
+                <td>—</td><td class="log-table__nowrap">Dec 2026</td>
+                <td><span class="tag tag--active">active</span></td>
+              </tr>
+              <tr>
+                <td class="log-table__id">eb4024a0</td>
+                <td class="log-table__decision">Consent, not consensus, for operational calls</td>
+                <td>group</td><td class="log-table__nowrap">—</td>
+                <td><span class="tag tag--active">active</span></td>
+              </tr>
+              <tr>
+                <td class="log-table__id">3be7b057</td>
+                <td class="log-table__decision">Curatorial Lead holds final say on what is shown</td>
+                <td>S. Hayder</td><td class="log-table__nowrap">—</td>
+                <td><span class="tag tag--proposed">proposed</span></td>
+              </tr>
+              <tr>
+                <td class="log-table__id">a9ca11cf</td>
+                <td class="log-table__decision">Hang work using removable fixings only</td>
+                <td>—</td><td class="log-table__nowrap">review</td>
+                <td><span class="tag tag--deferred">deferred</span></td>
+              </tr>
+              <tr>
+                <td class="log-table__id">4a989562</td>
+                <td class="log-table__decision">Open call for the first exhibition</td>
+                <td>—</td><td class="log-table__nowrap">—</td>
+                <td><span class="tag tag--superseded">superseded</span></td>
+              </tr>
+            </tbody>
+          </table>
+
+        </div>
+      </div>
+    </main>
+
+    <!-- ── INSPECTOR ─────────────────────────────────────────────────────── -->
+    <aside class="inspector app__inspector" aria-label="Record inspector">
+      <section class="inspector__section">
+        <div class="inspector__title">Validation <span class="inspector__title-aside">clean</span></div>
+        <div class="diag-clear">
+          <span class="diag-clear__check">✓</span> No diagnostics — record is valid.
+        </div>
+      </section>
+
+      <section class="inspector__section">
+        <div class="inspector__title">Lifecycle</div>
+        <div class="lifecycle">
+          <div class="lifecycle__current">
+            <span class="lifecycle__current-label">Status</span>
+            <span class="tag tag--active">active</span>
+          </div>
+          <div class="lifecycle__transitions">
+            <button class="transition">deferred</button>
+            <button class="transition transition--successor">superseded</button>
+            <button class="transition transition--successor">closed</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="inspector__section">
+        <div class="inspector__title">Record</div>
+        <dl class="meta">
+          <div class="meta__row"><dt class="meta__key">type</dt><dd class="meta__val">governance/decision@1</dd></div>
+          <div class="meta__row"><dt class="meta__key">tier</dt><dd class="meta__val">2 — Record</dd></div>
+          <div class="meta__row"><dt class="meta__key">id</dt><dd class="meta__val">9054911c-5285-4c3e-8198-4b9650169001</dd></div>
+          <div class="meta__row"><dt class="meta__key">container</dt><dd class="meta__val">Decisions</dd></div>
+          <div class="meta__row"><dt class="meta__key">created</dt><dd class="meta__val">2026-05-31</dd></div>
+          <div class="meta__row"><dt class="meta__key">updated</dt><dd class="meta__val">2026-05-31</dd></div>
+        </dl>
+      </section>
+    </aside>
+  </div>
+</body>
+</html>

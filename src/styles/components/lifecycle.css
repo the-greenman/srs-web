@@ -1,0 +1,48 @@
+/* ============================================================================
+   component: lifecycle (.lifecycle) — status transition control
+   ----------------------------------------------------------------------------
+   Shows the record's current ext:lifecycle state (as a .tag) and the legal
+   transitions out of it as a row of buttons. A transition that produces a
+   successor (ratified/closed -> new record + supersedes/amends relation) is
+   marked so the UI can prompt for the follow-on record.
+
+   Legal transitions and successor creation are decided in Rust and surfaced
+   through WASM — this is presentation only (ADR-001).
+
+   Lifecycle + supersession flows — B11:
+     https://github.com/the-greenman/srs-web/issues/7
+   ========================================================================== */
+
+.lifecycle { display: flex; flex-direction: column; gap: var(--space-sm); }
+
+.lifecycle__current { display: flex; align-items: center; gap: 10px; }
+.lifecycle__current-label {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--grey-3);
+}
+
+.lifecycle__transitions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.transition {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 10px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--grey-3);
+  background: transparent;
+  border: 1px solid var(--grey-2);
+  cursor: pointer;
+}
+.transition::before { content: "\2192"; color: var(--grey-3); }
+.transition:hover { color: var(--ink); border-color: var(--ink); }
+.transition:hover::before { color: var(--ink); }
+
+/* Transition that spawns a successor record (supersede/amend) */
+.transition--successor { border-style: dashed; }

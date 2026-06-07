@@ -1,0 +1,81 @@
+/* ============================================================================
+   component: card (.card) — the record reading view
+   ----------------------------------------------------------------------------
+   Renders one Tier-2 Record: an ink header (id · title · status) over a stack
+   of field rows (label + value). Field labels are denormalised from the Type's
+   FieldAssignment displayLabel; required fields carry a marker. Empty optional
+   fields collapse to a quiet placeholder.
+
+   Drives the record renderer — B5:
+     https://github.com/the-greenman/srs-web/issues/4
+   Ported/generalised from the muDemocracy .mvd-card specimen.
+   ========================================================================== */
+
+.card {
+  margin-bottom: var(--space-sm);
+  border: 1px solid var(--grey-2);
+  background: var(--color-surface);
+}
+
+/* ── Header (ink) ─────────────────────────────────────────────────────────── */
+.card__header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 12px 20px;
+  background: var(--black);
+  color: var(--paper);
+  filter: url(#ink-surface);
+}
+.card__id {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: var(--tracking-label);
+  color: var(--color-on-dark-muted);
+}
+.card__title {
+  font-size: var(--size-md);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--paper);
+}
+.card__status { margin-left: auto; }
+
+/* ── Body: field rows ─────────────────────────────────────────────────────── */
+.card__body { padding: 0; }
+
+.card__field { padding: 16px 20px; border-bottom: var(--rule-soft); }
+.card__field:last-child { border-bottom: none; }
+.card__field-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--grey-3);
+}
+.card__field-label .req { color: var(--ink); }
+.card__field-value {
+  font-family: var(--font-sans);
+  font-size: var(--size-base);
+  line-height: var(--leading-body);
+  color: var(--ink);
+}
+.card__field-value--empty {
+  font-size: var(--size-sm);
+  font-style: italic;
+  color: var(--grey-3);
+}
+
+/* ── Two-up body for compact records (roles, summary cards) ───────────────── */
+.card__body--grid { display: grid; grid-template-columns: 1fr 1fr; }
+.card__body--grid .card__field { border-right: var(--rule-soft); }
+.card__body--grid .card__field:nth-child(even) { border-right: none; }
+
+@media (max-width: 720px) {
+  .card__body--grid { grid-template-columns: 1fr; }
+  .card__body--grid .card__field { border-right: none; }
+}
