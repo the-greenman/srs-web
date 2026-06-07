@@ -1,0 +1,143 @@
+/* ============================================================================
+   component: field (.field) — form control + its label/help/error
+   ----------------------------------------------------------------------------
+   The atomic editing unit. One .field wraps a mono uppercase label (with
+   required marker and a value-type hint), an optional help line, the control
+   itself (.input / .textarea / .select), and an inline error slot.
+
+   Controls map to the SRS valueType:
+     string  -> .input
+     text    -> .textarea
+     select  -> .select  (allowedValues become <option>s)
+     number/date/url/boolean reuse .input with the matching native type.
+
+   Generated edit forms — B9:
+     https://github.com/the-greenman/srs-web/issues/5
+   The invalid state + inline error drive validate-on-save — B13:
+     https://github.com/the-greenman/srs-web/issues/9
+   ========================================================================== */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field__label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--grey-3);
+}
+.field__label .req {
+  color: var(--ink);
+  font-weight: 600;
+}
+.field__type-hint {
+  margin-left: auto;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: var(--grey-2);
+}
+.field__help {
+  font-family: var(--font-sans);
+  font-size: var(--size-sm);
+  line-height: 1.4;
+  color: var(--grey-3);
+}
+
+/* ── Controls ─────────────────────────────────────────────────────────────── */
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--font-sans);
+  font-size: var(--size-base);
+  line-height: var(--leading-body);
+  color: var(--ink);
+  background: var(--color-surface);
+  border: 1px solid var(--grey-2);
+  border-radius: 0;
+  -webkit-appearance: none;
+}
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--grey-3);
+}
+
+.textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.select {
+  padding-right: 34px;
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a8680'/%3E%3C/svg%3E");
+}
+
+/* ── Invalid state — monochrome: heavier left rule + marker, never colour ──── */
+.field--invalid .input,
+.field--invalid .textarea,
+.field--invalid .select {
+  border-color: var(--ink);
+  border-left-width: 3px;
+}
+.field__error {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--ink);
+}
+.field__error::before {
+  content: "!";
+  font-weight: 700;
+}
+
+/* ── Sticky save bar (form footer) ────────────────────────────────────────── */
+.save-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: var(--space-md) calc(-1 * var(--space-md)) calc(-1 * var(--space-md));
+  padding: var(--space-sm) var(--space-md);
+  border-top: var(--rule);
+  background: var(--color-surface);
+}
+.save-bar__dirty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--grey-3);
+}
+.save-bar__dirty::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.save-bar__spacer {
+  margin-left: auto;
+}

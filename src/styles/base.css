@@ -1,0 +1,88 @@
+/* ============================================================================
+   base — reset, document defaults, typography, atmosphere
+   ----------------------------------------------------------------------------
+   Element-level defaults only (no class selectors). Sets the paper-grain
+   texture and the shared type rhythm every screen inherits.
+   Foundation — B1 scaffold:
+     https://github.com/the-greenman/srs-web/issues/2
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--size-base);
+  line-height: var(--leading-body);
+  -webkit-font-smoothing: subpixel-antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Paper grain — fixed multiply overlay. Ported from the muDemocracy brand so
+   the editor reads as the same physical surface as the marketing site. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.02;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23g)' opacity='1'/%3E%3C/svg%3E");
+}
+
+@media (max-width: 640px) {
+  body::after {
+    opacity: 0.016;
+  }
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-sans);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+p {
+  margin: 0 0 1rem;
+}
+p:last-child {
+  margin-bottom: 0;
+}
+
+a {
+  color: var(--ink);
+  text-decoration-color: var(--grey-2);
+  text-underline-offset: 0.16em;
+}
+a:hover {
+  text-decoration-color: var(--ink);
+}
+
+/* Shared form-control reset so widgets start from the same baseline */
+input,
+textarea,
+select,
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}

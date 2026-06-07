@@ -1,0 +1,63 @@
+/* ============================================================================
+   component: tag (.tag) — the governance lifecycle status vocabulary
+   ----------------------------------------------------------------------------
+   One modifier per state in the `governance/status` enum:
+     draft · proposed · active · deferred · superseded · closed · rejected · archived
+   (see the gallery package field status-aee7afe9.json).
+
+   BRAND RULE — no accent colour. Status is distinguished by border style and
+   fill weight only: active/closed are emphatic (ink), terminal states
+   (superseded/rejected) strike through, draft is dashed/provisional.
+
+   Status presentation + transitions are B11:
+     https://github.com/the-greenman/srs-web/issues/7
+   ========================================================================== */
+
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--grey-2);
+  color: var(--grey-3);
+}
+
+.tag--draft {
+  border-style: dashed;
+}
+.tag--proposed {
+  /* base: provisional, quiet */
+}
+.tag--active {
+  color: var(--ink);
+  border-color: var(--grey-4);
+}
+.tag--deferred {
+  background: var(--grey-1);
+}
+.tag--superseded {
+  border-color: var(--grey-1);
+  text-decoration: line-through;
+}
+.tag--closed {
+  color: var(--paper);
+  background: var(--black);
+  border-color: var(--black);
+}
+.tag--rejected {
+  border-color: var(--grey-1);
+  text-decoration: line-through;
+}
+.tag--archived {
+  border-color: var(--grey-1);
+}
+
+/* On-dark placement (record header sits on ink) */
+.tag--on-dark {
+  color: var(--color-on-dark);
+  border-color: var(--color-on-dark-muted);
+}
