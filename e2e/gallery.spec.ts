@@ -75,6 +75,45 @@ test.describe("Gallery fixture — real records render", () => {
     await expect(firstCard).toHaveClass(/record-list__item--selected/);
   });
 
+  test("selecting an article shows its fields in the inspector", async ({ page }) => {
+    // Click first article card
+    await page.locator(".record-list__item").first().click();
+
+    // The first inspector section is the record detail — it must contain "Article text"
+    await expect(page.locator(".inspector__section").first()).toContainText("Article text");
+
+    // The placeholder text must not appear anywhere
+    await expect(page.locator("text=Coming in B5")).not.toBeVisible();
+    await expect(page.locator("text=Detail view not yet implemented")).not.toBeVisible();
+  });
+
+  test("selecting a decision shows its fields in the inspector", async ({ page }) => {
+    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await page.locator(".record-list__item").first().click();
+
+    // Decision-specific field labels must appear in the first inspector section
+    await expect(page.locator(".inspector__section").first()).toContainText("Decision statement");
+  });
+
+  test("selecting a role shows its fields in the inspector", async ({ page }) => {
+    await page.getByRole("link", { name: /Roles/ }).click();
+    await page.locator(".record-list__item").first().click();
+
+    // Role-specific field labels must appear in the first inspector section
+    await expect(page.locator(".inspector__section").first()).toContainText("Role holder");
+  });
+
+  test("deselecting a card clears the inspector record section", async ({ page }) => {
+    const firstCard = page.locator(".record-list__item").first();
+    await firstCard.click(); // select
+    await expect(page.locator(".inspector__section").first()).toContainText("Article text");
+
+    await firstCard.click(); // deselect (toggle)
+    // After deselect the record section disappears; Validation becomes the first section
+    await expect(page.locator(".inspector__section").first()).toContainText("Validation");
+    await expect(page.locator("text=Article text")).not.toBeVisible();
+  });
+
   test("repo filename shown in topbar", async ({ page }) => {
     await expect(page.locator(".topbar__repo")).toContainText("gallery");
   });

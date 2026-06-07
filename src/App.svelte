@@ -34,7 +34,7 @@
 
   import { SECTIONS } from "$lib/governance/sections.js";
   import type { SectionKey } from "$lib/governance/sections.js";
-  import { getStringField } from "$lib/governance/field-utils.js";
+  import { getStringField, getFieldValue } from "$lib/governance/field-utils.js";
 
   // ---------------------------------------------------------------------------
   // State
@@ -150,6 +150,10 @@
     errorCount === 0
       ? "clean"
       : `${errorCount} error${errorCount === 1 ? "" : "s"}`,
+  );
+
+  let selectedRecord = $derived(
+    selectedId != null ? (activeRecords.find((r) => r.instanceId === selectedId) ?? null) : null,
   );
 </script>
 
@@ -301,13 +305,7 @@
                     id={articleNumber}
                     title={title}
                     status={status}
-                  >
-                    {#if isSelected}
-                      <CardField label="Coming in B5">
-                        Detail view not yet implemented — select a record to highlight it.
-                      </CardField>
-                    {/if}
-                  </Card>
+                  />
                 </div>
               {/each}
             </div>
@@ -317,7 +315,121 @@
     {/snippet}
 
     {#snippet inspector()}
-      <Inspector label="Validation">
+      <Inspector label="Inspector">
+        {#if selectedRecord}
+          <InspectorSection title={activeSection_.label.replace(/s$/, "")} aside={selectedRecord.typeName}>
+            {#if activeSection === "articles"}
+              {@const body = getFieldValue(selectedRecord, "article_text")}
+              {@const amendRule = getStringField(selectedRecord, "amendment_rule")}
+              {@const protected_ = getStringField(selectedRecord, "protected_status")}
+              {#if body}
+                <CardField label="Article text">
+                  <span class="inspector__text">{body}</span>
+                </CardField>
+              {/if}
+              {#if amendRule}
+                <CardField label="Amendment rule">
+                  <span class="inspector__text">{amendRule}</span>
+                </CardField>
+              {/if}
+              {#if protected_}
+                <CardField label="Protected status">
+                  <span class="inspector__text">{protected_}</span>
+                </CardField>
+              {/if}
+            {:else if activeSection === "decisions"}
+              {@const stmt = getStringField(selectedRecord, "decision_statement")}
+              {@const ctx = getStringField(selectedRecord, "context")}
+              {@const rationale = getStringField(selectedRecord, "rationale")}
+              {@const alts = getStringField(selectedRecord, "alternatives_considered")}
+              {@const revisit = getStringField(selectedRecord, "revisit_when")}
+              {@const owner = getStringField(selectedRecord, "owner")}
+              {@const question = getStringField(selectedRecord, "decision_question")}
+              {@const nextSteps = getStringField(selectedRecord, "next_steps")}
+              {#if stmt}
+                <CardField label="Decision statement">
+                  <span class="inspector__text">{stmt}</span>
+                </CardField>
+              {/if}
+              {#if ctx}
+                <CardField label="Context">
+                  <span class="inspector__text">{ctx}</span>
+                </CardField>
+              {/if}
+              {#if rationale}
+                <CardField label="Rationale">
+                  <span class="inspector__text">{rationale}</span>
+                </CardField>
+              {/if}
+              {#if alts}
+                <CardField label="Alternatives considered">
+                  <span class="inspector__text">{alts}</span>
+                </CardField>
+              {/if}
+              {#if question}
+                <CardField label="Decision question">
+                  <span class="inspector__text">{question}</span>
+                </CardField>
+              {/if}
+              {#if revisit}
+                <CardField label="Revisit when">
+                  <span class="inspector__text">{revisit}</span>
+                </CardField>
+              {/if}
+              {#if owner}
+                <CardField label="Owner">
+                  <span class="inspector__text">{owner}</span>
+                </CardField>
+              {/if}
+              {#if nextSteps}
+                <CardField label="Next steps">
+                  <span class="inspector__text">{nextSteps}</span>
+                </CardField>
+              {/if}
+            {:else if activeSection === "roles"}
+              {@const holder = getStringField(selectedRecord, "role_holder")}
+              {@const authority = getStringField(selectedRecord, "authority")}
+              {@const boundary = getStringField(selectedRecord, "boundary")}
+              {@const source = getStringField(selectedRecord, "source_of_authority")}
+              {#if holder}
+                <CardField label="Role holder">
+                  <span class="inspector__text">{holder}</span>
+                </CardField>
+              {/if}
+              {#if authority}
+                <CardField label="Authority">
+                  <span class="inspector__text">{authority}</span>
+                </CardField>
+              {/if}
+              {#if boundary}
+                <CardField label="Boundary">
+                  <span class="inspector__text">{boundary}</span>
+                </CardField>
+              {/if}
+              {#if source}
+                <CardField label="Source of authority">
+                  <span class="inspector__text">{source}</span>
+                </CardField>
+              {/if}
+            {:else}
+              {#each selectedRecord.fieldValues as fv}
+                <CardField label={fv.fieldId.slice(0, 8)}>
+                  <span class="inspector__text">{fv.value}</span>
+                </CardField>
+              {/each}
+            {/if}
+            <div class="inspector__kv inspector__kv--meta">
+              <span class="inspector__k">ID</span>
+              <span class="inspector__v inspector__v--mono">{selectedRecord.instanceId.slice(0, 8)}…</span>
+            </div>
+            {#if selectedRecord.createdAt}
+              <div class="inspector__kv inspector__kv--meta">
+                <span class="inspector__k">Created</span>
+                <span class="inspector__v">{selectedRecord.createdAt.slice(0, 10)}</span>
+              </div>
+            {/if}
+          </InspectorSection>
+        {/if}
         <InspectorSection title="Validation" aside={validationAside}>
           <Diagnostics {diagnostics} />
         </InspectorSection>
@@ -463,6 +575,12 @@
     padding: 0.2rem 0;
   }
 
+  .inspector__kv--meta {
+    margin-top: 0.25rem;
+    border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+    padding-top: 0.4rem;
+  }
+
   .inspector__k {
     opacity: 0.55;
   }
@@ -472,6 +590,20 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .inspector__v--mono {
+    font-family: monospace;
+    font-size: 0.6875rem;
+  }
+
+  /* ---- Inspector text (multi-line field values) ---- */
+  .inspector__text {
+    display: block;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.8125rem;
+    line-height: 1.5;
   }
 
   /* ---- Nav footer ---- */
