@@ -16,8 +16,10 @@
 /** Opaque WASM handle — methods are defined in srs-bindings. */
 export interface SrsRepository {
   validate(): RepositoryValidationReport;
-  list_records(filter_json: string): SrsRecord[];
-  get_record(id: string): SrsRecord | null;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised to SrsRecord[] in listRecords()
+  list_records(filter_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised to SrsRecord | null in getRecord()
+  get_record(id: string): any;
   list_notes(): ListNotesResult;
 }
 
@@ -97,12 +99,10 @@ export async function initWasm(): Promise<void> {
   // Dynamic import so Vite + vite-plugin-wasm can handle the WASM initialisation.
   // The path is resolved at runtime by Vite; the WASM package is built from
   // srs-rust/crates/srs-bindings and placed at src/lib/srs_bindings/.
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error — srs_bindings package is generated at build time, not present during typecheck
-  const mod = await import(/* @vite-ignore */ "./srs_bindings/srs_bindings.js");
-  // biome-ignore lint/suspicious/noExplicitAny: wasm_bindgen init function
-  await (mod as any).default();
-  wasmModule = mod as unknown as SrsRepositoryConstructor;
+  // biome-ignore lint/suspicious/noExplicitAny: srs_bindings is generated at build time
+  const mod = await import(/* @vite-ignore */ "./srs_bindings/srs_bindings.js") as any;
+  await mod.default();
+  wasmModule = mod.SrsRepository as SrsRepositoryConstructor;
 }
 
 function requireWasm(): SrsRepositoryConstructor {
@@ -124,12 +124,47 @@ export function loadRepo(srsj: string): SrsRepository {
   return requireWasm().load(srsj);
 }
 
+// ---------------------------------------------------------------------------
+// WASM output normalisation
+// ---------------------------------------------------------------------------
+
+/**
+ * serde_wasm_bindgen does not always honour #[serde(rename_all = "camelCase")].
+ * Normalise both snake_case and camelCase field names so all TypeScript code
+ * can assume camelCase regardless of the serialiser behaviour.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: raw WASM output has unknown shape
+function normalizeRecord(raw: any): SrsRecord {
+  // biome-ignore lint/suspicious/noExplicitAny: raw fv has unknown shape
+  const rawFvs: any[] = raw.fieldValues ?? raw.field_values ?? [];
+  return {
+    instanceId: raw.instanceId ?? raw.instance_id,
+    typeId: raw.typeId ?? raw.type_id,
+    typeVersion: raw.typeVersion ?? raw.type_version,
+    typeNamespace: raw.typeNamespace ?? raw.type_namespace,
+    typeName: raw.typeName ?? raw.type_name,
+    fieldValues: rawFvs.map((fv) => ({
+      fieldId: fv.fieldId ?? fv.field_id,
+      value: fv.value,
+    })),
+    lifecycle: raw.lifecycle,
+    createdAt: raw.createdAt ?? raw.created_at,
+    updatedAt: raw.updatedAt ?? raw.updated_at,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
 /**
  * List records in the repository, optionally filtered.
  * Pass an empty filter (`{}`) to list all records.
  */
 export function listRecords(repo: SrsRepository, filter: RecordListFilter = {}): SrsRecord[] {
-  return repo.list_records(JSON.stringify(filter));
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; normalised below
+  const raw: any[] = repo.list_records(JSON.stringify(filter));
+  return raw.map(normalizeRecord);
 }
 
 /**
