@@ -23,10 +23,18 @@
   font-family: var(--font-mono);
   font-size: var(--size-xs);
 }
-.diag-summary__strong { color: var(--ink); font-weight: 600; }
-.diag-summary__dim { color: var(--grey-3); }
+.diag-summary__strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.diag-summary__dim {
+  color: var(--grey-3);
+}
 
-.diag-list { display: flex; flex-direction: column; }
+.diag-list {
+  display: flex;
+  flex-direction: column;
+}
 
 .diag {
   display: grid;
@@ -35,7 +43,9 @@
   padding: 10px 0;
   border-bottom: var(--rule-soft);
 }
-.diag:last-child { border-bottom: none; }
+.diag:last-child {
+  border-bottom: none;
+}
 
 .diag__sev {
   height: fit-content;
@@ -62,10 +72,22 @@
 }
 
 /* Severity modifiers — fill/weight only */
-.diag--error .diag__sev { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.diag--error .diag__msg { font-weight: 500; }
-.diag--warn  .diag__sev { color: var(--ink); border-color: var(--ink); }
-.diag--info  .diag__sev { color: var(--grey-3); border-color: var(--grey-2); }
+.diag--error .diag__sev {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.diag--error .diag__msg {
+  font-weight: 500;
+}
+.diag--warn .diag__sev {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.diag--info .diag__sev {
+  color: var(--grey-3);
+  border-color: var(--grey-2);
+}
 
 /* All-clear */
 .diag-clear {
@@ -79,7 +101,8 @@
 }
 .diag-clear__check {
   flex: none;
-  width: 16px; height: 16px;
+  width: 16px;
+  height: 16px;
   display: grid;
   place-items: center;
   border: 1.5px solid var(--ink);

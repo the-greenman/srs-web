@@ -18,7 +18,10 @@
   background: color-mix(in srgb, var(--grey-1) 40%, var(--paper));
 }
 
-.repeat__list { display: flex; flex-direction: column; }
+.repeat__list {
+  display: flex;
+  flex-direction: column;
+}
 
 .repeat__entry {
   display: grid;
@@ -28,7 +31,9 @@
   padding: 10px 12px;
   border-bottom: var(--rule-soft);
 }
-.repeat__entry:last-child { border-bottom: none; }
+.repeat__entry:last-child {
+  border-bottom: none;
+}
 .repeat__index {
   padding-top: 12px;
   font-family: var(--font-mono);
@@ -37,10 +42,13 @@
 }
 /* entry controls sit on paper so they read as inputs against the tinted body */
 .repeat__entry .input,
-.repeat__entry .textarea { background: var(--color-surface); }
+.repeat__entry .textarea {
+  background: var(--color-surface);
+}
 
 .repeat__remove {
-  width: 28px; height: 28px;
+  width: 28px;
+  height: 28px;
   margin-top: 4px;
   line-height: 1;
   font-family: var(--font-mono);
@@ -49,8 +57,14 @@
   border: 1px solid var(--grey-2);
   cursor: pointer;
 }
-.repeat__remove:hover { border-color: var(--ink); color: var(--ink); }
-.repeat__remove:disabled { opacity: 0.35; cursor: not-allowed; }
+.repeat__remove:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.repeat__remove:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 
 .repeat__foot {
   display: flex;
