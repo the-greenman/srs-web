@@ -22,6 +22,6 @@
     }
   },
   "files": {
-    "ignore": ["node_modules", "dist", "**/*.svelte"]
+    "ignore": ["node_modules", "dist", "**/*.svelte", "src/lib/srs_bindings/**"]
   }
 }
