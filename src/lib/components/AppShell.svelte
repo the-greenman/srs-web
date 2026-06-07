@@ -5,17 +5,17 @@
   B4 viewer shell: https://github.com/the-greenman/srs-web/issues/3
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+import type { Snippet } from "svelte";
 
-  let {
-    nav,
-    main,
-    inspector,
-  }: {
-    nav: Snippet;
-    main: Snippet;
-    inspector?: Snippet;
-  } = $props();
+const {
+  nav,
+  main,
+  inspector,
+}: {
+  nav: Snippet;
+  main: Snippet;
+  inspector?: Snippet;
+} = $props();
 </script>
 
 <div class="app">

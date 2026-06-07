@@ -16,8 +16,14 @@
   letter-spacing: var(--tracking-eyebrow);
   color: var(--grey-3);
 }
-.t-muted { font-family: var(--font-mono); font-size: var(--size-sm); color: var(--grey-3); }
-.t-mono { font-family: var(--font-mono); }
+.t-muted {
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+  color: var(--grey-3);
+}
+.t-mono {
+  font-family: var(--font-mono);
+}
 .t-label {
   font-family: var(--font-mono);
   font-size: var(--size-xs);
@@ -27,20 +33,43 @@
 }
 
 /* Visibility */
-.is-hidden { display: none !important; }
+.is-hidden {
+  display: none !important;
+}
 .sr-only {
-  position: absolute; width: 1px; height: 1px;
-  padding: 0; margin: -1px; overflow: hidden;
-  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* Stack — vertical rhythm without bespoke margins */
-.stack > * + * { margin-top: var(--space-sm); }
-.stack--md > * + * { margin-top: var(--space-md); }
-.stack--xs > * + * { margin-top: var(--space-xs); }
+.stack > * + * {
+  margin-top: var(--space-sm);
+}
+.stack--md > * + * {
+  margin-top: var(--space-md);
+}
+.stack--xs > * + * {
+  margin-top: var(--space-xs);
+}
 
 /* Inline cluster */
-.cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); }
-.cluster--sm { gap: 8px; }
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.cluster--sm {
+  gap: 8px;
+}
 
-.push-right { margin-left: auto; }
+.push-right {
+  margin-left: auto;
+}

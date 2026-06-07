@@ -5,24 +5,24 @@
   B5 record renderer: https://github.com/the-greenman/srs-web/issues/4
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
-  import type { Status } from '../types';
-  import Tag from './Tag.svelte';
+import type { Snippet } from "svelte";
+import type { Status } from "../types";
+import Tag from "./Tag.svelte";
 
-  let {
-    id,
-    title,
-    status,
-    grid = false,
-    children,
-  }: {
-    id?: string;
-    title: string;
-    status?: Status;
-    /** Two-up field grid (roles, summary cards). */
-    grid?: boolean;
-    children?: Snippet;
-  } = $props();
+const {
+  id,
+  title,
+  status,
+  grid = false,
+  children,
+}: {
+  id?: string;
+  title: string;
+  status?: Status;
+  /** Two-up field grid (roles, summary cards). */
+  grid?: boolean;
+  children?: Snippet;
+} = $props();
 </script>
 
 <article class="card">

@@ -7,21 +7,21 @@
   B13 validate-on-save: https://github.com/the-greenman/srs-web/issues/9
 -->
 <script lang="ts">
-  import type { Diagnostic, DiagnosticSeverity } from '../types';
+import type { Diagnostic, DiagnosticSeverity } from "../types";
 
-  let { diagnostics = [] }: { diagnostics?: Diagnostic[] } = $props();
+const { diagnostics = [] }: { diagnostics?: Diagnostic[] } = $props();
 
-  const counts = $derived({
-    error: diagnostics.filter((d) => d.severity === 'error').length,
-    warn: diagnostics.filter((d) => d.severity === 'warn').length,
-    info: diagnostics.filter((d) => d.severity === 'info').length,
-  });
+const counts = $derived({
+  error: diagnostics.filter((d) => d.severity === "error").length,
+  warn: diagnostics.filter((d) => d.severity === "warn").length,
+  info: diagnostics.filter((d) => d.severity === "info").length,
+});
 
-  const sevLabel: Record<DiagnosticSeverity, string> = {
-    error: 'err',
-    warn: 'warn',
-    info: 'info',
-  };
+const sevLabel: Record<DiagnosticSeverity, string> = {
+  error: "err",
+  warn: "warn",
+  info: "info",
+};
 </script>
 
 {#if diagnostics.length === 0}

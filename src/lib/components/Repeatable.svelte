@@ -7,33 +7,33 @@
   B5 repeatable rendering: https://github.com/the-greenman/srs-web/issues/4
 -->
 <script lang="ts">
-  let {
-    label,
-    typeHint,
-    help,
-    values = $bindable<string[]>([]),
-    min = 0,
-    max,
-    addLabel = '+ Add',
-  }: {
-    label: string;
-    typeHint?: string;
-    help?: string;
-    values?: string[];
-    min?: number;
-    max?: number;
-    addLabel?: string;
-  } = $props();
+let {
+  label,
+  typeHint,
+  help,
+  values = $bindable<string[]>([]),
+  min = 0,
+  max,
+  addLabel = "+ Add",
+}: {
+  label: string;
+  typeHint?: string;
+  help?: string;
+  values?: string[];
+  min?: number;
+  max?: number;
+  addLabel?: string;
+} = $props();
 
-  const canRemove = $derived(values.length > min);
-  const canAdd = $derived(max == null || values.length < max);
+const canRemove = $derived(values.length > min);
+const canAdd = $derived(max == null || values.length < max);
 
-  function add() {
-    if (canAdd) values = [...values, ''];
-  }
-  function remove(i: number) {
-    if (canRemove) values = values.filter((_, j) => j !== i);
-  }
+function add() {
+  if (canAdd) values = [...values, ""];
+}
+function remove(i: number) {
+  if (canRemove) values = values.filter((_, j) => j !== i);
+}
 </script>
 
 <div class="field">

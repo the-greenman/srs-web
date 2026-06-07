@@ -6,17 +6,17 @@
   B5 field-group rendering: https://github.com/the-greenman/srs-web/issues/4
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+import type { Snippet } from "svelte";
 
-  let {
-    legend,
-    help,
-    children,
-  }: {
-    legend: string;
-    help?: string;
-    children?: Snippet;
-  } = $props();
+const {
+  legend,
+  help,
+  children,
+}: {
+  legend: string;
+  help?: string;
+  children?: Snippet;
+} = $props();
 </script>
 
 <fieldset class="field-group">

@@ -1,0 +1,28 @@
+{
+  "name": "srs-web",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json",
+    "lint": "biome check src/",
+    "format": "biome format --write src/"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@biomejs/biome": "^1.9.4",
+    "svelte": "^5.28.0",
+    "svelte-check": "^4.1.4",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vite-plugin-top-level-await": "^1.4.4",
+    "vite-plugin-wasm": "^3.4.1"
+  },
+  "allowScripts": {
+    "@biomejs/biome@1.9.4": true,
+    "@swc/core@1.15.40": true,
+    "esbuild@0.25.12": true
+  }
+}

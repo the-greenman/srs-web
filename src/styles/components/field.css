@@ -17,7 +17,11 @@
      https://github.com/the-greenman/srs-web/issues/9
    ========================================================================== */
 
-.field { display: flex; flex-direction: column; gap: 6px; }
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
 .field__label {
   display: flex;
@@ -29,7 +33,10 @@
   letter-spacing: var(--tracking-label);
   color: var(--grey-3);
 }
-.field__label .req { color: var(--ink); font-weight: 600; }
+.field__label .req {
+  color: var(--ink);
+  font-weight: 600;
+}
 .field__type-hint {
   margin-left: auto;
   text-transform: none;
@@ -66,9 +73,14 @@
   box-shadow: inset 0 0 0 1px var(--ink);
 }
 .input::placeholder,
-.textarea::placeholder { color: var(--grey-3); }
+.textarea::placeholder {
+  color: var(--grey-3);
+}
 
-.textarea { min-height: 92px; resize: vertical; }
+.textarea {
+  min-height: 92px;
+  resize: vertical;
+}
 
 .select {
   padding-right: 34px;
@@ -94,7 +106,10 @@
   font-size: var(--size-xs);
   color: var(--ink);
 }
-.field__error::before { content: "!"; font-weight: 700; }
+.field__error::before {
+  content: "!";
+  font-weight: 700;
+}
 
 /* ── Sticky save bar (form footer) ────────────────────────────────────────── */
 .save-bar {
@@ -118,8 +133,11 @@
 }
 .save-bar__dirty::before {
   content: "";
-  width: 6px; height: 6px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--ink);
 }
-.save-bar__spacer { margin-left: auto; }
+.save-bar__spacer {
+  margin-left: auto;
+}

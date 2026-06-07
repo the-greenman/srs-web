@@ -4,19 +4,19 @@
   B9 generated edit forms: https://github.com/the-greenman/srs-web/issues/5
 -->
 <script lang="ts">
-  import type { HTMLSelectAttributes } from 'svelte/elements';
+import type { HTMLSelectAttributes } from "svelte/elements";
 
-  let {
-    value = $bindable(''),
-    options,
-    class: klass = '',
-    ...rest
-  }: {
-    value?: string;
-    /** The field's allowedValues. */
-    options: string[];
-    class?: string;
-  } & HTMLSelectAttributes = $props();
+let {
+  value = $bindable(""),
+  options,
+  class: klass = "",
+  ...rest
+}: {
+  value?: string;
+  /** The field's allowedValues. */
+  options: string[];
+  class?: string;
+} & HTMLSelectAttributes = $props();
 </script>
 
 <select class={`select ${klass}`} bind:value {...rest}>

@@ -4,21 +4,21 @@
   B5 record renderer: https://github.com/the-greenman/srs-web/issues/4
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+import type { Snippet } from "svelte";
 
-  let {
-    label,
-    required = false,
-    empty = false,
-    emptyText = 'Not recorded',
-    children,
-  }: {
-    label: string;
-    required?: boolean;
-    empty?: boolean;
-    emptyText?: string;
-    children?: Snippet;
-  } = $props();
+const {
+  label,
+  required = false,
+  empty = false,
+  emptyText = "Not recorded",
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  empty?: boolean;
+  emptyText?: string;
+  children?: Snippet;
+} = $props();
 </script>
 
 <div class="card__field">

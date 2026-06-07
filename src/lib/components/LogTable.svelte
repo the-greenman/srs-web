@@ -6,16 +6,16 @@
   B12 decision log / summary card: https://github.com/the-greenman/srs-web/issues/8
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+import type { Snippet } from "svelte";
 
-  let {
-    columns,
-    children,
-  }: {
-    columns: string[];
-    /** <tr> rows for the body. */
-    children?: Snippet;
-  } = $props();
+const {
+  columns,
+  children,
+}: {
+  columns: string[];
+  /** <tr> rows for the body. */
+  children?: Snippet;
+} = $props();
 </script>
 
 <table class="log-table">

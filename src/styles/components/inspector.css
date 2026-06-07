@@ -20,7 +20,9 @@
   background: var(--color-surface);
 }
 
-.inspector__section + .inspector__section { margin-top: var(--space-md); }
+.inspector__section + .inspector__section {
+  margin-top: var(--space-md);
+}
 
 .inspector__title {
   display: flex;
@@ -35,10 +37,15 @@
   letter-spacing: 0.1em;
   color: var(--grey-3);
 }
-.inspector__title-aside { margin-left: auto; color: var(--ink); }
+.inspector__title-aside {
+  margin-left: auto;
+  color: var(--ink);
+}
 
 /* ── Key/value metadata list (provenance, ids, timestamps) ────────────────── */
-.meta { margin: 0; }
+.meta {
+  margin: 0;
+}
 .meta__row {
   display: grid;
   grid-template-columns: 6.5em 1fr;
@@ -48,6 +55,15 @@
   font-family: var(--font-mono);
   font-size: var(--size-xs);
 }
-.meta__row:last-child { border-bottom: none; }
-.meta__key { color: var(--grey-3); letter-spacing: 0.04em; }
-.meta__val { margin: 0; color: var(--ink); word-break: break-word; }
+.meta__row:last-child {
+  border-bottom: none;
+}
+.meta__key {
+  color: var(--grey-3);
+  letter-spacing: 0.04em;
+}
+.meta__val {
+  margin: 0;
+  color: var(--ink);
+  word-break: break-word;
+}

@@ -9,29 +9,29 @@
 
 /** The governance/status enum — see gallery package field status-aee7afe9.json. */
 export type Status =
-  | 'draft'
-  | 'proposed'
-  | 'active'
-  | 'deferred'
-  | 'superseded'
-  | 'closed'
-  | 'rejected'
-  | 'archived';
+  | "draft"
+  | "proposed"
+  | "active"
+  | "deferred"
+  | "superseded"
+  | "closed"
+  | "rejected"
+  | "archived";
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'mono';
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "mono";
 
 /** SRS field valueType — drives which control a generated form renders (B9). */
 export type ValueType =
-  | 'string'
-  | 'text'
-  | 'number'
-  | 'boolean'
-  | 'date'
-  | 'url'
-  | 'select'
-  | 'multiselect';
+  | "string"
+  | "text"
+  | "number"
+  | "boolean"
+  | "date"
+  | "url"
+  | "select"
+  | "multiselect";
 
-export type DiagnosticSeverity = 'error' | 'warn' | 'info';
+export type DiagnosticSeverity = "error" | "warn" | "info";
 
 /** One entry from the CLI/WASM `diagnostics[]` array. */
 export interface Diagnostic {

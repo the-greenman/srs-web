@@ -6,21 +6,21 @@
   B4 read-only viewer: https://github.com/the-greenman/srs-web/issues/3
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+import type { Snippet } from "svelte";
 
-  let {
-    repo,
-    repoId,
-    eyebrow = 'srs · governance',
-    children,
-    footer,
-  }: {
-    repo: string;
-    repoId?: string;
-    eyebrow?: string;
-    children?: Snippet;
-    footer?: Snippet;
-  } = $props();
+const {
+  repo,
+  repoId,
+  eyebrow = "srs · governance",
+  children,
+  footer,
+}: {
+  repo: string;
+  repoId?: string;
+  eyebrow?: string;
+  children?: Snippet;
+  footer?: Snippet;
+} = $props();
 </script>
 
 <nav class="nav app__nav" aria-label="Repository sections">

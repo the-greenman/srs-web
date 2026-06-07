@@ -5,15 +5,15 @@
   B4 read-only viewer: https://github.com/the-greenman/srs-web/issues/3
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+import type { Snippet } from "svelte";
 
-  let {
-    label = 'Inspector',
-    children,
-  }: {
-    label?: string;
-    children?: Snippet;
-  } = $props();
+const {
+  label = "Inspector",
+  children,
+}: {
+  label?: string;
+  children?: Snippet;
+} = $props();
 </script>
 
 <aside class="inspector app__inspector" aria-label={label}>

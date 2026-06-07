@@ -4,16 +4,16 @@
   B9 generated edit forms: https://github.com/the-greenman/srs-web/issues/5
 -->
 <script lang="ts">
-  import type { HTMLInputAttributes } from 'svelte/elements';
+import type { HTMLInputAttributes } from "svelte/elements";
 
-  let {
-    value = $bindable(''),
-    class: klass = '',
-    ...rest
-  }: {
-    value?: string;
-    class?: string;
-  } & HTMLInputAttributes = $props();
+let {
+  value = $bindable(""),
+  class: klass = "",
+  ...rest
+}: {
+  value?: string;
+  class?: string;
+} & HTMLInputAttributes = $props();
 </script>
 
 <input class={`input ${klass}`} bind:value {...rest} />

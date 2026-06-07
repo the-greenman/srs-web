@@ -6,18 +6,18 @@
   B11 lifecycle/supersession: https://github.com/the-greenman/srs-web/issues/7
 -->
 <script lang="ts">
-  import type { Status, LifecycleTransition } from '../types';
-  import Tag from './Tag.svelte';
+import type { LifecycleTransition, Status } from "../types";
+import Tag from "./Tag.svelte";
 
-  let {
-    status,
-    transitions = [],
-    onTransition,
-  }: {
-    status: Status;
-    transitions?: LifecycleTransition[];
-    onTransition?: (to: Status) => void;
-  } = $props();
+const {
+  status,
+  transitions = [],
+  onTransition,
+}: {
+  status: Status;
+  transitions?: LifecycleTransition[];
+  onTransition?: (to: Status) => void;
+} = $props();
 </script>
 
 <div class="lifecycle">

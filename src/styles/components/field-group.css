@@ -36,4 +36,8 @@
 }
 
 /* Children stack with the tighter inner rhythm */
-.field-group__body { display: flex; flex-direction: column; gap: var(--space-sm); }
+.field-group__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}

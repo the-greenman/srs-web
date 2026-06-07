@@ -7,26 +7,26 @@
     https://github.com/the-greenman/srs-web/issues/6
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
-  import type { HTMLButtonAttributes } from 'svelte/elements';
-  import type { ButtonVariant } from '../types';
+import type { Snippet } from "svelte";
+import type { HTMLButtonAttributes } from "svelte/elements";
+import type { ButtonVariant } from "../types";
 
-  let {
-    variant = 'secondary',
-    onDark = false,
-    active = false,
-    class: klass = '',
-    children,
-    ...rest
-  }: {
-    variant?: ButtonVariant;
-    /** Style for placement on the dark nav rail / ink header. */
-    onDark?: boolean;
-    /** Pressed state for the mono toggle variant. */
-    active?: boolean;
-    class?: string;
-    children?: Snippet;
-  } & HTMLButtonAttributes = $props();
+const {
+  variant = "secondary",
+  onDark = false,
+  active = false,
+  class: klass = "",
+  children,
+  ...rest
+}: {
+  variant?: ButtonVariant;
+  /** Style for placement on the dark nav rail / ink header. */
+  onDark?: boolean;
+  /** Pressed state for the mono toggle variant. */
+  active?: boolean;
+  class?: string;
+  children?: Snippet;
+} & HTMLButtonAttributes = $props();
 </script>
 
 <button

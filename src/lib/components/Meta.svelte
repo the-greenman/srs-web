@@ -4,7 +4,7 @@
   B4 read-only viewer: https://github.com/the-greenman/srs-web/issues/3
 -->
 <script lang="ts">
-  let { rows }: { rows: { key: string; val: string }[] } = $props();
+const { rows }: { rows: { key: string; val: string }[] } = $props();
 </script>
 
 <dl class="meta">

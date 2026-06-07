@@ -7,28 +7,28 @@
   B13 validate-on-save:    https://github.com/the-greenman/srs-web/issues/9
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+import type { Snippet } from "svelte";
 
-  let {
-    label,
-    required = false,
-    typeHint,
-    help,
-    error,
-    id,
-    children,
-  }: {
-    label: string;
-    required?: boolean;
-    /** e.g. "string", "text", "select". */
-    typeHint?: string;
-    help?: string;
-    /** Inline validation message; presence flags the field invalid. */
-    error?: string;
-    /** Wire to the control's id for label association. */
-    id?: string;
-    children?: Snippet;
-  } = $props();
+const {
+  label,
+  required = false,
+  typeHint,
+  help,
+  error,
+  id,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  /** e.g. "string", "text", "select". */
+  typeHint?: string;
+  help?: string;
+  /** Inline validation message; presence flags the field invalid. */
+  error?: string;
+  /** Wire to the control's id for label association. */
+  id?: string;
+  children?: Snippet;
+} = $props();
 </script>
 
 <div class="field" class:field--invalid={!!error}>

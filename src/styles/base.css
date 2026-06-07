@@ -9,9 +9,13 @@
 
 *,
 *::before,
-*::after { box-sizing: border-box; }
+*::after {
+  box-sizing: border-box;
+}
 
-html { font-size: 16px; }
+html {
+  font-size: 16px;
+}
 
 body {
   margin: 0;
@@ -38,28 +42,42 @@ body::after {
 }
 
 @media (max-width: 640px) {
-  body::after { opacity: 0.016; }
+  body::after {
+    opacity: 0.016;
+  }
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--font-sans);
   line-height: var(--leading-tight);
   letter-spacing: -0.02em;
   margin: 0;
 }
 
-p { margin: 0 0 1rem; }
-p:last-child { margin-bottom: 0; }
+p {
+  margin: 0 0 1rem;
+}
+p:last-child {
+  margin-bottom: 0;
+}
 
 a {
   color: var(--ink);
   text-decoration-color: var(--grey-2);
   text-underline-offset: 0.16em;
 }
-a:hover { text-decoration-color: var(--ink); }
+a:hover {
+  text-decoration-color: var(--ink);
+}
 
 /* Shared form-control reset so widgets start from the same baseline */
-input, textarea, select, button {
+input,
+textarea,
+select,
+button {
   font: inherit;
   color: inherit;
 }

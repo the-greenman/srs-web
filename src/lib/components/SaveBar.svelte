@@ -6,15 +6,15 @@
   B13 validate-on-save: https://github.com/the-greenman/srs-web/issues/9
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+import type { Snippet } from "svelte";
 
-  let {
-    dirtyCount = 0,
-    children,
-  }: {
-    dirtyCount?: number;
-    children?: Snippet;
-  } = $props();
+const {
+  dirtyCount = 0,
+  children,
+}: {
+  dirtyCount?: number;
+  children?: Snippet;
+} = $props();
 </script>
 
 <div class="save-bar">

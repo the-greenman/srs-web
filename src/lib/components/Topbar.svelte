@@ -4,15 +4,15 @@
   B4 viewer shell: https://github.com/the-greenman/srs-web/issues/3
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+import type { Snippet } from "svelte";
 
-  let {
-    crumb,
-    actions,
-  }: {
-    crumb?: Snippet;
-    actions?: Snippet;
-  } = $props();
+const {
+  crumb,
+  actions,
+}: {
+  crumb?: Snippet;
+  actions?: Snippet;
+} = $props();
 </script>
 
 <div class="topbar">

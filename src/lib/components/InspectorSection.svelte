@@ -5,17 +5,17 @@
   B4 read-only viewer: https://github.com/the-greenman/srs-web/issues/3
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+import type { Snippet } from "svelte";
 
-  let {
-    title,
-    aside,
-    children,
-  }: {
-    title: string;
-    aside?: string;
-    children?: Snippet;
-  } = $props();
+const {
+  title,
+  aside,
+  children,
+}: {
+  title: string;
+  aside?: string;
+  children?: Snippet;
+} = $props();
 </script>
 
 <section class="inspector__section">

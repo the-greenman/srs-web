@@ -26,14 +26,38 @@
   color: var(--grey-3);
 }
 
-.tag--draft      { border-style: dashed; }
-.tag--proposed   { /* base: provisional, quiet */ }
-.tag--active     { color: var(--ink); border-color: var(--grey-4); }
-.tag--deferred   { background: var(--grey-1); }
-.tag--superseded { border-color: var(--grey-1); text-decoration: line-through; }
-.tag--closed     { color: var(--paper); background: var(--black); border-color: var(--black); }
-.tag--rejected   { border-color: var(--grey-1); text-decoration: line-through; }
-.tag--archived   { border-color: var(--grey-1); }
+.tag--draft {
+  border-style: dashed;
+}
+.tag--proposed {
+  /* base: provisional, quiet */
+}
+.tag--active {
+  color: var(--ink);
+  border-color: var(--grey-4);
+}
+.tag--deferred {
+  background: var(--grey-1);
+}
+.tag--superseded {
+  border-color: var(--grey-1);
+  text-decoration: line-through;
+}
+.tag--closed {
+  color: var(--paper);
+  background: var(--black);
+  border-color: var(--black);
+}
+.tag--rejected {
+  border-color: var(--grey-1);
+  text-decoration: line-through;
+}
+.tag--archived {
+  border-color: var(--grey-1);
+}
 
 /* On-dark placement (record header sits on ink) */
-.tag--on-dark { color: var(--color-on-dark); border-color: var(--color-on-dark-muted); }
+.tag--on-dark {
+  color: var(--color-on-dark);
+  border-color: var(--color-on-dark-muted);
+}

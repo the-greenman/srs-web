@@ -5,15 +5,15 @@
   B4 viewer shell: https://github.com/the-greenman/srs-web/issues/3
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+import type { Snippet } from "svelte";
 
-  let {
-    wide = false,
-    children,
-  }: {
-    wide?: boolean;
-    children?: Snippet;
-  } = $props();
+const {
+  wide = false,
+  children,
+}: {
+  wide?: boolean;
+  children?: Snippet;
+} = $props();
 </script>
 
 <div class="workspace">
