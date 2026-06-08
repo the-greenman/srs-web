@@ -42,6 +42,10 @@ export interface SrsRepository {
   list_containers(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainer()
   get_container(container_id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in addContainerMember()
+  add_container_member(container_id: string, instance_id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in removeContainerMember()
+  remove_container_member(container_id: string, instance_id: string): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -295,11 +299,13 @@ export function exportSrsj(repo: SrsRepository): string {
 export function listRelations(repo: SrsRepository, filter: RelationListFilter = {}): SrsRelation[] {
   // biome-ignore lint/suspicious/noExplicitAny: WASM boundary
   const raw: any[] = repo.list_relations(JSON.stringify(filter));
+  // list_relations returns RelationSummary (sourceId / targetId), while the
+  // Relation entity uses sourceInstanceId / targetInstanceId — accept both.
   return raw.map((r) => ({
     relationId: r.relationId ?? r.relation_id,
     relationType: r.relationType ?? r.relation_type,
-    sourceInstanceId: r.sourceInstanceId ?? r.source_instance_id,
-    targetInstanceId: r.targetInstanceId ?? r.target_instance_id,
+    sourceInstanceId: r.sourceInstanceId ?? r.source_instance_id ?? r.sourceId ?? r.source_id,
+    targetInstanceId: r.targetInstanceId ?? r.target_instance_id ?? r.targetId ?? r.target_id,
     assertedBy: r.assertedBy ?? r.asserted_by,
     confidence: r.confidence,
     status: r.status,
@@ -451,4 +457,22 @@ export function listContainers(
 /** Get a single container, including its root and member instance IDs. */
 export function getContainer(repo: SrsRepository, containerId: string): Container {
   return repo.get_container(containerId) as Container;
+}
+
+/** Add an instance to a container's membership. Returns the updated member-id list. */
+export function addContainerMember(
+  repo: SrsRepository,
+  containerId: string,
+  instanceId: string
+): string[] {
+  return repo.add_container_member(containerId, instanceId) as string[];
+}
+
+/** Remove an instance from a container's membership. Returns the updated member-id list. */
+export function removeContainerMember(
+  repo: SrsRepository,
+  containerId: string,
+  instanceId: string
+): string[] {
+  return repo.remove_container_member(containerId, instanceId) as string[];
 }
