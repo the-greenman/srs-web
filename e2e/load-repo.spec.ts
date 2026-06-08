@@ -15,9 +15,10 @@ const FIXTURE_PATH = path.join(__dirname, "fixtures", "sample.srsj");
 test.describe("Load repository", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    // Wait for idle state (WASM boot complete)
+    // Wait for WASM boot, then choose governance mode
+    await page.getByTestId("mode-governance").click({ timeout: 15000 });
     await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 15000,
+      timeout: 5000,
     });
   });
 

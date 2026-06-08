@@ -19,8 +19,10 @@ const GALLERY_PATH = path.join(__dirname, "fixtures", "gallery.srsj");
 test.describe("Export / Import round-trip (B10)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
+    // Wait for WASM boot, then choose governance mode
+    await page.getByTestId("mode-governance").click({ timeout: 15000 });
     await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 15000,
+      timeout: 5000,
     });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
@@ -110,8 +112,9 @@ test.describe("Export / Import round-trip (B10)", () => {
     // The exported JSON must contain the new record's title text
     expect(exportedText).toContain("Round-Trip Test Article");
 
-    // Re-import: click "Open another file", upload the exported content as a file
+    // Re-import: click "Open another file", choose governance again, re-upload
     await page.getByRole("button", { name: "Open another file" }).click();
+    await page.getByTestId("mode-governance").click({ timeout: 5000 });
     await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible();
 
     // Write the exported content to a temp file and re-upload

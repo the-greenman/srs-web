@@ -8,21 +8,27 @@ import { expect, test } from "@playwright/test";
  */
 
 test.describe("App baseline", () => {
-  test("shows the SRS Governance Viewer heading in idle state", async ({ page }) => {
+  test("shows the mode picker in idle state", async ({ page }) => {
     await page.goto("/");
 
-    // Wait for WASM to initialise — app transitions boot → idle
+    // Wait for WASM to initialise — app transitions boot → idle (mode picker)
+    await expect(page.getByTestId("mode-picker")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId("mode-governance")).toBeVisible();
+    await expect(page.getByTestId("mode-guides")).toBeVisible();
+  });
+
+  test("shows the SRS Governance Viewer heading after choosing governance", async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("mode-governance").click({ timeout: 15000 });
+
     await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 15000,
+      timeout: 5000,
     });
   });
 
-  test("shows the file input in idle state", async ({ page }) => {
+  test("shows the file input after choosing governance", async ({ page }) => {
     await page.goto("/");
-
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 15000,
-    });
+    await page.getByTestId("mode-governance").click({ timeout: 15000 });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await expect(fileInput).toBeAttached();
@@ -31,11 +37,8 @@ test.describe("App baseline", () => {
   test("does not show three-pane layout in idle state", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 15000,
-    });
-
-    // Nav items appear only after a repo is loaded
-    await expect(page.getByText("Articles")).not.toBeVisible();
+    // Mode picker should be visible; the governance nav is only shown after loading
+    await expect(page.getByTestId("mode-picker")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("link", { name: /^Articles$/ })).not.toBeVisible();
   });
 });
