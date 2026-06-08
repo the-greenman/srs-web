@@ -18,6 +18,7 @@
     createRecord,
     updateRecord,
     deleteRecord,
+    exportSrsj,
   } from "$lib/srs-client.js";
   import type { SrsRepository, SrsRecord, Diagnostic as WasmDiagnostic, CreateRecordInput, UpdateRecordInput } from "$lib/srs-client.js";
   import type { Diagnostic, Status } from "$lib/types.js";
@@ -196,6 +197,18 @@
     loadSectionRecords(repo);
   }
 
+  function handleExport() {
+    if (!repo) return;
+    const json = exportSrsj(repo);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${repoName}.srsj`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   // ---------------------------------------------------------------------------
   // Derived
   // ---------------------------------------------------------------------------
@@ -334,6 +347,7 @@
                 onclick={() => { formMode = "create"; editingRecord = null; }}
               >New {GOVERNANCE_FORMS[activeSection].label}</button>
             {/if}
+            <button class="topbar__export" onclick={handleExport}>Download .srsj</button>
             <button
               class="topbar__reset"
               onclick={() => {
@@ -666,6 +680,20 @@
     border-radius: 2px;
     padding: 0.2rem 0.5rem;
     cursor: pointer;
+  }
+
+  .topbar__export {
+    font-size: 0.75rem;
+    background: none;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+    opacity: 0.6;
+  }
+
+  .topbar__export:hover {
+    opacity: 1;
   }
 
   /* ---- Inspector KV ---- */
