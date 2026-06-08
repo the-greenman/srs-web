@@ -20,6 +20,7 @@
   let {
     schema,
     record = null,
+    wide = false,
     onSave,
     onCancel,
     saving = false,
@@ -27,6 +28,8 @@
   }: {
     schema: TypeFormDef;
     record?: SrsRecord | null;
+    /** Remove max-width cap so the form fills its container. */
+    wide?: boolean;
     onSave: (input: CreateRecordInput | UpdateRecordInput) => void;
     onCancel: () => void;
     saving?: boolean;
@@ -77,7 +80,7 @@
   let title = $derived(isEdit ? `Edit ${schema.label}` : `New ${schema.label}`);
 </script>
 
-<div class="record-form">
+<div class="record-form" class:record-form--wide={wide} data-testid="record-form">
   <h2 class="record-form__title">{title}</h2>
   <form onsubmit={handleSubmit} class="record-form__fields">
     {#each schema.fields as def (def.fieldId)}
@@ -133,6 +136,9 @@
   .record-form {
     padding: 1.5rem;
     max-width: 42rem;
+  }
+  .record-form--wide {
+    max-width: none;
   }
 
   .record-form__title {

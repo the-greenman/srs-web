@@ -50,5 +50,7 @@
 >
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="inspector__drag-handle" onpointerdown={onDragStart} aria-hidden="true"></div>
-  {@render children?.()}
+  <div class="inspector__body">
+    {@render children?.()}
+  </div>
 </aside>

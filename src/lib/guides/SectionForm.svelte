@@ -29,6 +29,7 @@
     fields,
     groups,
     record = null,
+    wide = false,
     onSave,
     onCancel,
     saving = false,
@@ -38,6 +39,8 @@
     fields: FieldFormDef[];
     groups: GroupFormDef[];
     record?: SrsRecord | null;
+    /** Remove max-width cap so the form fills its container. */
+    wide?: boolean;
     onSave: (input: CreateRecordInput | UpdateRecordInput) => void;
     onCancel: () => void;
     saving?: boolean;
@@ -190,7 +193,7 @@
   let title = $derived(record ? `Edit ${label}` : `New ${label}`);
 </script>
 
-<div class="record-form">
+<div class="record-form" class:record-form--wide={wide} data-testid="section-form">
   <h2 class="record-form__title">{title}</h2>
   <form onsubmit={handleSubmit} class="record-form__fields">
     {#each fields as def (def.fieldId)}
@@ -305,6 +308,9 @@
   .record-form {
     padding: 1.5rem;
     max-width: 46rem;
+  }
+  .record-form--wide {
+    max-width: none;
   }
   .record-form__title {
     margin: 0 0 1.5rem;

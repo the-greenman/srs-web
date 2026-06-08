@@ -541,6 +541,7 @@
                 fields={activeSectionDescriptor.fields}
                 groups={activeSectionDescriptor.groups}
                 record={editingRecord}
+                wide
                 onSave={handleSave}
                 onCancel={cancelForm}
                 saving={formSaving}
@@ -552,6 +553,7 @@
               <RecordForm
                 schema={activeFormDef}
                 record={editingRecord}
+                wide
                 onSave={handleSave}
                 onCancel={cancelForm}
                 saving={formSaving}
@@ -689,7 +691,6 @@
   }
 
   .guides-form-panel {
-    max-width: 640px;
     padding: 1rem;
   }
 

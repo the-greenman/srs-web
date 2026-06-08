@@ -14,14 +14,19 @@
   height: 100vh;
   position: sticky;
   top: 0;
-  overflow-y: auto;
-  padding: var(--space-md) var(--space-sm);
+  overflow-y: hidden; /* body handles scroll */
   border-left: var(--rule);
   background: var(--color-surface);
-  /* flex column so a grow section can take remaining height */
+}
+
+/* Inner flex column: handles scroll + grow sections. Separate from .inspector
+   so the layout.css display:none rule on .app__inspector is never overridden. */
+.inspector__body {
   display: flex;
   flex-direction: column;
-  position: relative;
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--space-md) var(--space-sm);
 }
 
 /* Drag handle — thin grab strip at the left edge */
