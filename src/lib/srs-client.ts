@@ -36,8 +36,6 @@ export interface SrsRepository {
   set_lifecycle_state(instance_id: string, state: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in blueprintSchema()
   blueprint_schema(blueprint_id: string): any;
-  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in renderDocumentView()
-  render_document_view(view_id: string, format: string, container_id?: string | null): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -376,41 +374,13 @@ export interface BlueprintSchemaResult {
 }
 
 // ---------------------------------------------------------------------------
-// Document view types (C3 / C8)
-// ---------------------------------------------------------------------------
-
-export interface DocumentViewResult {
-  rendered: string;
-  diagnostics: string[];
-  projection: unknown | null;
-}
-
-// ---------------------------------------------------------------------------
-// Blueprint schema + document view wrappers
+// Blueprint schema wrapper
 // ---------------------------------------------------------------------------
 
 /**
  * Project a blueprint into a JSON Schema describing the multi-record document
  * it declares. Returns the schema object and any non-fatal diagnostics.
  */
-export function blueprintSchema(
-  repo: SrsRepository,
-  blueprintId: string
-): BlueprintSchemaResult {
-  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; typed above
+export function blueprintSchema(repo: SrsRepository, blueprintId: string): BlueprintSchemaResult {
   return repo.blueprint_schema(blueprintId) as BlueprintSchemaResult;
-}
-
-/**
- * Render a document view. `format` is "json" or "markdown".
- * When `format === "json"`, `projection` in the result is a DocumentViewProjection.
- */
-export function renderDocumentView(
-  repo: SrsRepository,
-  viewId: string,
-  format: string,
-  containerId?: string | null
-): DocumentViewResult {
-  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; typed above
-  return repo.render_document_view(viewId, format, containerId) as DocumentViewResult;
 }

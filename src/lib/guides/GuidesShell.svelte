@@ -123,12 +123,8 @@
 
   /** Return sections belonging to the currently selected guide (all sections for C8). */
   let selectedGuideSections = $derived(
-    selectedGuideId
-      ? sections.filter((s) => {
-          // In C8 we show all sections (guide→sections scoping comes in C9).
-          return true;
-        })
-      : []
+    // In C8 we show all sections (guide→sections scoping comes in C9).
+    selectedGuideId ? sections : []
   );
 
   /** Reload guides + sections from WASM. Does NOT read selectedGuideId. */
