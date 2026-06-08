@@ -70,50 +70,57 @@ test.describe("Gallery fixture — real records render", () => {
     await expect(page.locator(".empty-state")).not.toBeVisible();
   });
 
-  test("clicking a record card selects it", async ({ page }) => {
-    // Click the first article card — should add selected class
-    const firstCard = page.locator(".record-list__item").first();
-    await firstCard.click();
-    await expect(firstCard).toHaveClass(/record-list__item--selected/);
+  test("clicking a record card opens the reading view", async ({ page }) => {
+    // Click the first article card — reading view should open
+    await page.locator(".record-list__item").first().click();
+    await expect(page.locator('[data-testid="record-reading"]')).toBeVisible();
   });
 
-  test("selecting an article shows its fields in the inspector", async ({ page }) => {
-    // Click first article card
+  test("selecting an article shows its fields in the reading view", async ({ page }) => {
+    // Click first article card — reading view opens in the centre canvas
     await page.locator(".record-list__item").first().click();
 
-    // The first inspector section is the record detail — it must contain "Article text"
-    await expect(page.locator(".inspector__section").first()).toContainText("Article text");
+    // Reading view must appear in the centre with field labels
+    await expect(page.locator('[data-testid="record-reading"]')).toBeVisible();
+    await expect(page.locator('[data-testid="record-reading"]')).toContainText("Article Text");
 
-    // The placeholder text must not appear anywhere
-    await expect(page.locator("text=Coming in B5")).not.toBeVisible();
-    await expect(page.locator("text=Detail view not yet implemented")).not.toBeVisible();
+    // Field content must NOT appear in the inspector
+    await expect(page.locator(".inspector__section").first()).not.toContainText("Article Text");
   });
 
-  test("selecting a decision shows its fields in the inspector", async ({ page }) => {
+  test("selecting a decision shows its fields in the reading view", async ({ page }) => {
     await page.getByRole("link", { name: /Decision Log/ }).click();
     await page.locator(".record-list__item").first().click();
 
-    // Decision-specific field labels must appear in the first inspector section
-    await expect(page.locator(".inspector__section").first()).toContainText("Decision statement");
+    // Reading view must contain decision-specific field labels
+    await expect(page.locator('[data-testid="record-reading"]')).toContainText("Decision Statement");
+
+    // Field content must NOT appear in the inspector
+    await expect(page.locator(".inspector__section").first()).not.toContainText("Decision Statement");
   });
 
-  test("selecting a role shows its fields in the inspector", async ({ page }) => {
+  test("selecting a role shows its fields in the reading view", async ({ page }) => {
     await page.getByRole("link", { name: /Roles/ }).click();
     await page.locator(".record-list__item").first().click();
 
-    // Role-specific field labels must appear in the first inspector section
-    await expect(page.locator(".inspector__section").first()).toContainText("Role holder");
+    // Reading view must contain role-specific field labels
+    await expect(page.locator('[data-testid="record-reading"]')).toContainText("Role Holder");
+
+    // Field content must NOT appear in the inspector
+    await expect(page.locator(".inspector__section").first()).not.toContainText("Role Holder");
   });
 
-  test("deselecting a card clears the inspector record section", async ({ page }) => {
-    const firstCard = page.locator(".record-list__item").first();
-    await firstCard.click(); // select
-    await expect(page.locator(".inspector__section").first()).toContainText("Article text");
+  test("clicking back from the reading view returns to the record list", async ({ page }) => {
+    await page.locator(".record-list__item").first().click();
+    await expect(page.locator('[data-testid="record-reading"]')).toBeVisible();
 
-    await firstCard.click(); // deselect (toggle)
-    // After deselect the record section disappears; Validation becomes the first section
+    // Clicking the back button clears selection and returns to the list
+    await page.getByTestId("record-reading-back").click();
+    await expect(page.locator('[data-testid="record-reading"]')).not.toBeAttached();
+    // Record list is visible again
+    await expect(page.locator(".record-list__item").first()).toBeVisible();
+    // Validation inspector section remains visible
     await expect(page.locator(".inspector__section").first()).toContainText("Validation");
-    await expect(page.locator("text=Article text")).not.toBeVisible();
   });
 
   test("repo filename shown in topbar", async ({ page }) => {
