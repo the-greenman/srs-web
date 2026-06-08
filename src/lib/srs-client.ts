@@ -34,6 +34,10 @@ export interface SrsRepository {
   delete_relation(relation_id: string): void;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in setLifecycleState()
   set_lifecycle_state(instance_id: string, state: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in blueprintSchema()
+  blueprint_schema(blueprint_id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in renderDocumentView()
+  render_document_view(view_id: string, format: string, container_id?: string | null): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -333,4 +337,80 @@ export function setLifecycleState(
 ): SrsRecord {
   const raw = repo.set_lifecycle_state(instanceId, state);
   return normalizeRecord(raw);
+}
+
+// ---------------------------------------------------------------------------
+// Blueprint schema types (C2 / C8)
+// ---------------------------------------------------------------------------
+
+export interface SchemaProperty {
+  title: string;
+  type?: string;
+  enum?: string[];
+  "x-srs-field-id": string;
+  "x-srs-order": number;
+  "x-srs-widget"?: string;
+}
+
+export interface SchemaDefinition {
+  type: string;
+  properties: Record<string, SchemaProperty>;
+  required?: string[];
+  additionalProperties?: boolean;
+}
+
+export interface BlueprintSchema {
+  properties: {
+    root?: { $ref: string };
+    contains?: {
+      type?: string;
+      items?: { oneOf: Array<{ $ref: string }> };
+    };
+  };
+  definitions: Record<string, SchemaDefinition>;
+}
+
+export interface BlueprintSchemaResult {
+  schema: BlueprintSchema;
+  diagnostics: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Document view types (C3 / C8)
+// ---------------------------------------------------------------------------
+
+export interface DocumentViewResult {
+  rendered: string;
+  diagnostics: string[];
+  projection: unknown | null;
+}
+
+// ---------------------------------------------------------------------------
+// Blueprint schema + document view wrappers
+// ---------------------------------------------------------------------------
+
+/**
+ * Project a blueprint into a JSON Schema describing the multi-record document
+ * it declares. Returns the schema object and any non-fatal diagnostics.
+ */
+export function blueprintSchema(
+  repo: SrsRepository,
+  blueprintId: string
+): BlueprintSchemaResult {
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; typed above
+  return repo.blueprint_schema(blueprintId) as BlueprintSchemaResult;
+}
+
+/**
+ * Render a document view. `format` is "json" or "markdown".
+ * When `format === "json"`, `projection` in the result is a DocumentViewProjection.
+ */
+export function renderDocumentView(
+  repo: SrsRepository,
+  viewId: string,
+  format: string,
+  containerId?: string | null
+): DocumentViewResult {
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; typed above
+  return repo.render_document_view(viewId, format, containerId) as DocumentViewResult;
 }

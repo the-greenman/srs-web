@@ -422,6 +422,7 @@
      ========================================================================= -->
 {:else if editorMode === "guides"}
   <GuidesShell
+    repo={repo!}
     repoName={repoName}
     onOpenAnother={() => {
       repo = null;
