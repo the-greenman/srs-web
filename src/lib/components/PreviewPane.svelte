@@ -3,8 +3,8 @@
 
   Wraps a rendered HTML fragment (from renderDocumentView "html") inside an
   <iframe srcdoc> so the guide's CSS is isolated from the app shell. The iframe
-  uses sandbox="allow-same-origin" to prevent script execution from injected
-  markup while keeping same-origin fetch for relative assets if needed.
+  uses sandbox="" (fully restrictive) — no scripts, no same-origin access, no
+  allow-* flags — since the srcdoc template needs no external resources.
 
   ADR-003: Document Views drive rendered output; this is a render-surface concern.
   srs-web#39: live preview for the guides inspector slot.
@@ -63,7 +63,7 @@
     <iframe
       class="preview-pane__frame"
       data-testid="guides-preview-frame"
-      sandbox="allow-same-origin"
+      sandbox=""
       title="Guide preview"
       {srcdoc}
     ></iframe>
