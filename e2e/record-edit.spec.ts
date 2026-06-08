@@ -103,7 +103,11 @@ test.describe("Record edit forms (B9)", () => {
     await page.getByRole("link", { name: /Decision Log/ }).click();
     await expect(page.getByRole("heading", { name: "Decision Log", level: 2 })).toBeVisible();
 
+    // New Decision opens the DecisionFlow mode chooser (B12)
     await page.locator("button.topbar__new").click();
+
+    // Select Quick Capture mode
+    await page.getByRole("button", { name: "Quick Capture" }).click();
 
     // Fill Title
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Test Decision E2E");

@@ -40,6 +40,7 @@
   import Field from "$lib/components/Field.svelte";
   import RecordForm from "$lib/components/RecordForm.svelte";
   import SuccessorModal from "$lib/components/SuccessorModal.svelte";
+  import DecisionFlow from "$lib/components/DecisionFlow.svelte";
 
   import { SECTIONS } from "$lib/governance/sections.js";
   import type { SectionKey } from "$lib/governance/sections.js";
@@ -83,6 +84,11 @@
 
   /** Whether the immutability guard modal is shown. */
   let showSuccessorModal = $state(false);
+
+  /** Decision flow mode — replaces generic form for decisions. */
+  let decisionFlowMode = $state(false);
+  let decisionFlowSaving = $state(false);
+  let decisionFlowError = $state<string | null>(null);
 
   // ---------------------------------------------------------------------------
   // WASM initialisation
@@ -385,6 +391,8 @@
                   formMode = null;
                   editingRecord = null;
                   formError = null;
+                  decisionFlowMode = false;
+                  decisionFlowError = null;
                 }}
               >
                 <NavItem
@@ -415,11 +423,18 @@
             <span class="topbar__section">{activeSection_.label}</span>
           {/snippet}
           {#snippet actions()}
-            {#if formMode === null && GOVERNANCE_FORMS[activeSection]}
-              <button
-                class="topbar__new"
-                onclick={() => { formMode = "create"; editingRecord = null; }}
-              >New {GOVERNANCE_FORMS[activeSection].label}</button>
+            {#if formMode === null && !decisionFlowMode}
+              {#if activeSection === "decisions"}
+                <button
+                  class="topbar__new"
+                  onclick={() => { decisionFlowMode = true; decisionFlowError = null; }}
+                >New Decision</button>
+              {:else if GOVERNANCE_FORMS[activeSection]}
+                <button
+                  class="topbar__new"
+                  onclick={() => { formMode = "create"; editingRecord = null; }}
+                >New {GOVERNANCE_FORMS[activeSection].label}</button>
+              {/if}
             {/if}
             <button class="topbar__export" onclick={handleExport}>Download .srsj</button>
             <button
@@ -432,6 +447,8 @@
                 formMode = null;
                 editingRecord = null;
                 formError = null;
+                decisionFlowMode = false;
+                decisionFlowError = null;
                 appState = "idle";
               }}
             >Open another file</button>
@@ -439,7 +456,28 @@
         </Topbar>
 
         <Workspace>
-          {#if formMode !== null && GOVERNANCE_FORMS[activeSection]}
+          {#if decisionFlowMode}
+            <DecisionFlow
+              onSave={(input) => {
+                if (!repo) return;
+                decisionFlowSaving = true;
+                decisionFlowError = null;
+                try {
+                  const created = createRecord(repo, "1fcad6a2-9f78-5e41-94ba-d82e88b822f3", 1, input);
+                  decisionFlowMode = false;
+                  loadSectionRecords(repo);
+                  selectedId = created.instanceId;
+                } catch (e: unknown) {
+                  decisionFlowError = e instanceof Error ? e.message : String(e);
+                } finally {
+                  decisionFlowSaving = false;
+                }
+              }}
+              onCancel={() => { decisionFlowMode = false; decisionFlowError = null; }}
+              saving={decisionFlowSaving}
+              saveError={decisionFlowError}
+            />
+          {:else if formMode !== null && GOVERNANCE_FORMS[activeSection]}
             <RecordForm
               schema={GOVERNANCE_FORMS[activeSection] as TypeFormDef}
               record={editingRecord}
