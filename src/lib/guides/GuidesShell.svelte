@@ -15,8 +15,15 @@
     listRecords,
     createRecord,
     updateRecord,
+    deleteRecord,
     exportSrsj,
     listContainers,
+    getContainer,
+    addContainerMember,
+    removeContainerMember,
+    listRelations,
+    createRelation,
+    deleteRelation,
     renderDocumentView,
   } from "$lib/srs-client.js";
   import type { SrsRepository, SrsRecord, CreateRecordInput, UpdateRecordInput } from "$lib/srs-client.js";
@@ -125,19 +132,81 @@
     return st?.label ?? record.typeName ?? "Section";
   }
 
-  /** Return sections belonging to the currently selected guide (all sections for C8). */
-  let selectedGuideSections = $derived(
-    // In C8 we show all sections (guide→sections scoping comes in C9).
-    selectedGuideId ? sections : []
-  );
+  /** The selected guide's container id (the guide is its root), or null. */
+  let selectedContainerId = $state<string | null>(null);
 
-  /** Reload guides + sections from WASM. Does NOT read selectedGuideId. */
+  /** Sections of the selected guide, scoped to its container and in precedes order. */
+  let orderedSections = $state<SrsRecord[]>([]);
+
+  /** Order a set of section records by their `precedes` relation chain. */
+  function orderByPrecedes(secs: SrsRecord[]): SrsRecord[] {
+    const ids = new Set(secs.map((s) => s.instanceId));
+    const rels = listRelations(repo, { relationType: "precedes" }).filter(
+      (r) => ids.has(r.sourceInstanceId) && ids.has(r.targetInstanceId)
+    );
+    const next = new Map<string, string>();
+    const hasIncoming = new Set<string>();
+    for (const r of rels) {
+      next.set(r.sourceInstanceId, r.targetInstanceId);
+      hasIncoming.add(r.targetInstanceId);
+    }
+    const byId = new Map(secs.map((s) => [s.instanceId, s]));
+    const ordered: SrsRecord[] = [];
+    const visited = new Set<string>();
+    // The chain head has no incoming precedes edge; follow next-pointers from there.
+    let cursor = secs.find((s) => !hasIncoming.has(s.instanceId))?.instanceId;
+    while (cursor && byId.has(cursor) && !visited.has(cursor)) {
+      visited.add(cursor);
+      ordered.push(byId.get(cursor) as SrsRecord);
+      cursor = next.get(cursor);
+    }
+    // Append any section not reachable through the chain, deterministically.
+    for (const s of secs) if (!visited.has(s.instanceId)) ordered.push(s);
+    return ordered;
+  }
+
+  /** Resolve the selected guide's container and rebuild the ordered section list. */
+  function refreshSections() {
+    selectedContainerId = null;
+    orderedSections = [];
+    if (!selectedGuideId) return;
+    const containers = listContainers(repo, { rootInstanceId: selectedGuideId });
+    if (containers.length === 0) return;
+    selectedContainerId = containers[0].containerId;
+    const container = getContainer(repo, selectedContainerId);
+    const members = new Set(container.memberInstanceIds ?? []);
+    const scoped = sections.filter((s) => members.has(s.instanceId));
+    orderedSections = orderByPrecedes(scoped);
+  }
+
+  /**
+   * Delete every `precedes` relation touching any id in `clearIds`, then recreate a
+   * single chain through `orderedIds`. Used by add / reorder / remove so the stored
+   * order always matches the displayed order.
+   */
+  function rebuildPrecedesChain(orderedIds: string[], clearIds: string[]) {
+    const clear = new Set(clearIds);
+    const rels = listRelations(repo, { relationType: "precedes" }).filter(
+      (r) => clear.has(r.sourceInstanceId) || clear.has(r.targetInstanceId)
+    );
+    for (const r of rels) deleteRelation(repo, r.relationId);
+    for (let i = 0; i < orderedIds.length - 1; i++) {
+      createRelation(repo, {
+        relationType: "precedes",
+        sourceInstanceId: orderedIds[i],
+        targetInstanceId: orderedIds[i + 1],
+      });
+    }
+  }
+
+  /** Reload guides + sections from WASM, then re-scope the selected guide's sections. */
   function reload() {
     if (!guideTypeId) return;
     const sectionTypeIds = new Set(sectionTypeList.map((st) => st.typeId));
     const all = listRecords(repo, {});
     guides = all.filter((r) => r.typeId === guideTypeId);
     sections = all.filter((r) => sectionTypeIds.has(r.typeId));
+    refreshSections();
   }
 
   // ---------------------------------------------------------------------------
@@ -245,6 +314,28 @@
     formError = null;
   }
 
+  /** Move a section one slot up (dir = -1) or down (dir = +1), rewriting precedes. */
+  function moveSection(index: number, dir: -1 | 1) {
+    const j = index + dir;
+    if (j < 0 || j >= orderedSections.length) return;
+    const ids = orderedSections.map((s) => s.instanceId);
+    [ids[index], ids[j]] = [ids[j], ids[index]];
+    rebuildPrecedesChain(ids, ids);
+    reload();
+  }
+
+  /** Remove a section: drop it from the chain + container membership, then delete it. */
+  function removeSection(section: SrsRecord) {
+    const beforeIds = orderedSections.map((s) => s.instanceId);
+    const remaining = beforeIds.filter((id) => id !== section.instanceId);
+    rebuildPrecedesChain(remaining, beforeIds);
+    if (selectedContainerId) {
+      removeContainerMember(repo, selectedContainerId, section.instanceId);
+    }
+    deleteRecord(repo, section.instanceId);
+    reload();
+  }
+
   async function handleSave(input: CreateRecordInput | UpdateRecordInput) {
     formSaving = true;
     formError = null;
@@ -259,7 +350,24 @@
         reload();
         cancelForm();
       } else if (formMode === "create-section" && createSectionTypeId) {
-        createRecord(repo, createSectionTypeId, createSectionTypeVersion, input as CreateRecordInput);
+        const created = createRecord(
+          repo,
+          createSectionTypeId,
+          createSectionTypeVersion,
+          input as CreateRecordInput
+        );
+        // Join the guide's container and append to the end of the precedes chain.
+        if (selectedContainerId) {
+          addContainerMember(repo, selectedContainerId, created.instanceId);
+          const lastId = orderedSections[orderedSections.length - 1]?.instanceId;
+          if (lastId) {
+            createRelation(repo, {
+              relationType: "precedes",
+              sourceInstanceId: lastId,
+              targetInstanceId: created.instanceId,
+            });
+          }
+        }
         reload();
         cancelForm();
       } else if (formMode === "edit-section" && editingRecord) {
@@ -379,6 +487,7 @@
               onclick={() => {
                 selectedGuideId = guide.instanceId;
                 cancelForm();
+                refreshSections();
               }}
             >
               {guideLabel(guide)}
@@ -459,21 +568,43 @@
 
             <!-- Section list -->
             <ul class="guides-shell__section-list" data-testid="guides-section-list">
-              {#each selectedGuideSections as section (section.instanceId)}
-                <li>
+              {#each orderedSections as section, index (section.instanceId)}
+                <li class="guides-shell__section-row" data-testid="guides-section-item">
                   <!-- svelte-ignore a11y_click_events_have_key_events -->
                   <!-- svelte-ignore a11y_no_static_element_interactions -->
                   <div
                     class="guides-shell__section-item"
-                    data-testid="guides-section-item"
+                    data-testid="guides-section-open"
                     onclick={() => openEditSection(section)}
                   >
                     <span class="guides-shell__section-type">{sectionTypeName(section)}</span>
                     <span class="guides-shell__section-heading">{sectionLabel(section)}</span>
                   </div>
+                  <div class="guides-shell__section-controls">
+                    <button
+                      class="guides-shell__icon-btn"
+                      data-testid="guides-section-up"
+                      title="Move up"
+                      disabled={index === 0}
+                      onclick={() => moveSection(index, -1)}
+                    >↑</button>
+                    <button
+                      class="guides-shell__icon-btn"
+                      data-testid="guides-section-down"
+                      title="Move down"
+                      disabled={index === orderedSections.length - 1}
+                      onclick={() => moveSection(index, 1)}
+                    >↓</button>
+                    <button
+                      class="guides-shell__icon-btn guides-shell__icon-btn--danger"
+                      data-testid="guides-section-remove"
+                      title="Remove section"
+                      onclick={() => removeSection(section)}
+                    >✕</button>
+                  </div>
                 </li>
               {/each}
-              {#if selectedGuideSections.length === 0}
+              {#if orderedSections.length === 0}
                 <li class="guides-shell__empty">No sections yet — use "Add Section" above</li>
               {/if}
             </ul>
@@ -691,6 +822,12 @@
     margin: 0;
     padding: 0;
   }
+  .guides-shell__section-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--color-border, #eee);
+  }
   .guides-shell__section-item {
     display: flex;
     align-items: baseline;
@@ -698,10 +835,38 @@
     padding: 0.5rem 0.25rem;
     cursor: pointer;
     border-radius: 4px;
-    border-bottom: 1px solid var(--color-border, #eee);
+    flex: 1;
+    min-width: 0;
   }
   .guides-shell__section-item:hover {
     background: var(--color-surface-hover, #f5f5f5);
+  }
+  .guides-shell__section-controls {
+    display: flex;
+    gap: 0.2rem;
+    flex-shrink: 0;
+  }
+  .guides-shell__icon-btn {
+    font-size: 0.8rem;
+    line-height: 1;
+    width: 1.6rem;
+    height: 1.6rem;
+    border: 1px solid var(--color-border, #ddd);
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    color: var(--color-muted, #666);
+  }
+  .guides-shell__icon-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .guides-shell__icon-btn:not(:disabled):hover {
+    background: var(--color-surface-hover, #f0f0f0);
+  }
+  .guides-shell__icon-btn--danger {
+    color: #b91c1c;
+    border-color: #fca5a5;
   }
   .guides-shell__section-type {
     font-size: 0.7rem;
