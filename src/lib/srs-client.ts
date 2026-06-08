@@ -438,10 +438,11 @@ export interface DocumentViewResult {
 }
 
 /**
- * Render a document view. `format` is "json" or "markdown".
- * When `format === "json"`, `projection` is a DocumentViewProjection object and
- * `rendered` is its serialised JSON string. `containerId` scopes ContainerSubset
- * sections (e.g. selecting which guide to render).
+ * Render a document view. Supported `format` values: `"json"`, `"markdown"`, `"html"`.
+ * - `"json"`: `projection` is a DocumentViewProjection object; `rendered` is its JSON string.
+ * - `"html"`: `rendered` is an HTML fragment (`<div class="srs-document">…</div>`); `projection` is null.
+ * - `"markdown"`: `rendered` is a Markdown string; `projection` is null.
+ * `containerId` scopes ContainerSubset sections (e.g. selecting which guide to render).
  */
 export function renderDocumentView(
   repo: SrsRepository,
