@@ -9,6 +9,7 @@
 
   B4 read-only governance viewer: https://github.com/the-greenman/srs-web/issues/3
   B9 edit forms:                  https://github.com/the-greenman/srs-web/issues/5
+  B11 lifecycle & supersession:   https://github.com/the-greenman/srs-web/issues/7
 -->
 <script lang="ts">
   import {
@@ -19,8 +20,9 @@
     updateRecord,
     deleteRecord,
     exportSrsj,
+    createRelation,
   } from "$lib/srs-client.js";
-  import type { SrsRepository, SrsRecord, Diagnostic as WasmDiagnostic, CreateRecordInput, UpdateRecordInput } from "$lib/srs-client.js";
+  import type { SrsRepository, SrsRecord, Diagnostic as WasmDiagnostic, CreateRecordInput, UpdateRecordInput, CreateRelationInput } from "$lib/srs-client.js";
   import type { Diagnostic, Status } from "$lib/types.js";
 
   import AppShell from "$lib/components/AppShell.svelte";
@@ -37,12 +39,14 @@
   import Diagnostics from "$lib/components/Diagnostics.svelte";
   import Field from "$lib/components/Field.svelte";
   import RecordForm from "$lib/components/RecordForm.svelte";
+  import SuccessorModal from "$lib/components/SuccessorModal.svelte";
 
   import { SECTIONS } from "$lib/governance/sections.js";
   import type { SectionKey } from "$lib/governance/sections.js";
   import { getStringField, getFieldValue } from "$lib/governance/field-utils.js";
   import { GOVERNANCE_FORMS } from "$lib/governance/form-schema.js";
   import type { TypeFormDef } from "$lib/governance/form-schema.js";
+  import { LIFECYCLE_TRANSITIONS, IMMUTABLE_STATES } from "$lib/governance/lifecycle.js";
 
   // ---------------------------------------------------------------------------
   // State
@@ -76,6 +80,9 @@
   let editingRecord = $state<SrsRecord | null>(null);
   let formSaving = $state(false);
   let formError = $state<string | null>(null);
+
+  /** Whether the immutability guard modal is shown. */
+  let showSuccessorModal = $state(false);
 
   // ---------------------------------------------------------------------------
   // WASM initialisation
@@ -186,6 +193,13 @@
 
   function handleEditRecord() {
     if (!selectedRecord) return;
+    const status = selectedRecord.fieldValues.find(
+      (fv) => fv.fieldId === "aee7afe9-6650-5fa4-a61a-495c3b88994b"
+    )?.value as string | undefined;
+    if (status && IMMUTABLE_STATES.has(status)) {
+      showSuccessorModal = true;
+      return;
+    }
     editingRecord = selectedRecord;
     formMode = "edit";
   }
@@ -195,6 +209,56 @@
     deleteRecord(repo, selectedRecord.instanceId);
     selectedId = null;
     loadSectionRecords(repo);
+  }
+
+  function handleLifecycleTransition(toState: string) {
+    if (!repo || !selectedRecord) return;
+    const statusFieldId = "aee7afe9-6650-5fa4-a61a-495c3b88994b";
+    try {
+      // Governance status is stored as a field value, not ext:lifecycle state.
+      // Update the status field to the new state via updateRecord.
+      const existingValues = selectedRecord.fieldValues.filter((fv) => fv.fieldId !== statusFieldId);
+      updateRecord(repo, selectedRecord.instanceId, {
+        fieldValues: [...existingValues, { fieldId: statusFieldId, value: toState }],
+      });
+      loadSectionRecords(repo);
+      // refreshValidation(); // called by B13
+    } catch (e: unknown) {
+      // silently ignore for now — errors will surface via validate()
+    }
+  }
+
+  function handleCreateSuccessor() {
+    if (!repo || !selectedRecord) return;
+    const typeDef = GOVERNANCE_FORMS[activeSection];
+    if (!typeDef) return;
+    showSuccessorModal = false;
+    const statusFieldId = "aee7afe9-6650-5fa4-a61a-495c3b88994b";
+    let successorId: string | null = null;
+    try {
+      const baseValues = selectedRecord.fieldValues.filter((fv) => fv.fieldId !== statusFieldId);
+      const successor = createRecord(repo, typeDef.typeId, typeDef.typeVersion, {
+        fieldValues: [...baseValues, { fieldId: statusFieldId, value: "draft" }],
+      });
+      successorId = successor.instanceId;
+      try {
+        createRelation(repo, {
+          relationType: "supersedes",
+          sourceInstanceId: successor.instanceId,
+          targetInstanceId: selectedRecord.instanceId,
+        } as CreateRelationInput);
+      } catch (relErr: unknown) {
+        // Relation creation failure is non-fatal: the successor record was created
+        console.warn("supersedes relation could not be created:", relErr);
+      }
+    } catch (e: unknown) {
+      console.error("Failed to create successor:", e);
+    }
+    // Always refresh the list (successor may have been created even if relation failed)
+    loadSectionRecords(repo);
+    if (successorId !== null) {
+      selectedId = successorId;
+    }
   }
 
   function handleExport() {
@@ -534,6 +598,17 @@
               <button class="inspector__btn" onclick={handleEditRecord}>Edit</button>
               <button class="inspector__btn inspector__btn--danger" onclick={handleDeleteRecord}>Delete</button>
             </div>
+            {@const currentStatus = getStringField(selectedRecord, "status") ?? ""}
+            {@const transitions = LIFECYCLE_TRANSITIONS[currentStatus] ?? []}
+            {#if transitions.length > 0}
+              <div class="inspector__transitions">
+                {#each transitions as toState}
+                  <button class="inspector__btn inspector__btn--transition" onclick={() => handleLifecycleTransition(toState)}>
+                    → {toState}
+                  </button>
+                {/each}
+              </div>
+            {/if}
           </InspectorSection>
         {/if}
         <InspectorSection title="Validation" aside={validationAside}>
@@ -552,6 +627,14 @@
       </Inspector>
     {/snippet}
   </AppShell>
+
+  {#if showSuccessorModal && selectedRecord}
+    <SuccessorModal
+      record={selectedRecord}
+      onCreateSuccessor={handleCreateSuccessor}
+      onCancel={() => { showSuccessorModal = false; }}
+    />
+  {/if}
 {/if}
 
 <style>
@@ -757,6 +840,21 @@
   .inspector__btn:hover { opacity: 1; }
 
   .inspector__btn--danger { color: #c00; border-color: #c00; }
+
+  /* ---- Inspector lifecycle transition buttons ---- */
+  .inspector__transitions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  }
+
+  .inspector__btn--transition {
+    font-size: 0.6875rem;
+    opacity: 0.65;
+  }
 
   /* ---- Nav footer ---- */
   .nav__footer-stat {
