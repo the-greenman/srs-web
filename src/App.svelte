@@ -113,6 +113,13 @@
     sectionRecords = result;
   }
 
+  function refreshValidation(): void {
+    if (!repo) return;
+    const report = repo.validate();
+    instanceCount = report.instanceCount;
+    diagnostics = report.diagnostics.map(mapDiagnostic);
+  }
+
   // ---------------------------------------------------------------------------
   // File import
   // ---------------------------------------------------------------------------
@@ -165,11 +172,13 @@
         formMode = null;
         loadSectionRecords(repo);
         selectedId = created.instanceId;
+        refreshValidation();
       } else if (formMode === "edit" && editingRecord) {
         updateRecord(repo, editingRecord.instanceId, input as UpdateRecordInput);
         formMode = null;
         editingRecord = null;
         loadSectionRecords(repo);
+        refreshValidation();
       }
     } catch (e: unknown) {
       formError = e instanceof Error ? e.message : String(e);
@@ -195,6 +204,7 @@
     deleteRecord(repo, selectedRecord.instanceId);
     selectedId = null;
     loadSectionRecords(repo);
+    refreshValidation();
   }
 
   function handleExport() {
