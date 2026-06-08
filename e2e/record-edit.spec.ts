@@ -124,22 +124,37 @@ test.describe("Record edit forms (B9)", () => {
 
   // --------------------------------------------------------------------------
   // Test 6: Edit existing record
+  // Note: gallery articles are all "active" (immutable state), so we create a
+  // fresh draft article first, then edit it.
   // --------------------------------------------------------------------------
   test("Edit existing record — updated title appears in list", async ({ page }) => {
-    // Select the first article
-    const firstCard = page.locator(".record-list__item").first();
-    const originalTitle = await firstCard.textContent();
-    await firstCard.click();
+    // Create a new draft article to edit (gallery articles are all active and guarded)
+    await page.locator("button.topbar__new").click();
+    await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("To Be Edited");
+    await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Original body");
+    await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
+    await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    // Click Edit in the inspector
-    await page.locator("button.inspector__btn", { hasText: "Edit" }).click();
+    // Wait for list to show the new record
+    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
+    await expect(page.locator(".record-list")).toContainText("To Be Edited");
 
-    // Form should be visible
+    // Select the new draft card (it should be auto-selected after creation)
+    const newCard = page.locator(".record-list__item").filter({ hasText: "To Be Edited" });
+    const editBtn = page.locator("button.inspector__btn", { hasText: "Edit" });
+    if (!(await editBtn.isVisible())) {
+      await newCard.click();
+    }
+
+    // Click Edit in the inspector — the draft record is not immutable, so the form opens
+    await editBtn.click();
+
+    // Form should be visible (not the modal)
     await expect(
       page.locator(".field").filter({ hasText: "Title" }).locator("input")
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 5000 });
 
-    // Clear the Title field and type a new value
+    // Update the title
     const titleInput = page.locator(".field").filter({ hasText: "Title" }).locator("input");
     await titleInput.clear();
     await titleInput.fill("Edited Title E2E");
@@ -150,11 +165,7 @@ test.describe("Record edit forms (B9)", () => {
     // Form should close and updated title appears
     await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
     await expect(page.locator(".record-list")).toContainText("Edited Title E2E");
-
-    // Old title should be gone (if it was different)
-    if (originalTitle && !originalTitle.includes("Edited Title E2E")) {
-      await expect(page.locator(".record-list")).not.toContainText(originalTitle.trim());
-    }
+    await expect(page.locator(".record-list")).not.toContainText("To Be Edited");
   });
 
   // --------------------------------------------------------------------------
