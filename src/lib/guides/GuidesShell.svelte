@@ -16,6 +16,8 @@
     createRecord,
     updateRecord,
     exportSrsj,
+    listContainers,
+    renderDocumentView,
   } from "$lib/srs-client.js";
   import type { SrsRepository, SrsRecord, CreateRecordInput, UpdateRecordInput } from "$lib/srs-client.js";
   import type { TypeFormDef } from "$lib/governance/form-schema.js";
@@ -28,9 +30,11 @@
   import RecordForm from "$lib/components/RecordForm.svelte";
 
   // ---------------------------------------------------------------------------
-  // muSrs guide blueprint UUID (stable — part of the muDemocracy package)
+  // muSrs guide blueprint + document-view UUIDs (stable — part of the package)
   // ---------------------------------------------------------------------------
   const GUIDE_BLUEPRINT_ID = "7bfa600b-f7b2-4a0e-82d4-34c02d9d6770";
+  /** guide-body-view: renders a guide in precedes order via ContainerSubset. */
+  const GUIDE_VIEW_ID = "2aba4d85-317b-44e1-a600-d38a743b4cb4";
 
   // ---------------------------------------------------------------------------
   // Props
@@ -272,11 +276,50 @@
 
   function handleExport() {
     const srsj = exportSrsj(repo);
-    const blob = new Blob([srsj], { type: "application/json" });
+    download(srsj, `${repoName.replace(/\s+/g, "-").toLowerCase()}.srsj`);
+  }
+
+  /** Export error (non-fatal; shown in the shell). */
+  let exportError = $state<string | null>(null);
+
+  /**
+   * C10 — export the selected guide as a JSON DocumentViewProjection.
+   * Resolves the guide's container (it is that container's root), renders the
+   * guide-body document view as JSON, and downloads the projection.
+   */
+  function handleExportGuideJson() {
+    exportError = null;
+    if (!selectedGuideId) return;
+    try {
+      const containers = listContainers(repo, { rootInstanceId: selectedGuideId });
+      if (containers.length === 0) {
+        exportError = "No container found for this guide — cannot resolve its sections to render.";
+        return;
+      }
+      const containerId = containers[0].containerId;
+      const result = renderDocumentView(repo, GUIDE_VIEW_ID, "json", containerId);
+      if (!result.projection) {
+        exportError = `Render produced no projection${
+          result.diagnostics.length ? `: ${result.diagnostics.join("; ")}` : ""
+        }`;
+        return;
+      }
+      const guide = guides.find((g) => g.instanceId === selectedGuideId);
+      const name = guide ? guideLabel(guide) : "guide";
+      const slug = name.replace(/\s+/g, "-").toLowerCase();
+      download(JSON.stringify(result.projection, null, 2), `${slug}.guide-view.json`);
+    } catch (e) {
+      exportError = `Export failed: ${e instanceof Error ? e.message : String(e)}`;
+    }
+  }
+
+  /** Trigger a browser download of `content` as `filename`. */
+  function download(content: string, filename: string) {
+    const blob = new Blob([content], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${repoName.replace(/\s+/g, "-").toLowerCase()}.srsj`;
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -373,10 +416,22 @@
               <h2 class="guides-shell__detail-title">{guideLabel(selectedGuide)}</h2>
               <button
                 class="guides-shell__action-btn"
+                data-testid="guides-export-guide-json"
+                onclick={handleExportGuideJson}
+                title="Export this guide as a JSON document-view projection"
+              >Export guide JSON</button>
+              <button
+                class="guides-shell__action-btn"
                 data-testid="guides-edit-guide"
                 onclick={() => openEditGuide(selectedGuide)}
               >Edit</button>
             </div>
+
+            {#if exportError}
+              <div class="guides-shell__error" role="alert" data-testid="guides-export-error">
+                {exportError}
+              </div>
+            {/if}
 
             <!-- Section controls -->
             <div class="guides-shell__section-bar">

@@ -36,6 +36,12 @@ export interface SrsRepository {
   set_lifecycle_state(instance_id: string, state: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in blueprintSchema()
   blueprint_schema(blueprint_id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in renderDocumentView()
+  render_document_view(view_id: string, format: string, container_id?: string | null): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listContainers()
+  list_containers(filter_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainer()
+  get_container(container_id: string): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -383,4 +389,66 @@ export interface BlueprintSchemaResult {
  */
 export function blueprintSchema(repo: SrsRepository, blueprintId: string): BlueprintSchemaResult {
   return repo.blueprint_schema(blueprintId) as BlueprintSchemaResult;
+}
+
+// ---------------------------------------------------------------------------
+// Document view types + wrapper (C3 / C10)
+// ---------------------------------------------------------------------------
+
+export interface DocumentViewResult {
+  rendered: string;
+  diagnostics: string[];
+  projection: unknown | null;
+}
+
+/**
+ * Render a document view. `format` is "json" or "markdown".
+ * When `format === "json"`, `projection` is a DocumentViewProjection object and
+ * `rendered` is its serialised JSON string. `containerId` scopes ContainerSubset
+ * sections (e.g. selecting which guide to render).
+ */
+export function renderDocumentView(
+  repo: SrsRepository,
+  viewId: string,
+  format: string,
+  containerId?: string | null
+): DocumentViewResult {
+  return repo.render_document_view(viewId, format, containerId) as DocumentViewResult;
+}
+
+// ---------------------------------------------------------------------------
+// Container types + wrappers (C9 / C10)
+// ---------------------------------------------------------------------------
+
+export interface ContainerSummary {
+  containerId: string;
+  title: string;
+  containerType?: string;
+}
+
+export interface Container {
+  containerId: string;
+  title: string;
+  containerType?: string;
+  rootInstanceIds?: string[];
+  memberInstanceIds?: string[];
+}
+
+export interface ContainerListFilter {
+  containerType?: string;
+  memberInstanceId?: string;
+  rootInstanceId?: string;
+}
+
+/** List container summaries, optionally filtered by type / member / root instance. */
+export function listContainers(
+  repo: SrsRepository,
+  filter: ContainerListFilter = {}
+): ContainerSummary[] {
+  return repo.list_containers(JSON.stringify(filter)) as ContainerSummary[];
+}
+
+/** Get a single container, including its root and member instance IDs. */
+export function getContainer(repo: SrsRepository, containerId: string): Container {
+  return repo.get_container(containerId) as Container;
 }
