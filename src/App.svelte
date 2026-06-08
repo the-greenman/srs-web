@@ -41,6 +41,7 @@
   import RecordForm from "$lib/components/RecordForm.svelte";
   import SuccessorModal from "$lib/components/SuccessorModal.svelte";
   import DecisionFlow from "$lib/components/DecisionFlow.svelte";
+  import GuidesShell from "$lib/guides/GuidesShell.svelte";
 
   import { SECTIONS } from "$lib/governance/sections.js";
   import type { SectionKey } from "$lib/governance/sections.js";
@@ -54,9 +55,11 @@
   // ---------------------------------------------------------------------------
 
   type AppState = "boot" | "idle" | "loaded" | "error";
+  type EditorMode = "governance" | "guides";
 
   let appState = $state<AppState>("boot");
   let errorMsg = $state<string | null>(null);
+  let editorMode = $state<EditorMode | null>(null);
 
   let repoName = $state<string>("Untitled repository");
 
@@ -352,27 +355,86 @@
   </div>
 
 <!-- =========================================================================
-     Idle state — file picker
+     Idle state — mode picker then file picker
      ========================================================================= -->
 {:else if appState === "idle"}
-  <div class="splash">
-    <h1 class="splash__title">SRS Governance Viewer</h1>
-    <p class="splash__sub">Open a <code>.srsj</code> repository file to explore its governance records.</p>
-    <div class="splash__field">
-      <Field label="Repository file" typeHint=".srsj">
-        <input
-          id="srsj-file"
-          type="file"
-          accept=".srsj,.json"
-          onchange={onFileChange}
-          class="splash__input"
-        />
-      </Field>
+  {#if editorMode === null}
+    <div class="splash" data-testid="mode-picker">
+      <h1 class="splash__title">SRS Editor</h1>
+      <p class="splash__sub">Choose an editor mode to get started.</p>
+      <div class="mode-picker">
+        <button
+          class="mode-picker__btn"
+          data-testid="mode-governance"
+          onclick={() => { editorMode = "governance"; }}
+        >
+          <strong>Governance Editor</strong>
+          <span>Articles, Decisions, Roles</span>
+        </button>
+        <button
+          class="mode-picker__btn"
+          data-testid="mode-guides"
+          onclick={() => { editorMode = "guides"; }}
+        >
+          <strong>Guides Editor</strong>
+          <span>muDemocracy guides</span>
+        </button>
+      </div>
     </div>
-  </div>
+  {:else if editorMode === "governance"}
+    <div class="splash" data-testid="governance-file-picker">
+      <h1 class="splash__title">SRS Governance Viewer</h1>
+      <p class="splash__sub">Open a <code>.srsj</code> repository file to explore its governance records.</p>
+      <div class="splash__field">
+        <Field label="Repository file" typeHint=".srsj">
+          <input
+            id="srsj-file"
+            type="file"
+            accept=".srsj,.json"
+            onchange={onFileChange}
+            class="splash__input"
+          />
+        </Field>
+      </div>
+      <button class="splash__back" onclick={() => { editorMode = null; }}>← Back</button>
+    </div>
+  {:else}
+    <div class="splash" data-testid="guides-file-picker">
+      <h1 class="splash__title">muDemocracy Guides Editor</h1>
+      <p class="splash__sub">Open a <code>.srsj</code> repository file to edit guides.</p>
+      <div class="splash__field">
+        <Field label="Repository file" typeHint=".srsj">
+          <input
+            id="srsj-file"
+            type="file"
+            accept=".srsj,.json"
+            onchange={onFileChange}
+            class="splash__input"
+          />
+        </Field>
+      </div>
+      <button class="splash__back" onclick={() => { editorMode = null; }}>← Back</button>
+    </div>
+  {/if}
 
 <!-- =========================================================================
-     Loaded state — three-pane viewer
+     Loaded state — guides or governance shell
+     ========================================================================= -->
+{:else if editorMode === "guides"}
+  <GuidesShell
+    repoName={repoName}
+    onOpenAnother={() => {
+      repo = null;
+      sectionRecords = {};
+      selectedId = null;
+      diagnostics = [];
+      editorMode = null;
+      appState = "idle";
+    }}
+  />
+
+<!-- =========================================================================
+     Loaded state — governance three-pane viewer
      ========================================================================= -->
 {:else}
   <AppShell>
@@ -449,6 +511,7 @@
                 formError = null;
                 decisionFlowMode = false;
                 decisionFlowError = null;
+                editorMode = null;
                 appState = "idle";
               }}
             >Open another file</button>
@@ -735,6 +798,51 @@
   .splash__retry {
     margin-top: 0.5rem;
     cursor: pointer;
+  }
+
+  .splash__back {
+    margin-top: 1rem;
+    background: none;
+    border: none;
+    color: var(--color-muted, #888);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 0;
+  }
+  .splash__back:hover {
+    text-decoration: underline;
+  }
+
+  .mode-picker {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .mode-picker__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 1rem 1.5rem;
+    min-width: 10rem;
+    border: 1px solid var(--color-border, #ddd);
+    border-radius: 6px;
+    background: var(--color-surface-1, #fafafa);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .mode-picker__btn:hover {
+    border-color: var(--color-accent, #4a90d9);
+    background: var(--color-surface-2, #f0f6ff);
+  }
+  .mode-picker__btn strong {
+    font-size: 0.95rem;
+  }
+  .mode-picker__btn span {
+    font-size: 0.75rem;
+    color: var(--color-muted, #888);
   }
 
   /* ---- Section heading ---- */

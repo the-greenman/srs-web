@@ -18,8 +18,10 @@ const GALLERY_PATH = path.join(__dirname, "fixtures", "gallery.srsj");
 test.describe("Record edit forms (B9)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
+    // Wait for WASM boot, then choose governance mode
+    await page.getByTestId("mode-governance").click({ timeout: 15000 });
     await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 15000,
+      timeout: 5000,
     });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
