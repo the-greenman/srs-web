@@ -9,6 +9,10 @@ import { expect, test } from "@playwright/test";
  * create, edit, and delete operations, and that instanceCount stays in sync.
  *
  * B13 validate-on-save: https://github.com/the-greenman/srs-web/issues/9
+ *
+ * Note: after a successful save, the new/edited record is auto-selected and the
+ * reading view opens (Phase A, srs-web#39). Inspector sections (Validation,
+ * Repository) remain accessible in the right rail regardless of reading view state.
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -60,8 +64,9 @@ test.describe("Validate on save (B13)", () => {
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    // Form should close — record list returns
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
+    // After save, the new record is auto-selected and the reading view opens.
+    // The inspector pane is still visible — check validation and repo count there.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
 
     // Validation should still be clean
     await expect(
@@ -85,17 +90,15 @@ test.describe("Validate on save (B13)", () => {
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
+    // After save, the new record is auto-selected and the reading view opens.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
 
-    // Read instanceCount after create
+    // Read instanceCount after create (inspector still visible)
     const repoAside = page.locator(".inspector__title").filter({ hasText: "Repository" }).locator(".inspector__title-aside");
     const countAfterCreate = parseInt((await repoAside.textContent()) ?? "0", 10);
 
-    // Select the newly created record (auto-selected after create, but verify)
+    // The new record is selected; the inspector shows the Delete button.
     const deleteBtn = page.locator("button.inspector__btn--danger", { hasText: "Delete" });
-    if (!(await deleteBtn.isVisible())) {
-      await page.locator(".record-list__item").filter({ hasText: "To Delete For Validation" }).click();
-    }
     await expect(deleteBtn).toBeVisible({ timeout: 3000 });
 
     // Delete it
@@ -123,8 +126,9 @@ test.describe("Validate on save (B13)", () => {
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    // After create, record is auto-selected and list view returns
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
+    // After create, the record is auto-selected and the reading view opens.
+    // The inspector shows Edit button for the selected draft record.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
 
     // Click Edit — the new draft record is selected; "draft" is not immutable
     await page.locator("button.inspector__btn", { hasText: "Edit" }).click();
@@ -137,8 +141,8 @@ test.describe("Validate on save (B13)", () => {
     // Save
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    // Form should close
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
+    // After edit-save, the record is still selected and the reading view returns.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
 
     // Validation section should still be clean
     await expect(

@@ -6,7 +6,9 @@
   fields are hardcoded; all derive from `blueprintSchema()`.
 
   ADR-001: zero SRS semantics in TypeScript.
+  ADR-003: Blueprint drives authoring; document views drive rendering.
   C8 blueprint-schema-driven guides renderer: srs-web#26
+  srs-web#39: ported to shared AppShell/Nav/Inspector design system
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -36,6 +38,17 @@
   } from "$lib/guides/blueprint-utils.js";
   import RecordForm from "$lib/components/RecordForm.svelte";
   import SectionForm from "$lib/guides/SectionForm.svelte";
+  import AppShell from "$lib/components/AppShell.svelte";
+  import Nav from "$lib/components/Nav.svelte";
+  import NavGroup from "$lib/components/NavGroup.svelte";
+  import NavItem from "$lib/components/NavItem.svelte";
+  import Main from "$lib/components/Main.svelte";
+  import Topbar from "$lib/components/Topbar.svelte";
+  import Workspace from "$lib/components/Workspace.svelte";
+  import Inspector from "$lib/components/Inspector.svelte";
+  import InspectorSection from "$lib/components/InspectorSection.svelte";
+  import Button from "$lib/components/Button.svelte";
+  import PreviewPane from "$lib/components/PreviewPane.svelte";
 
   // ---------------------------------------------------------------------------
   // muSrs guide blueprint + document-view UUIDs (stable — part of the package)
@@ -107,6 +120,13 @@
 
   /** Schema load error (non-fatal; shown in the shell). */
   let schemaError = $state<string | null>(null);
+
+  /** Export error (non-fatal; shown in the shell). */
+  let exportError = $state<string | null>(null);
+
+  /** HTML preview of the selected guide (rendered via renderDocumentView "html"). */
+  let previewHtml = $state<string | null>(null);
+  let previewLoading = $state(false);
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -203,6 +223,23 @@
     }
   }
 
+  /** Render the selected guide to HTML for the preview pane. */
+  function refreshPreview() {
+    if (!selectedGuideId || !selectedContainerId) {
+      previewHtml = null;
+      return;
+    }
+    previewLoading = true;
+    try {
+      const result = renderDocumentView(repo, GUIDE_VIEW_ID, "html", selectedContainerId);
+      previewHtml = result.rendered && result.rendered.trim() ? result.rendered : null;
+    } catch {
+      previewHtml = null;
+    } finally {
+      previewLoading = false;
+    }
+  }
+
   /** Reload guides + sections from WASM, then re-scope the selected guide's sections. */
   function reload() {
     if (!guideTypeId) return;
@@ -211,6 +248,7 @@
     guides = all.filter((r) => r.typeId === guideTypeId);
     sections = all.filter((r) => sectionTypeIds.has(r.typeId));
     refreshSections();
+    refreshPreview();
   }
 
   // ---------------------------------------------------------------------------
@@ -380,9 +418,6 @@
     download(srsj, `${repoName.replace(/\s+/g, "-").toLowerCase()}.srsj`);
   }
 
-  /** Export error (non-fatal; shown in the shell). */
-  let exportError = $state<string | null>(null);
-
   /**
    * C10 — export the selected guide as a JSON DocumentViewProjection.
    * Resolves the guide's container (it is that container's root), renders the
@@ -426,260 +461,216 @@
   }
 </script>
 
-<div class="guides-shell" data-testid="guides-shell">
-  <!-- ======================================================================
-       Header
-       ====================================================================== -->
-  <header class="guides-shell__header">
-    <span class="guides-shell__eyebrow">srs · guides</span>
-    <h1 class="guides-shell__repo">{repoName}</h1>
-    <div class="guides-shell__actions">
-      <button
-        class="guides-shell__action-btn"
-        data-testid="guides-export-btn"
-        onclick={handleExport}
-        title="Export .srsj"
-      >Export .srsj</button>
-      <button
-        class="guides-shell__action-btn guides-shell__action-btn--muted"
-        onclick={onOpenAnother}
-      >Open another file</button>
-    </div>
-  </header>
-
-  {#if schemaError}
-    <div class="guides-shell__error" role="alert">{schemaError}</div>
-  {/if}
-
-  <!-- ======================================================================
-       Main two-column layout
-       ====================================================================== -->
-  <div class="guides-shell__body">
-    <!-- ----------------------------------------------------------------
-         Left: Guide list
-         ---------------------------------------------------------------- -->
-    <aside class="guides-shell__sidebar">
-      <div class="guides-shell__sidebar-header">
-        <span class="guides-shell__sidebar-title">Guides</span>
-        <button
-          class="guides-shell__new-btn"
-          data-testid="guides-new-guide"
-          onclick={openNewGuide}
-        >+ New</button>
-      </div>
-
-      <ul class="guides-shell__guide-list" data-testid="guides-guide-list">
-        {#each guides as guide (guide.instanceId)}
-          <li>
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div
-              class="guides-shell__guide-item"
-              class:guides-shell__guide-item--active={guide.instanceId === selectedGuideId}
-              data-testid="guides-guide-item"
-              onclick={() => {
-                selectedGuideId = guide.instanceId;
-                cancelForm();
-                refreshSections();
-              }}
-            >
-              {guideLabel(guide)}
+<div data-testid="guides-shell">
+  <AppShell>
+    {#snippet nav()}
+      <Nav repo={repoName} eyebrow="srs · guides">
+        {#snippet children()}
+          <NavGroup label="Guides">
+            <div data-testid="guides-guide-list">
+              {#each guides as guide (guide.instanceId)}
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <div
+                  data-testid="guides-guide-item"
+                  onclick={() => {
+                    selectedGuideId = guide.instanceId;
+                    cancelForm();
+                    refreshSections();
+                    refreshPreview();
+                  }}
+                >
+                  <NavItem
+                    label={guideLabel(guide)}
+                    active={guide.instanceId === selectedGuideId}
+                  />
+                </div>
+              {/each}
+              {#if guides.length === 0}
+                <p class="guides-nav__empty">No guides yet</p>
+              {/if}
             </div>
-          </li>
-        {/each}
-        {#if guides.length === 0}
-          <li class="guides-shell__empty">No guides yet</li>
+          </NavGroup>
+        {/snippet}
+        {#snippet footer()}
+          <Button
+            variant="ghost"
+            onDark
+            data-testid="guides-new-guide"
+            onclick={openNewGuide}
+          >+ New guide</Button>
+        {/snippet}
+      </Nav>
+    {/snippet}
+
+    {#snippet main()}
+      <Main>
+        <Topbar>
+          {#snippet crumb()}
+            <span class="topbar__repo">{repoName}</span>
+          {/snippet}
+          {#snippet actions()}
+            <Button
+              variant="ghost"
+              data-testid="guides-export-btn"
+              onclick={handleExport}
+            >Export .srsj</Button>
+            <Button variant="ghost" onclick={onOpenAnother}>Open another file</Button>
+          {/snippet}
+        </Topbar>
+
+        {#if schemaError}
+          <div class="guides-error" role="alert">{schemaError}</div>
         {/if}
-      </ul>
-    </aside>
 
-    <!-- ----------------------------------------------------------------
-         Right: Detail + form area
-         ---------------------------------------------------------------- -->
-    <main class="guides-shell__main">
-      {#if formMode !== null && activeSectionDescriptor !== null}
-        <!-- Section form (flat fields + groups: tables, items) -->
-        <div class="guides-shell__form-panel">
-          <SectionForm
-            label={activeSectionDescriptor.label}
-            fields={activeSectionDescriptor.fields}
-            groups={activeSectionDescriptor.groups}
-            record={editingRecord}
-            onSave={handleSave}
-            onCancel={cancelForm}
-            saving={formSaving}
-            saveError={formError}
-          />
-        </div>
-      {:else if formMode !== null && activeFormDef !== null}
-        <!-- Guide (root) form -->
-        <div class="guides-shell__form-panel">
-          <RecordForm
-            schema={activeFormDef}
-            record={editingRecord}
-            onSave={handleSave}
-            onCancel={cancelForm}
-            saving={formSaving}
-            saveError={formError}
-          />
-        </div>
-      {:else if selectedGuideId}
-        {@const selectedGuide = guides.find((g) => g.instanceId === selectedGuideId)}
-        {#if selectedGuide}
-          <div class="guides-shell__detail">
-            <!-- Guide header -->
-            <div class="guides-shell__detail-header">
-              <h2 class="guides-shell__detail-title">{guideLabel(selectedGuide)}</h2>
-              <button
-                class="guides-shell__action-btn"
-                data-testid="guides-export-guide-json"
-                onclick={handleExportGuideJson}
-                title="Export this guide as a JSON document-view projection"
-              >Export guide JSON</button>
-              <button
-                class="guides-shell__action-btn"
-                data-testid="guides-edit-guide"
-                onclick={() => openEditGuide(selectedGuide)}
-              >Edit</button>
+        <Workspace>
+          {#if formMode !== null && activeSectionDescriptor !== null}
+            <div class="guides-form-panel">
+              <SectionForm
+                label={activeSectionDescriptor.label}
+                fields={activeSectionDescriptor.fields}
+                groups={activeSectionDescriptor.groups}
+                record={editingRecord}
+                onSave={handleSave}
+                onCancel={cancelForm}
+                saving={formSaving}
+                saveError={formError}
+              />
             </div>
+          {:else if formMode !== null && activeFormDef !== null}
+            <div class="guides-form-panel">
+              <RecordForm
+                schema={activeFormDef}
+                record={editingRecord}
+                onSave={handleSave}
+                onCancel={cancelForm}
+                saving={formSaving}
+                saveError={formError}
+              />
+            </div>
+          {:else if selectedGuideId}
+            {@const selectedGuide = guides.find((g) => g.instanceId === selectedGuideId)}
+            {#if selectedGuide}
+              <div class="guides-detail">
+                <div class="guides-detail__header">
+                  <h2 class="guides-detail__title">{guideLabel(selectedGuide)}</h2>
+                  <Button
+                    variant="ghost"
+                    data-testid="guides-export-guide-json"
+                    onclick={handleExportGuideJson}
+                    title="Export this guide as a JSON document-view projection"
+                  >Export guide JSON</Button>
+                  <Button
+                    variant="ghost"
+                    data-testid="guides-edit-guide"
+                    onclick={() => openEditGuide(selectedGuide)}
+                  >Edit</Button>
+                </div>
 
-            {#if exportError}
-              <div class="guides-shell__error" role="alert" data-testid="guides-export-error">
-                {exportError}
-              </div>
-            {/if}
-
-            <!-- Section controls -->
-            <div class="guides-shell__section-bar">
-              <span class="guides-shell__section-label">Sections</span>
-              <div class="guides-shell__section-picker-wrap">
-                <button
-                  class="guides-shell__new-btn"
-                  data-testid="guides-add-section"
-                  onclick={() => { sectionPickerOpen = !sectionPickerOpen; }}
-                >+ Add Section</button>
-                {#if sectionPickerOpen}
-                  <div class="guides-shell__section-picker" role="menu">
-                    {#each sectionTypeList as st (st.typeId)}
-                      <button
-                        class="guides-shell__section-type-btn"
-                        data-testid="guides-section-type-{st.typeId}"
-                        onclick={() => openNewSection(st)}
-                        role="menuitem"
-                      >{st.label}</button>
-                    {/each}
+                {#if exportError}
+                  <div class="guides-error" role="alert" data-testid="guides-export-error">
+                    {exportError}
                   </div>
                 {/if}
-              </div>
-            </div>
 
-            <!-- Section list -->
-            <ul class="guides-shell__section-list" data-testid="guides-section-list">
-              {#each orderedSections as section, index (section.instanceId)}
-                <li class="guides-shell__section-row" data-testid="guides-section-item">
-                  <!-- svelte-ignore a11y_click_events_have_key_events -->
-                  <!-- svelte-ignore a11y_no_static_element_interactions -->
-                  <div
-                    class="guides-shell__section-item"
-                    data-testid="guides-section-open"
-                    onclick={() => openEditSection(section)}
-                  >
-                    <span class="guides-shell__section-type">{sectionTypeName(section)}</span>
-                    <span class="guides-shell__section-heading">{sectionLabel(section)}</span>
+                <div class="guides-section-bar">
+                  <span class="guides-section-label">Sections</span>
+                  <div class="guides-section-picker-wrap">
+                    <Button
+                      variant="ghost"
+                      data-testid="guides-add-section"
+                      onclick={() => { sectionPickerOpen = !sectionPickerOpen; }}
+                    >+ Add Section</Button>
+                    {#if sectionPickerOpen}
+                      <div class="guides-section-picker" role="menu">
+                        {#each sectionTypeList as st (st.typeId)}
+                          <button
+                            class="guides-section-type-btn"
+                            data-testid="guides-section-type-{st.typeId}"
+                            onclick={() => openNewSection(st)}
+                            role="menuitem"
+                          >{st.label}</button>
+                        {/each}
+                      </div>
+                    {/if}
                   </div>
-                  <div class="guides-shell__section-controls">
-                    <button
-                      class="guides-shell__icon-btn"
-                      data-testid="guides-section-up"
-                      title="Move up"
-                      disabled={index === 0}
-                      onclick={() => moveSection(index, -1)}
-                    >↑</button>
-                    <button
-                      class="guides-shell__icon-btn"
-                      data-testid="guides-section-down"
-                      title="Move down"
-                      disabled={index === orderedSections.length - 1}
-                      onclick={() => moveSection(index, 1)}
-                    >↓</button>
-                    <button
-                      class="guides-shell__icon-btn guides-shell__icon-btn--danger"
-                      data-testid="guides-section-remove"
-                      title="Remove section"
-                      onclick={() => removeSection(section)}
-                    >✕</button>
-                  </div>
-                </li>
-              {/each}
-              {#if orderedSections.length === 0}
-                <li class="guides-shell__empty">No sections yet — use "Add Section" above</li>
-              {/if}
-            </ul>
-          </div>
-        {/if}
-      {:else}
-        <div class="guides-shell__placeholder">
-          <p>Select a guide from the list, or create a new one.</p>
-        </div>
-      {/if}
-    </main>
-  </div>
+                </div>
+
+                <ul class="guides-section-list" data-testid="guides-section-list">
+                  {#each orderedSections as section, index (section.instanceId)}
+                    <li class="guides-section-row" data-testid="guides-section-item">
+                      <!-- svelte-ignore a11y_click_events_have_key_events -->
+                      <!-- svelte-ignore a11y_no_static_element_interactions -->
+                      <div
+                        class="guides-section-item"
+                        data-testid="guides-section-open"
+                        onclick={() => openEditSection(section)}
+                      >
+                        <span class="guides-section-type">{sectionTypeName(section)}</span>
+                        <span
+                          class="guides-section-heading"
+                          data-testid="guides-section-heading"
+                        >{sectionLabel(section)}</span>
+                      </div>
+                      <div class="guides-section-controls">
+                        <button
+                          class="guides-icon-btn"
+                          data-testid="guides-section-up"
+                          title="Move up"
+                          disabled={index === 0}
+                          onclick={() => moveSection(index, -1)}
+                        >↑</button>
+                        <button
+                          class="guides-icon-btn"
+                          data-testid="guides-section-down"
+                          title="Move down"
+                          disabled={index === orderedSections.length - 1}
+                          onclick={() => moveSection(index, 1)}
+                        >↓</button>
+                        <button
+                          class="guides-icon-btn guides-icon-btn--danger"
+                          data-testid="guides-section-remove"
+                          title="Remove section"
+                          onclick={() => removeSection(section)}
+                        >✕</button>
+                      </div>
+                    </li>
+                  {/each}
+                  {#if orderedSections.length === 0}
+                    <li class="guides-section-empty">No sections yet — use "Add Section" above</li>
+                  {/if}
+                </ul>
+              </div>
+            {/if}
+          {:else}
+            <p class="guides-placeholder">Select a guide from the list, or create a new one.</p>
+          {/if}
+        </Workspace>
+      </Main>
+    {/snippet}
+
+    {#snippet inspector()}
+      <Inspector label="Guide">
+        <InspectorSection title="Preview">
+          <PreviewPane html={previewHtml} loading={previewLoading} />
+        </InspectorSection>
+      </Inspector>
+    {/snippet}
+  </AppShell>
 </div>
 
 <style>
-  .guides-shell {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    font-family: var(--font-sans, sans-serif);
-    overflow: hidden;
-  }
+  /* Scoped styles for elements not covered by the shared design system tokens */
 
-  /* Header */
-  .guides-shell__header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.6rem 1.25rem;
-    background: var(--color-surface-1, #f5f5f5);
-    border-bottom: 1px solid var(--color-border, #ddd);
-    flex-shrink: 0;
-  }
-  .guides-shell__eyebrow {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-muted, #888);
-    flex-shrink: 0;
-  }
-  .guides-shell__repo {
-    flex: 1;
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .guides-shell__actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-shrink: 0;
-  }
-  .guides-shell__action-btn {
+  .guides-nav__empty {
+    padding: 0.5rem 1rem;
     font-size: 0.8rem;
-    padding: 0.3rem 0.7rem;
-    border: 1px solid var(--color-border, #ddd);
-    border-radius: 4px;
-    background: transparent;
-    cursor: pointer;
-  }
-  .guides-shell__action-btn--muted {
-    color: var(--color-muted, #888);
+    color: rgba(255, 255, 255, 0.45);
+    font-style: italic;
+    margin: 0;
   }
 
-  /* Error banner */
-  .guides-shell__error {
+  .guides-error {
     padding: 0.5rem 1.25rem;
     background: #fef2f2;
     color: #b91c1c;
@@ -687,99 +678,30 @@
     border-bottom: 1px solid #fca5a5;
   }
 
-  /* Two-column body */
-  .guides-shell__body {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
-
-  /* Sidebar */
-  .guides-shell__sidebar {
-    width: 220px;
-    flex-shrink: 0;
-    border-right: 1px solid var(--color-border, #ddd);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .guides-shell__sidebar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem 1rem 0.5rem;
-    border-bottom: 1px solid var(--color-border, #eee);
-  }
-  .guides-shell__sidebar-title {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-muted, #888);
-  }
-  .guides-shell__new-btn {
-    font-size: 0.75rem;
-    padding: 0.2rem 0.5rem;
-    border: 1px solid var(--color-border, #ddd);
-    border-radius: 4px;
-    background: transparent;
-    cursor: pointer;
-  }
-  .guides-shell__guide-list {
-    list-style: none;
-    margin: 0;
-    padding: 0.5rem 0;
-    overflow-y: auto;
-    flex: 1;
-  }
-  .guides-shell__guide-item {
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
-    cursor: pointer;
-    border-left: 2px solid transparent;
-  }
-  .guides-shell__guide-item:hover {
-    background: var(--color-surface-hover, #f0f0f0);
-  }
-  .guides-shell__guide-item--active {
-    border-left-color: var(--color-accent, #3b82f6);
-    background: var(--color-surface-active, #eff6ff);
-    font-weight: 500;
-  }
-  .guides-shell__empty {
-    padding: 0.5rem 1rem;
-    font-size: 0.8rem;
-    color: var(--color-muted, #aaa);
-    font-style: italic;
-  }
-
-  /* Main detail area */
-  .guides-shell__main {
-    flex: 1;
-    overflow-y: auto;
-  }
-  .guides-shell__form-panel {
+  .guides-form-panel {
     max-width: 640px;
     padding: 1rem;
   }
-  .guides-shell__detail {
+
+  .guides-detail {
     padding: 1.25rem 1.5rem;
   }
-  .guides-shell__detail-header {
+
+  .guides-detail__header {
     display: flex;
     align-items: center;
     gap: 1rem;
     margin-bottom: 1.25rem;
   }
-  .guides-shell__detail-title {
+
+  .guides-detail__title {
     flex: 1;
     font-size: 1.1rem;
     font-weight: 600;
     margin: 0;
   }
 
-  /* Section controls */
-  .guides-shell__section-bar {
+  .guides-section-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -787,17 +709,20 @@
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--color-border, #eee);
   }
-  .guides-shell__section-label {
+
+  .guides-section-label {
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--color-muted, #888);
   }
-  .guides-shell__section-picker-wrap {
+
+  .guides-section-picker-wrap {
     position: relative;
   }
-  .guides-shell__section-picker {
+
+  .guides-section-picker {
     position: absolute;
     right: 0;
     top: calc(100% + 4px);
@@ -809,7 +734,8 @@
     min-width: 180px;
     overflow: hidden;
   }
-  .guides-shell__section-type-btn {
+
+  .guides-section-type-btn {
     display: block;
     width: 100%;
     text-align: left;
@@ -819,23 +745,25 @@
     background: transparent;
     cursor: pointer;
   }
-  .guides-shell__section-type-btn:hover {
+
+  .guides-section-type-btn:hover {
     background: var(--color-surface-hover, #f5f5f5);
   }
 
-  /* Section list */
-  .guides-shell__section-list {
+  .guides-section-list {
     list-style: none;
     margin: 0;
     padding: 0;
   }
-  .guides-shell__section-row {
+
+  .guides-section-row {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     border-bottom: 1px solid var(--color-border, #eee);
   }
-  .guides-shell__section-item {
+
+  .guides-section-item {
     display: flex;
     align-items: baseline;
     gap: 0.75rem;
@@ -845,15 +773,18 @@
     flex: 1;
     min-width: 0;
   }
-  .guides-shell__section-item:hover {
+
+  .guides-section-item:hover {
     background: var(--color-surface-hover, #f5f5f5);
   }
-  .guides-shell__section-controls {
+
+  .guides-section-controls {
     display: flex;
     gap: 0.2rem;
     flex-shrink: 0;
   }
-  .guides-shell__icon-btn {
+
+  .guides-icon-btn {
     font-size: 0.8rem;
     line-height: 1;
     width: 1.6rem;
@@ -864,18 +795,22 @@
     cursor: pointer;
     color: var(--color-muted, #666);
   }
-  .guides-shell__icon-btn:disabled {
+
+  .guides-icon-btn:disabled {
     opacity: 0.35;
     cursor: default;
   }
-  .guides-shell__icon-btn:not(:disabled):hover {
+
+  .guides-icon-btn:not(:disabled):hover {
     background: var(--color-surface-hover, #f0f0f0);
   }
-  .guides-shell__icon-btn--danger {
+
+  .guides-icon-btn--danger {
     color: #b91c1c;
     border-color: #fca5a5;
   }
-  .guides-shell__section-type {
+
+  .guides-section-type {
     font-size: 0.7rem;
     color: var(--color-muted, #888);
     background: var(--color-surface-1, #f0f0f0);
@@ -883,17 +818,26 @@
     padding: 0.1rem 0.4rem;
     flex-shrink: 0;
   }
-  .guides-shell__section-heading {
+
+  .guides-section-heading {
     font-size: 0.9rem;
   }
 
-  /* Placeholder */
-  .guides-shell__placeholder {
+  .guides-section-empty {
+    padding: 0.5rem 0;
+    font-size: 0.8rem;
+    color: var(--color-muted, #aaa);
+    font-style: italic;
+  }
+
+  .guides-placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
     height: 100%;
     color: var(--color-muted, #aaa);
     font-size: 0.9rem;
+    padding: 2rem;
   }
+
 </style>
