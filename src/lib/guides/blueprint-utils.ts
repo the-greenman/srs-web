@@ -12,7 +12,7 @@
  */
 
 import type { FieldFormDef } from "$lib/governance/form-schema.js";
-import type { BlueprintSchema, SchemaDefinition } from "$lib/srs-client.js";
+import type { BlueprintSchema, SchemaDefinition, SchemaProperty } from "$lib/srs-client.js";
 
 /**
  * Extract the definition UUID from a JSON Schema `$ref` string.
@@ -26,24 +26,69 @@ export function refToTypeId(ref: string): string {
  * Convert a blueprint SchemaDefinition into a sorted FieldFormDef array
  * suitable for RecordForm. Properties are sorted by `x-srs-order`.
  */
+function isGroup(prop: SchemaProperty): boolean {
+  return prop["x-srs-group-id"] != null;
+}
+
+/** Map a single scalar schema property to a FieldFormDef. */
+function propertyToField(name: string, prop: SchemaProperty, required: boolean): FieldFormDef {
+  let valueType: FieldFormDef["valueType"];
+  if (prop.enum) {
+    valueType = "select";
+  } else if (prop["x-srs-widget"] === "textarea") {
+    valueType = "text";
+  } else {
+    valueType = "string";
+  }
+  return {
+    fieldId: prop["x-srs-field-id"] ?? name,
+    label: prop.title || name,
+    valueType,
+    required,
+    options: prop.enum,
+    name,
+  };
+}
+
 export function definitionToFields(def: SchemaDefinition): FieldFormDef[] {
   return Object.entries(def.properties)
+    .filter(([, prop]) => !isGroup(prop))
+    .sort(([, a], [, b]) => (a["x-srs-order"] ?? 0) - (b["x-srs-order"] ?? 0))
+    .map(([name, prop]) => propertyToField(name, prop, def.required?.includes(name) ?? false));
+}
+
+/**
+ * A resolved field-group descriptor (ext:field-groups) derived from a section
+ * definition. Repeatable groups carry one or more entries; each entry is a set
+ * of values for `fields`. `compositeRenderer` (e.g. "table") selects a widget.
+ */
+export interface GroupFormDef {
+  groupId: string;
+  label: string;
+  order: number;
+  repeatable: boolean;
+  compositeRenderer?: string;
+  fields: FieldFormDef[];
+}
+
+/** Extract field groups (array/object group properties) from a definition. */
+export function definitionToGroups(def: SchemaDefinition): GroupFormDef[] {
+  return Object.entries(def.properties)
+    .filter(([, prop]) => isGroup(prop))
     .sort(([, a], [, b]) => (a["x-srs-order"] ?? 0) - (b["x-srs-order"] ?? 0))
     .map(([name, prop]) => {
-      let valueType: FieldFormDef["valueType"];
-      if (prop.enum) {
-        valueType = "select";
-      } else if (prop["x-srs-widget"] === "textarea") {
-        valueType = "text";
-      } else {
-        valueType = "string";
-      }
+      const itemProps = prop.items?.properties ?? {};
+      const itemRequired = prop.items?.required ?? [];
+      const fields = Object.entries(itemProps)
+        .sort(([, a], [, b]) => (a["x-srs-order"] ?? 0) - (b["x-srs-order"] ?? 0))
+        .map(([fname, fprop]) => propertyToField(fname, fprop, itemRequired.includes(fname)));
       return {
-        fieldId: prop["x-srs-field-id"],
+        groupId: prop["x-srs-group-id"] ?? name,
         label: prop.title || name,
-        valueType,
-        required: def.required?.includes(name) ?? false,
-        options: prop.enum,
+        order: prop["x-srs-order"] ?? 0,
+        repeatable: prop["x-srs-repeatable"] ?? false,
+        compositeRenderer: prop["x-srs-composite-renderer"],
+        fields,
       };
     });
 }
@@ -56,6 +101,7 @@ export interface SectionTypeDescriptor {
   typeVersion: number;
   label: string;
   fields: FieldFormDef[];
+  groups: GroupFormDef[];
 }
 
 /**
@@ -75,6 +121,7 @@ export function sectionTypes(schema: BlueprintSchema): SectionTypeDescriptor[] {
       typeVersion: 1,
       label: labelForTypeId(typeId),
       fields: def ? definitionToFields(def) : [],
+      groups: def ? definitionToGroups(def) : [],
     };
   });
 }

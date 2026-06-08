@@ -35,6 +35,7 @@
     type SectionTypeDescriptor,
   } from "$lib/guides/blueprint-utils.js";
   import RecordForm from "$lib/components/RecordForm.svelte";
+  import SectionForm from "$lib/guides/SectionForm.svelte";
 
   // ---------------------------------------------------------------------------
   // muSrs guide blueprint + document-view UUIDs (stable — part of the package)
@@ -87,6 +88,9 @@
 
   /** Schema for the currently open form. */
   let activeFormDef = $state<TypeFormDef | null>(null);
+
+  /** Descriptor (fields + groups) for the currently open section form, if any. */
+  let activeSectionDescriptor = $state<SectionTypeDescriptor | null>(null);
 
   /** Record being edited (edit modes only). */
   let editingRecord = $state<SrsRecord | null>(null);
@@ -279,14 +283,8 @@
     createSectionTypeId = descriptor.typeId;
     createSectionTypeVersion = descriptor.typeVersion;
     formMode = "create-section";
-    activeFormDef = {
-      typeId: descriptor.typeId,
-      typeVersion: descriptor.typeVersion,
-      typeNamespace: "com.mudemocracy",
-      typeName: descriptor.label,
-      label: descriptor.label,
-      fields: descriptor.fields,
-    };
+    activeSectionDescriptor = descriptor;
+    activeFormDef = null;
     editingRecord = null;
     formError = null;
   }
@@ -295,14 +293,8 @@
     const descriptor = sectionTypeList.find((st) => st.typeId === section.typeId);
     if (!descriptor) return;
     formMode = "edit-section";
-    activeFormDef = {
-      typeId: descriptor.typeId,
-      typeVersion: descriptor.typeVersion,
-      typeNamespace: "com.mudemocracy",
-      typeName: descriptor.label,
-      label: descriptor.label,
-      fields: descriptor.fields,
-    };
+    activeSectionDescriptor = descriptor;
+    activeFormDef = null;
     editingRecord = section;
     formError = null;
   }
@@ -310,6 +302,7 @@
   function cancelForm() {
     formMode = null;
     activeFormDef = null;
+    activeSectionDescriptor = null;
     editingRecord = null;
     formError = null;
   }
@@ -504,8 +497,22 @@
          Right: Detail + form area
          ---------------------------------------------------------------- -->
     <main class="guides-shell__main">
-      {#if formMode !== null && activeFormDef !== null}
-        <!-- Form panel -->
+      {#if formMode !== null && activeSectionDescriptor !== null}
+        <!-- Section form (flat fields + groups: tables, items) -->
+        <div class="guides-shell__form-panel">
+          <SectionForm
+            label={activeSectionDescriptor.label}
+            fields={activeSectionDescriptor.fields}
+            groups={activeSectionDescriptor.groups}
+            record={editingRecord}
+            onSave={handleSave}
+            onCancel={cancelForm}
+            saving={formSaving}
+            saveError={formError}
+          />
+        </div>
+      {:else if formMode !== null && activeFormDef !== null}
+        <!-- Guide (root) form -->
         <div class="guides-shell__form-panel">
           <RecordForm
             schema={activeFormDef}
