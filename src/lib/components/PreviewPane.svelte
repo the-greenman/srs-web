@@ -75,7 +75,6 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 200px;
   }
 
   .preview-pane__status {
@@ -88,7 +87,9 @@
   .preview-pane__frame {
     border: none;
     width: 100%;
+    height: 100%;
     flex: 1;
-    min-height: 200px;
+    min-height: 0;
+    display: block;
   }
 </style>

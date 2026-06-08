@@ -124,6 +124,9 @@
   /** Export error (non-fatal; shown in the shell). */
   let exportError = $state<string | null>(null);
 
+  /** Whether the preview inspector is force-shown on narrow screens. */
+  let previewOpen = $state(false);
+
   /** HTML preview of the selected guide (rendered via renderDocumentView "html"). */
   let previewHtml = $state<string | null>(null);
   let previewLoading = $state(false);
@@ -516,6 +519,13 @@
               onclick={handleExport}
             >Export .srsj</Button>
             <Button variant="ghost" onclick={onOpenAnother}>Open another file</Button>
+            <Button
+              variant="ghost"
+              class="guides-preview-toggle"
+              data-testid="guides-preview-toggle"
+              onclick={() => { previewOpen = !previewOpen; }}
+              title={previewOpen ? "Hide preview" : "Show preview"}
+            >{previewOpen ? "Hide preview" : "Preview"}</Button>
           {/snippet}
         </Topbar>
 
@@ -523,7 +533,7 @@
           <div class="guides-error" role="alert">{schemaError}</div>
         {/if}
 
-        <Workspace>
+        <Workspace wide>
           {#if formMode !== null && activeSectionDescriptor !== null}
             <div class="guides-form-panel">
               <SectionForm
@@ -650,8 +660,8 @@
     {/snippet}
 
     {#snippet inspector()}
-      <Inspector label="Guide">
-        <InspectorSection title="Preview">
+      <Inspector label="Guide" open={previewOpen}>
+        <InspectorSection title="Preview" grow>
           <PreviewPane html={previewHtml} loading={previewLoading} />
         </InspectorSection>
       </Inspector>
@@ -838,6 +848,13 @@
     color: var(--color-muted, #aaa);
     font-size: 0.9rem;
     padding: 2rem;
+  }
+
+  /* Preview toggle only useful on narrow screens — inspector is always visible above 1100px */
+  @media (min-width: 1101px) {
+    :global(.guides-preview-toggle) {
+      display: none;
+    }
   }
 
 </style>

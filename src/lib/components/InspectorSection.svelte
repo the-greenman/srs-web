@@ -10,15 +10,18 @@
   let {
     title,
     aside,
+    grow = false,
     children,
   }: {
     title: string;
     aside?: string;
+    /** Stretch this section to fill remaining inspector height. */
+    grow?: boolean;
     children?: Snippet;
   } = $props();
 </script>
 
-<section class="inspector__section">
+<section class="inspector__section" class:inspector__section--grow={grow}>
   <div class="inspector__title">
     {title}{#if aside}<span class="inspector__title-aside">{aside}</span>{/if}
   </div>

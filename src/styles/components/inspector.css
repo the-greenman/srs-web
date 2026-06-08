@@ -18,10 +18,57 @@
   padding: var(--space-md) var(--space-sm);
   border-left: var(--rule);
   background: var(--color-surface);
+  /* flex column so a grow section can take remaining height */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Drag handle — thin grab strip at the left edge */
+.inspector__drag-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  z-index: 10;
+}
+.inspector__drag-handle:hover,
+.inspector__drag-handle:active {
+  background: var(--grey-4, #ccc);
 }
 
 .inspector__section + .inspector__section {
   margin-top: var(--space-md);
+}
+
+/* A section that grows to fill the remaining rail height */
+.inspector__section--grow {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* cancel the top margin so the grow section butts up cleanly */
+  margin-top: 0 !important;
+}
+.inspector__section--grow > :not(.inspector__title) {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Force-show on narrow screens (toggle via JS) */
+@media (max-width: 1100px) {
+  .inspector--open {
+    display: flex !important;
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--inspector-width, 320px);
+    z-index: 50;
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
+  }
 }
 
 .inspector__title {
