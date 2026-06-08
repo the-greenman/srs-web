@@ -226,13 +226,13 @@
                   <tr>
                     {#each Array(colCount(g, entry)) as _, ci (ci)}
                       <th>
-                        <input
+                        <textarea
                           class="te-input"
                           data-testid="te-header"
-                          value={tableCols(g, entry)[ci] ?? ""}
+                          rows={1}
                           oninput={(e) => setHeader(g, i, ci, e.currentTarget.value)}
                           disabled={saving}
-                        />
+                        >{tableCols(g, entry)[ci] ?? ""}</textarea>
                       </th>
                     {/each}
                     <th class="te-actions"></th>
@@ -243,13 +243,13 @@
                     <tr data-testid="te-row">
                       {#each Array(colCount(g, entry)) as _, ci (ci)}
                         <td>
-                          <input
+                          <textarea
                             class="te-input"
                             data-testid="te-cell"
-                            value={row[ci] ?? ""}
+                            rows={2}
                             oninput={(e) => setCell(g, i, ri, ci, e.currentTarget.value)}
                             disabled={saving}
-                          />
+                          >{row[ci] ?? ""}</textarea>
                         </td>
                       {/each}
                       <td class="te-actions">
@@ -350,6 +350,7 @@
   .te-table td {
     border: 1px solid var(--color-border, #ddd);
     padding: 0;
+    vertical-align: top;
   }
   .te-table th {
     background: var(--color-surface-1, #f5f5f5);
@@ -357,10 +358,13 @@
   .te-input {
     width: 100%;
     border: none;
-    padding: 0.35rem 0.5rem;
+    padding: 0.5rem 0.6rem;
     font: inherit;
     background: transparent;
     box-sizing: border-box;
+    resize: vertical;
+    overflow: auto;
+    display: block;
   }
   .te-input:focus {
     outline: 2px solid var(--color-accent, #3b82f6);
