@@ -9,15 +9,15 @@
  * Terminal states map to an empty array — no outgoing transitions.
  */
 export const LIFECYCLE_TRANSITIONS: Record<string, string[]> = {
-  draft:      ["proposed", "active", "deferred"],
-  proposed:   ["active", "rejected", "deferred"],
-  active:     ["closed", "superseded"],
-  deferred:   ["active", "rejected"],
+  draft: ["proposed", "active", "deferred"],
+  proposed: ["active", "rejected", "deferred"],
+  active: ["closed", "superseded"],
+  deferred: ["active", "rejected"],
   // Terminal states — no transitions out
-  closed:     [],
-  rejected:   [],
+  closed: [],
+  rejected: [],
   superseded: [],
-  archived:   [],
+  archived: [],
 };
 
 /**
