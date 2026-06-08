@@ -16,6 +16,8 @@ export interface FieldFormDef {
   valueType: "string" | "text" | "select";
   required: boolean;
   options?: string[];
+  /** Schema property name (e.g. "columns", "rows"). Set for group sub-fields. */
+  name?: string;
 }
 
 export interface TypeFormDef {

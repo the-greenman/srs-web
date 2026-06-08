@@ -73,6 +73,7 @@ export interface SrsRecord {
   typeNamespace?: string;
   typeName?: string;
   fieldValues: FieldValue[];
+  groupValues?: GroupFieldValue[];
   lifecycle?: LifecycleState;
   createdAt?: string;
   updatedAt?: string;
@@ -119,9 +120,14 @@ export interface UpdateRecordInput {
   tags?: string[];
 }
 
+export interface GroupEntry {
+  fieldValues: FieldValue[];
+  entryId?: string;
+}
+
 export interface GroupFieldValue {
   groupId: string;
-  values: FieldValue[];
+  entries: GroupEntry[];
 }
 
 export interface SrsRelation {
@@ -208,6 +214,20 @@ export function loadRepo(srsj: string): SrsRepository {
 function normalizeRecord(raw: any): SrsRecord {
   // biome-ignore lint/suspicious/noExplicitAny: raw fv has unknown shape
   const rawFvs: any[] = raw.fieldValues ?? raw.field_values ?? [];
+  // biome-ignore lint/suspicious/noExplicitAny: raw group values have unknown shape
+  const rawGvs: any[] = raw.groupValues ?? raw.group_values ?? [];
+  const groupValues = rawGvs.map((gv) => ({
+    groupId: gv.groupId ?? gv.group_id,
+    // biome-ignore lint/suspicious/noExplicitAny: raw entry has unknown shape
+    entries: (gv.entries ?? []).map((e: any) => ({
+      // biome-ignore lint/suspicious/noExplicitAny: raw entry fv has unknown shape
+      fieldValues: (e.fieldValues ?? e.field_values ?? []).map((fv: any) => ({
+        fieldId: fv.fieldId ?? fv.field_id,
+        value: fv.value,
+      })),
+      entryId: e.entryId ?? e.entry_id,
+    })),
+  }));
   return {
     instanceId: raw.instanceId ?? raw.instance_id,
     typeId: raw.typeId ?? raw.type_id,
@@ -218,6 +238,7 @@ function normalizeRecord(raw: any): SrsRecord {
       fieldId: fv.fieldId ?? fv.field_id,
       value: fv.value,
     })),
+    groupValues: groupValues.length > 0 ? groupValues : undefined,
     lifecycle: raw.lifecycle,
     createdAt: raw.createdAt ?? raw.created_at,
     updatedAt: raw.updatedAt ?? raw.updated_at,
@@ -354,12 +375,21 @@ export function setLifecycleState(
 // ---------------------------------------------------------------------------
 
 export interface SchemaProperty {
-  title: string;
+  title?: string;
   type?: string;
   enum?: string[];
-  "x-srs-field-id": string;
-  "x-srs-order": number;
+  "x-srs-field-id"?: string;
+  "x-srs-order"?: number;
   "x-srs-widget"?: string;
+  // Field-group (ext:field-groups) array/object properties carry these:
+  "x-srs-group-id"?: string;
+  "x-srs-repeatable"?: boolean;
+  "x-srs-composite-renderer"?: string;
+  items?: {
+    type?: string;
+    properties?: Record<string, SchemaProperty>;
+    required?: string[];
+  };
 }
 
 export interface SchemaDefinition {
