@@ -66,14 +66,8 @@ test.describe("Lifecycle transitions (B11)", () => {
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    // Wait for list — new record auto-selected
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
-
-    // If the new record is not already selected, select it
-    const newCard = page.locator(".record-list__item").filter({ hasText: "Draft Article for Lifecycle Test" });
-    if (!(await page.locator(".inspector__transitions").isVisible())) {
-      await newCard.click();
-    }
+    // After save, the new record is auto-selected and the reading view opens.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
 
     // Should show transitions for draft: → proposed, → active, → deferred
     const transitionsDiv = page.locator(".inspector__transitions");
@@ -96,18 +90,14 @@ test.describe("Lifecycle transitions (B11)", () => {
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
-
-    // Select the newly created article if not already selected
-    const newCard = page.locator(".record-list__item").filter({ hasText: "Transition Test Article" });
-    if (!(await page.locator(".inspector__transitions").isVisible())) {
-      await newCard.click();
-    }
+    // After save, the new record is auto-selected and the reading view opens.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
 
     // Click "→ proposed"
     await page.locator(".inspector__btn--transition", { hasText: "→ proposed" }).click();
 
-    // The card in the list should now show the "proposed" status badge
+    // Click back to verify the list card shows the updated status.
+    await page.getByTestId("record-reading-back").click();
     await expect(
       page.locator(".record-list__item").filter({ hasText: "Transition Test Article" })
     ).toContainText("proposed", { timeout: 3000 });
@@ -179,13 +169,12 @@ test.describe("Lifecycle transitions (B11)", () => {
     // Modal should be gone
     await expect(page.locator(".modal-overlay")).not.toBeVisible();
 
-    // Article count should have increased by 1
-    await expect(page.locator(".record-list__item")).toHaveCount(initialCount + 1, { timeout: 3000 });
+    // The successor is auto-selected — reading view opens for the new draft.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
 
-    // The newly selected record (successor) should show "draft" status
-    // The successor is auto-selected after creation, so the card should show draft
-    const selectedItem = page.locator(".record-list__item--selected");
-    await expect(selectedItem).toContainText("draft", { timeout: 3000 });
+    // Click back to verify the list count increased by 1.
+    await page.getByTestId("record-reading-back").click();
+    await expect(page.locator(".record-list__item")).toHaveCount(initialCount + 1, { timeout: 3000 });
   });
 
   // --------------------------------------------------------------------------
@@ -200,13 +189,8 @@ test.describe("Lifecycle transitions (B11)", () => {
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("active");
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
-
-    // Select the new article if not already selected
-    const newCard = page.locator(".record-list__item").filter({ hasText: "To Be Closed" });
-    if (!(await page.locator(".inspector__transitions").isVisible())) {
-      await newCard.click();
-    }
+    // After save, the new record is auto-selected and the reading view opens.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
 
     // Should show active → closed and active → superseded
     await expect(page.locator(".inspector__transitions")).toBeVisible({ timeout: 3000 });
@@ -214,12 +198,13 @@ test.describe("Lifecycle transitions (B11)", () => {
     // Transition to "closed"
     await page.locator(".inspector__btn--transition", { hasText: "→ closed" }).click();
 
-    // The card should now show "closed"
+    // No transition buttons should be visible in the inspector (closed is terminal)
+    await expect(page.locator(".inspector__transitions")).not.toBeVisible();
+
+    // Click back to verify the list card shows the updated "closed" status.
+    await page.getByTestId("record-reading-back").click();
     await expect(
       page.locator(".record-list__item").filter({ hasText: "To Be Closed" })
     ).toContainText("closed", { timeout: 3000 });
-
-    // No transition buttons should be visible (closed is terminal)
-    await expect(page.locator(".inspector__transitions")).not.toBeVisible();
   });
 });

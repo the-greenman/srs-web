@@ -48,6 +48,7 @@
   import Inspector from "$lib/components/Inspector.svelte";
   import InspectorSection from "$lib/components/InspectorSection.svelte";
   import Button from "$lib/components/Button.svelte";
+  import PreviewPane from "$lib/components/PreviewPane.svelte";
 
   // ---------------------------------------------------------------------------
   // muSrs guide blueprint + document-view UUIDs (stable — part of the package)
@@ -122,6 +123,10 @@
 
   /** Export error (non-fatal; shown in the shell). */
   let exportError = $state<string | null>(null);
+
+  /** HTML preview of the selected guide (rendered via renderDocumentView "html"). */
+  let previewHtml = $state<string | null>(null);
+  let previewLoading = $state(false);
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -218,6 +223,23 @@
     }
   }
 
+  /** Render the selected guide to HTML for the preview pane. */
+  function refreshPreview() {
+    if (!selectedGuideId || !selectedContainerId) {
+      previewHtml = null;
+      return;
+    }
+    previewLoading = true;
+    try {
+      const result = renderDocumentView(repo, GUIDE_VIEW_ID, "html", selectedContainerId);
+      previewHtml = result.rendered && result.rendered.trim() ? result.rendered : null;
+    } catch {
+      previewHtml = null;
+    } finally {
+      previewLoading = false;
+    }
+  }
+
   /** Reload guides + sections from WASM, then re-scope the selected guide's sections. */
   function reload() {
     if (!guideTypeId) return;
@@ -226,6 +248,7 @@
     guides = all.filter((r) => r.typeId === guideTypeId);
     sections = all.filter((r) => sectionTypeIds.has(r.typeId));
     refreshSections();
+    refreshPreview();
   }
 
   // ---------------------------------------------------------------------------
@@ -454,6 +477,7 @@
                     selectedGuideId = guide.instanceId;
                     cancelForm();
                     refreshSections();
+                    refreshPreview();
                   }}
                 >
                   <NavItem
@@ -627,11 +651,9 @@
 
     {#snippet inspector()}
       <Inspector label="Guide">
-        {#if selectedGuideId}
-          <InspectorSection title="Preview">
-            <p class="guides-inspector__preview-placeholder">Preview loads in Phase C.</p>
-          </InspectorSection>
-        {/if}
+        <InspectorSection title="Preview">
+          <PreviewPane html={previewHtml} loading={previewLoading} />
+        </InspectorSection>
       </Inspector>
     {/snippet}
   </AppShell>
@@ -818,10 +840,4 @@
     padding: 2rem;
   }
 
-  .guides-inspector__preview-placeholder {
-    font-size: 0.8rem;
-    color: var(--color-muted, #888);
-    margin: 0;
-    padding: 0.25rem 0;
-  }
 </style>

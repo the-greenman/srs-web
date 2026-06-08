@@ -92,9 +92,13 @@ test.describe("Export / Import round-trip (B10)", () => {
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
     await page.getByRole("button", { name: "Save" }).click();
 
-    // Wait for form to close and new record to appear
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 5000 });
-    await expect(page.locator("text=Round-Trip Test Article")).toBeVisible();
+    // After save, the new record is auto-selected and the reading view opens.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("record-reading")).toContainText("Round-Trip Test Article");
+
+    // Click back to return to the list before exporting.
+    await page.getByTestId("record-reading-back").click();
+    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
 
     // Download the mutated repo
     const [download] = await Promise.all([

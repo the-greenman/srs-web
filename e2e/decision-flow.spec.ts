@@ -74,7 +74,12 @@ test.describe("Decision Flow (B12)", () => {
     // Click Save
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    // Record list should appear with the new decision
+    // After save, the new record is auto-selected and the reading view opens.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId("record-reading")).toContainText("Quick Decision E2E");
+
+    // Click back — record list should contain the new decision.
+    await page.getByTestId("record-reading-back").click();
     await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
     await expect(page.locator(".record-list")).toContainText("Quick Decision E2E");
   });
@@ -186,7 +191,12 @@ test.describe("Decision Flow (B12)", () => {
     // Click Save
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    // Record list should appear with the new decision
+    // After save, the new record is auto-selected and the reading view opens.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId("record-reading")).toContainText("Full Deliberation E2E Decision");
+
+    // Click back — record list should contain the new decision.
+    await page.getByTestId("record-reading-back").click();
     await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
     await expect(page.locator(".record-list")).toContainText("Full Deliberation E2E Decision");
   });

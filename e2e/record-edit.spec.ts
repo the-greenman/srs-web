@@ -10,6 +10,11 @@ import { expect, test } from "@playwright/test";
  * persist in the record list.
  *
  * B9 edit forms: https://github.com/the-greenman/srs-web/issues/5
+ *
+ * Note: after a successful save, the new/edited record is auto-selected and the
+ * reading view opens in the centre canvas (Phase A, srs-web#39). Tests that
+ * previously asserted .record-list is immediately visible now check the reading
+ * view first, then click back to verify the list.
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -90,10 +95,13 @@ test.describe("Record edit forms (B9)", () => {
     // Submit
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    // Form should close and record list appears
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
+    // After save, the new record is auto-selected and the reading view opens.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId("record-reading")).toContainText("Test Article E2E");
 
-    // New article should appear somewhere in the list
+    // Click back — record list should contain the new article.
+    await page.getByTestId("record-reading-back").click();
+    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
     await expect(page.locator(".record-list")).toContainText("Test Article E2E");
   });
 
@@ -123,7 +131,12 @@ test.describe("Record edit forms (B9)", () => {
     // Submit
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    // Form should close and record appears in list
+    // After save, the new record is auto-selected and the reading view opens.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId("record-reading")).toContainText("Test Decision E2E");
+
+    // Click back — record list should contain the new decision.
+    await page.getByTestId("record-reading-back").click();
     await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
     await expect(page.locator(".record-list")).toContainText("Test Decision E2E");
   });
@@ -141,16 +154,13 @@ test.describe("Record edit forms (B9)", () => {
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    // Wait for list to show the new record
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
-    await expect(page.locator(".record-list")).toContainText("To Be Edited");
+    // After save, the reading view opens for the new record.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId("record-reading")).toContainText("To Be Edited");
 
-    // Select the new draft card (it should be auto-selected after creation)
-    const newCard = page.locator(".record-list__item").filter({ hasText: "To Be Edited" });
+    // The inspector should already show Edit button for the auto-selected record.
     const editBtn = page.locator("button.inspector__btn", { hasText: "Edit" });
-    if (!(await editBtn.isVisible())) {
-      await newCard.click();
-    }
+    await expect(editBtn).toBeVisible({ timeout: 3000 });
 
     // Click Edit in the inspector — the draft record is not immutable, so the form opens
     await editBtn.click();
@@ -168,7 +178,9 @@ test.describe("Record edit forms (B9)", () => {
     // Submit
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    // Form should close and updated title appears
+    // After edit-save, the record is still selected, reading view shows the updated title.
+    // Click back to verify the list also reflects the change.
+    await page.getByTestId("record-reading-back").click();
     await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
     await expect(page.locator(".record-list")).toContainText("Edited Title E2E");
     await expect(page.locator(".record-list")).not.toContainText("To Be Edited");
@@ -190,23 +202,16 @@ test.describe("Record edit forms (B9)", () => {
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    // Wait for list with new article
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
-    await expect(page.locator(".record-list__item")).toHaveCount(initialCount + 1, { timeout: 3000 });
-
-    // After save, the new record is pre-selected (selectedId = created.instanceId).
-    // The inspector should already show Edit/Delete buttons.
-    // If it's not visible, click the new card to select it.
+    // After save, the reading view opens. The inspector shows Delete button for the new record.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
     const deleteBtn = page.locator("button.inspector__btn--danger", { hasText: "Delete" });
-    if (!(await deleteBtn.isVisible())) {
-      await page.locator(".record-list__item").filter({ hasText: "To Be Deleted" }).click();
-    }
     await expect(deleteBtn).toBeVisible({ timeout: 3000 });
 
     // Click Delete in the inspector
     await deleteBtn.click();
 
-    // Wait for list to update — count should be back to initial
+    // Record is deleted and deselected — list shows and count is back to initial.
+    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
     await expect(page.locator(".record-list__item")).toHaveCount(initialCount, { timeout: 3000 });
   });
 
@@ -235,7 +240,12 @@ test.describe("Record edit forms (B9)", () => {
     // Submit
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
 
-    // Form should close and role appears in list
+    // After save, the new record is auto-selected and the reading view opens.
+    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId("record-reading")).toContainText("Test Role E2E");
+
+    // Click back — record list should contain the new role.
+    await page.getByTestId("record-reading-back").click();
     await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
     await expect(page.locator(".record-list")).toContainText("Test Role E2E");
   });
