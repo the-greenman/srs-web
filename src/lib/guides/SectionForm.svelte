@@ -367,7 +367,7 @@
     display: block;
   }
   .te-input:focus {
-    outline: 2px solid var(--color-accent, #3b82f6);
+    outline: 2px solid var(--color-focus-ring, var(--ink, #111));
     outline-offset: -2px;
   }
   .te-actions {

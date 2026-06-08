@@ -27,7 +27,7 @@ async function sectionHeadings(page: import("@playwright/test").Page): Promise<s
   const n = await rows.count();
   const out: string[] = [];
   for (let i = 0; i < n; i++) {
-    out.push((await rows.nth(i).locator(".guides-shell__section-heading").innerText()).trim());
+    out.push((await rows.nth(i).getByTestId("guides-section-heading").innerText()).trim());
   }
   return out;
 }
