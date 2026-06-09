@@ -12,6 +12,9 @@ const CONTENT = "https://content.dropboxapi.com/2";
 const OAUTH_STATE = "srs.dropbox.oauth.state";
 const OAUTH_VERIFIER = "srs.dropbox.oauth.verifier";
 const OAUTH_MESSAGE = "srs.dropbox.oauth.complete";
+const DROPBOX_SCOPES = ["files.metadata.read", "files.content.read", "files.content.write"].join(
+  " "
+);
 
 interface DropboxToken {
   access_token: string;
@@ -218,6 +221,7 @@ export class DropboxProvider implements StorageProvider {
       code_challenge: challenge,
       code_challenge_method: "S256",
       token_access_type: "online",
+      scope: DROPBOX_SCOPES,
       state,
     }).toString();
 
@@ -303,7 +307,13 @@ export class DropboxProvider implements StorageProvider {
       body: JSON.stringify(body),
     });
     if (!response.ok) {
-      throw new StorageFetchError(`Dropbox request failed: ${await parseError(response)}`);
+      const message = await parseError(response);
+      if (message.includes("missing_scope")) {
+        throw new StorageAuthenticationError(
+          "Dropbox authorization is missing a required file scope. Enable files.metadata.read, files.content.read, and files.content.write in the Dropbox app console, click Submit, then reconnect."
+        );
+      }
+      throw new StorageFetchError(`Dropbox request failed: ${message}`);
     }
     return response.json() as Promise<T>;
   }

@@ -39,6 +39,33 @@ Drive files.
 Add the deployed HTTPS origin and Dropbox redirect URI to both provider
 consoles before production deployment.
 
+### Cloudflare Pages production
+
+For `https://app.mudemocracy.org`, configure the provider consoles with:
+
+- Dropbox redirect URI: `https://app.mudemocracy.org/`
+- Google authorized JavaScript origin: `https://app.mudemocracy.org`
+- Google API key website restriction: `https://app.mudemocracy.org/*`
+
+In Cloudflare, open **Workers & Pages**, select the Pages project, then use
+**Settings > Environment variables** to add the five `VITE_*` values from
+`.env.example` to the Production environment. Use:
+
+```text
+VITE_DROPBOX_REDIRECT_URI=https://app.mudemocracy.org/
+```
+
+The Dropbox app key, Google OAuth client ID, Google API key, and Google project
+number are compiled into the browser bundle by Vite. They are identifiers, not
+secrets. Their protection comes from exact provider redirect/origin rules,
+minimal OAuth scopes, and restricting the Google API key to the production
+hostname and Google Picker API.
+
+Do not configure these production values for arbitrary Cloudflare preview URLs.
+Provider authentication should remain disabled on previews unless a separate
+preview credential set and stable preview hostname are registered with both
+providers.
+
 ## Save-ready storage contract
 
 Cloud documents retain their provider ID and revision in a `DocumentHandle`.

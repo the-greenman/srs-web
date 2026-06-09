@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DropboxDocumentHandle, parseDropboxOAuthCallback } from "../src/lib/storage/dropbox.js";
+import {
+  DropboxDocumentHandle,
+  DropboxProvider,
+  parseDropboxOAuthCallback,
+} from "../src/lib/storage/dropbox.js";
 import { StorageConflictError } from "../src/lib/storage/errors.js";
 import { GoogleDriveDocumentHandle } from "../src/lib/storage/google-drive.js";
 
@@ -59,6 +63,27 @@ describe("Dropbox storage adapter", () => {
       () => "token"
     );
     await expect(handle.write("{}", "rev-1")).rejects.toBeInstanceOf(StorageConflictError);
+  });
+
+  it("explains missing Dropbox scopes", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error_summary: "missing_scope/..." }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+    const provider = new DropboxProvider({
+      appKey: "app-key",
+      redirectUri: "http://localhost:5174/",
+    });
+    Object.assign(provider, { accessToken: "token", expiresAt: Date.now() + 60_000 });
+
+    await expect(provider.list()).rejects.toThrow(
+      "Enable files.metadata.read, files.content.read, and files.content.write",
+    );
   });
 });
 
