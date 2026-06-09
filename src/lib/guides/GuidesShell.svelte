@@ -18,7 +18,6 @@
     createRecord,
     updateRecord,
     deleteRecord,
-    exportSrsj,
     listContainers,
     getContainer,
     addContainerMember,
@@ -49,6 +48,7 @@
   import InspectorSection from "$lib/components/InspectorSection.svelte";
   import Button from "$lib/components/Button.svelte";
   import PreviewPane from "$lib/components/PreviewPane.svelte";
+  import { downloadDocument } from "$lib/storage/index.js";
 
   // ---------------------------------------------------------------------------
   // muSrs guide blueprint + document-view UUIDs (stable — part of the package)
@@ -63,9 +63,11 @@
   interface Props {
     repo: SrsRepository;
     repoName: string;
+    documentProvider: string;
+    onExport: () => void;
     onOpenAnother: () => void;
   }
-  let { repo, repoName, onOpenAnother }: Props = $props();
+  let { repo, repoName, documentProvider, onExport, onOpenAnother }: Props = $props();
 
   // ---------------------------------------------------------------------------
   // State
@@ -416,11 +418,6 @@
     }
   }
 
-  function handleExport() {
-    const srsj = exportSrsj(repo);
-    download(srsj, `${repoName.replace(/\s+/g, "-").toLowerCase()}.srsj`);
-  }
-
   /**
    * C10 — export the selected guide as a JSON DocumentViewProjection.
    * Resolves the guide's container (it is that container's root), renders the
@@ -446,22 +443,12 @@
       const guide = guides.find((g) => g.instanceId === selectedGuideId);
       const name = guide ? guideLabel(guide) : "guide";
       const slug = name.replace(/\s+/g, "-").toLowerCase();
-      download(JSON.stringify(result.projection, null, 2), `${slug}.guide-view.json`);
+      downloadDocument(JSON.stringify(result.projection, null, 2), `${slug}.guide-view.json`);
     } catch (e) {
       exportError = `Export failed: ${e instanceof Error ? e.message : String(e)}`;
     }
   }
 
-  /** Trigger a browser download of `content` as `filename`. */
-  function download(content: string, filename: string) {
-    const blob = new Blob([content], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 </script>
 
 <div data-testid="guides-shell">
@@ -510,13 +497,13 @@
       <Main>
         <Topbar>
           {#snippet crumb()}
-            <span class="topbar__repo">{repoName}</span>
+            <span class="topbar__repo" title={`Opened from ${documentProvider}`}>{repoName}</span>
           {/snippet}
           {#snippet actions()}
             <Button
               variant="ghost"
               data-testid="guides-export-btn"
-              onclick={handleExport}
+              onclick={onExport}
             >Export .srsj</Button>
             <Button variant="ghost" onclick={onOpenAnother}>Open another file</Button>
             <Button

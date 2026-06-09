@@ -36,12 +36,17 @@
   import InspectorSection from "$lib/components/InspectorSection.svelte";
   import Card from "$lib/components/Card.svelte";
   import Diagnostics from "$lib/components/Diagnostics.svelte";
-  import Field from "$lib/components/Field.svelte";
   import RecordForm from "$lib/components/RecordForm.svelte";
   import SuccessorModal from "$lib/components/SuccessorModal.svelte";
   import DecisionFlow from "$lib/components/DecisionFlow.svelte";
   import GuidesShell from "$lib/guides/GuidesShell.svelte";
   import RecordReading from "$lib/components/RecordReading.svelte";
+  import SourceChooser from "$lib/components/SourceChooser.svelte";
+  import {
+    createStorageProvidersFromEnv,
+    downloadDocument,
+    type DocumentHandle,
+  } from "$lib/storage/index.js";
 
   import { SECTIONS } from "$lib/governance/sections.js";
   import type { SectionKey } from "$lib/governance/sections.js";
@@ -62,6 +67,8 @@
   let editorMode = $state<EditorMode | null>(null);
 
   let repoName = $state<string>("Untitled repository");
+  const storageProviders = createStorageProvidersFromEnv();
+  let activeDocument = $state<DocumentHandle | null>(null);
 
   /** Records per section, keyed by section key. */
   let sectionRecords = $state<Record<string, SrsRecord[]>>({});
@@ -137,38 +144,36 @@
   }
 
   // ---------------------------------------------------------------------------
-  // File import
+  // Document import
   // ---------------------------------------------------------------------------
 
-  async function onFileChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
+  async function loadDocument(handle: DocumentHandle): Promise<void> {
     errorMsg = null;
     sectionRecords = {};
     selectedId = null;
     diagnostics = [];
 
     try {
-      const text = await file.text();
+      const text = await handle.read();
       repo = loadRepo(text);
+      activeDocument = handle;
 
-      // Derive a display name from the filename (strip extension)
-      repoName = file.name.replace(/\.(srsj|json)$/i, "");
+      repoName = handle.name.replace(/\.(srsj|json)$/i, "");
 
-      // Populate section record lists
       loadSectionRecords(repo);
 
-      // Run validation
       const report = repo.validate();
       instanceCount = report.instanceCount;
       diagnostics = report.diagnostics.map(mapDiagnostic);
 
       appState = "loaded";
     } catch (e: unknown) {
-      errorMsg = `Failed to load repository: ${e instanceof Error ? e.message : String(e)}`;
-      appState = "error";
+      repo = null;
+      activeDocument = null;
+      throw new Error(
+        `Failed to load repository: ${e instanceof Error ? e.message : String(e)}`,
+        { cause: e },
+      );
     }
   }
 
@@ -283,13 +288,7 @@
   function handleExport() {
     if (!repo) return;
     const json = exportSrsj(repo);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${repoName}.srsj`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadDocument(json, `${repoName}.srsj`);
   }
 
   // ---------------------------------------------------------------------------
@@ -385,34 +384,14 @@
     <div class="splash" data-testid="governance-file-picker">
       <h1 class="splash__title">SRS Governance Viewer</h1>
       <p class="splash__sub">Open a <code>.srsj</code> repository file to explore its governance records.</p>
-      <div class="splash__field">
-        <Field label="Repository file" typeHint=".srsj">
-          <input
-            id="srsj-file"
-            type="file"
-            accept=".srsj,.json"
-            onchange={onFileChange}
-            class="splash__input"
-          />
-        </Field>
-      </div>
+      <SourceChooser providers={storageProviders} onOpen={loadDocument} />
       <button class="splash__back" onclick={() => { editorMode = null; }}>← Back</button>
     </div>
   {:else}
     <div class="splash" data-testid="guides-file-picker">
       <h1 class="splash__title">muDemocracy Guides Editor</h1>
       <p class="splash__sub">Open a <code>.srsj</code> repository file to edit guides.</p>
-      <div class="splash__field">
-        <Field label="Repository file" typeHint=".srsj">
-          <input
-            id="srsj-file"
-            type="file"
-            accept=".srsj,.json"
-            onchange={onFileChange}
-            class="splash__input"
-          />
-        </Field>
-      </div>
+      <SourceChooser providers={storageProviders} onOpen={loadDocument} />
       <button class="splash__back" onclick={() => { editorMode = null; }}>← Back</button>
     </div>
   {/if}
@@ -424,8 +403,11 @@
   <GuidesShell
     repo={repo!}
     repoName={repoName}
+    documentProvider={activeDocument?.provider ?? "local"}
+    onExport={handleExport}
     onOpenAnother={() => {
       repo = null;
+      activeDocument = null;
       sectionRecords = {};
       selectedId = null;
       diagnostics = [];
@@ -481,7 +463,10 @@
       <Main>
         <Topbar>
           {#snippet crumb()}
-            <span class="topbar__repo">{repoName}</span>
+            <span
+              class="topbar__repo"
+              title={`Opened from ${activeDocument?.provider ?? "local"}`}
+            >{repoName}</span>
             <span class="topbar__sep">›</span>
             <span class="topbar__section">{activeSection_.label}</span>
           {/snippet}
@@ -507,6 +492,7 @@
                 diagnostics = [];
                 selectedId = null;
                 repo = null;
+                activeDocument = null;
                 formMode = null;
                 editingRecord = null;
                 formError = null;
@@ -680,17 +666,6 @@
     margin: 0;
     opacity: 0.65;
     max-width: 28rem;
-  }
-
-  .splash__field {
-    margin-top: 1rem;
-    min-width: 18rem;
-    text-align: left;
-  }
-
-  .splash__input {
-    display: block;
-    width: 100%;
   }
 
   .splash__status {
