@@ -128,6 +128,30 @@
     "title": "muDemocracy"
   },
   "data": {
+    "package/fields/item-body-6fafae71.json": {
+      "aiGuidance": {
+        "purpose": "Body text for an item in a structured list, tips group, or commentary."
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Body text for an item in a structured list, tips group, or commentary.",
+      "id": "6fafae71-f6f1-4e83-b091-19765517ff80",
+      "name": "item-body",
+      "namespace": "com.mudemocracy",
+      "valueType": "text",
+      "version": 1
+    },
+    "package/fields/cell-92d83824.json": {
+      "aiGuidance": {
+        "purpose": ""
+      },
+      "createdAt": "2026-06-05T09:41:36.014914329+00:00",
+      "description": "A single table cell value",
+      "id": "92d83824-0de6-4af2-9a61-b93178cc5225",
+      "name": "cell",
+      "namespace": "com.mudemocracy",
+      "valueType": "string",
+      "version": 1
+    },
     "records/tier-2/0fd5e0f3-63d8-430d-9454-da8c9f20cf52.json": {
       "createdAt": "2026-06-04T13:19:26.955112434+00:00",
       "fieldValues": [
@@ -155,99 +179,32 @@
       "typeVersion": 1,
       "updatedAt": "2026-06-05T17:39:57.693849932+00:00"
     },
-    "package/types/sectioncommentary-474e299c.json": {
-      "createdAt": "2026-06-08T00:00:00Z",
-      "description": "A guide section presenting a list of commentary items, each a term paired with body prose.",
-      "extendsTypeId": "a6bf3a1d-a785-45e1-8b14-19162e032f99",
-      "extendsTypeVersion": 1,
-      "fieldGroups": [
-        {
-          "fields": [
-            {
-              "fieldId": "98be1bba-e609-4754-933e-853e884807b8",
-              "order": 0,
-              "repeatable": false,
-              "required": true
-            },
-            {
-              "fieldId": "82df4f78-1180-4cc8-8c01-f1b96bd8d0fe",
-              "order": 1,
-              "repeatable": false,
-              "required": true
-            }
-          ],
-          "groupId": "items",
-          "label": "Items",
-          "order": 0,
-          "repeatable": true,
-          "required": true
-        }
-      ],
-      "fieldOrder": [
-        "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-        "9629c9b5-3b17-4766-b3d3-b2890902821a",
-        "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-        "items",
-        "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
-        "c83931f4-620c-4f8e-b3c5-54f106fb6dc6"
-      ],
-      "fields": [],
-      "id": "474e299c-5809-4f92-a40d-b3ae1be3ad17",
-      "name": "section.commentary",
-      "namespace": "com.mudemocracy",
-      "version": 1
-    },
-    "package/fields/blocks-dabb80dc.json": {
-      "aiGuidance": {
-        "purpose": "Comma-separated slugs of shared blocks to include"
-      },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Comma-separated slugs of shared blocks to include",
-      "id": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
-      "name": "blocks",
-      "namespace": "com.mudemocracy",
-      "valueType": "text",
-      "version": 1
-    },
-    "package/types/section-a6bf3a1d.json": {
-      "createdAt": "2026-06-05T00:00:00Z",
-      "description": "Base section type — shared fields inherited by all guide section types.",
-      "fields": [
+    "records/tier-2/a44be813-d2b4-4214-aaa9-4b8a11ce206f.json": {
+      "createdAt": "2026-06-04T13:19:16.473193163+00:00",
+      "fieldValues": [
         {
           "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "order": 1,
-          "repeatable": false,
-          "required": false
+          "value": "deciding-which-decisions-to-record"
         },
         {
-          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
-          "order": 2,
-          "repeatable": false,
-          "required": true
+          "fieldId": "e5b359b0-8f8b-4807-bae9-b841adbd6248",
+          "value": "Deciding which decisions to record"
         },
         {
-          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "order": 3,
-          "repeatable": false,
-          "required": false
+          "fieldId": "9bb3d21d-3a02-4b87-863d-99fdfcdb8a3e",
+          "value": "A guide for deciding which decisions to record."
         },
         {
-          "fieldId": "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
-          "order": 4,
-          "repeatable": false,
-          "required": false
-        },
-        {
-          "fieldId": "c83931f4-620c-4f8e-b3c5-54f106fb6dc6",
-          "order": 5,
-          "repeatable": false,
-          "required": false
+          "fieldId": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
+          "value": "about-mudemocracy"
         }
       ],
-      "id": "a6bf3a1d-a785-45e1-8b14-19162e032f99",
-      "name": "section",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "instanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
+      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
+      "typeName": "guide",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-04T13:19:16.473201434+00:00"
     },
     "records/tier-2/f82ca8a8-63f7-49b9-89df-94597277025b.json": {
       "createdAt": "2026-06-04T13:19:19.659626811+00:00",
@@ -343,41 +300,71 @@
       "typeVersion": 1,
       "updatedAt": "2026-06-09T13:24:22.897026532+00:00"
     },
-    "package/fields/body-cd97f7d2.json": {
-      "aiGuidance": {
-        "purpose": "Main body content of a text or list section"
-      },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Main body content of a text or list section",
-      "id": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-      "name": "body",
-      "namespace": "com.mudemocracy",
-      "valueType": "text",
-      "version": 1
-    },
-    "package/fields/outro-04ce57ec.json": {
-      "aiGuidance": {
-        "purpose": "Optional closing prose displayed below the main section content."
-      },
-      "createdAt": "2026-06-05T17:25:25.894834329+00:00",
-      "description": "Optional closing prose displayed below the main section content.",
-      "id": "04ce57ec-46bc-4e1e-9238-34bf7247905a",
-      "name": "outro",
-      "namespace": "com.mudemocracy",
-      "valueType": "text",
-      "version": 1
-    },
-    "package/fields/columns-15d81030.json": {
-      "aiGuidance": {
-        "purpose": "JSON array of column header label strings"
-      },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "JSON array of column header label strings",
-      "id": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-      "name": "columns",
-      "namespace": "com.mudemocracy",
-      "valueType": "text",
-      "version": 1
+    "records/tier-2/afa31093-d955-4ea1-841e-9443775e3f15.json": {
+      "createdAt": "2026-06-04T13:19:27.208333536+00:00",
+      "fieldValues": [
+        {
+          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
+          "value": "Hidden decisions"
+        },
+        {
+          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+          "value": "hidden-decisions"
+        },
+        {
+          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
+          "value": "The most difficult decisions to identify are the ones that are hidden by unclear or vague language, when we are avoiding being specific. This leads to decision making by default. It is important to remember that not making a decision is still a decision."
+        }
+      ],
+      "groupValues": [
+        {
+          "entries": [
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
+                  "value": "[\"Statement\", \"Hidden decision\"]"
+                },
+                {
+                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
+                  "value": "[[\"We need more information before we can move forward\", \"Delay the project\"], [\"We need to make sure everyone is 100% happy with this first\", \"Giving everyone a veto which usually means staying exactly where you are\"], [\"Let's just keep this on the radar for next month\", \"This issue is not a priority\"]]"
+                },
+                {
+                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
+                  "value": "Examples"
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
+                  "value": "[\"Behaviour\", \"Explanation\"]"
+                },
+                {
+                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
+                  "value": "[[\"Circular talk\", \"The same topic has come up in the last three meetings\"], [\"'Should' loop\", \"Repeatedly saying 'We really should do something about X' without any proposals for a next step\"], [\"Low energy\", \"The room feels heavy or bored. This is a sign of analysing rather than choosing\"]]"
+                },
+                {
+                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
+                  "value": "Indicators"
+                },
+                {
+                  "fieldId": "920fd0a2-5fb2-40c4-9362-7c6c86ab8ccd",
+                  "value": "There are some things that you can look out for which would indicate if a decision is hiding in the room. If you notice some of these signs it could mean that there is a decision that needs to be named and surfaced."
+                }
+              ]
+            }
+          ],
+          "groupId": "tables"
+        }
+      ],
+      "instanceId": "afa31093-d955-4ea1-841e-9443775e3f15",
+      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
+      "typeName": "section.table",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-05T17:39:57.701530545+00:00"
     },
     "package/types/persona-ff66ad38.json": {
       "createdAt": "2026-06-04T00:00:00Z",
@@ -425,17 +412,41 @@
       "namespace": "com.mudemocracy",
       "version": 1
     },
-    "package/relation-types/contains-72b25b57.json": {
-      "canonicalDirection": "source is the container; target is the contained member",
-      "category": "composition",
+    "package/relation-types/precedes-8d18debb.json": {
+      "canonicalDirection": "source comes before target",
+      "category": "sequence",
       "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Source instance contains or is composed of target instance. Defines structural membership or composition boundaries.",
-      "id": "72b25b57-d400-49d5-82bd-7d8627587f08",
-      "inverseType": "part-of",
+      "description": "Source instance comes before target instance in a defined sequence or ordering.",
+      "id": "8d18debb-5346-4c0e-adff-36fda7306174",
+      "inverseType": "follows",
       "irreflexive": true,
-      "key": "contains",
-      "label": "Contains",
+      "key": "precedes",
+      "label": "Precedes",
       "namespace": "com.mudemocracy",
+      "version": 1
+    },
+    "package/fields/page-c83931f4.json": {
+      "aiGuidance": {
+        "purpose": "Print page number this section appears on"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Print page number this section appears on",
+      "id": "c83931f4-620c-4f8e-b3c5-54f106fb6dc6",
+      "name": "page",
+      "namespace": "com.mudemocracy",
+      "valueType": "number",
+      "version": 1
+    },
+    "package/fields/widths-8d98614d.json": {
+      "aiGuidance": {
+        "purpose": "JSON array of CSS width strings per column"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "JSON array of CSS width strings per column",
+      "id": "8d98614d-f420-4597-90fd-c141e8584b06",
+      "name": "widths",
+      "namespace": "com.mudemocracy",
+      "valueType": "text",
       "version": 1
     },
     "records/notes/09b3fbbc-d7af-4924-b0a9-4c09133e2550.json": {
@@ -452,67 +463,142 @@
       ],
       "title": "muDemocracy"
     },
-    "package/fields/title-e5b359b0.json": {
-      "aiGuidance": {
-        "purpose": "Human-readable title of the guide"
+    "package/themes/guide-prose-4f8a2c1e.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/theme.json",
+      "createdAt": "2026-06-05T00:00:00Z",
+      "description": "Prose rendering theme for guide document views. Renders visible fields as plain paragraphs — no bold labels. Structural fields (slug, heading, title) are hidden via the paired L1 view.",
+      "elementTemplates": {
+        "fieldRow": "{{field-value}}\n",
+        "groupFieldRowTemplates": {
+          "item-body": "{{field-value}}\n",
+          "item-term": "**{{field-value}}**\n"
+        }
       },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Human-readable title of the guide",
-      "id": "e5b359b0-8f8b-4807-bae9-b841adbd6248",
-      "name": "title",
+      "id": "4f8a2c1e-3b7d-4e9f-a1c2-8d5e6f7a9b0c",
+      "name": "guide-prose",
       "namespace": "com.mudemocracy",
-      "valueType": "string",
+      "targets": [
+        "markdown"
+      ],
       "version": 1
     },
-    "package/fields/description-b966f9c3.json": {
-      "aiGuidance": {
-        "purpose": "Overview description of the persona"
-      },
+    "containers/d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d.json": {
+      "containerId": "d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d",
+      "containerType": "guide",
       "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Overview description of the persona",
-      "id": "b966f9c3-ad32-47f4-bc80-e6cb83ebb855",
-      "name": "description",
+      "memberInstanceIds": [
+        "0c7f33d9-58cb-489c-9fd8-26d8b807fe21",
+        "0dff90b5-4534-4a2b-9f1a-28f35130e943",
+        "0fd5e0f3-63d8-430d-9454-da8c9f20cf52",
+        "26f98f5b-f49a-4ac1-8bac-41aedccabc31",
+        "afa31093-d955-4ea1-841e-9443775e3f15"
+      ],
+      "rootInstanceIds": [
+        "0dff90b5-4534-4a2b-9f1a-28f35130e943"
+      ],
+      "title": "Recognising decisions"
+    },
+    "records/tier-2/3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c.json": {
+      "createdAt": "2026-06-04T13:19:23.533596629+00:00",
+      "fieldValues": [
+        {
+          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
+          "value": "Tips"
+        },
+        {
+          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+          "value": "tips"
+        }
+      ],
+      "groupValues": [
+        {
+          "entries": [
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+                  "value": "Getting stuck"
+                },
+                {
+                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+                  "value": "If the discussion seems to be going in circles, move to the decision question and ask 'It sounds like we are stuck, what is the actual choice we are trying to make right now?"
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+                  "value": "Hidden decisions"
+                },
+                {
+                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+                  "value": "If the group say 'We need more information' you can ask 'Are we making a strategic decision to delay this? And if so what is the review trigger for when we have enough information."
+                }
+              ]
+            }
+          ],
+          "groupId": "items"
+        }
+      ],
+      "instanceId": "3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c",
+      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
+      "typeName": "section.table",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-09T13:25:06.656354203+00:00"
+    },
+    "package/fields/confirmation-8b647900.json": {
+      "aiGuidance": {
+        "purpose": "Optional confirmation prose displayed below the items in a list section (target schema: list section confirmation)."
+      },
+      "createdAt": "2026-06-08T00:00:00Z",
+      "description": "Optional confirmation prose displayed below the items in a list section.",
+      "id": "8b647900-ee55-4dc8-b52c-c0ff913b54b0",
+      "name": "confirmation",
       "namespace": "com.mudemocracy",
       "valueType": "text",
       "version": 1
     },
-    "package/types/guide-8f138dd6.json": {
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "A muDemocracy guide document — top-level metadata record for a guide container.",
-      "fields": [
+    "package/types/sectioncommentary-474e299c.json": {
+      "createdAt": "2026-06-08T00:00:00Z",
+      "description": "A guide section presenting a list of commentary items, each a term paired with body prose.",
+      "extendsTypeId": "a6bf3a1d-a785-45e1-8b14-19162e032f99",
+      "extendsTypeVersion": 1,
+      "fieldGroups": [
         {
-          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "order": 1,
-          "repeatable": false,
-          "required": false
-        },
-        {
-          "fieldId": "e5b359b0-8f8b-4807-bae9-b841adbd6248",
-          "order": 2,
-          "repeatable": false,
+          "fields": [
+            {
+              "fieldId": "98be1bba-e609-4754-933e-853e884807b8",
+              "order": 0,
+              "repeatable": false,
+              "required": true
+            },
+            {
+              "fieldId": "82df4f78-1180-4cc8-8c01-f1b96bd8d0fe",
+              "order": 1,
+              "repeatable": false,
+              "required": true
+            }
+          ],
+          "groupId": "items",
+          "label": "Items",
+          "order": 0,
+          "repeatable": true,
           "required": true
-        },
-        {
-          "fieldId": "9bb3d21d-3a02-4b87-863d-99fdfcdb8a3e",
-          "order": 3,
-          "repeatable": false,
-          "required": false
-        },
-        {
-          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "order": 4,
-          "repeatable": false,
-          "required": false
-        },
-        {
-          "fieldId": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
-          "order": 5,
-          "repeatable": false,
-          "required": false
         }
       ],
-      "id": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
-      "name": "guide",
+      "fieldOrder": [
+        "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+        "9629c9b5-3b17-4766-b3d3-b2890902821a",
+        "cd97f7d2-29e4-435e-a991-9be8281d6a78",
+        "items",
+        "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
+        "c83931f4-620c-4f8e-b3c5-54f106fb6dc6"
+      ],
+      "fields": [],
+      "id": "474e299c-5809-4f92-a40d-b3ae1be3ad17",
+      "name": "section.commentary",
       "namespace": "com.mudemocracy",
       "version": 1
     },
@@ -531,30 +617,6 @@
         "a44be813-d2b4-4214-aaa9-4b8a11ce206f"
       ],
       "title": "Deciding which decisions to record"
-    },
-    "package/fields/rows-876daf6a.json": {
-      "aiGuidance": {
-        "purpose": "JSON array of arrays representing table rows and cells"
-      },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "JSON array of arrays representing table rows and cells",
-      "id": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-      "name": "rows",
-      "namespace": "com.mudemocracy",
-      "valueType": "text",
-      "version": 1
-    },
-    "package/fields/cell-92d83824.json": {
-      "aiGuidance": {
-        "purpose": ""
-      },
-      "createdAt": "2026-06-05T09:41:36.014914329+00:00",
-      "description": "A single table cell value",
-      "id": "92d83824-0de6-4af2-9a61-b93178cc5225",
-      "name": "cell",
-      "namespace": "com.mudemocracy",
-      "valueType": "string",
-      "version": 1
     },
     "records/tier-2/26f98f5b-f49a-4ac1-8bac-41aedccabc31.json": {
       "createdAt": "2026-06-04T13:19:28.687634744+00:00",
@@ -639,143 +701,47 @@
       "typeVersion": 1,
       "updatedAt": "2026-06-05T17:39:57.719892684+00:00"
     },
-    "package/views/guide-prose-view-030637e8.json": {
-      "createdAt": "2026-06-05T00:00:00Z",
-      "description": "Controls field visibility for guide document view rendering. Shows only prose content fields; hides structural/metadata fields. Pair with the guide-prose theme.",
-      "exportConfig": {
-        "omitEmptyFields": true
-      },
-      "fieldViews": [
-        {
-          "fieldId": "9bb3d21d-3a02-4b87-863d-99fdfcdb8a3e",
-          "order": 0,
-          "visible": true
-        },
-        {
-          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "order": 1,
-          "visible": true
-        },
-        {
-          "fieldId": "138e40f4-888b-49ed-9c26-bedc9567e806",
-          "order": 2,
-          "visible": true
-        },
-        {
-          "fieldId": "e5e6ebce-8dfe-446f-a7fd-e329d4f5d67e",
-          "order": 3,
-          "visible": true
-        },
-        {
-          "fieldId": "04ce57ec-46bc-4e1e-9238-34bf7247905a",
-          "order": 4,
-          "visible": true
-        },
-        {
-          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "order": 5,
-          "visible": false
-        },
-        {
-          "fieldId": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
-          "order": 6,
-          "visible": false
-        },
-        {
-          "fieldId": "a1517ec7-7509-4021-9a47-fb3da8014eb7",
-          "order": 7,
-          "visible": false
-        },
-        {
-          "fieldId": "c83931f4-620c-4f8e-b3c5-54f106fb6dc6",
-          "order": 8,
-          "visible": false
-        },
-        {
-          "fieldId": "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
-          "order": 9,
-          "visible": false
-        }
-      ],
-      "id": "030637e8-0239-4b17-912a-e6bb3c374426",
-      "name": "guide-prose-view",
-      "namespace": "com.mudemocracy",
-      "version": 1
-    },
-    "package/fields/commentary-body-82df4f78.json": {
+    "package/fields/frustrations-3ca80b2b.json": {
       "aiGuidance": {
-        "purpose": "Body prose for an item in a commentary section's items group (target schema: commentary item.body)."
-      },
-      "createdAt": "2026-06-08T00:00:00Z",
-      "description": "Body prose for an item in a commentary section's items group.",
-      "id": "82df4f78-1180-4cc8-8c01-f1b96bd8d0fe",
-      "name": "commentary-body",
-      "namespace": "com.mudemocracy",
-      "valueType": "text",
-      "version": 1
-    },
-    "manifest.json": {
-      "containerIndex": [
-        {
-          "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
-          "title": "Deciding which decisions to record"
-        },
-        {
-          "containerId": "78749395-dcde-4b02-a59e-184095e0ae0b",
-          "title": "Deliberating a decision"
-        },
-        {
-          "containerId": "d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d",
-          "title": "Recognising decisions"
-        },
-        {
-          "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
-          "title": "Decision Recording"
-        }
-      ]
-    },
-    "package/fields/callout-138e40f4.json": {
-      "aiGuidance": {
-        "purpose": "Highlighted callout text for a text section"
+        "purpose": "Pain points and blockers the persona experiences"
       },
       "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Highlighted callout text for a text section",
-      "id": "138e40f4-888b-49ed-9c26-bedc9567e806",
-      "name": "callout",
+      "description": "Pain points and blockers the persona experiences",
+      "id": "3ca80b2b-25a2-4f54-9bbc-4519fbc98ae3",
+      "name": "frustrations",
       "namespace": "com.mudemocracy",
       "valueType": "text",
       "version": 1
     },
-    "records/tier-2/0dff90b5-4534-4a2b-9f1a-28f35130e943.json": {
-      "createdAt": "2026-06-04T13:19:26.822539212+00:00",
-      "fieldValues": [
-        {
-          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "value": "recognising-decisions"
-        },
-        {
-          "fieldId": "e5b359b0-8f8b-4807-bae9-b841adbd6248",
-          "value": "Recognising decisions"
-        },
-        {
-          "fieldId": "9bb3d21d-3a02-4b87-863d-99fdfcdb8a3e",
-          "value": "A guide for recognising when a decision exists"
-        },
-        {
-          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "value": "When a group of people meet to discuss a subject the conversation can feel like it lacks direction. Even when the group wants to take action, it is difficult to identify moments where a decision could be made. Often the language we use hides the fact that we are making a decision by default — not deciding is also a decision.\n\nThis guide helps you to recognise unhelpful language and patterns and shows you how to ask the right questions to bring clarity to your discussions."
-        },
-        {
-          "fieldId": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
-          "value": "about-mudemocracy"
+    "package/themes/guide-prose-html-5f3d230e.json": {
+      "createdAt": "2026-06-08T00:00:00Z",
+      "description": "HTML variant of guide-prose for the web preview. Renders visible fields as plain paragraphs without labels. item-term is bolded. Mirrors guide-prose semantics but uses HTML templates.",
+      "elementTemplates": {
+        "fieldRow": "<p>{{field-value}}</p>",
+        "groupFieldRowTemplates": {
+          "item-body": "<p>{{field-value}}</p>",
+          "item-term": "<p><strong>{{field-value}}</strong></p>"
         }
+      },
+      "id": "5f3d230e-850b-417a-ac51-135a81485bc7",
+      "name": "guide-prose-html",
+      "namespace": "com.mudemocracy",
+      "targets": [
+        "html"
       ],
-      "instanceId": "0dff90b5-4534-4a2b-9f1a-28f35130e943",
-      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
-      "typeName": "guide",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-05T17:39:57.688235313+00:00"
+      "version": 1
+    },
+    "package/fields/columns-15d81030.json": {
+      "aiGuidance": {
+        "purpose": "JSON array of column header label strings"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "JSON array of column header label strings",
+      "id": "15d81030-07db-40a7-9885-d23b1d6b39f7",
+      "name": "columns",
+      "namespace": "com.mudemocracy",
+      "valueType": "text",
+      "version": 1
     },
     "package/types/sectiontable-d8d09d3b.json": {
       "createdAt": "2026-06-04T00:00:00Z",
@@ -848,11 +814,11 @@
       "fieldOrder": [
         "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
         "9629c9b5-3b17-4766-b3d3-b2890902821a",
+        "cd97f7d2-29e4-435e-a991-9be8281d6a78",
         "a1517ec7-7509-4021-9a47-fb3da8014eb7",
         "tables",
         "2fa78abf-c801-4d2a-8ddb-de218f079d1a",
         "items",
-        "cd97f7d2-29e4-435e-a991-9be8281d6a78",
         "04ce57ec-46bc-4e1e-9238-34bf7247905a",
         "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
         "c83931f4-620c-4f8e-b3c5-54f106fb6dc6"
@@ -894,70 +860,6 @@
       "valueType": "text",
       "version": 1
     },
-    "package/themes/guide-prose-html-5f3d230e.json": {
-      "createdAt": "2026-06-08T00:00:00Z",
-      "description": "HTML variant of guide-prose for the web preview. Renders visible fields as plain paragraphs without labels. item-term is bolded. Mirrors guide-prose semantics but uses HTML templates.",
-      "elementTemplates": {
-        "fieldRow": "<p>{{field-value}}</p>",
-        "groupFieldRowTemplates": {
-          "item-body": "<p>{{field-value}}</p>",
-          "item-term": "<p><strong>{{field-value}}</strong></p>"
-        }
-      },
-      "id": "5f3d230e-850b-417a-ac51-135a81485bc7",
-      "name": "guide-prose-html",
-      "namespace": "com.mudemocracy",
-      "targets": [
-        "html"
-      ],
-      "version": 1
-    },
-    "records/tier-2/3ad28075-33d6-457e-a824-9421d0e83e2b.json": {
-      "createdAt": "2026-06-04T13:19:25.327585299+00:00",
-      "fieldValues": [
-        {
-          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
-          "value": "Example"
-        },
-        {
-          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "value": "example"
-        },
-        {
-          "fieldId": "c83931f4-620c-4f8e-b3c5-54f106fb6dc6",
-          "value": 3
-        },
-        {
-          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "value": "A decision record for a community group deciding how often to meet."
-        }
-      ],
-      "groupValues": [
-        {
-          "entries": [
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-                  "value": "[\"Question\", \"What to write\"]"
-                },
-                {
-                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-                  "value": "[[\"What was decided?\", \"We will meet monthly on the first Sunday with a brief written summary sent to all members within 48 hours.\"], [\"Why?\", \"Monthly is frequent enough to address decisions in time and infrequent enough that attendance is sustainable. The written summary addresses the concerns of 3 members who work weekends and cannot attend.\"], [\"What were the options?\", \"Fortnightly, rejected as unsustainable for working members. Quarterly, rejected as too slow for timely decisions\"], [\"When to revisit?\", \"If attendance drops below 3 members for 2 consecutive meetings or a time-sensitive decision is delayed because we couldn't meet in time - whichever comes first.\"]]"
-                }
-              ]
-            }
-          ],
-          "groupId": "tables"
-        }
-      ],
-      "instanceId": "3ad28075-33d6-457e-a824-9421d0e83e2b",
-      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
-      "typeName": "section.table",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-09T12:21:49.413923240+00:00"
-    },
     "package/fields/name-d8045b2d.json": {
       "aiGuidance": {
         "purpose": "Full name of the persona"
@@ -970,28 +872,224 @@
       "valueType": "string",
       "version": 1
     },
-    "package/fields/widths-8d98614d.json": {
+    "package/fields/theme-cf0ab5be.json": {
       "aiGuidance": {
-        "purpose": "JSON array of CSS width strings per column"
+        "purpose": "Visual theme variant for the section"
+      },
+      "allowedValues": [
+        "default",
+        "inverted",
+        "highlight"
+      ],
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Visual theme variant for the section",
+      "id": "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
+      "name": "theme",
+      "namespace": "com.mudemocracy",
+      "valueType": "select",
+      "version": 1
+    },
+    "records/tier-2/1ff0ab83-c1c8-4e23-b611-2e629d919307.json": {
+      "createdAt": "2026-06-04T13:19:24.056851634+00:00",
+      "fieldValues": [
+        {
+          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+          "value": "decision-recording"
+        },
+        {
+          "fieldId": "e5b359b0-8f8b-4807-bae9-b841adbd6248",
+          "value": "Decision Recording"
+        },
+        {
+          "fieldId": "9bb3d21d-3a02-4b87-863d-99fdfcdb8a3e",
+          "value": "A guide for recording decisions made by a group."
+        },
+        {
+          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
+          "value": "When a group finally makes a decision, it can be easy to assume everyone remembers it the same way. But memories fade, and people often leave a meeting with different ideas about what was actually agreed. Without a clear record, groups often end up having the exact same conversation weeks later, wasting time and energy.\n\nThis guide helps you capture agreements clearly and simply using a four-question format. It shows you how to create a reliable decision log so your group can move forward with confidence and clarity."
+        },
+        {
+          "fieldId": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
+          "value": "about-mudemocracy"
+        }
+      ],
+      "instanceId": "1ff0ab83-c1c8-4e23-b611-2e629d919307",
+      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
+      "typeName": "guide",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-05T17:39:57.663093051+00:00"
+    },
+    "records/tier-2/2aeb491a-9664-45e6-87e6-6fa38a3324c4.json": {
+      "createdAt": "2026-06-04T13:19:24.162247816+00:00",
+      "fieldValues": [
+        {
+          "fieldId": "e5e6ebce-8dfe-446f-a7fd-e329d4f5d67e",
+          "value": "What was decided?\nWhy?\nWhat were the options?\nWhen to revisit?"
+        },
+        {
+          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+          "value": "process"
+        },
+        {
+          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
+          "value": "Process"
+        },
+        {
+          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
+          "value": "To begin, start with a relatively easy decision. When you feel more confident, move on to more complex or emotionally charged decisions.\n\nThere are 4 questions to answer to be able to record a decision clearly so that it is useful now and in the future."
+        },
+        {
+          "fieldId": "04ce57ec-46bc-4e1e-9238-34bf7247905a",
+          "value": "Confirm the decision before moving onto the next item. The recording of all decisions must be agreed and recorded before the end of the meeting."
+        },
+        {
+          "fieldId": "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
+          "value": "default"
+        }
+      ],
+      "groupValues": [],
+      "instanceId": "2aeb491a-9664-45e6-87e6-6fa38a3324c4",
+      "typeId": "76cdc3fb-8460-4efc-90f5-3c4a15b86cad",
+      "typeName": "section.list",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-09T15:52:54.045+00:00"
+    },
+    "package/fields/blocks-dabb80dc.json": {
+      "aiGuidance": {
+        "purpose": "Comma-separated slugs of shared blocks to include"
       },
       "createdAt": "2026-06-04T00:00:00Z",
-      "description": "JSON array of CSS width strings per column",
-      "id": "8d98614d-f420-4597-90fd-c141e8584b06",
-      "name": "widths",
+      "description": "Comma-separated slugs of shared blocks to include",
+      "id": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
+      "name": "blocks",
       "namespace": "com.mudemocracy",
       "valueType": "text",
       "version": 1
     },
-    "records/tier-2/3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c.json": {
-      "createdAt": "2026-06-04T13:19:23.533596629+00:00",
+    "package/blueprints/guide-7bfa600b.json": {
+      "createdAt": "2026-06-08T00:00:00Z",
+      "description": "A muDemocracy guide — a root guide record with an ordered sequence of sections (text, list, table, or commentary).",
+      "id": "7bfa600b-f7b2-4a0e-82d4-34c02d9d6770",
+      "name": "guide",
+      "namespace": "com.mudemocracy",
+      "requiredTypes": [],
+      "rootTypes": [
+        {
+          "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f"
+        }
+      ],
+      "structure": [
+        {
+          "cardinality": "0..*",
+          "relationType": "contains",
+          "required": false,
+          "sourceType": {
+            "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f"
+          },
+          "targetType": {
+            "typeId": "4408a98e-d23e-4bc6-aef5-d8678571e2f6"
+          }
+        },
+        {
+          "cardinality": "0..*",
+          "relationType": "contains",
+          "required": false,
+          "sourceType": {
+            "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f"
+          },
+          "targetType": {
+            "typeId": "76cdc3fb-8460-4efc-90f5-3c4a15b86cad"
+          }
+        },
+        {
+          "cardinality": "0..*",
+          "relationType": "contains",
+          "required": false,
+          "sourceType": {
+            "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f"
+          },
+          "targetType": {
+            "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7"
+          }
+        },
+        {
+          "cardinality": "0..*",
+          "relationType": "contains",
+          "required": false,
+          "sourceType": {
+            "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f"
+          },
+          "targetType": {
+            "typeId": "474e299c-5809-4f92-a40d-b3ae1be3ad17"
+          }
+        }
+      ],
+      "version": 1
+    },
+    "package/types/guide-8f138dd6.json": {
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "A muDemocracy guide document — top-level metadata record for a guide container.",
+      "fields": [
+        {
+          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+          "order": 1,
+          "repeatable": false,
+          "required": false
+        },
+        {
+          "fieldId": "e5b359b0-8f8b-4807-bae9-b841adbd6248",
+          "order": 2,
+          "repeatable": false,
+          "required": true
+        },
+        {
+          "fieldId": "9bb3d21d-3a02-4b87-863d-99fdfcdb8a3e",
+          "order": 3,
+          "repeatable": false,
+          "required": false
+        },
+        {
+          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
+          "order": 4,
+          "repeatable": false,
+          "required": false
+        },
+        {
+          "fieldId": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
+          "order": 5,
+          "repeatable": false,
+          "required": false
+        }
+      ],
+      "id": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
+      "name": "guide",
+      "namespace": "com.mudemocracy",
+      "version": 1
+    },
+    "package/fields/body-cd97f7d2.json": {
+      "aiGuidance": {
+        "purpose": "Main body content of a text or list section"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Main body content of a text or list section",
+      "id": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
+      "name": "body",
+      "namespace": "com.mudemocracy",
+      "valueType": "text",
+      "version": 1
+    },
+    "records/tier-2/b5a4b93a-16d5-400d-be4b-a11ee98bc9e6.json": {
+      "createdAt": "2026-06-04T13:19:17.990311350+00:00",
       "fieldValues": [
         {
           "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
-          "value": "Tips"
+          "value": "Decision log review"
         },
         {
           "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "value": "tips"
+          "value": "decision-log-review"
         }
       ],
       "groupValues": [
@@ -1001,11 +1099,11 @@
               "fieldValues": [
                 {
                   "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "Getting stuck"
+                  "value": "The log looks like a to-do list"
                 },
                 {
                   "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "If the discussion seems to be going in circles, move to the decision question and ask 'It sounds like we are stuck, what is the actual choice we are trying to make right now?"
+                  "value": "It is full of names and deadlines rather than reasons and trade-offs."
                 }
               ]
             },
@@ -1013,11 +1111,23 @@
               "fieldValues": [
                 {
                   "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "Hidden decisions"
+                  "value": "Micro-decisions"
                 },
                 {
                   "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "If the group say 'We need more information' you can ask 'Are we making a strategic decision to delay this? And if so what is the review trigger for when we have enough information."
+                  "value": "You are recording things that could be changed tomorrow without anyone needing to know."
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+                  "value": "What without Why"
+                },
+                {
+                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+                  "value": "If the decision is just an action without the reason it is probably a task."
                 }
               ]
             }
@@ -1025,50 +1135,258 @@
           "groupId": "items"
         }
       ],
-      "instanceId": "3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c",
+      "instanceId": "b5a4b93a-16d5-400d-be4b-a11ee98bc9e6",
       "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
       "typeName": "section.table",
       "typeNamespace": "com.mudemocracy",
       "typeVersion": 1,
-      "updatedAt": "2026-06-09T13:25:06.656354203+00:00"
+      "updatedAt": "2026-06-05T17:39:57.631791491+00:00"
     },
-    "records/tier-2/a44be813-d2b4-4214-aaa9-4b8a11ce206f.json": {
-      "createdAt": "2026-06-04T13:19:16.473193163+00:00",
-      "fieldValues": [
+    "package/package.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
+      "blueprints": [
+        "blueprints/guide-7bfa600b.json"
+      ],
+      "createdAt": "2026-01-01T00:00:00Z",
+      "description": "",
+      "documentViews": [
+        "document-views/guide-body-view-2aba4d85.json"
+      ],
+      "fields": [
+        "fields/slug-2e3be0f8.json",
+        "fields/heading-9629c9b5.json",
+        "fields/theme-cf0ab5be.json",
+        "fields/page-c83931f4.json",
+        "fields/title-e5b359b0.json",
+        "fields/subtitle-9bb3d21d.json",
+        "fields/blocks-dabb80dc.json",
+        "fields/body-cd97f7d2.json",
+        "fields/callout-138e40f4.json",
+        "fields/list-items-e5e6ebce.json",
+        "fields/item-body-6fafae71.json",
+        "fields/item-term-a02b147b.json",
+        "fields/subheading-4523e0e0.json",
+        "fields/label-920fd0a2.json",
+        "fields/columns-15d81030.json",
+        "fields/widths-8d98614d.json",
+        "fields/rows-876daf6a.json",
+        "fields/name-d8045b2d.json",
+        "fields/description-b966f9c3.json",
+        "fields/goals-4765d592.json",
+        "fields/frustrations-3ca80b2b.json",
+        "fields/context-4bbcefae.json",
+        "fields/tags-eba84460.json",
+        "fields/cell-92d83824.json",
+        "fields/outro-04ce57ec.json",
+        "fields/commentary-term-98be1bba.json",
+        "fields/commentary-body-82df4f78.json",
+        "fields/note-2fa78abf.json",
+        "fields/confirmation-8b647900.json",
+        "fields/intro-a1517ec7.json"
+      ],
+      "id": "1881df16-af1e-4dd3-a2e1-db19ff7c8fd6",
+      "name": "primary",
+      "namespace": "com.mudemocracy",
+      "relationTypes": [
+        "relation-types/precedes-8d18debb.json",
+        "relation-types/contains-72b25b57.json"
+      ],
+      "status": "active",
+      "themes": [
+        "themes/guide-prose-4f8a2c1e.json",
+        "themes/guide-prose-html-5f3d230e.json"
+      ],
+      "title": "primary",
+      "types": [
+        "types/guide-8f138dd6.json",
+        "types/sectiontext-4408a98e.json",
+        "types/sectionlist-76cdc3fb.json",
+        "types/sectiontable-d8d09d3b.json",
+        "types/sectioncommentary-474e299c.json",
+        "types/persona-ff66ad38.json",
+        "types/section-a6bf3a1d.json"
+      ],
+      "version": "1.0.0",
+      "views": [
+        "views/guide-prose-view-030637e8.json"
+      ]
+    },
+    "package/document-views/guide-body-view-2aba4d85.json": {
+      "containerType": "guide",
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Renders a full guide in precedes order using ContainerSubset. Use --container to select the guide.",
+      "format": "markdown",
+      "id": "2aba4d85-317b-44e1-a600-d38a743b4cb4",
+      "name": "guide-body-view",
+      "namespace": "com.mudemocracy",
+      "preamble": "{{heading-1}}{{container-title}}",
+      "sections": [
         {
-          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "value": "deciding-which-decisions-to-record"
-        },
+          "emptyBehavior": "hide",
+          "order": 0,
+          "renderViewId": "030637e8-0239-4b17-912a-e6bb3c374426",
+          "sectionId": "guide-body",
+          "source": {
+            "containerId": "00000000-0000-0000-0000-000000000000",
+            "type": "container-subset"
+          },
+          "titleFieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a"
+        }
+      ],
+      "themeRef": {
+        "mode": "bundled",
+        "themeId": "4f8a2c1e-3b7d-4e9f-a1c2-8d5e6f7a9b0c"
+      },
+      "themeVariants": [
         {
-          "fieldId": "e5b359b0-8f8b-4807-bae9-b841adbd6248",
-          "value": "Deciding which decisions to record"
-        },
+          "description": "HTML rendering variant for web preview",
+          "name": "html",
+          "themeRef": {
+            "mode": "bundled",
+            "themeId": "5f3d230e-850b-417a-ac51-135a81485bc7"
+          }
+        }
+      ],
+      "version": 1
+    },
+    "package/fields/subtitle-9bb3d21d.json": {
+      "aiGuidance": {
+        "purpose": "Optional subtitle or tagline for the guide"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Optional subtitle or tagline for the guide",
+      "id": "9bb3d21d-3a02-4b87-863d-99fdfcdb8a3e",
+      "name": "subtitle",
+      "namespace": "com.mudemocracy",
+      "valueType": "string",
+      "version": 1
+    },
+    "package/fields/subheading-4523e0e0.json": {
+      "aiGuidance": {
+        "purpose": "Optional sub-heading displayed above a table"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Optional sub-heading displayed above a table",
+      "id": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
+      "name": "subheading",
+      "namespace": "com.mudemocracy",
+      "valueType": "string",
+      "version": 1
+    },
+    "package/fields/note-2fa78abf.json": {
+      "aiGuidance": {
+        "purpose": "Optional note prose displayed below the tables in a table section (target schema: table section note)."
+      },
+      "createdAt": "2026-06-08T00:00:00Z",
+      "description": "Optional note prose displayed below the tables in a table section.",
+      "id": "2fa78abf-c801-4d2a-8ddb-de218f079d1a",
+      "name": "note",
+      "namespace": "com.mudemocracy",
+      "valueType": "text",
+      "version": 1
+    },
+    "package/fields/slug-2e3be0f8.json": {
+      "aiGuidance": {
+        "purpose": "URL-safe identifier for the entity"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "URL-safe identifier for the entity",
+      "id": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+      "name": "slug",
+      "namespace": "com.mudemocracy",
+      "valueType": "string",
+      "version": 1
+    },
+    "package/fields/context-4bbcefae.json": {
+      "aiGuidance": {
+        "purpose": "Situational context for the persona"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Situational context for the persona",
+      "id": "4bbcefae-b988-4d1d-b343-00240f262407",
+      "name": "context",
+      "namespace": "com.mudemocracy",
+      "valueType": "text",
+      "version": 1
+    },
+    "containers/1c843817-c0f9-4ba6-b65f-c6d23af161a7.json": {
+      "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
+      "containerType": "guide",
+      "createdAt": "2026-06-04T00:00:00Z",
+      "memberInstanceIds": [
+        "1ff0ab83-c1c8-4e23-b611-2e629d919307",
+        "2aeb491a-9664-45e6-87e6-6fa38a3324c4",
+        "3ad28075-33d6-457e-a824-9421d0e83e2b",
+        "6ddd3472-a70d-4382-bd57-6bb24708a764",
+        "8b33ce73-8e9f-45bb-90a3-c782c004db1e",
+        "e89f9184-6c54-4c99-936a-9ae3baf5595b"
+      ],
+      "rootInstanceIds": [
+        "1ff0ab83-c1c8-4e23-b611-2e629d919307"
+      ],
+      "title": "Decision Recording"
+    },
+    "package/views/guide-prose-view-030637e8.json": {
+      "createdAt": "2026-06-05T00:00:00Z",
+      "description": "Controls field visibility for guide document view rendering. Shows only prose content fields; hides structural/metadata fields. Pair with the guide-prose theme.",
+      "exportConfig": {
+        "omitEmptyFields": true
+      },
+      "fieldViews": [
         {
           "fieldId": "9bb3d21d-3a02-4b87-863d-99fdfcdb8a3e",
-          "value": "A guide for deciding which decisions to record."
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "fieldId": "138e40f4-888b-49ed-9c26-bedc9567e806",
+          "order": 2,
+          "visible": true
+        },
+        {
+          "fieldId": "e5e6ebce-8dfe-446f-a7fd-e329d4f5d67e",
+          "order": 3,
+          "visible": true
+        },
+        {
+          "fieldId": "04ce57ec-46bc-4e1e-9238-34bf7247905a",
+          "order": 4,
+          "visible": true
+        },
+        {
+          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+          "order": 5,
+          "visible": false
         },
         {
           "fieldId": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
-          "value": "about-mudemocracy"
+          "order": 6,
+          "visible": false
+        },
+        {
+          "fieldId": "a1517ec7-7509-4021-9a47-fb3da8014eb7",
+          "order": 7,
+          "visible": false
+        },
+        {
+          "fieldId": "c83931f4-620c-4f8e-b3c5-54f106fb6dc6",
+          "order": 8,
+          "visible": false
+        },
+        {
+          "fieldId": "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
+          "order": 9,
+          "visible": false
         }
       ],
-      "instanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
-      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
-      "typeName": "guide",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-04T13:19:16.473201434+00:00"
-    },
-    "package/fields/item-term-a02b147b.json": {
-      "aiGuidance": {
-        "purpose": "Optional term or title label for an item in a structured list or tips group."
-      },
-      "createdAt": "2026-06-05T00:00:00Z",
-      "description": "Optional term or title label for an item in a structured list or tips group.",
-      "id": "a02b147b-4319-4cdd-b263-781640c93fcb",
-      "name": "item-term",
+      "id": "030637e8-0239-4b17-912a-e6bb3c374426",
+      "name": "guide-prose-view",
       "namespace": "com.mudemocracy",
-      "valueType": "text",
       "version": 1
     },
     "records/tier-2/0c7f33d9-58cb-489c-9fd8-26d8b807fe21.json": {
@@ -1142,75 +1460,6 @@
       "typeVersion": 1,
       "updatedAt": "2026-06-05T17:39:57.709403244+00:00"
     },
-    "package/package.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
-      "blueprints": [
-        "blueprints/guide-7bfa600b.json"
-      ],
-      "createdAt": "2026-01-01T00:00:00Z",
-      "description": "",
-      "documentViews": [
-        "document-views/guide-body-view-2aba4d85.json"
-      ],
-      "fields": [
-        "fields/slug-2e3be0f8.json",
-        "fields/heading-9629c9b5.json",
-        "fields/theme-cf0ab5be.json",
-        "fields/page-c83931f4.json",
-        "fields/title-e5b359b0.json",
-        "fields/subtitle-9bb3d21d.json",
-        "fields/blocks-dabb80dc.json",
-        "fields/body-cd97f7d2.json",
-        "fields/callout-138e40f4.json",
-        "fields/list-items-e5e6ebce.json",
-        "fields/item-body-6fafae71.json",
-        "fields/item-term-a02b147b.json",
-        "fields/subheading-4523e0e0.json",
-        "fields/label-920fd0a2.json",
-        "fields/columns-15d81030.json",
-        "fields/widths-8d98614d.json",
-        "fields/rows-876daf6a.json",
-        "fields/name-d8045b2d.json",
-        "fields/description-b966f9c3.json",
-        "fields/goals-4765d592.json",
-        "fields/frustrations-3ca80b2b.json",
-        "fields/context-4bbcefae.json",
-        "fields/tags-eba84460.json",
-        "fields/cell-92d83824.json",
-        "fields/outro-04ce57ec.json",
-        "fields/commentary-term-98be1bba.json",
-        "fields/commentary-body-82df4f78.json",
-        "fields/note-2fa78abf.json",
-        "fields/confirmation-8b647900.json",
-        "fields/intro-a1517ec7.json"
-      ],
-      "id": "1881df16-af1e-4dd3-a2e1-db19ff7c8fd6",
-      "name": "primary",
-      "namespace": "com.mudemocracy",
-      "relationTypes": [
-        "relation-types/precedes-8d18debb.json",
-        "relation-types/contains-72b25b57.json"
-      ],
-      "status": "active",
-      "themes": [
-        "themes/guide-prose-4f8a2c1e.json",
-        "themes/guide-prose-html-5f3d230e.json"
-      ],
-      "title": "primary",
-      "types": [
-        "types/guide-8f138dd6.json",
-        "types/sectiontext-4408a98e.json",
-        "types/sectionlist-76cdc3fb.json",
-        "types/sectiontable-d8d09d3b.json",
-        "types/sectioncommentary-474e299c.json",
-        "types/persona-ff66ad38.json",
-        "types/section-a6bf3a1d.json"
-      ],
-      "version": "1.0.0",
-      "views": [
-        "views/guide-prose-view-030637e8.json"
-      ]
-    },
     "records/tier-2/30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b.json": {
       "createdAt": "2026-06-04T13:19:19.097472264+00:00",
       "fieldValues": [
@@ -1242,58 +1491,120 @@
       "typeVersion": 1,
       "updatedAt": "2026-06-09T13:23:25.628603598+00:00"
     },
-    "package/document-views/guide-body-view-2aba4d85.json": {
-      "containerType": "guide",
+    "package/types/sectionlist-76cdc3fb.json": {
       "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Renders a full guide in precedes order using ContainerSubset. Use --container to select the guide.",
-      "format": "markdown",
-      "id": "2aba4d85-317b-44e1-a600-d38a743b4cb4",
-      "name": "guide-body-view",
-      "namespace": "com.mudemocracy",
-      "preamble": "{{heading-1}}{{container-title}}",
-      "sections": [
-        {
-          "emptyBehavior": "hide",
-          "order": 0,
-          "renderViewId": "030637e8-0239-4b17-912a-e6bb3c374426",
-          "sectionId": "guide-body",
-          "source": {
-            "containerId": "00000000-0000-0000-0000-000000000000",
-            "type": "container-subset"
-          },
-          "titleFieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a"
-        }
+      "description": "A guide section presenting an ordered list of items.",
+      "extendsTypeId": "a6bf3a1d-a785-45e1-8b14-19162e032f99",
+      "extendsTypeVersion": 1,
+      "fieldOrder": [
+        "9629c9b5-3b17-4766-b3d3-b2890902821a",
+        "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+        "cd97f7d2-29e4-435e-a991-9be8281d6a78",
+        "e5e6ebce-8dfe-446f-a7fd-e329d4f5d67e",
+        "8b647900-ee55-4dc8-b52c-c0ff913b54b0",
+        "04ce57ec-46bc-4e1e-9238-34bf7247905a",
+        "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
+        "c83931f4-620c-4f8e-b3c5-54f106fb6dc6"
       ],
-      "themeRef": {
-        "mode": "bundled",
-        "themeId": "4f8a2c1e-3b7d-4e9f-a1c2-8d5e6f7a9b0c"
-      },
-      "themeVariants": [
+      "fields": [
         {
-          "description": "HTML rendering variant for web preview",
-          "name": "html",
-          "themeRef": {
-            "mode": "bundled",
-            "themeId": "5f3d230e-850b-417a-ac51-135a81485bc7"
-          }
-        }
-      ],
-      "version": 1
-    },
-    "records/tier-2/afa31093-d955-4ea1-841e-9443775e3f15.json": {
-      "createdAt": "2026-06-04T13:19:27.208333536+00:00",
-      "fieldValues": [
-        {
-          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
-          "value": "Hidden decisions"
+          "displayLabel": "Items",
+          "fieldId": "e5e6ebce-8dfe-446f-a7fd-e329d4f5d67e",
+          "order": 1,
+          "repeatable": false,
+          "required": true
         },
         {
+          "fieldId": "8b647900-ee55-4dc8-b52c-c0ff913b54b0",
+          "order": 2,
+          "repeatable": false,
+          "required": false
+        },
+        {
+          "fieldId": "04ce57ec-46bc-4e1e-9238-34bf7247905a",
+          "order": 3,
+          "repeatable": false,
+          "required": false
+        }
+      ],
+      "id": "76cdc3fb-8460-4efc-90f5-3c4a15b86cad",
+      "name": "section.list",
+      "namespace": "com.mudemocracy",
+      "version": 1
+    },
+    "package/fields/commentary-term-98be1bba.json": {
+      "aiGuidance": {
+        "purpose": "Term or label for an item in a commentary section's items group (target schema: commentary item.term)."
+      },
+      "createdAt": "2026-06-08T00:00:00Z",
+      "description": "Term or label for an item in a commentary section's items group.",
+      "id": "98be1bba-e609-4754-933e-853e884807b8",
+      "name": "commentary-term",
+      "namespace": "com.mudemocracy",
+      "valueType": "text",
+      "version": 1
+    },
+    "records/tier-2/0dff90b5-4534-4a2b-9f1a-28f35130e943.json": {
+      "createdAt": "2026-06-04T13:19:26.822539212+00:00",
+      "fieldValues": [
+        {
           "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "value": "hidden-decisions"
+          "value": "recognising-decisions"
+        },
+        {
+          "fieldId": "e5b359b0-8f8b-4807-bae9-b841adbd6248",
+          "value": "Recognising decisions"
+        },
+        {
+          "fieldId": "9bb3d21d-3a02-4b87-863d-99fdfcdb8a3e",
+          "value": "A guide for recognising when a decision exists"
         },
         {
           "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "value": "The most difficult decisions to identify are the ones that are hidden by unclear or vague language, when we are avoiding being specific. This leads to decision making by default. It is important to remember that not making a decision is still a decision."
+          "value": "When a group of people meet to discuss a subject the conversation can feel like it lacks direction. Even when the group wants to take action, it is difficult to identify moments where a decision could be made. Often the language we use hides the fact that we are making a decision by default — not deciding is also a decision.\n\nThis guide helps you to recognise unhelpful language and patterns and shows you how to ask the right questions to bring clarity to your discussions."
+        },
+        {
+          "fieldId": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
+          "value": "about-mudemocracy"
+        }
+      ],
+      "instanceId": "0dff90b5-4534-4a2b-9f1a-28f35130e943",
+      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
+      "typeName": "guide",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-05T17:39:57.688235313+00:00"
+    },
+    "package/fields/rows-876daf6a.json": {
+      "aiGuidance": {
+        "purpose": "JSON array of arrays representing table rows and cells"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "JSON array of arrays representing table rows and cells",
+      "id": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
+      "name": "rows",
+      "namespace": "com.mudemocracy",
+      "valueType": "text",
+      "version": 1
+    },
+    "records/tier-2/8b33ce73-8e9f-45bb-90a3-c782c004db1e.json": {
+      "createdAt": "2026-06-04T13:19:24.728404321+00:00",
+      "fieldValues": [
+        {
+          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
+          "value": "What to record"
+        },
+        {
+          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+          "value": "what-to-record"
+        },
+        {
+          "fieldId": "c83931f4-620c-4f8e-b3c5-54f106fb6dc6",
+          "value": 2
+        },
+        {
+          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
+          "value": "The decisions that you record should all follow the same format. This is helpful when you want to compare decisions or update a previous decision."
         }
       ],
       "groupValues": [
@@ -1302,36 +1613,53 @@
             {
               "fieldValues": [
                 {
-                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-                  "value": "[\"Statement\", \"Hidden decision\"]"
+                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+                  "value": "Why"
                 },
                 {
-                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-                  "value": "[[\"We need more information before we can move forward\", \"Delay the project\"], [\"We need to make sure everyone is 100% happy with this first\", \"Giving everyone a veto which usually means staying exactly where you are\"], [\"Let's just keep this on the radar for next month\", \"This issue is not a priority\"]]"
-                },
-                {
-                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
-                  "value": "Examples"
+                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+                  "value": "Focus on the outcome, not the argument. Don't try to capture the drama or who said what. The goal is to remind your future selves, or those not in the room, of the logic not the debate."
                 }
               ]
             },
             {
               "fieldValues": [
                 {
+                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+                  "value": "What were the options"
+                },
+                {
+                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+                  "value": "Avoid writing 'none' or leaving this section blank. If there wasn't a competing proposal, the alternative was likely leaving things as they are. Clearly state what would have happened if you hadn't made this decision."
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+                  "value": "When to revisit"
+                },
+                {
+                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+                  "value": "Avoid setting a date i.e. review in six months unless you put a calendar reminder in place. It is best for a review to be triggered by a noticeable event or change in your data."
+                }
+              ]
+            }
+          ],
+          "groupId": "items"
+        },
+        {
+          "entries": [
+            {
+              "fieldValues": [
+                {
                   "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-                  "value": "[\"Behaviour\", \"Explanation\"]"
+                  "value": "[\"Question\", \"What to write\"]"
                 },
                 {
                   "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-                  "value": "[[\"Circular talk\", \"The same topic has come up in the last three meetings\"], [\"'Should' loop\", \"Repeatedly saying 'We really should do something about X' without any proposals for a next step\"], [\"Low energy\", \"The room feels heavy or bored. This is a sign of analysing rather than choosing\"]]"
-                },
-                {
-                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
-                  "value": "Indicators"
-                },
-                {
-                  "fieldId": "920fd0a2-5fb2-40c4-9362-7c6c86ab8ccd",
-                  "value": "There are some things that you can look out for which would indicate if a decision is hiding in the room. If you notice some of these signs it could mean that there is a decision that needs to be named and surfaced."
+                  "value": "[[\"What was decided?\", \"One clear sentence written in the active voice stating what was decided. Eg We agree/we will/we decide\\u2026\"], [\"Why?\", \"What made this the right choice? Avoid giving a summary of the discussion. Include key evidence in 2 - 4 sentences\"], [\"What were the options?\", \"The option (s) that had genuine support. \"], [\"When to revisit?\", \"What would happen for us to decide to review this decision? This should be specific and linked to the why. \"]]"
                 }
               ]
             }
@@ -1339,12 +1667,44 @@
           "groupId": "tables"
         }
       ],
-      "instanceId": "afa31093-d955-4ea1-841e-9443775e3f15",
+      "instanceId": "8b33ce73-8e9f-45bb-90a3-c782c004db1e",
       "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
       "typeName": "section.table",
       "typeNamespace": "com.mudemocracy",
       "typeVersion": 1,
-      "updatedAt": "2026-06-05T17:39:57.701530545+00:00"
+      "updatedAt": "2026-06-09T12:21:34.180223786+00:00"
+    },
+    "package/fields/outro-04ce57ec.json": {
+      "aiGuidance": {
+        "purpose": "Optional closing prose displayed below the main section content."
+      },
+      "createdAt": "2026-06-05T17:25:25.894834329+00:00",
+      "description": "Optional closing prose displayed below the main section content.",
+      "id": "04ce57ec-46bc-4e1e-9238-34bf7247905a",
+      "name": "outro",
+      "namespace": "com.mudemocracy",
+      "valueType": "text",
+      "version": 1
+    },
+    "manifest.json": {
+      "containerIndex": [
+        {
+          "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
+          "title": "Deciding which decisions to record"
+        },
+        {
+          "containerId": "78749395-dcde-4b02-a59e-184095e0ae0b",
+          "title": "Deliberating a decision"
+        },
+        {
+          "containerId": "d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d",
+          "title": "Recognising decisions"
+        },
+        {
+          "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
+          "title": "Decision Recording"
+        }
+      ]
     },
     "package/fields/goals-4765d592.json": {
       "aiGuidance": {
@@ -1358,69 +1718,533 @@
       "valueType": "text",
       "version": 1
     },
-    "package/fields/page-c83931f4.json": {
-      "aiGuidance": {
-        "purpose": "Print page number this section appears on"
-      },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Print page number this section appears on",
-      "id": "c83931f4-620c-4f8e-b3c5-54f106fb6dc6",
-      "name": "page",
-      "namespace": "com.mudemocracy",
-      "valueType": "number",
-      "version": 1
-    },
-    "containers/78749395-dcde-4b02-a59e-184095e0ae0b.json": {
-      "containerId": "78749395-dcde-4b02-a59e-184095e0ae0b",
-      "containerType": "guide",
-      "createdAt": "2026-06-04T00:00:00Z",
-      "memberInstanceIds": [
-        "2b512f4c-522f-4081-bb07-a1cfe7ad94f0",
-        "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b",
-        "3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c",
-        "f82ca8a8-63f7-49b9-89df-94597277025b",
-        "f889bfae-3798-43ab-8e7c-b0a42d6f5291"
-      ],
-      "rootInstanceIds": [
-        "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b"
-      ],
-      "title": "Deliberating a decision"
-    },
-    "records/tier-2/2aeb491a-9664-45e6-87e6-6fa38a3324c4.json": {
-      "createdAt": "2026-06-04T13:19:24.162247816+00:00",
+    "records/tier-2/07b77123-7e01-4253-883e-766c99016016.json": {
+      "createdAt": "2026-06-04T13:19:18.372688803+00:00",
       "fieldValues": [
         {
-          "fieldId": "e5e6ebce-8dfe-446f-a7fd-e329d4f5d67e",
-          "value": "What was decided?\nWhy?\nWhat were the options?\nWhen to revisit?"
+          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
+          "value": "Quick checklist"
+        },
+        {
+          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+          "value": "quick-checklist"
+        }
+      ],
+      "instanceId": "07b77123-7e01-4253-883e-766c99016016",
+      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
+      "typeName": "section.table",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-05T17:39:57.634892380+00:00"
+    },
+    "package/fields/title-e5b359b0.json": {
+      "aiGuidance": {
+        "purpose": "Human-readable title of the guide"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Human-readable title of the guide",
+      "id": "e5b359b0-8f8b-4807-bae9-b841adbd6248",
+      "name": "title",
+      "namespace": "com.mudemocracy",
+      "valueType": "string",
+      "version": 1
+    },
+    "package/types/section-a6bf3a1d.json": {
+      "createdAt": "2026-06-05T00:00:00Z",
+      "description": "Base section type — shared fields inherited by all guide section types.",
+      "fields": [
+        {
+          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+          "order": 1,
+          "repeatable": false,
+          "required": false
+        },
+        {
+          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
+          "order": 2,
+          "repeatable": false,
+          "required": true
+        },
+        {
+          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
+          "order": 3,
+          "repeatable": false,
+          "required": false
+        },
+        {
+          "fieldId": "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
+          "order": 4,
+          "repeatable": false,
+          "required": false
+        },
+        {
+          "fieldId": "c83931f4-620c-4f8e-b3c5-54f106fb6dc6",
+          "order": 5,
+          "repeatable": false,
+          "required": false
+        }
+      ],
+      "id": "a6bf3a1d-a785-45e1-8b14-19162e032f99",
+      "name": "section",
+      "namespace": "com.mudemocracy",
+      "version": 1
+    },
+    "package/fields/heading-9629c9b5.json": {
+      "aiGuidance": {
+        "purpose": "Display heading for a section"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Display heading for a section",
+      "id": "9629c9b5-3b17-4766-b3d3-b2890902821a",
+      "name": "heading",
+      "namespace": "com.mudemocracy",
+      "valueType": "string",
+      "version": 1
+    },
+    "relations/relations-collection.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relations-collection.json",
+      "relations": [
+        {
+          "createdAt": "2026-06-04T00:00:00Z",
+          "relationId": "fb936ac8-d1f0-432c-9493-42baa7e30d08",
+          "relationType": "precedes",
+          "sourceInstanceId": "a638cca2-6650-44bb-9ede-7d2fc40c57b2",
+          "targetInstanceId": "1126bdf3-8171-4c04-89fd-13610018bb78"
+        },
+        {
+          "createdAt": "2026-06-04T00:00:00Z",
+          "relationId": "9f9af466-c907-40e5-b129-96fd873b14fe",
+          "relationType": "precedes",
+          "sourceInstanceId": "1126bdf3-8171-4c04-89fd-13610018bb78",
+          "targetInstanceId": "b5a4b93a-16d5-400d-be4b-a11ee98bc9e6"
+        },
+        {
+          "createdAt": "2026-06-04T00:00:00Z",
+          "relationId": "c458c3c2-3410-417c-a484-55603c799a78",
+          "relationType": "precedes",
+          "sourceInstanceId": "b5a4b93a-16d5-400d-be4b-a11ee98bc9e6",
+          "targetInstanceId": "07b77123-7e01-4253-883e-766c99016016"
+        },
+        {
+          "createdAt": "2026-06-04T00:00:00Z",
+          "relationId": "ccb74717-97e5-4ae1-b50e-6b43081f3460",
+          "relationType": "precedes",
+          "sourceInstanceId": "2b512f4c-522f-4081-bb07-a1cfe7ad94f0",
+          "targetInstanceId": "f82ca8a8-63f7-49b9-89df-94597277025b"
+        },
+        {
+          "createdAt": "2026-06-04T00:00:00Z",
+          "relationId": "36f61d6e-976e-4e91-a762-0e2647f46f4c",
+          "relationType": "precedes",
+          "sourceInstanceId": "f82ca8a8-63f7-49b9-89df-94597277025b",
+          "targetInstanceId": "f889bfae-3798-43ab-8e7c-b0a42d6f5291"
+        },
+        {
+          "createdAt": "2026-06-04T00:00:00Z",
+          "relationId": "5b29eb0f-50c1-4be5-86c3-b6593022cd49",
+          "relationType": "precedes",
+          "sourceInstanceId": "f889bfae-3798-43ab-8e7c-b0a42d6f5291",
+          "targetInstanceId": "3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c"
+        },
+        {
+          "createdAt": "2026-06-04T00:00:00Z",
+          "relationId": "7f789667-c7c7-449d-adf5-fca09b9df686",
+          "relationType": "precedes",
+          "sourceInstanceId": "0fd5e0f3-63d8-430d-9454-da8c9f20cf52",
+          "targetInstanceId": "afa31093-d955-4ea1-841e-9443775e3f15"
+        },
+        {
+          "createdAt": "2026-06-04T00:00:00Z",
+          "relationId": "21217de3-998e-4db5-b6a7-162d4747a87c",
+          "relationType": "precedes",
+          "sourceInstanceId": "afa31093-d955-4ea1-841e-9443775e3f15",
+          "targetInstanceId": "0c7f33d9-58cb-489c-9fd8-26d8b807fe21"
+        },
+        {
+          "createdAt": "2026-06-04T00:00:00Z",
+          "relationId": "1dd5f836-d881-47f3-9ac7-6dc836b6cc3b",
+          "relationType": "precedes",
+          "sourceInstanceId": "0c7f33d9-58cb-489c-9fd8-26d8b807fe21",
+          "targetInstanceId": "26f98f5b-f49a-4ac1-8bac-41aedccabc31"
+        },
+        {
+          "relationId": "744ae843-cc72-4cf9-9ed7-6d819c7b2321",
+          "relationType": "precedes",
+          "sourceInstanceId": "2aeb491a-9664-45e6-87e6-6fa38a3324c4",
+          "targetInstanceId": "8b33ce73-8e9f-45bb-90a3-c782c004db1e"
+        },
+        {
+          "relationId": "2f4b3c2d-7b9d-4677-ab55-bc3df569152e",
+          "relationType": "precedes",
+          "sourceInstanceId": "8b33ce73-8e9f-45bb-90a3-c782c004db1e",
+          "targetInstanceId": "3ad28075-33d6-457e-a824-9421d0e83e2b"
+        },
+        {
+          "relationId": "a5f0a94f-0366-4f39-8a9b-9465bfbb1d66",
+          "relationType": "precedes",
+          "sourceInstanceId": "3ad28075-33d6-457e-a824-9421d0e83e2b",
+          "targetInstanceId": "e89f9184-6c54-4c99-936a-9ae3baf5595b"
+        },
+        {
+          "relationId": "090910a3-76e2-4df6-98ff-de72c2e1c66b",
+          "relationType": "precedes",
+          "sourceInstanceId": "e89f9184-6c54-4c99-936a-9ae3baf5595b",
+          "targetInstanceId": "6ddd3472-a70d-4382-bd57-6bb24708a764"
+        }
+      ]
+    },
+    "records/tier-2/6ddd3472-a70d-4382-bd57-6bb24708a764.json": {
+      "createdAt": "2026-06-04T13:19:26.278837863+00:00",
+      "fieldValues": [
+        {
+          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
+          "value": "Things to watch out for"
+        },
+        {
+          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+          "value": "things-to-watch-out-for"
+        },
+        {
+          "fieldId": "c83931f4-620c-4f8e-b3c5-54f106fb6dc6",
+          "value": 4
+        }
+      ],
+      "groupValues": [
+        {
+          "entries": [
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+                  "value": "A decision log is a living tool, not an archive"
+                },
+                {
+                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+                  "value": "If a review trigger is met (e.g., attendance drops), you must review it and see if it needs a revisit."
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+                  "value": "Over-recording"
+                },
+                {
+                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+                  "value": "You don't need to use this four-question format for minor, operational details (like who is buying the biscuits for the next meeting). Save it for choices that change your direction, spend significant money, or affect how people work together."
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+                  "value": "Letting one person hold the keys"
+                },
+                {
+                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+                  "value": "Even if one person does most of the typing, the log belongs to the whole group. Make sure everyone knows how to access it independently so transparency is maintained."
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+                  "value": "Storing your decisions"
+                },
+                {
+                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+                  "value": "The decisions made should be stored where everyone relevant can review them. This could be a print out stored in a filing cabinet or shared notice board or a shared folder on the internet."
+                }
+              ]
+            }
+          ],
+          "groupId": "items"
+        }
+      ],
+      "instanceId": "6ddd3472-a70d-4382-bd57-6bb24708a764",
+      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
+      "typeName": "section.table",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-09T12:22:23.513436863+00:00"
+    },
+    "records/tier-2/2b512f4c-522f-4081-bb07-a1cfe7ad94f0.json": {
+      "createdAt": "2026-06-04T13:19:19.207369888+00:00",
+      "fieldValues": [
+        {
+          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
+          "value": "Process"
         },
         {
           "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
           "value": "process"
         },
         {
+          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
+          "value": "Work through these steps in order during your meeting and write down the answers as you go. Use the detailed section below if the discussion gets stuck."
+        },
+        {
+          "fieldId": "04ce57ec-46bc-4e1e-9238-34bf7247905a",
+          "value": ""
+        }
+      ],
+      "groupValues": [
+        {
+          "entries": [
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
+                  "value": "[\"Title\", \"Headline\"]"
+                },
+                {
+                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
+                  "value": "[[\"Background\", \"What happened before this?\"], [\"Friction\", \"What's the problem we need to fix?\"], [\"Decision question\", \"What exactly are we deciding?\"], [\"Options\", \"What are our other choices?\"], [\"Key requirements\", \"What matters most to us here?\"], [\"Decision\", \"What is the decision?\"], [\"Why\", \"Why does this option win?\"], [\"Review triggers\", \"When should we look at it again?\"], [\"Next steps\", \"What is still left to do?\"]]"
+                }
+              ]
+            }
+          ],
+          "groupId": "tables"
+        },
+        {
+          "entries": [
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+                  "value": "Interruptions"
+                },
+                {
+                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+                  "value": "If people interrupt or debate prematurely, point back to the guide and remind them that there is a specific time for every part of the conversation."
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+                  "value": "Silence is a sign"
+                },
+                {
+                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+                  "value": "If the room goes quiet, it usually means the question is too vague or people are overwhelmed. Go back to the decision question and try rephrasing it."
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+                  "value": "Write it where people can see it"
+                },
+                {
+                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+                  "value": "If meeting in person or online, share your screen or use a whiteboard to write the answers live. This stops people from repeating themselves."
+                }
+              ]
+            }
+          ],
+          "groupId": "items"
+        }
+      ],
+      "instanceId": "2b512f4c-522f-4081-bb07-a1cfe7ad94f0",
+      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
+      "typeName": "section.table",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-09T13:23:55.378341380+00:00"
+    },
+    "package/fields/label-920fd0a2.json": {
+      "aiGuidance": {
+        "purpose": "Optional paragraph displayed above a table (below subheading)"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Optional paragraph displayed above a table (below subheading)",
+      "id": "920fd0a2-5fb2-40c4-9362-7c6c86ab8ccd",
+      "name": "label",
+      "namespace": "com.mudemocracy",
+      "valueType": "text",
+      "version": 1
+    },
+    "records/tier-2/a638cca2-6650-44bb-9ede-7d2fc40c57b2.json": {
+      "createdAt": "2026-06-04T13:19:16.577587806+00:00",
+      "fieldValues": [
+        {
           "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
           "value": "Process"
         },
         {
+          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+          "value": "process"
+        },
+        {
           "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "value": "To begin, start with a relatively easy decision. When you feel more confident, move on to more complex or emotionally charged decisions.\n\nThere are 4 questions to answer to be able to record a decision clearly so that it is useful now and in the future."
-        },
-        {
-          "fieldId": "04ce57ec-46bc-4e1e-9238-34bf7247905a",
-          "value": "Confirm the decision before moving onto the next item. The recording of all decisions must be agreed and recorded before the end of the meeting."
-        },
-        {
-          "fieldId": "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
-          "value": "default"
+          "value": "Not all decisions are equal. Recording minor decisions causes unnecessary admin. It is important to distinguish between recording tasks and strategy. This is the difference between doing vs deciding."
         }
       ],
-      "groupValues": [],
-      "instanceId": "2aeb491a-9664-45e6-87e6-6fa38a3324c4",
-      "typeId": "76cdc3fb-8460-4efc-90f5-3c4a15b86cad",
-      "typeName": "section.list",
+      "groupValues": [
+        {
+          "entries": [
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
+                  "value": "[\"Type\", \"Description\", \"Example\", \"Action\"]"
+                },
+                {
+                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
+                  "value": "[[\"Strategic\", \"Choosing a goal or priority\", \"We will prioritise growth over stability this year\", \"Record\"], [\"Tactical\", \"Choosing a method or system\", \"We will use email instead of Whatsapp for formal votes\", \"Record\"], [\"Operational\", \"Assigning work or picking the next step\", \"John will call the venue tomorrow\", \"Ignore\"]]"
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
+                  "value": "[]"
+                },
+                {
+                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
+                  "value": "[[\"Will this matter in six months?\", \"Does this have long term consequences or is it just for today?\"], [\"Is this a policy now?\", \"Does this change our purpose or scope?\"], [\"Was there a trade-off?\", \"Did we actively consider and say no to viable alternatives?\"], [\"Would a review be useful?\", \"If the decision proves to be wrong, do we need to know what we discussed at the time?\"]]"
+                },
+                {
+                  "fieldId": "920fd0a2-5fb2-40c4-9362-7c6c86ab8ccd",
+                  "value": "If you are unsure whether to record a decision, ask these four questions. If you answer yes to at least two, record the decision."
+                }
+              ]
+            }
+          ],
+          "groupId": "tables"
+        }
+      ],
+      "instanceId": "a638cca2-6650-44bb-9ede-7d2fc40c57b2",
+      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
+      "typeName": "section.table",
       "typeNamespace": "com.mudemocracy",
       "typeVersion": 1,
-      "updatedAt": "2026-06-09T15:52:54.045+00:00"
+      "updatedAt": "2026-06-05T17:39:57.618594708+00:00"
+    },
+    "records/tier-2/f889bfae-3798-43ab-8e7c-b0a42d6f5291.json": {
+      "createdAt": "2026-06-04T13:19:21.344337895+00:00",
+      "fieldValues": [
+        {
+          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
+          "value": "Detailed explanations"
+        },
+        {
+          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+          "value": "detail-2"
+        }
+      ],
+      "groupValues": [
+        {
+          "entries": [
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
+                  "value": "[]"
+                },
+                {
+                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
+                  "value": "[[\"Headline\", \"What matters most to us here?\"], [\"Explanation\", \"These are the standards we use to judge our choices and record how the alternatives perform against our requirements. We may consider cost, ease of use, values and trade-offs. It explains what a good decision looks like for this problem and records any disagreements.\"], [\"Questions\", \"What are the non-negotiables? Cost, deadline, legal? How does the decision hold up against our values - do we value cost or quality? What are we giving up if we choose option B? What was the main point of disagreement in our discussion?\"]]"
+                },
+                {
+                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
+                  "value": "Key requirements"
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
+                  "value": "[]"
+                },
+                {
+                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
+                  "value": "[[\"Headline\", \"What did we decide?\"], [\"Explanation\", \"One clear, short sentence stating what we are going to do. Start with active words like 'We will, we have decided to..' so the outcome is clear\"], [\"Questions\", \"Can someone state the decision in one sentence?\"]]"
+                },
+                {
+                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
+                  "value": "Verdict"
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
+                  "value": "[]"
+                },
+                {
+                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
+                  "value": "[[\"Headline\", \"Why did this option win?\"], [\"Explanation\", \"Record the reason for the choice.\"], [\"Questions\", \"What was the deciding factor that got us to this decision? How do we explain to someone who is not here why we made this choice?\"]]"
+                },
+                {
+                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
+                  "value": "Why"
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
+                  "value": "[]"
+                },
+                {
+                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
+                  "value": "[[\"Headline\", \"When should we look at this again?\"], [\"Explanation\", \"These are the signs that the decision may not be working anymore. It can include specific dates for a review or specific conditions that would trigger a review.\"], [\"Questions\", \"What would have to happen for us to realise this decision was not correct? Is there a specific date when we should review? What specific conditions should we look out for?\"]]"
+                },
+                {
+                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
+                  "value": "Review triggers"
+                }
+              ]
+            },
+            {
+              "fieldValues": [
+                {
+                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
+                  "value": "[]"
+                },
+                {
+                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
+                  "value": "[[\"Headline\", \"What's still left to do?\"], [\"Explanation\", \"Record any tasks that emerge from the decision being made. There may be none.\"], [\"Questions\", \"Who is taking ownership of this task and by when?\"]]"
+                },
+                {
+                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
+                  "value": "Next steps"
+                }
+              ]
+            }
+          ],
+          "groupId": "tables"
+        }
+      ],
+      "instanceId": "f889bfae-3798-43ab-8e7c-b0a42d6f5291",
+      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
+      "typeName": "section.table",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-09T13:24:48.414835854+00:00"
+    },
+    "package/fields/commentary-body-82df4f78.json": {
+      "aiGuidance": {
+        "purpose": "Body prose for an item in a commentary section's items group (target schema: commentary item.body)."
+      },
+      "createdAt": "2026-06-08T00:00:00Z",
+      "description": "Body prose for an item in a commentary section's items group.",
+      "id": "82df4f78-1180-4cc8-8c01-f1b96bd8d0fe",
+      "name": "commentary-body",
+      "namespace": "com.mudemocracy",
+      "valueType": "text",
+      "version": 1
     },
     "records/tier-2/1126bdf3-8171-4c04-89fd-13610018bb78.json": {
       "createdAt": "2026-06-04T13:19:17.387992682+00:00",
@@ -1538,44 +2362,16 @@
       "typeVersion": 1,
       "updatedAt": "2026-06-09T15:56:16.244+00:00"
     },
-    "package/types/sectionlist-76cdc3fb.json": {
+    "package/relation-types/contains-72b25b57.json": {
+      "canonicalDirection": "source is the container; target is the contained member",
+      "category": "composition",
       "createdAt": "2026-06-04T00:00:00Z",
-      "description": "A guide section presenting an ordered list of items.",
-      "extendsTypeId": "a6bf3a1d-a785-45e1-8b14-19162e032f99",
-      "extendsTypeVersion": 1,
-      "fieldOrder": [
-        "9629c9b5-3b17-4766-b3d3-b2890902821a",
-        "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-        "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-        "e5e6ebce-8dfe-446f-a7fd-e329d4f5d67e",
-        "8b647900-ee55-4dc8-b52c-c0ff913b54b0",
-        "04ce57ec-46bc-4e1e-9238-34bf7247905a",
-        "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
-        "c83931f4-620c-4f8e-b3c5-54f106fb6dc6"
-      ],
-      "fields": [
-        {
-          "displayLabel": "Items",
-          "fieldId": "e5e6ebce-8dfe-446f-a7fd-e329d4f5d67e",
-          "order": 1,
-          "repeatable": false,
-          "required": true
-        },
-        {
-          "fieldId": "8b647900-ee55-4dc8-b52c-c0ff913b54b0",
-          "order": 2,
-          "repeatable": false,
-          "required": false
-        },
-        {
-          "fieldId": "04ce57ec-46bc-4e1e-9238-34bf7247905a",
-          "order": 3,
-          "repeatable": false,
-          "required": false
-        }
-      ],
-      "id": "76cdc3fb-8460-4efc-90f5-3c4a15b86cad",
-      "name": "section.list",
+      "description": "Source instance contains or is composed of target instance. Defines structural membership or composition boundaries.",
+      "id": "72b25b57-d400-49d5-82bd-7d8627587f08",
+      "inverseType": "part-of",
+      "irreflexive": true,
+      "key": "contains",
+      "label": "Contains",
       "namespace": "com.mudemocracy",
       "version": 1
     },
@@ -1591,157 +2387,52 @@
       "valueType": "text",
       "version": 1
     },
-    "relations/relations-collection.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relations-collection.json",
-      "relations": [
-        {
-          "createdAt": "2026-06-04T00:00:00Z",
-          "relationId": "fb936ac8-d1f0-432c-9493-42baa7e30d08",
-          "relationType": "precedes",
-          "sourceInstanceId": "a638cca2-6650-44bb-9ede-7d2fc40c57b2",
-          "targetInstanceId": "1126bdf3-8171-4c04-89fd-13610018bb78"
-        },
-        {
-          "createdAt": "2026-06-04T00:00:00Z",
-          "relationId": "9f9af466-c907-40e5-b129-96fd873b14fe",
-          "relationType": "precedes",
-          "sourceInstanceId": "1126bdf3-8171-4c04-89fd-13610018bb78",
-          "targetInstanceId": "b5a4b93a-16d5-400d-be4b-a11ee98bc9e6"
-        },
-        {
-          "createdAt": "2026-06-04T00:00:00Z",
-          "relationId": "c458c3c2-3410-417c-a484-55603c799a78",
-          "relationType": "precedes",
-          "sourceInstanceId": "b5a4b93a-16d5-400d-be4b-a11ee98bc9e6",
-          "targetInstanceId": "07b77123-7e01-4253-883e-766c99016016"
-        },
-        {
-          "createdAt": "2026-06-04T00:00:00Z",
-          "relationId": "ccb74717-97e5-4ae1-b50e-6b43081f3460",
-          "relationType": "precedes",
-          "sourceInstanceId": "2b512f4c-522f-4081-bb07-a1cfe7ad94f0",
-          "targetInstanceId": "f82ca8a8-63f7-49b9-89df-94597277025b"
-        },
-        {
-          "createdAt": "2026-06-04T00:00:00Z",
-          "relationId": "36f61d6e-976e-4e91-a762-0e2647f46f4c",
-          "relationType": "precedes",
-          "sourceInstanceId": "f82ca8a8-63f7-49b9-89df-94597277025b",
-          "targetInstanceId": "f889bfae-3798-43ab-8e7c-b0a42d6f5291"
-        },
-        {
-          "createdAt": "2026-06-04T00:00:00Z",
-          "relationId": "5b29eb0f-50c1-4be5-86c3-b6593022cd49",
-          "relationType": "precedes",
-          "sourceInstanceId": "f889bfae-3798-43ab-8e7c-b0a42d6f5291",
-          "targetInstanceId": "3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c"
-        },
-        {
-          "createdAt": "2026-06-04T00:00:00Z",
-          "relationId": "7f789667-c7c7-449d-adf5-fca09b9df686",
-          "relationType": "precedes",
-          "sourceInstanceId": "0fd5e0f3-63d8-430d-9454-da8c9f20cf52",
-          "targetInstanceId": "afa31093-d955-4ea1-841e-9443775e3f15"
-        },
-        {
-          "createdAt": "2026-06-04T00:00:00Z",
-          "relationId": "21217de3-998e-4db5-b6a7-162d4747a87c",
-          "relationType": "precedes",
-          "sourceInstanceId": "afa31093-d955-4ea1-841e-9443775e3f15",
-          "targetInstanceId": "0c7f33d9-58cb-489c-9fd8-26d8b807fe21"
-        },
-        {
-          "createdAt": "2026-06-04T00:00:00Z",
-          "relationId": "1dd5f836-d881-47f3-9ac7-6dc836b6cc3b",
-          "relationType": "precedes",
-          "sourceInstanceId": "0c7f33d9-58cb-489c-9fd8-26d8b807fe21",
-          "targetInstanceId": "26f98f5b-f49a-4ac1-8bac-41aedccabc31"
-        },
-        {
-          "relationId": "744ae843-cc72-4cf9-9ed7-6d819c7b2321",
-          "relationType": "precedes",
-          "sourceInstanceId": "2aeb491a-9664-45e6-87e6-6fa38a3324c4",
-          "targetInstanceId": "8b33ce73-8e9f-45bb-90a3-c782c004db1e"
-        },
-        {
-          "relationId": "2f4b3c2d-7b9d-4677-ab55-bc3df569152e",
-          "relationType": "precedes",
-          "sourceInstanceId": "8b33ce73-8e9f-45bb-90a3-c782c004db1e",
-          "targetInstanceId": "3ad28075-33d6-457e-a824-9421d0e83e2b"
-        },
-        {
-          "relationId": "a5f0a94f-0366-4f39-8a9b-9465bfbb1d66",
-          "relationType": "precedes",
-          "sourceInstanceId": "3ad28075-33d6-457e-a824-9421d0e83e2b",
-          "targetInstanceId": "e89f9184-6c54-4c99-936a-9ae3baf5595b"
-        },
-        {
-          "relationId": "090910a3-76e2-4df6-98ff-de72c2e1c66b",
-          "relationType": "precedes",
-          "sourceInstanceId": "e89f9184-6c54-4c99-936a-9ae3baf5595b",
-          "targetInstanceId": "6ddd3472-a70d-4382-bd57-6bb24708a764"
-        }
-      ]
-    },
-    "package/relation-types/precedes-8d18debb.json": {
-      "canonicalDirection": "source comes before target",
-      "category": "sequence",
+    "containers/78749395-dcde-4b02-a59e-184095e0ae0b.json": {
+      "containerId": "78749395-dcde-4b02-a59e-184095e0ae0b",
+      "containerType": "guide",
       "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Source instance comes before target instance in a defined sequence or ordering.",
-      "id": "8d18debb-5346-4c0e-adff-36fda7306174",
-      "inverseType": "follows",
-      "irreflexive": true,
-      "key": "precedes",
-      "label": "Precedes",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "memberInstanceIds": [
+        "2b512f4c-522f-4081-bb07-a1cfe7ad94f0",
+        "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b",
+        "3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c",
+        "f82ca8a8-63f7-49b9-89df-94597277025b",
+        "f889bfae-3798-43ab-8e7c-b0a42d6f5291"
+      ],
+      "rootInstanceIds": [
+        "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b"
+      ],
+      "title": "Deliberating a decision"
     },
-    "package/fields/subheading-4523e0e0.json": {
+    "package/fields/item-term-a02b147b.json": {
       "aiGuidance": {
-        "purpose": "Optional sub-heading displayed above a table"
+        "purpose": "Optional term or title label for an item in a structured list or tips group."
       },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Optional sub-heading displayed above a table",
-      "id": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
-      "name": "subheading",
-      "namespace": "com.mudemocracy",
-      "valueType": "string",
-      "version": 1
-    },
-    "package/fields/heading-9629c9b5.json": {
-      "aiGuidance": {
-        "purpose": "Display heading for a section"
-      },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Display heading for a section",
-      "id": "9629c9b5-3b17-4766-b3d3-b2890902821a",
-      "name": "heading",
-      "namespace": "com.mudemocracy",
-      "valueType": "string",
-      "version": 1
-    },
-    "package/fields/commentary-term-98be1bba.json": {
-      "aiGuidance": {
-        "purpose": "Term or label for an item in a commentary section's items group (target schema: commentary item.term)."
-      },
-      "createdAt": "2026-06-08T00:00:00Z",
-      "description": "Term or label for an item in a commentary section's items group.",
-      "id": "98be1bba-e609-4754-933e-853e884807b8",
-      "name": "commentary-term",
+      "createdAt": "2026-06-05T00:00:00Z",
+      "description": "Optional term or title label for an item in a structured list or tips group.",
+      "id": "a02b147b-4319-4cdd-b263-781640c93fcb",
+      "name": "item-term",
       "namespace": "com.mudemocracy",
       "valueType": "text",
       "version": 1
     },
-    "records/tier-2/f889bfae-3798-43ab-8e7c-b0a42d6f5291.json": {
-      "createdAt": "2026-06-04T13:19:21.344337895+00:00",
+    "records/tier-2/3ad28075-33d6-457e-a824-9421d0e83e2b.json": {
+      "createdAt": "2026-06-04T13:19:25.327585299+00:00",
       "fieldValues": [
         {
           "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
-          "value": "Detailed explanations"
+          "value": "Example"
         },
         {
           "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "value": "detail-2"
+          "value": "example"
+        },
+        {
+          "fieldId": "c83931f4-620c-4f8e-b3c5-54f106fb6dc6",
+          "value": 3
+        },
+        {
+          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
+          "value": "A decision record for a community group deciding how often to meet."
         }
       ],
       "groupValues": [
@@ -1751,79 +2442,11 @@
               "fieldValues": [
                 {
                   "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-                  "value": "[]"
+                  "value": "[\"Question\", \"What to write\"]"
                 },
                 {
                   "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-                  "value": "[[\"Headline\", \"What matters most to us here?\"], [\"Explanation\", \"These are the standards we use to judge our choices and record how the alternatives perform against our requirements. We may consider cost, ease of use, values and trade-offs. It explains what a good decision looks like for this problem and records any disagreements.\"], [\"Questions\", \"What are the non-negotiables? Cost, deadline, legal? How does the decision hold up against our values - do we value cost or quality? What are we giving up if we choose option B? What was the main point of disagreement in our discussion?\"]]"
-                },
-                {
-                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
-                  "value": "Key requirements"
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-                  "value": "[]"
-                },
-                {
-                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-                  "value": "[[\"Headline\", \"What did we decide?\"], [\"Explanation\", \"One clear, short sentence stating what we are going to do. Start with active words like 'We will, we have decided to..' so the outcome is clear\"], [\"Questions\", \"Can someone state the decision in one sentence?\"]]"
-                },
-                {
-                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
-                  "value": "Verdict"
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-                  "value": "[]"
-                },
-                {
-                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-                  "value": "[[\"Headline\", \"Why did this option win?\"], [\"Explanation\", \"Record the reason for the choice.\"], [\"Questions\", \"What was the deciding factor that got us to this decision? How do we explain to someone who is not here why we made this choice?\"]]"
-                },
-                {
-                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
-                  "value": "Why"
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-                  "value": "[]"
-                },
-                {
-                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-                  "value": "[[\"Headline\", \"When should we look at this again?\"], [\"Explanation\", \"These are the signs that the decision may not be working anymore. It can include specific dates for a review or specific conditions that would trigger a review.\"], [\"Questions\", \"What would have to happen for us to realise this decision was not correct? Is there a specific date when we should review? What specific conditions should we look out for?\"]]"
-                },
-                {
-                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
-                  "value": "Review triggers"
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-                  "value": "[]"
-                },
-                {
-                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-                  "value": "[[\"Headline\", \"What's still left to do?\"], [\"Explanation\", \"Record any tasks that emerge from the decision being made. There may be none.\"], [\"Questions\", \"Who is taking ownership of this task and by when?\"]]"
-                },
-                {
-                  "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
-                  "value": "Next steps"
+                  "value": "[[\"What was decided?\", \"We will meet monthly on the first Sunday with a brief written summary sent to all members within 48 hours.\"], [\"Why?\", \"Monthly is frequent enough to address decisions in time and infrequent enough that attendance is sustainable. The written summary addresses the concerns of 3 members who work weekends and cannot attend.\"], [\"What were the options?\", \"Fortnightly, rejected as unsustainable for working members. Quarterly, rejected as too slow for timely decisions\"], [\"When to revisit?\", \"If attendance drops below 3 members for 2 consecutive meetings or a time-sensitive decision is delayed because we couldn't meet in time - whichever comes first.\"]]"
                 }
               ]
             }
@@ -1831,50 +2454,33 @@
           "groupId": "tables"
         }
       ],
-      "instanceId": "f889bfae-3798-43ab-8e7c-b0a42d6f5291",
+      "instanceId": "3ad28075-33d6-457e-a824-9421d0e83e2b",
       "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
       "typeName": "section.table",
       "typeNamespace": "com.mudemocracy",
       "typeVersion": 1,
-      "updatedAt": "2026-06-09T13:24:48.414835854+00:00"
+      "updatedAt": "2026-06-09T12:21:49.413923240+00:00"
     },
-    "package/fields/theme-cf0ab5be.json": {
+    "package/fields/callout-138e40f4.json": {
       "aiGuidance": {
-        "purpose": "Visual theme variant for the section"
-      },
-      "allowedValues": [
-        "default",
-        "inverted",
-        "highlight"
-      ],
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Visual theme variant for the section",
-      "id": "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
-      "name": "theme",
-      "namespace": "com.mudemocracy",
-      "valueType": "select",
-      "version": 1
-    },
-    "package/fields/slug-2e3be0f8.json": {
-      "aiGuidance": {
-        "purpose": "URL-safe identifier for the entity"
+        "purpose": "Highlighted callout text for a text section"
       },
       "createdAt": "2026-06-04T00:00:00Z",
-      "description": "URL-safe identifier for the entity",
-      "id": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-      "name": "slug",
+      "description": "Highlighted callout text for a text section",
+      "id": "138e40f4-888b-49ed-9c26-bedc9567e806",
+      "name": "callout",
       "namespace": "com.mudemocracy",
-      "valueType": "string",
+      "valueType": "text",
       "version": 1
     },
-    "package/fields/confirmation-8b647900.json": {
+    "package/fields/description-b966f9c3.json": {
       "aiGuidance": {
-        "purpose": "Optional confirmation prose displayed below the items in a list section (target schema: list section confirmation)."
+        "purpose": "Overview description of the persona"
       },
-      "createdAt": "2026-06-08T00:00:00Z",
-      "description": "Optional confirmation prose displayed below the items in a list section.",
-      "id": "8b647900-ee55-4dc8-b52c-c0ff913b54b0",
-      "name": "confirmation",
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Overview description of the persona",
+      "id": "b966f9c3-ad32-47f4-bc80-e6cb83ebb855",
+      "name": "description",
       "namespace": "com.mudemocracy",
       "valueType": "text",
       "version": 1
@@ -1911,23 +2517,6 @@
       "namespace": "com.mudemocracy",
       "version": 1
     },
-    "containers/1c843817-c0f9-4ba6-b65f-c6d23af161a7.json": {
-      "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
-      "containerType": "guide",
-      "createdAt": "2026-06-04T00:00:00Z",
-      "memberInstanceIds": [
-        "1ff0ab83-c1c8-4e23-b611-2e629d919307",
-        "2aeb491a-9664-45e6-87e6-6fa38a3324c4",
-        "3ad28075-33d6-457e-a824-9421d0e83e2b",
-        "6ddd3472-a70d-4382-bd57-6bb24708a764",
-        "8b33ce73-8e9f-45bb-90a3-c782c004db1e",
-        "e89f9184-6c54-4c99-936a-9ae3baf5595b"
-      ],
-      "rootInstanceIds": [
-        "1ff0ab83-c1c8-4e23-b611-2e629d919307"
-      ],
-      "title": "Decision Recording"
-    },
     "package/fields/tags-eba84460.json": {
       "aiGuidance": {
         "purpose": "Comma-separated tags for categorising the persona"
@@ -1936,595 +2525,6 @@
       "description": "Comma-separated tags for categorising the persona",
       "id": "eba84460-cb0f-4f47-811a-78fdfc33630e",
       "name": "tags",
-      "namespace": "com.mudemocracy",
-      "valueType": "text",
-      "version": 1
-    },
-    "package/blueprints/guide-7bfa600b.json": {
-      "createdAt": "2026-06-08T00:00:00Z",
-      "description": "A muDemocracy guide — a root guide record with an ordered sequence of sections (text, list, table, or commentary).",
-      "id": "7bfa600b-f7b2-4a0e-82d4-34c02d9d6770",
-      "name": "guide",
-      "namespace": "com.mudemocracy",
-      "requiredTypes": [],
-      "rootTypes": [
-        {
-          "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f"
-        }
-      ],
-      "structure": [
-        {
-          "cardinality": "0..*",
-          "relationType": "contains",
-          "required": false,
-          "sourceType": {
-            "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f"
-          },
-          "targetType": {
-            "typeId": "4408a98e-d23e-4bc6-aef5-d8678571e2f6"
-          }
-        },
-        {
-          "cardinality": "0..*",
-          "relationType": "contains",
-          "required": false,
-          "sourceType": {
-            "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f"
-          },
-          "targetType": {
-            "typeId": "76cdc3fb-8460-4efc-90f5-3c4a15b86cad"
-          }
-        },
-        {
-          "cardinality": "0..*",
-          "relationType": "contains",
-          "required": false,
-          "sourceType": {
-            "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f"
-          },
-          "targetType": {
-            "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7"
-          }
-        },
-        {
-          "cardinality": "0..*",
-          "relationType": "contains",
-          "required": false,
-          "sourceType": {
-            "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f"
-          },
-          "targetType": {
-            "typeId": "474e299c-5809-4f92-a40d-b3ae1be3ad17"
-          }
-        }
-      ],
-      "version": 1
-    },
-    "records/tier-2/b5a4b93a-16d5-400d-be4b-a11ee98bc9e6.json": {
-      "createdAt": "2026-06-04T13:19:17.990311350+00:00",
-      "fieldValues": [
-        {
-          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
-          "value": "Decision log review"
-        },
-        {
-          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "value": "decision-log-review"
-        }
-      ],
-      "groupValues": [
-        {
-          "entries": [
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "The log looks like a to-do list"
-                },
-                {
-                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "It is full of names and deadlines rather than reasons and trade-offs."
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "Micro-decisions"
-                },
-                {
-                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "You are recording things that could be changed tomorrow without anyone needing to know."
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "What without Why"
-                },
-                {
-                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "If the decision is just an action without the reason it is probably a task."
-                }
-              ]
-            }
-          ],
-          "groupId": "items"
-        }
-      ],
-      "instanceId": "b5a4b93a-16d5-400d-be4b-a11ee98bc9e6",
-      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
-      "typeName": "section.table",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-05T17:39:57.631791491+00:00"
-    },
-    "package/themes/guide-prose-4f8a2c1e.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/theme.json",
-      "createdAt": "2026-06-05T00:00:00Z",
-      "description": "Prose rendering theme for guide document views. Renders visible fields as plain paragraphs — no bold labels. Structural fields (slug, heading, title) are hidden via the paired L1 view.",
-      "elementTemplates": {
-        "fieldRow": "{{field-value}}\n",
-        "groupFieldRowTemplates": {
-          "item-body": "{{field-value}}\n",
-          "item-term": "**{{field-value}}**\n"
-        }
-      },
-      "id": "4f8a2c1e-3b7d-4e9f-a1c2-8d5e6f7a9b0c",
-      "name": "guide-prose",
-      "namespace": "com.mudemocracy",
-      "targets": [
-        "markdown"
-      ],
-      "version": 1
-    },
-    "records/tier-2/8b33ce73-8e9f-45bb-90a3-c782c004db1e.json": {
-      "createdAt": "2026-06-04T13:19:24.728404321+00:00",
-      "fieldValues": [
-        {
-          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
-          "value": "What to record"
-        },
-        {
-          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "value": "what-to-record"
-        },
-        {
-          "fieldId": "c83931f4-620c-4f8e-b3c5-54f106fb6dc6",
-          "value": 2
-        },
-        {
-          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "value": "The decisions that you record should all follow the same format. This is helpful when you want to compare decisions or update a previous decision."
-        }
-      ],
-      "groupValues": [
-        {
-          "entries": [
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "Why"
-                },
-                {
-                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "Focus on the outcome, not the argument. Don't try to capture the drama or who said what. The goal is to remind your future selves, or those not in the room, of the logic not the debate."
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "What were the options"
-                },
-                {
-                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "Avoid writing 'none' or leaving this section blank. If there wasn't a competing proposal, the alternative was likely leaving things as they are. Clearly state what would have happened if you hadn't made this decision."
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "When to revisit"
-                },
-                {
-                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "Avoid setting a date i.e. review in six months unless you put a calendar reminder in place. It is best for a review to be triggered by a noticeable event or change in your data."
-                }
-              ]
-            }
-          ],
-          "groupId": "items"
-        },
-        {
-          "entries": [
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-                  "value": "[\"Question\", \"What to write\"]"
-                },
-                {
-                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-                  "value": "[[\"What was decided?\", \"One clear sentence written in the active voice stating what was decided. Eg We agree/we will/we decide\\u2026\"], [\"Why?\", \"What made this the right choice? Avoid giving a summary of the discussion. Include key evidence in 2 - 4 sentences\"], [\"What were the options?\", \"The option (s) that had genuine support. \"], [\"When to revisit?\", \"What would happen for us to decide to review this decision? This should be specific and linked to the why. \"]]"
-                }
-              ]
-            }
-          ],
-          "groupId": "tables"
-        }
-      ],
-      "instanceId": "8b33ce73-8e9f-45bb-90a3-c782c004db1e",
-      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
-      "typeName": "section.table",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-09T12:21:34.180223786+00:00"
-    },
-    "package/fields/label-920fd0a2.json": {
-      "aiGuidance": {
-        "purpose": "Optional paragraph displayed above a table (below subheading)"
-      },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Optional paragraph displayed above a table (below subheading)",
-      "id": "920fd0a2-5fb2-40c4-9362-7c6c86ab8ccd",
-      "name": "label",
-      "namespace": "com.mudemocracy",
-      "valueType": "text",
-      "version": 1
-    },
-    "package/fields/subtitle-9bb3d21d.json": {
-      "aiGuidance": {
-        "purpose": "Optional subtitle or tagline for the guide"
-      },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Optional subtitle or tagline for the guide",
-      "id": "9bb3d21d-3a02-4b87-863d-99fdfcdb8a3e",
-      "name": "subtitle",
-      "namespace": "com.mudemocracy",
-      "valueType": "string",
-      "version": 1
-    },
-    "records/tier-2/6ddd3472-a70d-4382-bd57-6bb24708a764.json": {
-      "createdAt": "2026-06-04T13:19:26.278837863+00:00",
-      "fieldValues": [
-        {
-          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
-          "value": "Things to watch out for"
-        },
-        {
-          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "value": "things-to-watch-out-for"
-        },
-        {
-          "fieldId": "c83931f4-620c-4f8e-b3c5-54f106fb6dc6",
-          "value": 4
-        }
-      ],
-      "groupValues": [
-        {
-          "entries": [
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "A decision log is a living tool, not an archive"
-                },
-                {
-                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "If a review trigger is met (e.g., attendance drops), you must review it and see if it needs a revisit."
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "Over-recording"
-                },
-                {
-                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "You don't need to use this four-question format for minor, operational details (like who is buying the biscuits for the next meeting). Save it for choices that change your direction, spend significant money, or affect how people work together."
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "Letting one person hold the keys"
-                },
-                {
-                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "Even if one person does most of the typing, the log belongs to the whole group. Make sure everyone knows how to access it independently so transparency is maintained."
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "Storing your decisions"
-                },
-                {
-                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "The decisions made should be stored where everyone relevant can review them. This could be a print out stored in a filing cabinet or shared notice board or a shared folder on the internet."
-                }
-              ]
-            }
-          ],
-          "groupId": "items"
-        }
-      ],
-      "instanceId": "6ddd3472-a70d-4382-bd57-6bb24708a764",
-      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
-      "typeName": "section.table",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-09T12:22:23.513436863+00:00"
-    },
-    "package/fields/frustrations-3ca80b2b.json": {
-      "aiGuidance": {
-        "purpose": "Pain points and blockers the persona experiences"
-      },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Pain points and blockers the persona experiences",
-      "id": "3ca80b2b-25a2-4f54-9bbc-4519fbc98ae3",
-      "name": "frustrations",
-      "namespace": "com.mudemocracy",
-      "valueType": "text",
-      "version": 1
-    },
-    "records/tier-2/2b512f4c-522f-4081-bb07-a1cfe7ad94f0.json": {
-      "createdAt": "2026-06-04T13:19:19.207369888+00:00",
-      "fieldValues": [
-        {
-          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
-          "value": "Process"
-        },
-        {
-          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "value": "process"
-        },
-        {
-          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "value": "Work through these steps in order during your meeting and write down the answers as you go. Use the detailed section below if the discussion gets stuck."
-        },
-        {
-          "fieldId": "04ce57ec-46bc-4e1e-9238-34bf7247905a",
-          "value": ""
-        }
-      ],
-      "groupValues": [
-        {
-          "entries": [
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-                  "value": "[\"Title\", \"Headline\"]"
-                },
-                {
-                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-                  "value": "[[\"Background\", \"What happened before this?\"], [\"Friction\", \"What's the problem we need to fix?\"], [\"Decision question\", \"What exactly are we deciding?\"], [\"Options\", \"What are our other choices?\"], [\"Key requirements\", \"What matters most to us here?\"], [\"Decision\", \"What is the decision?\"], [\"Why\", \"Why does this option win?\"], [\"Review triggers\", \"When should we look at it again?\"], [\"Next steps\", \"What is still left to do?\"]]"
-                }
-              ]
-            }
-          ],
-          "groupId": "tables"
-        },
-        {
-          "entries": [
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "Interruptions"
-                },
-                {
-                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "If people interrupt or debate prematurely, point back to the guide and remind them that there is a specific time for every part of the conversation."
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "Silence is a sign"
-                },
-                {
-                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "If the room goes quiet, it usually means the question is too vague or people are overwhelmed. Go back to the decision question and try rephrasing it."
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-                  "value": "Write it where people can see it"
-                },
-                {
-                  "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "If meeting in person or online, share your screen or use a whiteboard to write the answers live. This stops people from repeating themselves."
-                }
-              ]
-            }
-          ],
-          "groupId": "items"
-        }
-      ],
-      "instanceId": "2b512f4c-522f-4081-bb07-a1cfe7ad94f0",
-      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
-      "typeName": "section.table",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-09T13:23:55.378341380+00:00"
-    },
-    "package/fields/item-body-6fafae71.json": {
-      "aiGuidance": {
-        "purpose": "Body text for an item in a structured list, tips group, or commentary."
-      },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Body text for an item in a structured list, tips group, or commentary.",
-      "id": "6fafae71-f6f1-4e83-b091-19765517ff80",
-      "name": "item-body",
-      "namespace": "com.mudemocracy",
-      "valueType": "text",
-      "version": 1
-    },
-    "records/tier-2/a638cca2-6650-44bb-9ede-7d2fc40c57b2.json": {
-      "createdAt": "2026-06-04T13:19:16.577587806+00:00",
-      "fieldValues": [
-        {
-          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
-          "value": "Process"
-        },
-        {
-          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "value": "process"
-        },
-        {
-          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "value": "Not all decisions are equal. Recording minor decisions causes unnecessary admin. It is important to distinguish between recording tasks and strategy. This is the difference between doing vs deciding."
-        }
-      ],
-      "groupValues": [
-        {
-          "entries": [
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-                  "value": "[\"Type\", \"Description\", \"Example\", \"Action\"]"
-                },
-                {
-                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-                  "value": "[[\"Strategic\", \"Choosing a goal or priority\", \"We will prioritise growth over stability this year\", \"Record\"], [\"Tactical\", \"Choosing a method or system\", \"We will use email instead of Whatsapp for formal votes\", \"Record\"], [\"Operational\", \"Assigning work or picking the next step\", \"John will call the venue tomorrow\", \"Ignore\"]]"
-                }
-              ]
-            },
-            {
-              "fieldValues": [
-                {
-                  "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-                  "value": "[]"
-                },
-                {
-                  "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-                  "value": "[[\"Will this matter in six months?\", \"Does this have long term consequences or is it just for today?\"], [\"Is this a policy now?\", \"Does this change our purpose or scope?\"], [\"Was there a trade-off?\", \"Did we actively consider and say no to viable alternatives?\"], [\"Would a review be useful?\", \"If the decision proves to be wrong, do we need to know what we discussed at the time?\"]]"
-                },
-                {
-                  "fieldId": "920fd0a2-5fb2-40c4-9362-7c6c86ab8ccd",
-                  "value": "If you are unsure whether to record a decision, ask these four questions. If you answer yes to at least two, record the decision."
-                }
-              ]
-            }
-          ],
-          "groupId": "tables"
-        }
-      ],
-      "instanceId": "a638cca2-6650-44bb-9ede-7d2fc40c57b2",
-      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
-      "typeName": "section.table",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-05T17:39:57.618594708+00:00"
-    },
-    "records/tier-2/1ff0ab83-c1c8-4e23-b611-2e629d919307.json": {
-      "createdAt": "2026-06-04T13:19:24.056851634+00:00",
-      "fieldValues": [
-        {
-          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "value": "decision-recording"
-        },
-        {
-          "fieldId": "e5b359b0-8f8b-4807-bae9-b841adbd6248",
-          "value": "Decision Recording"
-        },
-        {
-          "fieldId": "9bb3d21d-3a02-4b87-863d-99fdfcdb8a3e",
-          "value": "A guide for recording decisions made by a group."
-        },
-        {
-          "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "value": "When a group finally makes a decision, it can be easy to assume everyone remembers it the same way. But memories fade, and people often leave a meeting with different ideas about what was actually agreed. Without a clear record, groups often end up having the exact same conversation weeks later, wasting time and energy.\n\nThis guide helps you capture agreements clearly and simply using a four-question format. It shows you how to create a reliable decision log so your group can move forward with confidence and clarity."
-        },
-        {
-          "fieldId": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
-          "value": "about-mudemocracy"
-        }
-      ],
-      "instanceId": "1ff0ab83-c1c8-4e23-b611-2e629d919307",
-      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
-      "typeName": "guide",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-05T17:39:57.663093051+00:00"
-    },
-    "records/tier-2/07b77123-7e01-4253-883e-766c99016016.json": {
-      "createdAt": "2026-06-04T13:19:18.372688803+00:00",
-      "fieldValues": [
-        {
-          "fieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
-          "value": "Quick checklist"
-        },
-        {
-          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
-          "value": "quick-checklist"
-        }
-      ],
-      "instanceId": "07b77123-7e01-4253-883e-766c99016016",
-      "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
-      "typeName": "section.table",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-05T17:39:57.634892380+00:00"
-    },
-    "containers/d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d.json": {
-      "containerId": "d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d",
-      "containerType": "guide",
-      "createdAt": "2026-06-04T00:00:00Z",
-      "memberInstanceIds": [
-        "0c7f33d9-58cb-489c-9fd8-26d8b807fe21",
-        "0dff90b5-4534-4a2b-9f1a-28f35130e943",
-        "0fd5e0f3-63d8-430d-9454-da8c9f20cf52",
-        "26f98f5b-f49a-4ac1-8bac-41aedccabc31",
-        "afa31093-d955-4ea1-841e-9443775e3f15"
-      ],
-      "rootInstanceIds": [
-        "0dff90b5-4534-4a2b-9f1a-28f35130e943"
-      ],
-      "title": "Recognising decisions"
-    },
-    "package/fields/note-2fa78abf.json": {
-      "aiGuidance": {
-        "purpose": "Optional note prose displayed below the tables in a table section (target schema: table section note)."
-      },
-      "createdAt": "2026-06-08T00:00:00Z",
-      "description": "Optional note prose displayed below the tables in a table section.",
-      "id": "2fa78abf-c801-4d2a-8ddb-de218f079d1a",
-      "name": "note",
-      "namespace": "com.mudemocracy",
-      "valueType": "text",
-      "version": 1
-    },
-    "package/fields/context-4bbcefae.json": {
-      "aiGuidance": {
-        "purpose": "Situational context for the persona"
-      },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Situational context for the persona",
-      "id": "4bbcefae-b988-4d1d-b343-00240f262407",
-      "name": "context",
       "namespace": "com.mudemocracy",
       "valueType": "text",
       "version": 1
