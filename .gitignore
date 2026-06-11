@@ -1,6 +1,9 @@
 node_modules/
 dist/
 .svelte-kit/
+.env
+.env.*
+!.env.example
 
 # WASM build output — built from srs-rust, not committed here
 src/lib/srs_bindings/

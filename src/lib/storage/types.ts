@@ -1,0 +1,43 @@
+export type StorageProviderId = "local" | "dropbox" | "google-drive";
+
+export interface DocumentCapabilities {
+  read: boolean;
+  write: boolean;
+}
+
+export interface WriteResult {
+  revision: string | null;
+}
+
+export interface DocumentHandle {
+  readonly provider: StorageProviderId;
+  readonly id: string;
+  readonly name: string;
+  readonly capabilities: DocumentCapabilities;
+  readonly revision: string | null;
+  read(): Promise<string>;
+  write(content: string, expectedRevision?: string | null): Promise<WriteResult>;
+}
+
+export interface OpenDocument {
+  handle: DocumentHandle;
+  text: string;
+}
+
+export interface StorageEntry {
+  id: string;
+  name: string;
+  kind: "file" | "folder";
+  path?: string;
+  revision?: string | null;
+}
+
+export interface StorageProvider {
+  readonly id: Exclude<StorageProviderId, "local">;
+  readonly label: string;
+  readonly configured: boolean;
+  authenticate(): Promise<void>;
+  select?(): Promise<DocumentHandle>;
+  list?(path?: string): Promise<StorageEntry[]>;
+  open(entry: StorageEntry): Promise<DocumentHandle>;
+}
