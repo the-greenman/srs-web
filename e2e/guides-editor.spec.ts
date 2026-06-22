@@ -142,6 +142,42 @@ test.describe("Guides editor (C8)", () => {
   });
 
   // --------------------------------------------------------------------------
+  // Test 5b: guide root form surfaces the introduction with a clear label
+  //
+  // Regression guard for muDemocracy.org#14: the guide stores its intro in the
+  // shared `body` field, which previously inherited that field's generic
+  // section-oriented description ("Main body content of a text or list section")
+  // as its form label — so the intro was unrecognisable/uneditable. The guide
+  // type now sets displayLabel "Introduction / body" on that assignment.
+  // --------------------------------------------------------------------------
+  test("guide root form labels the introduction field 'Introduction / body'", async ({ page }) => {
+    // Select the Decision Recording guide by label (nav order is not guaranteed).
+    const items = page.getByTestId("guides-guide-item");
+    const count = await items.count();
+    let target = items.first();
+    for (let i = 0; i < count; i++) {
+      if (/decision recording/i.test(await items.nth(i).innerText())) {
+        target = items.nth(i);
+        break;
+      }
+    }
+    await target.click();
+
+    await page.getByTestId("guides-edit-guide").click();
+    await expect(page.getByTestId("record-form")).toBeVisible();
+
+    // The introduction field must be present, clearly labelled, and editable,
+    // pre-filled with the guide's existing intro prose.
+    const introField = page.locator(".field").filter({ hasText: "Introduction / body" });
+    await expect(introField).toHaveCount(1);
+    const introTextarea = introField.locator("textarea");
+    await expect(introTextarea).toBeVisible();
+    await expect(introTextarea).toHaveValue(/When a group finally makes a decision/);
+
+    await page.locator("button", { hasText: "Cancel" }).click();
+  });
+
+  // --------------------------------------------------------------------------
   // Test 6: Create section, edit body, and save
   // --------------------------------------------------------------------------
   test("Create section.text, edit body and save — section appears in list", async ({ page }) => {
