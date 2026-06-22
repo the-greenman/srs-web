@@ -260,4 +260,28 @@ test.describe("Guides editor (C8)", () => {
     // Clean up temp file.
     await fs.unlink(tmpPath).catch(() => {});
   });
+
+  // --------------------------------------------------------------------------
+  // Test 8: select field (theme) renders as a dropdown, not a text input (#46)
+  // --------------------------------------------------------------------------
+  test("section.text theme (select) field renders as a <select> dropdown", async ({ page }) => {
+    await page.getByTestId("guides-guide-item").first().click();
+    await page.getByTestId("guides-add-section").click();
+    await page.getByTestId(`guides-section-type-${SECTION_TEXT_ID}`).click();
+
+    await expect(page.getByRole("heading", { name: "New Text section" })).toBeVisible();
+
+    // `theme` (com.mudemocracy/theme) is the only select field on section.text,
+    // with allowedValues default/inverted/highlight. Before #46 it fell through
+    // to a plain <input>; it must now render as a <select> combobox.
+    const form = page.getByTestId("section-form");
+    const dropdown = form.getByRole("combobox");
+    await expect(dropdown).toBeVisible();
+    await expect(dropdown.locator("option")).toHaveCount(3);
+    await expect(dropdown.locator("option", { hasText: "inverted" })).toHaveCount(1);
+    // initialFields() defaults a select to its first allowedValue.
+    await expect(dropdown).toHaveValue("default");
+
+    await page.locator("button", { hasText: "Cancel" }).click();
+  });
 });

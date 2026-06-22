@@ -21,6 +21,7 @@
   import type { GroupFormDef } from "$lib/guides/blueprint-utils.js";
   import Field from "$lib/components/Field.svelte";
   import Input from "$lib/components/Input.svelte";
+  import Select from "$lib/components/Select.svelte";
   import Textarea from "$lib/components/Textarea.svelte";
   import SaveBar from "$lib/components/SaveBar.svelte";
 
@@ -201,6 +202,8 @@
       <Field label={def.label} required={def.required} id={inputId}>
         {#if def.valueType === "text"}
           <Textarea id={inputId} bind:value={fieldValues[def.fieldId]} disabled={saving} rows={4} />
+        {:else if def.valueType === "select" && def.options?.length}
+          <Select id={inputId} bind:value={fieldValues[def.fieldId]} options={def.options} disabled={saving} />
         {:else}
           <Input id={inputId} bind:value={fieldValues[def.fieldId]} disabled={saving} />
         {/if}
@@ -278,6 +281,8 @@
                 <Field label={f.label} id={`g-${g.groupId}-${i}-${f.fieldId}`}>
                   {#if f.valueType === "text"}
                     <Textarea id={`g-${g.groupId}-${i}-${f.fieldId}`} bind:value={entry[f.fieldId]} disabled={saving} rows={3} />
+                  {:else if f.valueType === "select" && f.options?.length}
+                    <Select id={`g-${g.groupId}-${i}-${f.fieldId}`} bind:value={entry[f.fieldId]} options={f.options} disabled={saving} />
                   {:else}
                     <Input id={`g-${g.groupId}-${i}-${f.fieldId}`} bind:value={entry[f.fieldId]} disabled={saving} />
                   {/if}
