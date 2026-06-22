@@ -1051,12 +1051,14 @@
           "required": false
         },
         {
+          "displayLabel": "Introduction / body",
           "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
           "order": 4,
           "repeatable": false,
           "required": false
         },
         {
+          "displayLabel": "Shared blocks",
           "fieldId": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
           "order": 5,
           "repeatable": false,
