@@ -93,11 +93,11 @@
             disabled={saving}
             rows={4}
           />
-        {:else if def.valueType === "select"}
+        {:else if def.valueType === "select" && def.options?.length}
           <Select
             id={inputId}
             bind:value={fieldValues[def.fieldId]}
-            options={def.options ?? []}
+            options={def.options}
             disabled={saving}
           />
         {:else}
