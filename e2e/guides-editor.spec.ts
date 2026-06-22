@@ -279,6 +279,8 @@ test.describe("Guides editor (C8)", () => {
     await expect(dropdown).toBeVisible();
     await expect(dropdown.locator("option")).toHaveCount(3);
     await expect(dropdown.locator("option", { hasText: "inverted" })).toHaveCount(1);
+    // initialFields() defaults a select to its first allowedValue.
+    await expect(dropdown).toHaveValue("default");
 
     await page.locator("button", { hasText: "Cancel" }).click();
   });
