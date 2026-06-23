@@ -9,6 +9,7 @@
 
 // Layout shell
 export { default as AppShell } from "./AppShell.svelte";
+export { default as Breadcrumb } from "./Breadcrumb.svelte";
 export { default as Main } from "./Main.svelte";
 export { default as Topbar } from "./Topbar.svelte";
 export { default as Workspace } from "./Workspace.svelte";
@@ -45,6 +46,7 @@ export { default as Lifecycle } from "./Lifecycle.svelte";
 
 // Shared types
 export type {
+  BreadcrumbItem,
   Status,
   ButtonVariant,
   ValueType,

@@ -56,6 +56,19 @@
 .topbar__crumb-current {
   color: var(--ink);
 }
+.topbar__crumb-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+.topbar__crumb-link:hover {
+  text-decoration: underline;
+}
 .topbar__actions {
   margin-left: auto;
   display: flex;

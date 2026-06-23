@@ -41,6 +41,15 @@ export interface Diagnostic {
   where?: string;
 }
 
+/** One level in a Topbar breadcrumb trail. */
+export interface BreadcrumbItem {
+  label: string;
+  /** Tooltip shown on hover (e.g. "Opened from local"). */
+  title?: string;
+  /** If present, renders the item as a clickable button that calls this handler. */
+  onclick?: () => void;
+}
+
 /** A legal lifecycle transition out of the current status (B11). */
 export interface LifecycleTransition {
   to: Status;

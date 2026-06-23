@@ -38,6 +38,7 @@
   import RecordForm from "$lib/components/RecordForm.svelte";
   import SectionForm from "$lib/guides/SectionForm.svelte";
   import AppShell from "$lib/components/AppShell.svelte";
+  import Breadcrumb from "$lib/components/Breadcrumb.svelte";
   import Nav from "$lib/components/Nav.svelte";
   import NavGroup from "$lib/components/NavGroup.svelte";
   import NavItem from "$lib/components/NavItem.svelte";
@@ -49,6 +50,7 @@
   import Button from "$lib/components/Button.svelte";
   import PreviewPane from "$lib/components/PreviewPane.svelte";
   import { downloadDocument } from "$lib/storage/index.js";
+  import type { BreadcrumbItem } from "$lib/types.js";
 
   // ---------------------------------------------------------------------------
   // muSrs guide blueprint + document-view UUIDs (stable — part of the package)
@@ -302,6 +304,35 @@
   });
 
   // ---------------------------------------------------------------------------
+  // Breadcrumb
+  // ---------------------------------------------------------------------------
+
+  function guideCrumbItems(): BreadcrumbItem[] {
+    const items: BreadcrumbItem[] = [{ label: repoName, title: `Opened from ${documentProvider}` }];
+    if (formMode === "create-guide") {
+      items.push({ label: "New guide" });
+      return items;
+    }
+    const guide = selectedGuideId
+      ? guides.find((g) => g.instanceId === selectedGuideId)
+      : null;
+    if (!guide) return items;
+    if (formMode !== null) {
+      items.push({ label: guideLabel(guide), onclick: cancelForm });
+      if (formMode === "edit-guide") {
+        items.push({ label: "Edit body" });
+      } else if (formMode === "create-section") {
+        items.push({ label: `New ${activeSectionDescriptor?.label ?? "section"}` });
+      } else if (formMode === "edit-section" && editingRecord) {
+        items.push({ label: sectionLabel(editingRecord) });
+      }
+    } else {
+      items.push({ label: guideLabel(guide) });
+    }
+    return items;
+  }
+
+  // ---------------------------------------------------------------------------
   // Form actions
   // ---------------------------------------------------------------------------
 
@@ -497,7 +528,7 @@
       <Main>
         <Topbar>
           {#snippet crumb()}
-            <span class="topbar__repo" title={`Opened from ${documentProvider}`}>{repoName}</span>
+            <Breadcrumb items={guideCrumbItems()} />
           {/snippet}
           {#snippet actions()}
             <Button

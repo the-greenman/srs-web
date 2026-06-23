@@ -23,9 +23,10 @@
     createRelation,
   } from "$lib/srs-client.js";
   import type { SrsRepository, SrsRecord, Diagnostic as WasmDiagnostic, CreateRecordInput, UpdateRecordInput, CreateRelationInput } from "$lib/srs-client.js";
-  import type { Diagnostic, Status } from "$lib/types.js";
+  import type { BreadcrumbItem, Diagnostic, Status } from "$lib/types.js";
 
   import AppShell from "$lib/components/AppShell.svelte";
+  import Breadcrumb from "$lib/components/Breadcrumb.svelte";
   import Main from "$lib/components/Main.svelte";
   import Topbar from "$lib/components/Topbar.svelte";
   import Workspace from "$lib/components/Workspace.svelte";
@@ -292,6 +293,26 @@
   }
 
   // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // Breadcrumb
+  // ---------------------------------------------------------------------------
+
+  function governanceCrumbItems(): BreadcrumbItem[] {
+    const items: BreadcrumbItem[] = [{ label: repoName, title: `Opened from ${activeDocument?.provider ?? "local"}` }];
+    if (formMode !== null) {
+      items.push({ label: activeSection_.label, onclick: handleFormCancel });
+      if (formMode === "create") {
+        items.push({ label: `New ${activeSection_.label.replace(/s$/, "")}` });
+      } else if (editingRecord) {
+        const title = editingRecord.fieldValues[0]?.value as string | undefined;
+        items.push({ label: title ?? "Record" });
+      }
+    } else {
+      items.push({ label: activeSection_.label });
+    }
+    return items;
+  }
+
   // Derived
   // ---------------------------------------------------------------------------
 
@@ -463,12 +484,7 @@
       <Main>
         <Topbar>
           {#snippet crumb()}
-            <span
-              class="topbar__repo"
-              title={`Opened from ${activeDocument?.provider ?? "local"}`}
-            >{repoName}</span>
-            <span class="topbar__sep">›</span>
-            <span class="topbar__section">{activeSection_.label}</span>
+            <Breadcrumb items={governanceCrumbItems()} />
           {/snippet}
           {#snippet actions()}
             {#if formMode === null && !decisionFlowMode}
@@ -772,15 +788,6 @@
   }
 
   /* ---- Topbar extras ---- */
-  .topbar__sep {
-    margin: 0 0.35rem;
-    opacity: 0.4;
-  }
-
-  .topbar__section {
-    font-weight: 500;
-  }
-
   .topbar__reset {
     font-size: 0.75rem;
     background: none;
