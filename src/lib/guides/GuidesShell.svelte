@@ -571,7 +571,13 @@
                   <span class="guides-section-label">Body</span>
                 </div>
                 <div class="guides-section-row guides-body-row" data-testid="guides-body-row">
-                  <div class="guides-body-item">
+                  <!-- svelte-ignore a11y_click_events_have_key_events -->
+                  <!-- svelte-ignore a11y_no_static_element_interactions -->
+                  <div
+                    class="guides-body-item"
+                    data-testid="guides-body-open"
+                    onclick={() => openEditGuide(selectedGuide)}
+                  >
                     <span class="guides-section-type">{guideFormDef?.label ?? "Guide"}</span>
                     <span class="guides-section-heading">{guideLabel(selectedGuide)}</span>
                   </div>
@@ -733,9 +739,14 @@
     align-items: baseline;
     gap: 0.75rem;
     padding: 0.5rem 0.25rem;
+    cursor: pointer;
     border-radius: 4px;
     flex: 1;
     min-width: 0;
+  }
+
+  .guides-body-item:hover {
+    background: var(--color-surface-hover, #f5f5f5);
   }
 
   .guides-section-label {
