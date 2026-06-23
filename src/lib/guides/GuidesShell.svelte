@@ -570,8 +570,8 @@
                 <div class="guides-section-bar guides-body-bar">
                   <span class="guides-section-label">Body</span>
                 </div>
-                <div class="guides-body-row" data-testid="guides-body-row">
-                  <div class="guides-section-item guides-body-item">
+                <div class="guides-section-row guides-body-row" data-testid="guides-body-row">
+                  <div class="guides-body-item">
                     <span class="guides-section-type">{guideFormDef?.label ?? "Guide"}</span>
                     <span class="guides-section-heading">{guideLabel(selectedGuide)}</span>
                   </div>
@@ -721,24 +721,21 @@
   }
 
   .guides-body-bar {
-    margin-top: 0;
     margin-bottom: 0;
   }
 
   .guides-body-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    border-bottom: 1px solid var(--color-border, #eee);
     margin-bottom: 1.25rem;
   }
 
   .guides-body-item {
-    cursor: default;
-  }
-
-  .guides-body-item:hover {
-    background: transparent;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.5rem 0.25rem;
+    border-radius: 4px;
+    flex: 1;
+    min-width: 0;
   }
 
   .guides-section-label {
