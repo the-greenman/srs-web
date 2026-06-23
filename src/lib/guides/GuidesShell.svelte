@@ -559,11 +559,6 @@
                     onclick={handleExportGuideJson}
                     title="Export this guide as a JSON document-view projection"
                   >Export guide JSON</Button>
-                  <Button
-                    variant="ghost"
-                    data-testid="guides-edit-guide"
-                    onclick={() => openEditGuide(selectedGuide)}
-                  >Edit</Button>
                 </div>
 
                 {#if exportError}
@@ -571,6 +566,23 @@
                     {exportError}
                   </div>
                 {/if}
+
+                <div class="guides-section-bar guides-body-bar">
+                  <span class="guides-section-label">Body</span>
+                </div>
+                <div class="guides-body-row" data-testid="guides-body-row">
+                  <div class="guides-section-item guides-body-item">
+                    <span class="guides-section-type">{guideFormDef?.label ?? "Guide"}</span>
+                    <span class="guides-section-heading">{guideLabel(selectedGuide)}</span>
+                  </div>
+                  <div class="guides-section-controls">
+                    <Button
+                      variant="ghost"
+                      data-testid="guides-edit-guide"
+                      onclick={() => openEditGuide(selectedGuide)}
+                    >Edit</Button>
+                  </div>
+                </div>
 
                 <div class="guides-section-bar">
                   <span class="guides-section-label">Sections</span>
@@ -706,6 +718,27 @@
     margin-bottom: 0.75rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--color-border, #eee);
+  }
+
+  .guides-body-bar {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .guides-body-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--color-border, #eee);
+    margin-bottom: 1.25rem;
+  }
+
+  .guides-body-item {
+    cursor: default;
+  }
+
+  .guides-body-item:hover {
+    background: transparent;
   }
 
   .guides-section-label {
