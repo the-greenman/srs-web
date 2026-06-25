@@ -15,7 +15,9 @@ import {
   containersForInstance,
   documentViewsForContainer,
   listBlueprints,
+  listDocumentViews,
   typeSchema,
+  type DocumentViewListFilter,
 } from "../src/lib/srs-client.js";
 
 // ---------------------------------------------------------------------------
@@ -47,6 +49,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     type_schema: () => { throw new Error("not mocked"); },
     list_blueprints: () => { throw new Error("not mocked"); },
     document_views_for_container: () => { throw new Error("not mocked"); },
+    list_document_views: () => { throw new Error("not mocked"); },
   };
   return { ...base, ...overrides };
 }
@@ -226,5 +229,79 @@ describe("documentViewsForContainer", () => {
     const result = documentViewsForContainer(repo, "unbound-container");
 
     expect(result).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// listDocumentViews
+// ---------------------------------------------------------------------------
+
+describe("listDocumentViews", () => {
+  it("calls list_document_views with an empty filter and returns summaries", () => {
+    const summaries = [
+      {
+        id: "dv-001",
+        namespace: "com.test",
+        name: "decision-log-view",
+        version: 1,
+        description: "Decision log document view",
+        containerType: "decision-log",
+      },
+    ];
+    const spy = vi.fn().mockReturnValue(summaries);
+    const repo = mockRepo({ list_document_views: spy });
+
+    const result = listDocumentViews(repo);
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith("{}");
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("dv-001");
+    expect(result[0].containerType).toBe("decision-log");
+  });
+
+  it("returns an empty array when no document views are registered", () => {
+    const repo = mockRepo({ list_document_views: () => [] });
+
+    const result = listDocumentViews(repo);
+
+    expect(result).toEqual([]);
+  });
+
+  it("exposes rootTypeRefs when present on a view", () => {
+    const repo = mockRepo({
+      list_document_views: () => ([
+        {
+          id: "dv-002",
+          namespace: "com.test",
+          name: "typed-view",
+          version: 1,
+          description: "view with type refs",
+          containerType: "typed-container",
+          rootTypeRefs: [{ typeId: "type-abc", typeVersion: 2 }],
+        },
+      ]),
+    });
+
+    const result = listDocumentViews(repo);
+
+    expect(result[0].rootTypeRefs).toHaveLength(1);
+    expect(result[0].rootTypeRefs?.[0].typeId).toBe("type-abc");
+    expect(result[0].rootTypeRefs?.[0].typeVersion).toBe(2);
+  });
+
+  it("propagates WASM throw when the binding fails", () => {
+    const repo = mockRepo({ list_document_views: () => { throw new Error("wasm error"); } });
+    expect(() => listDocumentViews(repo)).toThrow("wasm error");
+  });
+
+  it("passes a filter when provided", () => {
+    const spy = vi.fn().mockReturnValue([]);
+    const repo = mockRepo({ list_document_views: spy });
+    const filter: DocumentViewListFilter = { namespace: "com.test" };
+
+    listDocumentViews(repo, filter);
+
+    expect(spy).toHaveBeenCalledWith(JSON.stringify(filter));
   });
 });

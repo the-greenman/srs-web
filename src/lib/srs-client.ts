@@ -54,6 +54,8 @@ export interface SrsRepository {
   list_blueprints(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in documentViewsForContainer()
   document_views_for_container(container_id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listDocumentViews()
+  list_document_views(filter_json: string): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -644,4 +646,48 @@ export function documentViewsForContainer(
   containerId: string
 ): DocumentView[] {
   return repo.document_views_for_container(containerId) as DocumentView[];
+}
+
+// --- listDocumentViews -------------------------------------------------------
+
+/**
+ * Lightweight document-view summary returned by `listDocumentViews`.
+ * Used for discovery (blueprint↔view pairing). For rendering, use
+ * `documentViewsForContainer` which returns full `DocumentView` objects.
+ *
+ * `containerType` enables the string-convention join (ADR-004):
+ *   a view belongs to a blueprint when `view.namespace === blueprint.namespace
+ *   && view.containerType === blueprint.name`.
+ * `rootTypeRefs` will enable the authoritative UUID join (ADR-004 follow-up)
+ * once `BlueprintSummary` exposes `rootTypes`.
+ */
+export interface DocumentViewSummary {
+  id: string;
+  namespace: string;
+  name: string;
+  version: number;
+  description: string;
+  containerType?: string;
+  rootTypeRefs?: ExactTypeRef[];
+  sourcePackage?: string;
+}
+
+export interface DocumentViewListFilter {
+  namespace?: string;
+  name?: string;
+}
+
+/**
+ * List document-view summaries across all package boundaries.
+ * Returns an empty array when no document views are registered.
+ * The WASM binding returns a bare array (not an envelope).
+ *
+ * `DocumentViewSummary` fields are camelCase because the Rust struct carries
+ * `#[serde(rename_all = "camelCase")]` — no manual normalisation is needed.
+ */
+export function listDocumentViews(
+  repo: SrsRepository,
+  filter: DocumentViewListFilter = {}
+): DocumentViewSummary[] {
+  return repo.list_document_views(JSON.stringify(filter)) as DocumentViewSummary[];
 }

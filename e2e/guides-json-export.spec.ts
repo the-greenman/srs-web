@@ -13,9 +13,10 @@ import { expect, test } from "@playwright/test";
  * C10 export guide JSON document-view: https://github.com/the-greenman/srs-web/issues/28
  */
 
+import { FIXTURE_GUIDE_VIEW_ID } from "./fixtures/fixture-constants.js";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MUSRS_FIXTURE = path.join(__dirname, "fixtures", "muSrs.srsj");
-const GUIDE_VIEW_ID = "2aba4d85-317b-44e1-a600-d38a743b4cb4";
 
 async function readDownload(download: import("@playwright/test").Download): Promise<string> {
   const stream = await download.createReadStream();
@@ -52,7 +53,7 @@ test.describe("Guide JSON-view export (C10)", () => {
     const projection = JSON.parse(await readDownload(download));
 
     // Projection envelope from the guide-body document view.
-    expect(projection.documentViewId).toBe(GUIDE_VIEW_ID);
+    expect(projection.documentViewId).toBe(FIXTURE_GUIDE_VIEW_ID);
     expect(typeof projection.containerTitle).toBe("string");
     expect(projection.containerTitle.length).toBeGreaterThan(0);
     expect(Array.isArray(projection.sections)).toBe(true);

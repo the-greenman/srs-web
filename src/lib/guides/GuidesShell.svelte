@@ -14,6 +14,8 @@
   import { onMount } from "svelte";
   import {
     blueprintSchema,
+    listBlueprints,
+    listDocumentViews,
     listRecords,
     createRecord,
     updateRecord,
@@ -27,7 +29,9 @@
     deleteRelation,
     renderDocumentView,
   } from "$lib/srs-client.js";
-  import type { SrsRepository, SrsRecord, CreateRecordInput, UpdateRecordInput } from "$lib/srs-client.js";
+  import type { SrsRepository, SrsRecord, CreateRecordInput, UpdateRecordInput, DocumentViewSummary } from "$lib/srs-client.js";
+  import { findBlueprint, documentViewsForBlueprint } from "$lib/discovery.js";
+  import ViewPicker from "$lib/components/ViewPicker.svelte";
   import type { TypeFormDef } from "$lib/governance/form-schema.js";
   import {
     sectionTypes,
@@ -53,11 +57,11 @@
   import type { BreadcrumbItem } from "$lib/types.js";
 
   // ---------------------------------------------------------------------------
-  // muSrs guide blueprint + document-view UUIDs (stable — part of the package)
+  // Well-known blueprint identity for this opinionated editor (ADR-004).
+  // The blueprint and its paired document views are discovered at runtime via
+  // listBlueprints() + listDocumentViews(); no UUID literals here.
   // ---------------------------------------------------------------------------
-  const GUIDE_BLUEPRINT_ID = "7bfa600b-f7b2-4a0e-82d4-34c02d9d6770";
-  /** guide-body-view: renders a guide in precedes order via ContainerSubset. */
-  const GUIDE_VIEW_ID = "2aba4d85-317b-44e1-a600-d38a743b4cb4";
+  const WELL_KNOWN_BLUEPRINT = { namespace: "com.mudemocracy", name: "guide" } as const;
 
   // ---------------------------------------------------------------------------
   // Props
@@ -134,6 +138,12 @@
   /** HTML preview of the selected guide (rendered via renderDocumentView "html"). */
   let previewHtml = $state<string | null>(null);
   let previewLoading = $state(false);
+
+  /** Document views discovered for the guide blueprint (ADR-004). */
+  let availableViews = $state<DocumentViewSummary[]>([]);
+
+  /** Currently selected document-view ID for preview/export. Null until discovery completes. */
+  let guideViewId = $state<string | null>(null);
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -232,13 +242,13 @@
 
   /** Render the selected guide to HTML for the preview pane. */
   function refreshPreview() {
-    if (!selectedGuideId || !selectedContainerId) {
+    if (!selectedGuideId || !selectedContainerId || !guideViewId) {
       previewHtml = null;
       return;
     }
     previewLoading = true;
     try {
-      const result = renderDocumentView(repo, GUIDE_VIEW_ID, "html", selectedContainerId);
+      const result = renderDocumentView(repo, guideViewId, "html", selectedContainerId);
       previewHtml = result.rendered && result.rendered.trim() ? result.rendered : null;
     } catch {
       previewHtml = null;
@@ -259,11 +269,29 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Boot: load blueprint schema (runs once on mount — not reactive)
+  // Boot: discover blueprint + views, load schema (runs once on mount)
   // ---------------------------------------------------------------------------
   onMount(() => {
     try {
-      const result = blueprintSchema(repo, GUIDE_BLUEPRINT_ID);
+      // Discover blueprint and paired views (ADR-004: string-convention join).
+      const bps = listBlueprints(repo).summaries;
+      const blueprint = findBlueprint(bps, WELL_KNOWN_BLUEPRINT.namespace, WELL_KNOWN_BLUEPRINT.name);
+      if (!blueprint) {
+        schemaError = `Guide blueprint not found (${WELL_KNOWN_BLUEPRINT.namespace}/${WELL_KNOWN_BLUEPRINT.name})`;
+        return;
+      }
+      const allViews = listDocumentViews(repo);
+      // Sort deterministically by name so the auto-selected view is stable.
+      const views = documentViewsForBlueprint(blueprint, allViews).sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+      availableViews = views;
+      guideViewId = views[0]?.id ?? null;
+      if (views.length === 0) {
+        schemaError = `No document views found for blueprint ${WELL_KNOWN_BLUEPRINT.namespace}/${WELL_KNOWN_BLUEPRINT.name} — preview and export unavailable.`;
+      }
+
+      const result = blueprintSchema(repo, blueprint.id);
       if (result.diagnostics.length > 0) {
         schemaError = result.diagnostics.join("; ");
       }
@@ -464,7 +492,11 @@
         return;
       }
       const containerId = containers[0].containerId;
-      const result = renderDocumentView(repo, GUIDE_VIEW_ID, "json", containerId);
+      if (!guideViewId) {
+        exportError = "No document view discovered for this guide — cannot export.";
+        return;
+      }
+      const result = renderDocumentView(repo, guideViewId, "json", containerId);
       if (!result.projection) {
         exportError = `Render produced no projection${
           result.diagnostics.length ? `: ${result.diagnostics.join("; ")}` : ""
@@ -699,6 +731,15 @@
 
     {#snippet inspector()}
       <Inspector label="Guide" open={previewOpen}>
+        {#if availableViews.length > 1}
+          <InspectorSection title="View">
+            <ViewPicker
+              views={availableViews}
+              selectedViewId={guideViewId}
+              onSelect={(id) => { guideViewId = id; refreshPreview(); }}
+            />
+          </InspectorSection>
+        {/if}
         <InspectorSection title="Preview" grow>
           <PreviewPane html={previewHtml} loading={previewLoading} />
         </InspectorSection>
