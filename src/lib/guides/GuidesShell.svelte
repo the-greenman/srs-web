@@ -281,9 +281,15 @@
         return;
       }
       const allViews = listDocumentViews(repo);
-      const views = documentViewsForBlueprint(blueprint, allViews);
+      // Sort deterministically by name so the auto-selected view is stable.
+      const views = documentViewsForBlueprint(blueprint, allViews).sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
       availableViews = views;
       guideViewId = views[0]?.id ?? null;
+      if (views.length === 0) {
+        schemaError = `No document views found for blueprint ${WELL_KNOWN_BLUEPRINT.namespace}/${WELL_KNOWN_BLUEPRINT.name} — preview and export unavailable.`;
+      }
 
       const result = blueprintSchema(repo, blueprint.id);
       if (result.diagnostics.length > 0) {

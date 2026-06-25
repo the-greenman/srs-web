@@ -672,14 +672,22 @@ export interface DocumentViewSummary {
   sourcePackage?: string;
 }
 
+export interface DocumentViewListFilter {
+  namespace?: string;
+  name?: string;
+}
+
 /**
  * List document-view summaries across all package boundaries.
  * Returns an empty array when no document views are registered.
  * The WASM binding returns a bare array (not an envelope).
  *
- * Pass an empty filter (`"{}"`) to list all views; the filter is reserved
- * for future namespace/name scoping.
+ * `DocumentViewSummary` fields are camelCase because the Rust struct carries
+ * `#[serde(rename_all = "camelCase")]` — no manual normalisation is needed.
  */
-export function listDocumentViews(repo: SrsRepository): DocumentViewSummary[] {
-  return repo.list_document_views("{}") as DocumentViewSummary[];
+export function listDocumentViews(
+  repo: SrsRepository,
+  filter: DocumentViewListFilter = {}
+): DocumentViewSummary[] {
+  return repo.list_document_views(JSON.stringify(filter)) as DocumentViewSummary[];
 }

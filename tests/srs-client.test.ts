@@ -17,6 +17,7 @@ import {
   listBlueprints,
   listDocumentViews,
   typeSchema,
+  type DocumentViewListFilter,
 } from "../src/lib/srs-client.js";
 
 // ---------------------------------------------------------------------------
@@ -292,5 +293,15 @@ describe("listDocumentViews", () => {
   it("propagates WASM throw when the binding fails", () => {
     const repo = mockRepo({ list_document_views: () => { throw new Error("wasm error"); } });
     expect(() => listDocumentViews(repo)).toThrow("wasm error");
+  });
+
+  it("passes a filter when provided", () => {
+    const spy = vi.fn().mockReturnValue([]);
+    const repo = mockRepo({ list_document_views: spy });
+    const filter: DocumentViewListFilter = { namespace: "com.test" };
+
+    listDocumentViews(repo, filter);
+
+    expect(spy).toHaveBeenCalledWith(JSON.stringify(filter));
   });
 });

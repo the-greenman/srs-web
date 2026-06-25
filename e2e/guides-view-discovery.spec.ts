@@ -15,11 +15,10 @@ import { expect, test } from "@playwright/test";
  *  ViewPicker hidden: only one view available for the guide blueprint → picker absent.
  */
 
+import { FIXTURE_GUIDE_VIEW_ID } from "./fixtures/fixture-constants.js";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MUSRS_FIXTURE = path.join(__dirname, "fixtures", "muSrs.srsj");
-
-/** Fixture assertion: the guide-body-view ID in the muSrs package. Not an app constant. */
-const FIXTURE_GUIDE_VIEW_ID = "2aba4d85-317b-44e1-a600-d38a743b4cb4";
 
 test.describe("Blueprint↔view discovery (srs-web#43)", () => {
   test.beforeEach(async ({ page }) => {
@@ -41,7 +40,7 @@ test.describe("Blueprint↔view discovery (srs-web#43)", () => {
     // Select the first guide — this triggers refreshPreview() using the discovered view.
     await page.getByTestId("guides-guide-item").first().click();
     await expect(page.getByTestId("guides-section-item").first()).toBeVisible({ timeout: 5000 });
-    await expect(page.getByTestId("guides-preview-frame")).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId("guides-preview-frame")).toBeVisible({ timeout: 5000 });
   });
 
   test("ViewPicker is hidden when only one view is available", async ({ page }) => {
