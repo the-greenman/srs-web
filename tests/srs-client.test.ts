@@ -65,7 +65,8 @@ describe("containersForInstance", () => {
 
     expect(spy).toHaveBeenCalledOnce();
     expect(spy).toHaveBeenCalledWith("inst-abc");
-    expect(result).toBe(summaries);
+    expect(result[0].containerId).toBe("c1");
+    expect(result[0].title).toBe("Log");
   });
 
   it("returns an empty array when the instance belongs to no container", () => {
@@ -111,6 +112,11 @@ describe("typeSchema", () => {
     expect(result.diagnostics).toHaveLength(1);
     expect(result.diagnostics[0]).toContain("dangling fieldId");
   });
+
+  it("propagates WASM throw when the type cannot be resolved", () => {
+    const repo = mockRepo({ type_schema: () => { throw new Error("type not found"); } });
+    expect(() => typeSchema(repo, "nonexistent-type")).toThrow("type not found");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -144,12 +150,13 @@ describe("listBlueprints", () => {
     expect(result.diagnostics).toEqual([]);
   });
 
-  it("returns empty summaries when no blueprints are registered", () => {
+  it("returns empty summaries and empty diagnostics when no blueprints are registered", () => {
     const repo = mockRepo({ list_blueprints: () => ({ summaries: [], diagnostics: [] }) });
 
     const result = listBlueprints(repo);
 
     expect(result.summaries).toEqual([]);
+    expect(result.diagnostics).toEqual([]);
   });
 
   it("exposes sourcePackage on sub-package blueprints", () => {
