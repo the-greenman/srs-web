@@ -46,6 +46,14 @@ export interface SrsRepository {
   add_container_member(container_id: string, instance_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in removeContainerMember()
   remove_container_member(container_id: string, instance_id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in containersForInstance()
+  containers_for_instance(instance_id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in typeSchema()
+  type_schema(type_id: string, type_version?: number): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listBlueprints()
+  list_blueprints(): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in documentViewsForContainer()
+  document_views_for_container(container_id: string): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -506,4 +514,134 @@ export function removeContainerMember(
   instanceId: string
 ): string[] {
   return repo.remove_container_member(containerId, instanceId) as string[];
+}
+
+// ---------------------------------------------------------------------------
+// New bindings: containersForInstance, typeSchema, listBlueprints,
+// documentViewsForContainer (srs-rust#181 / srs-web#52)
+// ---------------------------------------------------------------------------
+
+// --- containersForInstance -------------------------------------------------
+
+/**
+ * List the containers an instance belongs to (reverse lookup).
+ * Returns every container whose `memberInstanceIds` includes `instanceId`.
+ * Returns an empty array (not an error) when the instance is not a container member.
+ */
+export function containersForInstance(repo: SrsRepository, instanceId: string): ContainerSummary[] {
+  return repo.containers_for_instance(instanceId) as ContainerSummary[];
+}
+
+// --- typeSchema ------------------------------------------------------------
+
+/**
+ * Result of projecting a Type into a draft-07 JSON Schema.
+ * `schema` is a JSON Schema object describing `fieldValues` for a single record of the type.
+ * `diagnostics` carries non-fatal projection warnings (dangling fieldId, missing allowedValues, etc.).
+ */
+export interface TypeSchemaResult {
+  schema: Record<string, unknown>;
+  diagnostics: string[];
+}
+
+/**
+ * Project a Type into a draft-07 JSON Schema describing a single record's `fieldValues`.
+ * Pass `typeVersion` to pin a specific version; omit it (or pass `undefined`) to resolve
+ * the latest version in the package.
+ * Throws if the Type cannot be resolved.
+ */
+export function typeSchema(
+  repo: SrsRepository,
+  typeId: string,
+  typeVersion?: number
+): TypeSchemaResult {
+  return repo.type_schema(typeId, typeVersion) as TypeSchemaResult;
+}
+
+// --- listBlueprints --------------------------------------------------------
+
+/**
+ * Lightweight blueprint summary returned by `listBlueprints`.
+ * `rootTypeCount` is the number of `rootTypes` ExactTypeRef entries declared in the blueprint.
+ * `sourcePackage` is the package boundary selector string when the blueprint comes from a
+ * sub-package boundary (absent for the primary package).
+ */
+export interface BlueprintSummary {
+  id: string;
+  namespace: string;
+  name: string;
+  version: number;
+  description: string;
+  rootTypeCount: number;
+  sourcePackage?: string;
+}
+
+/** Result envelope from `list_blueprints`. */
+export interface BlueprintListResult {
+  summaries: BlueprintSummary[];
+  /** WARN-level provenance diagnostics (missing blueprint files, duplicate IDs). */
+  diagnostics: string[];
+}
+
+/**
+ * List blueprint summaries across all package boundaries.
+ * Returns `{ summaries: [], diagnostics: [] }` when no blueprints are registered.
+ */
+export function listBlueprints(repo: SrsRepository): BlueprintListResult {
+  return repo.list_blueprints() as BlueprintListResult;
+}
+
+// --- documentViewsForContainer ---------------------------------------------
+
+/**
+ * Version-exact type anchor used in `DocumentView.rootTypeRefs` (RFC-009).
+ */
+export interface ExactTypeRef {
+  typeId: string;
+  typeVersion: number;
+}
+
+/** A single section within a DocumentView. */
+export interface DocumentSection {
+  sectionId: string;
+  title?: string;
+  description?: string;
+  order: number;
+  source: Record<string, unknown>;
+  emptyBehavior?: string;
+}
+
+/**
+ * Full DocumentView object (including `sections`), as returned by
+ * `document_views_for_container`. Carries the section definitions the
+ * web client needs to render the view for a container.
+ */
+export interface DocumentView {
+  id: string;
+  namespace: string;
+  name: string;
+  version: number;
+  description: string;
+  containerType?: string;
+  rootTypeRefs?: ExactTypeRef[];
+  sections: DocumentSection[];
+  format?: string;
+  preamble?: string;
+  createdAt: string;
+}
+
+/**
+ * List the DocumentViews that apply to a container, resolved via RFC-009 `rootTypeRefs`
+ * matching: the container's first root instance's `typeId`/`typeVersion` is matched
+ * against each DocumentView's `rootTypeRefs`.
+ *
+ * Returns full DocumentView objects (including `sections`) — not lightweight summaries —
+ * because the caller needs the section definitions to render the view.
+ * Returns an empty array (not an error) when no view binds the container's root type.
+ */
+export function documentViewsForContainer(
+  repo: SrsRepository,
+  containerId: string
+): DocumentView[] {
+  return repo.document_views_for_container(containerId) as DocumentView[];
 }
