@@ -528,10 +528,7 @@ export function removeContainerMember(
  * Returns every container whose `memberInstanceIds` includes `instanceId`.
  * Returns an empty array (not an error) when the instance is not a container member.
  */
-export function containersForInstance(
-  repo: SrsRepository,
-  instanceId: string
-): ContainerSummary[] {
+export function containersForInstance(repo: SrsRepository, instanceId: string): ContainerSummary[] {
   return repo.containers_for_instance(instanceId) as ContainerSummary[];
 }
 
