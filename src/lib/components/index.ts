@@ -38,6 +38,9 @@ export { default as Repeatable } from "./Repeatable.svelte";
 export { default as FieldGroup } from "./FieldGroup.svelte";
 export { default as SaveBar } from "./SaveBar.svelte";
 
+// View selection
+export { default as ViewPicker } from "./ViewPicker.svelte";
+
 // Status / actions / validation
 export { default as Tag } from "./Tag.svelte";
 export { default as Button } from "./Button.svelte";
