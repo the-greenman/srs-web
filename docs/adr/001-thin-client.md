@@ -1,7 +1,7 @@
 # ADR-001: srs-web is a thin WASM client — zero SRS semantics in TypeScript
 
 - **Status:** accepted
-- **Date:** 2026-06-07
+- **Date:** 2026-06-07 (proposed), 2026-06-26 (accepted)
 - **Supersedes:** —
 - **Superseded by:** —
 
@@ -28,3 +28,29 @@ srs-web holds **no SRS semantics in TypeScript**. All mutation, validation, life
 
 **Neutral:**
 - The TypeScript types for WASM outputs are derived from the payload schemas in `srs-rust/crates/srs-cli/schemas/payload/`, keeping TS types in sync with the Rust contract.
+
+## Relationship to the capability-layering guide
+
+This ADR is the srs-web end of the ecosystem-wide default path documented in
+`srs-rust/docs/architecture/capability-layering.md`: a capability is built once as a
+`srs-repository` service, exposed through a WASM binding, and srs-web consumes the
+binding and renders the result. The canonical violation of this rule was a bespoke
+client-side search filter (`DecisionLogView.svelte`) — semantics in a leaf client,
+unreachable by the CLI or any other engine. Its corrected form is the portable `find`
+capability (srs-rust EPIC #212).
+
+## Residual TypeScript-semantics debt (to migrate behind bindings)
+
+The following client-side logic still encodes SRS semantics in TypeScript and should be
+pushed down into `srs-bindings` over time. None is new work for this ADR; it is recorded
+here so it isn't mistaken for acceptable presentation logic:
+
+- **Relation-chain traversal** — `orderByPrecedes` / `rebuildPrecedesChain` in
+  `GuidesShell.svelte` follow and rebuild `precedes` chains in TS. This is graph
+  ordering that belongs in a `srs-repository` service exposed as an ordered-relations
+  binding.
+- **Field-by-name lookup** — `getFieldValue` / `getStringField` (`governance/field-utils.ts`)
+  resolve field values via a TS-side `FIELD_NAMES` UUID map, duplicating the type
+  schema. The binding should return fields addressable by name.
+- **Hardcoded vocabularies** — the lifecycle `STATUS_OPTIONS` list is hardcoded in TS
+  instead of derived from the type/lifecycle definition via a binding.
