@@ -11,6 +11,7 @@ import { expect, test } from "@playwright/test";
  *   - on narrow viewports (< 1100px), the inspector collapses and the preview is not visible.
  *
  * srs-web#39: guides HTML preview
+ * srs-web#41: export polish — Markdown export, Print button, theme picker
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -50,5 +51,28 @@ test.describe("Guides HTML preview (Phase C)", () => {
     await page.setViewportSize({ width: 800, height: 900 });
     // The .app__inspector is display:none below 1100px via layout.css.
     await expect(page.getByTestId("guides-preview-pane")).not.toBeVisible();
+  });
+
+  test("Export Markdown button is present and enabled when guide selected", async ({ page }) => {
+    const btn = page.getByTestId("guides-export-markdown");
+    await expect(btn).toBeVisible();
+    await expect(btn).toBeEnabled();
+  });
+
+  test("Print button is present and enabled after preview renders", async ({ page }) => {
+    await expect(page.getByTestId("guides-preview-frame")).toBeVisible();
+    const btn = page.getByTestId("guides-export-print");
+    await expect(btn).toBeVisible();
+    await expect(btn).toBeEnabled();
+  });
+
+  test("Theme picker is present in inspector with Default and Print options", async ({ page }) => {
+    const picker = page.getByTestId("guides-theme-picker");
+    await expect(picker).toBeVisible();
+    // Verify default value
+    await expect(picker).toHaveValue("default");
+    // Switch to Print theme
+    await picker.selectOption("print");
+    await expect(picker).toHaveValue("print");
   });
 });
