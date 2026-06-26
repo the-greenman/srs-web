@@ -936,7 +936,7 @@
     },
     "package/fields/rationale-3340532b.json": {
       "aiGuidance": {
-        "purpose": ""
+        "purpose": "Explains the deciding factor — why this option was chosen over the alternatives. One to three sentences capturing the core reasoning."
       },
       "createdAt": "2026-05-25T00:00:00Z",
       "description": "Reasoning behind the decision.",
@@ -971,7 +971,7 @@
     },
     "package/fields/decisionstatement-de1296e0.json": {
       "aiGuidance": {
-        "purpose": ""
+        "purpose": "States the settled commitment in one concise, active-voice sentence. This is the record of what was decided, not why."
       },
       "createdAt": "2026-05-25T00:00:00Z",
       "description": "What was decided.",
