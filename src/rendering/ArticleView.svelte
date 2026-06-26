@@ -9,9 +9,11 @@
   import { Card, CardField } from '$lib/components/index.js';
   import FieldValueView from './FieldValueView.svelte';
   import { getFieldValueByName, isPresent } from './field-helpers.js';
-  import { fieldDef } from '../governance/package.js';
+  import { getFieldMeta } from '$lib/governance/field-meta.js';
 
   let { record }: { record: SrsRecord } = $props();
+
+  const fieldMeta = $derived(getFieldMeta());
 
   /** Profile-ordered field names for article (§10.3). */
   const ARTICLE_FIELDS = [
@@ -26,8 +28,8 @@
 
   /** Build a display title from article_number + title, or fall back to instanceId. */
   const displayTitle = $derived(() => {
-    const num = getFieldValueByName(record, 'article_number')?.value;
-    const ttl = getFieldValueByName(record, 'title')?.value;
+    const num = getFieldValueByName(record, 'article_number', fieldMeta)?.value;
+    const ttl = getFieldValueByName(record, 'title', fieldMeta)?.value;
     if (num && ttl) return `${String(num)} — ${String(ttl)}`;
     if (ttl) return String(ttl);
     return record.instanceId.slice(0, 8);
@@ -38,10 +40,10 @@
 
 <Card title={displayTitle()} {status}>
   {#each ARTICLE_FIELDS as field}
-    {@const fv = getFieldValueByName(record, field.name)}
+    {@const fv = getFieldValueByName(record, field.name, fieldMeta)}
     {#if fv && isPresent(fv.value)}
       <CardField label={field.label}>
-        <FieldValueView {fv} def={fieldDef(fv.fieldId)} />
+        <FieldValueView {fv} />
       </CardField>
     {/if}
   {/each}

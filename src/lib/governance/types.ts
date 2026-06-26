@@ -13,8 +13,8 @@ export interface FieldFormDef {
   valueType: "string" | "text" | "select";
   required: boolean;
   options?: string[];
-  /** Schema property name (e.g. "columns", "rows"). Set for group sub-fields. */
-  name?: string;
+  /** Snake_case schema property name — always set by propertyToField in blueprint-utils. */
+  name: string;
 }
 
 export interface TypeFormDef {

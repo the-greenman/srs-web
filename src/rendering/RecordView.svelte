@@ -1,5 +1,5 @@
 <!--
-  RecordView — full record field list. Uses fieldDef to label each value.
+  RecordView — full record field list. Uses fieldMeta to label each value.
   Renders all non-empty fieldValues in the order they appear on the record.
   Falls back gracefully for unknown field IDs (shows short UUID prefix as label).
   B5 record renderer: https://github.com/the-greenman/srs-web/issues/4
@@ -7,11 +7,13 @@
 <script lang="ts">
   import type { SrsRecord } from '$lib/srs-client.js';
   import type { Status } from '$lib/types.js';
-  import { fieldLabel, fieldDef } from '../governance/package.js';
+  import { getFieldMeta } from '$lib/governance/field-meta.js';
   import { Card, CardField } from '$lib/components/index.js';
   import FieldValueView from './FieldValueView.svelte';
 
   let { record, title }: { record: SrsRecord; title?: string } = $props();
+
+  const fieldMeta = $derived(getFieldMeta());
 
   /** Cast lifecycle to Status — lifecycle values are a subset of Status. */
   function toStatus(lifecycle: string | undefined): Status | undefined {
@@ -33,8 +35,8 @@
 >
   {#each record.fieldValues as fv}
     {#if !isEmpty(fv.value)}
-      <CardField label={fieldLabel(fv.fieldId)}>
-        <FieldValueView {fv} def={fieldDef(fv.fieldId)} />
+      <CardField label={fieldMeta.get(fv.fieldId)?.label ?? fv.fieldId.slice(0, 8)}>
+        <FieldValueView {fv} />
       </CardField>
     {/if}
   {/each}

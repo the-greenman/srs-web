@@ -13,9 +13,11 @@
   import FieldValueView from './FieldValueView.svelte';
   import RecordView from './RecordView.svelte';
   import { getFieldValueByName, isPresent } from './field-helpers.js';
-  import { fieldDef } from '../governance/package.js';
+  import { getFieldMeta } from '$lib/governance/field-meta.js';
 
   let { record }: { record: SrsRecord } = $props();
+
+  const fieldMeta = $derived(getFieldMeta());
 
   const EXERCISE_FIELDS = [
     { name: 'thinking_reached',     label: 'Thinking Reached' },
@@ -27,18 +29,19 @@
 
   /**
    * Determine whether any exercise-specific fields are present.
-   * If none are known (exercise type not yet in governance package), fall back
-   * to the generic RecordView.
+   * Exercise type has no typeId in sections.ts, so fieldMeta will have no
+   * exercise field entries — hasExerciseFields will be false and we fall back
+   * to RecordView. This is the pre-existing intended behavior.
    */
   const hasExerciseFields = $derived(
     EXERCISE_FIELDS.some((f) => {
-      const fv = getFieldValueByName(record, f.name);
+      const fv = getFieldValueByName(record, f.name, fieldMeta);
       return fv !== undefined && isPresent(fv.value);
     }),
   );
 
   const displayTitle = $derived(() => {
-    const ttl = getFieldValueByName(record, 'title')?.value;
+    const ttl = getFieldValueByName(record, 'title', fieldMeta)?.value;
     return ttl ? String(ttl) : record.instanceId.slice(0, 8);
   });
 
@@ -48,10 +51,10 @@
 {#if hasExerciseFields}
   <Card title={displayTitle()} {status}>
     {#each EXERCISE_FIELDS as field}
-      {@const fv = getFieldValueByName(record, field.name)}
+      {@const fv = getFieldValueByName(record, field.name, fieldMeta)}
       {#if fv && isPresent(fv.value)}
         <CardField label={field.label}>
-          <FieldValueView {fv} def={fieldDef(fv.fieldId)} />
+          <FieldValueView {fv} />
         </CardField>
       {/if}
     {/each}

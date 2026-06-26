@@ -57,6 +57,7 @@
   import type { TypeFormDef } from "$lib/governance/types.js";
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
   import { LIFECYCLE_TRANSITIONS, IMMUTABLE_STATES } from "$lib/governance/lifecycle.js";
+  import { setFieldMetaContext, buildFieldMetaMap } from "$lib/governance/field-meta.js";
 
   // ---------------------------------------------------------------------------
   // State
@@ -91,6 +92,13 @@
 
   /** TypeFormDef per section key, derived from typeSchema() at load time. */
   let sectionSchemas = $state<Record<string, TypeFormDef>>({});
+
+  // fieldMetaMap is a $derived so buildFieldMetaMap runs only when sectionSchemas
+  // changes (once at load), not on every reactive access from child components.
+  const fieldMetaMap = $derived(buildFieldMetaMap(sectionSchemas));
+
+  // Provide reactive field metadata to all descendant rendering components.
+  setFieldMetaContext(() => fieldMetaMap);
 
   /** Form mode: null = list view, 'create' = new record, 'edit' = edit existing. */
   let formMode = $state<"create" | "edit" | null>(null);
