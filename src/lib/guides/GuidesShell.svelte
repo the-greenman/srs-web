@@ -519,7 +519,7 @@
     }
   }
 
-  async function handleExportMarkdown() {
+  function handleExportMarkdown() {
     exportError = null;
     try {
       if (!selectedGuideId || !selectedContainerId || !guideViewId) return;
