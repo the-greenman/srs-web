@@ -70,7 +70,7 @@ No new TS type contracts introduced. Existing imports from `$lib/srs-client.js`,
 
 #### Tasks
 
-- [ ] Create `src/lib/governance/GovernanceShell.svelte` with the following props interface:
+- [x] Create `src/lib/governance/GovernanceShell.svelte` with the following props interface:
   ```ts
   interface Props {
     repo: SrsRepository;
@@ -81,24 +81,24 @@ No new TS type contracts introduced. Existing imports from `$lib/srs-client.js`,
   }
   let { repo, repoName, documentProvider, onExport, onOpenAnother }: Props = $props();
   ```
-- [ ] Move these state variables from `App.svelte` into `GovernanceShell.svelte`:
+- [x] Move these state variables from `App.svelte` into `GovernanceShell.svelte`:
   - `sectionRecords`, `dynamicSections`, `activeSection`, `selectedId`
   - `diagnostics`, `instanceCount`, `sectionSchemas`
   - `formMode`, `editingRecord`, `formSaving`, `formError`
   - `showSuccessorModal`, `decisionFlowMode`, `decisionFlowSaving`, `decisionFlowError`
   - `fieldMetaMap` ($derived)
-- [ ] Move these derived values:
+- [x] Move these derived values:
   - `activeRecords`, `activeSection_`, `isDecisionSection`, `activeSectionSchema`
   - `errorCount`, `validationAside`, `selectedRecord`
-- [ ] Move `setFieldMetaContext(() => fieldMetaMap)` call.
-- [ ] Move `mapDiagnostic`, `loadSectionRecords`, `buildSectionSchemas`, `refreshValidation` helpers.
+- [x] Move `setFieldMetaContext(() => fieldMetaMap)` call.
+- [x] Move `mapDiagnostic`, `loadSectionRecords`, `buildSectionSchemas`, `refreshValidation` helpers.
   - Note: `buildSectionSchemas` depends on the output of `loadSectionRecords` — call them sequentially in `onMount`, matching the GuidesShell pattern (single try-block, sequential awaits).
-- [ ] Move `handleFormSave`, `handleFormCancel`, `handleEditRecord`, `handleDeleteRecord`, `handleLifecycleTransition`, `handleCreateSuccessor` handlers.
-- [ ] Move `governanceCrumbItems()` breadcrumb helper.
-- [ ] Move the SVG `<defs>` ink-surface filter block.
-- [ ] Move the three-pane layout template (AppShell + Nav + Workspace + Inspector markup).
-- [ ] Move governance-specific CSS (`.ink-surface`, three-pane grid, section-nav, workspace, inspector rules).
-- [ ] Use `onMount` for initial data load — sequential calls matching the GuidesShell pattern:
+- [x] Move `handleFormSave`, `handleFormCancel`, `handleEditRecord`, `handleDeleteRecord`, `handleLifecycleTransition`, `handleCreateSuccessor` handlers.
+- [x] Move `governanceCrumbItems()` breadcrumb helper.
+- [x] Move the SVG `<defs>` ink-surface filter block.
+- [x] Move the three-pane layout template (AppShell + Nav + Workspace + Inspector markup).
+- [x] Move governance-specific CSS (`.ink-surface`, three-pane grid, section-nav, workspace, inspector rules).
+- [x] Use `onMount` for initial data load — sequential calls matching the GuidesShell pattern:
   ```ts
   onMount(async () => {
     await loadSectionRecords();
@@ -106,18 +106,18 @@ No new TS type contracts introduced. Existing imports from `$lib/srs-client.js`,
     await refreshValidation();
   });
   ```
-- [ ] Import all subcomponents using their actual file names from `$lib/components/`:
+- [x] Import all subcomponents using their actual file names from `$lib/components/`:
   `AppShell`, `Breadcrumb`, `Main`, `Topbar`, `Workspace`, `Nav`, `NavGroup`, `NavItem`,
   `Inspector`, `InspectorSection`, `Card`, `Diagnostics`, `RecordForm`, `SuccessorModal`,
   `DecisionFlow`, `RecordReading`, `DecisionLogView`.
 
 #### Acceptance Criteria
 
-- [ ] `src/lib/governance/GovernanceShell.svelte` exists.
-- [ ] `npm run typecheck` passes with zero errors.
-- [ ] `npm run build` succeeds.
-- [ ] No SRS semantics added in TypeScript — all WASM calls preserved as-is through `$lib/srs-client.js`.
-- [ ] `setFieldMetaContext` is called inside `GovernanceShell`, not in `App.svelte`.
+- [x] `src/lib/governance/GovernanceShell.svelte` exists.
+- [x] `npm run typecheck` passes with zero errors.
+- [x] `npm run build` succeeds.
+- [x] No SRS semantics added in TypeScript — all WASM calls preserved as-is through `$lib/srs-client.js`.
+- [x] `setFieldMetaContext` is called inside `GovernanceShell`, not in `App.svelte`.
 
 #### Testing
 
@@ -146,12 +146,12 @@ Do not start Phase 2 until this gate passes.
 
 #### Tasks
 
-- [ ] Import `GovernanceShell` in `App.svelte`.
-- [ ] Remove all governance-specific state, derived values, and handlers from `App.svelte` (all vars and functions listed in Phase 1).
-- [ ] Remove `mapDiagnostic`, `loadSectionRecords`, `buildSectionSchemas`, `refreshValidation` from `App.svelte`.
-- [ ] Remove `setFieldMetaContext` and its import from `App.svelte`.
-- [ ] Remove the SVG `<defs>` ink-surface filter from `App.svelte`.
-- [ ] Replace the governance template subtree (`{#if editorMode === 'governance'}...`) with:
+- [x] Import `GovernanceShell` in `App.svelte`.
+- [x] Remove all governance-specific state, derived values, and handlers from `App.svelte` (all vars and functions listed in Phase 1).
+- [x] Remove `mapDiagnostic`, `loadSectionRecords`, `buildSectionSchemas`, `refreshValidation` from `App.svelte`.
+- [x] Remove `setFieldMetaContext` and its import from `App.svelte`.
+- [x] Remove the SVG `<defs>` ink-surface filter from `App.svelte`.
+- [x] Replace the governance template subtree (`{#if editorMode === 'governance'}...`) with:
   ```svelte
   <GovernanceShell
     repo={repo!}
@@ -162,19 +162,19 @@ Do not start Phase 2 until this gate passes.
   />
   ```
   The `onOpenAnother` lambda is intentionally simple — all governance state that previously needed resetting here now lives in `GovernanceShell` and is garbage-collected when the component unmounts.
-- [ ] Simplify `loadDocument` in `App.svelte`: remove governance-specific side-effects (`sectionRecords = {}` reset, etc.). After this phase `loadDocument` only initialises `repo` and sets `appState = 'loaded'`.
-- [ ] Remove governance-specific CSS from `App.svelte` styles — keep only splash/boot/idle/mode-picker styles.
-- [ ] Verify no `sectionRecords`, `activeSection`, `selectedId`, `diagnostics`, `formMode`, or similar governance identifiers remain in `App.svelte`.
+- [x] Simplify `loadDocument` in `App.svelte`: remove governance-specific side-effects (`sectionRecords = {}` reset, etc.). After this phase `loadDocument` only initialises `repo` and sets `appState = 'loaded'`.
+- [x] Remove governance-specific CSS from `App.svelte` styles — keep only splash/boot/idle/mode-picker styles.
+- [x] Verify no `sectionRecords`, `activeSection`, `selectedId`, `diagnostics`, `formMode`, or similar governance identifiers remain in `App.svelte`.
 
 #### Acceptance Criteria
 
-- [ ] `npm run typecheck` passes with zero errors.
-- [ ] `npm run build` succeeds.
-- [ ] `npm test` passes — all existing tests continue to pass; no new test failures.
-- [ ] `App.svelte` contains no governance state variables or handlers.
-- [ ] Governance mode renders the same three-pane layout as before.
-- [ ] Guides mode is unaffected — `GuidesShell` is unchanged.
-- [ ] `setFieldMetaContext` is called inside `GovernanceShell.svelte`, not `App.svelte`.
+- [x] `npm run typecheck` passes with zero errors.
+- [x] `npm run build` succeeds.
+- [x] `npm test` passes — all existing tests continue to pass; no new test failures.
+- [x] `App.svelte` contains no governance state variables or handlers.
+- [x] Governance mode renders the same three-pane layout as before.
+- [x] Guides mode is unaffected — `GuidesShell` is unchanged.
+- [x] `setFieldMetaContext` is called inside `GovernanceShell.svelte`, not `App.svelte`.
 
 #### Testing
 
@@ -200,16 +200,16 @@ Do not proceed to Stage 6 until this gate passes.
 
 ## Final Acceptance
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm run build` succeeds
-- [ ] `npm test` passes — no regressions
-- [ ] WASM loads and governance section records load correctly when a `.srsj` file is opened in governance mode
-- [ ] `GovernanceShell.svelte` exists under `src/lib/governance/`
-- [ ] `App.svelte` contains no governance state variables or handlers
-- [ ] `setFieldMetaContext` is called inside `GovernanceShell.svelte`
-- [ ] Guides mode is unaffected
-- [ ] No SRS semantics added or removed in TypeScript (ADR-001 clean)
+- [x] `npm run typecheck` passes
+- [x] `npm run lint` passes
+- [x] `npm run build` succeeds
+- [x] `npm test` passes — no regressions
+- [x] WASM loads and governance section records load correctly when a `.srsj` file is opened in governance mode
+- [x] `GovernanceShell.svelte` exists under `src/lib/governance/`
+- [x] `App.svelte` contains no governance state variables or handlers
+- [x] `setFieldMetaContext` is called inside `GovernanceShell.svelte`
+- [x] Guides mode is unaffected
+- [x] No SRS semantics added or removed in TypeScript (ADR-001 clean)
 
 ## Coordination Rules
 
