@@ -42,7 +42,7 @@
   import { buildDynamicSections } from "$lib/governance/sections.js";
   import type { SectionConfig, SectionKey } from "$lib/governance/sections.js";
   import { DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
-  import { getStringField } from "$lib/governance/field-utils.js";
+  import { getStringField, STATUS_FIELD_ID } from "$lib/governance/field-utils.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
   import { LIFECYCLE_TRANSITIONS, IMMUTABLE_STATES } from "$lib/governance/lifecycle.js";
@@ -268,7 +268,7 @@
   function handleEditRecord() {
     if (!selectedRecord) return;
     const status = selectedRecord.fieldValues.find(
-      (fv) => fv.fieldId === "aee7afe9-6650-5fa4-a61a-495c3b88994b"
+      (fv) => fv.fieldId === STATUS_FIELD_ID
     )?.value as string | undefined;
     if (status && IMMUTABLE_STATES.has(status)) {
       showSuccessorModal = true;
@@ -288,7 +288,7 @@
 
   function handleLifecycleTransition(toState: string) {
     if (!selectedRecord) return;
-    const statusFieldId = "aee7afe9-6650-5fa4-a61a-495c3b88994b";
+    const statusFieldId = STATUS_FIELD_ID;
     try {
       // Governance status is stored as a field value, not ext:lifecycle state.
       // Update the status field to the new state via updateRecord.
@@ -306,7 +306,7 @@
   function handleCreateSuccessor() {
     if (!selectedRecord) return;
     showSuccessorModal = false;
-    const statusFieldId = "aee7afe9-6650-5fa4-a61a-495c3b88994b";
+    const statusFieldId = STATUS_FIELD_ID;
     try {
       const baseValues = selectedRecord.fieldValues.filter((fv) => fv.fieldId !== statusFieldId);
       const result = createRecordSuccessor(repo, selectedRecord.instanceId, {
