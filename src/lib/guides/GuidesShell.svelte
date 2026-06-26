@@ -53,6 +53,7 @@
   import InspectorSection from "$lib/components/InspectorSection.svelte";
   import Button from "$lib/components/Button.svelte";
   import PreviewPane from "$lib/components/PreviewPane.svelte";
+  import { PREVIEW_THEMES, THEME_DEFAULT } from "$lib/guides/preview-themes.js";
   import { downloadDocument } from "$lib/storage/index.js";
   import type { BreadcrumbItem } from "$lib/types.js";
 
@@ -138,6 +139,12 @@
   /** HTML preview of the selected guide (rendered via renderDocumentView "html"). */
   let previewHtml = $state<string | null>(null);
   let previewLoading = $state(false);
+
+  /** Selected preview theme ID; drives selectedThemeCss. */
+  let selectedThemeId = $state("default");
+  const selectedThemeCss = $derived(
+    PREVIEW_THEMES.find((t) => t.id === selectedThemeId)?.css ?? THEME_DEFAULT
+  );
 
   /** Document views discovered for the guide blueprint (ADR-004). */
   let availableViews = $state<DocumentViewSummary[]>([]);
@@ -512,6 +519,42 @@
     }
   }
 
+  function handleExportMarkdown() {
+    exportError = null;
+    try {
+      if (!selectedGuideId || !selectedContainerId || !guideViewId) return;
+      const result = renderDocumentView(repo, guideViewId, "markdown", selectedContainerId);
+      if (!result.rendered) {
+        exportError = "Render produced no content.";
+        return;
+      }
+      const guide = guides.find((g) => g.instanceId === selectedGuideId);
+      const title = guide ? guideLabel(guide) : "guide";
+      const slug = title.replace(/\s+/g, "-").toLowerCase();
+      const blob = new Blob([result.rendered], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${slug}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      exportError = `Markdown export failed: ${e instanceof Error ? e.message : String(e)}`;
+    }
+  }
+
+  function handlePrint() {
+    if (!previewHtml) return;
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(
+      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Guide</title><style>${selectedThemeCss}</style><style>@media print { body { margin: 0; } }</style></head><body>${previewHtml}</body></html>`
+    );
+    win.document.close();
+    win.focus();
+    win.print();
+  }
+
 </script>
 
 <div data-testid="guides-shell">
@@ -740,8 +783,34 @@
             />
           </InspectorSection>
         {/if}
+        <InspectorSection title="Export">
+          <Button
+            variant="ghost"
+            data-testid="guides-export-markdown"
+            onclick={handleExportMarkdown}
+            disabled={!guideViewId}
+          >Export Markdown</Button>
+          <Button
+            variant="ghost"
+            data-testid="guides-export-print"
+            onclick={handlePrint}
+            disabled={!previewHtml}
+          >Print / Save as PDF</Button>
+        </InspectorSection>
+        <InspectorSection title="Theme">
+          <select
+            data-testid="guides-theme-picker"
+            class="guides-theme-select"
+            value={selectedThemeId}
+            onchange={(e) => { selectedThemeId = e.currentTarget.value; }}
+          >
+            {#each PREVIEW_THEMES as theme (theme.id)}
+              <option value={theme.id}>{theme.label}</option>
+            {/each}
+          </select>
+        </InspectorSection>
         <InspectorSection title="Preview" grow>
-          <PreviewPane html={previewHtml} loading={previewLoading} />
+          <PreviewPane html={previewHtml} loading={previewLoading} themeCss={selectedThemeCss} />
         </InspectorSection>
       </Inspector>
     {/snippet}
@@ -949,6 +1018,17 @@
     color: var(--color-muted, #aaa);
     font-size: 0.9rem;
     padding: 2rem;
+  }
+
+  .guides-theme-select {
+    width: 100%;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--color-border, #ddd);
+    border-radius: 4px;
+    background: var(--color-surface-0, #fff);
+    color: var(--color-text, #111);
+    cursor: pointer;
   }
 
   /* Preview toggle only useful on narrow screens — inspector is always visible above 1100px */
