@@ -33,13 +33,13 @@ export function buildFieldMetaMap(schemas: Record<string, TypeFormDef>): Map<str
 
 /**
  * Call once during App.svelte synchronous init, AFTER $state declarations.
- * The getter ensures child components read the current sectionSchemas on
- * every $derived access — Svelte tracks the dependency through the getter.
+ * Pass a getter that returns the already-computed Map (e.g. a $derived) so
+ * the context getter does not rebuild the map on every reactive access.
  */
-export function setFieldMetaContext(getSchemas: () => Record<string, TypeFormDef>): void {
+export function setFieldMetaContext(getMeta: () => Map<string, FieldFormDef>): void {
   setContext<FieldMetaContext>(FIELD_META_KEY, {
     get meta() {
-      return buildFieldMetaMap(getSchemas());
+      return getMeta();
     },
   });
 }
