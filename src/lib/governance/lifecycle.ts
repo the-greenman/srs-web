@@ -18,6 +18,7 @@ export const LIFECYCLE_TRANSITIONS: Record<string, string[]> = {
   rejected: [],
   superseded: [],
   archived: [],
+  abandoned: [],
 };
 
 /**

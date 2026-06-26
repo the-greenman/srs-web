@@ -16,7 +16,8 @@ export type Status =
   | "superseded"
   | "closed"
   | "rejected"
-  | "archived";
+  | "archived"
+  | "abandoned";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "mono";
 
