@@ -56,6 +56,7 @@
         data-testid="search-input"
         class="controls-bar__search"
         placeholder="Search decisions…"
+        aria-label="Search decisions"
         bind:value={searchQuery}
       />
       <button
