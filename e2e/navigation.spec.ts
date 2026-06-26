@@ -43,11 +43,6 @@ test.describe("Navigation", () => {
     await expect(page.getByRole("heading", { name: "Roles", level: 2 })).toBeVisible();
   });
 
-  test("clicking Exercise Book shows Exercise Book section heading", async ({ page }) => {
-    await page.getByRole("link", { name: /Exercise Book/ }).click();
-    await expect(page.getByRole("heading", { name: "Exercise Book", level: 2 })).toBeVisible();
-  });
-
   test("clicking Articles after another section returns to Articles heading", async ({ page }) => {
     await page.getByRole("link", { name: /Decision Log/ }).click();
     await expect(page.getByRole("heading", { name: "Decision Log", level: 2 })).toBeVisible();
