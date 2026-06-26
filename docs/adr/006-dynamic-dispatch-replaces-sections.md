@@ -70,5 +70,8 @@ not a human-readable string. `sectionSchemas` is keyed by typeId accordingly.
   issues track adding the exercise type to the gallery package.
 - Blueprint-based discovery (ADR-004 pattern) remains the long-term goal for governance types
   if a governance blueprint is added to the gallery package. This ADR does not prevent that.
-- `RecordDispatch.svelte` is currently dead code (not imported in `App.svelte`). Wiring it
-  into the rendering path is tracked as a follow-up issue.
+- `RecordDispatch.svelte` is wired into the rendering path via `RecordReading.svelte`
+  (completed in [srs-web#70](https://github.com/the-greenman/srs-web/issues/70)). The
+  VIEW_REGISTRY is now live: selecting a record routes to the type-specific view or falls
+  back to `RecordView` for unknown types. `RecordReading` no longer renders fields
+  directly — it delegates to `RecordDispatch` and retains only the back-button navigation.
