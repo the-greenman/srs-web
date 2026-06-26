@@ -51,7 +51,7 @@
     type DocumentHandle,
   } from "$lib/storage/index.js";
 
-  import { buildDynamicSections } from "$lib/governance/sections.js";
+  import { buildDynamicSections, DECISION_TYPE_ID } from "$lib/governance/sections.js";
   import type { SectionConfig, SectionKey } from "$lib/governance/sections.js";
   import { getStringField } from "$lib/governance/field-utils.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
@@ -378,7 +378,6 @@
     dynamicSections.find((s) => s.key === activeSection) ?? null,
   );
 
-  const DECISION_TYPE_ID = "1fcad6a2-9f78-5e41-94ba-d82e88b822f3";
   let isDecisionSection = $derived(activeSection_?.typeId === DECISION_TYPE_ID);
 
   let activeSectionSchema = $derived(
@@ -598,7 +597,7 @@
                 decisionFlowSaving = true;
                 decisionFlowError = null;
                 try {
-                  const decisionTypeDef = activeSectionSchema;
+                  const decisionTypeDef = sectionSchemas[DECISION_TYPE_ID];
                   if (!decisionTypeDef) { decisionFlowError = "Decision type schema not loaded"; return; }
                   const created = createRecord(repo, decisionTypeDef.typeId, decisionTypeDef.typeVersion, input);
                   decisionFlowMode = false;

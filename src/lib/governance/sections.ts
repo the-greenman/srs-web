@@ -25,6 +25,9 @@ export interface SectionConfig {
 
 export type SectionKey = string;
 
+/** Exported so consumers (App.svelte, RecordDispatch) share one source of truth. */
+export const DECISION_TYPE_ID = "1fcad6a2-9f78-5e41-94ba-d82e88b822f3";
+
 const KNOWN_TYPE_CONFIG: Record<
   string,
   { label: string; icon: string; typeVersion: number; typeName: string; typeNamespace: string }
@@ -36,7 +39,7 @@ const KNOWN_TYPE_CONFIG: Record<
     typeName: "article",
     typeNamespace: "governance",
   },
-  "1fcad6a2-9f78-5e41-94ba-d82e88b822f3": {
+  [DECISION_TYPE_ID]: {
     label: "Decision Log",
     icon: "⊕",
     typeVersion: 1,
