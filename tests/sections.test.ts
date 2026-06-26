@@ -2,7 +2,8 @@
  * Unit tests for sections.ts — buildDynamicSections() helper (ADR-006).
  *
  * All functions are pure; no WASM interaction. Tests cover section derivation
- * from KNOWN_TYPE_CONFIG (always visible) and from unknown records.
+ * from TYPE_REGISTRY (always visible) and from unknown records.
+ * Note: DECISION_TYPE_ID is defined as a local constant here for test independence.
  */
 
 import { describe, expect, it } from "vitest";
@@ -101,7 +102,7 @@ describe("buildDynamicSections", () => {
       { instanceId: "x", typeId: "", typeVersion: 1, fieldValues: [] } as SrsRecord,
     ];
     const sections = buildDynamicSections(records);
-    // Only KNOWN_TYPE_CONFIG entries
+    // Only TYPE_REGISTRY entries
     expect(sections).toHaveLength(3);
   });
 
