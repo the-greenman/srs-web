@@ -15,6 +15,8 @@ export interface FieldFormDef {
   options?: string[];
   /** Snake_case schema property name — always set by propertyToField in blueprint-utils. */
   name: string;
+  /** AI guidance purpose text from the package field definition, if non-empty. */
+  aiGuidance?: string;
 }
 
 export interface TypeFormDef {

@@ -135,10 +135,10 @@ test.describe("Record edit forms (B9)", () => {
     await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
     await expect(page.getByTestId("record-reading")).toContainText("Test Decision E2E");
 
-    // Click back — record list should contain the new decision.
+    // Click back — decision log view should contain the new decision.
     await page.getByTestId("record-reading-back").click();
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
-    await expect(page.locator(".record-list")).toContainText("Test Decision E2E");
+    await expect(page.getByTestId("decision-log-view")).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId("decision-log-view")).toContainText("Test Decision E2E");
   });
 
   // --------------------------------------------------------------------------

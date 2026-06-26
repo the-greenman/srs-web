@@ -3,16 +3,19 @@
 
   Two modes:
     Quick Capture  (§8.3): title + decision_statement + rationale + status
-    Full Deliberation (§8.4): guided 9-stage wizard
+    Full Deliberation (§8.4): guided wizard over all non-header fields from schema
 
   Decision Summary Card is shown once both decision_statement and rationale
   are filled in either mode.
 
-  ADR-001: zero SRS semantics in TypeScript. All validation via WASM.
-  B12 decision protocol: https://github.com/the-greenman/srs-web/issues/8
+  ADR-001: zero SRS semantics in TypeScript. Field metadata (labels, IDs,
+  aiGuidance) comes from the TypeFormDef passed as `schema` prop — no UUIDs
+  hardcoded in this component.
 -->
 <script lang="ts">
+  import { untrack } from "svelte";
   import type { CreateRecordInput } from "$lib/srs-client.js";
+  import type { TypeFormDef, FieldFormDef } from "$lib/governance/types.js";
   import Field from "$lib/components/Field.svelte";
   import Input from "$lib/components/Input.svelte";
   import Textarea from "$lib/components/Textarea.svelte";
@@ -20,11 +23,13 @@
   import SaveBar from "$lib/components/SaveBar.svelte";
 
   let {
+    schema,
     onSave,
     onCancel,
     saving = false,
     saveError = null,
   }: {
+    schema: TypeFormDef;
     onSave: (input: CreateRecordInput) => void;
     onCancel: () => void;
     saving?: boolean;
@@ -32,99 +37,21 @@
   } = $props();
 
   // ---------------------------------------------------------------------------
-  // Field IDs (from gallery package / field-utils.ts)
+  // Field role assignments (presentation config — snake_case property names)
+  // These identify well-known fields by their stable package name, not by UUID.
   // ---------------------------------------------------------------------------
 
-  const FIELD_TITLE = "d7e82557-9045-5e92-a494-d99112bbec4a";
-  const FIELD_DECISION_QUESTION = "73cd845a-3623-5bc6-8ade-42a7cd64740c";
-  const FIELD_CONTEXT = "9889052c-9313-5e2f-a2ac-15baa3c6983e";
-  const FIELD_FRICTION = "1a1c0a5d-a1df-5d03-95f2-32af73bb71da";
-  const FIELD_ALTERNATIVES = "636ce948-2110-57b4-a3ed-04354ec17843";
-  const FIELD_KEY_REQUIREMENTS = "a952604c-d150-5315-bfc1-7229ddc1d636";
-  const FIELD_DECISION_STATEMENT = "de1296e0-e083-58d9-97a0-cb2b91fec02e";
-  const FIELD_RATIONALE = "3340532b-d845-5e54-92b3-819ed05365c5";
-  const FIELD_REVISIT_WHEN = "c04b7f84-9a55-5353-8c9f-2b62f6a1e34e";
-  const FIELD_NEXT_STEPS = "4181f210-f4be-5587-950e-890eda2a5590";
-  const FIELD_STATUS = "aee7afe9-6650-5fa4-a61a-495c3b88994b";
+  const HEADER_NAMES = ["title", "status"];
 
-  const STATUS_OPTIONS = [
-    "draft",
-    "proposed",
-    "active",
-    "deferred",
-    "superseded",
-    "closed",
-    "rejected",
-    "archived",
-  ];
-
-  // ---------------------------------------------------------------------------
-  // 9-stage deliberation definition
-  // ---------------------------------------------------------------------------
-
-  interface Stage {
-    label: string;
-    fieldId: string;
-    valueType: "string" | "text";
-    prompt: string;
-  }
-
-  const STAGES: Stage[] = [
-    {
-      label: "Decision Question",
-      fieldId: FIELD_DECISION_QUESTION,
-      valueType: "string",
-      prompt: "What specific question does this decision answer?",
-    },
-    {
-      label: "Context",
-      fieldId: FIELD_CONTEXT,
-      valueType: "text",
-      prompt: "What background led to this decision?",
-    },
-    {
-      label: "Friction",
-      fieldId: FIELD_FRICTION,
-      valueType: "text",
-      prompt: "What tensions, constraints, or disagreements exist?",
-    },
-    {
-      label: "Alternatives Considered",
-      fieldId: FIELD_ALTERNATIVES,
-      valueType: "text",
-      prompt: "What other options were considered and why were they rejected?",
-    },
-    {
-      label: "Key Requirements",
-      fieldId: FIELD_KEY_REQUIREMENTS,
-      valueType: "text",
-      prompt: "What must the chosen option satisfy?",
-    },
-    {
-      label: "Decision Statement",
-      fieldId: FIELD_DECISION_STATEMENT,
-      valueType: "text",
-      prompt: "State the decision clearly and definitively.",
-    },
-    {
-      label: "Rationale",
-      fieldId: FIELD_RATIONALE,
-      valueType: "text",
-      prompt: "Why is this the right decision given the constraints?",
-    },
-    {
-      label: "Revisit When",
-      fieldId: FIELD_REVISIT_WHEN,
-      valueType: "text",
-      prompt: "What conditions would trigger revisiting this decision?",
-    },
-    {
-      label: "Next Steps",
-      fieldId: FIELD_NEXT_STEPS,
-      valueType: "text",
-      prompt: "What actions follow from this decision?",
-    },
-  ];
+  // Derived field lookups
+  const titleField: FieldFormDef | undefined = $derived(schema.fields.find(f => f.name === "title"));
+  const statusField: FieldFormDef | undefined = $derived(schema.fields.find(f => f.name === "status"));
+  const decisionStatementField: FieldFormDef | undefined = $derived(schema.fields.find(f => f.name === "decision_statement"));
+  const rationaleField: FieldFormDef | undefined = $derived(schema.fields.find(f => f.name === "rationale"));
+  // Full Deliberation stages: all fields not in the persistent header, in schema order
+  const deliberationStages: FieldFormDef[] = $derived(
+    schema.fields.filter(f => !HEADER_NAMES.includes(f.name))
+  );
 
   // ---------------------------------------------------------------------------
   // Mode & stage state
@@ -142,9 +69,13 @@
   let quickDecisionStatement = $state("");
   let quickRationale = $state("");
 
-  // Stage field values keyed by fieldId
+  // Stage field values keyed by field name (snake_case). Pre-initialized to ""
+  // for all schema fields so bind:value never receives undefined (Svelte 5 rejects
+  // bind:value={undefined} when the child prop has a fallback default).
+  // untrack() is intentional: we want a one-time snapshot of the schema at mount,
+  // not reactive tracking (schema doesn't change during a component instance's life).
   let stageValues = $state<Record<string, string>>(
-    Object.fromEntries(STAGES.map((s) => [s.fieldId, ""]))
+    untrack(() => Object.fromEntries(schema.fields.map(f => [f.name, ""])))
   );
 
   // ---------------------------------------------------------------------------
@@ -154,11 +85,11 @@
   let summaryDecisionStatement = $derived(
     mode === "quick"
       ? quickDecisionStatement
-      : stageValues[FIELD_DECISION_STATEMENT]
+      : stageValues["decision_statement"] ?? ""
   );
 
   let summaryRationale = $derived(
-    mode === "quick" ? quickRationale : stageValues[FIELD_RATIONALE]
+    mode === "quick" ? quickRationale : stageValues["rationale"] ?? ""
   );
 
   let showSummary = $derived(
@@ -191,21 +122,23 @@
   function buildInput(): CreateRecordInput {
     const fvs: { fieldId: string; value: string }[] = [];
 
-    // title is always required
-    fvs.push({ fieldId: FIELD_TITLE, value: title });
-    // status is always required
-    fvs.push({ fieldId: FIELD_STATUS, value: status });
+    if (titleField && title.trim() !== "") {
+      fvs.push({ fieldId: titleField.fieldId, value: title });
+    }
+    if (statusField) {
+      fvs.push({ fieldId: statusField.fieldId, value: status });
+    }
 
     if (mode === "quick") {
-      if (quickDecisionStatement.trim() !== "") {
-        fvs.push({ fieldId: FIELD_DECISION_STATEMENT, value: quickDecisionStatement });
+      if (decisionStatementField && quickDecisionStatement.trim() !== "") {
+        fvs.push({ fieldId: decisionStatementField.fieldId, value: quickDecisionStatement });
       }
-      if (quickRationale.trim() !== "") {
-        fvs.push({ fieldId: FIELD_RATIONALE, value: quickRationale });
+      if (rationaleField && quickRationale.trim() !== "") {
+        fvs.push({ fieldId: rationaleField.fieldId, value: quickRationale });
       }
     } else {
-      for (const s of STAGES) {
-        const val = stageValues[s.fieldId];
+      for (const s of deliberationStages) {
+        const val = stageValues[s.name];
         if (val && val.trim() !== "") {
           fvs.push({ fieldId: s.fieldId, value: val });
         }
@@ -230,15 +163,15 @@
   // ---------------------------------------------------------------------------
 
   function nextStage() {
-    if (stage < STAGES.length - 1) stage += 1;
+    if (stage < deliberationStages.length - 1) stage += 1;
   }
 
   function prevStage() {
     if (stage > 0) stage -= 1;
   }
 
-  let currentStage = $derived(STAGES[stage]);
-  let isLastStage = $derived(stage === STAGES.length - 1);
+  let currentStage = $derived(deliberationStages[stage]);
+  let isLastStage = $derived(stage === deliberationStages.length - 1);
 </script>
 
 <!-- =========================================================================
@@ -275,45 +208,53 @@
   <div class="decision-flow">
     <h2 class="decision-flow__title">New Decision — Quick Capture</h2>
     <form onsubmit={handleQuickSubmit} class="decision-flow__form">
-      <Field label="Title" required id="qc-title">
-        <Input id="qc-title" bind:value={title} disabled={saving} />
-      </Field>
+      {#if titleField}
+        <Field label={titleField.label} required id="qc-title" help={titleField.aiGuidance}>
+          <Input id="qc-title" bind:value={title} disabled={saving} />
+        </Field>
+      {/if}
 
-      <Field
-        label="Decision Statement"
-        required
-        id="qc-statement"
-        help="State the decision clearly and definitively."
-      >
-        <Textarea
+      {#if decisionStatementField}
+        <Field
+          label={decisionStatementField.label}
+          required
           id="qc-statement"
-          bind:value={quickDecisionStatement}
-          disabled={saving}
-          rows={4}
-        />
-      </Field>
+          help={decisionStatementField.aiGuidance}
+        >
+          <Textarea
+            id="qc-statement"
+            bind:value={quickDecisionStatement}
+            disabled={saving}
+            rows={4}
+          />
+        </Field>
+      {/if}
 
-      <Field
-        label="Rationale"
-        id="qc-rationale"
-        help="Why is this the right decision?"
-      >
-        <Textarea
+      {#if rationaleField}
+        <Field
+          label={rationaleField.label}
           id="qc-rationale"
-          bind:value={quickRationale}
-          disabled={saving}
-          rows={4}
-        />
-      </Field>
+          help={rationaleField.aiGuidance}
+        >
+          <Textarea
+            id="qc-rationale"
+            bind:value={quickRationale}
+            disabled={saving}
+            rows={4}
+          />
+        </Field>
+      {/if}
 
-      <Field label="Status" required id="qc-status">
-        <Select
-          id="qc-status"
-          bind:value={status}
-          options={STATUS_OPTIONS}
-          disabled={saving}
-        />
-      </Field>
+      {#if statusField}
+        <Field label={statusField.label} required id="qc-status">
+          <Select
+            id="qc-status"
+            bind:value={status}
+            options={statusField.options ?? []}
+            disabled={saving}
+          />
+        </Field>
+      {/if}
 
       {#if showSummary}
         <div class="decision-summary">
@@ -367,113 +308,119 @@
 
     <!-- Persistent header: title + status on every stage -->
     <div class="decision-flow__persistent">
-      <Field label="Title" required id="del-title">
-        <Input id="del-title" bind:value={title} disabled={saving} />
-      </Field>
-      <Field label="Status" required id="del-status">
-        <Select
-          id="del-status"
-          bind:value={status}
-          options={STATUS_OPTIONS}
-          disabled={saving}
-        />
-      </Field>
+      {#if titleField}
+        <Field label={titleField.label} required id="del-title">
+          <Input id="del-title" bind:value={title} disabled={saving} />
+        </Field>
+      {/if}
+      {#if statusField}
+        <Field label={statusField.label} required id="del-status">
+          <Select
+            id="del-status"
+            bind:value={status}
+            options={statusField.options ?? []}
+            disabled={saving}
+          />
+        </Field>
+      {/if}
     </div>
 
     <!-- Stage progress -->
-    <div class="decision-flow__progress">
-      <div class="decision-flow__progress-bar">
-        <div
-          class="decision-flow__progress-fill"
-          style="width: {((stage + 1) / STAGES.length) * 100}%"
-        ></div>
-      </div>
-      <span class="decision-flow__progress-label">
-        Stage {stage + 1} of {STAGES.length}: {currentStage.label}
-      </span>
-    </div>
-
-    <!-- Current stage form -->
-    <form onsubmit={handleDeliberateSubmit} class="decision-flow__form">
-      <Field
-        label={currentStage.label}
-        id="del-stage-field"
-        help={currentStage.prompt}
-      >
-        {#if currentStage.valueType === "text"}
-          <Textarea
-            id="del-stage-field"
-            bind:value={stageValues[currentStage.fieldId]}
-            disabled={saving}
-            rows={5}
-          />
-        {:else}
-          <Input
-            id="del-stage-field"
-            bind:value={stageValues[currentStage.fieldId]}
-            disabled={saving}
-          />
-        {/if}
-      </Field>
-
-      {#if showSummary}
-        <div class="decision-summary">
-          <div class="decision-summary__header">
-            <span class="decision-summary__label">Decision Summary</span>
-            <button
-              type="button"
-              class="decision-summary__copy"
-              onclick={copyMarkdown}
-            >{copyDone ? "Copied!" : "Copy as Markdown"}</button>
-          </div>
-          <div class="decision-summary__section">
-            <p class="decision-summary__heading">Decision</p>
-            <p class="decision-summary__body">{summaryDecisionStatement}</p>
-          </div>
-          <div class="decision-summary__section">
-            <p class="decision-summary__heading">Rationale</p>
-            <p class="decision-summary__body">{summaryRationale}</p>
-          </div>
+    {#if currentStage}
+      <div class="decision-flow__progress">
+        <div class="decision-flow__progress-bar">
+          <div
+            class="decision-flow__progress-fill"
+            style="width: {((stage + 1) / deliberationStages.length) * 100}%"
+          ></div>
         </div>
-      {/if}
+        <span class="decision-flow__progress-label">
+          Stage {stage + 1} of {deliberationStages.length}: {currentStage.label}
+        </span>
+      </div>
 
-      {#if saveError}
-        <p class="form-error" role="alert">{saveError}</p>
-      {/if}
+      <!-- Current stage form -->
+      <form onsubmit={handleDeliberateSubmit} class="decision-flow__form">
+        <Field
+          label={currentStage.label}
+          id="del-stage-field"
+          help={currentStage.aiGuidance}
+        >
+          {#if currentStage.valueType === "text"}
+            <Textarea
+              id="del-stage-field"
+              bind:value={stageValues[currentStage.name]}
+              disabled={saving}
+              rows={5}
+            />
+          {:else}
+            <Input
+              id="del-stage-field"
+              bind:value={stageValues[currentStage.name]}
+              disabled={saving}
+            />
+          {/if}
+        </Field>
 
-      <SaveBar>
-        {#snippet children()}
-          <button
-            type="button"
-            class="btn btn--secondary"
-            onclick={onCancel}
-            disabled={saving}
-          >Cancel</button>
-          {#if stage > 0}
+        {#if showSummary}
+          <div class="decision-summary">
+            <div class="decision-summary__header">
+              <span class="decision-summary__label">Decision Summary</span>
+              <button
+                type="button"
+                class="decision-summary__copy"
+                onclick={copyMarkdown}
+              >{copyDone ? "Copied!" : "Copy as Markdown"}</button>
+            </div>
+            <div class="decision-summary__section">
+              <p class="decision-summary__heading">Decision</p>
+              <p class="decision-summary__body">{summaryDecisionStatement}</p>
+            </div>
+            <div class="decision-summary__section">
+              <p class="decision-summary__heading">Rationale</p>
+              <p class="decision-summary__body">{summaryRationale}</p>
+            </div>
+          </div>
+        {/if}
+
+        {#if saveError}
+          <p class="form-error" role="alert">{saveError}</p>
+        {/if}
+
+        <SaveBar>
+          {#snippet children()}
             <button
               type="button"
               class="btn btn--secondary"
-              onclick={prevStage}
+              onclick={onCancel}
               disabled={saving}
-            >Back</button>
-          {/if}
-          {#if !isLastStage}
-            <button
-              type="button"
-              class="btn btn--primary"
-              onclick={nextStage}
-              disabled={saving}
-            >Next</button>
-          {:else}
-            <button
-              type="submit"
-              class="btn btn--primary"
-              disabled={saving}
-            >{saving ? "Saving…" : "Save"}</button>
-          {/if}
-        {/snippet}
-      </SaveBar>
-    </form>
+            >Cancel</button>
+            {#if stage > 0}
+              <button
+                type="button"
+                class="btn btn--secondary"
+                onclick={prevStage}
+                disabled={saving}
+              >Back</button>
+            {/if}
+            {#if !isLastStage}
+              <button
+                type="button"
+                class="btn btn--primary"
+                onclick={nextStage}
+                disabled={saving}
+              >Next</button>
+            {:else}
+              <button
+                type="submit"
+                class="btn btn--primary"
+                disabled={saving}
+              >{saving ? "Saving…" : "Save"}</button>
+            {/if}
+          {/snippet}
+        </SaveBar>
+      </form>
+    {/if}
   </div>
 {/if}
 
