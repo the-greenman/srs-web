@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
   import type { SrsRecord } from "$lib/srs-client.js";
+  import type { Status } from "$lib/types.js";
   import { getStringField } from "$lib/governance/field-utils.js";
   import { getFieldMeta } from "$lib/governance/field-meta.js";
   import LogTable from "./LogTable.svelte";
@@ -24,6 +25,9 @@
   let sortOrder = $state<"newest" | "oldest">("newest");
   let topicFilter = $state<string>("all");
   let searchQuery = $state<string>("");
+  let showAll = $state(false);
+
+  const HIDDEN_STATUSES: ReadonlySet<Status> = new Set(["superseded", "abandoned"]);
 
   const availableTopics = $derived(
     [...new Set(records.flatMap((r) => r.tags ?? []))].sort((a, b) => a.localeCompare(b))
@@ -31,6 +35,13 @@
 
   const displayedRecords = $derived(
     [...records
+      .filter((r) => {
+        if (!showAll) {
+          const s = getStringField(r, "status", fieldMeta);
+          if (s !== undefined && HIDDEN_STATUSES.has(s as Status)) return false;
+        }
+        return true;
+      })
       .filter((r) => {
         if (topicFilter !== "all" && !(r.tags ?? []).includes(topicFilter)) return false;
         const q = searchQuery.trim().toLowerCase();
@@ -81,6 +92,15 @@
           {/each}
         </select>
       {/if}
+      <button
+        data-testid="show-all-toggle"
+        class="controls-bar__show-all-btn"
+        class:controls-bar__show-all-btn--active={showAll}
+        aria-pressed={showAll}
+        onclick={() => { showAll = !showAll; }}
+      >
+        {showAll ? "Hide superseded/abandoned" : "Show superseded/abandoned"}
+      </button>
     </div>
     <LogTable columns={["Decision", "Status", "Date"]}>
       {#each displayedRecords as record (record.instanceId)}
@@ -137,5 +157,24 @@
   .controls-bar__search:focus {
     outline: 2px solid var(--accent, #0066cc);
     outline-offset: 1px;
+  }
+
+  .controls-bar__show-all-btn {
+    font-size: 0.8125rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--grey-3, #ccc);
+    border-radius: 4px;
+    background: var(--surface, #fff);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .controls-bar__show-all-btn:hover {
+    background: var(--grey-1, #f5f5f5);
+  }
+
+  .controls-bar__show-all-btn--active {
+    background: var(--grey-2, #e8e8e8);
+    border-color: var(--grey-4, #aaa);
   }
 </style>
