@@ -1,6 +1,6 @@
 # ADR-001: srs-web is a thin WASM client — zero SRS semantics in TypeScript
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-06-07
 - **Supersedes:** —
 - **Superseded by:** —
