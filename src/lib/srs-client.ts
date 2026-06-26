@@ -87,6 +87,7 @@ export interface SrsRecord {
   lifecycle?: LifecycleState;
   createdAt?: string;
   updatedAt?: string;
+  tags?: string[];
 }
 
 export interface FieldValue {
@@ -252,6 +253,7 @@ function normalizeRecord(raw: any): SrsRecord {
     lifecycle: raw.lifecycle,
     createdAt: raw.createdAt ?? raw.created_at,
     updatedAt: raw.updatedAt ?? raw.updated_at,
+    ...(Array.isArray(raw.tags) && { tags: raw.tags }),
   };
 }
 
