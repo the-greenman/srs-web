@@ -28,12 +28,11 @@
     [...records
       .filter((r) => topicFilter === "all" || (r.tags ?? []).includes(topicFilter))]
       .sort((a, b) => {
-        // ISO 8601 strings are lexicographically ordered — localeCompare is safe here
+        // ISO 8601 strings are lexicographically ordered; use < / > to avoid locale-sensitive collation
         const dateA = a.createdAt ?? "";
         const dateB = b.createdAt ?? "";
-        return sortOrder === "newest"
-          ? dateB.localeCompare(dateA)
-          : dateA.localeCompare(dateB);
+        if (sortOrder === "newest") return dateB < dateA ? -1 : dateB > dateA ? 1 : 0;
+        return dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
       })
   );
 </script>
