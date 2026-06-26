@@ -6,6 +6,7 @@
   import type { SrsRecord } from "$lib/srs-client.js";
   import type { Status } from "$lib/types.js";
   import { getStringField } from "$lib/governance/field-utils.js";
+  import { getFieldMeta } from "$lib/governance/field-meta.js";
   import Tag from "./Tag.svelte";
 
   let {
@@ -18,8 +19,10 @@
     onclick: () => void;
   } = $props();
 
-  const title = $derived(getStringField(record, "title") ?? "Untitled");
-  const rawStatement = $derived(getStringField(record, "decision_statement"));
+  const fieldMeta = $derived(getFieldMeta());
+
+  const title = $derived(getStringField(record, "title", fieldMeta) ?? "Untitled");
+  const rawStatement = $derived(getStringField(record, "decision_statement", fieldMeta));
   const statement = $derived(
     rawStatement !== undefined
       ? rawStatement.length > 120
@@ -27,7 +30,7 @@
         : rawStatement
       : undefined
   );
-  const status = $derived(getStringField(record, "status") as Status | undefined);
+  const status = $derived(getStringField(record, "status", fieldMeta) as Status | undefined);
   const date = $derived(record.createdAt?.slice(0, 10) ?? "—");
 </script>
 

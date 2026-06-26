@@ -10,6 +10,7 @@
 <script lang="ts">
   import type { SrsRecord } from "$lib/srs-client.js";
   import { getStringField } from "$lib/governance/field-utils.js";
+  import { getFieldMeta } from "$lib/governance/field-meta.js";
 
   interface Props {
     record: SrsRecord;
@@ -19,7 +20,8 @@
 
   const { record, onCreateSuccessor, onCancel }: Props = $props();
 
-  const status = $derived(getStringField(record, "status") ?? "immutable");
+  const fieldMeta = $derived(getFieldMeta());
+  const status = $derived(getStringField(record, "status", fieldMeta) ?? "immutable");
 </script>
 
 <div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
