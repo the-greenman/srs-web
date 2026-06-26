@@ -625,9 +625,8 @@
               saving={formSaving}
               saveError={formError}
             />
-          {:else if selectedRecord && formMode === null && activeSectionSchema}
+          {:else if selectedRecord && formMode === null}
             <RecordReading
-              schema={activeSectionSchema}
               record={selectedRecord}
               sectionLabel={activeSection_?.label ?? ""}
               onBack={() => { selectedId = null; }}

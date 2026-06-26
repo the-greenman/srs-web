@@ -1,33 +1,25 @@
 <!--
-  RecordReading — schema-driven record reading view for the governance centre canvas.
+  RecordReading — record reading view for the governance centre canvas.
 
-  Renders a record's field values with human-readable labels derived from a TypeFormDef.
-  The TypeFormDef is used only as a label registry (presentation metadata); this component
-  never constructs or validates records — ADR-001 is respected.
+  Delegates content rendering to RecordDispatch, which routes to a type-specific view
+  (ArticleView, DecisionView, RoleView) or falls back to RecordView for unknown types.
+  ADR-006: typeId-keyed dispatch; srs-web#70.
 
   Usage: show when a record is selected and formMode is null; clicking back clears selection.
 -->
 <script lang="ts">
   import type { SrsRecord } from "$lib/srs-client.js";
-  import type { TypeFormDef } from "$lib/governance/types.js";
-  import CardField from "$lib/components/CardField.svelte";
+  import RecordDispatch from "../../rendering/RecordDispatch.svelte";
 
   let {
-    schema,
     record,
     sectionLabel,
     onBack,
   }: {
-    schema: TypeFormDef;
     record: SrsRecord;
     sectionLabel: string;
     onBack: () => void;
   } = $props();
-
-  /** Build a fieldId → label map from the schema for O(1) lookup. */
-  const labelMap = $derived(
-    new Map(schema.fields.map((f) => [f.fieldId, f.label]))
-  );
 </script>
 
 <div data-testid="record-reading" class="reading">
@@ -36,15 +28,7 @@
   </button>
 
   <div class="reading__card">
-    {#each record.fieldValues as fv (fv.fieldId)}
-      {@const label = labelMap.get(fv.fieldId)}
-      {@const value = typeof fv.value === "string" ? fv.value : null}
-      {#if label && value}
-        <CardField {label}>
-          <span class="reading__text">{value}</span>
-        </CardField>
-      {/if}
-    {/each}
+    <RecordDispatch {record} />
   </div>
 </div>
 
@@ -77,8 +61,5 @@
     gap: 0;
   }
 
-  .reading__text {
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
+
 </style>
