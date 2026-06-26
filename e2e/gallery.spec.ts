@@ -147,3 +147,64 @@ test.describe("Gallery fixture — real records render", () => {
     await expect(page.locator(".topbar__repo")).toContainText("gallery");
   });
 });
+
+test.describe("Decision Log — sort and filter controls", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("mode-governance").click({ timeout: 15000 });
+    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
+      timeout: 5000,
+    });
+
+    const fileInput = page.locator('input[type="file"]#srsj-file');
+    await fileInput.setInputFiles(GALLERY_PATH);
+
+    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
+    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(page.getByTestId("decision-log-view")).toBeVisible();
+  });
+
+  test("sort toggle defaults to newest first", async ({ page }) => {
+    const toggle = page.getByTestId("sort-toggle");
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveText("Newest first");
+  });
+
+  test("sort decisions oldest first", async ({ page }) => {
+    const toggle = page.getByTestId("sort-toggle");
+    await toggle.click();
+    await expect(toggle).toHaveText("Oldest first");
+    // Oldest decision is Pilot duration (2026-01-15)
+    const firstTitle = page.getByTestId("decision-summary-card").first().locator(".dscard__title");
+    await expect(firstTitle).toContainText("Pilot duration");
+  });
+
+  test("sort decisions newest first after toggling", async ({ page }) => {
+    const toggle = page.getByTestId("sort-toggle");
+    // Toggle to oldest then back to newest
+    await toggle.click();
+    await toggle.click();
+    await expect(toggle).toHaveText("Newest first");
+    // Newest decision is Closure obligations (2026-05-01)
+    const firstTitle = page.getByTestId("decision-summary-card").first().locator(".dscard__title");
+    await expect(firstTitle).toContainText("Closure obligations");
+  });
+
+  test("filter by topic exhibitions shows 2 decisions", async ({ page }) => {
+    await page.getByTestId("topic-filter").selectOption("exhibitions");
+    await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
+  });
+
+  test("filter by all topics restores list", async ({ page }) => {
+    await page.getByTestId("topic-filter").selectOption("exhibitions");
+    await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
+    await page.getByTestId("topic-filter").selectOption("all");
+    await expect(page.getByTestId("decision-summary-card")).toHaveCount(7);
+  });
+
+  test("topic filter shows sorted options", async ({ page }) => {
+    const select = page.getByTestId("topic-filter");
+    const options = await select.locator("option").allTextContents();
+    expect(options).toEqual(["All topics", "exhibitions", "governance", "operations"]);
+  });
+});

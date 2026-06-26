@@ -16,14 +16,55 @@
     selectedId?: string | null;
     onSelect: (id: string | null) => void;
   } = $props();
+
+  let sortOrder = $state<"newest" | "oldest">("newest");
+  let topicFilter = $state<string>("all");
+
+  const availableTopics = $derived(
+    [...new Set(records.flatMap((r) => r.tags ?? []))].sort((a, b) => a.localeCompare(b))
+  );
+
+  const displayedRecords = $derived(
+    [...records
+      .filter((r) => topicFilter === "all" || (r.tags ?? []).includes(topicFilter))]
+      .sort((a, b) => {
+        // ISO 8601 strings are lexicographically ordered — localeCompare is safe here
+        const dateA = a.createdAt ?? "";
+        const dateB = b.createdAt ?? "";
+        return sortOrder === "newest"
+          ? dateB.localeCompare(dateA)
+          : dateA.localeCompare(dateB);
+      })
+  );
 </script>
 
 <div data-testid="decision-log-view">
   {#if records.length === 0}
     <p class="empty-state">No decisions in this repository.</p>
   {:else}
+    <div class="controls-bar">
+      <button
+        data-testid="sort-toggle"
+        class="controls-bar__sort-btn"
+        onclick={() => { sortOrder = sortOrder === "newest" ? "oldest" : "newest"; }}
+      >
+        {sortOrder === "newest" ? "Newest first" : "Oldest first"}
+      </button>
+      {#if availableTopics.length > 0}
+        <select
+          data-testid="topic-filter"
+          value={topicFilter}
+          onchange={(e) => { topicFilter = (e.target as HTMLSelectElement).value; }}
+        >
+          <option value="all">All topics</option>
+          {#each availableTopics as topic}
+            <option value={topic}>{topic}</option>
+          {/each}
+        </select>
+      {/if}
+    </div>
     <LogTable columns={["Decision", "Status", "Date"]}>
-      {#each records as record (record.instanceId)}
+      {#each displayedRecords as record (record.instanceId)}
         <DecisionSummaryCard
           {record}
           selected={selectedId === record.instanceId}
@@ -40,5 +81,27 @@
     color: var(--ink);
     opacity: 0.6;
     font-size: 0.875rem;
+  }
+
+  .controls-bar {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-sm);
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .controls-bar__sort-btn {
+    font-size: 0.8125rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--grey-3, #ccc);
+    border-radius: 4px;
+    background: var(--surface, #fff);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .controls-bar__sort-btn:hover {
+    background: var(--grey-1, #f5f5f5);
   }
 </style>
