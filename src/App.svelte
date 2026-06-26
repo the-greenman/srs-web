@@ -151,11 +151,15 @@
         if (schemaResult.diagnostics.length > 0) {
           console.warn("typeSchema diagnostics for section", section.key, schemaResult.diagnostics);
         }
-        const schema = schemaResult.schema as unknown as SchemaDefinition;
-        if (typeof schema !== "object" || schema === null || typeof schema.properties !== "object") {
-          console.warn("typeSchema returned unexpected shape for section", section.key, schema);
+        const rawSchema = schemaResult.schema;
+        if (
+          typeof rawSchema !== "object" || rawSchema === null ||
+          typeof rawSchema["properties"] !== "object" || rawSchema["properties"] === null
+        ) {
+          console.warn("typeSchema returned unexpected shape for section", section.key, rawSchema);
           continue;
         }
+        const schema = rawSchema as unknown as SchemaDefinition;
         result[section.key] = {
           typeId: section.typeId,
           typeVersion: section.typeVersion ?? 1,
@@ -566,8 +570,9 @@
                 decisionFlowSaving = true;
                 decisionFlowError = null;
                 try {
-                  const decisionSection = SECTIONS.find((s) => s.key === "decisions")!;
-                  const created = createRecord(repo, decisionSection.typeId!, decisionSection.typeVersion ?? 1, input);
+                  const decisionTypeDef = sectionSchemas["decisions"];
+                  if (!decisionTypeDef) { decisionFlowError = "Decision type schema not loaded"; return; }
+                  const created = createRecord(repo, decisionTypeDef.typeId, decisionTypeDef.typeVersion, input);
                   decisionFlowMode = false;
                   loadSectionRecords(repo);
                   selectedId = created.instanceId;
