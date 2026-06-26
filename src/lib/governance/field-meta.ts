@@ -2,7 +2,6 @@
  * field-meta.ts — Svelte context for schema-derived field metadata.
  *
  * Provides a Map<fieldId, FieldFormDef> built from sectionSchemas at load time.
- * Replaces the static GOVERNANCE_FIELDS map in governance/package.ts (srs-web#55).
  * ADR-001: all field metadata is sourced from WASM typeSchema(), not hardcoded here.
  */
 

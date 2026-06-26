@@ -590,8 +590,9 @@
         </Topbar>
 
         <Workspace>
-          {#if decisionFlowMode}
+          {#if decisionFlowMode && sectionSchemas[DECISION_TYPE_ID]}
             <DecisionFlow
+              schema={sectionSchemas[DECISION_TYPE_ID]!}
               onSave={(input) => {
                 if (!repo) return;
                 decisionFlowSaving = true;
