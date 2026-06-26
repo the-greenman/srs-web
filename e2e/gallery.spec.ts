@@ -51,9 +51,29 @@ test.describe("Gallery fixture — real records render", () => {
     await page.getByRole("link", { name: /Decision Log/ }).click();
     await expect(page.getByRole("heading", { name: "Decision Log", level: 2 })).toBeVisible();
 
-    // gallery.srsj has 7 decisions
-    await expect(page.locator(".record-list__item").first()).toBeVisible();
-    await expect(page.locator(".empty-state")).not.toBeVisible();
+    // gallery.srsj has 7 decisions — DecisionLogView renders them as summary card rows
+    await expect(page.getByTestId("decision-log-view")).toBeVisible();
+    await expect(page.getByTestId("decision-summary-card").first()).toBeVisible();
+  });
+
+  test("Decision Log shows DecisionSummaryCard rows with decision content", async ({ page }) => {
+    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(page.getByTestId("decision-log-view")).toBeVisible();
+
+    // gallery.srsj has 7 decisions — 7 summary card rows
+    const cards = page.getByTestId("decision-summary-card");
+    await expect(cards).toHaveCount(7);
+
+    // First card must contain the decision statement (not empty)
+    const firstCard = cards.first();
+    await expect(firstCard).toBeVisible();
+    await expect(firstCard.locator(".dscard__statement")).not.toBeEmpty();
+  });
+
+  test("clicking a DecisionSummaryCard row opens the reading view", async ({ page }) => {
+    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await page.getByTestId("decision-summary-card").first().click();
+    await expect(page.getByTestId("record-reading")).toBeVisible();
   });
 
   test("Decision Log nav item shows count badge", async ({ page }) => {
@@ -90,7 +110,7 @@ test.describe("Gallery fixture — real records render", () => {
 
   test("selecting a decision shows its fields in the reading view", async ({ page }) => {
     await page.getByRole("link", { name: /Decision Log/ }).click();
-    await page.locator(".record-list__item").first().click();
+    await page.getByTestId("decision-summary-card").first().click();
 
     // Reading view must contain decision-specific field labels
     await expect(page.locator('[data-testid="record-reading"]')).toContainText("Decision Statement");

@@ -28,6 +28,8 @@ export { default as Meta } from "./Meta.svelte";
 export { default as Card } from "./Card.svelte";
 export { default as CardField } from "./CardField.svelte";
 export { default as LogTable } from "./LogTable.svelte";
+export { default as DecisionSummaryCard } from "./DecisionSummaryCard.svelte";
+export { default as DecisionLogView } from "./DecisionLogView.svelte";
 
 // Forms
 export { default as Field } from "./Field.svelte";

@@ -42,6 +42,7 @@
   import DecisionFlow from "$lib/components/DecisionFlow.svelte";
   import GuidesShell from "$lib/guides/GuidesShell.svelte";
   import RecordReading from "$lib/components/RecordReading.svelte";
+  import DecisionLogView from "$lib/components/DecisionLogView.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import {
     createStorageProvidersFromEnv,
@@ -560,41 +561,53 @@
               onBack={() => { selectedId = null; }}
             />
           {:else}
-            <div class="section-heading">
-              <h2 class="section-heading__title">{activeSection_.label}</h2>
-              <span class="section-heading__count">{activeRecords.length}</span>
-            </div>
-
-            {#if activeRecords.length === 0}
-              <p class="empty-state">No {activeSection_.label.toLowerCase()} records in this repository.</p>
-            {:else}
-              <div class="record-list">
-                {#each activeRecords as record (record.instanceId)}
-                  {@const title =
-                    getStringField(record, "title") ??
-                    getStringField(record, "decision_statement") ??
-                    record.instanceId}
-                  {@const articleNumber = getStringField(record, "article_number")}
-                  {@const status = getStringField(record, "status") as Status | undefined}
-                  {@const isSelected = selectedId === record.instanceId}
-
-                  <!-- svelte-ignore a11y_click_events_have_key_events -->
-                  <!-- svelte-ignore a11y_no_static_element_interactions -->
-                  <div
-                    class="record-list__item"
-                    class:record-list__item--selected={isSelected}
-                    onclick={() => {
-                      selectedId = isSelected ? null : record.instanceId;
-                    }}
-                  >
-                    <Card
-                      id={articleNumber}
-                      title={title}
-                      status={status}
-                    />
-                  </div>
-                {/each}
+            {#if activeSection === "decisions"}
+              <div class="section-heading">
+                <h2 class="section-heading__title">{activeSection_.label}</h2>
+                <span class="section-heading__count">{activeRecords.length}</span>
               </div>
+              <DecisionLogView
+                records={activeRecords}
+                selectedId={selectedId}
+                onSelect={(id) => { selectedId = id; }}
+              />
+            {:else}
+              <div class="section-heading">
+                <h2 class="section-heading__title">{activeSection_.label}</h2>
+                <span class="section-heading__count">{activeRecords.length}</span>
+              </div>
+
+              {#if activeRecords.length === 0}
+                <p class="empty-state">No {activeSection_.label.toLowerCase()} records in this repository.</p>
+              {:else}
+                <div class="record-list">
+                  {#each activeRecords as record (record.instanceId)}
+                    {@const title =
+                      getStringField(record, "title") ??
+                      getStringField(record, "decision_statement") ??
+                      record.instanceId}
+                    {@const articleNumber = getStringField(record, "article_number")}
+                    {@const status = getStringField(record, "status") as Status | undefined}
+                    {@const isSelected = selectedId === record.instanceId}
+
+                    <!-- svelte-ignore a11y_click_events_have_key_events -->
+                    <!-- svelte-ignore a11y_no_static_element_interactions -->
+                    <div
+                      class="record-list__item"
+                      class:record-list__item--selected={isSelected}
+                      onclick={() => {
+                        selectedId = isSelected ? null : record.instanceId;
+                      }}
+                    >
+                      <Card
+                        id={articleNumber}
+                        title={title}
+                        status={status}
+                      />
+                    </div>
+                  {/each}
+                </div>
+              {/if}
             {/if}
           {/if}
         </Workspace>
