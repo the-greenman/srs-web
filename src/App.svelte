@@ -20,10 +20,10 @@
     updateRecord,
     deleteRecord,
     exportSrsj,
-    createRelation,
+    createRecordSuccessor,
     typeSchema,
   } from "$lib/srs-client.js";
-  import type { SrsRepository, SrsRecord, Diagnostic as WasmDiagnostic, CreateRecordInput, UpdateRecordInput, CreateRelationInput, SchemaDefinition } from "$lib/srs-client.js";
+  import type { SrsRepository, SrsRecord, Diagnostic as WasmDiagnostic, CreateRecordInput, UpdateRecordInput, SchemaDefinition } from "$lib/srs-client.js";
   import type { BreadcrumbItem, Diagnostic, Status } from "$lib/types.js";
 
   import AppShell from "$lib/components/AppShell.svelte";
@@ -311,34 +311,19 @@
 
   function handleCreateSuccessor() {
     if (!repo || !selectedRecord) return;
-    const typeDef = activeSection ? sectionSchemas[activeSection] : undefined;
-    if (!typeDef) return;
     showSuccessorModal = false;
     const statusFieldId = "aee7afe9-6650-5fa4-a61a-495c3b88994b";
-    let successorId: string | null = null;
     try {
       const baseValues = selectedRecord.fieldValues.filter((fv) => fv.fieldId !== statusFieldId);
-      const successor = createRecord(repo, typeDef.typeId, typeDef.typeVersion, {
+      const result = createRecordSuccessor(repo, selectedRecord.instanceId, {
+        relationType: "supersedes",
         fieldValues: [...baseValues, { fieldId: statusFieldId, value: "draft" }],
       });
-      successorId = successor.instanceId;
-      try {
-        createRelation(repo, {
-          relationType: "supersedes",
-          sourceInstanceId: successor.instanceId,
-          targetInstanceId: selectedRecord.instanceId,
-        } as CreateRelationInput);
-      } catch (relErr: unknown) {
-        // Relation creation failure is non-fatal: the successor record was created
-        console.warn("supersedes relation could not be created:", relErr);
-      }
+      loadSectionRecords(repo);
+      selectedId = result.record.instanceId;
     } catch (e: unknown) {
       console.error("Failed to create successor:", e);
-    }
-    // Always refresh the list (successor may have been created even if relation failed)
-    loadSectionRecords(repo);
-    if (successorId !== null) {
-      selectedId = successorId;
+      loadSectionRecords(repo);
     }
   }
 

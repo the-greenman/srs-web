@@ -56,6 +56,8 @@ export interface SrsRepository {
   document_views_for_container(container_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listDocumentViews()
   list_document_views(filter_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in createRecordSuccessor()
+  create_record_successor(predecessor_id: string, input_json: string): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -167,6 +169,18 @@ export interface CreateRelationInput {
   assertedBy?: string;
   confidence?: number;
   status?: string;
+}
+
+export interface CreateRecordSuccessorInput {
+  relationType: "supersedes" | "refines";
+  fieldValues: FieldValue[];
+  lifecycleState?: string;
+  typeVersion?: number;
+}
+
+export interface CreateRecordSuccessorResult {
+  record: SrsRecord;
+  relation: SrsRelation;
 }
 
 // ---------------------------------------------------------------------------
@@ -368,6 +382,33 @@ export function createRelation(repo: SrsRepository, input: CreateRelationInput):
  */
 export function deleteRelation(repo: SrsRepository, relationId: string): void {
   repo.delete_relation(relationId);
+}
+
+/**
+ * Create a successor record that supersedes or refines `predecessorId`.
+ * Atomically creates both the new record and the relation linking successor → predecessor.
+ * The predecessor's typeId and typeVersion are inherited unless `typeVersion` is specified.
+ */
+export function createRecordSuccessor(
+  repo: SrsRepository,
+  predecessorId: string,
+  input: CreateRecordSuccessorInput
+): CreateRecordSuccessorResult {
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; normalised below
+  const raw: any = repo.create_record_successor(predecessorId, JSON.stringify(input));
+  return {
+    record: normalizeRecord(raw.record),
+    relation: {
+      relationId: raw.relation.relationId ?? raw.relation.relation_id,
+      relationType: raw.relation.relationType ?? raw.relation.relation_type,
+      sourceInstanceId: raw.relation.sourceInstanceId ?? raw.relation.source_instance_id,
+      targetInstanceId: raw.relation.targetInstanceId ?? raw.relation.target_instance_id,
+      assertedBy: raw.relation.assertedBy ?? raw.relation.asserted_by,
+      confidence: raw.relation.confidence,
+      status: raw.relation.status,
+      createdAt: raw.relation.createdAt ?? raw.relation.created_at,
+    },
+  };
 }
 
 /**
