@@ -96,6 +96,7 @@
         data-testid="show-all-toggle"
         class="controls-bar__show-all-btn"
         class:controls-bar__show-all-btn--active={showAll}
+        aria-pressed={showAll}
         onclick={() => { showAll = !showAll; }}
       >
         {showAll ? "Hide superseded/abandoned" : "Show superseded/abandoned"}

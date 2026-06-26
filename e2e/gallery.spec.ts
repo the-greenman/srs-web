@@ -60,7 +60,7 @@ test.describe("Gallery fixture — real records render", () => {
     await page.getByRole("link", { name: /Decision Log/ }).click();
     await expect(page.getByTestId("decision-log-view")).toBeVisible();
 
-    // gallery.srsj has 7 decisions — 7 summary card rows
+    // gallery.srsj has 9 decisions total; 7 visible by default (superseded/abandoned hidden)
     const cards = page.getByTestId("decision-summary-card");
     await expect(cards).toHaveCount(7);
 
