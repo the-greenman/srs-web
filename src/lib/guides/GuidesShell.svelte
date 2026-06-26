@@ -32,7 +32,7 @@
   import type { SrsRepository, SrsRecord, CreateRecordInput, UpdateRecordInput, DocumentViewSummary } from "$lib/srs-client.js";
   import { findBlueprint, documentViewsForBlueprint } from "$lib/discovery.js";
   import ViewPicker from "$lib/components/ViewPicker.svelte";
-  import type { TypeFormDef } from "$lib/governance/form-schema.js";
+  import type { TypeFormDef } from "$lib/governance/types.js";
   import {
     sectionTypes,
     rootFields,

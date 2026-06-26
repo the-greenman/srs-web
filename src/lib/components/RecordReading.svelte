@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import type { SrsRecord } from "$lib/srs-client.js";
-  import type { TypeFormDef } from "$lib/governance/form-schema.js";
+  import type { TypeFormDef } from "$lib/governance/types.js";
   import CardField from "$lib/components/CardField.svelte";
 
   let {

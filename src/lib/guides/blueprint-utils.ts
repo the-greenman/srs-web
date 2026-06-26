@@ -11,7 +11,7 @@
  * C8 blueprint-schema-driven guides renderer: srs-web#26
  */
 
-import type { FieldFormDef } from "$lib/governance/form-schema.js";
+import type { FieldFormDef } from "$lib/governance/types.js";
 import type { BlueprintSchema, SchemaDefinition, SchemaProperty } from "$lib/srs-client.js";
 
 /**

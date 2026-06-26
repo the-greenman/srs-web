@@ -17,7 +17,7 @@
     UpdateRecordInput,
     GroupFieldValue,
   } from "$lib/srs-client.js";
-  import type { FieldFormDef } from "$lib/governance/form-schema.js";
+  import type { FieldFormDef } from "$lib/governance/types.js";
   import type { GroupFormDef } from "$lib/guides/blueprint-utils.js";
   import Field from "$lib/components/Field.svelte";
   import Input from "$lib/components/Input.svelte";
