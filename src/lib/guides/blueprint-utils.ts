@@ -47,6 +47,7 @@ function propertyToField(name: string, prop: SchemaProperty, required: boolean):
     required,
     options: prop.enum,
     name,
+    aiGuidance: prop["x-srs-ai-guidance"]?.purpose || undefined,
   };
 }
 

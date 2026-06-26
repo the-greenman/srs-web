@@ -395,6 +395,8 @@ export interface SchemaProperty {
   "x-srs-group-id"?: string;
   "x-srs-repeatable"?: boolean;
   "x-srs-composite-renderer"?: string;
+  // AI guidance emitted when aiGuidance is an object in the package field definition:
+  "x-srs-ai-guidance"?: { purpose?: string; [key: string]: unknown };
   items?: {
     type?: string;
     properties?: Record<string, SchemaProperty>;
