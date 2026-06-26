@@ -88,6 +88,16 @@
         "instanceId": "a9ca11cf-fd34-4901-b5f6-51e20737cb56",
         "path": "records/tier-2/a9ca11cf-fd34-4901-b5f6-51e20737cb56.json",
         "tier": 2
+      },
+      {
+        "instanceId": "00000000-0000-4000-8000-000000005801",
+        "path": "records/tier-2/00000000-0000-4000-8000-000000005801.json",
+        "tier": 2
+      },
+      {
+        "instanceId": "00000000-0000-4000-8000-000000005802",
+        "path": "records/tier-2/00000000-0000-4000-8000-000000005802.json",
+        "tier": 2
       }
     ],
     "namespace": "com.limoma",
@@ -268,7 +278,9 @@
         "9af57e54-03fb-4625-9a4c-8d2a254ff2b7",
         "a9ca11cf-fd34-4901-b5f6-51e20737cb56",
         "dd715d4a-8640-4641-b79d-e44f728c547b",
-        "eb4024a0-486f-4d64-a4e4-5d80297129d2"
+        "eb4024a0-486f-4d64-a4e4-5d80297129d2",
+        "00000000-0000-4000-8000-000000005801",
+        "00000000-0000-4000-8000-000000005802"
       ],
       "rootInstanceIds": [
         "9054911c-5285-4c3e-8198-4b9650169001"
@@ -432,7 +444,8 @@
         "superseded",
         "closed",
         "rejected",
-        "archived"
+        "archived",
+        "abandoned"
       ],
       "createdAt": "2026-05-25T00:00:00Z",
       "description": "Current governance status of the record.",
@@ -1595,6 +1608,52 @@
       "namespace": "governance",
       "valueType": "string",
       "version": 1
+    },
+    "records/tier-2/00000000-0000-4000-8000-000000005801.json": {
+      "instanceId": "00000000-0000-4000-8000-000000005801",
+      "typeId": "1fcad6a2-9f78-5e41-94ba-d82e88b822f3",
+      "typeVersion": 1,
+      "typeNamespace": "governance",
+      "typeName": "decision",
+      "fieldValues": [
+        {
+          "fieldId": "d7e82557-9045-5e92-a494-d99112bbec4a",
+          "value": "Old superseded decision"
+        },
+        {
+          "fieldId": "de1296e0-e083-58d9-97a0-cb2b91fec02e",
+          "value": "This decision has been superseded by a later record."
+        },
+        {
+          "fieldId": "aee7afe9-6650-5fa4-a61a-495c3b88994b",
+          "value": "superseded"
+        }
+      ],
+      "createdAt": "2025-06-01T00:00:00Z",
+      "updatedAt": "2025-06-01T00:00:00Z"
+    },
+    "records/tier-2/00000000-0000-4000-8000-000000005802.json": {
+      "instanceId": "00000000-0000-4000-8000-000000005802",
+      "typeId": "1fcad6a2-9f78-5e41-94ba-d82e88b822f3",
+      "typeVersion": 1,
+      "typeNamespace": "governance",
+      "typeName": "decision",
+      "fieldValues": [
+        {
+          "fieldId": "d7e82557-9045-5e92-a494-d99112bbec4a",
+          "value": "Abandoned proposal"
+        },
+        {
+          "fieldId": "de1296e0-e083-58d9-97a0-cb2b91fec02e",
+          "value": "This proposal was abandoned without a decision being reached."
+        },
+        {
+          "fieldId": "aee7afe9-6650-5fa4-a61a-495c3b88994b",
+          "value": "abandoned"
+        }
+      ],
+      "createdAt": "2025-05-01T00:00:00Z",
+      "updatedAt": "2025-05-01T00:00:00Z"
     }
   }
 }

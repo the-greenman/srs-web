@@ -78,7 +78,7 @@ test.describe("Gallery fixture — real records render", () => {
 
   test("Decision Log nav item shows count badge", async ({ page }) => {
     const decisionsNav = page.getByRole("link", { name: /Decision Log/ });
-    await expect(decisionsNav).toContainText("7");
+    await expect(decisionsNav).toContainText("9");
   });
 
   test("Roles section renders cards, not empty state", async ({ page }) => {
@@ -239,5 +239,59 @@ test.describe("Decision Log — sort and filter controls", () => {
   test("search is case-insensitive", async ({ page }) => {
     await page.getByTestId("search-input").fill("MOUNTING");
     await expect(page.getByTestId("decision-summary-card")).toHaveCount(1);
+  });
+});
+
+test.describe("Decision Log — hide superseded/abandoned toggle", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("mode-governance").click({ timeout: 15000 });
+    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
+      timeout: 5000,
+    });
+
+    const fileInput = page.locator('input[type="file"]#srsj-file');
+    await fileInput.setInputFiles(GALLERY_PATH);
+
+    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
+    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(page.getByTestId("decision-log-view")).toBeVisible();
+  });
+
+  test("default view hides superseded decisions", async ({ page }) => {
+    await expect(page.getByTestId("decision-summary-card")).toHaveCount(7);
+    await expect(
+      page.locator('[data-testid="decision-summary-card"]').filter({ hasText: "Old superseded decision" })
+    ).not.toBeAttached();
+  });
+
+  test("default view hides abandoned decisions", async ({ page }) => {
+    await expect(page.getByTestId("decision-summary-card")).toHaveCount(7);
+    await expect(
+      page.locator('[data-testid="decision-summary-card"]').filter({ hasText: "Abandoned proposal" })
+    ).not.toBeAttached();
+  });
+
+  test("Show all toggle reveals superseded and abandoned", async ({ page }) => {
+    const toggle = page.getByTestId("show-all-toggle");
+    await expect(toggle).toHaveText("Show superseded/abandoned");
+    await toggle.click();
+    await expect(toggle).toHaveText("Hide superseded/abandoned");
+    await expect(page.getByTestId("decision-summary-card")).toHaveCount(9);
+  });
+
+  test("Hide toggle re-hides superseded and abandoned", async ({ page }) => {
+    await page.getByTestId("show-all-toggle").click();
+    await expect(page.getByTestId("decision-summary-card")).toHaveCount(9);
+    await page.getByTestId("show-all-toggle").click();
+    await expect(page.getByTestId("decision-summary-card")).toHaveCount(7);
+  });
+
+  test("topic filter does not reveal superseded/abandoned records", async ({ page }) => {
+    await page.getByTestId("topic-filter").selectOption("exhibitions");
+    await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
+    await page.getByTestId("show-all-toggle").click();
+    // superseded/abandoned have no topic tags → still 2 under exhibitions filter
+    await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
   });
 });
