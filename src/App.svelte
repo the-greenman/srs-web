@@ -191,6 +191,7 @@
     onOpenAnother={() => {
       repo = null;
       activeDocument = null;
+      editorMode = null;
       appState = "idle";
     }}
   />

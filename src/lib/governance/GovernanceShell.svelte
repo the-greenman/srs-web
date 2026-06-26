@@ -203,6 +203,7 @@
   // ---------------------------------------------------------------------------
 
   onMount(() => {
+    // Order matters: buildSectionSchemas reads dynamicSections set by loadSectionRecords.
     loadSectionRecords();
     buildSectionSchemas();
     refreshValidation();
