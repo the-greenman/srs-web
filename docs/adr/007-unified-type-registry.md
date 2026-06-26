@@ -1,6 +1,6 @@
 # ADR-007: Unified type registry consolidates display hints and view components
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-06-26
 **Issue:** [srs-web#71](https://github.com/the-greenman/srs-web/issues/71)
 **Amends:** [ADR-006](./006-dynamic-dispatch-replaces-sections.md) (consequence: single-file registration)
