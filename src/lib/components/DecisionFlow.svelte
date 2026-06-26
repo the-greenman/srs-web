@@ -13,6 +13,7 @@
   hardcoded in this component.
 -->
 <script lang="ts">
+  import { untrack } from "svelte";
   import type { CreateRecordInput } from "$lib/srs-client.js";
   import type { TypeFormDef, FieldFormDef } from "$lib/governance/types.js";
   import Field from "$lib/components/Field.svelte";
@@ -68,9 +69,14 @@
   let quickDecisionStatement = $state("");
   let quickRationale = $state("");
 
-  // Stage field values keyed by field name (snake_case). Initialized empty;
-  // each key is set on first edit. Access with `?? ""` to handle missing keys.
-  let stageValues = $state<Record<string, string>>({});
+  // Stage field values keyed by field name (snake_case). Pre-initialized to ""
+  // for all schema fields so bind:value never receives undefined (Svelte 5 rejects
+  // bind:value={undefined} when the child prop has a fallback default).
+  // untrack() is intentional: we want a one-time snapshot of the schema at mount,
+  // not reactive tracking (schema doesn't change during a component instance's life).
+  let stageValues = $state<Record<string, string>>(
+    untrack(() => Object.fromEntries(schema.fields.map(f => [f.name, ""])))
+  );
 
   // ---------------------------------------------------------------------------
   // Derived: summary card visibility

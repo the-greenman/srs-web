@@ -78,10 +78,10 @@ test.describe("Decision Flow (B12)", () => {
     await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
     await expect(page.getByTestId("record-reading")).toContainText("Quick Decision E2E");
 
-    // Click back — record list should contain the new decision.
+    // Click back — decision log view should contain the new decision.
     await page.getByTestId("record-reading-back").click();
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
-    await expect(page.locator(".record-list")).toContainText("Quick Decision E2E");
+    await expect(page.getByTestId("decision-log-view")).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId("decision-log-view")).toContainText("Quick Decision E2E");
   });
 
   // --------------------------------------------------------------------------
@@ -196,10 +196,10 @@ test.describe("Decision Flow (B12)", () => {
     await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
     await expect(page.getByTestId("record-reading")).toContainText("Full Deliberation E2E Decision");
 
-    // Click back — record list should contain the new decision.
+    // Click back — decision log view should contain the new decision.
     await page.getByTestId("record-reading-back").click();
-    await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
-    await expect(page.locator(".record-list")).toContainText("Full Deliberation E2E Decision");
+    await expect(page.getByTestId("decision-log-view")).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId("decision-log-view")).toContainText("Full Deliberation E2E Decision");
   });
 
   // --------------------------------------------------------------------------
@@ -216,8 +216,8 @@ test.describe("Decision Flow (B12)", () => {
     // Click Cancel
     await page.getByRole("button", { name: "Cancel" }).click();
 
-    // Decision Log list should be visible again
-    await expect(page.locator(".record-list")).toBeVisible();
+    // Decision Log view should be visible again
+    await expect(page.getByTestId("decision-log-view")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Decision Log", level: 2 })).toBeVisible();
   });
 
