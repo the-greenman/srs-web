@@ -5,6 +5,7 @@
 <script lang="ts">
   import type { SrsRecord } from "$lib/srs-client.js";
   import { getStringField } from "$lib/governance/field-utils.js";
+  import { getFieldMeta } from "$lib/governance/field-meta.js";
   import LogTable from "./LogTable.svelte";
   import DecisionSummaryCard from "./DecisionSummaryCard.svelte";
 
@@ -17,6 +18,8 @@
     selectedId?: string | null;
     onSelect: (id: string | null) => void;
   } = $props();
+
+  const fieldMeta = $derived(getFieldMeta());
 
   let sortOrder = $state<"newest" | "oldest">("newest");
   let topicFilter = $state<string>("all");
@@ -32,8 +35,8 @@
         if (topicFilter !== "all" && !(r.tags ?? []).includes(topicFilter)) return false;
         const q = searchQuery.trim().toLowerCase();
         if (q === "") return true;
-        const title = (getStringField(r, "title") ?? "").toLowerCase();
-        const statement = (getStringField(r, "decision_statement") ?? "").toLowerCase();
+        const title = (getStringField(r, "title", fieldMeta) ?? "").toLowerCase();
+        const statement = (getStringField(r, "decision_statement", fieldMeta) ?? "").toLowerCase();
         return title.includes(q) || statement.includes(q);
       })]
       .sort((a, b) => {

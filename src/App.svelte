@@ -640,11 +640,11 @@
                 <div class="record-list">
                   {#each activeRecords as record (record.instanceId)}
                     {@const title =
-                      getStringField(record, "title") ??
-                      getStringField(record, "decision_statement") ??
+                      getStringField(record, "title", fieldMetaMap) ??
+                      getStringField(record, "decision_statement", fieldMetaMap) ??
                       record.instanceId}
-                    {@const articleNumber = getStringField(record, "article_number")}
-                    {@const status = getStringField(record, "status") as Status | undefined}
+                    {@const articleNumber = getStringField(record, "article_number", fieldMetaMap)}
+                    {@const status = getStringField(record, "status", fieldMetaMap) as Status | undefined}
                     {@const isSelected = selectedId === record.instanceId}
 
                     <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -689,7 +689,7 @@
               <button class="inspector__btn" onclick={handleEditRecord}>Edit</button>
               <button class="inspector__btn inspector__btn--danger" onclick={handleDeleteRecord}>Delete</button>
             </div>
-            {@const currentStatus = getStringField(selectedRecord, "status") ?? ""}
+            {@const currentStatus = getStringField(selectedRecord, "status", fieldMetaMap) ?? ""}
             {@const transitions = LIFECYCLE_TRANSITIONS[currentStatus] ?? []}
             {#if transitions.length > 0}
               <div class="inspector__transitions">
