@@ -10,9 +10,11 @@
   import { Card, CardField } from '$lib/components/index.js';
   import FieldValueView from './FieldValueView.svelte';
   import { getFieldValueByName, isPresent } from './field-helpers.js';
-  import { fieldDef } from '../governance/package.js';
+  import { getFieldMeta } from '$lib/governance/field-meta.js';
 
   let { record }: { record: SrsRecord } = $props();
+
+  const fieldMeta = $derived(getFieldMeta());
 
   const ROLE_FIELDS = [
     { name: 'title',              label: 'Title' },
@@ -25,7 +27,7 @@
   ] as const;
 
   const displayTitle = $derived(() => {
-    const ttl = getFieldValueByName(record, 'title')?.value;
+    const ttl = getFieldValueByName(record, 'title', fieldMeta)?.value;
     return ttl ? String(ttl) : record.instanceId.slice(0, 8);
   });
 
@@ -34,10 +36,10 @@
 
 <Card title={displayTitle()} {status}>
   {#each ROLE_FIELDS as field}
-    {@const fv = getFieldValueByName(record, field.name)}
+    {@const fv = getFieldValueByName(record, field.name, fieldMeta)}
     {#if fv && isPresent(fv.value)}
       <CardField label={field.label}>
-        <FieldValueView {fv} def={fieldDef(fv.fieldId)} />
+        <FieldValueView {fv} />
       </CardField>
     {/if}
   {/each}

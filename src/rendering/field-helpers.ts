@@ -7,18 +7,29 @@
  */
 
 import type { FieldValue, SrsRecord } from "$lib/srs-client.js";
-import { fieldIdByName } from "../governance/package.js";
+import type { FieldFormDef } from "$lib/governance/types.js";
 
 /** Return the FieldValue entry for a field by its snake_case name. */
-export function getFieldValueByName(record: SrsRecord, name: string): FieldValue | undefined {
-  const fieldId = fieldIdByName(name);
-  if (!fieldId) return undefined;
-  return record.fieldValues.find((fv) => fv.fieldId === fieldId);
+export function getFieldValueByName(
+  record: SrsRecord,
+  name: string,
+  fieldMeta: Map<string, FieldFormDef>,
+): FieldValue | undefined {
+  for (const [fieldId, def] of fieldMeta) {
+    if (def.name === name) {
+      return record.fieldValues.find((fv) => fv.fieldId === fieldId);
+    }
+  }
+  return undefined;
 }
 
 /** Return the raw value for a field by its snake_case name. */
-export function getFieldByName(record: SrsRecord, name: string): unknown {
-  return getFieldValueByName(record, name)?.value;
+export function getFieldByName(
+  record: SrsRecord,
+  name: string,
+  fieldMeta: Map<string, FieldFormDef>,
+): unknown {
+  return getFieldValueByName(record, name, fieldMeta)?.value;
 }
 
 /** Return true if the field value is non-empty (not null/undefined/empty string/empty array). */
