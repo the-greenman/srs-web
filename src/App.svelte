@@ -378,7 +378,8 @@
     dynamicSections.find((s) => s.key === activeSection) ?? null,
   );
 
-  let isDecisionSection = $derived(activeSection_?.typeName === "decision");
+  const DECISION_TYPE_ID = "1fcad6a2-9f78-5e41-94ba-d82e88b822f3";
+  let isDecisionSection = $derived(activeSection_?.typeId === DECISION_TYPE_ID);
 
   let activeSectionSchema = $derived(
     activeSection !== null ? (sectionSchemas[activeSection] ?? null) : null,

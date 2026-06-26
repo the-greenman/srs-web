@@ -1,6 +1,6 @@
 # ADR-005: Governance type IDs live in the SECTIONS config
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-006](./006-dynamic-dispatch-replaces-sections.md)
 **Date:** 2026-06-26
 **Issue:** [srs-web#53](https://github.com/the-greenman/srs-web/issues/53)
 **Supersedes:** —
