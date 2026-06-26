@@ -21,8 +21,9 @@
     deleteRecord,
     exportSrsj,
     createRelation,
+    typeSchema,
   } from "$lib/srs-client.js";
-  import type { SrsRepository, SrsRecord, Diagnostic as WasmDiagnostic, CreateRecordInput, UpdateRecordInput, CreateRelationInput } from "$lib/srs-client.js";
+  import type { SrsRepository, SrsRecord, Diagnostic as WasmDiagnostic, CreateRecordInput, UpdateRecordInput, CreateRelationInput, SchemaDefinition } from "$lib/srs-client.js";
   import type { BreadcrumbItem, Diagnostic, Status } from "$lib/types.js";
 
   import AppShell from "$lib/components/AppShell.svelte";
@@ -53,8 +54,8 @@
   import { SECTIONS } from "$lib/governance/sections.js";
   import type { SectionKey } from "$lib/governance/sections.js";
   import { getStringField } from "$lib/governance/field-utils.js";
-  import { GOVERNANCE_FORMS } from "$lib/governance/form-schema.js";
-  import type { TypeFormDef } from "$lib/governance/form-schema.js";
+  import type { TypeFormDef } from "$lib/governance/types.js";
+  import { definitionToFields } from "$lib/guides/blueprint-utils.js";
   import { LIFECYCLE_TRANSITIONS, IMMUTABLE_STATES } from "$lib/governance/lifecycle.js";
 
   // ---------------------------------------------------------------------------
@@ -87,6 +88,9 @@
 
   /** The loaded repository — needed for mutations. */
   let repo = $state<SrsRepository | null>(null);
+
+  /** TypeFormDef per section key, derived from typeSchema() at load time. */
+  let sectionSchemas = $state<Record<string, TypeFormDef>>({});
 
   /** Form mode: null = list view, 'create' = new record, 'edit' = edit existing. */
   let formMode = $state<"create" | "edit" | null>(null);
@@ -138,6 +142,39 @@
     sectionRecords = result;
   }
 
+  function buildSectionSchemas(loadedRepo: SrsRepository): Record<string, TypeFormDef> {
+    const result: Record<string, TypeFormDef> = {};
+    for (const section of SECTIONS) {
+      if (!section.typeId) continue;
+      try {
+        const schemaResult = typeSchema(loadedRepo, section.typeId, section.typeVersion);
+        if (schemaResult.diagnostics.length > 0) {
+          console.warn("typeSchema diagnostics for section", section.key, schemaResult.diagnostics);
+        }
+        const rawSchema = schemaResult.schema;
+        if (
+          typeof rawSchema !== "object" || rawSchema === null ||
+          typeof rawSchema["properties"] !== "object" || rawSchema["properties"] === null
+        ) {
+          console.warn("typeSchema returned unexpected shape for section", section.key, rawSchema);
+          continue;
+        }
+        const schema = rawSchema as unknown as SchemaDefinition;
+        result[section.key] = {
+          typeId: section.typeId,
+          typeVersion: section.typeVersion ?? 1,
+          typeNamespace: section.typeNamespace,
+          typeName: section.typeName,
+          label: section.label,
+          fields: definitionToFields(schema),
+        };
+      } catch (e: unknown) {
+        console.error("typeSchema failed for section", section.key, e);
+      }
+    }
+    return result;
+  }
+
   function refreshValidation(): void {
     if (!repo) return;
     const report = repo.validate();
@@ -163,6 +200,7 @@
       repoName = handle.name.replace(/\.(srsj|json)$/i, "");
 
       loadSectionRecords(repo);
+      sectionSchemas = buildSectionSchemas(repo);
 
       const report = repo.validate();
       instanceCount = report.instanceCount;
@@ -189,7 +227,7 @@
     formError = null;
     try {
       if (formMode === "create") {
-        const typeDef = GOVERNANCE_FORMS[activeSection];
+        const typeDef = sectionSchemas[activeSection];
         if (!typeDef) return;
         const created = createRecord(repo, typeDef.typeId, typeDef.typeVersion, input as CreateRecordInput);
         formMode = null;
@@ -256,7 +294,7 @@
 
   function handleCreateSuccessor() {
     if (!repo || !selectedRecord) return;
-    const typeDef = GOVERNANCE_FORMS[activeSection];
+    const typeDef = sectionSchemas[activeSection];
     if (!typeDef) return;
     showSuccessorModal = false;
     const statusFieldId = "aee7afe9-6650-5fa4-a61a-495c3b88994b";
@@ -431,6 +469,7 @@
       repo = null;
       activeDocument = null;
       sectionRecords = {};
+      sectionSchemas = {};
       selectedId = null;
       diagnostics = [];
       editorMode = null;
@@ -494,11 +533,11 @@
                   class="topbar__new"
                   onclick={() => { decisionFlowMode = true; decisionFlowError = null; }}
                 >New Decision</button>
-              {:else if GOVERNANCE_FORMS[activeSection]}
+              {:else if sectionSchemas[activeSection]}
                 <button
                   class="topbar__new"
                   onclick={() => { formMode = "create"; editingRecord = null; }}
-                >New {GOVERNANCE_FORMS[activeSection].label}</button>
+                >New {sectionSchemas[activeSection].label}</button>
               {/if}
             {/if}
             <button class="topbar__export" onclick={handleExport}>Download .srsj</button>
@@ -506,6 +545,7 @@
               class="topbar__reset"
               onclick={() => {
                 sectionRecords = {};
+                sectionSchemas = {};
                 diagnostics = [];
                 selectedId = null;
                 repo = null;
@@ -530,7 +570,9 @@
                 decisionFlowSaving = true;
                 decisionFlowError = null;
                 try {
-                  const created = createRecord(repo, "1fcad6a2-9f78-5e41-94ba-d82e88b822f3", 1, input);
+                  const decisionTypeDef = sectionSchemas["decisions"];
+                  if (!decisionTypeDef) { decisionFlowError = "Decision type schema not loaded"; return; }
+                  const created = createRecord(repo, decisionTypeDef.typeId, decisionTypeDef.typeVersion, input);
                   decisionFlowMode = false;
                   loadSectionRecords(repo);
                   selectedId = created.instanceId;
@@ -544,18 +586,18 @@
               saving={decisionFlowSaving}
               saveError={decisionFlowError}
             />
-          {:else if formMode !== null && GOVERNANCE_FORMS[activeSection]}
+          {:else if formMode !== null && sectionSchemas[activeSection]}
             <RecordForm
-              schema={GOVERNANCE_FORMS[activeSection] as TypeFormDef}
+              schema={sectionSchemas[activeSection]}
               record={editingRecord}
               onSave={handleFormSave}
               onCancel={handleFormCancel}
               saving={formSaving}
               saveError={formError}
             />
-          {:else if selectedRecord && formMode === null && GOVERNANCE_FORMS[activeSection]}
+          {:else if selectedRecord && formMode === null && sectionSchemas[activeSection]}
             <RecordReading
-              schema={GOVERNANCE_FORMS[activeSection] as TypeFormDef}
+              schema={sectionSchemas[activeSection]}
               record={selectedRecord}
               sectionLabel={activeSection_.label}
               onBack={() => { selectedId = null; }}

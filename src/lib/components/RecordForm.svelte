@@ -10,7 +10,7 @@
 -->
 <script lang="ts">
   import type { SrsRecord, CreateRecordInput, UpdateRecordInput } from "$lib/srs-client.js";
-  import type { TypeFormDef } from "$lib/governance/form-schema.js";
+  import type { TypeFormDef } from "$lib/governance/types.js";
   import Field from "$lib/components/Field.svelte";
   import Input from "$lib/components/Input.svelte";
   import Textarea from "$lib/components/Textarea.svelte";
