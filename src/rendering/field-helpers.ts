@@ -6,14 +6,14 @@
  * B5 record renderer: https://github.com/the-greenman/srs-web/issues/4
  */
 
-import type { FieldValue, SrsRecord } from "$lib/srs-client.js";
 import type { FieldFormDef } from "$lib/governance/types.js";
+import type { FieldValue, SrsRecord } from "$lib/srs-client.js";
 
 /** Return the FieldValue entry for a field by its snake_case name. */
 export function getFieldValueByName(
   record: SrsRecord,
   name: string,
-  fieldMeta: Map<string, FieldFormDef>,
+  fieldMeta: Map<string, FieldFormDef>
 ): FieldValue | undefined {
   for (const [fieldId, def] of fieldMeta) {
     if (def.name === name) {
@@ -27,7 +27,7 @@ export function getFieldValueByName(
 export function getFieldByName(
   record: SrsRecord,
   name: string,
-  fieldMeta: Map<string, FieldFormDef>,
+  fieldMeta: Map<string, FieldFormDef>
 ): unknown {
   return getFieldValueByName(record, name, fieldMeta)?.value;
 }

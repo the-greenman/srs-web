@@ -6,7 +6,7 @@
  * ADR-001: all field metadata is sourced from WASM typeSchema(), not hardcoded here.
  */
 
-import { setContext, getContext } from "svelte";
+import { getContext, setContext } from "svelte";
 import type { FieldFormDef, TypeFormDef } from "./types.js";
 
 export const FIELD_META_KEY = Symbol("fieldMeta");
@@ -21,9 +21,7 @@ export interface FieldMetaContext {
  * each iteration — safe because shared fields have identical metadata in all
  * governance type schemas.
  */
-export function buildFieldMetaMap(
-  schemas: Record<string, TypeFormDef>,
-): Map<string, FieldFormDef> {
+export function buildFieldMetaMap(schemas: Record<string, TypeFormDef>): Map<string, FieldFormDef> {
   const map = new Map<string, FieldFormDef>();
   for (const schema of Object.values(schemas)) {
     for (const field of schema.fields) {
@@ -38,9 +36,7 @@ export function buildFieldMetaMap(
  * The getter ensures child components read the current sectionSchemas on
  * every $derived access — Svelte tracks the dependency through the getter.
  */
-export function setFieldMetaContext(
-  getSchemas: () => Record<string, TypeFormDef>,
-): void {
+export function setFieldMetaContext(getSchemas: () => Record<string, TypeFormDef>): void {
   setContext<FieldMetaContext>(FIELD_META_KEY, {
     get meta() {
       return buildFieldMetaMap(getSchemas());
