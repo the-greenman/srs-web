@@ -51,8 +51,8 @@
     type DocumentHandle,
   } from "$lib/storage/index.js";
 
-  import { SECTIONS } from "$lib/governance/sections.js";
-  import type { SectionKey } from "$lib/governance/sections.js";
+  import { buildDynamicSections } from "$lib/governance/sections.js";
+  import type { SectionConfig, SectionKey } from "$lib/governance/sections.js";
   import { getStringField } from "$lib/governance/field-utils.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
@@ -74,11 +74,14 @@
   const storageProviders = createStorageProvidersFromEnv();
   let activeDocument = $state<DocumentHandle | null>(null);
 
-  /** Records per section, keyed by section key. */
+  /** Records per section, keyed by section key (typeId). */
   let sectionRecords = $state<Record<string, SrsRecord[]>>({});
 
-  /** Active sidebar section */
-  let activeSection = $state<SectionKey>("articles");
+  /** Sections derived from loaded records + KNOWN_TYPE_CONFIG. */
+  let dynamicSections = $state<SectionConfig[]>([]);
+
+  /** Active sidebar section — null until first repo load */
+  let activeSection = $state<SectionKey | null>(null);
 
   /** Selected record instance ID */
   let selectedId = $state<string | null>(null);
@@ -140,19 +143,23 @@
   }
 
   function loadSectionRecords(loadedRepo: SrsRepository): void {
+    const allRecords = listRecords(loadedRepo, {});
+    dynamicSections = buildDynamicSections(allRecords);
     const result: Record<string, SrsRecord[]> = {};
-    for (const section of SECTIONS) {
-      result[section.key] = listRecords(loadedRepo, {
-        typeNamespace: section.typeNamespace,
-        typeName: section.typeName,
-      });
+    for (const r of allRecords) {
+      if (!r.typeId) continue;
+      if (!result[r.typeId]) result[r.typeId] = [];
+      result[r.typeId].push(r);
     }
     sectionRecords = result;
+    if (activeSection === null && dynamicSections.length > 0) {
+      activeSection = dynamicSections[0].key;
+    }
   }
 
-  function buildSectionSchemas(loadedRepo: SrsRepository): Record<string, TypeFormDef> {
+  function buildSectionSchemas(loadedRepo: SrsRepository, sections: SectionConfig[]): Record<string, TypeFormDef> {
     const result: Record<string, TypeFormDef> = {};
-    for (const section of SECTIONS) {
+    for (const section of sections) {
       if (!section.typeId) continue;
       try {
         const schemaResult = typeSchema(loadedRepo, section.typeId, section.typeVersion);
@@ -197,6 +204,8 @@
   async function loadDocument(handle: DocumentHandle): Promise<void> {
     errorMsg = null;
     sectionRecords = {};
+    dynamicSections = [];
+    activeSection = null;
     selectedId = null;
     diagnostics = [];
 
@@ -208,7 +217,7 @@
       repoName = handle.name.replace(/\.(srsj|json)$/i, "");
 
       loadSectionRecords(repo);
-      sectionSchemas = buildSectionSchemas(repo);
+      sectionSchemas = buildSectionSchemas(repo, dynamicSections);
 
       const report = repo.validate();
       instanceCount = report.instanceCount;
@@ -235,7 +244,7 @@
     formError = null;
     try {
       if (formMode === "create") {
-        const typeDef = sectionSchemas[activeSection];
+        const typeDef = activeSection ? sectionSchemas[activeSection] : undefined;
         if (!typeDef) return;
         const created = createRecord(repo, typeDef.typeId, typeDef.typeVersion, input as CreateRecordInput);
         formMode = null;
@@ -302,7 +311,7 @@
 
   function handleCreateSuccessor() {
     if (!repo || !selectedRecord) return;
-    const typeDef = sectionSchemas[activeSection];
+    const typeDef = activeSection ? sectionSchemas[activeSection] : undefined;
     if (!typeDef) return;
     showSuccessorModal = false;
     const statusFieldId = "aee7afe9-6650-5fa4-a61a-495c3b88994b";
@@ -347,15 +356,15 @@
   function governanceCrumbItems(): BreadcrumbItem[] {
     const items: BreadcrumbItem[] = [{ label: repoName, title: `Opened from ${activeDocument?.provider ?? "local"}` }];
     if (formMode !== null) {
-      items.push({ label: activeSection_.label, onclick: handleFormCancel });
+      items.push({ label: activeSection_?.label ?? "", onclick: handleFormCancel });
       if (formMode === "create") {
-        items.push({ label: `New ${activeSection_.label.replace(/s$/, "")}` });
+        items.push({ label: `New ${(activeSection_?.label ?? "").replace(/s$/, "")}` });
       } else if (editingRecord) {
         const title = editingRecord.fieldValues[0]?.value as string | undefined;
         items.push({ label: title ?? "Record" });
       }
     } else {
-      items.push({ label: activeSection_.label });
+      items.push({ label: activeSection_?.label ?? "" });
     }
     return items;
   }
@@ -363,10 +372,16 @@
   // Derived
   // ---------------------------------------------------------------------------
 
-  let activeRecords = $derived(sectionRecords[activeSection] ?? []);
+  let activeRecords = $derived(activeSection !== null ? (sectionRecords[activeSection] ?? []) : []);
 
   let activeSection_ = $derived(
-    SECTIONS.find((s) => s.key === activeSection)!,
+    dynamicSections.find((s) => s.key === activeSection) ?? null,
+  );
+
+  let isDecisionSection = $derived(activeSection_?.typeName === "decision");
+
+  let activeSectionSchema = $derived(
+    activeSection !== null ? (sectionSchemas[activeSection] ?? null) : null,
   );
 
   /** Count of validation errors */
@@ -477,6 +492,8 @@
       repo = null;
       activeDocument = null;
       sectionRecords = {};
+      dynamicSections = [];
+      activeSection = null;
       sectionSchemas = {};
       selectedId = null;
       diagnostics = [];
@@ -494,13 +511,13 @@
       <Nav repo={repoName} eyebrow="srs · governance">
         {#snippet children()}
           <NavGroup label="Governance">
-            {#each SECTIONS as section (section.key)}
+            {#each dynamicSections as section (section.key)}
               <!-- svelte-ignore a11y_click_events_have_key_events -->
               <!-- svelte-ignore a11y_no_static_element_interactions -->
               <div
                 onclick={(e) => {
                   e.preventDefault();
-                  activeSection = section.key as SectionKey;
+                  activeSection = section.key;
                   selectedId = null;
                   formMode = null;
                   editingRecord = null;
@@ -536,16 +553,16 @@
           {/snippet}
           {#snippet actions()}
             {#if formMode === null && !decisionFlowMode}
-              {#if activeSection === "decisions"}
+              {#if isDecisionSection}
                 <button
                   class="topbar__new"
                   onclick={() => { decisionFlowMode = true; decisionFlowError = null; }}
                 >New Decision</button>
-              {:else if sectionSchemas[activeSection]}
+              {:else if activeSectionSchema}
                 <button
                   class="topbar__new"
                   onclick={() => { formMode = "create"; editingRecord = null; }}
-                >New {sectionSchemas[activeSection].label}</button>
+                >New {activeSectionSchema.label}</button>
               {/if}
             {/if}
             <button class="topbar__export" onclick={handleExport}>Download .srsj</button>
@@ -553,6 +570,8 @@
               class="topbar__reset"
               onclick={() => {
                 sectionRecords = {};
+                dynamicSections = [];
+                activeSection = null;
                 sectionSchemas = {};
                 diagnostics = [];
                 selectedId = null;
@@ -578,7 +597,7 @@
                 decisionFlowSaving = true;
                 decisionFlowError = null;
                 try {
-                  const decisionTypeDef = sectionSchemas["decisions"];
+                  const decisionTypeDef = activeSectionSchema;
                   if (!decisionTypeDef) { decisionFlowError = "Decision type schema not loaded"; return; }
                   const created = createRecord(repo, decisionTypeDef.typeId, decisionTypeDef.typeVersion, input);
                   decisionFlowMode = false;
@@ -594,26 +613,26 @@
               saving={decisionFlowSaving}
               saveError={decisionFlowError}
             />
-          {:else if formMode !== null && sectionSchemas[activeSection]}
+          {:else if formMode !== null && activeSectionSchema}
             <RecordForm
-              schema={sectionSchemas[activeSection]}
+              schema={activeSectionSchema}
               record={editingRecord}
               onSave={handleFormSave}
               onCancel={handleFormCancel}
               saving={formSaving}
               saveError={formError}
             />
-          {:else if selectedRecord && formMode === null && sectionSchemas[activeSection]}
+          {:else if selectedRecord && formMode === null && activeSectionSchema}
             <RecordReading
-              schema={sectionSchemas[activeSection]}
+              schema={activeSectionSchema}
               record={selectedRecord}
-              sectionLabel={activeSection_.label}
+              sectionLabel={activeSection_?.label ?? ""}
               onBack={() => { selectedId = null; }}
             />
           {:else}
-            {#if activeSection === "decisions"}
+            {#if isDecisionSection}
               <div class="section-heading">
-                <h2 class="section-heading__title">{activeSection_.label}</h2>
+                <h2 class="section-heading__title">{activeSection_?.label ?? ""}</h2>
                 <span class="section-heading__count">{activeRecords.length}</span>
               </div>
               <DecisionLogView
@@ -623,12 +642,12 @@
               />
             {:else}
               <div class="section-heading">
-                <h2 class="section-heading__title">{activeSection_.label}</h2>
+                <h2 class="section-heading__title">{activeSection_?.label ?? ""}</h2>
                 <span class="section-heading__count">{activeRecords.length}</span>
               </div>
 
               {#if activeRecords.length === 0}
-                <p class="empty-state">No {activeSection_.label.toLowerCase()} records in this repository.</p>
+                <p class="empty-state">No {activeSection_?.label?.toLowerCase() ?? ""} records in this repository.</p>
               {:else}
                 <div class="record-list">
                   {#each activeRecords as record (record.instanceId)}
@@ -667,7 +686,7 @@
     {#snippet inspector()}
       <Inspector label="Inspector">
         {#if selectedRecord && formMode === null}
-          <InspectorSection title={activeSection_.label.replace(/s$/, "")} aside={selectedRecord.typeName}>
+          <InspectorSection title={(activeSection_?.label ?? "").replace(/s$/, "")} aside={selectedRecord.typeName}>
             <div class="inspector__kv inspector__kv--meta">
               <span class="inspector__k">ID</span>
               <span class="inspector__v inspector__v--mono">{selectedRecord.instanceId.slice(0, 8)}…</span>
