@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
   import type { SrsRecord } from "$lib/srs-client.js";
+  import { getStringField } from "$lib/governance/field-utils.js";
   import LogTable from "./LogTable.svelte";
   import DecisionSummaryCard from "./DecisionSummaryCard.svelte";
 
@@ -19,6 +20,7 @@
 
   let sortOrder = $state<"newest" | "oldest">("newest");
   let topicFilter = $state<string>("all");
+  let searchQuery = $state<string>("");
 
   const availableTopics = $derived(
     [...new Set(records.flatMap((r) => r.tags ?? []))].sort((a, b) => a.localeCompare(b))
@@ -26,7 +28,14 @@
 
   const displayedRecords = $derived(
     [...records
-      .filter((r) => topicFilter === "all" || (r.tags ?? []).includes(topicFilter))]
+      .filter((r) => {
+        if (topicFilter !== "all" && !(r.tags ?? []).includes(topicFilter)) return false;
+        const q = searchQuery.trim().toLowerCase();
+        if (q === "") return true;
+        const title = (getStringField(r, "title") ?? "").toLowerCase();
+        const statement = (getStringField(r, "decision_statement") ?? "").toLowerCase();
+        return title.includes(q) || statement.includes(q);
+      })]
       .sort((a, b) => {
         // ISO 8601 strings are lexicographically ordered; use < / > to avoid locale-sensitive collation
         const dateA = a.createdAt ?? "";
@@ -42,6 +51,14 @@
     <p class="empty-state">No decisions in this repository.</p>
   {:else}
     <div class="controls-bar">
+      <input
+        type="search"
+        data-testid="search-input"
+        class="controls-bar__search"
+        placeholder="Search decisions…"
+        aria-label="Search decisions"
+        bind:value={searchQuery}
+      />
       <button
         data-testid="sort-toggle"
         class="controls-bar__sort-btn"
@@ -102,5 +119,20 @@
 
   .controls-bar__sort-btn:hover {
     background: var(--grey-1, #f5f5f5);
+  }
+
+  .controls-bar__search {
+    font-size: 0.8125rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--grey-3, #ccc);
+    border-radius: 4px;
+    background: var(--surface, #fff);
+    color: var(--ink);
+    min-width: 160px;
+  }
+
+  .controls-bar__search:focus {
+    outline: 2px solid var(--accent, #0066cc);
+    outline-offset: 1px;
   }
 </style>
