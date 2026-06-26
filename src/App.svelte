@@ -590,15 +590,16 @@
         </Topbar>
 
         <Workspace>
-          {#if decisionFlowMode && sectionSchemas[DECISION_TYPE_ID]}
+          {#if decisionFlowMode}
+            {@const decisionTypeDef = sectionSchemas[DECISION_TYPE_ID]}
+            {#if decisionTypeDef}
             <DecisionFlow
-              schema={sectionSchemas[DECISION_TYPE_ID]!}
+              schema={decisionTypeDef}
               onSave={(input) => {
                 if (!repo) return;
                 decisionFlowSaving = true;
                 decisionFlowError = null;
                 try {
-                  const decisionTypeDef = sectionSchemas[DECISION_TYPE_ID];
                   if (!decisionTypeDef) { decisionFlowError = "Decision type schema not loaded"; return; }
                   const created = createRecord(repo, decisionTypeDef.typeId, decisionTypeDef.typeVersion, input);
                   decisionFlowMode = false;
@@ -614,6 +615,7 @@
               saving={decisionFlowSaving}
               saveError={decisionFlowError}
             />
+            {/if}
           {:else if formMode !== null && activeSectionSchema}
             <RecordForm
               schema={activeSectionSchema}
