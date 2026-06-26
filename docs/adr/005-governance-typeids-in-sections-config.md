@@ -1,6 +1,6 @@
 # ADR-005: Governance type IDs live in the SECTIONS config
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-06-26
 **Issue:** [srs-web#53](https://github.com/the-greenman/srs-web/issues/53)
 **Supersedes:** —
