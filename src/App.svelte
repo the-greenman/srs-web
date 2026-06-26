@@ -51,8 +51,9 @@
     type DocumentHandle,
   } from "$lib/storage/index.js";
 
-  import { buildDynamicSections, DECISION_TYPE_ID } from "$lib/governance/sections.js";
+  import { buildDynamicSections } from "$lib/governance/sections.js";
   import type { SectionConfig, SectionKey } from "$lib/governance/sections.js";
+  import { DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
   import { getStringField } from "$lib/governance/field-utils.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
@@ -77,7 +78,7 @@
   /** Records per section, keyed by section key (typeId). */
   let sectionRecords = $state<Record<string, SrsRecord[]>>({});
 
-  /** Sections derived from loaded records + KNOWN_TYPE_CONFIG. */
+  /** Sections derived from loaded records + TYPE_REGISTRY. */
   let dynamicSections = $state<SectionConfig[]>([]);
 
   /** Active sidebar section — null until first repo load */

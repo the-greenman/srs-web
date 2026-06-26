@@ -75,3 +75,4 @@ not a human-readable string. `sectionSchemas` is keyed by typeId accordingly.
   VIEW_REGISTRY is now live: selecting a record routes to the type-specific view or falls
   back to `RecordView` for unknown types. `RecordReading` no longer renders fields
   directly — it delegates to `RecordDispatch` and retains only the back-button navigation.
+- ~~Registering a custom view requires only adding one entry to `VIEW_REGISTRY` in `RecordDispatch.svelte`.~~ **Updated by [ADR-007](./007-unified-type-registry.md):** registering a known type or custom view now requires one entry in `TYPE_REGISTRY` in `src/lib/governance/type-registry.ts`.
