@@ -21,6 +21,7 @@ See [agents.md](agents.md) for role definitions.
 | ADR | Decision | Status |
 |---|---|---|
 | [ADR-001](../docs/adr/001-thin-client.md) | Zero SRS semantics in TS — field IDs must come from WASM schema, never be synthesised | accepted |
+| [ADR-003](../docs/adr/003-blueprint-schema-driven-guides-editor.md) | Blueprint schema drives the composite authoring surface; `definitionToFields` / `definitionToGroups` are the conversion layer — this assertion enforces the schema-driven contract ADR-003 depends on | accepted |
 
 No new ADR required. Throwing on missing `x-srs-field-id` is a defensive guard against schema contract violations, not an architectural constraint.
 
@@ -47,6 +48,8 @@ No new ADR required. Throwing on missing `x-srs-field-id` is a defensive guard a
 
 - Changing the WASM service to guarantee `x-srs-field-id` is always emitted (separate srs-rust concern).
 - Changing `SchemaProperty` to mark `x-srs-field-id` as required (would break the TS contract with WASM output).
+- `GuidesShell.svelte` lines 323 and 332: these are intentional `?? null` sites. They look up `x-srs-field-id` by named property (`title`, `heading`) for display-label derivation only — the results are used in `guideLabel()` / `sectionLabel()` which gracefully fall back to `fieldValues[0]` when null. No SRS record mutation is involved, so no assertion is warranted there.
+- Pre-existing: `labelForTypeId()` in `blueprint-utils.ts` hardcodes four muDemocracy type UUIDs to produce friendly labels. This is a display concern that warrants a follow-up ADR-001 review but is out of scope here.
 
 ---
 
