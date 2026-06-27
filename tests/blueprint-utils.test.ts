@@ -150,6 +150,23 @@ describe("definitionToFields", () => {
 // ---------------------------------------------------------------------------
 
 describe("definitionToGroups", () => {
+  it("uses x-srs-group-id (not the property name) as groupId", () => {
+    const def = simpleDef({
+      items_group: {
+        type: "array",
+        title: "Items",
+        "x-srs-group-id": "my-group-uuid",
+        "x-srs-order": 0,
+        "x-srs-repeatable": true,
+        items: { type: "object", properties: {}, required: [] },
+      } as unknown as SchemaProperty,
+    });
+
+    const groups = definitionToGroups(def);
+
+    expect(groups[0].groupId).toBe("my-group-uuid");
+  });
+
   it("throws when an item property is missing x-srs-field-id", () => {
     const def = simpleDef({
       items_group: {

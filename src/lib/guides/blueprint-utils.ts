@@ -39,6 +39,15 @@ function requireFieldId(fieldId: string | undefined, propertyName: string): stri
   return fieldId;
 }
 
+function requireGroupId(groupId: string | undefined, propertyName: string): string {
+  if (!groupId) {
+    throw new Error(
+      `[blueprint-utils] x-srs-group-id missing on schema property "${propertyName}". The WASM typeSchema/blueprintSchema output must include x-srs-group-id on every group property.`
+    );
+  }
+  return groupId;
+}
+
 /** Map a single scalar schema property to a FieldFormDef. */
 function propertyToField(name: string, prop: SchemaProperty, required: boolean): FieldFormDef {
   let valueType: FieldFormDef["valueType"];
@@ -93,7 +102,7 @@ export function definitionToGroups(def: SchemaDefinition): GroupFormDef[] {
         .sort(([, a], [, b]) => (a["x-srs-order"] ?? 0) - (b["x-srs-order"] ?? 0))
         .map(([fname, fprop]) => propertyToField(fname, fprop, itemRequired.includes(fname)));
       return {
-        groupId: prop["x-srs-group-id"] ?? name,
+        groupId: requireGroupId(prop["x-srs-group-id"], name),
         label: prop.title || name,
         order: prop["x-srs-order"] ?? 0,
         repeatable: prop["x-srs-repeatable"] ?? false,
