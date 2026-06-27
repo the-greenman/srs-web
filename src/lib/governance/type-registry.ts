@@ -13,6 +13,7 @@
 
 import ArticleView from "../../rendering/ArticleView.svelte";
 import DecisionView from "../../rendering/DecisionView.svelte";
+import ExerciseView from "../../rendering/ExerciseView.svelte";
 import type RecordView from "../../rendering/RecordView.svelte";
 import RoleView from "../../rendering/RoleView.svelte";
 
@@ -57,5 +58,13 @@ export const TYPE_REGISTRY: Record<string, TypeRegistryEntry> = {
     typeName: "role",
     typeNamespace: "governance",
     view: RoleView as unknown as typeof RecordView,
+  },
+  "7f73b83e-4a5b-4c6d-8e9f-1a2b3c4d5e6f": {
+    label: "Exercises",
+    icon: "◎",
+    typeVersion: 1,
+    typeName: "exercise",
+    typeNamespace: "governance",
+    view: ExerciseView as unknown as typeof RecordView,
   },
 };

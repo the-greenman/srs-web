@@ -90,6 +90,29 @@ test.describe("Gallery fixture — real records render", () => {
     await expect(page.locator(".empty-state")).not.toBeVisible();
   });
 
+  test("Exercises section renders cards, not empty state", async ({ page }) => {
+    await page.getByRole("link", { name: /Exercises/ }).click();
+    await expect(page.getByRole("heading", { name: "Exercises", level: 2 })).toBeVisible();
+
+    // gallery.srsj has 2 exercises
+    await expect(page.locator(".record-list__item").first()).toBeVisible();
+    await expect(page.locator(".empty-state")).not.toBeVisible();
+  });
+
+  test("Exercises section shows count badge matching record count", async ({ page }) => {
+    // The nav item for Exercises includes a count; gallery has 2 exercises
+    const exercisesNav = page.getByRole("link", { name: /Exercises/ });
+    await expect(exercisesNav).toContainText("2");
+  });
+
+  test("selecting an exercise shows ExerciseView fields in the reading view", async ({ page }) => {
+    await page.getByRole("link", { name: /Exercises/ }).click();
+    await page.locator(".record-list__item").first().click();
+
+    // Reading view must contain exercise-specific field label
+    await expect(page.locator('[data-testid="record-reading"]')).toContainText("Thinking Reached");
+  });
+
   test("clicking a record card opens the reading view", async ({ page }) => {
     // Click the first article card — reading view should open
     await page.locator(".record-list__item").first().click();
