@@ -31,6 +31,7 @@
     { name: 'next_steps',              label: 'Next Steps' },
     { name: 'owner',                   label: 'Owner' },
     { name: 'status',                  label: 'Status' },
+    { name: 'external_links',          label: 'External Links' },
   ] as const;
 
   const displayTitle = $derived(() => {

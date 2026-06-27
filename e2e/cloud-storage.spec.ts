@@ -64,8 +64,8 @@ test.describe("Cloud storage sources", () => {
     await page.getByTestId("source-dropbox").click();
     await page.getByRole("button", { name: /dropbox-sample\.srsj/ }).click();
 
-    await expect(page.locator(".topbar__repo")).toHaveText("dropbox-sample");
-    await expect(page.locator(".topbar__repo")).toHaveAttribute("title", "Opened from dropbox");
+    await expect(page.locator(".topbar__crumb")).toContainText("dropbox-sample");
+    await expect(page.locator(".topbar__crumb span[title='Opened from dropbox']")).toBeVisible();
   });
 
   test("opens a Drive repository in Guides mode", async ({ page }) => {
@@ -75,11 +75,8 @@ test.describe("Cloud storage sources", () => {
     await page.getByTestId("source-google-drive").click();
 
     await expect(page.getByTestId("guides-shell")).toBeVisible();
-    await expect(page.locator(".topbar__repo")).toHaveText("drive-sample");
-    await expect(page.locator(".topbar__repo")).toHaveAttribute(
-      "title",
-      "Opened from google-drive",
-    );
+    await expect(page.locator(".topbar__crumb")).toContainText("drive-sample");
+    await expect(page.locator(".topbar__crumb span[title='Opened from google-drive']")).toBeVisible();
   });
 
   test("provider cancellation leaves the chooser open without an error", async ({ page }) => {

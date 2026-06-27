@@ -121,7 +121,7 @@ test.describe("Decision Flow (B12)", () => {
     await page.getByRole("button", { name: "Full Deliberation" }).click();
 
     // Stage 1 progress label
-    await expect(page.locator(".decision-flow__progress-label")).toContainText("Stage 1 of 10: Decision Question");
+    await expect(page.locator(".decision-flow__progress-label")).toContainText("Stage 1 of 11: Decision Question");
     // Field label for Decision Question
     await expect(page.locator(".field__label", { hasText: "Decision Question" })).toBeVisible();
   });
@@ -142,7 +142,7 @@ test.describe("Decision Flow (B12)", () => {
     await page.getByRole("button", { name: "Next" }).click();
 
     // Stage 2 should now show
-    await expect(page.locator(".decision-flow__progress-label")).toContainText("Stage 2 of 10: Context");
+    await expect(page.locator(".decision-flow__progress-label")).toContainText("Stage 2 of 11: Context");
     // Field label for Context
     await expect(page.locator(".field__label", { hasText: "Context" })).toBeVisible();
     // Back button should now be visible
@@ -172,6 +172,7 @@ test.describe("Decision Flow (B12)", () => {
       "Revisit in 6 months",   // Stage 8: Revisit When
       "Ship it",               // Stage 9: Next Steps
       "Alice",                 // Stage 10: Owner
+      "https://example.com",   // Stage 11: External Links
     ];
 
     for (let i = 0; i < stageTexts.length; i++) {
@@ -179,7 +180,7 @@ test.describe("Decision Flow (B12)", () => {
 
       if (i < stageTexts.length - 1) {
         await page.getByRole("button", { name: "Next" }).click();
-        await expect(page.locator(".decision-flow__progress-label")).toContainText(`Stage ${i + 2} of 10`);
+        await expect(page.locator(".decision-flow__progress-label")).toContainText(`Stage ${i + 2} of 11`);
       }
     }
 
@@ -256,7 +257,7 @@ test.describe("Decision Flow (B12)", () => {
       await page.getByRole("button", { name: "Next" }).click();
     }
 
-    await expect(page.locator(".decision-flow__progress-label")).toContainText("Stage 6 of 10: Decision Statement");
+    await expect(page.locator(".decision-flow__progress-label")).toContainText("Stage 6 of 11: Decision Statement");
     await expect(page.locator(".field__help")).toContainText("settled commitment");
   });
 });

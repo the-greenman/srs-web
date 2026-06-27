@@ -190,6 +190,10 @@
         {
           "fieldId": "aee7afe9-6650-5fa4-a61a-495c3b88994b",
           "value": "active"
+        },
+        {
+          "fieldId": "7a3f8c2d-5e6b-4b1e-9d0a-8c2f3b5a6e4d",
+          "value": "https://museumstandards.example.org/eye-level"
         }
       ],
       "instanceId": "3be7b057-9167-42a4-b0db-2a8b30666cef",
@@ -1235,7 +1239,8 @@
         "fields/authority-d25da548.json",
         "fields/boundary-3c39ee1f.json",
         "fields/sourceofauthority-9a32dc01.json",
-        "fields/status-aee7afe9.json"
+        "fields/status-aee7afe9.json",
+        "fields/externallinks-7a3f8c2d.json"
       ],
       "id": "90677fae-16a7-49ec-8aee-1872cbf8e381",
       "name": "governance-core",
@@ -1481,6 +1486,13 @@
           "order": 11,
           "repeatable": false,
           "required": true
+        },
+        {
+          "displayLabel": "External Links",
+          "fieldId": "7a3f8c2d-5e6b-4b1e-9d0a-8c2f3b5a6e4d",
+          "order": 12,
+          "repeatable": false,
+          "required": false
         }
       ],
       "id": "1fcad6a2-9f78-5e41-94ba-d82e88b822f3",
@@ -1654,6 +1666,18 @@
       ],
       "createdAt": "2025-05-01T00:00:00Z",
       "updatedAt": "2025-05-01T00:00:00Z"
+    },
+    "package/fields/externallinks-7a3f8c2d.json": {
+      "aiGuidance": {
+        "purpose": "Link to external sources such as meeting notes, research, or references that informed this decision."
+      },
+      "createdAt": "2026-06-27T00:00:00Z",
+      "description": "External references, links, or citations supporting this decision.",
+      "id": "7a3f8c2d-5e6b-4b1e-9d0a-8c2f3b5a6e4d",
+      "name": "external_links",
+      "namespace": "governance",
+      "valueType": "url",
+      "version": 1
     }
   }
 }

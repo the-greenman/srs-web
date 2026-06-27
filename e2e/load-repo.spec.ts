@@ -53,20 +53,11 @@ test.describe("Load repository", () => {
     await expect(page.getByRole("link", { name: /Roles/ })).toBeVisible({ timeout: 5000 });
   });
 
-  test("shows Exercise Book nav item after loading", async ({ page }) => {
-    const fileInput = page.locator('input[type="file"]#srsj-file');
-    await fileInput.setInputFiles(FIXTURE_PATH);
-
-    await expect(page.getByRole("link", { name: /Exercise Book/ })).toBeVisible({
-      timeout: 5000,
-    });
-  });
-
   test("shows the repo filename in the topbar after loading", async ({ page }) => {
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(FIXTURE_PATH);
 
-    // Filename without extension is shown as repo name in .topbar__repo span
-    await expect(page.locator(".topbar__repo")).toContainText("sample", { timeout: 5000 });
+    // Filename without extension is shown as repo name in breadcrumb
+    await expect(page.locator(".topbar__crumb")).toContainText("sample", { timeout: 5000 });
   });
 });

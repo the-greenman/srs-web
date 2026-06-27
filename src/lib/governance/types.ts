@@ -10,7 +10,7 @@
 export interface FieldFormDef {
   fieldId: string;
   label: string;
-  valueType: "string" | "text" | "select";
+  valueType: "string" | "text" | "select" | "url";
   required: boolean;
   options?: string[];
   /** Snake_case schema property name — always set by propertyToField in blueprint-utils. */

@@ -100,6 +100,14 @@
             options={def.options}
             disabled={saving}
           />
+        {:else if def.valueType === "url"}
+          <Input
+            id={inputId}
+            type="url"
+            bind:value={fieldValues[def.fieldId]}
+            disabled={saving}
+            placeholder="https://"
+          />
         {:else}
           <Input
             id={inputId}

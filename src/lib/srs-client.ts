@@ -430,6 +430,7 @@ export function setLifecycleState(
 export interface SchemaProperty {
   title?: string;
   type?: string;
+  format?: string;
   enum?: string[];
   "x-srs-field-id"?: string;
   "x-srs-order"?: number;

@@ -1,6 +1,6 @@
 <!--
   FieldValueView — renders a single FieldValue.
-  All current governance field types (string, text, select) render as plain text.
+  URL values (http/https) render as clickable anchors; all others as plain text.
   B5 record renderer: https://github.com/the-greenman/srs-web/issues/4
 -->
 <script lang="ts">
@@ -15,6 +15,16 @@
     if (v === null || v === undefined) return '';
     return String(v);
   }
+
+  function isUrl(v: unknown): boolean {
+    if (typeof v !== 'string') return false;
+    try {
+      const u = new URL(v);
+      return u.protocol === 'https:' || u.protocol === 'http:';
+    } catch {
+      return false;
+    }
+  }
 </script>
 
 {#if isArray && values.length === 0}
@@ -22,9 +32,17 @@
 {:else if isArray}
   <ul class="repeat__list">
     {#each values as v}
-      <li class="repeat__item">{formatValue(v)}</li>
+      <li class="repeat__item">
+        {#if isUrl(v)}
+          <a href={String(v)} class="field-value-url" target="_blank" rel="noopener noreferrer">{formatValue(v)}</a>
+        {:else}
+          {formatValue(v)}
+        {/if}
+      </li>
     {/each}
   </ul>
+{:else if isUrl(fv.value)}
+  <a href={String(fv.value)} class="field-value-url" target="_blank" rel="noopener noreferrer">{formatValue(fv.value)}</a>
 {:else}
   <span>{formatValue(fv.value)}</span>
 {/if}

@@ -144,7 +144,7 @@ test.describe("Gallery fixture — real records render", () => {
   });
 
   test("repo filename shown in topbar", async ({ page }) => {
-    await expect(page.locator(".topbar__repo")).toContainText("gallery");
+    await expect(page.locator(".topbar__crumb")).toContainText("gallery");
   });
 });
 
@@ -293,5 +293,62 @@ test.describe("Decision Log — hide superseded/abandoned toggle", () => {
     await page.getByTestId("show-all-toggle").click();
     // superseded/abandoned have no topic tags → still 2 under exhibitions filter
     await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
+  });
+});
+
+test.describe("Decision Log — external links (S8)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("mode-governance").click({ timeout: 15000 });
+    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
+      timeout: 5000,
+    });
+
+    const fileInput = page.locator('input[type="file"]#srsj-file');
+    await fileInput.setInputFiles(GALLERY_PATH);
+
+    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
+    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(page.getByTestId("decision-log-view")).toBeVisible();
+  });
+
+  test("external links field renders as a clickable anchor in the decision reading view", async ({ page }) => {
+    // Eye level standard has external_links set in the fixture
+    await page.getByTestId("decision-summary-card").filter({ hasText: "Eye level standard" }).click();
+    await expect(page.getByTestId("record-reading")).toBeVisible();
+
+    // External Links label must appear
+    await expect(page.getByTestId("record-reading")).toContainText("External Links");
+
+    // The URL must render as a link with a valid href
+    const link = page.getByTestId("record-reading").locator('a.field-value-url');
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute("href", "https://museumstandards.example.org/eye-level");
+  });
+
+  test("decision form shows a url input for the External Links field", async ({ page }) => {
+    // Open the DecisionFlow (New Decision button in Decision Log launches guided flow)
+    await page.locator("button.topbar__new").click();
+
+    // Choose Full Deliberation to walk through all field stages
+    await page.getByRole("button", { name: "Full Deliberation" }).click();
+
+    // Navigate through stages until we reach the External Links stage (last stage)
+    for (let i = 0; i < 15; i++) {
+      const label = page.locator(".decision-flow__progress-label");
+      const text = await label.textContent();
+      if (text?.includes("External Links")) break;
+      const nextBtn = page.getByRole("button", { name: "Next" });
+      if (await nextBtn.isVisible()) {
+        await nextBtn.click();
+      } else {
+        break;
+      }
+    }
+
+    // The External Links stage must render as input[type="url"]
+    await expect(page.locator(".decision-flow__progress-label")).toContainText("External Links");
+    const urlInput = page.locator('input[type="url"]');
+    await expect(urlInput).toBeVisible();
   });
 });

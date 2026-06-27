@@ -353,6 +353,14 @@
               disabled={saving}
               rows={5}
             />
+          {:else if currentStage.valueType === "url"}
+            <Input
+              id="del-stage-field"
+              type="url"
+              bind:value={stageValues[currentStage.name]}
+              disabled={saving}
+              placeholder="https://"
+            />
           {:else}
             <Input
               id="del-stage-field"
