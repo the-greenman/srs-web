@@ -30,6 +30,15 @@ function isGroup(prop: SchemaProperty): boolean {
   return prop["x-srs-group-id"] != null;
 }
 
+function requireFieldId(fieldId: string | undefined, propertyName: string): string {
+  if (!fieldId) {
+    throw new Error(
+      `[blueprint-utils] x-srs-field-id missing on schema property "${propertyName}". The WASM typeSchema/blueprintSchema output must include x-srs-field-id on every field property.`
+    );
+  }
+  return fieldId;
+}
+
 /** Map a single scalar schema property to a FieldFormDef. */
 function propertyToField(name: string, prop: SchemaProperty, required: boolean): FieldFormDef {
   let valueType: FieldFormDef["valueType"];
@@ -41,7 +50,7 @@ function propertyToField(name: string, prop: SchemaProperty, required: boolean):
     valueType = "string";
   }
   return {
-    fieldId: prop["x-srs-field-id"] ?? name,
+    fieldId: requireFieldId(prop["x-srs-field-id"], name),
     label: prop.title || name,
     valueType,
     required,
