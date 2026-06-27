@@ -30,6 +30,24 @@ function isGroup(prop: SchemaProperty): boolean {
   return prop["x-srs-group-id"] != null;
 }
 
+function requireFieldId(fieldId: string | undefined, propertyName: string): string {
+  if (!fieldId) {
+    throw new Error(
+      `[blueprint-utils] x-srs-field-id missing on schema property "${propertyName}". The WASM typeSchema/blueprintSchema output must include x-srs-field-id on every field property.`
+    );
+  }
+  return fieldId;
+}
+
+function requireGroupId(groupId: string | undefined, propertyName: string): string {
+  if (!groupId) {
+    throw new Error(
+      `[blueprint-utils] x-srs-group-id missing on schema property "${propertyName}". The WASM typeSchema/blueprintSchema output must include x-srs-group-id on every group property.`
+    );
+  }
+  return groupId;
+}
+
 /** Map a single scalar schema property to a FieldFormDef. */
 function propertyToField(name: string, prop: SchemaProperty, required: boolean): FieldFormDef {
   let valueType: FieldFormDef["valueType"];
@@ -41,7 +59,7 @@ function propertyToField(name: string, prop: SchemaProperty, required: boolean):
     valueType = "string";
   }
   return {
-    fieldId: prop["x-srs-field-id"] ?? name,
+    fieldId: requireFieldId(prop["x-srs-field-id"], name),
     label: prop.title || name,
     valueType,
     required,
@@ -84,7 +102,7 @@ export function definitionToGroups(def: SchemaDefinition): GroupFormDef[] {
         .sort(([, a], [, b]) => (a["x-srs-order"] ?? 0) - (b["x-srs-order"] ?? 0))
         .map(([fname, fprop]) => propertyToField(fname, fprop, itemRequired.includes(fname)));
       return {
-        groupId: prop["x-srs-group-id"] ?? name,
+        groupId: requireGroupId(prop["x-srs-group-id"], name),
         label: prop.title || name,
         order: prop["x-srs-order"] ?? 0,
         repeatable: prop["x-srs-repeatable"] ?? false,
