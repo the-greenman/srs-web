@@ -344,10 +344,10 @@
       <form onsubmit={handleDeliberateSubmit} class="decision-flow__form">
         <Field
           label={currentStage.label}
-          id="del-stage-field"
+          id={`del-stage-${currentStage.name}`}
           help={currentStage.aiGuidance}
         >
-          <FieldInput def={currentStage} bind:value={stageValues[currentStage.name]} id="del-stage-field" disabled={saving} rows={5} />
+          <FieldInput def={currentStage} bind:value={stageValues[currentStage.name]} id={`del-stage-${currentStage.name}`} disabled={saving} rows={5} />
         </Field>
 
         {#if showSummary}
