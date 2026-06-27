@@ -12,9 +12,7 @@
   import type { SrsRecord, CreateRecordInput, UpdateRecordInput } from "$lib/srs-client.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
   import Field from "$lib/components/Field.svelte";
-  import Input from "$lib/components/Input.svelte";
-  import Textarea from "$lib/components/Textarea.svelte";
-  import Select from "$lib/components/Select.svelte";
+  import FieldInput from "$lib/components/FieldInput.svelte";
   import SaveBar from "$lib/components/SaveBar.svelte";
 
   let {
@@ -86,27 +84,7 @@
     {#each schema.fields as def (def.fieldId)}
       {@const inputId = `rf-${def.fieldId}`}
       <Field label={def.label} required={def.required} id={inputId}>
-        {#if def.valueType === "text"}
-          <Textarea
-            id={inputId}
-            bind:value={fieldValues[def.fieldId]}
-            disabled={saving}
-            rows={4}
-          />
-        {:else if def.valueType === "select" && def.options?.length}
-          <Select
-            id={inputId}
-            bind:value={fieldValues[def.fieldId]}
-            options={def.options}
-            disabled={saving}
-          />
-        {:else}
-          <Input
-            id={inputId}
-            bind:value={fieldValues[def.fieldId]}
-            disabled={saving}
-          />
-        {/if}
+        <FieldInput def={def} bind:value={fieldValues[def.fieldId]} id={inputId} disabled={saving} />
       </Field>
     {/each}
 

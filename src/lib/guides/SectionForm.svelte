@@ -20,9 +20,7 @@
   import type { FieldFormDef } from "$lib/governance/types.js";
   import type { GroupFormDef } from "$lib/guides/blueprint-utils.js";
   import Field from "$lib/components/Field.svelte";
-  import Input from "$lib/components/Input.svelte";
-  import Select from "$lib/components/Select.svelte";
-  import Textarea from "$lib/components/Textarea.svelte";
+  import FieldInput from "$lib/components/FieldInput.svelte";
   import SaveBar from "$lib/components/SaveBar.svelte";
 
   let {
@@ -200,13 +198,7 @@
     {#each fields as def (def.fieldId)}
       {@const inputId = `rf-${def.fieldId}`}
       <Field label={def.label} required={def.required} id={inputId}>
-        {#if def.valueType === "text"}
-          <Textarea id={inputId} bind:value={fieldValues[def.fieldId]} disabled={saving} rows={4} />
-        {:else if def.valueType === "select" && def.options?.length}
-          <Select id={inputId} bind:value={fieldValues[def.fieldId]} options={def.options} disabled={saving} />
-        {:else}
-          <Input id={inputId} bind:value={fieldValues[def.fieldId]} disabled={saving} />
-        {/if}
+        <FieldInput def={def} bind:value={fieldValues[def.fieldId]} id={inputId} disabled={saving} />
       </Field>
     {/each}
 
@@ -220,11 +212,7 @@
             <div class="table-entry" data-testid="table-entry">
               {#each g.fields.filter((f) => f.name === "subheading" || f.name === "label") as meta (meta.fieldId)}
                 <Field label={meta.label} id={`g-${g.groupId}-${i}-${meta.fieldId}`}>
-                  <Input
-                    id={`g-${g.groupId}-${i}-${meta.fieldId}`}
-                    bind:value={groupValues[g.groupId][i][meta.fieldId]}
-                    disabled={saving}
-                  />
+                  <FieldInput def={meta} bind:value={groupValues[g.groupId][i][meta.fieldId]} id={`g-${g.groupId}-${i}-${meta.fieldId}`} disabled={saving} />
                 </Field>
               {/each}
               <table class="te-table">
@@ -279,13 +267,7 @@
             <div class="group-entry" data-testid="group-entry">
               {#each g.fields as f (f.fieldId)}
                 <Field label={f.label} id={`g-${g.groupId}-${i}-${f.fieldId}`}>
-                  {#if f.valueType === "text"}
-                    <Textarea id={`g-${g.groupId}-${i}-${f.fieldId}`} bind:value={entry[f.fieldId]} disabled={saving} rows={3} />
-                  {:else if f.valueType === "select" && f.options?.length}
-                    <Select id={`g-${g.groupId}-${i}-${f.fieldId}`} bind:value={entry[f.fieldId]} options={f.options} disabled={saving} />
-                  {:else}
-                    <Input id={`g-${g.groupId}-${i}-${f.fieldId}`} bind:value={entry[f.fieldId]} disabled={saving} />
-                  {/if}
+                  <FieldInput def={f} bind:value={entry[f.fieldId]} id={`g-${g.groupId}-${i}-${f.fieldId}`} disabled={saving} rows={3} />
                 </Field>
               {/each}
               <button type="button" class="te-btn te-btn--danger" data-testid="group-remove-entry" onclick={() => removeEntry(g, i)}>Remove</button>

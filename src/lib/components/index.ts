@@ -33,6 +33,7 @@ export { default as DecisionLogView } from "./DecisionLogView.svelte";
 
 // Forms
 export { default as Field } from "./Field.svelte";
+export { default as FieldInput } from "./FieldInput.svelte";
 export { default as Input } from "./Input.svelte";
 export { default as Textarea } from "./Textarea.svelte";
 export { default as Select } from "./Select.svelte";
