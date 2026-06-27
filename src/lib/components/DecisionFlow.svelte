@@ -17,6 +17,7 @@
   import type { CreateRecordInput } from "$lib/srs-client.js";
   import type { TypeFormDef, FieldFormDef } from "$lib/governance/types.js";
   import Field from "$lib/components/Field.svelte";
+  import FieldInput from "$lib/components/FieldInput.svelte";
   import Input from "$lib/components/Input.svelte";
   import Textarea from "$lib/components/Textarea.svelte";
   import Select from "$lib/components/Select.svelte";
@@ -346,20 +347,7 @@
           id="del-stage-field"
           help={currentStage.aiGuidance}
         >
-          {#if currentStage.valueType === "text"}
-            <Textarea
-              id="del-stage-field"
-              bind:value={stageValues[currentStage.name]}
-              disabled={saving}
-              rows={5}
-            />
-          {:else}
-            <Input
-              id="del-stage-field"
-              bind:value={stageValues[currentStage.name]}
-              disabled={saving}
-            />
-          {/if}
+          <FieldInput def={currentStage} bind:value={stageValues[currentStage.name]} id="del-stage-field" disabled={saving} rows={5} />
         </Field>
 
         {#if showSummary}
