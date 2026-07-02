@@ -11,11 +11,8 @@
  * ADR-007: TYPE_REGISTRY unifies display hints and view components into a single registry
  */
 
-import ArticleView from "../../rendering/ArticleView.svelte";
 import DecisionView from "../../rendering/DecisionView.svelte";
-import ExerciseView from "../../rendering/ExerciseView.svelte";
 import type RecordView from "../../rendering/RecordView.svelte";
-import RoleView from "../../rendering/RoleView.svelte";
 
 export interface TypeRegistryEntry {
   label: string;
@@ -34,15 +31,11 @@ export interface TypeRegistryEntry {
 
 export const DECISION_TYPE_ID = "1fcad6a2-9f78-5e41-94ba-d82e88b822f3";
 
+// Release 1 is a decision-log-only editor. The `article`, `role`, and `exercise` types
+// stay defined (dormant) in the com.mudemocracy.governance package, but the editor
+// registers only the decision view. Any dormant-type record that appears falls back to
+// RecordView via buildDynamicSections()/RecordDispatch.
 export const TYPE_REGISTRY: Record<string, TypeRegistryEntry> = {
-  "a1142ac3-5385-5c0e-8630-1dd3432cdf7f": {
-    label: "Articles",
-    icon: "§",
-    typeVersion: 1,
-    typeName: "article",
-    typeNamespace: "governance",
-    view: ArticleView as unknown as typeof RecordView,
-  },
   [DECISION_TYPE_ID]: {
     label: "Decision Log",
     icon: "⊕",
@@ -50,21 +43,5 @@ export const TYPE_REGISTRY: Record<string, TypeRegistryEntry> = {
     typeName: "decision",
     typeNamespace: "governance",
     view: DecisionView as unknown as typeof RecordView,
-  },
-  "e53dce11-6b83-5714-a8fe-f730edb500fa": {
-    label: "Roles",
-    icon: "◈",
-    typeVersion: 1,
-    typeName: "role",
-    typeNamespace: "governance",
-    view: RoleView as unknown as typeof RecordView,
-  },
-  "7f73b83e-4a5b-4c6d-8e9f-1a2b3c4d5e6f": {
-    label: "Exercises",
-    icon: "◎",
-    typeVersion: 1,
-    typeName: "exercise",
-    typeNamespace: "governance",
-    view: ExerciseView as unknown as typeof RecordView,
   },
 };
