@@ -2,7 +2,7 @@
   RecordReading — record reading view for the governance centre canvas.
 
   Delegates content rendering to RecordDispatch, which routes to a type-specific view
-  (ArticleView, DecisionView, RoleView) or falls back to RecordView for unknown types.
+  (DecisionView in release 1) or falls back to RecordView for unregistered types.
   ADR-006: typeId-keyed dispatch; srs-web#70.
 
   Usage: show when a record is selected and formMode is null; clicking back clears selection.
