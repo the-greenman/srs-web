@@ -1,6 +1,6 @@
 # ADR-004: Blueprint↔view discovery uses a string-convention join
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-008](008-rfc009-uuid-chain-join.md)
 **Date:** 2026-06-25
 **Issue:** [srs-web#43](https://github.com/the-greenman/srs-web/issues/43)
 **Supersedes:** —
