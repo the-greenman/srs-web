@@ -58,6 +58,10 @@ export interface SrsRepository {
   list_document_views(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in createRecordSuccessor()
   create_record_successor(predecessor_id: string, input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in find()
+  find(query_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listTerms()
+  list_terms(): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -769,4 +773,98 @@ export function listDocumentViews(
   filter: DocumentViewListFilter = {}
 ): DocumentViewSummary[] {
   return repo.list_document_views(JSON.stringify(filter)) as DocumentViewSummary[];
+}
+
+// ---------------------------------------------------------------------------
+// Discovery: find + DiscoveryQuery/DiscoveryResult/DiscoveryHit (srs-rust#218)
+// ---------------------------------------------------------------------------
+
+/** Input to the WASM `find` binding (maps to srs-repository DiscoveryQuery). */
+export interface DiscoveryQuery {
+  typeId?: string;
+  typeNamespace?: string;
+  typeName?: string;
+  containerId?: string;
+  tag?: string[];
+  lifecycleState?: string;
+  excludeLifecycleStates?: string[];
+  tier?: number;
+  contentMatch?: string;
+}
+
+/** A single hit returned by `find`. */
+export interface DiscoveryHit {
+  instanceId: string;
+  label: string;
+  typeNamespace: string;
+  typeName: string;
+  lifecycleState?: string;
+  score?: number;
+  snippet?: string;
+  matchedFields: string[];
+}
+
+/** Full result from the `find` binding. */
+export interface DiscoveryResult {
+  hits: DiscoveryHit[];
+  total: number;
+  diagnostics: string[];
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: raw WASM DiscoveryHit has unknown field case
+function normalizeDiscoveryHit(raw: any): DiscoveryHit {
+  return {
+    instanceId: raw.instanceId ?? raw.instance_id,
+    label: raw.label,
+    typeNamespace: raw.typeNamespace ?? raw.type_namespace,
+    typeName: raw.typeName ?? raw.type_name,
+    lifecycleState: raw.lifecycleState ?? raw.lifecycle_state,
+    score: raw.score,
+    snippet: raw.snippet,
+    matchedFields: raw.matchedFields ?? raw.matched_fields ?? [],
+  };
+}
+
+/**
+ * Full-text search across all records in the repository.
+ * Pass `contentMatch` for free-text; combine with `typeNamespace`/`typeName` to scope results.
+ * Returns hits sorted deterministically by instanceId (not ranked).
+ * ADR-001: callers must not pass governance-specific field names — use `contentMatch` only.
+ */
+export function find(repo: SrsRepository, query: DiscoveryQuery): DiscoveryResult {
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; normalised below
+  const raw: any = repo.find(JSON.stringify(query));
+  return {
+    hits: (raw.hits ?? []).map(normalizeDiscoveryHit),
+    total: raw.total ?? 0,
+    diagnostics: raw.diagnostics ?? [],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Vocabulary: listTerms + Term (srs-rust#303, RFC-006)
+// ---------------------------------------------------------------------------
+
+/** RFC-006 vocabulary Term returned by `list_terms`. */
+export interface Term {
+  id: string;
+  label: string;
+  definition?: string;
+  tags?: string[];
+}
+
+/**
+ * List RFC-006 vocabulary Terms from the repository.
+ * Terms are single-word identifier fields — no snake_case/camelCase ambiguity.
+ * Returns an empty array when no terms are registered.
+ */
+export function listTerms(repo: SrsRepository): Term[] {
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary
+  const raw: any[] = repo.list_terms();
+  return raw.map((r) => ({
+    id: r.id,
+    label: r.label,
+    definition: r.definition,
+    tags: Array.isArray(r.tags) ? r.tags : undefined,
+  }));
 }

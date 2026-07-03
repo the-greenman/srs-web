@@ -17,11 +17,13 @@ import {
   createRelation,
   deleteRelation,
   documentViewsForContainer,
+  find,
   listBlueprints,
   listContainers,
   listDocumentViews,
   listRecords,
   listRelations,
+  listTerms,
   typeSchema,
   type ContainerListFilter,
   type DocumentViewListFilter,
@@ -57,6 +59,8 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     list_blueprints: () => { throw new Error("not mocked"); },
     document_views_for_container: () => { throw new Error("not mocked"); },
     list_document_views: () => { throw new Error("not mocked"); },
+    find: () => { throw new Error("not mocked"); },
+    list_terms: () => { throw new Error("not mocked"); },
   };
   return { ...base, ...overrides };
 }
@@ -598,5 +602,133 @@ describe("deleteRelation", () => {
   it("propagates WASM throw when the relation ID does not exist", () => {
     const repo = mockRepo({ delete_relation: () => { throw new Error("relation not found"); } });
     expect(() => deleteRelation(repo, "nonexistent")).toThrow("relation not found");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// find (srs-rust#218)
+// ---------------------------------------------------------------------------
+
+describe("find", () => {
+  it("serialises the query as JSON and passes it to repo.find", () => {
+    const rawResult = {
+      hits: [],
+      total: 0,
+      diagnostics: [],
+    };
+    const spy = vi.fn().mockReturnValue(rawResult);
+    const repo = mockRepo({ find: spy });
+
+    find(repo, { contentMatch: "foo" });
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(JSON.stringify({ contentMatch: "foo" }));
+  });
+
+  it("returns a DiscoveryResult with normalised camelCase hit fields", () => {
+    const rawResult = {
+      hits: [
+        {
+          instance_id: "inst-001",
+          label: "Decision 1",
+          type_namespace: "com.test",
+          type_name: "decision",
+          matched_fields: ["title"],
+        },
+      ],
+      total: 1,
+      diagnostics: [],
+    };
+    const repo = mockRepo({ find: () => rawResult });
+
+    const result = find(repo, { contentMatch: "foo" });
+
+    expect(result.total).toBe(1);
+    expect(result.hits).toHaveLength(1);
+    expect(result.hits[0].instanceId).toBe("inst-001");
+    expect(result.hits[0].typeNamespace).toBe("com.test");
+    expect(result.hits[0].typeName).toBe("decision");
+    expect(result.hits[0].matchedFields).toEqual(["title"]);
+  });
+
+  it("also normalises camelCase hits (serde_wasm_bindgen honours camelCase)", () => {
+    const rawResult = {
+      hits: [
+        {
+          instanceId: "inst-002",
+          label: "Decision 2",
+          typeNamespace: "com.test",
+          typeName: "decision",
+          matchedFields: ["body"],
+        },
+      ],
+      total: 1,
+      diagnostics: [],
+    };
+    const repo = mockRepo({ find: () => rawResult });
+
+    const result = find(repo, {});
+
+    expect(result.hits[0].instanceId).toBe("inst-002");
+    expect(result.hits[0].matchedFields).toEqual(["body"]);
+  });
+
+  it("returns empty hits and diagnostics when the WASM result is empty", () => {
+    const repo = mockRepo({ find: () => ({ hits: [], total: 0, diagnostics: [] }) });
+
+    const result = find(repo, {});
+
+    expect(result.hits).toEqual([]);
+    expect(result.total).toBe(0);
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("propagates WASM throw", () => {
+    const repo = mockRepo({ find: () => { throw new Error("find failed"); } });
+    expect(() => find(repo, { contentMatch: "x" })).toThrow("find failed");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// listTerms (srs-rust#303, RFC-006)
+// ---------------------------------------------------------------------------
+
+describe("listTerms", () => {
+  it("calls list_terms with no arguments and returns normalised Term[]", () => {
+    const rawTerms = [
+      { id: "term-001", label: "Risk", definition: "A potential issue", tags: ["governance"] },
+      { id: "term-002", label: "Decision", tags: [] },
+    ];
+    const spy = vi.fn().mockReturnValue(rawTerms);
+    const repo = mockRepo({ list_terms: spy });
+
+    const result = listTerms(repo);
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith();
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe("term-001");
+    expect(result[0].label).toBe("Risk");
+    expect(result[0].definition).toBe("A potential issue");
+    expect(result[0].tags).toEqual(["governance"]);
+  });
+
+  it("returns a term with undefined definition and tags when they are absent", () => {
+    const repo = mockRepo({ list_terms: () => [{ id: "term-003", label: "Goal" }] });
+
+    const result = listTerms(repo);
+
+    expect(result[0].definition).toBeUndefined();
+    expect(result[0].tags).toBeUndefined();
+  });
+
+  it("returns an empty array when no terms are registered", () => {
+    const repo = mockRepo({ list_terms: () => [] });
+    expect(listTerms(repo)).toEqual([]);
+  });
+
+  it("propagates WASM throw", () => {
+    const repo = mockRepo({ list_terms: () => { throw new Error("terms failed"); } });
+    expect(() => listTerms(repo)).toThrow("terms failed");
   });
 });
