@@ -3,19 +3,22 @@
   B12 decision log / summary card: https://github.com/the-greenman/srs-web/issues/56
 -->
 <script lang="ts">
-  import type { SrsRecord } from "$lib/srs-client.js";
+  import type { SrsRecord, SrsRepository } from "$lib/srs-client.js";
   import type { Status } from "$lib/types.js";
   import { getStringField } from "$lib/governance/field-utils.js";
   import { getFieldMeta } from "$lib/governance/field-meta.js";
+  import { computeSearchHitIds, sortByCreatedAt } from "./decision-log-utils.js";
   import LogTable from "./LogTable.svelte";
   import DecisionSummaryCard from "./DecisionSummaryCard.svelte";
 
   let {
     records,
+    repo = undefined,
     selectedId = null,
     onSelect,
   }: {
     records: SrsRecord[];
+    repo?: SrsRepository;
     selectedId?: string | null;
     onSelect: (id: string | null) => void;
   } = $props();
@@ -33,30 +36,25 @@
     [...new Set(records.flatMap((r) => r.tags ?? []))].sort((a, b) => a.localeCompare(b))
   );
 
+  // Call WASM find once per query change; null means "no active search" (show all).
+  const searchHitIds = $derived(computeSearchHitIds(repo, searchQuery));
+
   const displayedRecords = $derived(
-    [...records
-      .filter((r) => {
-        if (!showAll) {
-          const s = getStringField(r, "status", fieldMeta);
-          if (s !== undefined && HIDDEN_STATUSES.has(s as Status)) return false;
-        }
-        return true;
-      })
-      .filter((r) => {
-        if (topicFilter !== "all" && !(r.tags ?? []).includes(topicFilter)) return false;
-        const q = searchQuery.trim().toLowerCase();
-        if (q === "") return true;
-        const title = (getStringField(r, "title", fieldMeta) ?? "").toLowerCase();
-        const statement = (getStringField(r, "decision_statement", fieldMeta) ?? "").toLowerCase();
-        return title.includes(q) || statement.includes(q);
-      })]
-      .sort((a, b) => {
-        // ISO 8601 strings are lexicographically ordered; use < / > to avoid locale-sensitive collation
-        const dateA = a.createdAt ?? "";
-        const dateB = b.createdAt ?? "";
-        if (sortOrder === "newest") return dateB < dateA ? -1 : dateB > dateA ? 1 : 0;
-        return dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
-      })
+    sortByCreatedAt(
+      records
+        .filter((r) => {
+          // Search filter via WASM find (ADR-001 compliant — no field names in the query)
+          if (searchHitIds !== null && !searchHitIds.has(r.instanceId)) return false;
+          // Status filter (residual ADR-001 gap tracked in srs-web#118)
+          if (!showAll) {
+            const s = getStringField(r, "status", fieldMeta);
+            if (s !== undefined && HIDDEN_STATUSES.has(s as Status)) return false;
+          }
+          if (topicFilter !== "all" && !(r.tags ?? []).includes(topicFilter)) return false;
+          return true;
+        }),
+      sortOrder
+    )
   );
 </script>
 

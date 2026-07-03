@@ -478,6 +478,7 @@
             </div>
             <DecisionLogView
               records={activeRecords}
+              {repo}
               selectedId={selectedId}
               onSelect={(id) => { selectedId = id; }}
             />

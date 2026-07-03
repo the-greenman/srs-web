@@ -54,6 +54,19 @@ tracked separately (see Out of scope).
 `srs-rust/crates/srs-bindings/src/lib.rs` (srs-rust#218 and srs-rust#303). What is missing
 is the TypeScript facade.
 
+**`to_js()` return contract:** Both `find` and `list_terms` use the `to_js()` helper, which
+serializes via `serde_json::to_string` then re-parses as a JS object. WASM therefore returns
+a real JS object (not a JSON string). TypeScript casts are valid without `JSON.parse`.
+
+**`find` and `list_terms` are WASM-only** — they are not CLI subcommands and are not covered
+by `srs-rust/crates/srs-cli/schemas/payload/` JSON schemas. TS types are derived directly
+from the Rust struct definitions in `discovery_service.rs` and `srs-core/types/term.rs`.
+
+**`DiscoveryHit` field normalisation required.** serde_wasm_bindgen does not always honour
+`#[serde(rename_all = "camelCase")]`. `DiscoveryHit` has multi-word fields (`instanceId`,
+`typeNamespace`, `typeName`, `matchedFields`) that may arrive as snake_case. A
+`normalizeDiscoveryHit` function with dual-key lookup is required, mirroring `normalizeRecord`.
+
 ### TypeScript types
 
 New types to add to `srs-client.ts`:
@@ -149,8 +162,20 @@ export function listTerms(repo: SrsRepository): Term[];
 - [ ] Add `find(query_json: string): any` method to `SrsRepository` interface with biome-ignore comment.
 - [ ] Add `list_terms(): any` method to `SrsRepository` interface with biome-ignore comment.
 - [ ] Add `DiscoveryQuery`, `DiscoveryHit`, `DiscoveryResult`, `Term` types to `srs-client.ts`.
-- [ ] Add `find(repo, query)` wrapper: `return repo.find(JSON.stringify(query)) as DiscoveryResult`.
-- [ ] Add `listTerms(repo)` wrapper: normalise camelCase/snake_case on `id`/`label`/`definition`/`tags`.
+- [ ] Add `normalizeDiscoveryHit(raw: any): DiscoveryHit` with dual-key lookup:
+  `instanceId: raw.instanceId ?? raw.instance_id`,
+  `label: raw.label`,
+  `typeNamespace: raw.typeNamespace ?? raw.type_namespace`,
+  `typeName: raw.typeName ?? raw.type_name`,
+  `lifecycleState: raw.lifecycleState ?? raw.lifecycle_state`,
+  `score: raw.score`,
+  `snippet: raw.snippet`,
+  `matchedFields: raw.matchedFields ?? raw.matched_fields ?? []`.
+- [ ] Add `find(repo, query)` wrapper: call `repo.find(JSON.stringify(query))`, normalise
+  result: `{ hits: raw.hits.map(normalizeDiscoveryHit), total: raw.total, diagnostics: raw.diagnostics ?? [] }`.
+- [ ] Add `listTerms(repo)` wrapper: raw Term fields (`id`, `label`, `definition`, `tags`) are
+  single-word — no snake_case ambiguity. Map directly:
+  `{ id: r.id, label: r.label, definition: r.definition, tags: r.tags }`. Handle undefined optionals.
 - [ ] Add `find` mock entry to `mockRepo()` base in `tests/srs-client.test.ts` (throws by default).
 - [ ] Add `list_terms` mock entry to `mockRepo()` base.
 - [ ] Write test: `find()` serialises query correctly and returns `DiscoveryResult`.
@@ -174,8 +199,11 @@ npm test -- srs-client
 
 1. All acceptance criteria above are met.
 2. `npm run typecheck` and `npm run build` both pass.
-3. Mark completed task checkboxes `[x]`.
-4. Commit: `feat: add find and listTerms WASM wrappers to srs-client (#104)`.
+3. `npm test -- srs-client` passes.
+4. Mark completed task checkboxes `[x]`.
+5. Commit: `feat: add find and listTerms WASM wrappers to srs-client (#104)`.
+
+Do not start Phase 2 until this milestone gate passes.
 
 ---
 
@@ -201,10 +229,15 @@ npm test -- srs-client
 - [ ] Update `GovernanceShell.svelte`: pass `repo={repo}` to `<DecisionLogView>`.
 - [ ] Remove unused imports from `DecisionLogView` if `getStringField` / `getFieldMeta` are no
   longer needed (check: `getStringField` is still used for the status filter; keep if so).
-- [ ] Add a `data-testid="decision-log-view"` Playwright/Vitest component test: search on a repo
-  with known decision records returns only matching records.
-- [ ] Add test: empty search returns all records.
-- [ ] Add test: sort toggle changes order of records by `createdAt`.
+- [ ] File a tracking issue for the residual ADR-001 gap: `getStringField(r, "status", fieldMeta)`
+  uses governance field name "status" and values "superseded"/"abandoned". Record the issue number
+  in this plan under Assumptions.
+- [ ] Add **Vitest unit tests** (not Playwright) in `tests/decision-log-view.test.ts`:
+  - Test: `find` spy called with `{ contentMatch: "foo" }` when searchQuery is "foo".
+    Use `vi.fn()` mock for `find` wrapper; verify `find` was called and only matching
+    instanceIds appear in `displayedRecords`.
+  - Test: empty search — `find` is NOT called; all records returned.
+  - Test: sort toggle changes order of records by `createdAt` (no WASM call needed).
 
 #### Acceptance Criteria
 
@@ -229,8 +262,12 @@ npm test
 
 1. All acceptance criteria above are met.
 2. `npm run typecheck` and `npm run build` both pass.
-3. Mark completed task checkboxes `[x]`.
-4. Commit: `feat: wire decision search through WASM find binding (#104)`.
+3. `npm test` passes.
+4. Tracking issue for status-filter ADR-001 gap is filed and number recorded.
+5. Mark completed task checkboxes `[x]`.
+6. Commit: `feat: wire decision search through WASM find binding (#104)`.
+
+Do not proceed to Final Acceptance until this milestone gate passes.
 
 ---
 
@@ -264,3 +301,4 @@ npm test
 - The `gallery.srsj` fixture contains at least one decision record for search testing.
 - `DecisionLogView.svelte` receives the `repo` prop as optional to avoid a breaking change in
   tests that render the component without a real WASM repo.
+- Residual ADR-001 gap (status filter via `getStringField`) tracked in srs-web#118.
