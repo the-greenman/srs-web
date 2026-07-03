@@ -738,11 +738,9 @@ export function documentViewsForContainer(
  * Used for discovery (blueprint↔view pairing). For rendering, use
  * `documentViewsForContainer` which returns full `DocumentView` objects.
  *
- * `containerType` enables the string-convention join (ADR-004):
- *   a view belongs to a blueprint when `view.namespace === blueprint.namespace
- *   && view.containerType === blueprint.name`.
- * `rootTypeRefs` will enable the authoritative UUID join (ADR-004 follow-up)
- * once `BlueprintSummary` exposes `rootTypes`.
+ * `rootTypeRefs` is used for the authoritative UUID-chain join (ADR-008):
+ *   a view belongs to a blueprint when `rootTypeRefs` contains the blueprint's root type UUID.
+ * `containerType` is a hint field only (RFC-009) and is no longer used for discovery.
  */
 export interface DocumentViewSummary {
   id: string;

@@ -6,7 +6,7 @@
   so the user can switch rendering strategy without leaving the editor.
 
   ADR-003: Document Views drive rendered output; this is a render-surface concern.
-  ADR-004: Views are discovered via the string-convention join; the IDs come from
+  ADR-008: Views are discovered via UUID-chain join (rootTypeRefs); the IDs come from
            discovery.ts, not hardcoded literals.
 -->
 <script lang="ts">
