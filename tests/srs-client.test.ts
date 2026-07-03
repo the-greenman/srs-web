@@ -18,6 +18,7 @@ import {
   listBlueprints,
   listContainers,
   listDocumentViews,
+  listRecords,
   typeSchema,
   type ContainerListFilter,
   type DocumentViewListFilter,
@@ -384,5 +385,60 @@ describe("addContainerMember", () => {
     const repo = mockRepo({ add_container_member: () => ["inst-abc"] });
     const result = addContainerMember(repo, "c-dl-001", "inst-abc");
     expect(result).toEqual(["inst-abc"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// listRecords — srs-web#91: unwrap RecordSummary.displayLabel from list_records
+// ---------------------------------------------------------------------------
+
+describe("listRecords", () => {
+  const baseInner = { instanceId: "r1", typeId: "t1", typeVersion: 1, fieldValues: [], tags: [] };
+
+  it("populates displayLabel from the RecordSummary wrapper and propagates inner record fields", () => {
+    const innerRecord = { instanceId: "r1", typeId: "t1", typeVersion: 1, fieldValues: [{ fieldId: "f1", value: "hello" }], tags: [] };
+    const summaries = [{ instanceId: "r1", displayLabel: "My Label", record: innerRecord }];
+    const repo = mockRepo({ list_records: () => summaries });
+
+    const result = listRecords(repo, {});
+
+    expect(result).toHaveLength(1);
+    expect(result[0].instanceId).toBe("r1");
+    expect(result[0].displayLabel).toBe("My Label");
+    expect(result[0].typeId).toBe("t1");
+    // Verify inner record's fieldValues reach the caller (backward-compat for existing callers)
+    expect(result[0].fieldValues).toEqual([{ fieldId: "f1", value: "hello" }]);
+  });
+
+  it("accepts display_label snake_case (defensive dual-lookup, consistent with normalizeRecord convention)", () => {
+    // RecordSummary uses #[serde(rename_all = "camelCase")] so real WASM always emits displayLabel.
+    // The snake_case branch exists defensively, consistent with the dual-lookup pattern in normalizeRecord.
+    const summaries = [{ instanceId: "r2", display_label: "Snake Label", record: { ...baseInner, instanceId: "r2" } }];
+    const repo = mockRepo({ list_records: () => summaries });
+
+    const result = listRecords(repo, {});
+
+    expect(result[0].instanceId).toBe("r2");
+    expect(result[0].displayLabel).toBe("Snake Label");
+  });
+
+  it("falls back gracefully for a bare Record shape (no wrapper); displayLabel is undefined", () => {
+    const bare = [{ instanceId: "r3", typeId: "t1", typeVersion: 1, fieldValues: [], tags: [] }];
+    const repo = mockRepo({ list_records: () => bare });
+
+    const result = listRecords(repo, {});
+
+    expect(result[0].instanceId).toBe("r3");
+    expect(result[0].displayLabel).toBeUndefined();
+  });
+
+  it("passes the filter JSON to list_records", () => {
+    const spy = vi.fn().mockReturnValue([]);
+    const repo = mockRepo({ list_records: spy });
+
+    listRecords(repo, { typeNamespace: "com.example", typeName: "decision" });
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(JSON.stringify({ typeNamespace: "com.example", typeName: "decision" }));
   });
 });
