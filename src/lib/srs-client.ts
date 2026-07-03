@@ -16,7 +16,7 @@
 /** Opaque WASM handle — methods are defined in srs-bindings. */
 export interface SrsRepository {
   validate(): RepositoryValidationReport;
-  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised to SrsRecord[] in listRecords()
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; unwrapped from RecordSummary[] ({ instanceId, displayLabel, record }) in listRecords() via normalizeRecordSummary()
   list_records(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised to SrsRecord | null in getRecord()
   get_record(id: string): any;
@@ -90,6 +90,14 @@ export interface SrsRecord {
   createdAt?: string;
   updatedAt?: string;
   tags?: string[];
+  /**
+   * Core-resolved display label from `record_display_label` (srs-rust#293).
+   * Populated by `listRecords()` — the WASM `list_records` binding returns
+   * `RecordSummary { instanceId, displayLabel, record }` since srs-rust#293.
+   * Absent (`undefined`) for records returned by `getRecord()` (bare Record shape).
+   * Clients must use `displayLabel` for list labels and not re-derive titles from fieldValues.
+   */
+  displayLabel?: string;
 }
 
 export interface FieldValue {
@@ -271,6 +279,26 @@ function normalizeRecord(raw: any): SrsRecord {
   };
 }
 
+/**
+ * Unwrap a `RecordSummary` from the WASM `list_records` binding (srs-rust#293).
+ * The binding returns `{ instanceId, displayLabel, record }` — not a bare `Record`.
+ * Normalises `displayLabel` from both camelCase and snake_case variants.
+ * If the wrapper shape is absent (bare Record — contract break), logs a warning and
+ * falls back to `normalizeRecord(raw)` so the app does not crash.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: raw WASM RecordSummary has unknown shape
+function normalizeRecordSummary(raw: any): SrsRecord {
+  if (raw.record !== undefined) {
+    const inner = normalizeRecord(raw.record);
+    inner.displayLabel = raw.displayLabel ?? raw.display_label;
+    return inner;
+  }
+  // WASM contract violation: list_records always returns RecordSummary since srs-rust#293.
+  // Log the unexpected shape and fall back defensively rather than crashing.
+  console.warn("list_records: unexpected bare Record shape; WASM contract may have changed", raw);
+  return normalizeRecord(raw);
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -278,11 +306,14 @@ function normalizeRecord(raw: any): SrsRecord {
 /**
  * List records in the repository, optionally filtered.
  * Pass an empty filter (`{}`) to list all records.
+ * Each returned `SrsRecord` carries `displayLabel` — the core-resolved display label
+ * from `record_display_label` (same resolution `srs tree` uses). Consumers must render
+ * `displayLabel` directly and must not re-derive titles from `fieldValues`.
  */
 export function listRecords(repo: SrsRepository, filter: RecordListFilter = {}): SrsRecord[] {
-  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; normalised below
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; unwrapped from RecordSummary below
   const raw: any[] = repo.list_records(JSON.stringify(filter));
-  return raw.map(normalizeRecord);
+  return raw.map(normalizeRecordSummary);
 }
 
 /**
