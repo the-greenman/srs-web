@@ -290,6 +290,9 @@ function normalizeRecord(raw: any): SrsRecord {
 function normalizeRecordSummary(raw: any): SrsRecord {
   if (raw.record !== undefined) {
     const inner = normalizeRecord(raw.record);
+    // RecordSummary uses #[serde(rename_all = "camelCase")] so the WASM always emits
+    // `displayLabel`. The `?? raw.display_label` guard matches the dual-lookup convention
+    // used throughout this file for forward-defensive handling of serde config changes.
     inner.displayLabel = raw.displayLabel ?? raw.display_label;
     return inner;
   }

@@ -395,8 +395,9 @@ describe("addContainerMember", () => {
 describe("listRecords", () => {
   const baseInner = { instanceId: "r1", typeId: "t1", typeVersion: 1, fieldValues: [], tags: [] };
 
-  it("populates displayLabel from the RecordSummary wrapper (camelCase)", () => {
-    const summaries = [{ instanceId: "r1", displayLabel: "My Label", record: baseInner }];
+  it("populates displayLabel from the RecordSummary wrapper and propagates inner record fields", () => {
+    const innerRecord = { instanceId: "r1", typeId: "t1", typeVersion: 1, fieldValues: [{ fieldId: "f1", value: "hello" }], tags: [] };
+    const summaries = [{ instanceId: "r1", displayLabel: "My Label", record: innerRecord }];
     const repo = mockRepo({ list_records: () => summaries });
 
     const result = listRecords(repo, {});
@@ -405,9 +406,13 @@ describe("listRecords", () => {
     expect(result[0].instanceId).toBe("r1");
     expect(result[0].displayLabel).toBe("My Label");
     expect(result[0].typeId).toBe("t1");
+    // Verify inner record's fieldValues reach the caller (backward-compat for existing callers)
+    expect(result[0].fieldValues).toEqual([{ fieldId: "f1", value: "hello" }]);
   });
 
-  it("populates displayLabel from the RecordSummary wrapper (snake_case display_label)", () => {
+  it("accepts display_label snake_case (defensive dual-lookup, consistent with normalizeRecord convention)", () => {
+    // RecordSummary uses #[serde(rename_all = "camelCase")] so real WASM always emits displayLabel.
+    // The snake_case branch exists defensively, consistent with the dual-lookup pattern in normalizeRecord.
     const summaries = [{ instanceId: "r2", display_label: "Snake Label", record: { ...baseInner, instanceId: "r2" } }];
     const repo = mockRepo({ list_records: () => summaries });
 
