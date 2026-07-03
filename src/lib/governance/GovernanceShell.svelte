@@ -310,6 +310,7 @@
     if (!selectedRecord) return;
     deleteRecord(repo, selectedRecord.instanceId);
     selectedId = null;
+    showLinkPicker = false;
     loadSectionRecords();
     refreshValidation();
   }
@@ -413,6 +414,7 @@
                 formMode = null;
                 editingRecord = null;
                 formError = null;
+                showLinkPicker = false;
               }}
             >
               <NavItem
@@ -601,7 +603,7 @@
   />
 {/if}
 
-{#if showLinkPicker && selectedRecord && activeSection_?.typeId === DECISION_TYPE_ID}
+{#if showLinkPicker && selectedRecord && activeSection_?.typeId === DECISION_TYPE_ID && formMode === null}
   <DecisionLinkPicker
     sourceInstanceId={selectedRecord.instanceId}
     sourceLabel={selectedRecord.displayLabel ?? selectedRecord.instanceId.slice(0, 8)}
