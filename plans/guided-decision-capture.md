@@ -1,5 +1,7 @@
 # Plan: Guided decision capture from blueprint schema + aiGuidance (#60)
 
+> **Superseded by [srs-web#103](https://github.com/the-greenman/srs-web/issues/103) (2026-07-03).** `DecisionFlow.svelte` is now dead code; decisions go through the generic `RecordForm` path. This plan's goals are moot — no `DecisionFlow` improvements will be made. Kept for historical reference.
+
 ## Summary
 
 `DecisionFlow.svelte` hard-codes 11 decision field UUID constants and 8 status option strings. This violates the srs-web#60 acceptance criterion that no decision field metadata be hardcoded in TypeScript, and means `aiGuidance` text from the package is never surfaced to the user. This plan removes all hardcoded field UUIDs from `DecisionFlow.svelte`, drives the component from the `TypeFormDef` already loaded in `App.svelte`, and exposes each field's `aiGuidance.purpose` as in-context help text.

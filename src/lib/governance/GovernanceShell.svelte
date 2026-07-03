@@ -10,6 +10,8 @@
     deleteRecord,
     createRecordSuccessor,
     typeSchema,
+    addContainerMember,
+    listContainers,
   } from "$lib/srs-client.js";
   import type {
     SrsRepository,
@@ -35,13 +37,12 @@
   import Diagnostics from "$lib/components/Diagnostics.svelte";
   import RecordForm from "$lib/components/RecordForm.svelte";
   import SuccessorModal from "$lib/components/SuccessorModal.svelte";
-  import DecisionFlow from "$lib/components/DecisionFlow.svelte";
   import RecordReading from "$lib/components/RecordReading.svelte";
   import DecisionLogView from "$lib/components/DecisionLogView.svelte";
 
   import { buildDynamicSections } from "$lib/governance/sections.js";
   import type { SectionConfig, SectionKey } from "$lib/governance/sections.js";
-  import { DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
+  import { DECISION_TYPE_ID, DECISION_LOG_CONTAINER_TYPE } from "$lib/governance/type-registry.js";
   import { getStringField, STATUS_FIELD_ID } from "$lib/governance/field-utils.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
@@ -100,10 +101,8 @@
   /** Whether the immutability guard modal is shown. */
   let showSuccessorModal = $state(false);
 
-  /** Decision flow mode — replaces generic form for decisions. */
-  let decisionFlowMode = $state(false);
-  let decisionFlowSaving = $state(false);
-  let decisionFlowError = $state<string | null>(null);
+  /** Container ID of the decision_log container, discovered at boot via listContainers. */
+  let decisionLogContainerId = $state<string | null>(null);
 
   // ---------------------------------------------------------------------------
   // Derived
@@ -114,8 +113,6 @@
   let activeSection_ = $derived(
     dynamicSections.find((s) => s.key === activeSection) ?? null,
   );
-
-  let isDecisionSection = $derived(activeSection_?.typeId === DECISION_TYPE_ID);
 
   let activeSectionSchema = $derived(
     activeSection !== null ? (sectionSchemas[activeSection] ?? null) : null,
@@ -207,6 +204,13 @@
     loadSectionRecords();
     buildSectionSchemas();
     refreshValidation();
+    try {
+      const containers = listContainers(repo, { containerType: DECISION_LOG_CONTAINER_TYPE });
+      decisionLogContainerId = containers[0]?.containerId ?? null;
+    } catch (e: unknown) {
+      console.error("listContainers failed in onMount:", e);
+      decisionLogContainerId = null;
+    }
   });
 
   // ---------------------------------------------------------------------------
@@ -241,6 +245,20 @@
         const typeDef = activeSection ? sectionSchemas[activeSection] : undefined;
         if (!typeDef) return;
         const created = createRecord(repo, typeDef.typeId, typeDef.typeVersion, input as CreateRecordInput);
+        if (decisionLogContainerId && activeSection_?.typeId === DECISION_TYPE_ID) {
+          try {
+            addContainerMember(repo, decisionLogContainerId, created.instanceId);
+          } catch (e: unknown) {
+            console.error("addContainerMember failed:", e);
+            formError = e instanceof Error
+              ? `Decision saved, but container registration failed: ${e.message}`
+              : "Decision saved, but could not register in decision log container.";
+            loadSectionRecords();
+            selectedId = created.instanceId;
+            refreshValidation();
+            return;
+          }
+        }
         formMode = null;
         loadSectionRecords();
         selectedId = created.instanceId;
@@ -350,8 +368,6 @@
                 formMode = null;
                 editingRecord = null;
                 formError = null;
-                decisionFlowMode = false;
-                decisionFlowError = null;
               }}
             >
               <NavItem
@@ -380,18 +396,11 @@
           <Breadcrumb items={governanceCrumbItems()} />
         {/snippet}
         {#snippet actions()}
-          {#if formMode === null && !decisionFlowMode}
-            {#if isDecisionSection}
-              <button
-                class="topbar__new"
-                onclick={() => { decisionFlowMode = true; decisionFlowError = null; }}
-              >New Decision</button>
-            {:else if activeSectionSchema}
-              <button
-                class="topbar__new"
-                onclick={() => { formMode = "create"; editingRecord = null; }}
-              >New {activeSectionSchema.label}</button>
-            {/if}
+          {#if formMode === null && activeSectionSchema}
+            <button
+              class="topbar__new"
+              onclick={() => { formMode = "create"; editingRecord = null; }}
+            >New {activeSectionSchema.label}</button>
           {/if}
           <button class="topbar__export" onclick={onExport}>Download .srsj</button>
           <button class="topbar__reset" onclick={onOpenAnother}>Open another file</button>
@@ -399,32 +408,7 @@
       </Topbar>
 
       <Workspace>
-        {#if decisionFlowMode}
-          {@const decisionTypeDef = sectionSchemas[DECISION_TYPE_ID]}
-          {#if decisionTypeDef}
-          <DecisionFlow
-            schema={decisionTypeDef}
-            onSave={(input) => {
-              decisionFlowSaving = true;
-              decisionFlowError = null;
-              try {
-                if (!decisionTypeDef) { decisionFlowError = "Decision type schema not loaded"; return; }
-                const created = createRecord(repo, decisionTypeDef.typeId, decisionTypeDef.typeVersion, input);
-                decisionFlowMode = false;
-                loadSectionRecords();
-                selectedId = created.instanceId;
-              } catch (e: unknown) {
-                decisionFlowError = e instanceof Error ? e.message : String(e);
-              } finally {
-                decisionFlowSaving = false;
-              }
-            }}
-            onCancel={() => { decisionFlowMode = false; decisionFlowError = null; }}
-            saving={decisionFlowSaving}
-            saveError={decisionFlowError}
-          />
-          {/if}
-        {:else if formMode !== null && activeSectionSchema}
+        {#if formMode !== null && activeSectionSchema}
           <RecordForm
             schema={activeSectionSchema}
             record={editingRecord}
@@ -440,7 +424,7 @@
             onBack={() => { selectedId = null; }}
           />
         {:else}
-          {#if isDecisionSection}
+          {#if activeSection_?.typeId === DECISION_TYPE_ID}
             <div class="section-heading">
               <h2 class="section-heading__title">{activeSection_?.label ?? ""}</h2>
               <span class="section-heading__count">{activeRecords.length}</span>
