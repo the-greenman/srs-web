@@ -76,3 +76,13 @@ not a human-readable string. `sectionSchemas` is keyed by typeId accordingly.
   back to `RecordView` for unknown types. `RecordReading` no longer renders fields
   directly — it delegates to `RecordDispatch` and retains only the back-button navigation.
 - ~~Registering a custom view requires only adding one entry to `VIEW_REGISTRY` in `RecordDispatch.svelte`.~~ **Updated by [ADR-007](./007-unified-type-registry.md):** registering a known type or custom view now requires one entry in `TYPE_REGISTRY` in `src/lib/governance/type-registry.ts`.
+
+## Decision note — multi-WASM-call orchestration (srs-web#103, 2026-07-03)
+
+Accepted pattern: a single user action in the TypeScript layer may trigger two sequential WASM mutations when one is a presentation-layer consequence of the other. Specifically, creating a decision record (`createRecord`) followed by registering it in the decision_log container (`addContainerMember`) is accepted under this ADR because:
+
+- Both calls use only structural metadata (typeId UUID, containerType string) as routing keys — no SRS model semantics live in TypeScript.
+- The container registration is a UI-layer concern (keeping the decision_log container consistent for document-view rendering), not an SRS model invariant. The WASM engine permits decisions to exist outside any container; the TS shell enforces UI-layer grouping.
+- This is analogous to other multi-step sequences already in the shell (e.g. `createRecordSuccessor` + `loadSectionRecords`).
+
+**Boundary:** this pattern is accepted only where every call is a thin WASM delegate and no business logic (validation, derivation, or cross-record constraint checking) lives in TypeScript between calls. If a feature requires TypeScript to enforce a cross-record invariant, it belongs in `srs-repository` as a service function and a new WASM binding — not in the TS orchestration layer. A future `create_decision` atomic binding that performs both operations in Rust is tracked as an enhancement issue in `srs-rust`.

@@ -204,8 +204,13 @@
     loadSectionRecords();
     buildSectionSchemas();
     refreshValidation();
-    const containers = listContainers(repo, { containerType: DECISION_LOG_CONTAINER_TYPE });
-    decisionLogContainerId = containers.find(c => c.containerType === DECISION_LOG_CONTAINER_TYPE)?.containerId ?? null;
+    try {
+      const containers = listContainers(repo, { containerType: DECISION_LOG_CONTAINER_TYPE });
+      decisionLogContainerId = containers[0]?.containerId ?? null;
+    } catch (e: unknown) {
+      console.error("listContainers failed in onMount:", e);
+      decisionLogContainerId = null;
+    }
   });
 
   // ---------------------------------------------------------------------------
@@ -245,6 +250,13 @@
             addContainerMember(repo, decisionLogContainerId, created.instanceId);
           } catch (e: unknown) {
             console.error("addContainerMember failed:", e);
+            formError = e instanceof Error
+              ? `Decision saved, but container registration failed: ${e.message}`
+              : "Decision saved, but could not register in decision log container.";
+            loadSectionRecords();
+            selectedId = created.instanceId;
+            refreshValidation();
+            return;
           }
         }
         formMode = null;
