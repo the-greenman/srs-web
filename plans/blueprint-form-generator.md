@@ -46,13 +46,13 @@
 - Move `FieldFormDef` and `TypeFormDef` interfaces to `src/lib/governance/types.ts`.
 - Extend `SECTIONS` entries in `src/lib/governance/sections.ts` with `typeId` and `typeVersion` for article, decision, and role.
 - In `App.svelte`: derive `TypeFormDef` per section at repo load time via `typeSchema()` + `definitionToFields()`; cache in `sectionSchemas` reactive state; replace all `GOVERNANCE_FORMS[...]` with `sectionSchemas[...]`.
-- Fix the hardcoded decision typeId in the `DecisionFlow` onSave callback in App.svelte.
+- Fix the hardcoded decision typeId in the `DecisionFlow` onSave callback in App.svelte. (Superseded by srs-web#103: `DecisionFlow` is now dead code; this item was completed differently.)
 - Update all import paths for `FieldFormDef` and `TypeFormDef`.
 
 **Out of scope:**
 
 - Changing `RecordForm.svelte` or `RecordReading.svelte` props or rendering logic.
-- Adding type schema support to `DecisionFlow.svelte`'s own internal field rendering (it still manages its own fields).
+- Adding type schema support to `DecisionFlow.svelte`'s own internal field rendering (it still manages its own fields). (Moot as of srs-web#103: `DecisionFlow` is dead code.)
 - The exercise section editor (no exercise type exists in gallery.srsj; remains read-only).
 - New WASM bindings, e2e fixture changes, or changes to srs-rust.
 

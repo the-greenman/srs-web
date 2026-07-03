@@ -53,7 +53,7 @@ No new TS type contracts introduced. Existing imports from `$lib/srs-client.js`,
 
 - Any changes to `GuidesShell.svelte` or the guides flow.
 - Any change to WASM binding signatures.
-- Any change to governance component logic (`RecordForm`, `Inspector`, `Nav`, `DecisionFlow`, etc.) beyond their import site.
+- Any change to governance component logic (`RecordForm`, `Inspector`, `Nav`, `DecisionFlow`, etc.) beyond their import site. (`DecisionFlow` is now dead code as of srs-web#103.)
 - Adding new features or capabilities to governance.
 - Refactoring `GovernanceShell.svelte` internals further (e.g., splitting into sub-components) — deferred as future work.
 - Resolving the hardcoded status field UUID — deferred as follow-up issue.
@@ -109,7 +109,7 @@ No new TS type contracts introduced. Existing imports from `$lib/srs-client.js`,
 - [x] Import all subcomponents using their actual file names from `$lib/components/`:
   `AppShell`, `Breadcrumb`, `Main`, `Topbar`, `Workspace`, `Nav`, `NavGroup`, `NavItem`,
   `Inspector`, `InspectorSection`, `Card`, `Diagnostics`, `RecordForm`, `SuccessorModal`,
-  `DecisionFlow`, `RecordReading`, `DecisionLogView`.
+  `DecisionFlow`, `RecordReading`, `DecisionLogView`. (`DecisionFlow` is no longer imported in GovernanceShell as of srs-web#103.)
 
 #### Acceptance Criteria
 
