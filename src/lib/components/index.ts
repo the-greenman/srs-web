@@ -44,6 +44,9 @@ export { default as SaveBar } from "./SaveBar.svelte";
 // View selection
 export { default as ViewPicker } from "./ViewPicker.svelte";
 
+// Decision link picker modal
+export { default as DecisionLinkPicker } from "./DecisionLinkPicker.svelte";
+
 // Status / actions / validation
 export { default as Tag } from "./Tag.svelte";
 export { default as Button } from "./Button.svelte";
