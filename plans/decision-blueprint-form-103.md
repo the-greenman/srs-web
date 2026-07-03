@@ -133,7 +133,7 @@ npm test
 
 #### Tasks
 
-- [ ] Rewrite `e2e/decision-flow.spec.ts`:
+- [x] Rewrite `e2e/decision-flow.spec.ts`:
   - Remove all tests referencing `Quick Capture`, `Full Deliberation`, `.decision-flow__progress-label`, `#del-stage-field`, `.decision-summary`
   - Rename describe block to `"Decision create (generic RecordForm, srs-web#103)"`
   - **Add test 1:** "New button opens generic RecordForm" — click `button.topbar__new`, assert `page.getByTestId("record-form")` is visible
