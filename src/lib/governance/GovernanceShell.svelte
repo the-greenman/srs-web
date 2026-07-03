@@ -46,7 +46,7 @@
 
   import { buildDynamicSections } from "$lib/governance/sections.js";
   import type { SectionConfig, SectionKey } from "$lib/governance/sections.js";
-  import { DECISION_TYPE_ID, DECISION_LOG_CONTAINER_TYPE } from "$lib/governance/type-registry.js";
+  import { DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
   import { getStringField, STATUS_FIELD_ID } from "$lib/governance/field-utils.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
@@ -214,11 +214,19 @@
     loadSectionRecords();
     buildSectionSchemas();
     refreshValidation();
+    // RFC-009 UUID-chain: find the decision-log container via root record's typeId
+    // (gallery.srsj confirms the decision-log container root is a decision record)
     try {
-      const containers = listContainers(repo, { containerType: DECISION_LOG_CONTAINER_TYPE });
-      decisionLogContainerId = containers[0]?.containerId ?? null;
+      const dlRecords = sectionRecords[DECISION_TYPE_ID] ?? [];
+      for (const record of dlRecords) {
+        const containers = listContainers(repo, { rootInstanceId: record.instanceId });
+        if (containers.length > 0) {
+          decisionLogContainerId = containers[0].containerId;
+          break;
+        }
+      }
     } catch (e: unknown) {
-      console.error("listContainers failed in onMount:", e);
+      console.error("decision-log container discovery failed:", e);
       decisionLogContainerId = null;
     }
   });
