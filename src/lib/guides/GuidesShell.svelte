@@ -58,9 +58,9 @@
   import type { BreadcrumbItem } from "$lib/types.js";
 
   // ---------------------------------------------------------------------------
-  // Well-known blueprint identity for this opinionated editor (ADR-004).
-  // The blueprint and its paired document views are discovered at runtime via
-  // listBlueprints() + listDocumentViews(); no UUID literals here.
+  // Well-known blueprint identity for this opinionated editor (ADR-008).
+  // The blueprint is found by name; document views are discovered via UUID-chain
+  // join (rootTypeRefs) using the root type UUID from blueprintSchema().
   // ---------------------------------------------------------------------------
   const WELL_KNOWN_BLUEPRINT = { namespace: "com.mudemocracy", name: "guide" } as const;
 
@@ -146,7 +146,7 @@
     PREVIEW_THEMES.find((t) => t.id === selectedThemeId)?.css ?? THEME_DEFAULT
   );
 
-  /** Document views discovered for the guide blueprint (ADR-004). */
+  /** Document views discovered for the guide blueprint (ADR-008 UUID-chain join). */
   let availableViews = $state<DocumentViewSummary[]>([]);
 
   /** Currently selected document-view ID for preview/export. Null until discovery completes. */
