@@ -165,6 +165,6 @@ describe("sortByCreatedAt", () => {
       makeRecord("inst-y", "2026-01-01T10:00:00Z"),
     ];
     const sorted = sortByCreatedAt(equalDates, "newest");
-    expect(sorted).toHaveLength(2);
+    expect(sorted.map((r) => r.instanceId)).toEqual(["inst-x", "inst-y"]);
   });
 });

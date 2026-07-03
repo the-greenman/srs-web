@@ -848,9 +848,10 @@ export function find(repo: SrsRepository, query: DiscoveryQuery): DiscoveryResul
 /** RFC-006 vocabulary Term returned by `list_terms`. */
 export interface Term {
   id: string;
-  label: string;
-  definition?: string;
-  tags?: string[];
+  label?: string;
+  description?: string;
+  aliases?: string[];
+  roles?: string[];
 }
 
 /**
@@ -864,7 +865,8 @@ export function listTerms(repo: SrsRepository): Term[] {
   return raw.map((r) => ({
     id: r.id,
     label: r.label,
-    definition: r.definition,
-    tags: Array.isArray(r.tags) ? r.tags : undefined,
+    description: r.description,
+    aliases: Array.isArray(r.aliases) ? r.aliases : undefined,
+    roles: Array.isArray(r.roles) ? r.roles : undefined,
   }));
 }

@@ -61,6 +61,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     list_document_views: () => { throw new Error("not mocked"); },
     find: () => { throw new Error("not mocked"); },
     list_terms: () => { throw new Error("not mocked"); },
+    create_record_successor: () => { throw new Error("not mocked"); },
   };
   return { ...base, ...overrides };
 }
@@ -696,8 +697,8 @@ describe("find", () => {
 describe("listTerms", () => {
   it("calls list_terms with no arguments and returns normalised Term[]", () => {
     const rawTerms = [
-      { id: "term-001", label: "Risk", definition: "A potential issue", tags: ["governance"] },
-      { id: "term-002", label: "Decision", tags: [] },
+      { id: "term-001", label: "Risk", description: "A potential issue", aliases: ["hazard"], roles: ["governance"] },
+      { id: "term-002", label: "Decision" },
     ];
     const spy = vi.fn().mockReturnValue(rawTerms);
     const repo = mockRepo({ list_terms: spy });
@@ -709,17 +710,20 @@ describe("listTerms", () => {
     expect(result).toHaveLength(2);
     expect(result[0].id).toBe("term-001");
     expect(result[0].label).toBe("Risk");
-    expect(result[0].definition).toBe("A potential issue");
-    expect(result[0].tags).toEqual(["governance"]);
+    expect(result[0].description).toBe("A potential issue");
+    expect(result[0].aliases).toEqual(["hazard"]);
+    expect(result[0].roles).toEqual(["governance"]);
   });
 
-  it("returns a term with undefined definition and tags when they are absent", () => {
-    const repo = mockRepo({ list_terms: () => [{ id: "term-003", label: "Goal" }] });
+  it("returns a term with undefined optional fields when they are absent", () => {
+    const repo = mockRepo({ list_terms: () => [{ id: "term-003" }] });
 
     const result = listTerms(repo);
 
-    expect(result[0].definition).toBeUndefined();
-    expect(result[0].tags).toBeUndefined();
+    expect(result[0].label).toBeUndefined();
+    expect(result[0].description).toBeUndefined();
+    expect(result[0].aliases).toBeUndefined();
+    expect(result[0].roles).toBeUndefined();
   });
 
   it("returns an empty array when no terms are registered", () => {
