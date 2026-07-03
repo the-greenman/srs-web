@@ -12,11 +12,14 @@
 import { describe, expect, it, vi } from "vitest";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 import {
+  addContainerMember,
   containersForInstance,
   documentViewsForContainer,
   listBlueprints,
+  listContainers,
   listDocumentViews,
   typeSchema,
+  type ContainerListFilter,
   type DocumentViewListFilter,
 } from "../src/lib/srs-client.js";
 
@@ -303,5 +306,83 @@ describe("listDocumentViews", () => {
     listDocumentViews(repo, filter);
 
     expect(spy).toHaveBeenCalledWith(JSON.stringify(filter));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// listContainers
+// ---------------------------------------------------------------------------
+
+describe("listContainers", () => {
+  it("calls list_containers with serialised filter and returns ContainerSummary array", () => {
+    const summaries = [
+      { containerId: "c-dl-001", title: "Decision Log", containerType: "decision-log" },
+    ];
+    const spy = vi.fn().mockReturnValue(summaries);
+    const repo = mockRepo({ list_containers: spy });
+
+    const result = listContainers(repo, { containerType: "decision-log" });
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(JSON.stringify({ containerType: "decision-log" }));
+    expect(result).toHaveLength(1);
+    expect(result[0].containerId).toBe("c-dl-001");
+    expect(result[0].containerType).toBe("decision-log");
+  });
+
+  it("passes an empty filter object when called with no arguments", () => {
+    const spy = vi.fn().mockReturnValue([]);
+    const repo = mockRepo({ list_containers: spy });
+
+    listContainers(repo);
+
+    expect(spy).toHaveBeenCalledWith("{}");
+  });
+
+  it("returns an empty array when no containers match the filter", () => {
+    const repo = mockRepo({ list_containers: () => [] });
+    const result = listContainers(repo, { containerType: "decision-log" });
+    expect(result).toEqual([]);
+  });
+
+  it("passes arbitrary filter keys through serialisation", () => {
+    const spy = vi.fn().mockReturnValue([]);
+    const repo = mockRepo({ list_containers: spy });
+    const filter: ContainerListFilter = { memberInstanceId: "inst-abc" };
+
+    listContainers(repo, filter);
+
+    expect(spy).toHaveBeenCalledWith(JSON.stringify(filter));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// addContainerMember — srs-web#103: register new decisions in decision_log
+// ---------------------------------------------------------------------------
+
+describe("addContainerMember", () => {
+  it("calls add_container_member with containerId and instanceId and returns the member list", () => {
+    const memberIds = ["inst-abc", "inst-def"];
+    const spy = vi.fn().mockReturnValue(memberIds);
+    const repo = mockRepo({ add_container_member: spy });
+
+    const result = addContainerMember(repo, "c-dl-001", "inst-abc");
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith("c-dl-001", "inst-abc");
+    expect(result).toEqual(memberIds);
+  });
+
+  it("propagates WASM throw when the container does not exist", () => {
+    const repo = mockRepo({
+      add_container_member: () => { throw new Error("container not found"); },
+    });
+    expect(() => addContainerMember(repo, "nonexistent", "inst-abc")).toThrow("container not found");
+  });
+
+  it("returns an empty array when the container starts empty (idempotent first add)", () => {
+    const repo = mockRepo({ add_container_member: () => ["inst-abc"] });
+    const result = addContainerMember(repo, "c-dl-001", "inst-abc");
+    expect(result).toEqual(["inst-abc"]);
   });
 });

@@ -30,6 +30,7 @@ export interface TypeRegistryEntry {
 }
 
 export const DECISION_TYPE_ID = "1fcad6a2-9f78-5e41-94ba-d82e88b822f3";
+export const DECISION_LOG_CONTAINER_TYPE = "decision-log";
 
 // Release 1 is a decision-log-only editor. The `article`, `role`, and `exercise` types
 // stay defined (dormant) in the com.mudemocracy.governance package, but the editor

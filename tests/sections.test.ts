@@ -3,7 +3,9 @@
  *
  * All functions are pure; no WASM interaction. Tests cover section derivation
  * from TYPE_REGISTRY (always visible) and from unknown records.
- * Note: DECISION_TYPE_ID is defined as a local constant here for test independence.
+ *
+ * Release 1 (srs-web#110): TYPE_REGISTRY contains only the decision type.
+ * Article and role type IDs are kept as local constants for unknown-type tests.
  */
 
 import { describe, expect, it } from "vitest";
@@ -28,49 +30,35 @@ function makeRecord(typeId: string, typeName?: string, overrides: Partial<SrsRec
 }
 
 describe("buildDynamicSections", () => {
-  it("returns exactly 3 sections from an empty record list", () => {
+  it("returns exactly 1 section from an empty record list (decision-only registry)", () => {
     const sections = buildDynamicSections([]);
-    expect(sections).toHaveLength(3);
+    expect(sections).toHaveLength(1);
   });
 
-  it("returns sections in order: articles, decisions, roles", () => {
+  it("returns decision as the only section when record list is empty", () => {
     const sections = buildDynamicSections([]);
-    expect(sections[0].typeName).toBe("article");
-    expect(sections[1].typeName).toBe("decision");
-    expect(sections[2].typeName).toBe("role");
+    expect(sections[0].typeName).toBe("decision");
   });
 
-  it("each known section has the correct label and icon", () => {
+  it("decision section has the correct label and icon", () => {
     const sections = buildDynamicSections([]);
-    const articles = sections.find((s) => s.typeId === ARTICLE_TYPE_ID);
-    expect(articles?.label).toBe("Articles");
-    expect(articles?.icon).toBe("§");
-
     const decisions = sections.find((s) => s.typeId === DECISION_TYPE_ID);
     expect(decisions?.label).toBe("Decision Log");
     expect(decisions?.icon).toBe("⊕");
-
-    const roles = sections.find((s) => s.typeId === ROLE_TYPE_ID);
-    expect(roles?.label).toBe("Roles");
-    expect(roles?.icon).toBe("◈");
   });
 
-  it("does not duplicate known types when records include them", () => {
-    const records = [
-      makeRecord(ARTICLE_TYPE_ID, "article"),
-      makeRecord(DECISION_TYPE_ID, "decision"),
-      makeRecord(ROLE_TYPE_ID, "role"),
-    ];
+  it("does not duplicate the decision section when records include a decision", () => {
+    const records = [makeRecord(DECISION_TYPE_ID, "decision")];
     const sections = buildDynamicSections(records);
-    expect(sections).toHaveLength(3);
+    expect(sections).toHaveLength(1);
   });
 
-  it("appends a 4th section for an unknown typeId found in records", () => {
+  it("appends a 2nd section for an unknown typeId found in records", () => {
     const unknownId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
     const records = [makeRecord(unknownId, "motion")];
     const sections = buildDynamicSections(records);
-    expect(sections).toHaveLength(4);
-    const motionSection = sections[3];
+    expect(sections).toHaveLength(2);
+    const motionSection = sections[1];
     expect(motionSection.typeId).toBe(unknownId);
     expect(motionSection.label).toBe("Motion");
     expect(motionSection.icon).toBe("◻");
@@ -84,7 +72,19 @@ describe("buildDynamicSections", () => {
       makeRecord(unknownId, "motion"),
     ];
     const sections = buildDynamicSections(records);
-    expect(sections).toHaveLength(4);
+    expect(sections).toHaveLength(2);
+  });
+
+  it("article and role type IDs are treated as unknown types (not in TYPE_REGISTRY)", () => {
+    const records = [
+      makeRecord(ARTICLE_TYPE_ID, "article"),
+      makeRecord(ROLE_TYPE_ID, "role"),
+    ];
+    const sections = buildDynamicSections(records);
+    // 1 known (decision) + 2 unknown (article, role)
+    expect(sections).toHaveLength(3);
+    expect(sections.find((s) => s.typeId === ARTICLE_TYPE_ID)).toBeDefined();
+    expect(sections.find((s) => s.typeId === ROLE_TYPE_ID)).toBeDefined();
   });
 
   it("unknown type with typeName undefined falls back to typeId as label", () => {
@@ -102,8 +102,8 @@ describe("buildDynamicSections", () => {
       { instanceId: "x", typeId: "", typeVersion: 1, fieldValues: [] } as SrsRecord,
     ];
     const sections = buildDynamicSections(records);
-    // Only TYPE_REGISTRY entries
-    expect(sections).toHaveLength(3);
+    // Only TYPE_REGISTRY entry (decision)
+    expect(sections).toHaveLength(1);
   });
 
   it("SectionKey is assignable from a string literal (type check)", () => {
