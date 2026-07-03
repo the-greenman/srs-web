@@ -12,10 +12,13 @@
     typeSchema,
     addContainerMember,
     listContainers,
+    listRelations,
+    createRelation,
   } from "$lib/srs-client.js";
   import type {
     SrsRepository,
     SrsRecord,
+    SrsRelation,
     Diagnostic as WasmDiagnostic,
     CreateRecordInput,
     UpdateRecordInput,
@@ -37,6 +40,7 @@
   import Diagnostics from "$lib/components/Diagnostics.svelte";
   import RecordForm from "$lib/components/RecordForm.svelte";
   import SuccessorModal from "$lib/components/SuccessorModal.svelte";
+  import DecisionLinkPicker from "$lib/components/DecisionLinkPicker.svelte";
   import RecordReading from "$lib/components/RecordReading.svelte";
   import DecisionLogView from "$lib/components/DecisionLogView.svelte";
 
@@ -100,6 +104,12 @@
 
   /** Whether the immutability guard modal is shown. */
   let showSuccessorModal = $state(false);
+
+  /** Whether the decision link picker modal is shown. */
+  let showLinkPicker = $state(false);
+
+  /** Relations (as source or target) for the currently selected decision. */
+  let decisionRelations = $state<SrsRelation[]>([]);
 
   /** Container ID of the decision_log container, discovered at boot via listContainers. */
   let decisionLogContainerId = $state<string | null>(null);
@@ -300,6 +310,7 @@
     if (!selectedRecord) return;
     deleteRecord(repo, selectedRecord.instanceId);
     selectedId = null;
+    showLinkPicker = false;
     loadSectionRecords();
     refreshValidation();
   }
@@ -338,6 +349,41 @@
       loadSectionRecords();
     }
   }
+
+  function loadDecisionRelations(instanceId: string): void {
+    try {
+      const asSource = listRelations(repo, { source: instanceId });
+      const asTarget = listRelations(repo, { target: instanceId });
+      decisionRelations = [...asSource, ...asTarget];
+    } catch (e: unknown) {
+      console.error("loadDecisionRelations failed:", e);
+      decisionRelations = [];
+    }
+  }
+
+  function handleAddRelation(relationType: string, targetInstanceId: string): void {
+    if (!selectedRecord) return;
+    try {
+      createRelation(repo, {
+        relationType,
+        sourceInstanceId: selectedRecord.instanceId,
+        targetInstanceId,
+      });
+      showLinkPicker = false;
+      loadDecisionRelations(selectedRecord.instanceId);
+      refreshValidation();
+    } catch (e: unknown) {
+      console.error("createRelation failed:", e);
+    }
+  }
+
+  $effect(() => {
+    if (selectedRecord && activeSection_?.typeId === DECISION_TYPE_ID) {
+      loadDecisionRelations(selectedRecord.instanceId);
+    } else {
+      decisionRelations = [];
+    }
+  });
 </script>
 
 <!-- SVG filter — required by Nav (ink surface effect) -->
@@ -368,6 +414,7 @@
                 formMode = null;
                 editingRecord = null;
                 formError = null;
+                showLinkPicker = false;
               }}
             >
               <NavItem
@@ -505,6 +552,32 @@
           {/if}
         </InspectorSection>
       {/if}
+      {#if selectedRecord && formMode === null && activeSection_?.typeId === DECISION_TYPE_ID}
+        <InspectorSection title="Decision Links" aside={decisionRelations.length === 0 ? "" : String(decisionRelations.length)}>
+          {#if decisionRelations.length === 0}
+            <p class="inspector__empty">No links yet.</p>
+          {:else}
+            <ul class="inspector__relations" data-testid="decision-relations-list">
+              {#each decisionRelations as rel (rel.relationId)}
+                {@const peerId = rel.sourceInstanceId === selectedRecord.instanceId ? rel.targetInstanceId : rel.sourceInstanceId}
+                {@const peerLabel = activeRecords.find(r => r.instanceId === peerId)?.displayLabel ?? peerId.slice(0, 8) + "…"}
+                {@const direction = rel.sourceInstanceId === selectedRecord.instanceId ? "→" : "←"}
+                <li class="inspector__relation-item" data-testid="relation-item">
+                  <span class="inspector__relation-type">{rel.relationType}</span>
+                  <span class="inspector__relation-dir">{direction}</span>
+                  <span class="inspector__relation-peer">{peerLabel}</span>
+                </li>
+              {/each}
+            </ul>
+          {/if}
+          <button
+            class="inspector__btn"
+            data-testid="add-relation-btn"
+            onclick={() => { showLinkPicker = true; }}
+          >Link to decision</button>
+        </InspectorSection>
+      {/if}
+
       <InspectorSection title="Validation" aside={validationAside}>
         <Diagnostics {diagnostics} />
       </InspectorSection>
@@ -527,6 +600,16 @@
     record={selectedRecord}
     onCreateSuccessor={handleCreateSuccessor}
     onCancel={() => { showSuccessorModal = false; }}
+  />
+{/if}
+
+{#if showLinkPicker && selectedRecord && activeSection_?.typeId === DECISION_TYPE_ID && formMode === null}
+  <DecisionLinkPicker
+    sourceInstanceId={selectedRecord.instanceId}
+    sourceLabel={selectedRecord.displayLabel ?? selectedRecord.instanceId.slice(0, 8)}
+    decisions={activeRecords.filter(r => r.instanceId !== selectedRecord.instanceId)}
+    onLink={handleAddRelation}
+    onCancel={() => { showLinkPicker = false; }}
   />
 {/if}
 
@@ -678,6 +761,48 @@
   .inspector__btn--transition {
     font-size: 0.6875rem;
     opacity: 0.65;
+  }
+
+  /* ---- Inspector decision relations ---- */
+  .inspector__empty {
+    font-size: 0.75rem;
+    opacity: 0.5;
+    margin: 0.25rem 0 0.5rem;
+  }
+
+  .inspector__relations {
+    list-style: none;
+    margin: 0 0 0.5rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .inspector__relation-item {
+    display: flex;
+    gap: 0.35rem;
+    align-items: baseline;
+    font-size: 0.75rem;
+    padding: 0.2rem 0;
+    border-top: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+  }
+
+  .inspector__relation-type {
+    font-style: italic;
+    opacity: 0.65;
+    min-width: 5rem;
+  }
+
+  .inspector__relation-dir {
+    opacity: 0.45;
+  }
+
+  .inspector__relation-peer {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 8rem;
   }
 
   /* ---- Nav footer ---- */

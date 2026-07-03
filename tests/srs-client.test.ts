@@ -14,11 +14,14 @@ import type { SrsRepository } from "../src/lib/srs-client.js";
 import {
   addContainerMember,
   containersForInstance,
+  createRelation,
+  deleteRelation,
   documentViewsForContainer,
   listBlueprints,
   listContainers,
   listDocumentViews,
   listRecords,
+  listRelations,
   typeSchema,
   type ContainerListFilter,
   type DocumentViewListFilter,
@@ -440,5 +443,160 @@ describe("listRecords", () => {
 
     expect(spy).toHaveBeenCalledOnce();
     expect(spy).toHaveBeenCalledWith(JSON.stringify({ typeNamespace: "com.example", typeName: "decision" }));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// listRelations — srs-web#106: load relations for a decision record
+// ---------------------------------------------------------------------------
+
+describe("listRelations", () => {
+  it("calls list_relations with JSON-serialised filter and returns normalised relations", () => {
+    const raw = [
+      {
+        relationId: "rel-001",
+        relationType: "supersedes",
+        sourceInstanceId: "inst-a",
+        targetInstanceId: "inst-b",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
+    ];
+    const spy = vi.fn().mockReturnValue(raw);
+    const repo = mockRepo({ list_relations: spy });
+
+    const result = listRelations(repo, { source: "inst-a" });
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(JSON.stringify({ source: "inst-a" }));
+    expect(result).toHaveLength(1);
+    expect(result[0].relationId).toBe("rel-001");
+    expect(result[0].relationType).toBe("supersedes");
+    expect(result[0].sourceInstanceId).toBe("inst-a");
+    expect(result[0].targetInstanceId).toBe("inst-b");
+  });
+
+  it("normalises snake_case fields from WASM (dual-lookup: relation_id, source_instance_id, target_instance_id)", () => {
+    const raw = [
+      {
+        relation_id: "rel-002",
+        relation_type: "depends-on",
+        source_instance_id: "inst-c",
+        target_instance_id: "inst-d",
+      },
+    ];
+    const repo = mockRepo({ list_relations: () => raw });
+
+    const result = listRelations(repo, { target: "inst-d" });
+
+    expect(result[0].relationId).toBe("rel-002");
+    expect(result[0].relationType).toBe("depends-on");
+    expect(result[0].sourceInstanceId).toBe("inst-c");
+    expect(result[0].targetInstanceId).toBe("inst-d");
+  });
+
+  it("accepts RelationSummary sourceId / targetId aliases", () => {
+    const raw = [{ relation_id: "rel-003", relation_type: "precedes", sourceId: "inst-e", targetId: "inst-f" }];
+    const repo = mockRepo({ list_relations: () => raw });
+
+    const result = listRelations(repo, {});
+
+    expect(result[0].sourceInstanceId).toBe("inst-e");
+    expect(result[0].targetInstanceId).toBe("inst-f");
+  });
+
+  it("returns an empty array when no relations match the filter", () => {
+    const repo = mockRepo({ list_relations: () => [] });
+    expect(listRelations(repo, { source: "orphan" })).toEqual([]);
+  });
+
+  it("uses an empty filter object when called with no filter argument", () => {
+    const spy = vi.fn().mockReturnValue([]);
+    const repo = mockRepo({ list_relations: spy });
+
+    listRelations(repo);
+
+    expect(spy).toHaveBeenCalledWith("{}");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createRelation — srs-web#106: link two decisions via a typed relation
+// ---------------------------------------------------------------------------
+
+describe("createRelation", () => {
+  it("calls create_relation with JSON-serialised input and returns the normalised relation", () => {
+    const raw = {
+      relationId: "rel-new-001",
+      relationType: "supersedes",
+      sourceInstanceId: "inst-src",
+      targetInstanceId: "inst-tgt",
+      createdAt: "2026-07-01T00:00:00Z",
+    };
+    const spy = vi.fn().mockReturnValue(raw);
+    const repo = mockRepo({ create_relation: spy });
+
+    const result = createRelation(repo, {
+      relationType: "supersedes",
+      sourceInstanceId: "inst-src",
+      targetInstanceId: "inst-tgt",
+    });
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(
+      JSON.stringify({ relationType: "supersedes", sourceInstanceId: "inst-src", targetInstanceId: "inst-tgt" })
+    );
+    expect(result.relationId).toBe("rel-new-001");
+    expect(result.relationType).toBe("supersedes");
+    expect(result.sourceInstanceId).toBe("inst-src");
+    expect(result.targetInstanceId).toBe("inst-tgt");
+  });
+
+  it("normalises snake_case fields from WASM (relation_id, relation_type, source_instance_id, target_instance_id)", () => {
+    const raw = {
+      relation_id: "rel-new-002",
+      relation_type: "depends-on",
+      source_instance_id: "inst-x",
+      target_instance_id: "inst-y",
+    };
+    const repo = mockRepo({ create_relation: () => raw });
+
+    const result = createRelation(repo, {
+      relationType: "depends-on",
+      sourceInstanceId: "inst-x",
+      targetInstanceId: "inst-y",
+    });
+
+    expect(result.relationId).toBe("rel-new-002");
+    expect(result.relationType).toBe("depends-on");
+    expect(result.sourceInstanceId).toBe("inst-x");
+    expect(result.targetInstanceId).toBe("inst-y");
+  });
+
+  it("propagates WASM throw when the relation cannot be created", () => {
+    const repo = mockRepo({ create_relation: () => { throw new Error("duplicate relation"); } });
+    expect(() =>
+      createRelation(repo, { relationType: "supersedes", sourceInstanceId: "a", targetInstanceId: "b" })
+    ).toThrow("duplicate relation");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// deleteRelation — srs-web#116 (UI deferred); binding tested here
+// ---------------------------------------------------------------------------
+
+describe("deleteRelation", () => {
+  it("calls delete_relation with the given relation ID", () => {
+    const spy = vi.fn();
+    const repo = mockRepo({ delete_relation: spy });
+
+    deleteRelation(repo, "rel-to-delete");
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith("rel-to-delete");
+  });
+
+  it("propagates WASM throw when the relation ID does not exist", () => {
+    const repo = mockRepo({ delete_relation: () => { throw new Error("relation not found"); } });
+    expect(() => deleteRelation(repo, "nonexistent")).toThrow("relation not found");
   });
 });
