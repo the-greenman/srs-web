@@ -55,26 +55,30 @@ via the existing `rootTypeId(schema)` helper in `blueprint-utils.ts`. The call t
 
 ### Container discovery in `GovernanceShell.svelte`
 
-Replace `listContainers(repo, { containerType: "decision-log" })` with:
+Replace `listContainers(repo, { containerType: "decision-log" })` with a UUID-direct lookup
+using the existing `DECISION_TYPE_ID` constant. Fixture analysis (gallery.srsj container
+`138e2fac-6a8a-4a06-9511-5aefd99ceae9`) confirms the decision-log container's root record has
+`typeId === DECISION_TYPE_ID`, so `sectionRecords` can be indexed directly by UUID:
 
 ```ts
-const dlSection = dynamicSections.find(
-  (s) => s.typeName === DECISION_LOG_TYPE_NAME && s.typeNamespace === DECISION_LOG_TYPE_NAMESPACE
-);
-if (dlSection) {
-  const dlRecords = sectionRecords[dlSection.typeId] ?? [];
-  const rootRecord = dlRecords[0];
-  if (rootRecord) {
-    const containers = listContainers(repo, { rootInstanceId: rootRecord.instanceId });
-    decisionLogContainerId = containers[0]?.containerId ?? null;
+try {
+  const dlRecords = sectionRecords[DECISION_TYPE_ID] ?? [];
+  for (const record of dlRecords) {
+    const containers = listContainers(repo, { rootInstanceId: record.instanceId });
+    if (containers.length > 0) {
+      decisionLogContainerId = containers[0].containerId;
+      break;
+    }
   }
+} catch (e: unknown) {
+  console.error("decision-log container discovery failed:", e);
+  decisionLogContainerId = null;
 }
 ```
 
-`dynamicSections` (built by `buildDynamicSections` from TYPE_REGISTRY + loaded records) and
-`sectionRecords` are synchronously populated by `loadSectionRecords()` before this block runs
-in `onMount()`. The two new constants `DECISION_LOG_TYPE_NAMESPACE` and `DECISION_LOG_TYPE_NAME`
-are added to `type-registry.ts`.
+`sectionRecords` is synchronously populated by `loadSectionRecords()` before this block runs
+in `onMount()`. `DECISION_TYPE_ID` is the existing constant — no new constants needed.
+`DECISION_LOG_CONTAINER_TYPE` is removed from `type-registry.ts` as it is no longer used.
 
 ## Consequences
 

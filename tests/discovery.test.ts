@@ -100,6 +100,19 @@ describe("documentViewsForBlueprint", () => {
     expect(result[0].id).toBe("view-match");
   });
 
+  it("excludes views with null rootTypeRefs (defensively coerced)", () => {
+    const views: DocumentViewSummary[] = [
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      dv("view-null-refs", null as any),
+      dv("view-match", [{ typeId: GUIDE_TYPE_ID, typeVersion: 1 }]),
+    ];
+
+    const result = documentViewsForBlueprint(GUIDE_TYPE_ID, views);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("view-match");
+  });
+
   it("matches when rootTypeRefs contains the target type among multiple entries", () => {
     const views: DocumentViewSummary[] = [
       dv("view-multi", [
