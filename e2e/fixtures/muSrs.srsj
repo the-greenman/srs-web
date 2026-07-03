@@ -1249,7 +1249,13 @@
           }
         }
       ],
-      "version": 1
+      "version": 1,
+      "rootTypeRefs": [
+        {
+          "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
+          "typeVersion": 1
+        }
+      ]
     },
     "package/fields/subtitle-9bb3d21d.json": {
       "aiGuidance": {

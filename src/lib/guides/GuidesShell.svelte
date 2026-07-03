@@ -280,16 +280,30 @@
   // ---------------------------------------------------------------------------
   onMount(() => {
     try {
-      // Discover blueprint and paired views (ADR-004: string-convention join).
+      // ADR-008: UUID-chain join — load blueprint schema first to get root type UUID,
+      // then use it to discover paired document views via rootTypeRefs.
       const bps = listBlueprints(repo).summaries;
       const blueprint = findBlueprint(bps, WELL_KNOWN_BLUEPRINT.namespace, WELL_KNOWN_BLUEPRINT.name);
       if (!blueprint) {
         schemaError = `Guide blueprint not found (${WELL_KNOWN_BLUEPRINT.namespace}/${WELL_KNOWN_BLUEPRINT.name})`;
         return;
       }
+
+      const result = blueprintSchema(repo, blueprint.id);
+      if (result.diagnostics.length > 0) {
+        schemaError = result.diagnostics.join("; ");
+        return;
+      }
+      const schema = result.schema;
+      const rootId = rootTypeId(schema);
+      if (!rootId) {
+        schemaError = `Blueprint schema has no root type (${WELL_KNOWN_BLUEPRINT.namespace}/${WELL_KNOWN_BLUEPRINT.name})`;
+        return;
+      }
+
       const allViews = listDocumentViews(repo);
       // Sort deterministically by name so the auto-selected view is stable.
-      const views = documentViewsForBlueprint(blueprint, allViews).sort((a, b) =>
+      const views = documentViewsForBlueprint(rootId, allViews).sort((a, b) =>
         a.name.localeCompare(b.name)
       );
       availableViews = views;
@@ -298,30 +312,22 @@
         schemaError = `No document views found for blueprint ${WELL_KNOWN_BLUEPRINT.namespace}/${WELL_KNOWN_BLUEPRINT.name} — preview and export unavailable.`;
       }
 
-      const result = blueprintSchema(repo, blueprint.id);
-      if (result.diagnostics.length > 0) {
-        schemaError = result.diagnostics.join("; ");
-      }
-      const schema = result.schema;
       sectionTypeList = sectionTypes(schema);
-      const rootId = rootTypeId(schema);
       guideTypeId = rootId;
       const fields = rootFields(schema);
-      if (rootId) {
-        guideFormDef = {
-          typeId: rootId,
-          typeVersion: 1,
-          typeNamespace: "com.mudemocracy",
-          typeName: "guide",
-          label: "Guide",
-          fields,
-        };
-        // Derive guide title field ID from the "title" property in the root definition.
-        const guideDef = schema.definitions[rootId];
-        if (guideDef) {
-          const titleProp = Object.entries(guideDef.properties).find(([n]) => n === "title");
-          guideTitleFieldId = titleProp?.[1]["x-srs-field-id"] ?? null;
-        }
+      guideFormDef = {
+        typeId: rootId,
+        typeVersion: 1,
+        typeNamespace: "com.mudemocracy",
+        typeName: "guide",
+        label: "Guide",
+        fields,
+      };
+      // Derive guide title field ID from the "title" property in the root definition.
+      const guideDef = schema.definitions[rootId];
+      if (guideDef) {
+        const titleProp = Object.entries(guideDef.properties).find(([n]) => n === "title");
+        guideTitleFieldId = titleProp?.[1]["x-srs-field-id"] ?? null;
       }
       // Derive section heading field ID from the "heading" property in any section type.
       const firstSt = sectionTypes(schema)[0];
