@@ -445,10 +445,7 @@
             {:else}
               <div class="record-list">
                 {#each activeRecords as record (record.instanceId)}
-                  {@const title =
-                    getStringField(record, "title", fieldMetaMap) ??
-                    getStringField(record, "decision_statement", fieldMetaMap) ??
-                    record.instanceId}
+                  {@const title = record.displayLabel ?? record.instanceId}
                   {@const articleNumber = getStringField(record, "article_number", fieldMetaMap)}
                   {@const status = getStringField(record, "status", fieldMetaMap) as Status | undefined}
                   {@const isSelected = selectedId === record.instanceId}

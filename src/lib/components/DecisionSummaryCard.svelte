@@ -21,7 +21,7 @@
 
   const fieldMeta = $derived(getFieldMeta());
 
-  const title = $derived(getStringField(record, "title", fieldMeta) ?? "Untitled");
+  const title = $derived(record.displayLabel ?? "Untitled");
   const rawStatement = $derived(getStringField(record, "decision_statement", fieldMeta));
   const statement = $derived(
     rawStatement !== undefined
