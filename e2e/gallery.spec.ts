@@ -5,10 +5,16 @@ import { expect, test } from "@playwright/test";
 /**
  * gallery.spec.ts — end-to-end tests using the governance gallery fixture.
  *
- * gallery.srsj is a real governance repository with 6 articles, 7 decisions,
- * and 3 roles. These tests verify that records actually render (not empty state),
- * which catches WASM serialisation bugs like duplicate-key crashes when
- * instanceId resolves to undefined.
+ * gallery.srsj is a real governance repository with 6 articles, 9 decisions,
+ * 3 roles, and 2 exercises. These tests verify that records actually render
+ * (not empty state), which catches WASM serialisation bugs like duplicate-key
+ * crashes when instanceId resolves to undefined.
+ *
+ * Release 1 is a decision-log-only editor: only DecisionView is registered in
+ * TYPE_REGISTRY. Article, role, and exercise records fall back to RecordView
+ * via RecordDispatch. Field labels are derived from the WASM typeSchema()
+ * output (displayLabel → JSON Schema title), so assertions like "Article Text",
+ * "Role Holder", and "Thinking Reached" remain valid under RecordView.
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -105,11 +111,11 @@ test.describe("Gallery fixture — real records render", () => {
     await expect(exercisesNav).toContainText("2");
   });
 
-  test("selecting an exercise shows ExerciseView fields in the reading view", async ({ page }) => {
+  test("selecting an exercise shows its fields in the reading view (RecordView fallback)", async ({ page }) => {
     await page.getByRole("link", { name: /Exercises/ }).click();
     await page.locator(".record-list__item").first().click();
 
-    // Reading view must contain exercise-specific field label
+    // RecordView derives label from type schema displayLabel → JSON Schema title
     await expect(page.locator('[data-testid="record-reading"]')).toContainText("Thinking Reached");
   });
 
