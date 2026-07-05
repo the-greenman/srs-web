@@ -76,7 +76,7 @@ interface RepositoryNavigation {
 - Migrating `gallery.srsj` or `muSrs.srsj` fixtures to RFC-013 (gallery.srsj is the WASM smoke-test fixture; those will be updated separately)
 - Removing `listContainers()` or `getContainer()` from `srs-client.ts` (they are still used by other code paths)
 - Removing `sections.ts` / `buildDynamicSections()` (kept for backward-compat unit tests per ADR-009)
-- No legacy fallback to `listContainers()` — the issue explicitly supersedes the interim path
+- Adding a `listContainers()` graceful-degradation fallback for pre-RFC-013 repos (gallery.srsj) — see Phase 2 details
 
 ---
 
@@ -93,7 +93,9 @@ interface RepositoryNavigation {
 - [ ] Add `NavigationNode` interface to `srs-client.ts` (after the `ContainerSummary` interfaces, around line 556)
 - [ ] Add `RepositoryNavigation` interface to `srs-client.ts`
 - [ ] Add `repository_navigation()` method to the `SrsRepository` interface (after `list_terms()`, around line 64)
-- [ ] Add `repositoryNavigation()` wrapper function to the public API section of `srs-client.ts`
+- [ ] Add `normalizeNavigationNode(raw: unknown): NavigationNode` following existing `normalizeMember` / `normalizeRecord` pattern (dual-lookup `raw.instanceId ?? raw.instance_id` etc.) — because `serde_wasm_bindgen` does not always honour `rename_all = "camelCase"` on nested structs
+- [ ] Add `normalizeRepositoryNavigation(raw: unknown): RepositoryNavigation` that calls `normalizeNavigationNode` on `identity` and each element of `sections`
+- [ ] Add `repositoryNavigation()` wrapper function that calls `repo.repository_navigation()` and passes result through `normalizeRepositoryNavigation`
 - [ ] Add unit tests for `repositoryNavigation()` in `tests/srs-client.test.ts`:
   ```typescript
   describe("repositoryNavigation", () => {
@@ -164,47 +166,60 @@ npm test
 #### Tasks
 
 - [ ] Update imports in `GovernanceShell.svelte`: add `repositoryNavigation` to imports from `srs-client.js`; remove `listContainers` import (keep `getContainer` — still used for loading member records)
-- [ ] Update `ContainerNavEntry` interface: replace `title: string` source (now from `displayLabel`); add `instanceId: string`; remove `containerType?: string` (fully dropped from nav entry — no longer a field); keep `rootTypeId`, `rootTypeVersion`, `rootTypeName`, `rootTypeNamespace`, `icon`; rename `containerId` comment to note it maps to `sectionContainerId`
-- [ ] Rewrite `loadContainerNav()` to use `repositoryNavigation()`:
+- [ ] Update `ContainerNavEntry` interface: replace `title: string` source (now from `displayLabel`); remove `instanceId: string` (not needed — `containerId` is the nav key); remove `containerType?: string` (fully dropped from nav entry — no longer a field); keep `rootTypeId`, `rootTypeVersion`, `rootTypeName`, `rootTypeNamespace`, `icon`; note `containerId` maps to `section.sectionContainerId`
+- [ ] Rewrite `loadContainerNav()` to use `repositoryNavigation()` with a `listContainers()` graceful-degradation fallback when `sections` is empty (pre-RFC-013 repos like `gallery.srsj`):
   ```typescript
   function loadContainerNav(): void {
     const nav = repositoryNavigation(repo);
-    const allRecords = listRecords(repo, {});
-    const recordMap = new Map<string, SrsRecord>(allRecords.map(r => [r.instanceId, r]));
-    const navEntries: ContainerNavEntry[] = [];
-    const recordsByContainer: Record<string, SrsRecord[]> = {};
-
-    for (const section of nav.sections) {
-      const containerId = section.sectionContainerId ?? section.instanceId;
-      const full = section.sectionContainerId ? getContainer(repo, section.sectionContainerId) : null;
-      const members = full
-        ? (full.memberInstanceIds ?? []).map(id => recordMap.get(id)).filter((r): r is SrsRecord => r !== undefined)
-        : [];
-      recordsByContainer[containerId] = members;
-
-      const regEntry = TYPE_REGISTRY[section.typeId];
-      navEntries.push({
-        instanceId: section.instanceId,
-        containerId,
-        title: section.displayLabel,
-        rootTypeId: section.typeId,
-        rootTypeVersion: section.typeVersion,
-        rootTypeName: section.typeName,
-        rootTypeNamespace: section.typeNamespace,
-        icon: regEntry?.icon ?? "◻",
-      });
+    if (nav.diagnostics.length > 0) {
+      console.warn("repository_navigation diagnostics:", nav.diagnostics);
     }
 
-    containers = navEntries;
-    containerRecords = recordsByContainer;
+    if (nav.sections.length > 0) {
+      // RFC-013 path: sections come from repository_navigation service
+      const allRecords = listRecords(repo, {});
+      const recordMap = new Map<string, SrsRecord>(allRecords.map(r => [r.instanceId, r]));
+      const navEntries: ContainerNavEntry[] = [];
+      const recordsByContainer: Record<string, SrsRecord[]> = {};
 
-    if (activeContainerId === null && navEntries.length > 0) {
-      activeContainerId = navEntries[0].containerId;
+      for (const section of nav.sections) {
+        if (!section.sectionContainerId) {
+          // Section root has no container — skip; a nav entry with no container cannot load records
+          continue;
+        }
+        const containerId = section.sectionContainerId;
+        const full = getContainer(repo, containerId);
+        const members = (full.memberInstanceIds ?? [])
+          .map(id => recordMap.get(id))
+          .filter((r): r is SrsRecord => r !== undefined);
+        recordsByContainer[containerId] = members;
+
+        const regEntry = TYPE_REGISTRY[section.typeId];
+        navEntries.push({
+          containerId,
+          title: section.displayLabel,
+          rootTypeId: section.typeId,
+          rootTypeVersion: section.typeVersion,
+          rootTypeName: section.typeName,
+          rootTypeNamespace: section.typeNamespace,
+          icon: regEntry?.icon ?? "◻",
+        });
+      }
+
+      containers = navEntries;
+      containerRecords = recordsByContainer;
+    } else {
+      // Pre-RFC-013 fallback: repo has no manifest.container, use listContainers() (ADR-009 interim)
+      buildContainerSections();
+    }
+
+    if (activeContainerId === null && containers.length > 0) {
+      activeContainerId = containers[0].containerId;
     }
   }
   ```
-- [ ] Log any nav diagnostics to console: `if (nav.diagnostics.length > 0) console.warn("repository_navigation diagnostics:", nav.diagnostics)`
-- [ ] Remove the `buildContainerSections` usage note from old code
+  Note: `buildContainerSections()` is the existing `listContainers()` + `getContainer()` loop already present in `GovernanceShell.svelte`, extracted into its own function for the fallback path. The fallback keeps the shell working for repos without `manifest.container` (gallery, pre-RFC-013 repos).
+- [ ] Remove the `buildContainerSections` usage note from old code; rename/extract it as the fallback function
 - [ ] Verify nav still works: section heading shows `displayLabel`, clicking a second nav item updates `activeContainerId` and the heading, form mode clears on section switch, breadcrumb updates
 
 #### Acceptance Criteria
@@ -333,6 +348,6 @@ npm run e2e -- navigation
 
 - The WASM binary in `srs_bindings/` includes `repository_navigation()` (srs-rust#268, closed). The CI build rebuilds the WASM from source.
 - `srs-client.ts` uses `#[serde(rename_all = "camelCase")]` on `RepositoryNavigation` and `NavigationNode` (confirmed in `repository_navigation_service.rs`), so no camelCase normalisation is needed.
-- `gallery.srsj` does not have `manifest.container` — gallery-based e2e tests do not exercise the nav sections path and are unaffected.
+- `gallery.srsj` does not have `manifest.container` — `repository_navigation()` returns `sections: []` with a diagnostic. The `listContainers()` fallback path in Phase 2 handles this: when `sections.length === 0`, `buildContainerSections()` is called and gallery-based e2e tests continue to work.
 - **display label for sample.srsj:** Since `sample.srsj` has no package, `build_field_name_index` returns empty and `record_display_label` falls back to `typeName`. Setting `typeName: "Articles"` on the Articles section root gives display label "Articles". This is intentional for the test fixture.
-- **`sectionContainerId` invariant:** RFC-013 mandates that every section root in a correctly-configured repo has a corresponding section container. `sectionContainerId` is always non-null in practice. The fallback `containerId = section.instanceId` is a defensive measure — it shows an empty record list for the section, which is preferable to crashing. No user-visible warning is shown (the nav diagnostics from `repository_navigation` already cover this case).
+- **`sectionContainerId` null handling:** Sections without a `sectionContainerId` are skipped (no nav entry rendered). RFC-013 mandates every section root has a corresponding container, so this only fires for malformed repos. No user-visible warning beyond the existing `diagnostics` console.warn. No fallback to `instanceId` — that was ADR-001 non-compliant (treating a record instanceId as a containerId is a semantic assumption).
