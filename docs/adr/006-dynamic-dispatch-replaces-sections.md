@@ -84,6 +84,6 @@ Accepted pattern: a single user action in the TypeScript layer may trigger two s
 
 - Both calls use only structural metadata (typeId UUID, containerType string) as routing keys — no SRS model semantics live in TypeScript.
 - The container registration is a UI-layer concern (keeping the decision_log container consistent for document-view rendering), not an SRS model invariant. The WASM engine permits decisions to exist outside any container; the TS shell enforces UI-layer grouping.
-- This is analogous to other multi-step sequences already in the shell (e.g. `createRecordSuccessor` + `loadSectionRecords`).
+- This is analogous to other multi-step sequences already in the shell (e.g. `createRecordSuccessor` + `loadContainerNav`).
 
 **Boundary:** this pattern is accepted only where every call is a thin WASM delegate and no business logic (validation, derivation, or cross-record constraint checking) lives in TypeScript between calls. If a feature requires TypeScript to enforce a cross-record invariant, it belongs in `srs-repository` as a service function and a new WASM binding — not in the TS orchestration layer. A future `create_decision` atomic binding that performs both operations in Rust is tracked as an enhancement issue in `srs-rust`.

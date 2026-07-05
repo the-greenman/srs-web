@@ -379,6 +379,13 @@
         relationType: "supersedes",
         fieldValues: [...baseValues, { fieldId: statusFieldId, value: "draft" }],
       });
+      if (activeContainerId) {
+        try {
+          addContainerMember(repo, activeContainerId, result.record.instanceId);
+        } catch (e: unknown) {
+          console.error("addContainerMember failed for successor:", e);
+        }
+      }
       loadContainerNav();
       selectedId = result.record.instanceId;
     } catch (e: unknown) {
