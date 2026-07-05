@@ -14,6 +14,7 @@
     addContainerMember,
     listContainers,
     getContainer,
+    repositoryNavigation,
     listRelations,
     createRelation,
   } from "$lib/srs-client.js";
@@ -71,9 +72,9 @@
   // ---------------------------------------------------------------------------
 
   interface ContainerNavEntry {
+    /** Maps to `section.sectionContainerId` in the RFC-013 nav path. */
     containerId: string;
     title: string;
-    containerType?: string;
     rootTypeId?: string;
     rootTypeVersion?: number;
     rootTypeName?: string;
@@ -85,7 +86,7 @@
   // State
   // ---------------------------------------------------------------------------
 
-  /** Container nav entries from listContainers(), ordered as returned (ADR-009). */
+  /** Container nav entries from repositoryNavigation() (RFC-013) or listContainers() fallback (ADR-009). */
   let containers = $state<ContainerNavEntry[]>([]);
 
   /** Records per container, keyed by containerId (populated from getContainer.memberInstanceIds). */
@@ -164,10 +165,65 @@
   }
 
   /**
-   * Load container nav from listContainers() and populate containerRecords.
-   * Replaces the old loadSectionRecords() + TYPE_REGISTRY approach (ADR-009).
+   * Load container nav from repositoryNavigation() (RFC-013 primary path).
+   * Falls back to listContainers() for pre-RFC-013 repos without manifest.container.
+   * ADR-009: this completes the migration from listContainers() to repository_navigation.
    */
   function loadContainerNav(): void {
+    const nav = repositoryNavigation(repo);
+    if (nav.diagnostics.length > 0) {
+      console.warn("repository_navigation diagnostics:", nav.diagnostics);
+    }
+
+    if (nav.sections.length > 0) {
+      // RFC-013 path: sections come from repository_navigation, ordered by precedes.
+      const allRecords = listRecords(repo, {});
+      const recordMap = new Map<string, SrsRecord>(allRecords.map((r) => [r.instanceId, r]));
+      const navEntries: ContainerNavEntry[] = [];
+      const recordsByContainer: Record<string, SrsRecord[]> = {};
+
+      for (const section of nav.sections) {
+        if (!section.sectionContainerId) {
+          // Section root has no container — skip. RFC-013 mandates every section root has
+          // a container; diagnostics from repository_navigation already surface this case.
+          continue;
+        }
+        const containerId = section.sectionContainerId;
+        const full = getContainer(repo, containerId);
+        const members = (full.memberInstanceIds ?? [])
+          .map((id) => recordMap.get(id))
+          .filter((r): r is SrsRecord => r !== undefined);
+        recordsByContainer[containerId] = members;
+
+        const regEntry = TYPE_REGISTRY[section.typeId];
+        navEntries.push({
+          containerId,
+          title: section.displayLabel,
+          rootTypeId: section.typeId,
+          rootTypeVersion: section.typeVersion,
+          rootTypeName: section.typeName,
+          rootTypeNamespace: section.typeNamespace,
+          icon: regEntry?.icon ?? "◻",
+        });
+      }
+
+      containers = navEntries;
+      containerRecords = recordsByContainer;
+    } else {
+      // Pre-RFC-013 fallback: manifest.container is absent; use listContainers() (ADR-009 interim).
+      buildContainerNavFromListContainers();
+    }
+
+    if (activeContainerId === null && containers.length > 0) {
+      activeContainerId = containers[0].containerId;
+    }
+  }
+
+  /**
+   * Fallback nav builder for pre-RFC-013 repos (no manifest.container).
+   * Used by loadContainerNav() when repository_navigation returns empty sections.
+   */
+  function buildContainerNavFromListContainers(): void {
     const allRecords = listRecords(repo, {});
     const recordMap = new Map<string, SrsRecord>(allRecords.map((r) => [r.instanceId, r]));
     const allContainers = listContainers(repo, {});
@@ -193,7 +249,6 @@
       navEntries.push({
         containerId: summary.containerId,
         title: summary.title,
-        containerType: summary.containerType,
         rootTypeId,
         rootTypeVersion,
         rootTypeName,
@@ -204,10 +259,6 @@
 
     containers = navEntries;
     containerRecords = recordsByContainer;
-
-    if (activeContainerId === null && navEntries.length > 0) {
-      activeContainerId = navEntries[0].containerId;
-    }
   }
 
   function buildContainerSchemas(): void {
