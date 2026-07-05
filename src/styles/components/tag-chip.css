@@ -1,0 +1,54 @@
+/* ============================================================================
+   component: tag-chip (.tag-chip) — free-form topic/content tag pill.
+   Distinct from .tag (governance lifecycle status vocabulary).
+   srs-web#105: decision tag chips + tag filter UI.
+   ========================================================================== */
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  padding: 3px 8px;
+  border: 1px solid var(--grey-2);
+  border-radius: 99px;
+  color: var(--grey-4);
+  background: transparent;
+  white-space: nowrap;
+}
+
+.tag-chip--filter {
+  cursor: pointer;
+  background: none;
+  transition: border-color 0.1s, color 0.1s;
+}
+
+.tag-chip--filter:hover {
+  border-color: var(--grey-3);
+  color: var(--ink);
+}
+
+.tag-chip--selected {
+  border-color: var(--ink);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.tag-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0 1px;
+  cursor: pointer;
+  font-size: var(--size-xs);
+  color: inherit;
+  opacity: 0.6;
+  line-height: 1;
+}
+
+.tag-chip__remove:hover {
+  opacity: 1;
+}
