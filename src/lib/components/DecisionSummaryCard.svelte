@@ -1,6 +1,7 @@
 <!--
   DecisionSummaryCard — <tr> row component for the Decision Log table.
   B12 decision log / summary card: https://github.com/the-greenman/srs-web/issues/56
+  Tag chips added in srs-web#105.
 -->
 <script lang="ts">
   import type { SrsRecord } from "$lib/srs-client.js";
@@ -8,6 +9,7 @@
   import { getStringField } from "$lib/governance/field-utils.js";
   import { getFieldMeta } from "$lib/governance/field-meta.js";
   import Tag from "./Tag.svelte";
+  import TagChip from "./TagChip.svelte";
 
   let {
     record,
@@ -32,6 +34,7 @@
   );
   const status = $derived(getStringField(record, "status", fieldMeta) as Status | undefined);
   const date = $derived(record.createdAt?.slice(0, 10) ?? "—");
+  const tags = $derived(record.tags ?? []);
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -46,6 +49,13 @@
     <span class="dscard__title">{title}</span>
     {#if statement !== undefined}
       <span class="dscard__statement">{statement}</span>
+    {/if}
+    {#if tags.length > 0}
+      <div class="dscard__tags">
+        {#each tags as tag (tag)}
+          <TagChip label={tag} />
+        {/each}
+      </div>
     {/if}
   </td>
   <td class="log-table__nowrap">
@@ -70,6 +80,13 @@
     opacity: 0.7;
     line-height: 1.4;
     white-space: pre-wrap;
+  }
+
+  .dscard__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
   }
 
   .log-table__row--selected td {

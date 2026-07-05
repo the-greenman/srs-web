@@ -10,6 +10,7 @@
   import { computeSearchHitIds, sortByCreatedAt } from "./decision-log-utils.js";
   import LogTable from "./LogTable.svelte";
   import DecisionSummaryCard from "./DecisionSummaryCard.svelte";
+  import TagChip from "./TagChip.svelte";
 
   let {
     records,
@@ -79,16 +80,12 @@
         {sortOrder === "newest" ? "Newest first" : "Oldest first"}
       </button>
       {#if availableTopics.length > 0}
-        <select
-          data-testid="topic-filter"
-          value={topicFilter}
-          onchange={(e) => { topicFilter = (e.target as HTMLSelectElement).value; }}
-        >
-          <option value="all">All topics</option>
-          {#each availableTopics as topic}
-            <option value={topic}>{topic}</option>
+        <div class="controls-bar__tag-filter" data-testid="topic-filter" role="group" aria-label="Filter by tag">
+          <TagChip label="All" selected={topicFilter === "all"} onSelect={() => { topicFilter = "all"; }} />
+          {#each availableTopics as topic (topic)}
+            <TagChip label={topic} selected={topicFilter === topic} onSelect={() => { topicFilter = topic; }} />
           {/each}
-        </select>
+        </div>
       {/if}
       <button
         data-testid="show-all-toggle"
@@ -123,9 +120,17 @@
   .controls-bar {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     gap: var(--space-sm);
     align-items: center;
     padding: var(--space-sm) var(--space-md);
+  }
+
+  .controls-bar__tag-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
   }
 
   .controls-bar__sort-btn {
