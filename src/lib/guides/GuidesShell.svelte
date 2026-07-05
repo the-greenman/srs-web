@@ -219,7 +219,7 @@
     if (containers.length === 0) return;
     selectedContainerId = containers[0].containerId;
     const view: ContainerView = resolveContainerView(repo, selectedContainerId);
-    const sectionRecords = view.members.slice(1).map((m) => m.record);
+    const sectionRecords = view.members.filter((m) => m.tier > 0).map((m) => m.record);
     orderedSections = orderByPrecedes(sectionRecords);
   }
 

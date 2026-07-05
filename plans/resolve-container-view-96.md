@@ -122,7 +122,7 @@ npm run lint
 
 - [ ] Import `resolveContainerView` and `ContainerView`/`ResolvedMember` types from `srs-client.ts`
 - [ ] Remove `getContainer` import
-- [ ] Update `refreshSections()`: replace `getContainer` + `sections.filter(...)` with `resolveContainerView(repo, containerId)`, then extract `view.members.slice(1).map(m => m.record)` (slice(1) removes root at index 0) and pipe through `orderByPrecedes()`. Note: `members` returns `ResolvedMember[]`, not `SrsRecord[]` — the `.map(m => m.record)` extraction is required before passing to `orderByPrecedes()`.
+- [ ] Update `refreshSections()`: replace `getContainer` + `sections.filter(...)` with `resolveContainerView(repo, containerId)`, then extract `view.members.filter(m => m.tier > 0).map(m => m.record)` (tier 0 is the root guide record; tier > 0 are sections) and pipe through `orderByPrecedes()`. Note: `members` returns `ResolvedMember[]`, not `SrsRecord[]` — the `.map(m => m.record)` extraction is required before passing to `orderByPrecedes()`.
 - [ ] Remove `sections` `$state` variable
 - [ ] Update `reload()`: remove `sections` filtering from `listRecords()` output
 - [ ] Verify `guideLabel()` and `sectionLabel()` still work (they operate on `SrsRecord.fieldValues`, not `displayLabel`)
@@ -172,4 +172,4 @@ npm test
 
 - `resolve_container_view` is already built into the WASM artifact at `src/lib/srs_bindings/`. If the WASM artifact is not rebuilt for this PR (CI builds from source), tests that require a live WASM call will be skipped/mocked — this is acceptable for this PR.
 - The `orderByPrecedes()` function is retained in GuidesShell because precedes-chain ordering is guide-author intent and the Rust service does not yet return precedes-ordered members (tracked in #97).
-- `ContainerView.members[0]` is always the root (guide record). Root is excluded from the section list by using `.slice(1)` on the members array.
+- `ContainerView.members[0]` is the root (guide record) with tier 0. Section members have tier > 0. Root is excluded from the section list by filtering `m.tier > 0`.

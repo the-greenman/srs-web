@@ -831,7 +831,8 @@ function normalizeColumnSpec(c: any): ColumnSpec {
  * `record.displayLabel` is NOT injected; consumers read from `fieldValues`.
  *
  * Note: `members` arrive in stored (UUID-alphabetical) order, not precedes order.
- * Callers requiring precedes ordering must apply `orderByPrecedes()` to `.members.map(m => m.record)`.
+ * The root record (tier 0) is `members[0]`; section members have tier > 0.
+ * To get ordered sections: `view.members.filter(m => m.tier > 0).map(m => m.record)`, then apply `orderByPrecedes()`.
  * Tracked as ADR-001 residual debt in srs-web#122.
  */
 export function resolveContainerView(
