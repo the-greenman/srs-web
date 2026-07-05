@@ -24,6 +24,7 @@ import {
   listRecords,
   listRelations,
   listTerms,
+  repositoryNavigation,
   resolveContainerView,
   typeSchema,
   type ContainerListFilter,
@@ -64,6 +65,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     list_terms: () => { throw new Error("not mocked"); },
     create_record_successor: () => { throw new Error("not mocked"); },
     resolve_container_view: () => { throw new Error("not mocked"); },
+    repository_navigation: () => { throw new Error("not mocked"); },
   };
   return { ...base, ...overrides };
 }
@@ -948,5 +950,117 @@ describe("resolveContainerView", () => {
   it("propagates WASM throw", () => {
     const repo = mockRepo({ resolve_container_view: () => { throw new Error("container not found"); } });
     expect(() => resolveContainerView(repo, "missing")).toThrow("container not found");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// repositoryNavigation (srs-rust#268, RFC-013)
+// ---------------------------------------------------------------------------
+
+describe("repositoryNavigation", () => {
+  const rawNode = (instanceId: string, displayLabel: string, sectionContainerId?: string) => ({
+    instanceId,
+    typeId: `type-${instanceId}`,
+    typeVersion: 1,
+    typeNamespace: "com.test",
+    typeName: "section",
+    displayLabel,
+    ...(sectionContainerId !== undefined && { sectionContainerId }),
+  });
+
+  it("calls repository_navigation and returns normalised RepositoryNavigation", () => {
+    const rawNav = {
+      rootContainerId: "root-c-1",
+      identity: rawNode("id-1", "Example Governance"),
+      sections: [
+        rawNode("s-1", "Articles", "c-articles"),
+        rawNode("s-2", "Decision Log", "c-decisions"),
+      ],
+      diagnostics: [],
+    };
+    const spy = vi.fn().mockReturnValue(rawNav);
+    const repo = mockRepo({ repository_navigation: spy });
+
+    const result = repositoryNavigation(repo);
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(result.rootContainerId).toBe("root-c-1");
+    expect(result.identity.instanceId).toBe("id-1");
+    expect(result.identity.displayLabel).toBe("Example Governance");
+    expect(result.sections).toHaveLength(2);
+    expect(result.sections[0].displayLabel).toBe("Articles");
+    expect(result.sections[0].sectionContainerId).toBe("c-articles");
+    expect(result.sections[1].displayLabel).toBe("Decision Log");
+    expect(result.diagnostics).toHaveLength(0);
+  });
+
+  it("normalises snake_case NavigationNode fields from WASM", () => {
+    const rawNav = {
+      root_container_id: "root-c-2",
+      identity: {
+        instance_id: "id-2",
+        type_id: "type-id-2",
+        type_version: 1,
+        type_namespace: "com.test",
+        type_name: "gov-repo",
+        display_label: "Governance Repo",
+      },
+      sections: [
+        {
+          instance_id: "s-3",
+          type_id: "type-s-3",
+          type_version: 1,
+          type_namespace: "com.test",
+          type_name: "Articles",
+          display_label: "Articles",
+          section_container_id: "c-articles-2",
+        },
+      ],
+      diagnostics: [],
+    };
+    const repo = mockRepo({ repository_navigation: () => rawNav });
+
+    const result = repositoryNavigation(repo);
+
+    expect(result.rootContainerId).toBe("root-c-2");
+    expect(result.identity.instanceId).toBe("id-2");
+    expect(result.identity.displayLabel).toBe("Governance Repo");
+    expect(result.sections[0].instanceId).toBe("s-3");
+    expect(result.sections[0].sectionContainerId).toBe("c-articles-2");
+  });
+
+  it("returns empty sections and diagnostic for pre-RFC-013 repo (no manifest.container)", () => {
+    const rawNav = {
+      rootContainerId: "",
+      identity: { instanceId: "", typeId: "", typeVersion: 0, typeNamespace: "", typeName: "", displayLabel: "" },
+      sections: [],
+      diagnostics: ["repository-navigation: manifest.container is absent; repo predates RFC-013 root container (epic #95)"],
+    };
+    const repo = mockRepo({ repository_navigation: () => rawNav });
+
+    const result = repositoryNavigation(repo);
+
+    expect(result.sections).toHaveLength(0);
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]).toContain("manifest.container is absent");
+  });
+
+  it("sectionContainerId is undefined when absent on a section node", () => {
+    const rawNav = {
+      rootContainerId: "r",
+      identity: rawNode("id-x", "X"),
+      sections: [rawNode("s-no-container", "Orphan Section")],
+      diagnostics: [],
+    };
+    const repo = mockRepo({ repository_navigation: () => rawNav });
+
+    const result = repositoryNavigation(repo);
+
+    expect(result.sections[0].sectionContainerId).toBeUndefined();
+  });
+
+  it("propagates WASM throw", () => {
+    const repo = mockRepo({ repository_navigation: () => { throw new Error("nav failed"); } });
+    expect(() => repositoryNavigation(repo)).toThrow("nav failed");
   });
 });
