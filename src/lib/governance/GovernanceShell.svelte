@@ -416,6 +416,7 @@
       const existingValues = selectedRecord.fieldValues.filter((fv) => fv.fieldId !== statusFieldId);
       updateRecord(repo, selectedRecord.instanceId, {
         fieldValues: [...existingValues, { fieldId: statusFieldId, value: toState }],
+        groupValues: selectedRecord.groupValues ?? null,
       });
       loadContainerNav();
       // refreshValidation(); // called by B13
@@ -481,6 +482,7 @@
     try {
       updateRecord(repo, selectedRecord.instanceId, {
         fieldValues: selectedRecord.fieldValues,
+        groupValues: selectedRecord.groupValues ?? null,
         tags: newTags,
       });
       loadContainerNav();
@@ -488,6 +490,14 @@
     } catch (e: unknown) {
       console.error("handleUpdateTags failed:", e);
     }
+  }
+
+  function handleAddTag(): void {
+    const trimmed = tagInput.trim();
+    if (trimmed && selectedRecord && !(selectedRecord.tags ?? []).includes(trimmed)) {
+      handleUpdateTags([...(selectedRecord.tags ?? []), trimmed]);
+    }
+    tagInput = "";
   }
 
   $effect(() => {
@@ -582,7 +592,7 @@
             saving={formSaving}
             saveError={formError}
           />
-        {:else if selectedRecord && formMode === null}
+        {:else if selectedRecord && formMode === null && activeContainer?.rootTypeId !== DECISION_TYPE_ID}
           <RecordReading
             record={selectedRecord}
             sectionLabel={activeContainer?.title ?? ""}
@@ -711,27 +721,13 @@
               data-testid="tag-input"
               placeholder="Add tag…"
               bind:value={tagInput}
-              onkeydown={(e) => {
-                if (e.key === "Enter") {
-                  const trimmed = tagInput.trim();
-                  if (trimmed && selectedRecord && !(selectedRecord.tags ?? []).includes(trimmed)) {
-                    handleUpdateTags([...(selectedRecord.tags ?? []), trimmed]);
-                  }
-                  tagInput = "";
-                }
-              }}
+              onkeydown={(e) => { if (e.key === "Enter") handleAddTag(); }}
             />
             <button
               type="button"
               class="inspector__btn"
               data-testid="tag-add-btn"
-              onclick={() => {
-                const trimmed = tagInput.trim();
-                if (trimmed && selectedRecord && !(selectedRecord.tags ?? []).includes(trimmed)) {
-                  handleUpdateTags([...(selectedRecord.tags ?? []), trimmed]);
-                }
-                tagInput = "";
-              }}
+              onclick={handleAddTag}
             >Add</button>
           </div>
         </InspectorSection>

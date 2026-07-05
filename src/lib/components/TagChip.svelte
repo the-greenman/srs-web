@@ -5,17 +5,11 @@
   srs-web#105: decision tag chips + tag filter UI.
 -->
 <script lang="ts">
-  let {
-    label,
-    selected = false,
-    onSelect,
-    onRemove,
-  }: {
-    label: string;
-    selected?: boolean;
-    onSelect?: () => void;
-    onRemove?: () => void;
-  } = $props();
+  type Props =
+    | { label: string; selected?: boolean; onSelect: () => void; onRemove?: never }
+    | { label: string; selected?: boolean; onRemove?: () => void; onSelect?: never };
+
+  let { label, selected = false, onSelect, onRemove }: Props = $props();
 </script>
 
 {#if onSelect}

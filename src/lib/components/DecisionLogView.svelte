@@ -7,7 +7,7 @@
   import type { Status } from "$lib/types.js";
   import { getStringField } from "$lib/governance/field-utils.js";
   import { getFieldMeta } from "$lib/governance/field-meta.js";
-  import { computeSearchHitIds, matchesTopicFilter, sortByCreatedAt } from "./decision-log-utils.js";
+  import { computeSearchHitIds, computeTagHitIds, sortByCreatedAt } from "./decision-log-utils.js";
   import LogTable from "./LogTable.svelte";
   import DecisionSummaryCard from "./DecisionSummaryCard.svelte";
   import TagChip from "./TagChip.svelte";
@@ -37,8 +37,9 @@
     [...new Set(records.flatMap((r) => r.tags ?? []))].sort((a, b) => a.localeCompare(b))
   );
 
-  // Call WASM find once per query change; null means "no active search" (show all).
+  // Call WASM find once per query/filter change; null means "no active filter" (show all).
   const searchHitIds = $derived(computeSearchHitIds(repo, searchQuery));
+  const tagHitIds = $derived(computeTagHitIds(repo, topicFilter));
 
   const displayedRecords = $derived(
     sortByCreatedAt(
@@ -51,7 +52,7 @@
             const s = getStringField(r, "status", fieldMeta);
             if (s !== undefined && HIDDEN_STATUSES.has(s as Status)) return false;
           }
-          if (!matchesTopicFilter(r, topicFilter)) return false;
+          if (tagHitIds !== null && !tagHitIds.has(r.instanceId)) return false;
           return true;
         }),
       sortOrder

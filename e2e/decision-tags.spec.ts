@@ -36,7 +36,7 @@ test.describe("Decision tag chips — read display", () => {
     await expect(page.getByTestId("tag-chip").first()).toBeVisible();
   });
 
-  test("decisions without tags show no tag chips on their card", async ({ page }) => {
+  test("filtering to a topic shows only decisions tagged with that topic", async ({ page }) => {
     // Filter to exhibitions (2 tagged decisions)
     await page.getByTestId("topic-filter").getByRole("button", { name: "exhibitions" }).click();
     const cards = page.getByTestId("decision-summary-card");

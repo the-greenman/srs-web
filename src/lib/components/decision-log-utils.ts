@@ -24,13 +24,17 @@ export function computeSearchHitIds(
 }
 
 /**
- * Returns true when `record` matches the active topic filter.
- * "all" is the sentinel for no filter. Otherwise checks record.tags inclusion.
- * Residual ADR-001 gap: tag matching in TS. Tracked in srs-web#126.
+ * Call WASM `find` with a tag filter and return the set of matching instance IDs.
+ * Returns null when topicFilter is "all" (no filter active) or `repo` is absent.
+ * ADR-001: delegates tag matching to the WASM engine, not TypeScript.
  */
-export function matchesTopicFilter(record: SrsRecord, topicFilter: string): boolean {
-  if (topicFilter === "all") return true;
-  return (record.tags ?? []).includes(topicFilter);
+export function computeTagHitIds(
+  repo: SrsRepository | undefined,
+  topicFilter: string
+): Set<string> | null {
+  if (!repo || topicFilter === "all") return null;
+  const result = find(repo, { tag: [topicFilter] });
+  return new Set(result.hits.map((h) => h.instanceId));
 }
 
 /**

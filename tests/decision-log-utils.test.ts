@@ -9,7 +9,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 import type { SrsRepository, SrsRecord } from "../src/lib/srs-client.js";
-import { computeSearchHitIds, matchesTopicFilter, sortByCreatedAt } from "../src/lib/components/decision-log-utils.js";
+import { computeSearchHitIds, computeTagHitIds, sortByCreatedAt } from "../src/lib/components/decision-log-utils.js";
 
 // ---------------------------------------------------------------------------
 // Mock helpers
@@ -52,34 +52,54 @@ function makeRecord(instanceId: string, createdAt: string): SrsRecord {
 }
 
 // ---------------------------------------------------------------------------
-// matchesTopicFilter
+// computeTagHitIds
 // ---------------------------------------------------------------------------
 
-describe("matchesTopicFilter", () => {
-  function makeTaggedRecord(tags: string[]): SrsRecord {
-    return { instanceId: "i1", typeId: "t1", typeVersion: 1, fieldValues: [], tags };
-  }
+describe("computeTagHitIds", () => {
+  it("calls find with tag array and returns a Set of matching instanceIds", () => {
+    const rawResult = {
+      hits: [
+        { instanceId: "inst-001", label: "D1", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
+        { instanceId: "inst-002", label: "D2", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
+      ],
+      total: 2,
+      diagnostics: [],
+    };
+    const spy = vi.fn().mockReturnValue(rawResult);
+    const repo = mockRepo({ find: spy });
 
-  it("returns true for topicFilter 'all' regardless of tags", () => {
-    expect(matchesTopicFilter(makeTaggedRecord([]), "all")).toBe(true);
-    expect(matchesTopicFilter(makeTaggedRecord(["exhibitions"]), "all")).toBe(true);
+    const result = computeTagHitIds(repo, "exhibitions");
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(JSON.stringify({ tag: ["exhibitions"] }));
+    expect(result).toBeInstanceOf(Set);
+    expect(result?.has("inst-001")).toBe(true);
+    expect(result?.has("inst-002")).toBe(true);
+    expect(result?.size).toBe(2);
   });
 
-  it("returns true when the record has the matching tag", () => {
-    expect(matchesTopicFilter(makeTaggedRecord(["exhibitions", "governance"]), "exhibitions")).toBe(true);
+  it("returns null and does NOT call find when topicFilter is 'all'", () => {
+    const spy = vi.fn();
+    const repo = mockRepo({ find: spy });
+
+    const result = computeTagHitIds(repo, "all");
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(result).toBeNull();
   });
 
-  it("returns false when the record does not have the tag", () => {
-    expect(matchesTopicFilter(makeTaggedRecord(["governance"]), "exhibitions")).toBe(false);
+  it("returns null when repo is undefined", () => {
+    const result = computeTagHitIds(undefined, "exhibitions");
+    expect(result).toBeNull();
   });
 
-  it("returns false when the record has no tags", () => {
-    expect(matchesTopicFilter(makeTaggedRecord([]), "exhibitions")).toBe(false);
-  });
+  it("returns an empty Set when find returns no hits", () => {
+    const repo = mockRepo({ find: () => ({ hits: [], total: 0, diagnostics: [] }) });
 
-  it("returns false when record.tags is undefined", () => {
-    const record: SrsRecord = { instanceId: "i1", typeId: "t1", typeVersion: 1, fieldValues: [] };
-    expect(matchesTopicFilter(record, "exhibitions")).toBe(false);
+    const result = computeTagHitIds(repo, "exhibitions");
+
+    expect(result).toBeInstanceOf(Set);
+    expect(result?.size).toBe(0);
   });
 });
 
