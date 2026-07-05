@@ -175,8 +175,8 @@
       console.warn("repository_navigation diagnostics:", nav.diagnostics);
     }
 
-    if (nav.sections.length > 0) {
-      // RFC-013 path: sections come from repository_navigation, ordered by precedes.
+    if (nav.diagnostics.length === 0) {
+      // RFC-013 path: manifest.container present; sections ordered by precedes.
       const allRecords = listRecords(repo, {});
       const recordMap = new Map<string, SrsRecord>(allRecords.map((r) => [r.instanceId, r]));
       const navEntries: ContainerNavEntry[] = [];

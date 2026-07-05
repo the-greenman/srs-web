@@ -993,7 +993,7 @@ function normalizeNavigationNode(raw: any): NavigationNode {
   return {
     instanceId: raw.instanceId ?? raw.instance_id,
     typeId: raw.typeId ?? raw.type_id,
-    typeVersion: raw.typeVersion ?? raw.type_version,
+    typeVersion: raw.typeVersion ?? raw.type_version ?? 0,
     typeNamespace: raw.typeNamespace ?? raw.type_namespace,
     typeName: raw.typeName ?? raw.type_name,
     displayLabel: raw.displayLabel ?? raw.display_label ?? "",
