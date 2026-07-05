@@ -1,9 +1,10 @@
 # ADR-006: Dynamic section discovery and typeId-keyed view dispatch
 
-**Status:** Accepted
+**Status:** Accepted (section-list portion superseded by [ADR-009](./009-container-driven-nav.md))
 **Date:** 2026-06-26
 **Issue:** [srs-web#54](https://github.com/the-greenman/srs-web/issues/54)
 **Supersedes:** [ADR-005](./005-governance-typeids-in-sections-config.md)
+**Partially superseded by:** [ADR-009](./009-container-driven-nav.md) — the section-list portion (typeId-keyed nav from `buildDynamicSections`) is replaced; the typeId-keyed view dispatch within a section is retained.
 
 ## Context
 
