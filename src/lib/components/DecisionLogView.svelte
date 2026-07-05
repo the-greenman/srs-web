@@ -7,7 +7,7 @@
   import type { Status } from "$lib/types.js";
   import { getStringField } from "$lib/governance/field-utils.js";
   import { getFieldMeta } from "$lib/governance/field-meta.js";
-  import { computeSearchHitIds, sortByCreatedAt } from "./decision-log-utils.js";
+  import { computeSearchHitIds, matchesTopicFilter, sortByCreatedAt } from "./decision-log-utils.js";
   import LogTable from "./LogTable.svelte";
   import DecisionSummaryCard from "./DecisionSummaryCard.svelte";
   import TagChip from "./TagChip.svelte";
@@ -51,7 +51,7 @@
             const s = getStringField(r, "status", fieldMeta);
             if (s !== undefined && HIDDEN_STATUSES.has(s as Status)) return false;
           }
-          if (topicFilter !== "all" && !(r.tags ?? []).includes(topicFilter)) return false;
+          if (!matchesTopicFilter(r, topicFilter)) return false;
           return true;
         }),
       sortOrder

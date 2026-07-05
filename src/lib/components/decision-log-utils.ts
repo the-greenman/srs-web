@@ -24,6 +24,16 @@ export function computeSearchHitIds(
 }
 
 /**
+ * Returns true when `record` matches the active topic filter.
+ * "all" is the sentinel for no filter. Otherwise checks record.tags inclusion.
+ * Residual ADR-001 gap: tag matching in TS. Tracked in srs-web#126.
+ */
+export function matchesTopicFilter(record: SrsRecord, topicFilter: string): boolean {
+  if (topicFilter === "all") return true;
+  return (record.tags ?? []).includes(topicFilter);
+}
+
+/**
  * Sort `SrsRecord[]` by `createdAt` ISO 8601 string.
  * ISO 8601 strings are lexicographically ordered — string comparison is correct and avoids
  * locale-sensitive collation from Date parsing.

@@ -9,7 +9,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 import type { SrsRepository, SrsRecord } from "../src/lib/srs-client.js";
-import { computeSearchHitIds, sortByCreatedAt } from "../src/lib/components/decision-log-utils.js";
+import { computeSearchHitIds, matchesTopicFilter, sortByCreatedAt } from "../src/lib/components/decision-log-utils.js";
 
 // ---------------------------------------------------------------------------
 // Mock helpers
@@ -50,6 +50,38 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
 function makeRecord(instanceId: string, createdAt: string): SrsRecord {
   return { instanceId, typeId: "t1", typeVersion: 1, fieldValues: [], createdAt };
 }
+
+// ---------------------------------------------------------------------------
+// matchesTopicFilter
+// ---------------------------------------------------------------------------
+
+describe("matchesTopicFilter", () => {
+  function makeTaggedRecord(tags: string[]): SrsRecord {
+    return { instanceId: "i1", typeId: "t1", typeVersion: 1, fieldValues: [], tags };
+  }
+
+  it("returns true for topicFilter 'all' regardless of tags", () => {
+    expect(matchesTopicFilter(makeTaggedRecord([]), "all")).toBe(true);
+    expect(matchesTopicFilter(makeTaggedRecord(["exhibitions"]), "all")).toBe(true);
+  });
+
+  it("returns true when the record has the matching tag", () => {
+    expect(matchesTopicFilter(makeTaggedRecord(["exhibitions", "governance"]), "exhibitions")).toBe(true);
+  });
+
+  it("returns false when the record does not have the tag", () => {
+    expect(matchesTopicFilter(makeTaggedRecord(["governance"]), "exhibitions")).toBe(false);
+  });
+
+  it("returns false when the record has no tags", () => {
+    expect(matchesTopicFilter(makeTaggedRecord([]), "exhibitions")).toBe(false);
+  });
+
+  it("returns false when record.tags is undefined", () => {
+    const record: SrsRecord = { instanceId: "i1", typeId: "t1", typeVersion: 1, fieldValues: [] };
+    expect(matchesTopicFilter(record, "exhibitions")).toBe(false);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // computeSearchHitIds
