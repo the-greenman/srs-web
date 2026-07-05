@@ -46,6 +46,7 @@
   import DecisionLinkPicker from "$lib/components/DecisionLinkPicker.svelte";
   import RecordReading from "$lib/components/RecordReading.svelte";
   import DecisionLogView from "$lib/components/DecisionLogView.svelte";
+  import TagChip from "$lib/components/TagChip.svelte";
 
   import { TYPE_REGISTRY, DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
   import { getStringField, STATUS_FIELD_ID } from "$lib/governance/field-utils.js";
@@ -126,6 +127,9 @@
 
   /** Relations (as source or target) for the currently selected decision. */
   let decisionRelations = $state<SrsRelation[]>([]);
+
+  /** Tag input value for the inspector tag editor. */
+  let tagInput = $state<string>("");
 
   // ---------------------------------------------------------------------------
   // Derived
@@ -472,12 +476,31 @@
     }
   }
 
+  function handleUpdateTags(newTags: string[]): void {
+    if (!selectedRecord) return;
+    try {
+      updateRecord(repo, selectedRecord.instanceId, {
+        fieldValues: selectedRecord.fieldValues,
+        tags: newTags,
+      });
+      loadContainerNav();
+      refreshValidation();
+    } catch (e: unknown) {
+      console.error("handleUpdateTags failed:", e);
+    }
+  }
+
   $effect(() => {
     if (selectedRecord && activeContainer?.rootTypeId === DECISION_TYPE_ID) {
       loadDecisionRelations(selectedRecord.instanceId);
     } else {
       decisionRelations = [];
     }
+  });
+
+  $effect(() => {
+    void selectedId;
+    tagInput = "";
   });
 </script>
 
@@ -671,6 +694,46 @@
             data-testid="add-relation-btn"
             onclick={() => { showLinkPicker = true; }}
           >Link to decision</button>
+        </InspectorSection>
+      {/if}
+
+      {#if selectedRecord && formMode === null && activeContainer?.rootTypeId === DECISION_TYPE_ID}
+        <InspectorSection title="Tags" aside={selectedRecord.tags?.length ? String(selectedRecord.tags.length) : ""}>
+          <div class="inspector__tags" data-testid="inspector-tags">
+            {#each selectedRecord.tags ?? [] as tag (tag)}
+              <TagChip label={tag} onRemove={() => handleUpdateTags((selectedRecord?.tags ?? []).filter((t) => t !== tag))} />
+            {/each}
+          </div>
+          <div class="inspector__tag-add">
+            <input
+              type="text"
+              class="inspector__tag-input"
+              data-testid="tag-input"
+              placeholder="Add tag…"
+              bind:value={tagInput}
+              onkeydown={(e) => {
+                if (e.key === "Enter") {
+                  const trimmed = tagInput.trim();
+                  if (trimmed && selectedRecord && !(selectedRecord.tags ?? []).includes(trimmed)) {
+                    handleUpdateTags([...(selectedRecord.tags ?? []), trimmed]);
+                  }
+                  tagInput = "";
+                }
+              }}
+            />
+            <button
+              type="button"
+              class="inspector__btn"
+              data-testid="tag-add-btn"
+              onclick={() => {
+                const trimmed = tagInput.trim();
+                if (trimmed && selectedRecord && !(selectedRecord.tags ?? []).includes(trimmed)) {
+                  handleUpdateTags([...(selectedRecord.tags ?? []), trimmed]);
+                }
+                tagInput = "";
+              }}
+            >Add</button>
+          </div>
         </InspectorSection>
       {/if}
 
@@ -906,5 +969,37 @@
     font-size: 0.6875rem;
     opacity: 0.4;
     padding: 0.5rem 0;
+  }
+
+  /* ---- Inspector tag editor ---- */
+  .inspector__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 0.5rem;
+    min-height: 1.5rem;
+  }
+
+  .inspector__tag-add {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+    margin-top: 0.25rem;
+  }
+
+  .inspector__tag-input {
+    flex: 1;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid var(--grey-3, #ccc);
+    border-radius: 3px;
+    background: var(--surface, #fff);
+    color: var(--ink);
+    min-width: 0;
+  }
+
+  .inspector__tag-input:focus {
+    outline: 2px solid var(--accent, #0066cc);
+    outline-offset: 1px;
   }
 </style>
