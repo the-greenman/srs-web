@@ -1,9 +1,10 @@
 # ADR-008: UUID-chain join replaces containerType string matching
 
-**Status:** Accepted
+**Status:** Accepted (GovernanceShell container-discovery portion superseded by [ADR-009](./009-container-driven-nav.md))
 **Date:** 2026-07-03
 **Issue:** [srs-web#97](https://github.com/the-greenman/srs-web/issues/97)
 **Supersedes:** [ADR-004](004-blueprint-view-convention-join.md)
+**Partially superseded by:** [ADR-009](./009-container-driven-nav.md) — the `GovernanceShell.svelte` container discovery section (UUID-chain lookup into `sectionRecords[DECISION_TYPE_ID]` → `decisionLogContainerId`) is removed; the sidebar is now container-keyed. The blueprint↔view discovery decision (`discovery.ts`) is unaffected.
 
 ## Context
 

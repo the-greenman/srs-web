@@ -4,11 +4,9 @@
  * Each entry maps a typeId UUID to display hints (label, icon, typeName, etc.)
  * AND its custom view component. To register a new known type, add one entry here.
  *
- * Unknown types (discovered from loaded records at runtime) are not in this registry;
- * buildDynamicSections() auto-derives them with a fallback label and RecordView.
- *
- * ADR-006: dynamic section discovery + typeId-keyed view dispatch
  * ADR-007: TYPE_REGISTRY unifies display hints and view components into a single registry
+ * ADR-009: TYPE_REGISTRY is presentation hints only — icon and view component.
+ *          It no longer drives sidebar section appearance (container-driven nav).
  */
 
 import DecisionView from "../../rendering/DecisionView.svelte";
@@ -33,8 +31,8 @@ export const DECISION_TYPE_ID = "1fcad6a2-9f78-5e41-94ba-d82e88b822f3";
 
 // Release 1 is a decision-log-only editor. The `article`, `role`, and `exercise` types
 // stay defined (dormant) in the com.mudemocracy.governance package, but the editor
-// registers only the decision view. Any dormant-type record that appears falls back to
-// RecordView via buildDynamicSections()/RecordDispatch.
+// registers only the decision view. Any dormant-type record falls back to RecordView
+// via RecordDispatch.
 export const TYPE_REGISTRY: Record<string, TypeRegistryEntry> = {
   [DECISION_TYPE_ID]: {
     label: "Decision Log",

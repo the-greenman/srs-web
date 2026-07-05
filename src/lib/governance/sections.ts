@@ -1,14 +1,9 @@
 /**
- * sections.ts — governance section discovery helpers.
+ * sections.ts — governance section discovery helpers (ADR-006).
  *
- * ADR-006: sections derive from loaded records + TYPE_REGISTRY (display hints).
- * The 3 known gallery types always appear (even in empty repos) because TYPE_REGISTRY
- * seeds them. Unknown types surface automatically when records of that type exist.
- *
- * Supersedes ADR-005 (which used a static SECTIONS array keyed by human-readable strings).
- *
- * B4 governance viewer: https://github.com/the-greenman/srs-web/issues/3
- * srs-web#54 dynamic sections + view dispatch
+ * NOTE: buildDynamicSections() is no longer used by GovernanceShell.svelte as of ADR-009
+ * (srs-web#93). The sidebar is now container-driven (listContainers()). This module is
+ * retained for unit-test backward-compatibility only.
  */
 
 import type { SrsRecord } from "../srs-client.js";

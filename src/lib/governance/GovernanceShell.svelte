@@ -1,6 +1,7 @@
 <!-- GovernanceShell.svelte — self-contained governance editor shell.
      Extracted from App.svelte following the GuidesShell pattern.
-     See plans/governance-shell-76.md and srs-web#76. -->
+     See plans/governance-shell-76.md and srs-web#76.
+     Nav migrated from TYPE_REGISTRY to container-driven (ADR-009, srs-web#93). -->
 <script lang="ts">
   import { onMount } from "svelte";
   import {
@@ -12,6 +13,7 @@
     typeSchema,
     addContainerMember,
     listContainers,
+    getContainer,
     listRelations,
     createRelation,
   } from "$lib/srs-client.js";
@@ -44,9 +46,7 @@
   import RecordReading from "$lib/components/RecordReading.svelte";
   import DecisionLogView from "$lib/components/DecisionLogView.svelte";
 
-  import { buildDynamicSections } from "$lib/governance/sections.js";
-  import type { SectionConfig, SectionKey } from "$lib/governance/sections.js";
-  import { DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
+  import { TYPE_REGISTRY, DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
   import { getStringField, STATUS_FIELD_ID } from "$lib/governance/field-utils.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
@@ -67,17 +67,32 @@
   let { repo, repoName, documentProvider, onExport, onOpenAnother }: Props = $props();
 
   // ---------------------------------------------------------------------------
+  // Local types
+  // ---------------------------------------------------------------------------
+
+  interface ContainerNavEntry {
+    containerId: string;
+    title: string;
+    containerType?: string;
+    rootTypeId?: string;
+    rootTypeVersion?: number;
+    rootTypeName?: string;
+    rootTypeNamespace?: string;
+    icon: string;
+  }
+
+  // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
 
-  /** Records per section, keyed by section key (typeId). */
-  let sectionRecords = $state<Record<string, SrsRecord[]>>({});
+  /** Container nav entries from listContainers(), ordered as returned (ADR-009). */
+  let containers = $state<ContainerNavEntry[]>([]);
 
-  /** Sections derived from loaded records + TYPE_REGISTRY. */
-  let dynamicSections = $state<SectionConfig[]>([]);
+  /** Records per container, keyed by containerId (populated from getContainer.memberInstanceIds). */
+  let containerRecords = $state<Record<string, SrsRecord[]>>({});
 
-  /** Active sidebar section — null until first data load. */
-  let activeSection = $state<SectionKey | null>(null);
+  /** Active sidebar container — null until first data load. */
+  let activeContainerId = $state<string | null>(null);
 
   /** Selected record instance ID. */
   let selectedId = $state<string | null>(null);
@@ -86,12 +101,12 @@
   let diagnostics = $state<Diagnostic[]>([]);
   let instanceCount = $state<number>(0);
 
-  /** TypeFormDef per section key, derived from typeSchema() at load time. */
-  let sectionSchemas = $state<Record<string, TypeFormDef>>({});
+  /** TypeFormDef per container, keyed by containerId, derived from root type schema. */
+  let containerSchemas = $state<Record<string, TypeFormDef>>({});
 
-  // fieldMetaMap is $derived so buildFieldMetaMap only runs when sectionSchemas
+  // fieldMetaMap is $derived so buildFieldMetaMap only runs when containerSchemas
   // changes (once at load), not on every reactive access from child components.
-  const fieldMetaMap = $derived(buildFieldMetaMap(sectionSchemas));
+  const fieldMetaMap = $derived(buildFieldMetaMap(containerSchemas));
 
   // Provide reactive field metadata to all descendant rendering components.
   setFieldMetaContext(() => fieldMetaMap);
@@ -111,21 +126,18 @@
   /** Relations (as source or target) for the currently selected decision. */
   let decisionRelations = $state<SrsRelation[]>([]);
 
-  /** Container ID of the decision_log container, discovered at boot via listContainers. */
-  let decisionLogContainerId = $state<string | null>(null);
-
   // ---------------------------------------------------------------------------
   // Derived
   // ---------------------------------------------------------------------------
 
-  let activeRecords = $derived(activeSection !== null ? (sectionRecords[activeSection] ?? []) : []);
+  let activeRecords = $derived(activeContainerId !== null ? (containerRecords[activeContainerId] ?? []) : []);
 
-  let activeSection_ = $derived(
-    dynamicSections.find((s) => s.key === activeSection) ?? null,
+  let activeContainer = $derived(
+    containers.find((c) => c.containerId === activeContainerId) ?? null,
   );
 
   let activeSectionSchema = $derived(
-    activeSection !== null ? (sectionSchemas[activeSection] ?? null) : null,
+    activeContainerId !== null ? (containerSchemas[activeContainerId] ?? null) : null,
   );
 
   /** Count of validation errors. */
@@ -151,52 +163,84 @@
     return { severity: sev, message: d.message };
   }
 
-  function loadSectionRecords(): void {
+  /**
+   * Load container nav from listContainers() and populate containerRecords.
+   * Replaces the old loadSectionRecords() + TYPE_REGISTRY approach (ADR-009).
+   */
+  function loadContainerNav(): void {
     const allRecords = listRecords(repo, {});
-    dynamicSections = buildDynamicSections(allRecords);
-    const result: Record<string, SrsRecord[]> = {};
-    for (const r of allRecords) {
-      if (!r.typeId) continue;
-      if (!result[r.typeId]) result[r.typeId] = [];
-      result[r.typeId].push(r);
+    const recordMap = new Map<string, SrsRecord>(allRecords.map((r) => [r.instanceId, r]));
+    const allContainers = listContainers(repo, {});
+
+    const navEntries: ContainerNavEntry[] = [];
+    const recordsByContainer: Record<string, SrsRecord[]> = {};
+
+    for (const summary of allContainers) {
+      const full = getContainer(repo, summary.containerId);
+      const members = (full.memberInstanceIds ?? [])
+        .map((id) => recordMap.get(id))
+        .filter((r): r is SrsRecord => r !== undefined);
+      recordsByContainer[summary.containerId] = members;
+
+      const rootId = full.rootInstanceIds?.[0];
+      const rootRecord = rootId ? recordMap.get(rootId) : undefined;
+      const rootTypeId = rootRecord?.typeId;
+      const rootTypeVersion = rootRecord?.typeVersion;
+      const rootTypeName = rootRecord?.typeName;
+      const rootTypeNamespace = rootRecord?.typeNamespace;
+      const regEntry = rootTypeId ? TYPE_REGISTRY[rootTypeId] : undefined;
+
+      navEntries.push({
+        containerId: summary.containerId,
+        title: summary.title,
+        containerType: summary.containerType,
+        rootTypeId,
+        rootTypeVersion,
+        rootTypeName,
+        rootTypeNamespace,
+        icon: regEntry?.icon ?? "◻",
+      });
     }
-    sectionRecords = result;
-    if (activeSection === null && dynamicSections.length > 0) {
-      activeSection = dynamicSections[0].key;
+
+    containers = navEntries;
+    containerRecords = recordsByContainer;
+
+    if (activeContainerId === null && navEntries.length > 0) {
+      activeContainerId = navEntries[0].containerId;
     }
   }
 
-  function buildSectionSchemas(): void {
+  function buildContainerSchemas(): void {
     const result: Record<string, TypeFormDef> = {};
-    for (const section of dynamicSections) {
-      if (!section.typeId) continue;
+    for (const container of containers) {
+      if (!container.rootTypeId) continue;
       try {
-        const schemaResult = typeSchema(repo, section.typeId, section.typeVersion);
+        const schemaResult = typeSchema(repo, container.rootTypeId, container.rootTypeVersion ?? 1);
         if (schemaResult.diagnostics.length > 0) {
-          console.warn("typeSchema diagnostics for section", section.key, schemaResult.diagnostics);
+          console.warn("typeSchema diagnostics for container", container.containerId, schemaResult.diagnostics);
         }
         const rawSchema = schemaResult.schema;
         if (
           typeof rawSchema !== "object" || rawSchema === null ||
           typeof rawSchema["properties"] !== "object" || rawSchema["properties"] === null
         ) {
-          console.warn("typeSchema returned unexpected shape for section", section.key, rawSchema);
+          console.warn("typeSchema returned unexpected shape for container", container.containerId, rawSchema);
           continue;
         }
         const schema = rawSchema as unknown as SchemaDefinition;
-        result[section.key] = {
-          typeId: section.typeId,
-          typeVersion: section.typeVersion ?? 1,
-          typeNamespace: section.typeNamespace,
-          typeName: section.typeName,
-          label: section.label,
+        result[container.containerId] = {
+          typeId: container.rootTypeId,
+          typeVersion: container.rootTypeVersion ?? 1,
+          typeNamespace: container.rootTypeNamespace ?? "",
+          typeName: container.rootTypeName ?? "",
+          label: container.rootTypeName ?? container.title,
           fields: definitionToFields(schema),
         };
       } catch (e: unknown) {
-        console.error("typeSchema failed for section", section.key, e);
+        console.error("typeSchema failed for container", container.containerId, e);
       }
     }
-    sectionSchemas = result;
+    containerSchemas = result;
   }
 
   function refreshValidation(): void {
@@ -210,25 +254,10 @@
   // ---------------------------------------------------------------------------
 
   onMount(() => {
-    // Order matters: buildSectionSchemas reads dynamicSections set by loadSectionRecords.
-    loadSectionRecords();
-    buildSectionSchemas();
+    // Order matters: buildContainerSchemas reads containers set by loadContainerNav.
+    loadContainerNav();
+    buildContainerSchemas();
     refreshValidation();
-    // RFC-009 UUID-chain: find the decision-log container via root record's typeId
-    // (gallery.srsj confirms the decision-log container root is a decision record)
-    try {
-      const dlRecords = sectionRecords[DECISION_TYPE_ID] ?? [];
-      for (const record of dlRecords) {
-        const containers = listContainers(repo, { rootInstanceId: record.instanceId });
-        if (containers.length > 0) {
-          decisionLogContainerId = containers[0].containerId;
-          break;
-        }
-      }
-    } catch (e: unknown) {
-      console.error("decision-log container discovery failed:", e);
-      decisionLogContainerId = null;
-    }
   });
 
   // ---------------------------------------------------------------------------
@@ -238,15 +267,15 @@
   function governanceCrumbItems(): BreadcrumbItem[] {
     const items: BreadcrumbItem[] = [{ label: repoName, title: `Opened from ${documentProvider}` }];
     if (formMode !== null) {
-      items.push({ label: activeSection_?.label ?? "", onclick: handleFormCancel });
+      items.push({ label: activeContainer?.title ?? "", onclick: handleFormCancel });
       if (formMode === "create") {
-        items.push({ label: `New ${(activeSection_?.label ?? "").replace(/s$/, "")}` });
+        items.push({ label: `New ${(activeContainer?.title ?? "").replace(/s$/, "")}` });
       } else if (editingRecord) {
         const title = editingRecord.fieldValues[0]?.value as string | undefined;
         items.push({ label: title ?? "Record" });
       }
     } else {
-      items.push({ label: activeSection_?.label ?? "" });
+      items.push({ label: activeContainer?.title ?? "" });
     }
     return items;
   }
@@ -260,32 +289,32 @@
     formError = null;
     try {
       if (formMode === "create") {
-        const typeDef = activeSection ? sectionSchemas[activeSection] : undefined;
+        const typeDef = activeContainerId ? containerSchemas[activeContainerId] : undefined;
         if (!typeDef) return;
         const created = createRecord(repo, typeDef.typeId, typeDef.typeVersion, input as CreateRecordInput);
-        if (decisionLogContainerId && activeSection_?.typeId === DECISION_TYPE_ID) {
+        if (activeContainerId) {
           try {
-            addContainerMember(repo, decisionLogContainerId, created.instanceId);
+            addContainerMember(repo, activeContainerId, created.instanceId);
           } catch (e: unknown) {
             console.error("addContainerMember failed:", e);
             formError = e instanceof Error
-              ? `Decision saved, but container registration failed: ${e.message}`
-              : "Decision saved, but could not register in decision log container.";
-            loadSectionRecords();
+              ? `Record saved, but container registration failed: ${e.message}`
+              : "Record saved, but could not register in container.";
+            loadContainerNav();
             selectedId = created.instanceId;
             refreshValidation();
             return;
           }
         }
         formMode = null;
-        loadSectionRecords();
+        loadContainerNav();
         selectedId = created.instanceId;
         refreshValidation();
       } else if (formMode === "edit" && editingRecord) {
         updateRecord(repo, editingRecord.instanceId, input as UpdateRecordInput);
         formMode = null;
         editingRecord = null;
-        loadSectionRecords();
+        loadContainerNav();
         refreshValidation();
       }
     } catch (e: unknown) {
@@ -319,7 +348,7 @@
     deleteRecord(repo, selectedRecord.instanceId);
     selectedId = null;
     showLinkPicker = false;
-    loadSectionRecords();
+    loadContainerNav();
     refreshValidation();
   }
 
@@ -333,7 +362,7 @@
       updateRecord(repo, selectedRecord.instanceId, {
         fieldValues: [...existingValues, { fieldId: statusFieldId, value: toState }],
       });
-      loadSectionRecords();
+      loadContainerNav();
       // refreshValidation(); // called by B13
     } catch (e: unknown) {
       // silently ignore for now — errors will surface via validate()
@@ -350,11 +379,18 @@
         relationType: "supersedes",
         fieldValues: [...baseValues, { fieldId: statusFieldId, value: "draft" }],
       });
-      loadSectionRecords();
+      if (activeContainerId) {
+        try {
+          addContainerMember(repo, activeContainerId, result.record.instanceId);
+        } catch (e: unknown) {
+          console.error("addContainerMember failed for successor:", e);
+        }
+      }
+      loadContainerNav();
       selectedId = result.record.instanceId;
     } catch (e: unknown) {
       console.error("Failed to create successor:", e);
-      loadSectionRecords();
+      loadContainerNav();
     }
   }
 
@@ -386,7 +422,7 @@
   }
 
   $effect(() => {
-    if (selectedRecord && activeSection_?.typeId === DECISION_TYPE_ID) {
+    if (selectedRecord && activeContainer?.rootTypeId === DECISION_TYPE_ID) {
       loadDecisionRelations(selectedRecord.instanceId);
     } else {
       decisionRelations = [];
@@ -411,13 +447,13 @@
     <Nav repo={repoName} eyebrow="srs · governance">
       {#snippet children()}
         <NavGroup label="Governance">
-          {#each dynamicSections as section (section.key)}
+          {#each containers as container (container.containerId)}
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
               onclick={(e) => {
                 e.preventDefault();
-                activeSection = section.key;
+                activeContainerId = container.containerId;
                 selectedId = null;
                 formMode = null;
                 editingRecord = null;
@@ -426,10 +462,10 @@
               }}
             >
               <NavItem
-                label={section.label}
-                id={section.icon}
-                count={sectionRecords[section.key]?.length ?? 0}
-                active={activeSection === section.key}
+                label={container.title}
+                id={container.icon}
+                count={containerRecords[container.containerId]?.length ?? 0}
+                active={activeContainerId === container.containerId}
                 href="#"
               />
             </div>
@@ -475,13 +511,13 @@
         {:else if selectedRecord && formMode === null}
           <RecordReading
             record={selectedRecord}
-            sectionLabel={activeSection_?.label ?? ""}
+            sectionLabel={activeContainer?.title ?? ""}
             onBack={() => { selectedId = null; }}
           />
         {:else}
-          {#if activeSection_?.typeId === DECISION_TYPE_ID}
+          {#if activeContainer?.rootTypeId === DECISION_TYPE_ID}
             <div class="section-heading">
-              <h2 class="section-heading__title">{activeSection_?.label ?? ""}</h2>
+              <h2 class="section-heading__title">{activeContainer?.title ?? ""}</h2>
               <span class="section-heading__count">{activeRecords.length}</span>
             </div>
             <DecisionLogView
@@ -492,12 +528,12 @@
             />
           {:else}
             <div class="section-heading">
-              <h2 class="section-heading__title">{activeSection_?.label ?? ""}</h2>
+              <h2 class="section-heading__title">{activeContainer?.title ?? ""}</h2>
               <span class="section-heading__count">{activeRecords.length}</span>
             </div>
 
             {#if activeRecords.length === 0}
-              <p class="empty-state">No {activeSection_?.label?.toLowerCase() ?? ""} records in this repository.</p>
+              <p class="empty-state">No {activeContainer?.title?.toLowerCase() ?? ""} records in this repository.</p>
             {:else}
               <div class="record-list">
                 {#each activeRecords as record (record.instanceId)}
@@ -533,7 +569,7 @@
   {#snippet inspector()}
     <Inspector label="Inspector">
       {#if selectedRecord && formMode === null}
-        <InspectorSection title={(activeSection_?.label ?? "").replace(/s$/, "")} aside={selectedRecord.typeName}>
+        <InspectorSection title={(activeContainer?.title ?? "").replace(/s$/, "")} aside={selectedRecord.typeName}>
           <div class="inspector__kv inspector__kv--meta">
             <span class="inspector__k">ID</span>
             <span class="inspector__v inspector__v--mono">{selectedRecord.instanceId.slice(0, 8)}…</span>
@@ -561,7 +597,7 @@
           {/if}
         </InspectorSection>
       {/if}
-      {#if selectedRecord && formMode === null && activeSection_?.typeId === DECISION_TYPE_ID}
+      {#if selectedRecord && formMode === null && activeContainer?.rootTypeId === DECISION_TYPE_ID}
         <InspectorSection title="Decision Links" aside={decisionRelations.length === 0 ? "" : String(decisionRelations.length)}>
           {#if decisionRelations.length === 0}
             <p class="inspector__empty">No links yet.</p>
@@ -612,7 +648,7 @@
   />
 {/if}
 
-{#if showLinkPicker && selectedRecord && activeSection_?.typeId === DECISION_TYPE_ID && formMode === null}
+{#if showLinkPicker && selectedRecord && activeContainer?.rootTypeId === DECISION_TYPE_ID && formMode === null}
   <DecisionLinkPicker
     sourceInstanceId={selectedRecord.instanceId}
     sourceLabel={selectedRecord.displayLabel ?? selectedRecord.instanceId.slice(0, 8)}

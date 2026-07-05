@@ -1,9 +1,10 @@
 # ADR-007: Unified type registry consolidates display hints and view components
 
-**Status:** Accepted
+**Status:** Accepted (partially superseded by [ADR-009](./009-container-driven-nav.md))
 **Date:** 2026-06-26
 **Issue:** [srs-web#71](https://github.com/the-greenman/srs-web/issues/71)
 **Amends:** [ADR-006](./006-dynamic-dispatch-replaces-sections.md) (consequence: single-file registration)
+**Partially superseded by:** [ADR-009](./009-container-driven-nav.md) — `TYPE_REGISTRY` is demoted to **presentation hints only** (icon, view component). It no longer drives sidebar section appearance or nav structure; containers from `listContainers()` are now the nav source.
 
 ## Context
 
