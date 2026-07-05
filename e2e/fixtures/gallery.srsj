@@ -127,7 +127,7 @@
     },
     "package/document-views/decision-deliberation-5a3ce87e.json": {
       "createdAt": "2026-05-31T00:00:00Z",
-      "description": "Full deliberation view — shows all fields including question, context, friction, alternatives, requirements, statement, rationale, next steps, owner, revisit, and status.",
+      "description": "Full deliberation view \u2014 shows all fields including question, context, friction, alternatives, requirements, statement, rationale, next steps, owner, revisit, and status.",
       "format": "markdown",
       "id": "5a3ce87e-8340-4d91-a140-ab56b57f704f",
       "name": "decision-deliberation",
@@ -160,11 +160,11 @@
         },
         {
           "fieldId": "8aa3eba2-204b-5ebd-ba7a-be0f066027d6",
-          "value": "LiMoMa — the Limehouse Museum of Maybe Art — is a community gallery initiative that uses the back stairs and landings of Limehouse Town Hall as a space for exhibiting artwork. It exists as a voluntary association of members with no formal legal status. The pilot runs for six months from June 2026."
+          "value": "LiMoMa \u2014 the Limehouse Museum of Maybe Art \u2014 is a community gallery initiative that uses the back stairs and landings of Limehouse Town Hall as a space for exhibiting artwork. It exists as a voluntary association of members with no formal legal status. The pilot runs for six months from June 2026."
         },
         {
           "fieldId": "3340532b-d845-5e54-92b3-819ed05365c5",
-          "value": "The name and definition set the frame for all subsequent decisions. 'Maybe Art' signals that the space is exploratory — not a conventional gallery with commercial or institutional expectations."
+          "value": "The name and definition set the frame for all subsequent decisions. 'Maybe Art' signals that the space is exploratory \u2014 not a conventional gallery with commercial or institutional expectations."
         },
         {
           "fieldId": "1f01bc6b-39c8-58d7-b1a3-79142623fece",
@@ -259,7 +259,7 @@
         },
         {
           "containerId": "138e2fac-6a8a-4a06-9511-5aefd99ceae9",
-          "title": "Decisions"
+          "title": "Decision Log"
         },
         {
           "containerId": "ece00010-0000-4000-8000-000000000010",
@@ -299,7 +299,7 @@
       "rootInstanceIds": [
         "9054911c-5285-4c3e-8198-4b9650169001"
       ],
-      "title": "Decisions"
+      "title": "Decision Log"
     },
     "records/tier-2/cc58c0dd-8e3a-4dc5-9b58-f3273911a9a9.json": {
       "createdAt": "2026-05-31T14:55:35.192383646+00:00",
@@ -314,7 +314,7 @@
         },
         {
           "fieldId": "8aa3eba2-204b-5ebd-ba7a-be0f066027d6",
-          "value": "When LiMoMa closes — whether at the end of the pilot, by group decision, or by necessity — the group will: (1) return all artworks to their makers within a reasonable period; (2) remove or make good all fixings and mounts; (3) leave no unresolved commitments to artists, the building, or third parties; (4) transfer any remaining shared funds to the Party Utility for building improvement. The Clerk is responsible for ensuring these obligations are discharged and recorded."
+          "value": "When LiMoMa closes \u2014 whether at the end of the pilot, by group decision, or by necessity \u2014 the group will: (1) return all artworks to their makers within a reasonable period; (2) remove or make good all fixings and mounts; (3) leave no unresolved commitments to artists, the building, or third parties; (4) transfer any remaining shared funds to the Party Utility for building improvement. The Clerk is responsible for ensuring these obligations are discharged and recorded."
         },
         {
           "fieldId": "3340532b-d845-5e54-92b3-819ed05365c5",
@@ -486,7 +486,7 @@
         },
         {
           "fieldId": "3c39ee1f-6fe0-5da7-a0b6-928aa3a63211",
-          "value": "Cannot decide what is shown or how it is installed. The Clerk's role is to maintain the record faithfully — not to determine its content. Cannot amend a decision unilaterally; can only record what the group has agreed."
+          "value": "Cannot decide what is shown or how it is installed. The Clerk's role is to maintain the record faithfully \u2014 not to determine its content. Cannot amend a decision unilaterally; can only record what the group has agreed."
         },
         {
           "fieldId": "9a32dc01-f348-5e05-9f54-bb6d21239f04",
@@ -537,7 +537,7 @@
         },
         {
           "fieldId": "c04b7f84-9a55-5353-8c9f-2b62f6a1e34e",
-          "value": "December 2026 pilot review — if Phase 1 is working, bring main hallway into scope for Phase 2."
+          "value": "December 2026 pilot review \u2014 if Phase 1 is working, bring main hallway into scope for Phase 2."
         },
         {
           "fieldId": "aee7afe9-6650-5fa4-a61a-495c3b88994b",
@@ -752,7 +752,7 @@
         },
         {
           "fieldId": "3c39ee1f-6fe0-5da7-a0b6-928aa3a63211",
-          "value": "Cannot decide what artwork is shown or how it is curated — that is the Curatorial Lead's authority. Cannot commit the group to structural changes without Party Utility agreement. Cannot override A-005 (Care of the building)."
+          "value": "Cannot decide what artwork is shown or how it is curated \u2014 that is the Curatorial Lead's authority. Cannot commit the group to structural changes without Party Utility agreement. Cannot override A-005 (Care of the building)."
         },
         {
           "fieldId": "9a32dc01-f348-5e05-9f54-bb6d21239f04",
@@ -787,15 +787,15 @@
         },
         {
           "fieldId": "1a1c0a5d-a1df-5d03-95f2-32af73bb71da",
-          "value": "The walls crumble when repeatedly drilled — every new hole degrades the plaster further. There is currently no consistent hanging system, so each person uses whatever is to hand (blue tack, tape, random screws), which looks poor and provides no standard for the pilot gallery. Something needs to be installed once and reused across shows."
+          "value": "The walls crumble when repeatedly drilled \u2014 every new hole degrades the plaster further. There is currently no consistent hanging system, so each person uses whatever is to hand (blue tack, tape, random screws), which looks poor and provides no standard for the pilot gallery. Something needs to be installed once and reused across shows."
         },
         {
           "fieldId": "636ce948-2110-57b4-a3ed-04354ec17843",
-          "value": "Hanging rails — inflexible, institutional-looking, poor fit for the angles in this stairwell. Command strips — fail on these walls, require grease-free surface, come off after about a week. Bolt systems — overkill for the weights involved. Sacrificial backing boards — interesting but adds complexity; may revisit for Phase 2. Central suspension from ceiling/beam — technically interesting but complex to engineer safely."
+          "value": "Hanging rails \u2014 inflexible, institutional-looking, poor fit for the angles in this stairwell. Command strips \u2014 fail on these walls, require grease-free surface, come off after about a week. Bolt systems \u2014 overkill for the weights involved. Sacrificial backing boards \u2014 interesting but adds complexity; may revisit for Phase 2. Central suspension from ceiling/beam \u2014 technically interesting but complex to engineer safely."
         },
         {
           "fieldId": "a952604c-d150-5315-bfc1-7229ddc1d636",
-          "value": "Must not continuously damage old plaster walls (non-negotiable). Must accommodate different artwork sizes, weights, and formats across multiple shows. Must look intentional — not like a DIY bodge — when fixings are not in use. Must be simple enough to install correctly the first time. Should protect the building, which is a shared cooperative space. Aesthetics vs practicality was the main tension discussed: the group accepted a slightly visible fixing system in exchange for durability and flexibility."
+          "value": "Must not continuously damage old plaster walls (non-negotiable). Must accommodate different artwork sizes, weights, and formats across multiple shows. Must look intentional \u2014 not like a DIY bodge \u2014 when fixings are not in use. Must be simple enough to install correctly the first time. Should protect the building, which is a shared cooperative space. Aesthetics vs practicality was the main tension discussed: the group accepted a slightly visible fixing system in exchange for durability and flexibility."
         },
         {
           "fieldId": "de1296e0-e083-58d9-97a0-cb2b91fec02e",
@@ -940,7 +940,7 @@
         },
         {
           "fieldId": "3340532b-d845-5e54-92b3-819ed05365c5",
-          "value": "Stating what we are not — a commercial gallery — is as important as stating what we are. This protects artists who exhibit with us and is honest about our amateur, community basis."
+          "value": "Stating what we are not \u2014 a commercial gallery \u2014 is as important as stating what we are. This protects artists who exhibit with us and is honest about our amateur, community basis."
         },
         {
           "fieldId": "1f01bc6b-39c8-58d7-b1a3-79142623fece",
@@ -972,7 +972,7 @@
     },
     "package/fields/rationale-3340532b.json": {
       "aiGuidance": {
-        "purpose": "Explains the deciding factor — why this option was chosen over the alternatives. One to three sentences capturing the core reasoning."
+        "purpose": "Explains the deciding factor \u2014 why this option was chosen over the alternatives. One to three sentences capturing the core reasoning."
       },
       "createdAt": "2026-05-25T00:00:00Z",
       "description": "Reasoning behind the decision.",
@@ -984,7 +984,7 @@
     },
     "package/document-views/decision-log-b5c8d124.json": {
       "createdAt": "2026-05-31T00:00:00Z",
-      "description": "Decision log view — compact summary showing only decision statement, alternatives considered, rationale, and revisit trigger.",
+      "description": "Decision log view \u2014 compact summary showing only decision statement, alternatives considered, rationale, and revisit trigger.",
       "format": "markdown",
       "id": "b5c8d124-2084-4a6b-a231-425e800e1e55",
       "name": "decision-log",
@@ -1022,7 +1022,7 @@
         "purpose": ""
       },
       "createdAt": "2026-05-26T00:00:00Z",
-      "description": "The limits of this role — where the role's authority ends or must be shared.",
+      "description": "The limits of this role \u2014 where the role's authority ends or must be shared.",
       "id": "3c39ee1f-6fe0-5da7-a0b6-928aa3a63211",
       "name": "boundary",
       "namespace": "governance",
@@ -1089,7 +1089,7 @@
         },
         {
           "fieldId": "3340532b-d845-5e54-92b3-819ed05365c5",
-          "value": "Our right to use this space depends on the trust of the Party Utility and the building community. Demonstrating care of the building is not optional — it is the basis on which the experiment is allowed to continue."
+          "value": "Our right to use this space depends on the trust of the Party Utility and the building community. Demonstrating care of the building is not optional \u2014 it is the basis on which the experiment is allowed to continue."
         },
         {
           "fieldId": "1f01bc6b-39c8-58d7-b1a3-79142623fece",
@@ -1097,7 +1097,7 @@
         },
         {
           "fieldId": "0df40543-f72a-5471-a7f1-c85c1f1f93e4",
-          "value": "Protected — requires Party Utility agreement to amend"
+          "value": "Protected \u2014 requires Party Utility agreement to amend"
         },
         {
           "fieldId": "aee7afe9-6650-5fa4-a61a-495c3b88994b",
@@ -1124,7 +1124,7 @@
         },
         {
           "fieldId": "9889052c-9313-5e2f-a2ac-15baa3c6983e",
-          "value": "The back stairwell cannot be locked — it is also a fire escape route. There is no practical mechanism to insure or protect work against theft or accidental damage in an open-access space."
+          "value": "The back stairwell cannot be locked \u2014 it is also a fire escape route. There is no practical mechanism to insure or protect work against theft or accidental damage in an open-access space."
         },
         {
           "fieldId": "3340532b-d845-5e54-92b3-819ed05365c5",
@@ -1315,7 +1315,7 @@
         },
         {
           "fieldId": "8aa3eba2-204b-5ebd-ba7a-be0f066027d6",
-          "value": "Decisions are made by talk and agreement. We do not vote. Where we cannot agree, the matter stays open or is recorded as an exercise. Once a decision is agreed, it is written down in the decision log and does not change silently — a new decision supersedes an old one by name. These Articles may be amended by unanimous agreement of all current members. The Clerk is responsible for maintaining the coherence of the record."
+          "value": "Decisions are made by talk and agreement. We do not vote. Where we cannot agree, the matter stays open or is recorded as an exercise. Once a decision is agreed, it is written down in the decision log and does not change silently \u2014 a new decision supersedes an old one by name. These Articles may be amended by unanimous agreement of all current members. The Clerk is responsible for maintaining the coherence of the record."
         },
         {
           "fieldId": "3340532b-d845-5e54-92b3-819ed05365c5",
@@ -1354,11 +1354,11 @@
         },
         {
           "fieldId": "3c39ee1f-6fe0-5da7-a0b6-928aa3a63211",
-          "value": "Cannot approve installation methods or fixings — that is Building Authority. Cannot commit to showing work that would require structural changes not yet approved. Cannot enter financial agreements on behalf of the group."
+          "value": "Cannot approve installation methods or fixings \u2014 that is Building Authority. Cannot commit to showing work that would require structural changes not yet approved. Cannot enter financial agreements on behalf of the group."
         },
         {
           "fieldId": "9a32dc01-f348-5e05-9f54-bb6d21239f04",
-          "value": "Delegated by the founding group at the founding meeting, May 2026. Role is Phase 1 scoped — to be reviewed at the pilot review in December 2026."
+          "value": "Delegated by the founding group at the founding meeting, May 2026. Role is Phase 1 scoped \u2014 to be reviewed at the pilot review in December 2026."
         },
         {
           "fieldId": "aee7afe9-6650-5fa4-a61a-495c3b88994b",
@@ -1393,7 +1393,7 @@
         },
         {
           "fieldId": "636ce948-2110-57b4-a3ed-04354ec17843",
-          "value": "Open-ended pilot with no fixed review date — judged too likely to drift."
+          "value": "Open-ended pilot with no fixed review date \u2014 judged too likely to drift."
         },
         {
           "fieldId": "c04b7f84-9a55-5353-8c9f-2b62f6a1e34e",
@@ -1857,7 +1857,7 @@
         },
         {
           "fieldId": "f4e00004-0000-4000-8000-000000000004",
-          "value": "None — the group can proceed on a provisional basis while the threshold question is worked out."
+          "value": "None \u2014 the group can proceed on a provisional basis while the threshold question is worked out."
         },
         {
           "fieldId": "f5e00005-0000-4000-8000-000000000005",

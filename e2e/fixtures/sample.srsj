@@ -6,5 +6,40 @@
     "namespace": "test",
     "instanceIndex": []
   },
-  "data": {}
+  "data": {
+    "manifest.json": {
+      "containerIndex": [
+        {
+          "containerId": "aa000001-0000-4000-8000-000000000001",
+          "title": "Articles"
+        },
+        {
+          "containerId": "dd000001-0000-4000-8000-000000000001",
+          "title": "Decision Log"
+        },
+        {
+          "containerId": "cc000001-0000-4000-8000-000000000001",
+          "title": "Roles"
+        }
+      ]
+    },
+    "containers/aa000001-0000-4000-8000-000000000001.json": {
+      "containerId": "aa000001-0000-4000-8000-000000000001",
+      "title": "Articles",
+      "memberInstanceIds": [],
+      "rootInstanceIds": []
+    },
+    "containers/dd000001-0000-4000-8000-000000000001.json": {
+      "containerId": "dd000001-0000-4000-8000-000000000001",
+      "title": "Decision Log",
+      "memberInstanceIds": [],
+      "rootInstanceIds": []
+    },
+    "containers/cc000001-0000-4000-8000-000000000001.json": {
+      "containerId": "cc000001-0000-4000-8000-000000000001",
+      "title": "Roles",
+      "memberInstanceIds": [],
+      "rootInstanceIds": []
+    }
+  }
 }
