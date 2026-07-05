@@ -49,6 +49,7 @@ export { default as DecisionLinkPicker } from "./DecisionLinkPicker.svelte";
 
 // Status / actions / validation
 export { default as Tag } from "./Tag.svelte";
+export { default as TagChip } from "./TagChip.svelte";
 export { default as Button } from "./Button.svelte";
 export { default as Diagnostics } from "./Diagnostics.svelte";
 export { default as Lifecycle } from "./Lifecycle.svelte";

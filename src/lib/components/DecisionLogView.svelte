@@ -7,9 +7,10 @@
   import type { Status } from "$lib/types.js";
   import { getStringField } from "$lib/governance/field-utils.js";
   import { getFieldMeta } from "$lib/governance/field-meta.js";
-  import { computeSearchHitIds, sortByCreatedAt } from "./decision-log-utils.js";
+  import { computeSearchHitIds, computeTagHitIds, sortByCreatedAt } from "./decision-log-utils.js";
   import LogTable from "./LogTable.svelte";
   import DecisionSummaryCard from "./DecisionSummaryCard.svelte";
+  import TagChip from "./TagChip.svelte";
 
   let {
     records,
@@ -36,8 +37,9 @@
     [...new Set(records.flatMap((r) => r.tags ?? []))].sort((a, b) => a.localeCompare(b))
   );
 
-  // Call WASM find once per query change; null means "no active search" (show all).
+  // Call WASM find once per query/filter change; null means "no active filter" (show all).
   const searchHitIds = $derived(computeSearchHitIds(repo, searchQuery));
+  const tagHitIds = $derived(computeTagHitIds(repo, topicFilter));
 
   const displayedRecords = $derived(
     sortByCreatedAt(
@@ -50,7 +52,7 @@
             const s = getStringField(r, "status", fieldMeta);
             if (s !== undefined && HIDDEN_STATUSES.has(s as Status)) return false;
           }
-          if (topicFilter !== "all" && !(r.tags ?? []).includes(topicFilter)) return false;
+          if (tagHitIds !== null && !tagHitIds.has(r.instanceId)) return false;
           return true;
         }),
       sortOrder
@@ -79,16 +81,12 @@
         {sortOrder === "newest" ? "Newest first" : "Oldest first"}
       </button>
       {#if availableTopics.length > 0}
-        <select
-          data-testid="topic-filter"
-          value={topicFilter}
-          onchange={(e) => { topicFilter = (e.target as HTMLSelectElement).value; }}
-        >
-          <option value="all">All topics</option>
-          {#each availableTopics as topic}
-            <option value={topic}>{topic}</option>
+        <div class="controls-bar__tag-filter" data-testid="topic-filter" role="group" aria-label="Filter by tag">
+          <TagChip label="All" selected={topicFilter === "all"} onSelect={() => { topicFilter = "all"; }} />
+          {#each availableTopics as topic (topic)}
+            <TagChip label={topic} selected={topicFilter === topic} onSelect={() => { topicFilter = topic; }} />
           {/each}
-        </select>
+        </div>
       {/if}
       <button
         data-testid="show-all-toggle"
@@ -123,9 +121,17 @@
   .controls-bar {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     gap: var(--space-sm);
     align-items: center;
     padding: var(--space-sm) var(--space-md);
+  }
+
+  .controls-bar__tag-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
   }
 
   .controls-bar__sort-btn {

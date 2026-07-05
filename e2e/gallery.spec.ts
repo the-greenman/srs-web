@@ -214,21 +214,21 @@ test.describe("Decision Log — sort and filter controls", () => {
   });
 
   test("filter by topic exhibitions shows 2 decisions", async ({ page }) => {
-    await page.getByTestId("topic-filter").selectOption("exhibitions");
+    await page.getByTestId("topic-filter").getByRole("button", { name: "exhibitions" }).click();
     await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
   });
 
   test("filter by all topics restores list", async ({ page }) => {
-    await page.getByTestId("topic-filter").selectOption("exhibitions");
+    await page.getByTestId("topic-filter").getByRole("button", { name: "exhibitions" }).click();
     await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
-    await page.getByTestId("topic-filter").selectOption("all");
+    await page.getByTestId("topic-filter").getByRole("button", { name: "All" }).click();
     await expect(page.getByTestId("decision-summary-card")).toHaveCount(7);
   });
 
-  test("topic filter shows sorted options", async ({ page }) => {
-    const select = page.getByTestId("topic-filter");
-    const options = await select.locator("option").allTextContents();
-    expect(options).toEqual(["All topics", "exhibitions", "governance", "operations"]);
+  test("topic filter shows sorted chip labels", async ({ page }) => {
+    const filterGroup = page.getByTestId("topic-filter");
+    const labels = await filterGroup.getByTestId("tag-chip-filter").allTextContents();
+    expect(labels).toEqual(["All", "exhibitions", "governance", "operations"]);
   });
 
   test("search input is visible", async ({ page }) => {
@@ -311,7 +311,7 @@ test.describe("Decision Log — hide superseded/abandoned toggle", () => {
   });
 
   test("topic filter does not reveal superseded/abandoned records", async ({ page }) => {
-    await page.getByTestId("topic-filter").selectOption("exhibitions");
+    await page.getByTestId("topic-filter").getByRole("button", { name: "exhibitions" }).click();
     await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
     await page.getByTestId("show-all-toggle").click();
     // superseded/abandoned have no topic tags → still 2 under exhibitions filter

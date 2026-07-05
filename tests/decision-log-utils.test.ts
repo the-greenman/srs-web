@@ -9,7 +9,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 import type { SrsRepository, SrsRecord } from "../src/lib/srs-client.js";
-import { computeSearchHitIds, sortByCreatedAt } from "../src/lib/components/decision-log-utils.js";
+import { computeSearchHitIds, computeTagHitIds, sortByCreatedAt } from "../src/lib/components/decision-log-utils.js";
 
 // ---------------------------------------------------------------------------
 // Mock helpers
@@ -50,6 +50,58 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
 function makeRecord(instanceId: string, createdAt: string): SrsRecord {
   return { instanceId, typeId: "t1", typeVersion: 1, fieldValues: [], createdAt };
 }
+
+// ---------------------------------------------------------------------------
+// computeTagHitIds
+// ---------------------------------------------------------------------------
+
+describe("computeTagHitIds", () => {
+  it("calls find with tag array and returns a Set of matching instanceIds", () => {
+    const rawResult = {
+      hits: [
+        { instanceId: "inst-001", label: "D1", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
+        { instanceId: "inst-002", label: "D2", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
+      ],
+      total: 2,
+      diagnostics: [],
+    };
+    const spy = vi.fn().mockReturnValue(rawResult);
+    const repo = mockRepo({ find: spy });
+
+    const result = computeTagHitIds(repo, "exhibitions");
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(JSON.stringify({ tag: ["exhibitions"] }));
+    expect(result).toBeInstanceOf(Set);
+    expect(result?.has("inst-001")).toBe(true);
+    expect(result?.has("inst-002")).toBe(true);
+    expect(result?.size).toBe(2);
+  });
+
+  it("returns null and does NOT call find when topicFilter is 'all'", () => {
+    const spy = vi.fn();
+    const repo = mockRepo({ find: spy });
+
+    const result = computeTagHitIds(repo, "all");
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(result).toBeNull();
+  });
+
+  it("returns null when repo is undefined", () => {
+    const result = computeTagHitIds(undefined, "exhibitions");
+    expect(result).toBeNull();
+  });
+
+  it("returns an empty Set when find returns no hits", () => {
+    const repo = mockRepo({ find: () => ({ hits: [], total: 0, diagnostics: [] }) });
+
+    const result = computeTagHitIds(repo, "exhibitions");
+
+    expect(result).toBeInstanceOf(Set);
+    expect(result?.size).toBe(0);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // computeSearchHitIds

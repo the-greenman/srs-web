@@ -36,6 +36,7 @@
 /* Components — one file per reusable block */
 @import url("./components/button.css") layer(components);
 @import url("./components/tag.css") layer(components);
+@import url("./components/tag-chip.css") layer(components);
 @import url("./components/nav.css") layer(components);
 @import url("./components/inspector.css") layer(components);
 @import url("./components/card.css") layer(components);
