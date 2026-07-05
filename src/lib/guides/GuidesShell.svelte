@@ -21,7 +21,7 @@
     updateRecord,
     deleteRecord,
     listContainers,
-    getContainer,
+    resolveContainerView,
     addContainerMember,
     removeContainerMember,
     listRelations,
@@ -29,7 +29,7 @@
     deleteRelation,
     renderDocumentView,
   } from "$lib/srs-client.js";
-  import type { SrsRepository, SrsRecord, CreateRecordInput, UpdateRecordInput, DocumentViewSummary } from "$lib/srs-client.js";
+  import type { SrsRepository, SrsRecord, CreateRecordInput, UpdateRecordInput, DocumentViewSummary, ContainerView } from "$lib/srs-client.js";
   import { findBlueprint, documentViewsForBlueprint } from "$lib/discovery.js";
   import ViewPicker from "$lib/components/ViewPicker.svelte";
   import type { TypeFormDef } from "$lib/governance/types.js";
@@ -91,9 +91,6 @@
 
   /** All guide records in the repo. */
   let guides = $state<SrsRecord[]>([]);
-
-  /** All section records in the repo (all 4 section types). */
-  let sections = $state<SrsRecord[]>([]);
 
   /** Field ID for the guide's "title" property (derived from blueprint schema). */
   let guideTitleFieldId = $state<string | null>(null);
@@ -221,10 +218,9 @@
     const containers = listContainers(repo, { rootInstanceId: selectedGuideId });
     if (containers.length === 0) return;
     selectedContainerId = containers[0].containerId;
-    const container = getContainer(repo, selectedContainerId);
-    const members = new Set(container.memberInstanceIds ?? []);
-    const scoped = sections.filter((s) => members.has(s.instanceId));
-    orderedSections = orderByPrecedes(scoped);
+    const view: ContainerView = resolveContainerView(repo, selectedContainerId);
+    const sectionRecords = view.members.filter((m) => m.tier > 0).map((m) => m.record);
+    orderedSections = orderByPrecedes(sectionRecords);
   }
 
   /**
@@ -264,13 +260,11 @@
     }
   }
 
-  /** Reload guides + sections from WASM, then re-scope the selected guide's sections. */
+  /** Reload guides from WASM, then re-scope the selected guide's sections. */
   function reload() {
     if (!guideTypeId) return;
-    const sectionTypeIds = new Set(sectionTypeList.map((st) => st.typeId));
     const all = listRecords(repo, {});
     guides = all.filter((r) => r.typeId === guideTypeId);
-    sections = all.filter((r) => sectionTypeIds.has(r.typeId));
     refreshSections();
     refreshPreview();
   }

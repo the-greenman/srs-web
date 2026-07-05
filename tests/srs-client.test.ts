@@ -24,6 +24,7 @@ import {
   listRecords,
   listRelations,
   listTerms,
+  resolveContainerView,
   typeSchema,
   type ContainerListFilter,
   type DocumentViewListFilter,
@@ -62,6 +63,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     find: () => { throw new Error("not mocked"); },
     list_terms: () => { throw new Error("not mocked"); },
     create_record_successor: () => { throw new Error("not mocked"); },
+    resolve_container_view: () => { throw new Error("not mocked"); },
   };
   return { ...base, ...overrides };
 }
@@ -734,5 +736,217 @@ describe("listTerms", () => {
   it("propagates WASM throw", () => {
     const repo = mockRepo({ list_terms: () => { throw new Error("terms failed"); } });
     expect(() => listTerms(repo)).toThrow("terms failed");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveContainerView (srs-rust#254, srs-web#96)
+// ---------------------------------------------------------------------------
+
+describe("resolveContainerView", () => {
+  const baseRecord = { instanceId: "r1", typeId: "t1", typeVersion: 1, fieldValues: [], tags: [] };
+  const rawMemberCamel = {
+    instanceId: "m1",
+    tier: 2,
+    displayLabel: "Section One",
+    record: baseRecord,
+  };
+  const rawColumnCamel = {
+    fieldId: "f1",
+    fieldName: "Title",
+    displayLabel: "Title",
+    order: 0,
+    required: true,
+  };
+
+  it("calls resolve_container_view with containerId and null when viewId is omitted", () => {
+    const rawView = { containerId: "c1", members: [], columns: [], excludeLifecycleStates: [], diagnostics: [] };
+    const spy = vi.fn().mockReturnValue(rawView);
+    const repo = mockRepo({ resolve_container_view: spy });
+
+    resolveContainerView(repo, "c1");
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith("c1", null);
+  });
+
+  it("passes viewId when provided", () => {
+    const rawView = { containerId: "c1", members: [], columns: [], excludeLifecycleStates: [], diagnostics: [] };
+    const spy = vi.fn().mockReturnValue(rawView);
+    const repo = mockRepo({ resolve_container_view: spy });
+
+    resolveContainerView(repo, "c1", "view-abc");
+
+    expect(spy).toHaveBeenCalledWith("c1", "view-abc");
+  });
+
+  it("normalises camelCase ContainerView fields", () => {
+    const rawView = {
+      containerId: "c1",
+      documentViewId: "dv-001",
+      root: rawMemberCamel,
+      members: [rawMemberCamel],
+      columns: [rawColumnCamel],
+      excludeLifecycleStates: ["archived"],
+      diagnostics: ["warn: no view found"],
+    };
+    const repo = mockRepo({ resolve_container_view: () => rawView });
+
+    const result = resolveContainerView(repo, "c1");
+
+    expect(result.containerId).toBe("c1");
+    expect(result.documentViewId).toBe("dv-001");
+    expect(result.excludeLifecycleStates).toEqual(["archived"]);
+    expect(result.diagnostics).toEqual(["warn: no view found"]);
+  });
+
+  it("normalises snake_case ContainerView fields", () => {
+    const rawView = {
+      container_id: "c2",
+      document_view_id: "dv-002",
+      members: [],
+      columns: [],
+      exclude_lifecycle_states: ["draft"],
+      diagnostics: [],
+    };
+    const repo = mockRepo({ resolve_container_view: () => rawView });
+
+    const result = resolveContainerView(repo, "c2");
+
+    expect(result.containerId).toBe("c2");
+    expect(result.documentViewId).toBe("dv-002");
+    expect(result.excludeLifecycleStates).toEqual(["draft"]);
+  });
+
+  it("normalises camelCase ResolvedMember fields including nested record", () => {
+    const rawView = {
+      containerId: "c1",
+      members: [rawMemberCamel],
+      columns: [],
+      excludeLifecycleStates: [],
+      diagnostics: [],
+    };
+    const repo = mockRepo({ resolve_container_view: () => rawView });
+
+    const result = resolveContainerView(repo, "c1");
+
+    expect(result.members).toHaveLength(1);
+    expect(result.members[0].instanceId).toBe("m1");
+    expect(result.members[0].tier).toBe(2);
+    expect(result.members[0].displayLabel).toBe("Section One");
+    expect(result.members[0].record.instanceId).toBe("r1");
+    expect(result.members[0].record.typeId).toBe("t1");
+  });
+
+  it("normalises snake_case ResolvedMember fields", () => {
+    const rawMemberSnake = {
+      instance_id: "m2",
+      tier: 1,
+      display_label: "Root Guide",
+      record: { instance_id: "r2", type_id: "t2", type_version: 1, field_values: [], tags: [] },
+    };
+    const rawView = {
+      containerId: "c1",
+      members: [rawMemberSnake],
+      columns: [],
+      excludeLifecycleStates: [],
+      diagnostics: [],
+    };
+    const repo = mockRepo({ resolve_container_view: () => rawView });
+
+    const result = resolveContainerView(repo, "c1");
+
+    expect(result.members[0].instanceId).toBe("m2");
+    expect(result.members[0].displayLabel).toBe("Root Guide");
+    expect(result.members[0].record.instanceId).toBe("r2");
+    expect(result.members[0].record.typeId).toBe("t2");
+  });
+
+  it("normalises camelCase ColumnSpec fields", () => {
+    const rawView = {
+      containerId: "c1",
+      members: [],
+      columns: [rawColumnCamel],
+      excludeLifecycleStates: [],
+      diagnostics: [],
+    };
+    const repo = mockRepo({ resolve_container_view: () => rawView });
+
+    const result = resolveContainerView(repo, "c1");
+
+    expect(result.columns).toHaveLength(1);
+    expect(result.columns[0].fieldId).toBe("f1");
+    expect(result.columns[0].fieldName).toBe("Title");
+    expect(result.columns[0].displayLabel).toBe("Title");
+    expect(result.columns[0].order).toBe(0);
+    expect(result.columns[0].required).toBe(true);
+  });
+
+  it("normalises snake_case ColumnSpec fields", () => {
+    const rawColumnSnake = {
+      field_id: "f2",
+      field_name: "Heading",
+      display_label: "Heading",
+      order: 1,
+      required: false,
+    };
+    const rawView = {
+      containerId: "c1",
+      members: [],
+      columns: [rawColumnSnake],
+      excludeLifecycleStates: [],
+      diagnostics: [],
+    };
+    const repo = mockRepo({ resolve_container_view: () => rawView });
+
+    const result = resolveContainerView(repo, "c1");
+
+    expect(result.columns[0].fieldId).toBe("f2");
+    expect(result.columns[0].fieldName).toBe("Heading");
+    expect(result.columns[0].required).toBe(false);
+  });
+
+  it("sets root to undefined when absent from WASM response", () => {
+    const rawView = { containerId: "c1", members: [], columns: [], excludeLifecycleStates: [], diagnostics: [] };
+    const repo = mockRepo({ resolve_container_view: () => rawView });
+
+    const result = resolveContainerView(repo, "c1");
+
+    expect(result.root).toBeUndefined();
+  });
+
+  it("normalises root when present", () => {
+    const rawView = {
+      containerId: "c1",
+      root: rawMemberCamel,
+      members: [rawMemberCamel],
+      columns: [],
+      excludeLifecycleStates: [],
+      diagnostics: [],
+    };
+    const repo = mockRepo({ resolve_container_view: () => rawView });
+
+    const result = resolveContainerView(repo, "c1");
+
+    expect(result.root).toBeDefined();
+    expect(result.root?.instanceId).toBe("m1");
+    expect(result.root?.displayLabel).toBe("Section One");
+  });
+
+  it("returns empty arrays for members, columns, excludeLifecycleStates, and diagnostics when absent", () => {
+    const rawView = { containerId: "c1" };
+    const repo = mockRepo({ resolve_container_view: () => rawView });
+
+    const result = resolveContainerView(repo, "c1");
+
+    expect(result.members).toEqual([]);
+    expect(result.columns).toEqual([]);
+    expect(result.excludeLifecycleStates).toEqual([]);
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("propagates WASM throw", () => {
+    const repo = mockRepo({ resolve_container_view: () => { throw new Error("container not found"); } });
+    expect(() => resolveContainerView(repo, "missing")).toThrow("container not found");
   });
 });

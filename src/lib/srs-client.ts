@@ -62,6 +62,8 @@ export interface SrsRepository {
   find(query_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listTerms()
   list_terms(): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in resolveContainerView()
+  resolve_container_view(container_id: string, view_id?: string | null): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -771,6 +773,84 @@ export function listDocumentViews(
   filter: DocumentViewListFilter = {}
 ): DocumentViewSummary[] {
   return repo.list_document_views(JSON.stringify(filter)) as DocumentViewSummary[];
+}
+
+// ---------------------------------------------------------------------------
+// ContainerView types + wrapper (srs-rust#254, srs-web#96)
+// ---------------------------------------------------------------------------
+
+export interface ColumnSpec {
+  fieldId: string;
+  fieldName: string;
+  displayLabel: string;
+  order: number;
+  required: boolean;
+}
+
+export interface ResolvedMember {
+  instanceId: string;
+  tier: number;
+  displayLabel: string;
+  record: SrsRecord;
+}
+
+export interface ContainerView {
+  containerId: string;
+  documentViewId?: string;
+  root?: ResolvedMember;
+  members: ResolvedMember[];
+  columns: ColumnSpec[];
+  excludeLifecycleStates: string[];
+  diagnostics: string[];
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: raw WASM ResolvedMember has unknown field case
+function normalizeMember(m: any): ResolvedMember {
+  return {
+    instanceId: m.instanceId ?? m.instance_id,
+    tier: m.tier,
+    displayLabel: m.displayLabel ?? m.display_label ?? "",
+    record: normalizeRecord(m.record),
+  };
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: raw WASM ColumnSpec has unknown field case
+function normalizeColumnSpec(c: any): ColumnSpec {
+  return {
+    fieldId: c.fieldId ?? c.field_id,
+    fieldName: c.fieldName ?? c.field_name,
+    displayLabel: c.displayLabel ?? c.display_label ?? "",
+    order: c.order,
+    required: c.required ?? false,
+  };
+}
+
+/**
+ * Resolve the structured view of a container, including its ordered members and column spec.
+ * ADR-001: pure WASM pass-through — all membership and display-label resolution stays in the core.
+ * `record.displayLabel` is NOT injected; consumers read from `fieldValues`.
+ *
+ * Note: `members` arrive in stored (UUID-alphabetical) order, not precedes order.
+ * The root record (tier 0) is `members[0]`; section members have tier > 0.
+ * To get ordered sections: `view.members.filter(m => m.tier > 0).map(m => m.record)`, then apply `orderByPrecedes()`.
+ * Tracked as ADR-001 residual debt in srs-web#122.
+ */
+export function resolveContainerView(
+  repo: SrsRepository,
+  containerId: string,
+  viewId?: string | null
+): ContainerView {
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; normalised below
+  const raw: any = repo.resolve_container_view(containerId, viewId ?? null);
+  return {
+    containerId: raw.containerId ?? raw.container_id,
+    documentViewId: raw.documentViewId ?? raw.document_view_id,
+    root: raw.root ? normalizeMember(raw.root) : undefined,
+    members: (raw.members ?? []).map(normalizeMember),
+    columns: (raw.columns ?? []).map(normalizeColumnSpec),
+    excludeLifecycleStates: raw.excludeLifecycleStates ?? raw.exclude_lifecycle_states ?? [],
+    diagnostics: raw.diagnostics ?? [],
+  };
 }
 
 // ---------------------------------------------------------------------------
