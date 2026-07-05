@@ -64,6 +64,8 @@ export interface SrsRepository {
   list_terms(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in resolveContainerView()
   resolve_container_view(container_id: string, view_id?: string | null): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in repositoryNavigation()
+  repository_navigation(): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -572,6 +574,39 @@ export interface ContainerListFilter {
   rootInstanceId?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Repository navigation types (srs-rust#268, RFC-013)
+// ---------------------------------------------------------------------------
+
+/**
+ * A single node in the repository navigation tree.
+ * Returned by `repositoryNavigation()` as either the identity node or a section.
+ * `sectionContainerId` is present only on section nodes (absent on identity).
+ * Mirrors `NavigationNode` in srs-rust `repository_navigation_service.rs`.
+ */
+export interface NavigationNode {
+  instanceId: string;
+  typeId: string;
+  typeVersion: number;
+  typeNamespace: string;
+  typeName: string;
+  displayLabel: string;
+  sectionContainerId?: string;
+}
+
+/**
+ * Full repository navigation result from `repositoryNavigation()`.
+ * `sections` are ordered by `precedes` relations — same order as `srs repo navigation`.
+ * `diagnostics` is non-empty when `manifest.container` is absent (pre-RFC-013 repo).
+ * Mirrors `RepositoryNavigation` in srs-rust `repository_navigation_service.rs`.
+ */
+export interface RepositoryNavigation {
+  rootContainerId: string;
+  identity: NavigationNode;
+  sections: NavigationNode[];
+  diagnostics: string[];
+}
+
 /** List container summaries, optionally filtered by type / member / root instance. */
 export function listContainers(
   repo: SrsRepository,
@@ -947,4 +982,47 @@ export function listTerms(repo: SrsRepository): Term[] {
     aliases: Array.isArray(r.aliases) ? r.aliases : undefined,
     roles: Array.isArray(r.roles) ? r.roles : undefined,
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Repository navigation wrapper (srs-rust#268, RFC-013)
+// ---------------------------------------------------------------------------
+
+// biome-ignore lint/suspicious/noExplicitAny: raw WASM NavigationNode has unknown field case
+function normalizeNavigationNode(raw: any): NavigationNode {
+  return {
+    instanceId: raw.instanceId ?? raw.instance_id,
+    typeId: raw.typeId ?? raw.type_id,
+    typeVersion: raw.typeVersion ?? raw.type_version ?? 0,
+    typeNamespace: raw.typeNamespace ?? raw.type_namespace,
+    typeName: raw.typeName ?? raw.type_name,
+    displayLabel: raw.displayLabel ?? raw.display_label ?? "",
+    sectionContainerId: raw.sectionContainerId ?? raw.section_container_id,
+  };
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: raw WASM RepositoryNavigation has unknown field case
+function normalizeRepositoryNavigation(raw: any): RepositoryNavigation {
+  return {
+    rootContainerId: raw.rootContainerId ?? raw.root_container_id ?? "",
+    identity: normalizeNavigationNode(raw.identity ?? {}),
+    sections: (raw.sections ?? []).map(normalizeNavigationNode),
+    diagnostics: raw.diagnostics ?? [],
+  };
+}
+
+/**
+ * Return the repository identity record and precedes-ordered section nodes.
+ * Sources from `repository_navigation_service` (srs-rust#268), which reads the
+ * RFC-013 root container from `manifest.container`.
+ *
+ * When `diagnostics` is non-empty, `manifest.container` is absent (pre-RFC-013 repo)
+ * and `sections` is empty. Callers should fall back to `listContainers()` in that case.
+ *
+ * ADR-001: pure WASM pass-through — section ordering is computed in the Rust service.
+ */
+export function repositoryNavigation(repo: SrsRepository): RepositoryNavigation {
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; normalised below
+  const raw: any = repo.repository_navigation();
+  return normalizeRepositoryNavigation(raw);
 }

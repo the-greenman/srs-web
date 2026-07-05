@@ -2,7 +2,7 @@
 
 - **Status:** accepted
 - **Date:** 2026-07-05
-- **Issue:** [srs-web#93](https://github.com/the-greenman/srs-web/issues/93)
+- **Issue:** [srs-web#93](https://github.com/the-greenman/srs-web/issues/93) (interim); completed via [srs-web#98](https://github.com/the-greenman/srs-web/issues/98)
 - **Supersedes (partial):** [ADR-006](./006-dynamic-dispatch-replaces-sections.md) — the section-list portion (type-keyed nav) is replaced; the typeId-keyed view dispatch within a section is retained.
 - **Demotes:** [ADR-007](./007-unified-type-registry.md) — TYPE_REGISTRY is now presentation hints only; it no longer drives sidebar section appearance.
 
@@ -20,12 +20,18 @@ records, with a root instance that defines its type and purpose.
 
 ## Decision
 
-The sidebar section list is sourced from `listContainers(repo, {})` (interim: all
-containers; future: a navigation-taxonomy selector). Each nav entry carries:
-- `containerId` — the stable selection key (replaces the typeId key of ADR-006)
-- `title` — from the container record (e.g., "Decision Log", "Articles")
-- `icon` — from `TYPE_REGISTRY[rootTypeId]?.icon` (presentation hint only)
-- `rootTypeId` — derived from the container's root instance; used only for view dispatch
+The sidebar section list is sourced from the `repository_navigation` WASM binding
+(`repositoryNavigation()` in `srs-client.ts`), which returns the RFC-013 root container's
+identity record plus precedes-ordered section roots. Each nav entry carries:
+- `containerId` — from `section.sectionContainerId` (the stable selection key)
+- `title` — from `section.displayLabel` (the WASM-resolved display label)
+- `icon` — from `TYPE_REGISTRY[section.typeId]?.icon` (presentation hint only)
+- `rootTypeId` — from `section.typeId`; used only for view dispatch
+
+**Pre-RFC-013 fallback:** When `repository_navigation` returns non-empty `diagnostics`
+(indicating `manifest.container` is absent), the sidebar falls back to `listContainers()`
+with `getContainer()` calls. This fallback is removed once all repositories migrate to
+RFC-013 root containers.
 
 `TYPE_REGISTRY` is demoted to **presentation hints** (icon, optional custom view
 component). It never determines what appears in the nav or how records are grouped.
@@ -34,16 +40,22 @@ component). It never determines what appears in the nav or how records are group
 state key. `sectionRecords` (keyed by typeId) is replaced by `containerRecords` (keyed by
 containerId), populated from `getContainer().memberInstanceIds`.
 
+**Migration history:** srs-web#93 established `listContainers()` as the interim nav source.
+srs-web#98 (Gate D, Phase 4) completed the migration to `repository_navigation`
+(srs-rust#268) once that binding was available.
+
 ## Rationale
 
 - **ADR-001 compliant.** Container IDs are structural metadata (opaque UUIDs passed to
   WASM), not SRS semantics. The nav is purely "which container is selected" — no record
   grouping logic lives in TypeScript.
-- **Future-proof.** When `repository_navigation` service (srs-rust#266) is available,
-  the nav source can migrate from `listContainers()` to the navigation service output
-  with no architectural change — it is a source swap, not a schema change.
-- **No new WASM binding.** `listContainers()` and `getContainer()` are already in
-  `srs-client.ts`. The source migration requires only a rewire in `GovernanceShell.svelte`.
+- **Future-proof.** The nav source migrated from `listContainers()` to
+  `repository_navigation` (srs-rust#268) with no architectural change — a source swap, as
+  anticipated. `listContainers()` and `getContainer()` are retained as a pre-RFC-013
+  fallback path.
+- **No new WASM binding (interim).** The interim phase used existing `listContainers()` and
+  `getContainer()` bindings. The completed migration uses `repository_navigation()` added
+  in srs-web#98.
 - **Simpler new-record flow.** Every new record created in a container section is
   automatically added to that container via `addContainerMember()`. The previous
   `decisionLogContainerId` special-case is eliminated.
