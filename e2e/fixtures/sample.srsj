@@ -4,7 +4,33 @@
     "repositoryId": "00000000-0000-0000-0000-000000000001",
     "srsVersion": "2.0-draft",
     "namespace": "test",
-    "instanceIndex": []
+    "instanceIndex": [
+      {
+        "instanceId": "11000000-0000-4000-8000-000000000001",
+        "path": "records/tier-2/11000000-0000-4000-8000-000000000001.json",
+        "tier": 2
+      },
+      {
+        "instanceId": "11000000-0000-4000-8000-000000000002",
+        "path": "records/tier-2/11000000-0000-4000-8000-000000000002.json",
+        "tier": 2
+      },
+      {
+        "instanceId": "11000000-0000-4000-8000-000000000003",
+        "path": "records/tier-2/11000000-0000-4000-8000-000000000003.json",
+        "tier": 2
+      },
+      {
+        "instanceId": "11000000-0000-4000-8000-000000000004",
+        "path": "records/tier-2/11000000-0000-4000-8000-000000000004.json",
+        "tier": 2
+      }
+    ],
+    "container": {
+      "containerId": "00000000-0000-4000-8000-000000000000",
+      "title": "Test Governance",
+      "identityInstanceId": "11000000-0000-4000-8000-000000000001"
+    }
   },
   "data": {
     "manifest.json": {
@@ -23,23 +49,89 @@
         }
       ]
     },
+    "containers/00000000-0000-4000-8000-000000000000.json": {
+      "containerId": "00000000-0000-4000-8000-000000000000",
+      "title": "Test Governance",
+      "rootInstanceIds": ["11000000-0000-4000-8000-000000000001"],
+      "memberInstanceIds": [
+        "11000000-0000-4000-8000-000000000001",
+        "11000000-0000-4000-8000-000000000002",
+        "11000000-0000-4000-8000-000000000003",
+        "11000000-0000-4000-8000-000000000004"
+      ]
+    },
     "containers/aa000001-0000-4000-8000-000000000001.json": {
       "containerId": "aa000001-0000-4000-8000-000000000001",
       "title": "Articles",
-      "memberInstanceIds": [],
-      "rootInstanceIds": []
+      "rootInstanceIds": ["11000000-0000-4000-8000-000000000002"],
+      "memberInstanceIds": []
     },
     "containers/dd000001-0000-4000-8000-000000000001.json": {
       "containerId": "dd000001-0000-4000-8000-000000000001",
       "title": "Decision Log",
-      "memberInstanceIds": [],
-      "rootInstanceIds": []
+      "rootInstanceIds": ["11000000-0000-4000-8000-000000000003"],
+      "memberInstanceIds": []
     },
     "containers/cc000001-0000-4000-8000-000000000001.json": {
       "containerId": "cc000001-0000-4000-8000-000000000001",
       "title": "Roles",
-      "memberInstanceIds": [],
-      "rootInstanceIds": []
+      "rootInstanceIds": ["11000000-0000-4000-8000-000000000004"],
+      "memberInstanceIds": []
+    },
+    "records/tier-2/11000000-0000-4000-8000-000000000001.json": {
+      "instanceId": "11000000-0000-4000-8000-000000000001",
+      "typeId": "00000000-0000-4000-8000-000000000101",
+      "typeVersion": 1,
+      "typeNamespace": "com.test",
+      "typeName": "governance-repo",
+      "fieldValues": [],
+      "createdAt": "2026-01-01T00:00:00Z"
+    },
+    "records/tier-2/11000000-0000-4000-8000-000000000002.json": {
+      "instanceId": "11000000-0000-4000-8000-000000000002",
+      "typeId": "00000000-0000-4000-8000-000000000102",
+      "typeVersion": 1,
+      "typeNamespace": "com.test",
+      "typeName": "Articles",
+      "fieldValues": [],
+      "createdAt": "2026-01-02T00:00:00Z"
+    },
+    "records/tier-2/11000000-0000-4000-8000-000000000003.json": {
+      "instanceId": "11000000-0000-4000-8000-000000000003",
+      "typeId": "00000000-0000-4000-8000-000000000103",
+      "typeVersion": 1,
+      "typeNamespace": "com.test",
+      "typeName": "Decision Log",
+      "fieldValues": [],
+      "createdAt": "2026-01-03T00:00:00Z"
+    },
+    "records/tier-2/11000000-0000-4000-8000-000000000004.json": {
+      "instanceId": "11000000-0000-4000-8000-000000000004",
+      "typeId": "00000000-0000-4000-8000-000000000104",
+      "typeVersion": 1,
+      "typeNamespace": "com.test",
+      "typeName": "Roles",
+      "fieldValues": [],
+      "createdAt": "2026-01-04T00:00:00Z"
+    },
+    "relations/relations-collection.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relations-collection.json",
+      "relations": [
+        {
+          "relationId": "rel-articles-precedes-decision-log",
+          "relationType": "precedes",
+          "sourceInstanceId": "11000000-0000-4000-8000-000000000002",
+          "targetInstanceId": "11000000-0000-4000-8000-000000000003",
+          "createdAt": "2026-01-01T00:00:00Z"
+        },
+        {
+          "relationId": "rel-decision-log-precedes-roles",
+          "relationType": "precedes",
+          "sourceInstanceId": "11000000-0000-4000-8000-000000000003",
+          "targetInstanceId": "11000000-0000-4000-8000-000000000004",
+          "createdAt": "2026-01-01T00:00:00Z"
+        }
+      ]
     }
   }
 }
