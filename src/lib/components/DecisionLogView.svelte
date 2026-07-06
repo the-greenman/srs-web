@@ -8,7 +8,7 @@
   import { getStringField } from "$lib/governance/field-utils.js";
   import { getFieldMeta } from "$lib/governance/field-meta.js";
   import { listDocumentViews, renderDocumentView } from "$lib/srs-client.js";
-  import { wrapLogHtml } from "$lib/governance/decision-export-utils.js";
+  import { triggerDownload, wrapLogHtml } from "$lib/governance/decision-export-utils.js";
   import { computeSearchHitIds, computeTagHitIds, sortByCreatedAt } from "./decision-log-utils.js";
   import LogTable from "./LogTable.svelte";
   import DecisionSummaryCard from "./DecisionSummaryCard.svelte";
@@ -59,12 +59,7 @@
       const content =
         format === "html" ? wrapLogHtml(result.rendered, "Decision Log") : result.rendered;
       const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `decision-log.${ext}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      triggerDownload(blob, `decision-log.${ext}`);
     } catch (e) {
       exportError = `Export failed: ${e instanceof Error ? e.message : String(e)}`;
     }

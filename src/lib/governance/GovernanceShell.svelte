@@ -55,7 +55,7 @@
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
   import { LIFECYCLE_TRANSITIONS, IMMUTABLE_STATES } from "$lib/governance/lifecycle.js";
   import { setFieldMetaContext, buildFieldMetaMap } from "$lib/governance/field-meta.js";
-  import { formatDecisionMarkdown, formatDecisionHtml } from "$lib/governance/decision-export-utils.js";
+  import { formatDecisionMarkdown, formatDecisionHtml, triggerDownload } from "$lib/governance/decision-export-utils.js";
 
   // ---------------------------------------------------------------------------
   // Props
@@ -569,12 +569,7 @@
         .replace(/\s+/g, "-")
         .replace(/[^a-z0-9-]/g, "");
       const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${slug || "decision"}.${ext}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      triggerDownload(blob, `${slug || "decision"}.${ext}`);
     } catch (e) {
       decisionExportError = `Export failed: ${e instanceof Error ? e.message : String(e)}`;
     }

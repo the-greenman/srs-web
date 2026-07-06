@@ -91,6 +91,22 @@ export function formatDecisionHtml(
 }
 
 /**
+ * Trigger a file download in the browser. Appends a temporary anchor to the document,
+ * clicks it, removes it, then revokes the object URL after a tick so the download
+ * queue has time to register it before the URL is freed.
+ */
+export function triggerDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+/**
  * Wrap an HTML fragment (e.g. from renderDocumentView "html") in a full HTML document.
  * renderDocumentView returns a bare <div class="srs-document">…</div> fragment, not a
  * complete document — this makes the whole-log download a valid standalone file.
