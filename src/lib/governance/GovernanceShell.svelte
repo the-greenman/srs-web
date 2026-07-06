@@ -118,6 +118,10 @@
   let editingRecord = $state<SrsRecord | null>(null);
   let formSaving = $state(false);
   let formError = $state<string | null>(null);
+  /** instanceId of a record that was created but whose addContainerMember call failed.
+   * Set when transitioning to edit mode after a partial create; cleared on next Save or Cancel.
+   * Used to retry addContainerMember when the user saves in edit mode. */
+  let partiallyCreatedId = $state<string | null>(null);
 
   /** Whether the immutability guard modal is shown. */
   let showSuccessorModal = $state(false);
@@ -351,14 +355,15 @@
           try {
             addContainerMember(repo, activeContainerId, created.instanceId);
           } catch (e: unknown) {
+            editingRecord = created;
+            formMode = "edit";
+            partiallyCreatedId = created.instanceId;
             console.error("addContainerMember failed:", e);
             formError = e instanceof Error
               ? `Record saved, but container registration failed: ${e.message}`
               : "Record saved, but could not register in container.";
             loadContainerNav();
             selectedId = created.instanceId;
-            editingRecord = created;
-            formMode = "edit";
             refreshValidation();
             return;
           }
@@ -368,7 +373,22 @@
         selectedId = created.instanceId;
         refreshValidation();
       } else if (formMode === "edit" && editingRecord) {
-        updateRecord(repo, editingRecord.instanceId, input as UpdateRecordInput);
+        const instanceId = editingRecord.instanceId;
+        updateRecord(repo, instanceId, input as UpdateRecordInput);
+        if (activeContainerId && partiallyCreatedId === instanceId) {
+          partiallyCreatedId = null;
+          try {
+            addContainerMember(repo, activeContainerId, instanceId);
+          } catch (e: unknown) {
+            console.error("addContainerMember retry failed:", e);
+            formError = e instanceof Error
+              ? `Record updated, but container registration still failed: ${e.message}`
+              : "Record updated, but could not register in container.";
+            loadContainerNav();
+            refreshValidation();
+            return;
+          }
+        }
         formMode = null;
         editingRecord = null;
         loadContainerNav();
@@ -385,6 +405,7 @@
     formMode = null;
     editingRecord = null;
     formError = null;
+    partiallyCreatedId = null;
   }
 
   function handleEditRecord() {
