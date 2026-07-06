@@ -40,4 +40,7 @@ export interface StorageProvider {
   select?(): Promise<DocumentHandle>;
   list?(path?: string): Promise<StorageEntry[]>;
   open(entry: StorageEntry): Promise<DocumentHandle>;
+  /** Create a brand-new document with the given name and content, returning a
+   * writable handle. Optional — absent on providers that cannot create files. */
+  create?(name: string, content: string): Promise<DocumentHandle>;
 }

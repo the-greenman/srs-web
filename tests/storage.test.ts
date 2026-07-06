@@ -5,7 +5,10 @@ import {
   parseDropboxOAuthCallback,
 } from "../src/lib/storage/dropbox.js";
 import { StorageConflictError } from "../src/lib/storage/errors.js";
-import { GoogleDriveDocumentHandle } from "../src/lib/storage/google-drive.js";
+import {
+  GoogleDriveDocumentHandle,
+  GoogleDriveProvider,
+} from "../src/lib/storage/google-drive.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -72,8 +75,8 @@ describe("Dropbox storage adapter", () => {
         new Response(JSON.stringify({ error_summary: "missing_scope/..." }), {
           status: 401,
           headers: { "Content-Type": "application/json" },
-        }),
-      ),
+        })
+      )
     );
     const provider = new DropboxProvider({
       appKey: "app-key",
@@ -82,7 +85,7 @@ describe("Dropbox storage adapter", () => {
     Object.assign(provider, { accessToken: "token", expiresAt: Date.now() + 60_000 });
 
     await expect(provider.list()).rejects.toThrow(
-      "Enable files.metadata.read, files.content.read, and files.content.write",
+      "Enable files.metadata.read, files.content.read, and files.content.write"
     );
   });
 });
@@ -120,5 +123,111 @@ describe("Google Drive storage adapter", () => {
       async () => "token"
     );
     await expect(handle.write("{}", '"etag-1"')).rejects.toBeInstanceOf(StorageConflictError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Provider create() — new-document creation (srs-web#141)
+// ---------------------------------------------------------------------------
+
+describe("DropboxProvider.create", () => {
+  function signedInProvider(): DropboxProvider {
+    const provider = new DropboxProvider({ appKey: "key", redirectUri: "https://app.test/" });
+    // biome-ignore lint/suspicious/noExplicitAny: test seam — pre-seed a valid token to skip the OAuth popup
+    (provider as any).accessToken = "token";
+    // biome-ignore lint/suspicious/noExplicitAny: test seam
+    (provider as any).expiresAt = Date.now() + 3_600_000;
+    return provider;
+  }
+
+  it("uploads with mode add + autorename and returns a writable handle", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ".tag": "file",
+          id: "id:new",
+          name: "my-org.srsj",
+          path_lower: "/my-org.srsj",
+          rev: "rev-1",
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const handle = await signedInProvider().create("my-org.srsj", '{"srsj":"1"}');
+
+    const [url, request] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://content.dropboxapi.com/2/files/upload");
+    expect(request.body).toBe('{"srsj":"1"}');
+    const args = JSON.parse((request.headers as Record<string, string>)["Dropbox-API-Arg"]) as {
+      path: string;
+      mode: string;
+      autorename: boolean;
+    };
+    expect(args).toMatchObject({ path: "/my-org.srsj", mode: "add", autorename: true });
+    expect(handle.provider).toBe("dropbox");
+    expect(handle.capabilities.write).toBe(true);
+    expect(handle.name).toBe("my-org.srsj");
+    expect(handle.revision).toBe("rev-1");
+  });
+
+  it("throws a StorageFetchError on upload failure", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response('{"error_summary":"path/no_write"}', { status: 400 }))
+    );
+    await expect(signedInProvider().create("x.srsj", "{}")).rejects.toThrow(
+      /Dropbox create failed/
+    );
+  });
+});
+
+describe("GoogleDriveProvider.create", () => {
+  function signedInProvider(): GoogleDriveProvider {
+    const provider = new GoogleDriveProvider({ clientId: "c", apiKey: "k", appId: "a" });
+    // biome-ignore lint/suspicious/noExplicitAny: test seam — pre-seed a valid token to skip GIS
+    (provider as any).accessToken = "gtoken";
+    // biome-ignore lint/suspicious/noExplicitAny: test seam
+    (provider as any).expiresAt = Date.now() + 3_600_000;
+    return provider;
+  }
+
+  it("creates via multipart upload and returns a writable handle", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ id: "drive-new", name: "my-org.srsj" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", etag: "etag-1" },
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const handle = await signedInProvider().create("my-org.srsj", '{"srsj":"1"}');
+
+    const [url, request] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart");
+    expect((request.headers as Record<string, string>)["Content-Type"]).toContain(
+      "multipart/related"
+    );
+    expect(String(request.body)).toContain('{"name":"my-org.srsj","mimeType":"application/json"}');
+    expect(String(request.body)).toContain('{"srsj":"1"}');
+    expect(handle.provider).toBe("google-drive");
+    expect(handle.capabilities.write).toBe(true);
+    expect(handle.id).toBe("drive-new");
+    expect(handle.revision).toBe("etag-1");
+  });
+
+  it("throws a StorageFetchError on create failure", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response('{"error":{"message":"insufficient permissions"}}', { status: 403 })
+        )
+    );
+    await expect(signedInProvider().create("x.srsj", "{}")).rejects.toThrow(
+      /Google Drive create failed/
+    );
   });
 });

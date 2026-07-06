@@ -55,6 +55,7 @@
   import PreviewPane from "$lib/components/PreviewPane.svelte";
   import { PREVIEW_THEMES, THEME_DEFAULT } from "$lib/guides/preview-themes.js";
   import { downloadDocument } from "$lib/storage/index.js";
+  import { slugifyFilename } from "$lib/slug.js";
   import type { BreadcrumbItem } from "$lib/types.js";
 
   // ---------------------------------------------------------------------------
@@ -473,7 +474,7 @@
       }
       const guide = guides.find((g) => g.instanceId === selectedGuideId);
       const name = guide?.displayLabel ?? "guide";
-      const slug = name.replace(/\s+/g, "-").toLowerCase();
+      const slug = slugifyFilename(name);
       downloadDocument(JSON.stringify(result.projection, null, 2), `${slug}.guide-view.json`);
     } catch (e) {
       exportError = `Export failed: ${e instanceof Error ? e.message : String(e)}`;
@@ -491,7 +492,7 @@
       }
       const guide = guides.find((g) => g.instanceId === selectedGuideId);
       const title = guide?.displayLabel ?? "guide";
-      const slug = title.replace(/\s+/g, "-").toLowerCase();
+      const slug = slugifyFilename(title);
       const blob = new Blob([result.rendered], { type: "text/markdown" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");

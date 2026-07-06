@@ -19,16 +19,20 @@
     initWasm,
     loadRepo,
     exportSrsj,
+    createGovernanceDocument,
   } from "$lib/srs-client.js";
   import type { SrsRepository } from "$lib/srs-client.js";
 
   import GuidesShell from "$lib/guides/GuidesShell.svelte";
   import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
+  import CreateGovernanceDocumentPanel from "$lib/components/CreateGovernanceDocumentPanel.svelte";
+  import { slugifyFilename } from "$lib/slug.js";
   import {
     createStorageProvidersFromEnv,
     downloadDocument,
     type DocumentHandle,
+    type StorageProviderId,
   } from "$lib/storage/index.js";
 
   // ---------------------------------------------------------------------------
@@ -83,6 +87,36 @@
         { cause: e },
       );
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Create new governance document (srs-web#141)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Scaffold a new governance document (all semantics in the WASM
+   * `scaffold_new_repository` binding) and persist it to the chosen backend.
+   * Throws on failure — the create panel renders the error and the app stays
+   * idle; no half-created state is entered.
+   */
+  async function createDocument(name: string, destination: StorageProviderId): Promise<void> {
+    const { repo: newRepo } = createGovernanceDocument(name);
+    const json = exportSrsj(newRepo);
+    const filename = `${slugifyFilename(name)}.srsj`;
+
+    if (destination === "local") {
+      downloadDocument(json, filename);
+      activeDocument = null;
+    } else {
+      const provider =
+        destination === "dropbox" ? storageProviders.dropbox : storageProviders.googleDrive;
+      if (!provider.create) throw new Error(`${provider.label} cannot create new files.`);
+      activeDocument = await provider.create(filename, json);
+    }
+
+    repo = newRepo;
+    repoName = name;
+    appState = "loaded";
   }
 
   // ---------------------------------------------------------------------------
@@ -151,6 +185,8 @@
       <h1 class="splash__title">SRS Governance Viewer</h1>
       <p class="splash__sub">Open a <code>.srsj</code> repository file to explore its governance records.</p>
       <SourceChooser providers={storageProviders} onOpen={loadDocument} />
+      <p class="splash__divider">or start from scratch</p>
+      <CreateGovernanceDocumentPanel providers={storageProviders} onCreate={createDocument} />
       <button class="splash__back" onclick={() => { editorMode = null; }}>← Back</button>
     </div>
   {:else}
@@ -221,6 +257,14 @@
     margin: 0;
     opacity: 0.65;
     max-width: 28rem;
+  }
+
+  .splash__divider {
+    margin: 0.75rem 0 0;
+    opacity: 0.45;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
 
   .splash__status {

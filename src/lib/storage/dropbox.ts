@@ -292,6 +292,35 @@ export class DropboxProvider implements StorageProvider {
     );
   }
 
+  async create(name: string, content: string): Promise<DocumentHandle> {
+    await this.authenticate();
+    const response = await fetch(`${CONTENT}/files/upload`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.requireToken()}`,
+        "Content-Type": "application/octet-stream",
+        "Dropbox-API-Arg": JSON.stringify({
+          path: `/${name}`,
+          mode: "add",
+          autorename: true,
+          mute: false,
+        }),
+      },
+      body: content,
+    });
+    if (!response.ok) {
+      throw new StorageFetchError(`Dropbox create failed: ${await parseError(response)}`);
+    }
+    const metadata = (await response.json()) as DropboxMetadata;
+    return new DropboxDocumentHandle(
+      metadata.id,
+      metadata.name,
+      metadata.path_lower ?? `/${name}`,
+      metadata.rev ?? null,
+      () => this.requireToken()
+    );
+  }
+
   private requireToken(): string {
     if (!this.accessToken) throw new StorageAuthenticationError("Dropbox is not signed in.");
     return this.accessToken;

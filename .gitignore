@@ -21,3 +21,6 @@ Thumbs.db
 test-results/
 playwright-report/
 .playwright/
+
+# transient e2e round-trip artifacts
+e2e/fixtures/_*.srsj
