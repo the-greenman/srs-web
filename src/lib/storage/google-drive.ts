@@ -223,6 +223,41 @@ export class GoogleDriveProvider implements StorageProvider {
     );
   }
 
+  async create(name: string, content: string): Promise<DocumentHandle> {
+    const token = await this.requireToken();
+    const boundary = "srs-drive-create";
+    const body = [
+      `--${boundary}`,
+      "Content-Type: application/json; charset=UTF-8",
+      "",
+      JSON.stringify({ name, mimeType: "application/json" }),
+      `--${boundary}`,
+      "Content-Type: application/json",
+      "",
+      content,
+      `--${boundary}--`,
+    ].join("\r\n");
+    const response = await fetch(
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,version",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": `multipart/related; boundary=${boundary}`,
+        },
+        body,
+      }
+    );
+    if (!response.ok) {
+      throw new StorageFetchError(`Google Drive create failed: ${await responseMessage(response)}`);
+    }
+    const metadata = (await response.json()) as { id: string; name: string };
+    const revision = response.headers.get("etag");
+    return new GoogleDriveDocumentHandle(metadata.id, metadata.name, revision, () =>
+      this.requireToken()
+    );
+  }
+
   private async ensureRuntime(): Promise<void> {
     if (!this.configured) {
       throw new StorageConfigurationError("Google Drive is not configured.");

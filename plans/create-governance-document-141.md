@@ -124,15 +124,15 @@ npm run typecheck && npm run lint && npm test
 
 #### Tasks
 
-- [ ] `storage/types.ts`: optional `create?(name, content)` on `StorageProvider`.
-- [ ] `DropboxProvider.create`: authenticate → `files/upload` `{ path: "/" + name, mode: "add", autorename: true }` → return `DropboxDocumentHandle` (write-capable, revision from response).
-- [ ] `GoogleDriveProvider.create`: authenticate → multipart create with `{ name }` metadata → return write-capable handle.
-- [ ] Unit tests with mocked `fetch` (same style as existing `tests/storage.test.ts`).
+- [x] `storage/types.ts`: optional `create?(name, content)` on `StorageProvider`.
+- [x] `DropboxProvider.create`: authenticate → `files/upload` `{ path: "/" + name, mode: "add", autorename: true }` → return `DropboxDocumentHandle` (write-capable, revision from response).
+- [x] `GoogleDriveProvider.create`: authenticate → multipart create with `{ name }` metadata → return write-capable handle.
+- [x] Unit tests with mocked `fetch` (same style as existing `tests/storage.test.ts`).
 
 #### Acceptance Criteria
 
-- [ ] Created handles report `capabilities.write === true` and round-trip `write()`.
-- [ ] `npm run typecheck`, `npm test` pass.
+- [x] Created handles report `capabilities.write === true` and round-trip `write()`.
+- [x] `npm run typecheck`, `npm test` pass.
 
 #### Milestone gate
 
