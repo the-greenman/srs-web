@@ -12,7 +12,8 @@
     "format": "biome format --write src/",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
-    "predeploy": "test -f src/lib/srs_bindings/srs_bindings_bg.wasm || (echo 'Missing src/lib/srs_bindings — build it from srs-rust via wasm-pack first' && exit 1)",
+    "fetch-bindings": "gh release download --repo the-greenman/srs-rust --pattern 'srs-bindings-web.tar.gz' --dir /tmp --clobber && mkdir -p src/lib/srs_bindings && tar -xzf /tmp/srs-bindings-web.tar.gz -C src/lib/srs_bindings",
+    "predeploy": "npm run fetch-bindings",
     "deploy": "vite build && wrangler deploy"
   },
   "devDependencies": {

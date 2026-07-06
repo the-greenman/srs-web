@@ -49,13 +49,27 @@ binding automatically, no dashboard step required. Deploys are run locally by
 a human via `npm run deploy` (`vite build && wrangler deploy`); there is no
 CI/CD deploy workflow.
 
+`npm run deploy` always ships the latest released WASM bindings: its
+`predeploy` hook runs `npm run fetch-bindings`, which pulls the newest
+`srs-bindings-web.tar.gz` from the `srs-rust` GitHub releases (built by that
+repo's `release.yml` on every merge to master) and extracts it into
+`src/lib/srs_bindings/`, overwriting whatever was there. There's no way to
+accidentally ship a stale binding on deploy. Requires `gh` to be authenticated
+locally (`gh auth status`).
+
+If you're actively developing new bindings in `srs-rust` and want to test
+unreleased changes in srs-web before they're merged, build locally instead —
+this overwrites the fetched artifact until you next run `fetch-bindings` or
+`deploy`:
+
+```bash
+wasm-pack build crates/srs-bindings --target web --out-dir ../../srs-web/src/lib/srs_bindings
+```
+
+(run from the `srs-rust` checkout).
+
 Before deploying:
 
-- Ensure `src/lib/srs_bindings/` is built and current — see
-  `wasm-pack build crates/srs-bindings --target web --out-dir
-  ../../srs-web/src/lib/srs_bindings` from the `srs-rust` checkout.
-  `npm run deploy` does not build this for you; a `predeploy` script only
-  checks that the artifact exists, not that it's up to date.
 - Ensure `wrangler` is authenticated: `npx wrangler whoami` (run
   `wrangler login` if not).
 - Ensure a `.env.production` file exists locally (gitignored, never
