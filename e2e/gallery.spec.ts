@@ -271,6 +271,69 @@ test.describe("Decision Log — sort and filter controls", () => {
   });
 });
 
+test.describe("Decision Log — export buttons", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("mode-governance").click({ timeout: 15000 });
+    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
+      timeout: 5000,
+    });
+
+    const fileInput = page.locator('input[type="file"]#srsj-file');
+    await fileInput.setInputFiles(GALLERY_PATH);
+
+    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
+    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(page.getByTestId("decision-log-view")).toBeVisible();
+  });
+
+  test("Decision Log export MD button is visible and triggers download", async ({ page }) => {
+    await expect(page.getByTestId("log-export-group")).toBeVisible();
+
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByTestId("log-export-md").click(),
+    ]);
+    expect(download.suggestedFilename()).toBe("decision-log.md");
+  });
+
+  test("Decision Log export HTML button triggers download", async ({ page }) => {
+    await expect(page.getByTestId("log-export-group")).toBeVisible();
+
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByTestId("log-export-html").click(),
+    ]);
+    expect(download.suggestedFilename()).toBe("decision-log.html");
+  });
+
+  test("single decision export MD button triggers download", async ({ page }) => {
+    const firstCard = page.getByTestId("decision-summary-card").first();
+    await expect(firstCard).toBeVisible();
+    await firstCard.click();
+
+    await expect(page.getByTestId("decision-export-group")).toBeVisible();
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByTestId("decision-export-md").click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/\.md$/);
+  });
+
+  test("single decision export HTML button triggers download", async ({ page }) => {
+    const firstCard = page.getByTestId("decision-summary-card").first();
+    await expect(firstCard).toBeVisible();
+    await firstCard.click();
+
+    await expect(page.getByTestId("decision-export-group")).toBeVisible();
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByTestId("decision-export-html").click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/\.html$/);
+  });
+});
+
 test.describe("Decision Log — hide superseded/abandoned toggle", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
