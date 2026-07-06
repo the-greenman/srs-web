@@ -44,13 +44,23 @@ lookups.
   logic remains in the list.
 - **The row title** is the core-resolved `displayLabel` (already established by
   srs-web#91). Titles are never re-derived from `fieldValues`.
-- **Row identity/order** is the container's members as returned by the core
-  (`ContainerView.members`, Tier > 0). No client-side `records.filter(typeId)` bucketing.
+- **Row identity/order** is unchanged from ADR-009: the list rows are the active
+  container's members (`containerRecords`, built from `getContainer().memberInstanceIds`).
+  This change touches only *which columns* each row shows — not the row set. Unifying the
+  row source onto `ContainerView.members` (as `GuidesShell` already does) is left to the
+  #137 convergence; in the gallery the two membership resolutions coincide. Either way
+  there is no client-side `records.filter(typeId)` bucketing.
 - When the governing DocumentView selects no fields (`columns` empty), rows render
   **title-only** — a legitimate, view-authored outcome, not a fallback to hardcoded fields.
 - `TYPE_REGISTRY` remains **presentation hints only** (icon, optional custom detail
   component — e.g. `DecisionLogView`). Removing a type from `TYPE_REGISTRY` does not
   change *what* the list shows.
+- The list card no longer renders the old header **article-number id** slot or the
+  **coloured status `Tag`** badge: those were driven by name-based `getStringField`
+  lookups. Status now appears (as plain text) only if the view selects it as a column.
+  Re-introducing a coloured status badge would require the client to special-case "the
+  status field" — exactly the name-based semantics `ColumnSpec` withholds — so it is not
+  reinstated here.
 
 `getStringField` / `getFieldValue` are **not** deleted — they are still used for
 non-list concerns (inspector `status`/lifecycle, the decision path). This ADR governs
