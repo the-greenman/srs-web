@@ -92,6 +92,12 @@
 .card__body--grid .card__field:nth-child(even) {
   border-right: none;
 }
+/* A view may select an odd number of columns (e.g. the roles-list view: Role
+   Holder, Authority, Status). The trailing odd cell sits alone in the second
+   grid column, so drop its border-right to avoid a dangling vertical rule. */
+.card__body--grid .card__field:last-child {
+  border-right: none;
+}
 
 @media (max-width: 720px) {
   .card__body--grid {

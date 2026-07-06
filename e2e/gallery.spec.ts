@@ -47,6 +47,27 @@ test.describe("Gallery fixture — real records render", () => {
     await expect(page.locator(".empty-state")).not.toBeVisible();
   });
 
+  test("Articles list rows show view-driven columns from the DocumentView spec (#94)", async ({ page }) => {
+    // The articles-list L1 view selects Article № + Status; columns come from the
+    // resolved ColumnSpec (ADR-010), not from hardcoded per-type field lookups.
+    const firstCard = page.locator(".record-list__item").first().locator(".card");
+    await expect(firstCard).toBeVisible();
+    const labels = await firstCard.locator(".card__field-label").allTextContents();
+    expect(labels.some((l) => l.includes("Article"))).toBe(true);
+    expect(labels.some((l) => l.includes("Status"))).toBe(true);
+  });
+
+  test("Roles list rows show view-driven columns (Role Holder, Authority, Status) (#94)", async ({ page }) => {
+    await page.getByRole("link", { name: /Roles/ }).click();
+    await expect(page.getByRole("heading", { name: "Roles", level: 2 })).toBeVisible();
+    const firstCard = page.locator(".record-list__item").first().locator(".card");
+    await expect(firstCard).toBeVisible();
+    const labels = await firstCard.locator(".card__field-label").allTextContents();
+    expect(labels.some((l) => l.includes("Role Holder"))).toBe(true);
+    expect(labels.some((l) => l.includes("Authority"))).toBe(true);
+    expect(labels.some((l) => l.includes("Status"))).toBe(true);
+  });
+
   test("Articles section shows count badge matching record count", async ({ page }) => {
     // The nav item for Articles includes a count; gallery has 6 articles
     const articlesNav = page.getByRole("link", { name: /Articles/ });
