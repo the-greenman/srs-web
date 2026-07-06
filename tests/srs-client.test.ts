@@ -14,6 +14,7 @@ import type { SrsRepository } from "../src/lib/srs-client.js";
 import {
   addContainerMember,
   containersForInstance,
+  createGovernanceDocument,
   createRelation,
   deleteRelation,
   documentViewsForContainer,
@@ -26,6 +27,7 @@ import {
   listTerms,
   repositoryNavigation,
   resolveContainerView,
+  scaffoldGovernanceDocument,
   typeSchema,
   type ContainerListFilter,
   type DocumentViewListFilter,
@@ -66,6 +68,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     create_record_successor: () => { throw new Error("not mocked"); },
     resolve_container_view: () => { throw new Error("not mocked"); },
     repository_navigation: () => { throw new Error("not mocked"); },
+    scaffold_new_repository: () => { throw new Error("not mocked"); },
   };
   return { ...base, ...overrides };
 }
@@ -1062,5 +1065,78 @@ describe("repositoryNavigation", () => {
   it("propagates WASM throw", () => {
     const repo = mockRepo({ repository_navigation: () => { throw new Error("nav failed"); } });
     expect(() => repositoryNavigation(repo)).toThrow("nav failed");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// scaffoldGovernanceDocument / createGovernanceDocument (srs-web#141)
+// ---------------------------------------------------------------------------
+
+describe("scaffoldGovernanceDocument", () => {
+  const scaffoldResult = {
+    repositoryId: "repo-1",
+    identityRecordId: "identity-1",
+    decisionLogContainerId: "dlc-1",
+    decisionLogRootId: "dlr-1",
+    rootContainerId: "root-1",
+  };
+
+  it("calls scaffold_new_repository with a title-only JSON payload", () => {
+    const spy = vi.fn().mockReturnValue(scaffoldResult);
+    const repo = mockRepo({ scaffold_new_repository: spy });
+
+    const result = scaffoldGovernanceDocument(repo, "  My Org  ");
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(JSON.parse(spy.mock.calls[0][0])).toEqual({ title: "My Org" });
+    expect(result.repo).toBe(repo);
+    expect(result.repositoryId).toBe("repo-1");
+    expect(result.decisionLogContainerId).toBe("dlc-1");
+  });
+
+  it("passes namespace through when given", () => {
+    const spy = vi.fn().mockReturnValue(scaffoldResult);
+    const repo = mockRepo({ scaffold_new_repository: spy });
+
+    scaffoldGovernanceDocument(repo, "My Org", "com.example.myorg");
+
+    expect(JSON.parse(spy.mock.calls[0][0])).toEqual({
+      title: "My Org",
+      namespace: "com.example.myorg",
+    });
+  });
+
+  it("normalises snake_case result keys", () => {
+    const repo = mockRepo({
+      scaffold_new_repository: () => ({
+        repository_id: "repo-2",
+        identity_record_id: "identity-2",
+        decision_log_container_id: "dlc-2",
+        decision_log_root_id: "dlr-2",
+        root_container_id: "root-2",
+      }),
+    });
+
+    const result = scaffoldGovernanceDocument(repo, "Snake Org");
+
+    expect(result.repositoryId).toBe("repo-2");
+    expect(result.identityRecordId).toBe("identity-2");
+    expect(result.decisionLogContainerId).toBe("dlc-2");
+    expect(result.decisionLogRootId).toBe("dlr-2");
+    expect(result.rootContainerId).toBe("root-2");
+  });
+
+  it("throws on an empty or whitespace title without touching WASM", () => {
+    const spy = vi.fn();
+    const repo = mockRepo({ scaffold_new_repository: spy });
+
+    expect(() => scaffoldGovernanceDocument(repo, "   ")).toThrow(/name is required/);
+    expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe("createGovernanceDocument", () => {
+  it("throws on an empty title before loading the seed", () => {
+    expect(() => createGovernanceDocument("")).toThrow(/name is required/);
   });
 });

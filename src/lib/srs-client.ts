@@ -9,6 +9,10 @@
  *   wasm-pack build crates/srs-bindings --target web --out-dir ../../srs-web/src/lib/srs_bindings
  */
 
+// RFC-014-migrated empty governance document — see src/lib/governance/seed/README.md
+// for provenance and the planned move into the bindings tarball (srs-rust#381).
+import GOVERNANCE_SEED_SRSJ from "./governance/seed/governance-seed.migrated.srsj?raw";
+
 // ---------------------------------------------------------------------------
 // WASM module types (mirrored from srs-bindings/src/lib.rs + srs-core types)
 // ---------------------------------------------------------------------------
@@ -66,6 +70,8 @@ export interface SrsRepository {
   resolve_container_view(container_id: string, view_id?: string | null): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in repositoryNavigation()
   repository_navigation(): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in scaffoldGovernanceDocument()
+  scaffold_new_repository(input_json: string): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -1026,4 +1032,64 @@ export function repositoryNavigation(repo: SrsRepository): RepositoryNavigation 
   // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; normalised below
   const raw: any = repo.repository_navigation();
   return normalizeRepositoryNavigation(raw);
+}
+
+// ---------------------------------------------------------------------------
+// Create governance document (srs-web#141)
+// ---------------------------------------------------------------------------
+
+/** Result of scaffolding a new governance document — `CreateGovernanceRepositoryResult`
+ * from `governance_scaffold_service` plus the live repo handle. */
+export interface CreateGovernanceDocumentResult {
+  repo: SrsRepository;
+  repositoryId: string;
+  identityRecordId: string;
+  decisionLogContainerId: string;
+  decisionLogRootId: string;
+  rootContainerId: string;
+}
+
+/**
+ * Scaffold governance records into a loaded seed repo.
+ * Exported separately from `createGovernanceDocument` so unit tests can drive it
+ * with a mock `SrsRepository` (the WASM loader is unavailable under vitest).
+ *
+ * ADR-001: TS supplies only `{ title, namespace? }`; identity stamping, record and
+ * container creation all happen in the WASM `scaffold_new_repository` binding.
+ * When `namespace` is omitted the core derives `com.example.<slug>` from the title.
+ */
+export function scaffoldGovernanceDocument(
+  repo: SrsRepository,
+  title: string,
+  namespace?: string
+): CreateGovernanceDocumentResult {
+  const trimmed = title.trim();
+  if (trimmed === "") throw new Error("A document name is required");
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; normalised below
+  const raw: any = repo.scaffold_new_repository(
+    JSON.stringify({ title: trimmed, ...(namespace ? { namespace } : {}) })
+  );
+  return {
+    repo,
+    repositoryId: raw.repositoryId ?? raw.repository_id,
+    identityRecordId: raw.identityRecordId ?? raw.identity_record_id,
+    decisionLogContainerId: raw.decisionLogContainerId ?? raw.decision_log_container_id,
+    decisionLogRootId: raw.decisionLogRootId ?? raw.decision_log_root_id,
+    rootContainerId: raw.rootContainerId ?? raw.root_container_id,
+  };
+}
+
+/**
+ * Create a new governance document from the bundled RFC-014-migrated seed:
+ * load the seed, then scaffold identity + Decision Log + root container in one
+ * WASM call. Returns the loaded repo ready for the editor; callers persist it
+ * via `exportSrsj()`.
+ */
+export function createGovernanceDocument(
+  title: string,
+  namespace?: string
+): CreateGovernanceDocumentResult {
+  const trimmed = title.trim();
+  if (trimmed === "") throw new Error("A document name is required");
+  return scaffoldGovernanceDocument(loadRepo(GOVERNANCE_SEED_SRSJ), trimmed, namespace);
 }
