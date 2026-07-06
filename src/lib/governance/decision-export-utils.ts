@@ -10,24 +10,24 @@
  * complete HTML document so the whole-log download is a valid standalone file.
  */
 
-import type { SrsRecord } from "$lib/srs-client.js";
-import type { FieldFormDef } from "$lib/governance/types.js";
 import { getStringField } from "$lib/governance/field-utils.js";
+import type { FieldFormDef } from "$lib/governance/types.js";
+import type { SrsRecord } from "$lib/srs-client.js";
 
 /** Field display order for decision export — mirrors DECISION_FIELDS in DecisionView.svelte. */
 const EXPORT_FIELDS = [
-  { name: "title",                   label: "Title" },
-  { name: "decision_statement",      label: "Decision Statement" },
-  { name: "decision_question",       label: "Decision Question" },
-  { name: "context",                 label: "Context" },
-  { name: "friction",                label: "Friction" },
-  { name: "key_requirements",        label: "Key Requirements" },
-  { name: "rationale",               label: "Rationale" },
+  { name: "title", label: "Title" },
+  { name: "decision_statement", label: "Decision Statement" },
+  { name: "decision_question", label: "Decision Question" },
+  { name: "context", label: "Context" },
+  { name: "friction", label: "Friction" },
+  { name: "key_requirements", label: "Key Requirements" },
+  { name: "rationale", label: "Rationale" },
   { name: "alternatives_considered", label: "Alternatives Considered" },
-  { name: "revisit_when",            label: "Revisit When" },
-  { name: "next_steps",              label: "Next Steps" },
-  { name: "owner",                   label: "Owner" },
-  { name: "status",                  label: "Status" },
+  { name: "revisit_when", label: "Revisit When" },
+  { name: "next_steps", label: "Next Steps" },
+  { name: "owner", label: "Owner" },
+  { name: "status", label: "Status" },
 ] as const;
 
 function escapeHtml(s: string): string {
@@ -52,7 +52,7 @@ export function formatDecisionMarkdown(
     lines.push(`## ${field.label}`, "", value, "");
   }
   if (record.createdAt) {
-    lines.push(`---`, "", `*Created: ${record.createdAt.slice(0, 10)}*`, "");
+    lines.push("---", "", `*Created: ${record.createdAt.slice(0, 10)}*`, "");
   }
   return lines.join("\n");
 }
@@ -81,12 +81,12 @@ export function formatDecisionHtml(
     "<!DOCTYPE html>",
     `<html><head><meta charset="utf-8">`,
     `<title>${escapeHtml(title)}</title>`,
-    `<style>body{font-family:system-ui,sans-serif;max-width:60ch;margin:2rem auto;padding:0 1rem}h1,h2{line-height:1.2}section{margin-bottom:1.5rem}footer{margin-top:2rem;color:#666}</style>`,
-    `</head><body>`,
+    "<style>body{font-family:system-ui,sans-serif;max-width:60ch;margin:2rem auto;padding:0 1rem}h1,h2{line-height:1.2}section{margin-bottom:1.5rem}footer{margin-top:2rem;color:#666}</style>",
+    "</head><body>",
     `<h1>${escapeHtml(title)}</h1>`,
     ...sections,
     date,
-    `</body></html>`,
+    "</body></html>",
   ].join("\n");
 }
 
@@ -100,10 +100,10 @@ export function wrapLogHtml(fragment: string, title: string): string {
     "<!DOCTYPE html>",
     `<html><head><meta charset="utf-8">`,
     `<title>${escapeHtml(title)}</title>`,
-    `<style>body{font-family:system-ui,sans-serif;max-width:80ch;margin:2rem auto;padding:0 1rem}h1,h2,h3{line-height:1.2}.srs-document{padding:0}</style>`,
-    `</head><body>`,
+    "<style>body{font-family:system-ui,sans-serif;max-width:80ch;margin:2rem auto;padding:0 1rem}h1,h2,h3{line-height:1.2}.srs-document{padding:0}</style>",
+    "</head><body>",
     `<h1>${escapeHtml(title)}</h1>`,
     fragment,
-    `</body></html>`,
+    "</body></html>",
   ].join("\n");
 }

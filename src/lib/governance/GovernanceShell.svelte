@@ -55,6 +55,7 @@
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
   import { LIFECYCLE_TRANSITIONS, IMMUTABLE_STATES } from "$lib/governance/lifecycle.js";
   import { setFieldMetaContext, buildFieldMetaMap } from "$lib/governance/field-meta.js";
+  import { formatDecisionMarkdown, formatDecisionHtml } from "$lib/governance/decision-export-utils.js";
 
   // ---------------------------------------------------------------------------
   // Props
@@ -135,6 +136,9 @@
 
   /** Tag input value for the inspector tag editor. */
   let tagInput = $state<string>("");
+
+  /** Error message for single-decision export (cleared on record selection change). */
+  let decisionExportError = $state<string | null>(null);
 
   // ---------------------------------------------------------------------------
   // Derived
@@ -546,7 +550,35 @@
   $effect(() => {
     void selectedId;
     tagInput = "";
+    decisionExportError = null;
   });
+
+  function handleExportDecision(format: "markdown" | "html"): void {
+    decisionExportError = null;
+    if (!selectedRecord) return;
+    try {
+      const content =
+        format === "html"
+          ? formatDecisionHtml(selectedRecord, fieldMetaMap)
+          : formatDecisionMarkdown(selectedRecord, fieldMetaMap);
+      const mimeType = format === "html" ? "text/html" : "text/markdown";
+      const ext = format === "html" ? "html" : "md";
+      const label = selectedRecord.displayLabel ?? selectedRecord.instanceId.slice(0, 8);
+      const slug = label
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${slug || "decision"}.${ext}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      decisionExportError = `Export failed: ${e instanceof Error ? e.message : String(e)}`;
+    }
+  }
 </script>
 
 <!-- SVG filter — required by Nav (ink surface effect) -->
@@ -771,6 +803,26 @@
               onclick={handleAddTag}
             >Add</button>
           </div>
+        </InspectorSection>
+      {/if}
+
+      {#if selectedRecord && formMode === null && activeContainer?.rootTypeId === DECISION_TYPE_ID}
+        <InspectorSection title="Export decision">
+          <div class="inspector__export-row" data-testid="decision-export-group">
+            <button
+              class="inspector__btn"
+              data-testid="decision-export-md"
+              onclick={() => handleExportDecision("markdown")}
+            >MD</button>
+            <button
+              class="inspector__btn"
+              data-testid="decision-export-html"
+              onclick={() => handleExportDecision("html")}
+            >HTML</button>
+          </div>
+          {#if decisionExportError}
+            <p class="inspector__export-error" role="alert">{decisionExportError}</p>
+          {/if}
         </InspectorSection>
       {/if}
 
@@ -1052,5 +1104,17 @@
   .inspector__tag-input:focus {
     outline: 2px solid var(--accent, #0066cc);
     outline-offset: 1px;
+  }
+
+  .inspector__export-row {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .inspector__export-error {
+    font-size: 0.7rem;
+    color: var(--error, #cc0000);
+    margin: 0.25rem 0 0;
   }
 </style>
