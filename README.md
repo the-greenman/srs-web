@@ -2,10 +2,21 @@
 
 Opinionated SRS governance web editor (WASM + Vite).
 
+## Creating a new governance document
+
+The governance editor's start screen offers **Create new** alongside opening
+an existing file: enter a name, pick a destination (this device / Dropbox /
+Google Drive), and the app scaffolds a complete governance document — identity
+record, Decision Log container, and root container — via the WASM
+`scaffold_new_repository` binding. The bundled seed lives at
+`src/lib/governance/seed/` (RFC-014-migrated; see the README there for
+provenance and regeneration — never hand-edit it).
+
 ## Cloud storage
 
 The editor can open `.srsj` and `.json` repositories from the local device,
-Dropbox, or Google Drive. Cloud credentials are public browser identifiers;
+Dropbox, or Google Drive, and can create new files on either cloud provider
+(`StorageProvider.create`). Cloud credentials are public browser identifiers;
 never add a provider client secret to this application.
 
 Copy `.env.example` to `.env.local` and fill in the configured provider values.
