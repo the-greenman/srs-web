@@ -169,14 +169,14 @@ As Phase 1; commit `feat: create-governance-document onboarding flow (#141)`.
 
 #### Tasks
 
-- [ ] `e2e/create-document.spec.ts`, three cases:
+- [x] `e2e/create-document.spec.ts`, three cases:
   - (a) **Local create + clean validation:** governance mode → fill `create-name` with "My Test Org" → click `create-local` → intercept the download (Playwright `download` event, same pattern as `export-import.spec.ts:39-47`) → assert filename `my-test-org.srsj`; parse content and assert `parsed.srsj === "1"`, `parsed.manifest.upstreamPackage.contentHash` is a non-empty string (proves the migrated seed), `parsed.manifest.title === "My Test Org"`; app is in loaded state (Decision Log nav link visible); **no validation diagnostics shown** (the Diagnostics component renders nothing / zero errors).
   - (b) **Create → first decision → export → re-import:** after (a)'s create, click "New Decision", fill Title "First Decision" (+ required fields), Save (the test creates the decision through the UI — the scaffold does NOT pre-create sample decisions); download via "Download .srsj"; re-import through the open flow (temp-file + `setInputFiles`, same as `export-import.spec.ts:119-137`); assert "First Decision" is visible in the Decision Log list.
   - (c) **Cloud create (fake provider):** inject fake providers via `page.addInitScript` **before** `page.goto` (exactly the `cloud-storage.spec.ts:12-40` pattern), where the fake exposes `create: async (name, content) => handle` — the fake records `(name, content)` into `window.__CREATE_CALLS__` and returns a `DocumentHandle` with `capabilities: { read: true, write: true }`, `revision: "revision-1"`, `write: async () => ({ revision: "revision-2" })`. Click `create-dropbox` → assert the fake received the slugged filename and content parsing to a valid srsj envelope, and the app transitioned to loaded.
 
 #### Acceptance Criteria
 
-- [ ] New spec passes locally alongside the full e2e suite (no regressions).
+- [x] New spec passes locally alongside the full e2e suite (no regressions).
 
 #### Milestone gate
 

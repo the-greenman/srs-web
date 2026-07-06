@@ -1,7 +1,12 @@
+import { existsSync } from "node:fs"
 import { defineConfig, devices } from "@playwright/test"
 
 const port = Number(process.env.PLAYWRIGHT_PORT ?? "5173")
 const baseURL = `http://localhost:${port}`
+
+// Pinned system chromium; fall back to Playwright's own resolution
+// (PLAYWRIGHT_BROWSERS_PATH) when the pinned build is not installed.
+const pinnedChromium = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 
 export default defineConfig({
   testDir: "./e2e",
@@ -20,9 +25,7 @@ export default defineConfig({
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
-        launchOptions: {
-          executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-        },
+        launchOptions: existsSync(pinnedChromium) ? { executablePath: pinnedChromium } : {},
       },
     },
   ],

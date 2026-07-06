@@ -25,9 +25,19 @@ export interface TypeRegistryEntry {
    * they share the same prop interface.
    */
   view?: typeof RecordView;
+  /**
+   * When this type is a container ROOT/header type (RFC-013 sections), the type that
+   * "New …" creates inside that container. Presentation-level create-target config,
+   * like the rest of this registry (ADR-005/ADR-009). Interim until the blueprint
+   * schema projects member types (`requiredTypes`) for record-only blueprints —
+   * see srs-rust#382; container/view-driven config is srs-web#94/#95.
+   */
+  memberTypeId?: string;
 }
 
 export const DECISION_TYPE_ID = "1fcad6a2-9f78-5e41-94ba-d82e88b822f3";
+/** RFC-013 decision-log header type (`governance/decision_log`) — the root record of a scaffolded Decision Log container. */
+export const DECISION_LOG_TYPE_ID = "5a061505-dd0e-4c8d-9e20-fa28a3c42b68";
 
 // Release 1 is a decision-log-only editor. The `article`, `role`, and `exercise` types
 // stay defined (dormant) in the com.mudemocracy.governance package, but the editor
@@ -41,5 +51,15 @@ export const TYPE_REGISTRY: Record<string, TypeRegistryEntry> = {
     typeName: "decision",
     typeNamespace: "governance",
     view: DecisionView as unknown as typeof RecordView,
+  },
+  // Scaffolded documents (srs-web#141) have an RFC-013 Decision Log container whose
+  // root record is a decision_log header; creating inside it must produce decisions.
+  [DECISION_LOG_TYPE_ID]: {
+    label: "Decision",
+    icon: "⊕",
+    typeVersion: 1,
+    typeName: "decision_log",
+    typeNamespace: "governance",
+    memberTypeId: DECISION_TYPE_ID,
   },
 };
