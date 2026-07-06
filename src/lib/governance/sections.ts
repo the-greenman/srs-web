@@ -34,15 +34,18 @@ function labelFromTypeName(s: string): string {
  * with auto-derived label and default icon — no TS change required for new types.
  */
 export function buildDynamicSections(records: SrsRecord[]): SectionConfig[] {
-  const result: SectionConfig[] = Object.entries(TYPE_REGISTRY).map(([typeId, cfg]) => ({
-    key: typeId,
-    label: cfg.label,
-    icon: cfg.icon,
-    typeNamespace: cfg.typeNamespace,
-    typeName: cfg.typeName,
-    typeId,
-    typeVersion: cfg.typeVersion,
-  }));
+  const result: SectionConfig[] = Object.entries(TYPE_REGISTRY)
+    // Header/root types (entries with memberTypeId) are container anchors, not record sections.
+    .filter(([, cfg]) => cfg.memberTypeId === undefined)
+    .map(([typeId, cfg]) => ({
+      key: typeId,
+      label: cfg.label,
+      icon: cfg.icon,
+      typeNamespace: cfg.typeNamespace,
+      typeName: cfg.typeName,
+      typeId,
+      typeVersion: cfg.typeVersion,
+    }));
   const seen = new Set(result.map((s) => s.typeId));
   for (const r of records) {
     if (!r.typeId || seen.has(r.typeId)) continue;
