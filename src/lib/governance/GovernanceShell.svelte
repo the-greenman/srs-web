@@ -18,6 +18,7 @@
     listRelations,
     createRelation,
     deleteRelation,
+    resolveContainerView,
   } from "$lib/srs-client.js";
   import type {
     SrsRepository,
@@ -27,8 +28,9 @@
     CreateRecordInput,
     UpdateRecordInput,
     SchemaDefinition,
+    ContainerView,
   } from "$lib/srs-client.js";
-  import type { BreadcrumbItem, Diagnostic, Status } from "$lib/types.js";
+  import type { BreadcrumbItem, Diagnostic } from "$lib/types.js";
 
   import AppShell from "$lib/components/AppShell.svelte";
   import Breadcrumb from "$lib/components/Breadcrumb.svelte";
@@ -41,6 +43,8 @@
   import Inspector from "$lib/components/Inspector.svelte";
   import InspectorSection from "$lib/components/InspectorSection.svelte";
   import Card from "$lib/components/Card.svelte";
+  import CardField from "$lib/components/CardField.svelte";
+  import FieldValueView from "../../rendering/FieldValueView.svelte";
   import Diagnostics from "$lib/components/Diagnostics.svelte";
   import RecordForm from "$lib/components/RecordForm.svelte";
   import SuccessorModal from "$lib/components/SuccessorModal.svelte";
@@ -148,6 +152,33 @@
 
   let activeContainer = $derived(
     containers.find((c) => c.containerId === activeContainerId) ?? null,
+  );
+
+  /**
+   * Structured view of the active container (ADR-010): the core-resolved column spec
+   * for the generic list pane. Skipped for the Decision path (it uses DecisionLogView,
+   * so resolving here would be a wasted WASM round-trip). Column *selection* and labels
+   * come from the DocumentView via the core; the client only reads values at the
+   * core-provided fieldIds — no field-name semantics in TS.
+   */
+  let activeContainerView = $derived.by<ContainerView | null>(() => {
+    if (activeContainerId === null) return null;
+    if (activeContainer?.rootTypeId === DECISION_TYPE_ID) return null;
+    try {
+      const view = resolveContainerView(repo, activeContainerId);
+      if (view.diagnostics.length > 0) {
+        console.warn("resolveContainerView diagnostics:", view.diagnostics);
+      }
+      return view;
+    } catch (e: unknown) {
+      console.error("resolveContainerView failed:", e);
+      return null;
+    }
+  });
+
+  /** Column spec for the active container's list, ordered by the DocumentView's `order`. */
+  let activeColumns = $derived(
+    [...(activeContainerView?.columns ?? [])].sort((a, b) => a.order - b.order),
   );
 
   let activeSectionSchema = $derived(
@@ -684,8 +715,6 @@
               <div class="record-list">
                 {#each activeRecords as record (record.instanceId)}
                   {@const title = record.displayLabel ?? record.instanceId}
-                  {@const articleNumber = getStringField(record, "article_number", fieldMetaMap)}
-                  {@const status = getStringField(record, "status", fieldMetaMap) as Status | undefined}
                   {@const isSelected = selectedId === record.instanceId}
 
                   <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -697,11 +726,20 @@
                       selectedId = isSelected ? null : record.instanceId;
                     }}
                   >
-                    <Card
-                      id={articleNumber}
-                      title={title}
-                      status={status}
-                    />
+                    <!-- Columns come from the DocumentView spec (ADR-010), not hardcoded
+                         per type. Values are read positionally by the core-provided
+                         fieldId; empty columns → title-only card. -->
+                    <Card title={title} grid={activeColumns.length > 0}>
+                      {#each activeColumns as col (col.fieldId)}
+                        {@const value = record.fieldValues.find((fv) => fv.fieldId === col.fieldId)?.value}
+                        <CardField
+                          label={col.displayLabel}
+                          empty={value === undefined || value === null || value === ""}
+                        >
+                          <FieldValueView fv={{ fieldId: col.fieldId, value }} />
+                        </CardField>
+                      {/each}
+                    </Card>
                   </div>
                 {/each}
               </div>
