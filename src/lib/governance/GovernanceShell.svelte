@@ -17,6 +17,7 @@
     repositoryNavigation,
     listRelations,
     createRelation,
+    deleteRelation,
   } from "$lib/srs-client.js";
   import type {
     SrsRepository,
@@ -500,6 +501,17 @@
     }
   }
 
+  function handleDeleteRelation(relationId: string): void {
+    if (!selectedRecord) return;
+    try {
+      deleteRelation(repo, relationId);
+      loadDecisionRelations(selectedRecord.instanceId);
+      refreshValidation();
+    } catch (e: unknown) {
+      console.error("deleteRelation failed:", e);
+    }
+  }
+
   function handleUpdateTags(newTags: string[]): void {
     if (!selectedRecord) return;
     try {
@@ -718,6 +730,12 @@
                   <span class="inspector__relation-type">{rel.relationType}</span>
                   <span class="inspector__relation-dir">{direction}</span>
                   <span class="inspector__relation-peer">{peerLabel}</span>
+                  <button
+                    class="inspector__relation-delete"
+                    data-testid="delete-relation-btn"
+                    aria-label="Delete relation"
+                    onclick={() => handleDeleteRelation(rel.relationId)}
+                  >✕</button>
                 </li>
               {/each}
             </ul>
@@ -982,6 +1000,20 @@
     white-space: nowrap;
     max-width: 8rem;
   }
+
+  .inspector__relation-delete {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.7rem;
+    opacity: 0.4;
+    padding: 0 0.15rem;
+    line-height: 1;
+    color: #c00;
+    flex-shrink: 0;
+  }
+  .inspector__relation-delete:hover { opacity: 1; }
 
   /* ---- Nav footer ---- */
   .nav__footer-stat {

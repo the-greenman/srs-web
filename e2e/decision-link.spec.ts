@@ -99,4 +99,32 @@ test.describe("Decision link picker (srs-web#106)", () => {
     await expect(page.getByTestId("decision-relations-list")).toBeVisible({ timeout: 3000 });
     await expect(page.getByTestId("relation-item").first()).toBeVisible();
   });
+
+  // --------------------------------------------------------------------------
+  // Test 4: Deleting a relation removes it from the list (srs-web#116)
+  // --------------------------------------------------------------------------
+  test("Deleting a relation removes it from the relations list", async ({ page }) => {
+    // Snapshot existing relation count before adding one
+    const initialCount = await page.getByTestId("relation-item").count();
+
+    // Create a relation (same as Test 3 setup)
+    await page.getByTestId("add-relation-btn").click();
+    await expect(page.getByRole("heading", { name: "Link to another decision" })).toBeVisible({
+      timeout: 3000,
+    });
+    await page.getByTestId("link-decision-item").first().click();
+    await page.getByTestId("link-confirm").click();
+    await expect(page.locator(".modal-overlay")).not.toBeVisible({ timeout: 3000 });
+
+    // Confirm the new relation appeared (count went up by 1)
+    await expect(page.getByTestId("relation-item")).toHaveCount(initialCount + 1, {
+      timeout: 3000,
+    });
+
+    // Delete the last relation in the list (the one just created ends up last)
+    await page.getByTestId("delete-relation-btn").last().click();
+
+    // Count should be back to the initial value
+    await expect(page.getByTestId("relation-item")).toHaveCount(initialCount, { timeout: 3000 });
+  });
 });
