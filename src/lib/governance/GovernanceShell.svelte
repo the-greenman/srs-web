@@ -357,6 +357,8 @@
               : "Record saved, but could not register in container.";
             loadContainerNav();
             selectedId = created.instanceId;
+            editingRecord = created;
+            formMode = "edit";
             refreshValidation();
             return;
           }
