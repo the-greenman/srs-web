@@ -1275,7 +1275,9 @@
       ],
       "version": "1.0.0",
       "views": [
-        "views/decision-log-faebd240.json"
+        "views/decision-log-faebd240.json",
+        "views/articles-list-a11c0000.json",
+        "views/roles-list-a11c0000.json"
       ]
     },
     "package/fields/authority-d25da548.json": {
@@ -1529,7 +1531,8 @@
             "type": "container-subset"
           },
           "title": "Articles of Association",
-          "titleFieldId": "d7e82557-9045-5e92-a494-d99112bbec4a"
+          "titleFieldId": "d7e82557-9045-5e92-a494-d99112bbec4a",
+          "renderViewId": "a11c0000-0000-4000-8000-000000000a01"
         },
         {
           "emptyBehavior": "hide",
@@ -1540,10 +1543,21 @@
             "type": "container-subset"
           },
           "title": "Roles",
-          "titleFieldId": "d7e82557-9045-5e92-a494-d99112bbec4a"
+          "titleFieldId": "d7e82557-9045-5e92-a494-d99112bbec4a",
+          "renderViewId": "a11c0000-0000-4000-8000-000000000a02"
         }
       ],
-      "version": 1
+      "version": 1,
+      "rootTypeRefs": [
+        {
+          "typeId": "a1142ac3-5385-5c0e-8630-1dd3432cdf7f",
+          "typeVersion": 1
+        },
+        {
+          "typeId": "e53dce11-6b83-5714-a8fe-f730edb500fa",
+          "typeVersion": 1
+        }
+      ]
     },
     "package/fields/articletext-8aa3eba2.json": {
       "aiGuidance": {
@@ -1871,6 +1885,61 @@
       "typeNamespace": "governance",
       "typeVersion": 1,
       "updatedAt": "2026-06-27T00:00:00Z"
+    },
+    "package/views/articles-list-a11c0000.json": {
+      "id": "a11c0000-0000-4000-8000-000000000a01",
+      "namespace": "governance",
+      "name": "articles-list",
+      "version": 1,
+      "description": "Compact article list \u2014 number and status.",
+      "createdAt": "2026-07-06T00:00:00Z",
+      "fieldViews": [
+        {
+          "fieldId": "60be1468-01bc-5d12-9eea-628f02801893",
+          "displayLabel": "Article \u2116",
+          "order": 0,
+          "required": false,
+          "visible": true
+        },
+        {
+          "fieldId": "aee7afe9-6650-5fa4-a61a-495c3b88994b",
+          "displayLabel": "Status",
+          "order": 1,
+          "required": true,
+          "visible": true
+        }
+      ]
+    },
+    "package/views/roles-list-a11c0000.json": {
+      "id": "a11c0000-0000-4000-8000-000000000a02",
+      "namespace": "governance",
+      "name": "roles-list",
+      "version": 1,
+      "description": "Compact role list \u2014 holder, authority, status.",
+      "createdAt": "2026-07-06T00:00:00Z",
+      "fieldViews": [
+        {
+          "fieldId": "a6c19b95-4f8f-5b07-93f8-3426c545277e",
+          "displayLabel": "Role Holder",
+          "order": 0,
+          "required": false,
+          "visible": true
+        },
+        {
+          "fieldId": "d25da548-79d6-555b-8878-f40b685b3955",
+          "displayLabel": "Authority",
+          "order": 1,
+          "required": true,
+          "visible": true
+        },
+        {
+          "fieldId": "aee7afe9-6650-5fa4-a61a-495c3b88994b",
+          "displayLabel": "Status",
+          "order": 2,
+          "required": true,
+          "visible": true
+        }
+      ]
     }
   }
 }
