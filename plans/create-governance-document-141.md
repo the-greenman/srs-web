@@ -146,16 +146,16 @@ As Phase 1; commit `feat: storage provider create() for Dropbox and Google Drive
 
 #### Tasks
 
-- [ ] `src/lib/components/CreateGovernanceDocumentPanel.svelte`: name input (required, trimmed), three destination buttons; busy/error handling mirroring `SourceChooser`; `data-testid="create-panel"`, `create-name`, `create-local`, `create-dropbox`, `create-google-drive`; cloud buttons disabled when `!provider.configured` or `create` missing.
-- [ ] `App.svelte`: governance idle screen gains the panel under the existing `SourceChooser` (Open vs Create sections); handler `createDocument(name, destination)` → bridge → `exportSrsj` → local: `downloadDocument(json, slugifyFilename(name) + ".srsj")` + `activeDocument = null`; cloud: `provider.create(slugifyFilename(name) + ".srsj", json)` → `activeDocument = handle`; set `repoName = name`, `appState = "loaded"`.
-- [ ] `src/lib/slug.ts`: `slugifyFilename` per Scope; refactor the two `GuidesShell.svelte` inline occurrences to use it (presentation-only; namespace derivation stays in the core).
-- [ ] **Error contract** (mirrors `SourceChooser.run()`): every failure path (scaffold throw, export throw, cloud `create()` rejection) is caught in the panel; `StorageError` with `code === "cancelled"` suppressed silently; any other error renders `.message` in a `<p role="alert">`; the app **stays in idle** and the scaffolded in-memory repo is discarded — no half-created state. Local download has no failure path (`downloadDocument` is fire-and-forget). Create buttons disabled while busy or when the trimmed name is empty; cloud buttons additionally disabled when `!provider.configured || !provider.create`.
+- [x] `src/lib/components/CreateGovernanceDocumentPanel.svelte`: name input (required, trimmed), three destination buttons; busy/error handling mirroring `SourceChooser`; `data-testid="create-panel"`, `create-name`, `create-local`, `create-dropbox`, `create-google-drive`; cloud buttons disabled when `!provider.configured` or `create` missing.
+- [x] `App.svelte`: governance idle screen gains the panel under the existing `SourceChooser` (Open vs Create sections); handler `createDocument(name, destination)` → bridge → `exportSrsj` → local: `downloadDocument(json, slugifyFilename(name) + ".srsj")` + `activeDocument = null`; cloud: `provider.create(slugifyFilename(name) + ".srsj", json)` → `activeDocument = handle`; set `repoName = name`, `appState = "loaded"`.
+- [x] `src/lib/slug.ts`: `slugifyFilename` per Scope; refactor the two `GuidesShell.svelte` inline occurrences to use it (presentation-only; namespace derivation stays in the core).
+- [x] **Error contract** (mirrors `SourceChooser.run()`): every failure path (scaffold throw, export throw, cloud `create()` rejection) is caught in the panel; `StorageError` with `code === "cancelled"` suppressed silently; any other error renders `.message` in a `<p role="alert">`; the app **stays in idle** and the scaffolded in-memory repo is discarded — no half-created state. Local download has no failure path (`downloadDocument` is fire-and-forget). Create buttons disabled while busy or when the trimmed name is empty; cloud buttons additionally disabled when `!provider.configured || !provider.create`.
 
 #### Acceptance Criteria
 
-- [ ] Create → editor shows the new document; Decision Log nav present (scaffold output).
-- [ ] Local create triggers a `.srsj` download whose envelope has `srsj`, `manifest`, `data`.
-- [ ] `npm run typecheck`, `npm run build` pass.
+- [x] Create → editor shows the new document; Decision Log nav present (scaffold output).
+- [x] Local create triggers a `.srsj` download whose envelope has `srsj`, `manifest`, `data`.
+- [x] `npm run typecheck`, `npm run build` pass.
 
 #### Milestone gate
 
