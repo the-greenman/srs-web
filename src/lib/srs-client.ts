@@ -841,11 +841,13 @@ export interface ContainerView {
 
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM ResolvedMember has unknown field case
 function normalizeMember(m: any): ResolvedMember {
+  const record = normalizeRecord(m.record);
+  record.displayLabel = (m.displayLabel ?? m.display_label) || undefined;
   return {
     instanceId: m.instanceId ?? m.instance_id,
     tier: m.tier,
     displayLabel: m.displayLabel ?? m.display_label ?? "",
-    record: normalizeRecord(m.record),
+    record,
   };
 }
 
@@ -863,12 +865,11 @@ function normalizeColumnSpec(c: any): ColumnSpec {
 /**
  * Resolve the structured view of a container, including its ordered members and column spec.
  * ADR-001: pure WASM pass-through — all membership and display-label resolution stays in the core.
- * `record.displayLabel` is NOT injected; consumers read from `fieldValues`.
+ * `record.displayLabel` is populated from the member-level WASM-resolved `displayLabel` (srs-web#114).
  *
  * Note: `members` arrive in stored (UUID-alphabetical) order, not precedes order.
  * The root record (tier 0) is `members[0]`; section members have tier > 0.
  * To get ordered sections: `view.members.filter(m => m.tier > 0).map(m => m.record)`, then apply `orderByPrecedes()`.
- * Tracked as ADR-001 residual debt in srs-web#122.
  */
 export function resolveContainerView(
   repo: SrsRepository,

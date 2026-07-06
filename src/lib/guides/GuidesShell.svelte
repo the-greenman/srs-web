@@ -92,12 +92,6 @@
   /** All guide records in the repo. */
   let guides = $state<SrsRecord[]>([]);
 
-  /** Field ID for the guide's "title" property (derived from blueprint schema). */
-  let guideTitleFieldId = $state<string | null>(null);
-
-  /** Field ID for sections' "heading" property (derived from blueprint schema). */
-  let sectionHeadingFieldId = $state<string | null>(null);
-
   /** Currently selected guide instance ID. */
   let selectedGuideId = $state<string | null>(null);
 
@@ -152,24 +146,6 @@
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
-
-  /** Derive the display label for a guide record using the schema-derived title field. */
-  function guideLabel(record: SrsRecord): string {
-    if (guideTitleFieldId) {
-      const fv = record.fieldValues.find((f) => f.fieldId === guideTitleFieldId);
-      if (fv) return fv.value as string;
-    }
-    return (record.fieldValues[0]?.value as string | undefined) ?? "Untitled Guide";
-  }
-
-  /** Derive the display label for a section record using the schema-derived heading field. */
-  function sectionLabel(record: SrsRecord): string {
-    if (sectionHeadingFieldId) {
-      const fv = record.fieldValues.find((f) => f.fieldId === sectionHeadingFieldId);
-      if (fv) return fv.value as string;
-    }
-    return (record.fieldValues[0]?.value as string | undefined) ?? "Untitled Section";
-  }
 
   /** Derive the human-readable type name for a section record. */
   function sectionTypeName(record: SrsRecord): string {
@@ -317,21 +293,6 @@
         label: "Guide",
         fields,
       };
-      // Derive guide title field ID from the "title" property in the root definition.
-      const guideDef = schema.definitions[rootId];
-      if (guideDef) {
-        const titleProp = Object.entries(guideDef.properties).find(([n]) => n === "title");
-        guideTitleFieldId = titleProp?.[1]["x-srs-field-id"] ?? null;
-      }
-      // Derive section heading field ID from the "heading" property in any section type.
-      const firstSt = sectionTypes(schema)[0];
-      if (firstSt) {
-        const stDef = schema.definitions[firstSt.typeId];
-        if (stDef) {
-          const headingProp = Object.entries(stDef.properties).find(([n]) => n === "heading");
-          sectionHeadingFieldId = headingProp?.[1]["x-srs-field-id"] ?? null;
-        }
-      }
       reload();
     } catch (e) {
       schemaError = `Blueprint schema load failed: ${e instanceof Error ? e.message : String(e)}`;
@@ -353,16 +314,16 @@
       : null;
     if (!guide) return items;
     if (formMode !== null) {
-      items.push({ label: guideLabel(guide), onclick: cancelForm });
+      items.push({ label: guide.displayLabel ?? "Untitled Guide", onclick: cancelForm });
       if (formMode === "edit-guide") {
         items.push({ label: "Edit body" });
       } else if (formMode === "create-section") {
         items.push({ label: `New ${activeSectionDescriptor?.label ?? "section"}` });
       } else if (formMode === "edit-section" && editingRecord) {
-        items.push({ label: sectionLabel(editingRecord) });
+        items.push({ label: editingRecord.displayLabel || "Untitled Section" });
       }
     } else {
-      items.push({ label: guideLabel(guide) });
+      items.push({ label: guide.displayLabel ?? "Untitled Guide" });
     }
     return items;
   }
@@ -511,7 +472,7 @@
         return;
       }
       const guide = guides.find((g) => g.instanceId === selectedGuideId);
-      const name = guide ? guideLabel(guide) : "guide";
+      const name = guide?.displayLabel ?? "guide";
       const slug = name.replace(/\s+/g, "-").toLowerCase();
       downloadDocument(JSON.stringify(result.projection, null, 2), `${slug}.guide-view.json`);
     } catch (e) {
@@ -529,7 +490,7 @@
         return;
       }
       const guide = guides.find((g) => g.instanceId === selectedGuideId);
-      const title = guide ? guideLabel(guide) : "guide";
+      const title = guide?.displayLabel ?? "guide";
       const slug = title.replace(/\s+/g, "-").toLowerCase();
       const blob = new Blob([result.rendered], { type: "text/markdown" });
       const url = URL.createObjectURL(blob);
@@ -577,7 +538,7 @@
                   }}
                 >
                   <NavItem
-                    label={guideLabel(guide)}
+                    label={guide.displayLabel ?? "Untitled Guide"}
                     active={guide.instanceId === selectedGuideId}
                   />
                 </div>
@@ -658,7 +619,7 @@
             {#if selectedGuide}
               <div class="guides-detail">
                 <div class="guides-detail__header">
-                  <h2 class="guides-detail__title">{guideLabel(selectedGuide)}</h2>
+                  <h2 class="guides-detail__title">{selectedGuide.displayLabel ?? "Untitled Guide"}</h2>
                   <Button
                     variant="ghost"
                     data-testid="guides-export-guide-json"
@@ -685,7 +646,7 @@
                     onclick={() => openEditGuide(selectedGuide)}
                   >
                     <span class="guides-section-type">{guideFormDef?.label ?? "Guide"}</span>
-                    <span class="guides-section-heading">{guideLabel(selectedGuide)}</span>
+                    <span class="guides-section-heading">{selectedGuide.displayLabel ?? "Untitled Guide"}</span>
                   </div>
                   <div class="guides-section-controls">
                     <Button
@@ -733,7 +694,7 @@
                         <span
                           class="guides-section-heading"
                           data-testid="guides-section-heading"
-                        >{sectionLabel(section)}</span>
+                        >{section.displayLabel || "Untitled Section"}</span>
                       </div>
                       <div class="guides-section-controls">
                         <button
