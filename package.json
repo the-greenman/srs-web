@@ -11,7 +11,9 @@
     "lint": "biome check src/",
     "format": "biome format --write src/",
     "e2e": "playwright test",
-    "e2e:ui": "playwright test --ui"
+    "e2e:ui": "playwright test --ui",
+    "predeploy": "test -f src/lib/srs_bindings/srs_bindings_bg.wasm || (echo 'Missing src/lib/srs_bindings — build it from srs-rust via wasm-pack first' && exit 1)",
+    "deploy": "vite build && wrangler deploy"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
@@ -23,7 +25,8 @@
     "vite": "^6.3.5",
     "vite-plugin-top-level-await": "^1.4.4",
     "vite-plugin-wasm": "^3.4.1",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "wrangler": "^4.100.0"
   },
   "allowScripts": {
     "@biomejs/biome@1.9.4": true,

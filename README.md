@@ -39,21 +39,44 @@ Drive files.
 Add the deployed HTTPS origin and Dropbox redirect URI to both provider
 consoles before production deployment.
 
-### Cloudflare Pages production
+### Cloudflare Workers production
 
-For `https://app.mudemocracy.org`, configure the provider consoles with:
+Deployed as a Cloudflare Worker (static assets, no server code) with the
+custom domain `https://app.mudemocracy.org` attached directly in
+`wrangler.jsonc` (`routes: [{ pattern: "app.mudemocracy.org", custom_domain:
+true }]`) — the first `wrangler deploy` provisions the DNS + custom domain
+binding automatically, no dashboard step required. Deploys are run locally by
+a human via `npm run deploy` (`vite build && wrangler deploy`); there is no
+CI/CD deploy workflow.
+
+Before deploying:
+
+- Ensure `src/lib/srs_bindings/` is built and current — see
+  `wasm-pack build crates/srs-bindings --target web --out-dir
+  ../../srs-web/src/lib/srs_bindings` from the `srs-rust` checkout.
+  `npm run deploy` does not build this for you; a `predeploy` script only
+  checks that the artifact exists, not that it's up to date.
+- Ensure `wrangler` is authenticated: `npx wrangler whoami` (run
+  `wrangler login` if not).
+- Ensure a `.env.production` file exists locally (gitignored, never
+  committed) with the five `VITE_*` values from `.env.example`, using the
+  production hostname for the Dropbox redirect URI:
+
+  ```text
+  VITE_DROPBOX_REDIRECT_URI=https://app.mudemocracy.org/
+  ```
+
+  `vite build` runs in production mode by default and loads `.env.production`
+  automatically — these values are compiled into the static bundle the same
+  way any other Vite env file would be. No Cloudflare dashboard environment
+  variable configuration is needed (that was a Pages-specific mechanism that
+  no longer applies).
+
+Configure the provider consoles with:
 
 - Dropbox redirect URI: `https://app.mudemocracy.org/`
 - Google authorized JavaScript origin: `https://app.mudemocracy.org`
 - Google API key website restriction: `https://app.mudemocracy.org/*`
-
-In Cloudflare, open **Workers & Pages**, select the Pages project, then use
-**Settings > Environment variables** to add the five `VITE_*` values from
-`.env.example` to the Production environment. Use:
-
-```text
-VITE_DROPBOX_REDIRECT_URI=https://app.mudemocracy.org/
-```
 
 The Dropbox app key, Google OAuth client ID, Google API key, and Google project
 number are compiled into the browser bundle by Vite. They are identifiers, not
