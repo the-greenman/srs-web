@@ -32,7 +32,7 @@ See [agents.md](agents.md) for role definitions.
 |---|---|---|
 | [ADR-001](../docs/adr/001-thin-client.md) | srs-web is a thin client; zero SRS semantics in TS | accepted |
 | [ADR-009](../docs/adr/009-container-driven-nav.md) | Sidebar + list are container-keyed | accepted |
-| [ADR-010](../docs/adr/010-view-driven-list-columns.md) | **List-pane columns come from `resolveContainerView().columns`, not name-based `getStringField`** (new — this plan) | proposed |
+| [ADR-010](../docs/adr/010-view-driven-list-columns.md) | **List-pane columns come from `resolveContainerView().columns`, not name-based `getStringField`** (new — this plan) | accepted |
 
 ---
 

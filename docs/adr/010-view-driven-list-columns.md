@@ -1,6 +1,6 @@
 # ADR-010: List-pane columns are driven by the resolved DocumentView column spec
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-07-06
 - **Issue:** [srs-web#94](https://github.com/the-greenman/srs-web/issues/94)
 - **Builds on:** [ADR-001](./001-thin-client.md) (thin client), [ADR-009](./009-container-driven-nav.md) (container-keyed nav)
