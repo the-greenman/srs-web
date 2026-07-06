@@ -86,6 +86,11 @@
     rootTypeVersion?: number;
     rootTypeName?: string;
     rootTypeNamespace?: string;
+    /** The type this section's records/create-form resolve to: the registry
+     * memberTypeId for RFC-013 header roots, else the root type itself.
+     * Computed at nav-build time so decision-feature gating does not depend
+     * on a later typeSchema() call succeeding. */
+    sectionTypeId?: string;
     icon: string;
   }
 
@@ -163,7 +168,7 @@
    */
   let activeContainerView = $derived.by<ContainerView | null>(() => {
     if (activeContainerId === null) return null;
-    if (activeContainer?.rootTypeId === DECISION_TYPE_ID) return null;
+    if (activeContainer?.sectionTypeId === DECISION_TYPE_ID) return null;
     try {
       const view = resolveContainerView(repo, activeContainerId);
       if (view.diagnostics.length > 0) {
@@ -244,6 +249,7 @@
           containerId,
           title: section.displayLabel,
           rootTypeId: section.typeId,
+          sectionTypeId: regEntry?.memberTypeId ?? section.typeId,
           rootTypeVersion: section.typeVersion,
           rootTypeName: section.typeName,
           rootTypeNamespace: section.typeNamespace,
@@ -294,6 +300,7 @@
         containerId: summary.containerId,
         title: summary.title,
         rootTypeId,
+        sectionTypeId: rootTypeId ? (regEntry?.memberTypeId ?? rootTypeId) : undefined,
         rootTypeVersion,
         rootTypeName,
         rootTypeNamespace,
@@ -315,7 +322,7 @@
       // (srs-rust#382) and the list pane is view-driven (srs-web#94/#95).
       const memberTypeId = TYPE_REGISTRY[container.rootTypeId]?.memberTypeId;
       const memberEntry = memberTypeId ? TYPE_REGISTRY[memberTypeId] : undefined;
-      const createTypeId = memberTypeId ?? container.rootTypeId;
+      const createTypeId = container.sectionTypeId ?? memberTypeId ?? container.rootTypeId;
       const createTypeVersion = memberTypeId
         ? (memberEntry?.typeVersion ?? 1)
         : (container.rootTypeVersion ?? 1);
@@ -583,7 +590,7 @@
   }
 
   $effect(() => {
-    if (selectedRecord && activeSectionSchema?.typeId === DECISION_TYPE_ID) {
+    if (selectedRecord && activeContainer?.sectionTypeId === DECISION_TYPE_ID) {
       loadDecisionRelations(selectedRecord.instanceId);
     } else {
       decisionRelations = [];
@@ -697,14 +704,14 @@
             saving={formSaving}
             saveError={formError}
           />
-        {:else if selectedRecord && formMode === null && activeSectionSchema?.typeId !== DECISION_TYPE_ID}
+        {:else if selectedRecord && formMode === null && activeContainer?.sectionTypeId !== DECISION_TYPE_ID}
           <RecordReading
             record={selectedRecord}
             sectionLabel={activeContainer?.title ?? ""}
             onBack={() => { selectedId = null; }}
           />
         {:else}
-          {#if activeSectionSchema?.typeId === DECISION_TYPE_ID}
+          {#if activeContainer?.sectionTypeId === DECISION_TYPE_ID}
             <div class="section-heading">
               <h2 class="section-heading__title">{activeContainer?.title ?? ""}</h2>
               <span class="section-heading__count">{activeRecords.length}</span>
@@ -793,7 +800,7 @@
           {/if}
         </InspectorSection>
       {/if}
-      {#if selectedRecord && formMode === null && activeSectionSchema?.typeId === DECISION_TYPE_ID}
+      {#if selectedRecord && formMode === null && activeContainer?.sectionTypeId === DECISION_TYPE_ID}
         <InspectorSection title="Decision Links" aside={decisionRelations.length === 0 ? "" : String(decisionRelations.length)}>
           {#if decisionRelations.length === 0}
             <p class="inspector__empty">No links yet.</p>
@@ -825,7 +832,7 @@
         </InspectorSection>
       {/if}
 
-      {#if selectedRecord && formMode === null && activeSectionSchema?.typeId === DECISION_TYPE_ID}
+      {#if selectedRecord && formMode === null && activeContainer?.sectionTypeId === DECISION_TYPE_ID}
         <InspectorSection title="Tags" aside={selectedRecord.tags?.length ? String(selectedRecord.tags.length) : ""}>
           <div class="inspector__tags" data-testid="inspector-tags">
             {#each selectedRecord.tags ?? [] as tag (tag)}
@@ -851,7 +858,7 @@
         </InspectorSection>
       {/if}
 
-      {#if selectedRecord && formMode === null && activeSectionSchema?.typeId === DECISION_TYPE_ID}
+      {#if selectedRecord && formMode === null && activeContainer?.sectionTypeId === DECISION_TYPE_ID}
         <InspectorSection title="Export decision">
           <div class="inspector__export-row" data-testid="decision-export-group">
             <button
@@ -896,7 +903,7 @@
   />
 {/if}
 
-{#if showLinkPicker && selectedRecord && activeSectionSchema?.typeId === DECISION_TYPE_ID && formMode === null}
+{#if showLinkPicker && selectedRecord && activeContainer?.sectionTypeId === DECISION_TYPE_ID && formMode === null}
   <DecisionLinkPicker
     sourceInstanceId={selectedRecord.instanceId}
     sourceLabel={selectedRecord.displayLabel ?? selectedRecord.instanceId.slice(0, 8)}
