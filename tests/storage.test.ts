@@ -11,6 +11,7 @@ import {
   type GitContentsLocation,
 } from "../src/lib/storage/git-contents.js";
 import {
+  completeGitHubOAuthCallback,
   GitHubDocumentHandle,
   parseGitHubOAuthCallback,
 } from "../src/lib/storage/github.js";
@@ -265,6 +266,24 @@ describe("GitHub storage adapter", () => {
         "https://app.test/?error=access_denied&error_description=Nope&state=state-2"
       )
     ).toEqual({ code: null, state: "state-2", error: "Nope" });
+  });
+
+  it("does not consume a redirect it did not initiate (no GitHub state in sessionStorage)", async () => {
+    // A Dropbox popup redirect also carries ?code&state; the GitHub handler must
+    // ignore it (return false, no token exchange) so the right handler runs.
+    vi.stubGlobal("window", {
+      location: { href: "http://localhost:5173/?code=abc&state=s1", origin: "http://localhost:5173" },
+      opener: {},
+      close: () => {},
+    });
+    vi.stubGlobal("sessionStorage", { getItem: () => null, removeItem: () => {} });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      completeGitHubOAuthCallback({ clientId: "c", redirectUri: "http://localhost:5173/" })
+    ).resolves.toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("round-trips UTF-8 through base64", () => {

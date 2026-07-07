@@ -94,6 +94,8 @@ export async function completeDropboxOAuthCallback(config: DropboxConfig): Promi
   if ((!code && !oauthError) || !state || !window.opener) return false;
 
   const expectedState = sessionStorage.getItem(OAUTH_STATE);
+  // Not our redirect (another provider opened this popup) — let the next handler try.
+  if (expectedState === null) return false;
   const verifier = sessionStorage.getItem(OAUTH_VERIFIER);
   const message: DropboxAuthMessage = { type: OAUTH_MESSAGE, state };
 

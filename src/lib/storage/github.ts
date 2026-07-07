@@ -99,6 +99,8 @@ export async function completeGitHubOAuthCallback(config: GitHubConfig): Promise
   if ((!code && !oauthError) || !state || !window.opener) return false;
 
   const expectedState = sessionStorage.getItem(OAUTH_STATE);
+  // Not our redirect (another provider opened this popup) — let the next handler try.
+  if (expectedState === null) return false;
   const verifier = sessionStorage.getItem(OAUTH_VERIFIER);
   const message: GitHubAuthMessage = { type: OAUTH_MESSAGE, state };
 
