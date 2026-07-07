@@ -3,7 +3,7 @@
      See plans/governance-shell-76.md and srs-web#76.
      Nav migrated from TYPE_REGISTRY to container-driven (ADR-009, srs-web#93). -->
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import {
     listRecords,
     createRecord,
@@ -19,7 +19,9 @@
     createRelation,
     deleteRelation,
     resolveContainerView,
+    exportSrsj,
   } from "$lib/srs-client.js";
+  import { saveWorkingCopy } from "$lib/browser-cache.js";
   import type {
     SrsRepository,
     SrsRecord,
@@ -148,6 +150,10 @@
 
   /** Error message for single-decision export (cleared on record selection change). */
   let decisionExportError = $state<string | null>(null);
+
+  /** Topbar autosave indicator state. */
+  let saveIndicator = $state<"idle" | "saved">("idle");
+  let saveIndicatorTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 
   // ---------------------------------------------------------------------------
   // Derived
@@ -357,6 +363,25 @@
     containerSchemas = result;
   }
 
+  function persistWorkingCopy(): void {
+    try {
+      const saved = saveWorkingCopy(repoName, exportSrsj(repo));
+      if (!saved) return;
+      if (saveIndicatorTimer !== null) clearTimeout(saveIndicatorTimer);
+      saveIndicator = "saved";
+      saveIndicatorTimer = setTimeout(() => {
+        saveIndicator = "idle";
+        saveIndicatorTimer = null;
+      }, 2000);
+    } catch (e: unknown) {
+      console.warn("persistWorkingCopy failed:", e);
+    }
+  }
+
+  onDestroy(() => {
+    if (saveIndicatorTimer !== null) clearTimeout(saveIndicatorTimer);
+  });
+
   function refreshValidation(): void {
     const report = repo.validate();
     instanceCount = report.instanceCount;
@@ -420,6 +445,7 @@
             loadContainerNav();
             selectedId = created.instanceId;
             refreshValidation();
+            persistWorkingCopy();
             return;
           }
         }
@@ -427,6 +453,7 @@
         loadContainerNav();
         selectedId = created.instanceId;
         refreshValidation();
+        persistWorkingCopy();
       } else if (formMode === "edit" && editingRecord) {
         const instanceId = editingRecord.instanceId;
         updateRecord(repo, instanceId, input as UpdateRecordInput);
@@ -441,6 +468,7 @@
               : "Record updated, but could not register in container.";
             loadContainerNav();
             refreshValidation();
+            persistWorkingCopy();
             return;
           }
         }
@@ -448,6 +476,7 @@
         editingRecord = null;
         loadContainerNav();
         refreshValidation();
+        persistWorkingCopy();
       }
     } catch (e: unknown) {
       formError = e instanceof Error ? e.message : String(e);
@@ -483,6 +512,7 @@
     showLinkPicker = false;
     loadContainerNav();
     refreshValidation();
+    persistWorkingCopy();
   }
 
   function handleLifecycleTransition(toState: string) {
@@ -497,6 +527,7 @@
         groupValues: selectedRecord.groupValues ?? null,
       });
       loadContainerNav();
+      persistWorkingCopy();
       // refreshValidation(); // called by B13
     } catch (e: unknown) {
       // silently ignore for now — errors will surface via validate()
@@ -522,6 +553,7 @@
       }
       loadContainerNav();
       selectedId = result.record.instanceId;
+      persistWorkingCopy();
     } catch (e: unknown) {
       console.error("Failed to create successor:", e);
       loadContainerNav();
@@ -550,6 +582,7 @@
       showLinkPicker = false;
       loadDecisionRelations(selectedRecord.instanceId);
       refreshValidation();
+      persistWorkingCopy();
     } catch (e: unknown) {
       console.error("createRelation failed:", e);
     }
@@ -561,6 +594,7 @@
       deleteRelation(repo, relationId);
       loadDecisionRelations(selectedRecord.instanceId);
       refreshValidation();
+      persistWorkingCopy();
     } catch (e: unknown) {
       console.error("deleteRelation failed:", e);
     }
@@ -576,6 +610,7 @@
       });
       loadContainerNav();
       refreshValidation();
+      persistWorkingCopy();
     } catch (e: unknown) {
       console.error("handleUpdateTags failed:", e);
     }
@@ -689,6 +724,12 @@
               onclick={() => { formMode = "create"; editingRecord = null; }}
             >New {activeSectionSchema.label}</button>
           {/if}
+          <span
+            class="topbar__save-indicator"
+            class:topbar__save-indicator--visible={saveIndicator === "saved"}
+            role="status"
+            aria-live="polite"
+          >Saved</span>
           <button class="topbar__export" onclick={onExport}>Download .srsj</button>
           <button class="topbar__reset" onclick={onOpenAnother}>Open another file</button>
         {/snippet}
@@ -1168,5 +1209,23 @@
     font-size: 0.7rem;
     color: var(--error, #cc0000);
     margin: 0.25rem 0 0;
+  }
+
+  /* ---- Autosave indicator ---- */
+  @keyframes save-fade {
+    0%   { opacity: 1; }
+    60%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .topbar__save-indicator {
+    font-size: 0.75rem;
+    opacity: 0;
+    pointer-events: none;
+    color: var(--accent, #0066cc);
+  }
+
+  .topbar__save-indicator--visible {
+    animation: save-fade 2s ease-out forwards;
   }
 </style>

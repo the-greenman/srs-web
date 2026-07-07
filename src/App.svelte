@@ -22,6 +22,8 @@
     createGovernanceDocument,
   } from "$lib/srs-client.js";
   import type { SrsRepository } from "$lib/srs-client.js";
+  import { loadWorkingCopy, clearWorkingCopy } from "$lib/browser-cache.js";
+  import type { WorkingCopyEntry } from "$lib/browser-cache.js";
 
   import GuidesShell from "$lib/guides/GuidesShell.svelte";
   import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
@@ -52,6 +54,10 @@
 
   let repo = $state<SrsRepository | null>(null);
 
+  /** Cached working copy loaded from localStorage on WASM init. */
+  let cachedSession = $state<WorkingCopyEntry | null>(null);
+  let restoreError = $state<string | null>(null);
+
   // ---------------------------------------------------------------------------
   // WASM initialisation
   // ---------------------------------------------------------------------------
@@ -59,6 +65,11 @@
   $effect(() => {
     initWasm()
       .then(() => {
+        const cached = loadWorkingCopy();
+        if (cached !== null) {
+          cachedSession = cached;
+          editorMode = "governance";
+        }
         appState = "idle";
       })
       .catch((e: unknown) => {
@@ -78,6 +89,7 @@
       repo = loadRepo(text);
       activeDocument = handle;
       repoName = handle.name.replace(/\.(srsj|json)$/i, "");
+      cachedSession = null;
       appState = "loaded";
     } catch (e: unknown) {
       repo = null;
@@ -116,6 +128,7 @@
 
     repo = newRepo;
     repoName = name;
+    cachedSession = null;
     appState = "loaded";
   }
 
@@ -183,6 +196,45 @@
   {:else if editorMode === "governance"}
     <div class="splash" data-testid="governance-file-picker">
       <h1 class="splash__title">SRS Governance Viewer</h1>
+      {#if cachedSession !== null}
+        <div class="restore-banner" role="status">
+          <p class="restore-banner__msg">
+            Unsaved session: <strong>{cachedSession.name}</strong>
+          </p>
+          {#if restoreError}
+            <p class="restore-banner__error" role="alert">{restoreError}</p>
+          {/if}
+          <div class="restore-banner__actions">
+            <button
+              class="restore-banner__restore"
+              onclick={() => {
+                restoreError = null;
+                const entry = cachedSession;
+                if (!entry) return;
+                try {
+                  repo = loadRepo(entry.srsj);
+                  repoName = entry.name;
+                  activeDocument = null;
+                  appState = "loaded";
+                  editorMode = "governance";
+                  cachedSession = null;
+                } catch (e: unknown) {
+                  clearWorkingCopy();
+                  restoreError = `Could not restore session: ${e instanceof Error ? e.message : String(e)}`;
+                }
+              }}
+            >Restore session</button>
+            <button
+              class="restore-banner__dismiss"
+              onclick={() => {
+                clearWorkingCopy();
+                cachedSession = null;
+                restoreError = null;
+              }}
+            >Discard</button>
+          </div>
+        </div>
+      {/if}
       <p class="splash__sub">Open a <code>.srsj</code> repository file to explore its governance records.</p>
       <SourceChooser providers={storageProviders} onOpen={loadDocument} />
       <p class="splash__divider">or start from scratch</p>
@@ -208,6 +260,8 @@
     documentProvider={activeDocument?.provider ?? "local"}
     onExport={handleExport}
     onOpenAnother={() => {
+      clearWorkingCopy();
+      cachedSession = null;
       repo = null;
       activeDocument = null;
       editorMode = null;
@@ -225,6 +279,8 @@
     documentProvider={activeDocument?.provider ?? "local"}
     onExport={handleExport}
     onOpenAnother={() => {
+      clearWorkingCopy();
+      cachedSession = null;
       repo = null;
       activeDocument = null;
       editorMode = null;
@@ -325,5 +381,51 @@
   .mode-picker__btn span {
     font-size: 0.75rem;
     color: var(--color-muted, #888);
+  }
+
+  /* ---- Restore banner ---- */
+  .restore-banner {
+    border: 1px solid var(--accent, #0066cc);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    max-width: 28rem;
+    width: 100%;
+    text-align: left;
+    background: var(--color-surface-2, #f0f6ff);
+  }
+
+  .restore-banner__msg {
+    margin: 0 0 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .restore-banner__error {
+    font-size: 0.75rem;
+    color: var(--error, #cc0000);
+    margin: 0 0 0.5rem;
+  }
+
+  .restore-banner__actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .restore-banner__restore {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.75rem;
+    background: var(--accent, #0066cc);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .restore-banner__dismiss {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.75rem;
+    background: none;
+    border: 1px solid var(--color-border, #ddd);
+    border-radius: 4px;
+    cursor: pointer;
   }
 </style>
