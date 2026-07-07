@@ -2,7 +2,9 @@
 # Copy to `.dev.vars` (gitignored) and fill in a GitHub OAuth App's values.
 # In production these are set with `wrangler secret put GITHUB_CLIENT_SECRET`
 # (secret) and as plaintext `[vars]` in wrangler.jsonc (client id / origins).
+# Origins must match the Vite dev server (port 5173) and VITE_GITHUB_REDIRECT_URI,
+# or the Worker's Origin/redirect_uri check rejects the exchange with 403.
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
-APP_ORIGIN=http://localhost:5174
-GITHUB_REDIRECT_URI=http://localhost:5174/
+APP_ORIGIN=http://localhost:5173
+GITHUB_REDIRECT_URI=http://localhost:5173/

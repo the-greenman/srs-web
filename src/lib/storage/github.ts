@@ -7,6 +7,7 @@ import {
 import {
   type GitContentsLocation,
   contentsHeaders,
+  encodePath,
   readGitFile,
   writeGitFile,
 } from "./git-contents.js";
@@ -284,7 +285,7 @@ export class GitHubProvider implements StorageProvider {
     const { owner, repo, filePath } = splitRepoPath(path);
     const branch = await this.branchFor(owner, repo);
     const items = await this.api<GitHubContentItem[]>(
-      `/repos/${owner}/${repo}/contents/${encodeURIComponent(filePath)}?ref=${encodeURIComponent(branch)}`
+      `/repos/${owner}/${repo}/contents/${encodePath(filePath)}?ref=${encodeURIComponent(branch)}`
     );
     return items
       .filter((item) => item.type === "dir" || /\.(srsj|json)$/i.test(item.name))

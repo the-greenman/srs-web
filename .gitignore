@@ -5,9 +5,10 @@ dist/
 .env.*
 !.env.example
 
-# wrangler local dev secrets for the OAuth proxy Worker
+# wrangler local dev secrets + state for the OAuth proxy Worker
 .dev.vars
 !.dev.vars.example
+.wrangler/
 
 # WASM build output — built from srs-rust, not committed here
 src/lib/srs_bindings/

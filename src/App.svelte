@@ -126,9 +126,16 @@
       downloadDocument(json, filename);
       activeDocument = null;
     } else {
+      // Resolve explicitly so a new provider id can never silently misroute here.
       const provider =
-        destination === "dropbox" ? storageProviders.dropbox : storageProviders.googleDrive;
-      if (!provider.create) throw new Error(`${provider.label} cannot create new files.`);
+        destination === "dropbox"
+          ? storageProviders.dropbox
+          : destination === "google-drive"
+            ? storageProviders.googleDrive
+            : storageProviders.github;
+      if (!provider?.create) {
+        throw new Error(`${provider?.label ?? destination} cannot create new files.`);
+      }
       activeDocument = await provider.create(filename, json);
     }
 

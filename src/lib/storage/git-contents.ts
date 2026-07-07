@@ -46,7 +46,8 @@ export function contentsHeaders(token: string): Record<string, string> {
   };
 }
 
-function encodePath(path: string): string {
+/** Percent-encode each path segment while preserving `/` separators (GitHub treats %2F as literal). */
+export function encodePath(path: string): string {
   return path
     .split("/")
     .filter((segment) => segment.length > 0)
