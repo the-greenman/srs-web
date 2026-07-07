@@ -542,8 +542,8 @@
 
   function handleCreateSuccessor() {
     if (!selectedRecord) return;
+    if (statusFieldId === undefined) return;
     showSuccessorModal = false;
-    if (!statusFieldId) return;
     try {
       const baseValues = selectedRecord.fieldValues.filter((fv) => fv.fieldId !== statusFieldId);
       const result = createRecordSuccessor(repo, selectedRecord.instanceId, {

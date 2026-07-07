@@ -34,12 +34,9 @@ export function getFieldValue(
   fieldName: string,
   fieldMeta: Map<string, FieldFormDef>
 ): unknown {
-  for (const [fieldId, def] of fieldMeta) {
-    if (def.name === fieldName) {
-      return record.fieldValues.find((fv) => fv.fieldId === fieldId)?.value;
-    }
-  }
-  return undefined;
+  const fieldId = findFieldId(fieldName, fieldMeta);
+  if (fieldId === undefined) return undefined;
+  return record.fieldValues.find((fv) => fv.fieldId === fieldId)?.value;
 }
 
 /**
