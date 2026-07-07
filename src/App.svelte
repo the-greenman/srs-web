@@ -226,15 +226,16 @@
     gitSaveError = null;
     try {
       const branch = opts.mode === "new" ? opts.newBranch : handle.branch;
+      // "new" only truly branches when the name differs from the current branch.
+      const branchedOff = opts.mode === "new" && branch !== handle.branch;
       await handle.saveToBranch(exportSrsj(repo), {
         branch,
         createFromCurrent: opts.mode === "new",
         message: opts.message,
       });
-      saveMessage =
-        opts.mode === "new"
-          ? `Saved to new branch “${branch}”. Open a pull request on GitHub to merge it.`
-          : "Saved.";
+      saveMessage = branchedOff
+        ? `Saved to new branch “${branch}”. Open a pull request on GitHub to merge it.`
+        : "Saved.";
       clearWorkingCopy();
       gitSaveOpen = false;
     } catch (e: unknown) {

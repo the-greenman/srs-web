@@ -78,11 +78,13 @@
       const provider = browseProvider(id);
       if (!provider) return;
       await provider.authenticate();
+      // Fetch before mutating view state so a failed list() leaves it untouched.
+      const listed = (await provider.list?.("")) ?? [];
       browsing = id;
       path = "";
       parents = [];
       filter = "";
-      entries = (await provider.list?.("")) ?? [];
+      entries = listed;
     });
   }
 
@@ -91,11 +93,13 @@
     const provider = id ? browseProvider(id) : undefined;
     if (!id || !provider) return;
     if (entry.kind === "folder") {
+      const nextPath = entry.path ?? "";
       void run(id, async () => {
+        const listed = (await provider.list?.(nextPath)) ?? [];
         parents = [...parents, path];
-        path = entry.path ?? "";
+        path = nextPath;
         filter = "";
-        entries = (await provider.list?.(path)) ?? [];
+        entries = listed;
       });
       return;
     }
@@ -113,10 +117,11 @@
     const next = [...parents];
     const parent = next.pop() ?? "";
     void run(id, async () => {
+      const listed = (await provider.list?.(parent)) ?? [];
       parents = next;
       path = parent;
       filter = "";
-      entries = (await provider.list?.(parent)) ?? [];
+      entries = listed;
     });
   }
 

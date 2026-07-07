@@ -408,4 +408,40 @@ describe("GitHub storage adapter", () => {
     expect(putBody.branch).toBe("feature");
     expect(putBody.sha).toBe("sha-1");
   });
+
+  it("saveToBranch on an existing branch uses that branch's SHA, not the source's", async () => {
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(json({ object: { sha: "commit-1" } })) // GET source head ref
+      .mockResolvedValueOnce(json({ message: "Reference already exists" }, 422)) // POST create ref -> exists
+      .mockResolvedValueOnce(json({ sha: "target-sha" })) // GET file sha on the existing target branch
+      .mockResolvedValueOnce(json({ content: { sha: "sha-after" } })); // PUT contents
+    vi.stubGlobal("fetch", fetchMock);
+    const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, "sha-1", () => "token");
+
+    await expect(
+      handle.saveToBranch("{}", { branch: "feature", createFromCurrent: true })
+    ).resolves.toEqual({ revision: "sha-after" });
+    // The write must send the *target branch's* SHA, not the stale source SHA.
+    const putBody = JSON.parse(String((fetchMock.mock.calls[3]?.[1] as RequestInit).body));
+    expect(putBody.sha).toBe("target-sha");
+  });
+
+  it("treats a non-SHA 422 as a fetch error, not a false conflict", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ message: "Invalid request. Branch name is invalid." }), {
+          status: 422,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+    );
+    const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, "sha-1", () => "token");
+    const err = await handle.write("{}", "sha-1").catch((e) => e);
+    expect(err).not.toBeInstanceOf(StorageConflictError);
+    expect(String(err)).toMatch(/Branch name is invalid/);
+  });
 });

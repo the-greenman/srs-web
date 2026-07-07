@@ -10,6 +10,7 @@ import {
   createBranch,
   encodePath,
   readGitFile,
+  readGitFileSha,
   writeGitFile,
 } from "./git-contents.js";
 import type {
@@ -201,15 +202,26 @@ export class GitHubDocumentHandle implements DocumentHandle, GitBranchAware {
   ): Promise<WriteResult> {
     const target = opts.branch.trim();
     const switching = target !== this.location.branch;
-    if (opts.createFromCurrent && switching) {
-      await createBranch(this.location, this.token(), target, this.location.branch);
-    }
     const targetLocation: GitContentsLocation = { ...this.location, branch: target };
+
+    // The expected SHA must be the file's SHA *on the target branch*. It equals
+    // the current revision only when the branch is freshly created from here; an
+    // existing target branch may have diverged, so read its actual SHA (null if
+    // the file/branch is absent → a create).
+    let expectedSha = this.currentRevision;
+    if (switching) {
+      const created = opts.createFromCurrent
+        ? await createBranch(this.location, this.token(), target, this.location.branch)
+        : false;
+      if (!created) {
+        expectedSha = await readGitFileSha(targetLocation, this.token());
+      }
+    }
+
     const { sha } = await writeGitFile(targetLocation, this.token(), {
       message: opts.message?.trim() || `Update ${this.name} via srs-web`,
       content,
-      // The blob SHA is shared across branches at branch-creation time.
-      sha: this.currentRevision,
+      sha: expectedSha,
     });
     this.location = targetLocation;
     this.currentRevision = sha;
@@ -313,9 +325,17 @@ export class GitHubProvider implements StorageProvider {
   private async listRepos(): Promise<StorageEntry[]> {
     // visibility=all requests private repos too; whether they actually come back
     // depends on the GitHub App's install scope + Contents/Metadata permission.
-    const repos = await this.api<GitHubRepo[]>(
-      "/user/repos?per_page=100&sort=updated&visibility=all&affiliation=owner,collaborator,organization_member"
-    );
+    // Paginate so accounts with >100 repos aren't silently truncated (bounded to
+    // keep a pathological account from hammering the API).
+    const repos: GitHubRepo[] = [];
+    const perPage = 100;
+    for (let page = 1; page <= 20; page++) {
+      const batch = await this.api<GitHubRepo[]>(
+        `/user/repos?per_page=${perPage}&page=${page}&sort=updated&visibility=all&affiliation=owner,collaborator,organization_member`
+      );
+      repos.push(...batch);
+      if (batch.length < perPage) break;
+    }
     return repos
       .map((repo) => {
         this.defaultBranches.set(repo.full_name, repo.default_branch);
