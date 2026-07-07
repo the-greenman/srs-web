@@ -49,11 +49,15 @@ here so it isn't mistaken for acceptable presentation logic:
   `GuidesShell.svelte` follow and rebuild `precedes` chains in TS. This is graph
   ordering that belongs in a `srs-repository` service exposed as an ordered-relations
   binding.
-- **Field-by-name lookup** — `getFieldValue` / `getStringField` (`governance/field-utils.ts`)
-  resolve field values via a TS-side `FIELD_NAMES` UUID map, duplicating the type
-  schema. The binding should return fields addressable by name. (The governance
-  **list pane** no longer uses this — its columns are now driven by the core
-  DocumentView column spec, see [ADR-010](./010-view-driven-list-columns.md); the
-  remaining callers are the inspector status/lifecycle and the decision path.)
+- **Field-by-name lookup** — `getFieldValue` / `getStringField` / `findFieldId`
+  (`governance/field-utils.ts`) resolve field values and IDs via a linear scan of the
+  WASM-derived `fieldMeta` map, keyed by the package field name. The hardcoded
+  `STATUS_FIELD_ID` UUID constant was removed in #86; the write path now uses the same
+  name-based `findFieldId("status", fieldMeta)` pattern as the read path. The remaining
+  debt is that the binding should eventually return fields addressable by name directly,
+  eliminating the TS-side scan. (The governance **list pane** no longer uses this —
+  its columns are now driven by the core DocumentView column spec, see
+  [ADR-010](./010-view-driven-list-columns.md); the remaining callers are the
+  inspector status/lifecycle and the decision path.)
 - **Hardcoded vocabularies** — the lifecycle `STATUS_OPTIONS` list is hardcoded in TS
   instead of derived from the type/lifecycle definition via a binding.
