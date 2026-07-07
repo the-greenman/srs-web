@@ -29,6 +29,18 @@
   let entries = $state<StorageEntry[] | null>(null);
   let path = $state("");
   let parents = $state<string[]>([]);
+  let filter = $state("");
+
+  // Case-insensitive name filter over the current folder's entries.
+  const visibleEntries = $derived(
+    entries === null
+      ? null
+      : filter.trim() === ""
+        ? entries
+        : entries.filter((entry) =>
+            entry.name.toLowerCase().includes(filter.trim().toLowerCase())
+          )
+  );
 
   function browseProvider(id: BrowseId): StorageProvider | undefined {
     return id === "dropbox" ? providers.dropbox : providers.github;
@@ -66,10 +78,13 @@
       const provider = browseProvider(id);
       if (!provider) return;
       await provider.authenticate();
+      // Fetch before mutating view state so a failed list() leaves it untouched.
+      const listed = (await provider.list?.("")) ?? [];
       browsing = id;
       path = "";
       parents = [];
-      entries = (await provider.list?.("")) ?? [];
+      filter = "";
+      entries = listed;
     });
   }
 
@@ -78,10 +93,13 @@
     const provider = id ? browseProvider(id) : undefined;
     if (!id || !provider) return;
     if (entry.kind === "folder") {
+      const nextPath = entry.path ?? "";
       void run(id, async () => {
+        const listed = (await provider.list?.(nextPath)) ?? [];
         parents = [...parents, path];
-        path = entry.path ?? "";
-        entries = (await provider.list?.(path)) ?? [];
+        path = nextPath;
+        filter = "";
+        entries = listed;
       });
       return;
     }
@@ -99,15 +117,18 @@
     const next = [...parents];
     const parent = next.pop() ?? "";
     void run(id, async () => {
+      const listed = (await provider.list?.(parent)) ?? [];
       parents = next;
       path = parent;
-      entries = (await provider.list?.(parent)) ?? [];
+      filter = "";
+      entries = listed;
     });
   }
 
   function closeBrowser(): void {
     entries = null;
     browsing = null;
+    filter = "";
   }
 
   function openGoogleDrive(): void {
@@ -177,6 +198,14 @@
       <div class="cloud-browser__path">
         {path || (browsing === "github" ? "All repositories" : "All files")}
       </div>
+      <input
+        class="cloud-browser__filter"
+        data-testid="cloud-browser-filter"
+        type="text"
+        placeholder={browsing === "github" && path === "" ? "Filter repositories…" : "Filter…"}
+        bind:value={filter}
+        aria-label="Filter this folder"
+      />
       <div class="cloud-browser__list">
         {#if parents.length > 0}
           <button class="cloud-browser__entry" onclick={goUp}>
@@ -184,13 +213,17 @@
             <span>Parent folder</span>
           </button>
         {/if}
-        {#each entries as entry (entry.id)}
+        {#each visibleEntries ?? [] as entry (entry.id)}
           <button class="cloud-browser__entry" onclick={() => chooseEntry(entry)}>
             <span class="cloud-browser__kind">{entry.kind === "folder" ? "Folder" : "SRSJ"}</span>
             <span>{entry.name}</span>
           </button>
         {:else}
-          <p class="cloud-browser__empty">No .srsj or .json files in this folder.</p>
+          <p class="cloud-browser__empty">
+            {filter.trim() === ""
+              ? "No .srsj or .json files in this folder."
+              : `Nothing matches “${filter.trim()}”.`}
+          </p>
         {/each}
       </div>
     </div>
@@ -302,6 +335,22 @@
     padding: 0.75rem 1.5rem;
     border-bottom: 1px solid var(--grey-2);
     color: var(--grey-3);
+  }
+
+  .cloud-browser__filter {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.625rem 1.5rem;
+    border: 0;
+    border-bottom: 1px solid var(--grey-2);
+    background: var(--paper);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+  }
+
+  .cloud-browser__filter:focus {
+    outline: 2px solid var(--black);
+    outline-offset: -2px;
   }
 
   .cloud-browser__list {

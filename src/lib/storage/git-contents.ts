@@ -108,8 +108,21 @@ export async function writeGitFile(
     headers: { ...contentsHeaders(token), "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  // 409 Conflict / 422 Unprocessable Entity == the blob SHA moved under us.
-  if (response.status === 409 || response.status === 422) throw new StorageConflictError();
+  // 409 == the blob SHA moved under us. 422 is overloaded (bad branch name,
+  // invalid content, …); only treat a SHA-related 422 as a concurrency conflict.
+  if (response.status === 409) throw new StorageConflictError();
+  if (response.status === 422) {
+    const detail = await parseError(response);
+    if (detail === "" || /\bsha\b/i.test(detail)) throw new StorageConflictError();
+    throw new StorageFetchError(`Git file write failed: ${detail}`);
+  }
+  // 403 on write with read working == the token can read but not write this repo.
+  if (response.status === 403) {
+    const detail = await parseError(response);
+    throw new StorageFetchError(
+      `Write denied (403: ${detail}). The connected GitHub App has read but not write access here — set its Contents permission to Read & write, approve the update on the installation, then sign out and back in.`
+    );
+  }
   if (!response.ok) {
     throw new StorageFetchError(`Git file write failed: ${await parseError(response)}`);
   }
@@ -117,4 +130,65 @@ export async function writeGitFile(
   const sha = data.content?.sha;
   if (!sha) throw new StorageFetchError("Git host did not return the new blob SHA after write.");
   return { sha };
+}
+
+/** Return a file's current blob SHA on a branch, or null if it (or the branch) is absent. */
+export async function readGitFileSha(
+  location: GitContentsLocation,
+  token: string
+): Promise<string | null> {
+  const url =
+    `${location.apiBase}/repos/${location.owner}/${location.repo}` +
+    `/contents/${encodePath(location.path)}?ref=${encodeURIComponent(location.branch)}`;
+  const response = await fetch(url, { headers: contentsHeaders(token) });
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new StorageFetchError(`Git file read failed: ${await parseError(response)}`);
+  }
+  const data = (await response.json()) as { sha?: string };
+  return data.sha ?? null;
+}
+
+/**
+ * Create `newBranch` pointing at the head of `fromBranch`. Returns true if it was
+ * created, false if it already existed. Lets a Clerk save to a fresh branch
+ * instead of a protected default.
+ */
+export async function createBranch(
+  location: Pick<GitContentsLocation, "apiBase" | "owner" | "repo">,
+  token: string,
+  newBranch: string,
+  fromBranch: string
+): Promise<boolean> {
+  const base = `${location.apiBase}/repos/${location.owner}/${location.repo}`;
+  const headRes = await fetch(`${base}/git/ref/heads/${encodeURIComponent(fromBranch)}`, {
+    headers: contentsHeaders(token),
+  });
+  if (!headRes.ok) {
+    throw new StorageFetchError(
+      `Could not read branch "${fromBranch}": ${await parseError(headRes)}`
+    );
+  }
+  const head = (await headRes.json()) as { object?: { sha?: string } };
+  const sha = head.object?.sha;
+  if (!sha) throw new StorageFetchError(`Branch "${fromBranch}" has no head commit.`);
+
+  const createRes = await fetch(`${base}/git/refs`, {
+    method: "POST",
+    headers: { ...contentsHeaders(token), "Content-Type": "application/json" },
+    body: JSON.stringify({ ref: `refs/heads/${newBranch}`, sha }),
+  });
+  // 422 == ref already exists; report it so the caller can resolve the real SHA.
+  if (createRes.status === 422) return false;
+  if (createRes.status === 403) {
+    throw new StorageFetchError(
+      `Creating a branch was denied (403: ${await parseError(createRes)}). The GitHub App needs Contents: Read & write and must be installed on this repository.`
+    );
+  }
+  if (!createRes.ok) {
+    throw new StorageFetchError(
+      `Could not create branch "${newBranch}": ${await parseError(createRes)}`
+    );
+  }
+  return true;
 }

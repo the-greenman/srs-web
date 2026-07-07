@@ -1,11 +1,22 @@
 import { type DropboxConfig, DropboxProvider } from "./dropbox.js";
 import { type GitHubConfig, GitHubProvider } from "./github.js";
 import { type GoogleDriveConfig, GoogleDriveProvider } from "./google-drive.js";
-import type { StorageProvider } from "./types.js";
+import type { DocumentHandle, GitBranchAware, StorageProvider } from "./types.js";
 
 export * from "./errors.js";
 export * from "./local.js";
 export * from "./types.js";
+
+/** A handle that supports branch-aware git saves (currently GitHub). */
+export function isGitBranchAware(
+  handle: DocumentHandle | null | undefined
+): handle is DocumentHandle & GitBranchAware {
+  return (
+    handle != null &&
+    typeof (handle as Partial<GitBranchAware>).saveToBranch === "function" &&
+    typeof (handle as Partial<GitBranchAware>).branch === "string"
+  );
+}
 export { completeDropboxOAuthCallback } from "./dropbox.js";
 export { completeGitHubOAuthCallback, type GitHubConfig } from "./github.js";
 

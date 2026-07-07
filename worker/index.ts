@@ -85,9 +85,17 @@ async function handleTokenExchange(
     return json({ error: "invalid_redirect_uri" }, 403);
   }
 
+  const clientId = provider.clientId(env);
+  const clientSecret = provider.clientSecret(env);
+  // Fail fast rather than sending the literal "undefined" upstream when a
+  // wrangler secret/var was never set (fresh worker, forgotten `secret put`).
+  if (!clientId || !clientSecret) {
+    return json({ error: "server_misconfigured" }, 500);
+  }
+
   const body = new URLSearchParams({
-    client_id: provider.clientId(env),
-    client_secret: provider.clientSecret(env),
+    client_id: clientId,
+    client_secret: clientSecret,
     code,
     code_verifier,
     redirect_uri,

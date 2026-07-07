@@ -7,11 +7,19 @@ import {
 import {
   type GitContentsLocation,
   contentsHeaders,
+  createBranch,
   encodePath,
   readGitFile,
+  readGitFileSha,
   writeGitFile,
 } from "./git-contents.js";
-import type { DocumentHandle, StorageEntry, StorageProvider, WriteResult } from "./types.js";
+import type {
+  DocumentHandle,
+  GitBranchAware,
+  StorageEntry,
+  StorageProvider,
+  WriteResult,
+} from "./types.js";
 
 const GITHUB_API = "https://api.github.com";
 const GITHUB_AUTHORIZE = "https://github.com/login/oauth/authorize";
@@ -41,6 +49,10 @@ interface GitHubContentItem {
   path: string;
   sha: string;
   type: "file" | "dir" | string;
+}
+
+interface GitHubBranch {
+  name: string;
 }
 
 export interface GitHubConfig {
@@ -99,6 +111,8 @@ export async function completeGitHubOAuthCallback(config: GitHubConfig): Promise
   if ((!code && !oauthError) || !state || !window.opener) return false;
 
   const expectedState = sessionStorage.getItem(OAUTH_STATE);
+  // Not our redirect (another provider opened this popup) — let the next handler try.
+  if (expectedState === null) return false;
   const verifier = sessionStorage.getItem(OAUTH_VERIFIER);
   const message: GitHubAuthMessage = { type: OAUTH_MESSAGE, state };
 
@@ -132,23 +146,34 @@ export async function completeGitHubOAuthCallback(config: GitHubConfig): Promise
   return true;
 }
 
-export class GitHubDocumentHandle implements DocumentHandle {
+export class GitHubDocumentHandle implements DocumentHandle, GitBranchAware {
   readonly provider = "github" as const;
   readonly capabilities = { read: true, write: true } as const;
   private currentRevision: string | null;
+  // Mutable: saving to a new branch rebinds this handle onto that branch.
+  private location: GitContentsLocation;
 
   constructor(
     readonly id: string,
     readonly name: string,
-    private readonly location: GitContentsLocation,
+    location: GitContentsLocation,
     revision: string | null,
     private readonly token: () => string
   ) {
+    this.location = location;
     this.currentRevision = revision;
   }
 
   get revision(): string | null {
     return this.currentRevision;
+  }
+
+  get branch(): string {
+    return this.location.branch;
+  }
+
+  get repoLabel(): string {
+    return `${this.location.owner}/${this.location.repo}`;
   }
 
   async read(): Promise<string> {
@@ -166,6 +191,43 @@ export class GitHubDocumentHandle implements DocumentHandle {
       content,
       sha: expectedRevision,
     });
+    this.currentRevision = sha;
+    return { revision: sha };
+  }
+
+  /**
+   * Save to `branch`. When `createFromCurrent` is set and the target differs from
+   * the current branch, the branch is created from the current head first, then
+   * the handle rebinds onto it (subsequent saves target the new branch).
+   */
+  async saveToBranch(
+    content: string,
+    opts: { branch: string; createFromCurrent?: boolean; message?: string }
+  ): Promise<WriteResult> {
+    const target = opts.branch.trim();
+    const switching = target !== this.location.branch;
+    const targetLocation: GitContentsLocation = { ...this.location, branch: target };
+
+    // The expected SHA must be the file's SHA *on the target branch*. It equals
+    // the current revision only when the branch is freshly created from here; an
+    // existing target branch may have diverged, so read its actual SHA (null if
+    // the file/branch is absent → a create).
+    let expectedSha = this.currentRevision;
+    if (switching) {
+      const created = opts.createFromCurrent
+        ? await createBranch(this.location, this.token(), target, this.location.branch)
+        : false;
+      if (!created) {
+        expectedSha = await readGitFileSha(targetLocation, this.token());
+      }
+    }
+
+    const { sha } = await writeGitFile(targetLocation, this.token(), {
+      message: opts.message?.trim() || `Update ${this.name} via srs-web`,
+      content,
+      sha: expectedSha,
+    });
+    this.location = targetLocation;
     this.currentRevision = sha;
     return { revision: sha };
   }
@@ -238,9 +300,16 @@ export class GitHubProvider implements StorageProvider {
     });
   }
 
+  // Browse path grammar (":" is illegal in git branch names, so it's unambiguous):
+  //   ""                        → repositories
+  //   "owner/repo"              → branches of that repo
+  //   "owner/repo:branch"       → that branch's root
+  //   "owner/repo:branch:dir"   → a directory on that branch
   async list(path = ""): Promise<StorageEntry[]> {
     await this.authenticate();
     if (path === "") return this.listRepos();
+    const { owner, repo, branch } = parseGitHubPath(path);
+    if (!branch) return this.listBranches(owner, repo);
     return this.listContents(path);
   }
 
@@ -249,14 +318,13 @@ export class GitHubProvider implements StorageProvider {
     if (entry.kind !== "file" || !entry.path) {
       throw new StorageFetchError("GitHub did not return a usable file path.");
     }
-    const { owner, repo, filePath } = splitRepoPath(entry.path);
-    if (!filePath) throw new StorageFetchError("GitHub entry is missing a file path.");
-    const branch = await this.branchFor(owner, repo);
+    const { owner, repo, branch, dir } = parseGitHubPath(entry.path);
+    if (!branch || !dir) throw new StorageFetchError("GitHub entry is missing a branch or path.");
     const location: GitContentsLocation = {
       apiBase: GITHUB_API,
       owner,
       repo,
-      path: filePath,
+      path: dir,
       branch,
     };
     return new GitHubDocumentHandle(entry.id, entry.name, location, entry.revision ?? null, () =>
@@ -265,9 +333,19 @@ export class GitHubProvider implements StorageProvider {
   }
 
   private async listRepos(): Promise<StorageEntry[]> {
-    const repos = await this.api<GitHubRepo[]>(
-      "/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member"
-    );
+    // visibility=all requests private repos too; whether they actually come back
+    // depends on the GitHub App's install scope + Contents/Metadata permission.
+    // Paginate so accounts with >100 repos aren't silently truncated (bounded to
+    // keep a pathological account from hammering the API).
+    const repos: GitHubRepo[] = [];
+    const perPage = 100;
+    for (let page = 1; page <= 20; page++) {
+      const batch = await this.api<GitHubRepo[]>(
+        `/user/repos?per_page=${perPage}&page=${page}&sort=updated&visibility=all&affiliation=owner,collaborator,organization_member`
+      );
+      repos.push(...batch);
+      if (batch.length < perPage) break;
+    }
     return repos
       .map((repo) => {
         this.defaultBranches.set(repo.full_name, repo.default_branch);
@@ -281,33 +359,49 @@ export class GitHubProvider implements StorageProvider {
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  /** Branches of a repo, as navigable folders; the default branch sorts first. */
+  private async listBranches(owner: string, repo: string): Promise<StorageEntry[]> {
+    const branches: GitHubBranch[] = [];
+    const perPage = 100;
+    for (let page = 1; page <= 20; page++) {
+      const batch = await this.api<GitHubBranch[]>(
+        `/repos/${owner}/${repo}/branches?per_page=${perPage}&page=${page}`
+      );
+      branches.push(...batch);
+      if (batch.length < perPage) break;
+    }
+    const defaultBranch = this.defaultBranches.get(`${owner}/${repo}`) ?? "";
+    return branches
+      .map((branch) => ({
+        id: `${owner}/${repo}:${branch.name}`,
+        name: branch.name,
+        kind: "folder" as const,
+        path: `${owner}/${repo}:${branch.name}`,
+      }))
+      .sort((a, b) => {
+        if (a.name === defaultBranch) return -1;
+        if (b.name === defaultBranch) return 1;
+        return a.name.localeCompare(b.name);
+      });
+  }
+
   private async listContents(path: string): Promise<StorageEntry[]> {
-    const { owner, repo, filePath } = splitRepoPath(path);
-    const branch = await this.branchFor(owner, repo);
+    const { owner, repo, branch, dir } = parseGitHubPath(path);
     const items = await this.api<GitHubContentItem[]>(
-      `/repos/${owner}/${repo}/contents/${encodePath(filePath)}?ref=${encodeURIComponent(branch)}`
+      `/repos/${owner}/${repo}/contents/${encodePath(dir)}?ref=${encodeURIComponent(branch)}`
     );
     return items
       .filter((item) => item.type === "dir" || /\.(srsj|json)$/i.test(item.name))
       .map((item) => ({
-        id: `${owner}/${repo}/${item.path}`,
+        id: `${owner}/${repo}:${branch}:${item.path}`,
         name: item.name,
         kind: item.type === "dir" ? ("folder" as const) : ("file" as const),
-        path: `${owner}/${repo}/${item.path}`,
+        path: `${owner}/${repo}:${branch}:${item.path}`,
         revision: item.type === "dir" ? null : item.sha,
       }))
       .sort((a, b) =>
         a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === "folder" ? -1 : 1
       );
-  }
-
-  private async branchFor(owner: string, repo: string): Promise<string> {
-    const key = `${owner}/${repo}`;
-    const known = this.defaultBranches.get(key);
-    if (known) return known;
-    const info = await this.api<{ default_branch: string }>(`/repos/${owner}/${repo}`);
-    this.defaultBranches.set(key, info.default_branch);
-    return info.default_branch;
   }
 
   private requireToken(): string {
@@ -326,9 +420,19 @@ export class GitHubProvider implements StorageProvider {
   }
 }
 
-/** Split "owner/repo[/dir/file]" into its parts; `filePath` is "" at a repo root. */
-function splitRepoPath(path: string): { owner: string; repo: string; filePath: string } {
-  const parts = path.split("/").filter((segment) => segment.length > 0);
-  const [owner = "", repo = "", ...rest] = parts;
-  return { owner, repo, filePath: rest.join("/") };
+/**
+ * Parse a GitHub browse path: "owner/repo", "owner/repo:branch", or
+ * "owner/repo:branch:dir/sub". `branch`/`dir` are "" when not yet selected.
+ * Git branch names cannot contain ":", so the first ":" always delimits the
+ * branch; any later ":" is kept as part of `dir` (rare, but path-legal).
+ */
+function parseGitHubPath(path: string): {
+  owner: string;
+  repo: string;
+  branch: string;
+  dir: string;
+} {
+  const [repoPart = "", branch = "", ...dirParts] = path.split(":");
+  const [owner = "", repo = ""] = repoPart.split("/").filter((segment) => segment.length > 0);
+  return { owner, repo, branch, dir: dirParts.join(":") };
 }
