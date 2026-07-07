@@ -119,6 +119,8 @@ export interface FieldValue {
   value: unknown;
 }
 
+// Open-ended string: the valid state vocabulary is enforced by the Rust core, not TypeScript.
+// TODO: expose lifecycle state vocabulary via a WASM binding (ADR-001 residual — srs-web#167)
 export type LifecycleState = string;
 
 export interface ListNotesResult {
