@@ -12,8 +12,11 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // CI runs the suite in parallel with a single retry. Serial (workers: 1) plus
+  // retries: 2 meant every failing test burned its timeout three times in a row,
+  // dragging the job past 20 minutes while the suite has known drift (#173).
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? "50%" : undefined,
   reporter: "html",
   timeout: 60000,
   use: {

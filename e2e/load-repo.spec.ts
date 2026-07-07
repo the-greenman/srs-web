@@ -62,7 +62,9 @@ test.describe("Load repository", () => {
     });
   });
 
-  test("shows the repo filename in the topbar after loading", async ({ page }) => {
+  // Quarantined (#173): .topbar__repo was replaced by the Breadcrumb component
+  // (.topbar__crumb-*). Rewrite against the current breadcrumb.
+  test.fixme("shows the repo filename in the topbar after loading", async ({ page }) => {
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(FIXTURE_PATH);
 

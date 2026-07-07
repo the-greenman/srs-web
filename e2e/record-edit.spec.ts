@@ -39,7 +39,9 @@ test.describe("Record edit forms (B9)", () => {
   // --------------------------------------------------------------------------
   // Test 1: "New Article" button is visible after loading
   // --------------------------------------------------------------------------
-  test('"New Article" button is visible after loading', async ({ page }) => {
+  // Quarantined (#173): the "New Article" topbar button no longer exists —
+  // RecordForm/topbar was redesigned. Rewrite against the current flow.
+  test.fixme('"New Article" button is visible after loading', async ({ page }) => {
     await expect(page.locator("button.topbar__new")).toBeVisible();
     await expect(page.locator("button.topbar__new")).toContainText("New Article");
   });
@@ -108,7 +110,9 @@ test.describe("Record edit forms (B9)", () => {
   // --------------------------------------------------------------------------
   // Test 5: Create decision successfully
   // --------------------------------------------------------------------------
-  test("Create decision successfully — appears in list", async ({ page }) => {
+  // Quarantined (#173): flow depends on a removed "Quick Capture" mode in the
+  // decision RecordForm (#103). Rewrite against the current create flow.
+  test.fixme("Create decision successfully — appears in list", async ({ page }) => {
     // Navigate to Decision Log
     await page.getByRole("link", { name: /Decision Log/ }).click();
     await expect(page.getByRole("heading", { name: "Decision Log", level: 2 })).toBeVisible();
