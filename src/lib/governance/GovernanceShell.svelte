@@ -785,7 +785,7 @@
             saving={formSaving}
             saveError={formError}
           />
-        {:else if selectedRecord && formMode === null && activeContainer?.sectionTypeId !== DECISION_TYPE_ID}
+        {:else if selectedRecord && formMode === null}
           <RecordReading
             record={selectedRecord}
             sectionLabel={activeContainer?.title ?? ""}

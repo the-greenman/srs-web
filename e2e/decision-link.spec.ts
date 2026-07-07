@@ -27,17 +27,17 @@ test.describe("Decision link picker (srs-web#106)", () => {
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(GALLERY_PATH);
 
-    // Wait for loaded state — nav shows Decisions link
-    await expect(page.getByRole("link", { name: /Decisions/ })).toBeVisible({ timeout: 5000 });
+    // Wait for loaded state — nav shows Decision Log link
+    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
 
-    // Navigate to Decisions section
-    await page.getByRole("link", { name: /Decisions/ }).click();
+    // Navigate to the Decision Log section
+    await page.getByRole("link", { name: /Decision Log/ }).click();
 
     // Wait for decision list to render (gallery has 9 decisions)
-    await expect(page.locator(".record-list__item").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("decision-summary-card").first()).toBeVisible({ timeout: 5000 });
 
-    // Select the first decision
-    await page.locator(".record-list__item").first().click();
+    // Select the first decision — opens the full record and the Decision Links inspector
+    await page.getByTestId("decision-summary-card").first().click();
   });
 
   // --------------------------------------------------------------------------
@@ -83,6 +83,9 @@ test.describe("Decision link picker (srs-web#106)", () => {
       timeout: 3000,
     });
 
+    // Use a relation type installed in the gallery package (precedes)
+    await page.getByTestId("link-relation-type").selectOption("precedes");
+
     // Select the first available target decision
     await page.getByTestId("link-decision-item").first().click();
 
@@ -112,6 +115,7 @@ test.describe("Decision link picker (srs-web#106)", () => {
     await expect(page.getByRole("heading", { name: "Link to another decision" })).toBeVisible({
       timeout: 3000,
     });
+    await page.getByTestId("link-relation-type").selectOption("precedes");
     await page.getByTestId("link-decision-item").first().click();
     await page.getByTestId("link-confirm").click();
     await expect(page.locator(".modal-overlay")).not.toBeVisible({ timeout: 3000 });

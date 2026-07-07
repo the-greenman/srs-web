@@ -57,27 +57,42 @@
       {
         "instanceId": "9054911c-5285-4c3e-8198-4b9650169001",
         "path": "records/tier-2/9054911c-5285-4c3e-8198-4b9650169001.json",
-        "tier": 2
+        "tier": 2,
+        "tags": [
+          "operations"
+        ]
       },
       {
         "instanceId": "eb4024a0-486f-4d64-a4e4-5d80297129d2",
         "path": "records/tier-2/eb4024a0-486f-4d64-a4e4-5d80297129d2.json",
-        "tier": 2
+        "tier": 2,
+        "tags": [
+          "exhibitions"
+        ]
       },
       {
         "instanceId": "3be7b057-9167-42a4-b0db-2a8b30666cef",
         "path": "records/tier-2/3be7b057-9167-42a4-b0db-2a8b30666cef.json",
-        "tier": 2
+        "tier": 2,
+        "tags": [
+          "exhibitions"
+        ]
       },
       {
         "instanceId": "9af57e54-03fb-4625-9a4c-8d2a254ff2b7",
         "path": "records/tier-2/9af57e54-03fb-4625-9a4c-8d2a254ff2b7.json",
-        "tier": 2
+        "tier": 2,
+        "tags": [
+          "operations"
+        ]
       },
       {
         "instanceId": "4a989562-4a9d-4c86-a365-91bf14d55f06",
         "path": "records/tier-2/4a989562-4a9d-4c86-a365-91bf14d55f06.json",
-        "tier": 2
+        "tier": 2,
+        "tags": [
+          "governance"
+        ]
       },
       {
         "instanceId": "dd715d4a-8640-4641-b79d-e44f728c547b",
