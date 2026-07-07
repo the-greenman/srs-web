@@ -3,7 +3,7 @@
      See plans/governance-shell-76.md and srs-web#76.
      Nav migrated from TYPE_REGISTRY to container-driven (ADR-009, srs-web#93). -->
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import {
     listRecords,
     createRecord,
@@ -365,7 +365,8 @@
 
   function persistWorkingCopy(): void {
     try {
-      saveWorkingCopy(repoName, exportSrsj(repo));
+      const saved = saveWorkingCopy(repoName, exportSrsj(repo));
+      if (!saved) return;
       if (saveIndicatorTimer !== null) clearTimeout(saveIndicatorTimer);
       saveIndicator = "saved";
       saveIndicatorTimer = setTimeout(() => {
@@ -376,6 +377,10 @@
       console.warn("persistWorkingCopy failed:", e);
     }
   }
+
+  onDestroy(() => {
+    if (saveIndicatorTimer !== null) clearTimeout(saveIndicatorTimer);
+  });
 
   function refreshValidation(): void {
     const report = repo.validate();
@@ -552,7 +557,6 @@
     } catch (e: unknown) {
       console.error("Failed to create successor:", e);
       loadContainerNav();
-      persistWorkingCopy();
     }
   }
 

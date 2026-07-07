@@ -73,7 +73,7 @@ describe("browser-cache", () => {
     expect(loadWorkingCopy()).toBeNull();
   });
 
-  it("saveWorkingCopy does not throw when localStorage.setItem throws QuotaExceededError", () => {
+  it("saveWorkingCopy does not throw and returns false when localStorage.setItem throws QuotaExceededError", () => {
     setup();
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(mockStorage, "setItem").mockImplementation(() => {
@@ -81,6 +81,12 @@ describe("browser-cache", () => {
       throw err;
     });
     expect(() => saveWorkingCopy("repo", "{}")).not.toThrow();
+    expect(saveWorkingCopy("repo", "{}")).toBe(false);
     expect(warnSpy).toHaveBeenCalledWith("autosave failed:", expect.any(DOMException));
+  });
+
+  it("saveWorkingCopy returns true on success", () => {
+    setup();
+    expect(saveWorkingCopy("repo", "{}")).toBe(true);
   });
 });

@@ -89,6 +89,7 @@
       repo = loadRepo(text);
       activeDocument = handle;
       repoName = handle.name.replace(/\.(srsj|json)$/i, "");
+      cachedSession = null;
       appState = "loaded";
     } catch (e: unknown) {
       repo = null;
@@ -127,6 +128,7 @@
 
     repo = newRepo;
     repoName = name;
+    cachedSession = null;
     appState = "loaded";
   }
 
@@ -218,7 +220,6 @@
                   cachedSession = null;
                 } catch (e: unknown) {
                   clearWorkingCopy();
-                  cachedSession = null;
                   restoreError = `Could not restore session: ${e instanceof Error ? e.message : String(e)}`;
                 }
               }}
@@ -260,6 +261,7 @@
     onExport={handleExport}
     onOpenAnother={() => {
       clearWorkingCopy();
+      cachedSession = null;
       repo = null;
       activeDocument = null;
       editorMode = null;
@@ -278,6 +280,7 @@
     onExport={handleExport}
     onOpenAnother={() => {
       clearWorkingCopy();
+      cachedSession = null;
       repo = null;
       activeDocument = null;
       editorMode = null;

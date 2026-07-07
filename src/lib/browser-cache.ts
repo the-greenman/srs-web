@@ -19,11 +19,11 @@ export interface WorkingCopyEntry {
 }
 
 /**
- * Persist the working copy to localStorage. Non-fatal: any error (including
- * QuotaExceededError) is logged to console and swallowed — autosave failure
- * must never interrupt the user's edit flow.
+ * Persist the working copy to localStorage. Returns true on success, false on
+ * any error (including QuotaExceededError). Non-fatal — autosave failure must
+ * never interrupt the user's edit flow.
  */
-export function saveWorkingCopy(name: string, srsj: string): void {
+export function saveWorkingCopy(name: string, srsj: string): boolean {
   try {
     const entry: WorkingCopyEntry = {
       name,
@@ -31,8 +31,10 @@ export function saveWorkingCopy(name: string, srsj: string): void {
       savedAt: new Date().toISOString(),
     };
     localStorage.setItem(WORKING_COPY_KEY, JSON.stringify(entry));
+    return true;
   } catch (e: unknown) {
     console.warn("autosave failed:", e);
+    return false;
   }
 }
 
