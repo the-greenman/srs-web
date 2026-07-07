@@ -1,5 +1,10 @@
 <script lang="ts">
-  import type { DocumentHandle, StorageEntry, StorageProviders } from "$lib/storage/index.js";
+  import type {
+    DocumentHandle,
+    StorageEntry,
+    StorageProvider,
+    StorageProviders,
+  } from "$lib/storage/index.js";
   import { LocalDocumentHandle, StorageError } from "$lib/storage/index.js";
   import Button from "./Button.svelte";
 
@@ -10,16 +15,26 @@
 
   let { providers, onOpen }: Props = $props();
 
-  let busy = $state<"local" | "dropbox" | "google-drive" | null>(null);
-  let error = $state<string | null>(null);
-  let dropboxEntries = $state<StorageEntry[] | null>(null);
-  let dropboxPath = $state("");
-  let dropboxParents = $state<string[]>([]);
+  type Busy = "local" | "dropbox" | "google-drive" | "github";
+  /** Providers that browse a folder tree in the shared modal (list + open). */
+  type BrowseId = "dropbox" | "github";
+  const BROWSE_LABEL: Record<BrowseId, string> = { dropbox: "Dropbox", github: "GitHub" };
 
-  async function run(
-    source: NonNullable<typeof busy>,
-    operation: () => Promise<void>,
-  ): Promise<void> {
+  let busy = $state<Busy | null>(null);
+  let error = $state<string | null>(null);
+
+  // Provider-agnostic folder browser, shared by Dropbox and GitHub. The `path`
+  // string is opaque to the modal (Dropbox: "/folder"; GitHub: "owner/repo/dir").
+  let browsing = $state<BrowseId | null>(null);
+  let entries = $state<StorageEntry[] | null>(null);
+  let path = $state("");
+  let parents = $state<string[]>([]);
+
+  function browseProvider(id: BrowseId): StorageProvider | undefined {
+    return id === "dropbox" ? providers.dropbox : providers.github;
+  }
+
+  async function run(source: Busy, operation: () => Promise<void>): Promise<void> {
     busy = source;
     error = null;
     try {
@@ -46,39 +61,53 @@
     input.value = "";
   }
 
-  function openDropbox(): void {
-    void run("dropbox", async () => {
-      await providers.dropbox.authenticate();
-      dropboxPath = "";
-      dropboxParents = [];
-      dropboxEntries = await providers.dropbox.list?.("") ?? [];
+  function openBrowser(id: BrowseId): void {
+    void run(id, async () => {
+      const provider = browseProvider(id);
+      if (!provider) return;
+      await provider.authenticate();
+      browsing = id;
+      path = "";
+      parents = [];
+      entries = (await provider.list?.("")) ?? [];
     });
   }
 
-  function chooseDropboxEntry(entry: StorageEntry): void {
+  function chooseEntry(entry: StorageEntry): void {
+    const id = browsing;
+    const provider = id ? browseProvider(id) : undefined;
+    if (!id || !provider) return;
     if (entry.kind === "folder") {
-      void run("dropbox", async () => {
-        dropboxParents = [...dropboxParents, dropboxPath];
-        dropboxPath = entry.path ?? "";
-        dropboxEntries = await providers.dropbox.list?.(dropboxPath) ?? [];
+      void run(id, async () => {
+        parents = [...parents, path];
+        path = entry.path ?? "";
+        entries = (await provider.list?.(path)) ?? [];
       });
       return;
     }
-    void run("dropbox", async () => {
-      const handle = await providers.dropbox.open(entry);
-      dropboxEntries = null;
+    void run(id, async () => {
+      const handle = await provider.open(entry);
+      closeBrowser();
       await onOpen(handle);
     });
   }
 
-  function goUpDropbox(): void {
-    const parents = [...dropboxParents];
-    const parent = parents.pop() ?? "";
-    void run("dropbox", async () => {
-      dropboxParents = parents;
-      dropboxPath = parent;
-      dropboxEntries = await providers.dropbox.list?.(parent) ?? [];
+  function goUp(): void {
+    const id = browsing;
+    const provider = id ? browseProvider(id) : undefined;
+    if (!id || !provider) return;
+    const next = [...parents];
+    const parent = next.pop() ?? "";
+    void run(id, async () => {
+      parents = next;
+      path = parent;
+      entries = (await provider.list?.(parent)) ?? [];
     });
+  }
+
+  function closeBrowser(): void {
+    entries = null;
+    browsing = null;
   }
 
   function openGoogleDrive(): void {
@@ -106,7 +135,7 @@
     data-testid="source-dropbox"
     disabled={!providers.dropbox.configured || busy !== null}
     title={providers.dropbox.configured ? "Open from Dropbox" : "Dropbox is not configured"}
-    onclick={openDropbox}
+    onclick={() => openBrowser("dropbox")}
   >{busy === "dropbox" ? "Connecting…" : "Dropbox"}</Button>
 
   <Button
@@ -116,37 +145,47 @@
     title={providers.googleDrive.configured ? "Open from Google Drive" : "Google Drive is not configured"}
     onclick={openGoogleDrive}
   >{busy === "google-drive" ? "Connecting…" : "Google Drive"}</Button>
+
+  <Button
+    variant="secondary"
+    data-testid="source-github"
+    disabled={!providers.github?.configured || busy !== null}
+    title={providers.github?.configured ? "Open from GitHub" : "GitHub is not configured"}
+    onclick={() => openBrowser("github")}
+  >{busy === "github" ? "Connecting…" : "GitHub"}</Button>
 </div>
 
 {#if error}
   <p class="source-chooser__error" role="alert">{error}</p>
 {/if}
 
-{#if dropboxEntries}
-  <div class="cloud-browser" role="dialog" aria-modal="true" aria-labelledby="dropbox-browser-title">
+{#if entries && browsing}
+  <div class="cloud-browser" role="dialog" aria-modal="true" aria-labelledby="cloud-browser-title">
     <div class="cloud-browser__panel">
       <header class="cloud-browser__header">
         <div>
-          <span class="cloud-browser__eyebrow">Dropbox</span>
-          <h2 id="dropbox-browser-title">Choose a repository</h2>
+          <span class="cloud-browser__eyebrow">{BROWSE_LABEL[browsing]}</span>
+          <h2 id="cloud-browser-title">Choose a repository</h2>
         </div>
         <button
           class="cloud-browser__close"
-          aria-label="Close Dropbox browser"
-          onclick={() => { dropboxEntries = null; }}
+          aria-label="Close browser"
+          onclick={closeBrowser}
         >×</button>
       </header>
 
-      <div class="cloud-browser__path">{dropboxPath || "All files"}</div>
+      <div class="cloud-browser__path">
+        {path || (browsing === "github" ? "All repositories" : "All files")}
+      </div>
       <div class="cloud-browser__list">
-        {#if dropboxParents.length > 0}
-          <button class="cloud-browser__entry" onclick={goUpDropbox}>
+        {#if parents.length > 0}
+          <button class="cloud-browser__entry" onclick={goUp}>
             <span class="cloud-browser__kind">↑</span>
             <span>Parent folder</span>
           </button>
         {/if}
-        {#each dropboxEntries as entry (entry.id)}
-          <button class="cloud-browser__entry" onclick={() => chooseDropboxEntry(entry)}>
+        {#each entries as entry (entry.id)}
+          <button class="cloud-browser__entry" onclick={() => chooseEntry(entry)}>
             <span class="cloud-browser__kind">{entry.kind === "folder" ? "Folder" : "SRSJ"}</span>
             <span>{entry.name}</span>
           </button>
@@ -161,7 +200,7 @@
 <style>
   .source-chooser {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
     gap: 0.75rem;
     width: min(38rem, calc(100vw - 2rem));
     margin-top: 1.5rem;

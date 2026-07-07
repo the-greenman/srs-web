@@ -33,6 +33,7 @@
   import {
     createStorageProvidersFromEnv,
     downloadDocument,
+    StorageError,
     type DocumentHandle,
     type StorageProviderId,
   } from "$lib/storage/index.js";
@@ -51,6 +52,10 @@
   let repoName = $state<string>("Untitled repository");
   const storageProviders = createStorageProvidersFromEnv();
   let activeDocument = $state<DocumentHandle | null>(null);
+
+  /** Document-level Save (write-capable cloud/git handles only). */
+  let saving = $state(false);
+  let saveMessage = $state<string | null>(null);
 
   let repo = $state<SrsRepository | null>(null);
 
@@ -90,6 +95,7 @@
       activeDocument = handle;
       repoName = handle.name.replace(/\.(srsj|json)$/i, "");
       cachedSession = null;
+      saveMessage = null;
       appState = "loaded";
     } catch (e: unknown) {
       repo = null;
@@ -120,15 +126,23 @@
       downloadDocument(json, filename);
       activeDocument = null;
     } else {
+      // Resolve explicitly so a new provider id can never silently misroute here.
       const provider =
-        destination === "dropbox" ? storageProviders.dropbox : storageProviders.googleDrive;
-      if (!provider.create) throw new Error(`${provider.label} cannot create new files.`);
+        destination === "dropbox"
+          ? storageProviders.dropbox
+          : destination === "google-drive"
+            ? storageProviders.googleDrive
+            : storageProviders.github;
+      if (!provider?.create) {
+        throw new Error(`${provider?.label ?? destination} cannot create new files.`);
+      }
       activeDocument = await provider.create(filename, json);
     }
 
     repo = newRepo;
     repoName = name;
     cachedSession = null;
+    saveMessage = null;
     appState = "loaded";
   }
 
@@ -140,6 +154,41 @@
     if (!repo) return;
     const json = exportSrsj(repo);
     downloadDocument(json, `${repoName}.srsj`);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Save (write back to the opened cloud/git document)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Write the current repo back to its source document (Dropbox/Drive/GitHub).
+   * A concurrent edit surfaces as a reload-and-retry prompt rather than a clobber.
+   * Provider-agnostic — any write-capable DocumentHandle works.
+   */
+  async function handleSave(): Promise<void> {
+    if (!repo || !activeDocument?.capabilities.write) return;
+    saving = true;
+    saveMessage = null;
+    try {
+      await activeDocument.write(exportSrsj(repo), activeDocument.revision);
+      saveMessage = "Saved.";
+      clearWorkingCopy();
+    } catch (e: unknown) {
+      const code =
+        e instanceof StorageError
+          ? e.code
+          : typeof e === "object" && e !== null && "code" in e
+            ? (e as { code?: string }).code
+            : null;
+      if (code === "conflict") {
+        saveMessage =
+          "This file changed since you opened it. Use “Open another file” to reload the latest version, then re-apply your edits.";
+      } else {
+        saveMessage = `Save failed: ${e instanceof Error ? e.message : String(e)}`;
+      }
+    } finally {
+      saving = false;
+    }
   }
 </script>
 
@@ -259,9 +308,13 @@
     repoName={repoName}
     documentProvider={activeDocument?.provider ?? "local"}
     onExport={handleExport}
+    onSave={activeDocument?.capabilities.write ? handleSave : undefined}
+    saving={saving}
+    saveMessage={saveMessage}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;
+      saveMessage = null;
       repo = null;
       activeDocument = null;
       editorMode = null;
@@ -278,9 +331,13 @@
     repoName={repoName}
     documentProvider={activeDocument?.provider ?? "local"}
     onExport={handleExport}
+    onSave={activeDocument?.capabilities.write ? handleSave : undefined}
+    saving={saving}
+    saveMessage={saveMessage}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;
+      saveMessage = null;
       repo = null;
       activeDocument = null;
       editorMode = null;

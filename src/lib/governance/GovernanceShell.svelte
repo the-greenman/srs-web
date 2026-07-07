@@ -72,9 +72,22 @@
     repoName: string;
     documentProvider: string;
     onExport: () => void;
+    /** Write back to the opened cloud/git document. Undefined for read-only handles. */
+    onSave?: () => Promise<void>;
+    saving?: boolean;
+    saveMessage?: string | null;
     onOpenAnother: () => void;
   }
-  let { repo, repoName, documentProvider, onExport, onOpenAnother }: Props = $props();
+  let {
+    repo,
+    repoName,
+    documentProvider,
+    onExport,
+    onSave,
+    saving = false,
+    saveMessage = null,
+    onOpenAnother,
+  }: Props = $props();
 
   // ---------------------------------------------------------------------------
   // Local types
@@ -741,6 +754,22 @@
             role="status"
             aria-live="polite"
           >Saved</span>
+          {#if onSave}
+            <button
+              class="topbar__export"
+              data-testid="save-document"
+              onclick={onSave}
+              disabled={saving}
+            >{saving ? "Saving…" : "Save"}</button>
+          {/if}
+          {#if saveMessage}
+            <span
+              class="topbar__save-message"
+              data-testid="save-status"
+              role="status"
+              aria-live="polite"
+            >{saveMessage}</span>
+          {/if}
           <button class="topbar__export" onclick={onExport}>Download .srsj</button>
           <button class="topbar__reset" onclick={onOpenAnother}>Open another file</button>
         {/snippet}
@@ -1049,6 +1078,17 @@
 
   .topbar__export:hover {
     opacity: 1;
+  }
+
+  .topbar__export:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .topbar__save-message {
+    font-size: 0.7rem;
+    opacity: 0.75;
+    max-width: 22rem;
   }
 
   /* ---- Inspector KV ---- */

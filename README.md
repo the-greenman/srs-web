@@ -29,12 +29,17 @@ user opens another file or explicitly discards the session.
 ## Cloud storage
 
 The editor can open `.srsj` and `.json` repositories from the local device,
-Dropbox, or Google Drive, and can create new files on either cloud provider
-(`StorageProvider.create`). Cloud credentials are public browser identifiers;
-never add a provider client secret to this application.
+Dropbox, Google Drive, or a GitHub repository; create new files on Dropbox or
+Google Drive (`StorageProvider.create`); and **Save** edits back to any
+write-capable cloud/git document. Cloud client IDs are public browser
+identifiers; never add a provider client secret to this application. GitHub's
+token exchange needs a secret, so it runs server-side in a tiny same-origin
+Worker (see [ADR-011](docs/adr/011-oauth-proxy-worker.md)) — the secret is a
+Worker secret, never in the bundle.
 
 Copy `.env.example` to `.env.local` and fill in the configured provider values.
-Local files remain available when either cloud provider is unconfigured.
+Local files remain available when any cloud provider is unconfigured; each
+provider's button is disabled until its client ID is set.
 
 ### Dropbox
 
@@ -64,9 +69,34 @@ Drive files.
 Add the deployed HTTPS origin and Dropbox redirect URI to both provider
 consoles before production deployment.
 
+### GitHub
+
+1. Create a **GitHub OAuth App** (Settings → Developer settings → OAuth Apps).
+2. Set the Authorization callback URL to `http://localhost:5173/` for local dev
+   (and the production origin — see below — before deploying).
+3. Put the app's **Client ID** in `VITE_GITHUB_CLIENT_ID` and set
+   `VITE_GITHUB_REDIRECT_URI` to the matching redirect URI.
+4. The app requests the `repo` scope so a Clerk can keep a public **or private**
+   governance repository. Sign in, browse your repos, open a `.srsj`, edit, and
+   **Save** — each Save is a new commit whose blob SHA becomes the revision; a
+   concurrent edit is reported as a conflict rather than silently clobbered.
+
+GitHub's token endpoint requires a client secret and has no browser CORS, so the
+browser cannot exchange the auth code directly. A same-origin Worker route,
+`POST /api/oauth/github/token` ([`worker/index.ts`](worker/index.ts)), performs
+the exchange server-side. It validates the `Origin` and `redirect_uri` against
+an allow-list so it can't be used as an open token oracle.
+
+**Local dev** needs the Worker running alongside Vite: in one terminal run
+`npm run dev` (Vite proxies `/api/*` to `http://localhost:8787`); in another run
+`wrangler dev`. Copy `.dev.vars.example` to `.dev.vars` (gitignored) and fill in
+the OAuth App's client ID + secret. Without `wrangler dev`, local files and the
+other providers still work — only GitHub sign-in is inert.
+
 ### Cloudflare Workers production
 
-Deployed as a Cloudflare Worker (static assets, no server code) with the
+Deployed as a Cloudflare Worker — a static-assets SPA **plus** the minimal
+`worker/index.ts` OAuth token-exchange route (ADR-011) — with the
 custom domain `https://app.mudemocracy.org` attached directly in
 `wrangler.jsonc` (`routes: [{ pattern: "app.mudemocracy.org", custom_domain:
 true }]`) — the first `wrangler deploy` provisions the DNS + custom domain
@@ -98,12 +128,23 @@ Before deploying:
 - Ensure `wrangler` is authenticated: `npx wrangler whoami` (run
   `wrangler login` if not).
 - Ensure a `.env.production` file exists locally (gitignored, never
-  committed) with the five `VITE_*` values from `.env.example`, using the
-  production hostname for the Dropbox redirect URI:
+  committed) with the `VITE_*` values from `.env.example`, using the
+  production hostname for the redirect URIs:
 
   ```text
   VITE_DROPBOX_REDIRECT_URI=https://app.mudemocracy.org/
+  VITE_GITHUB_REDIRECT_URI=https://app.mudemocracy.org/
   ```
+
+- Set the GitHub OAuth App **client secret** as a Worker secret (never a
+  `VITE_*` var, never in the bundle):
+
+  ```bash
+  wrangler secret put GITHUB_CLIENT_SECRET
+  ```
+
+  The public `GITHUB_CLIENT_ID` and the `APP_ORIGIN` / `GITHUB_REDIRECT_URI`
+  allow-list values are plaintext `[vars]` in `wrangler.jsonc`.
 
   `vite build` runs in production mode by default and loads `.env.production`
   automatically — these values are compiled into the static bundle the same
@@ -116,6 +157,7 @@ Configure the provider consoles with:
 - Dropbox redirect URI: `https://app.mudemocracy.org/`
 - Google authorized JavaScript origin: `https://app.mudemocracy.org`
 - Google API key website restriction: `https://app.mudemocracy.org/*`
+- GitHub OAuth App authorization callback URL: `https://app.mudemocracy.org/`
 
 The Dropbox app key, Google OAuth client ID, Google API key, and Google project
 number are compiled into the browser bundle by Vite. They are identifiers, not
@@ -130,11 +172,15 @@ providers.
 
 ## Save-ready storage contract
 
-Cloud documents retain their provider ID and revision in a `DocumentHandle`.
-Both adapters already implement revision-aware `write()` operations, although
-the current UI intentionally exposes only Open and Download. A future Save
-action can export the WASM repository and call:
+Cloud/git documents retain their provider ID and revision in a `DocumentHandle`.
+The **Save** button (shown for write-capable handles) exports the WASM
+repository and calls the provider-agnostic, revision-aware `write()`:
 
 ```ts
 await activeDocument.write(exportSrsj(repo), activeDocument.revision);
 ```
+
+The revision is the provider's concurrency token — Dropbox `rev`, Drive `etag`,
+GitHub blob SHA. A stale write raises `StorageConflictError`, which the UI
+surfaces as a reload-and-retry prompt instead of clobbering the newer version.
+Local browser files remain download-only (`Open` + `Download`).
