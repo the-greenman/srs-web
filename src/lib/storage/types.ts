@@ -19,6 +19,21 @@ export interface DocumentHandle {
   write(content: string, expectedRevision?: string | null): Promise<WriteResult>;
 }
 
+/**
+ * A DocumentHandle backed by a git host, which can commit to a chosen branch
+ * (optionally creating it). Lets the Save flow offer "commit here vs new branch".
+ */
+export interface GitBranchAware {
+  /** The branch the handle currently targets. */
+  readonly branch: string;
+  /** "owner/repo", for display. */
+  readonly repoLabel: string;
+  saveToBranch(
+    content: string,
+    opts: { branch: string; createFromCurrent?: boolean; message?: string }
+  ): Promise<WriteResult>;
+}
+
 export interface OpenDocument {
   handle: DocumentHandle;
   text: string;

@@ -368,4 +368,44 @@ describe("GitHub storage adapter", () => {
     const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, "sha-1", () => "token");
     await expect(handle.write("{}", "sha-1")).rejects.toThrow(/Read & write/);
   });
+
+  it("saveToBranch commits to the current branch without creating a ref", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ content: { sha: "sha-2" } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, "sha-1", () => "token");
+
+    await expect(handle.saveToBranch("{}", { branch: "main" })).resolves.toEqual({
+      revision: "sha-2",
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1); // just the PUT, no ref ops
+    expect(handle.branch).toBe("main");
+  });
+
+  it("saveToBranch creates a new branch, writes to it, and rebinds the handle", async () => {
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(json({ object: { sha: "commit-1" } })) // GET source head ref
+      .mockResolvedValueOnce(json({ ref: "refs/heads/feature" }, 201)) // POST create ref
+      .mockResolvedValueOnce(json({ content: { sha: "sha-branch" } })); // PUT contents
+    vi.stubGlobal("fetch", fetchMock);
+    const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, "sha-1", () => "token");
+
+    await expect(
+      handle.saveToBranch("{}", { branch: "feature", createFromCurrent: true })
+    ).resolves.toEqual({ revision: "sha-branch" });
+    expect(handle.branch).toBe("feature");
+
+    const createBody = JSON.parse(String((fetchMock.mock.calls[1]?.[1] as RequestInit).body));
+    expect(createBody).toMatchObject({ ref: "refs/heads/feature", sha: "commit-1" });
+    const putBody = JSON.parse(String((fetchMock.mock.calls[2]?.[1] as RequestInit).body));
+    expect(putBody.branch).toBe("feature");
+    expect(putBody.sha).toBe("sha-1");
+  });
 });

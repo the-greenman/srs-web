@@ -29,14 +29,22 @@
   import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import CreateGovernanceDocumentPanel from "$lib/components/CreateGovernanceDocumentPanel.svelte";
+  import GitSaveModal from "$lib/components/GitSaveModal.svelte";
   import { slugifyFilename } from "$lib/slug.js";
   import {
     createStorageProvidersFromEnv,
     downloadDocument,
+    isGitBranchAware,
     StorageError,
     type DocumentHandle,
     type StorageProviderId,
   } from "$lib/storage/index.js";
+
+  // Link to install/manage the GitHub App (a GitHub App must be installed to write).
+  const githubAppSlug = import.meta.env.VITE_GITHUB_APP_SLUG ?? "";
+  const githubInstallUrl = githubAppSlug
+    ? `https://github.com/apps/${githubAppSlug}/installations/new`
+    : null;
 
   // ---------------------------------------------------------------------------
   // State
@@ -56,6 +64,9 @@
   /** Document-level Save (write-capable cloud/git handles only). */
   let saving = $state(false);
   let saveMessage = $state<string | null>(null);
+  /** Git Save dialog (branch choice + install hint) state. */
+  let gitSaveOpen = $state(false);
+  let gitSaveError = $state<string | null>(null);
 
   let repo = $state<SrsRepository | null>(null);
 
@@ -160,12 +171,35 @@
   // Save (write back to the opened cloud/git document)
   // ---------------------------------------------------------------------------
 
+  function saveErrorMessage(e: unknown): string {
+    const code =
+      e instanceof StorageError
+        ? e.code
+        : typeof e === "object" && e !== null && "code" in e
+          ? (e as { code?: string }).code
+          : null;
+    if (code === "conflict") {
+      return "This file changed since you opened it. Use “Open another file” to reload the latest version, then re-apply your edits.";
+    }
+    return `Save failed: ${e instanceof Error ? e.message : String(e)}`;
+  }
+
   /**
-   * Write the current repo back to its source document (Dropbox/Drive/GitHub).
-   * A concurrent edit surfaces as a reload-and-retry prompt rather than a clobber.
-   * Provider-agnostic — any write-capable DocumentHandle works.
+   * Save the current repo back to its source document. Git-backed handles open a
+   * dialog (branch choice + install hint); other cloud handles write directly.
    */
   async function handleSave(): Promise<void> {
+    if (!repo || !activeDocument?.capabilities.write) return;
+    if (isGitBranchAware(activeDocument)) {
+      gitSaveError = null;
+      gitSaveOpen = true;
+      return;
+    }
+    await saveDirect();
+  }
+
+  /** Direct revision-aware write for non-git cloud handles (Dropbox/Drive). */
+  async function saveDirect(): Promise<void> {
     if (!repo || !activeDocument?.capabilities.write) return;
     saving = true;
     saveMessage = null;
@@ -174,18 +208,38 @@
       saveMessage = "Saved.";
       clearWorkingCopy();
     } catch (e: unknown) {
-      const code =
-        e instanceof StorageError
-          ? e.code
-          : typeof e === "object" && e !== null && "code" in e
-            ? (e as { code?: string }).code
-            : null;
-      if (code === "conflict") {
-        saveMessage =
-          "This file changed since you opened it. Use “Open another file” to reload the latest version, then re-apply your edits.";
-      } else {
-        saveMessage = `Save failed: ${e instanceof Error ? e.message : String(e)}`;
-      }
+      saveMessage = saveErrorMessage(e);
+    } finally {
+      saving = false;
+    }
+  }
+
+  /** Commit a git-backed document to the chosen (or newly created) branch. */
+  async function confirmGitSave(opts: {
+    mode: "current" | "new";
+    newBranch: string;
+    message: string;
+  }): Promise<void> {
+    if (!repo || !isGitBranchAware(activeDocument)) return;
+    const handle = activeDocument;
+    saving = true;
+    gitSaveError = null;
+    try {
+      const branch = opts.mode === "new" ? opts.newBranch : handle.branch;
+      await handle.saveToBranch(exportSrsj(repo), {
+        branch,
+        createFromCurrent: opts.mode === "new",
+        message: opts.message,
+      });
+      saveMessage =
+        opts.mode === "new"
+          ? `Saved to new branch “${branch}”. Open a pull request on GitHub to merge it.`
+          : "Saved.";
+      clearWorkingCopy();
+      gitSaveOpen = false;
+    } catch (e: unknown) {
+      // Keep the dialog open so the install hint stays visible on a permission error.
+      gitSaveError = saveErrorMessage(e);
     } finally {
       saving = false;
     }
@@ -342,6 +396,21 @@
       activeDocument = null;
       editorMode = null;
       appState = "idle";
+    }}
+  />
+{/if}
+
+{#if gitSaveOpen && isGitBranchAware(activeDocument)}
+  <GitSaveModal
+    repoLabel={activeDocument.repoLabel}
+    currentBranch={activeDocument.branch}
+    installUrl={githubInstallUrl}
+    busy={saving}
+    error={gitSaveError}
+    onSave={confirmGitSave}
+    onCancel={() => {
+      gitSaveOpen = false;
+      gitSaveError = null;
     }}
   />
 {/if}

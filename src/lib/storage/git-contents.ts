@@ -125,3 +125,45 @@ export async function writeGitFile(
   if (!sha) throw new StorageFetchError("Git host did not return the new blob SHA after write.");
   return { sha };
 }
+
+/**
+ * Create `newBranch` pointing at the head of `fromBranch`. No-op if it already
+ * exists. Lets a Clerk save to a fresh branch instead of a protected default.
+ */
+export async function createBranch(
+  location: Pick<GitContentsLocation, "apiBase" | "owner" | "repo">,
+  token: string,
+  newBranch: string,
+  fromBranch: string
+): Promise<void> {
+  const base = `${location.apiBase}/repos/${location.owner}/${location.repo}`;
+  const headRes = await fetch(`${base}/git/ref/heads/${encodeURIComponent(fromBranch)}`, {
+    headers: contentsHeaders(token),
+  });
+  if (!headRes.ok) {
+    throw new StorageFetchError(
+      `Could not read branch "${fromBranch}": ${await parseError(headRes)}`
+    );
+  }
+  const head = (await headRes.json()) as { object?: { sha?: string } };
+  const sha = head.object?.sha;
+  if (!sha) throw new StorageFetchError(`Branch "${fromBranch}" has no head commit.`);
+
+  const createRes = await fetch(`${base}/git/refs`, {
+    method: "POST",
+    headers: { ...contentsHeaders(token), "Content-Type": "application/json" },
+    body: JSON.stringify({ ref: `refs/heads/${newBranch}`, sha }),
+  });
+  // 422 == ref already exists; treat as usable rather than an error.
+  if (createRes.status === 422) return;
+  if (createRes.status === 403) {
+    throw new StorageFetchError(
+      `Creating a branch was denied (403: ${await parseError(createRes)}). The GitHub App needs Contents: Read & write and must be installed on this repository.`
+    );
+  }
+  if (!createRes.ok) {
+    throw new StorageFetchError(
+      `Could not create branch "${newBranch}": ${await parseError(createRes)}`
+    );
+  }
+}

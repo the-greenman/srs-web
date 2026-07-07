@@ -76,7 +76,16 @@ async function installFakeProviders(page: Page, mode: FakeMode = "success"): Pro
                   { id: "octo/gov", name: "octo/gov", kind: "folder", path: "octo/gov" },
                   { id: "octo/notes", name: "octo/notes", kind: "folder", path: "octo/notes" },
                 ],
-          open: async () => documentHandle("github", "repo.srsj"),
+          // A git-aware handle so Save opens the branch/install dialog.
+          open: async () => ({
+            ...documentHandle("github", "repo.srsj"),
+            branch: "main",
+            repoLabel: "octo/gov",
+            saveToBranch: async (_content: string, opts: { branch: string }) => {
+              if (fakeMode === "conflict") throw { code: "conflict", message: "changed upstream" };
+              return { revision: opts.branch === "main" ? "sha-2" : "sha-branch" };
+            },
+          }),
         },
       };
     },
@@ -190,27 +199,47 @@ test.describe("Cloud storage sources", () => {
     await expect(page.getByRole("button", { name: /octo\/notes/ })).toBeVisible();
   });
 
-  test("saves a GitHub document and reports success", async ({ page }) => {
+  async function openGitHubDoc(page: Page): Promise<void> {
+    await page.getByTestId("mode-governance").click();
+    await page.getByTestId("source-github").click();
+    await page.getByRole("button", { name: /octo\/gov/ }).click();
+    await page.getByRole("button", { name: /repo\.srsj/ }).click();
+  }
+
+  test("Save opens a branch dialog and commits to the current branch", async ({ page }) => {
     await installFakeProviders(page);
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
-    await page.getByTestId("source-github").click();
-    await page.getByRole("button", { name: /octo\/gov/ }).click();
-    await page.getByRole("button", { name: /repo\.srsj/ }).click();
+    await openGitHubDoc(page);
 
     await page.getByTestId("save-document").click();
+    await expect(page.getByTestId("git-save-modal")).toBeVisible();
+    // Current-branch commit is the default.
+    await page.getByTestId("git-save-confirm").click();
     await expect(page.getByTestId("save-status")).toContainText("Saved.");
+    await expect(page.getByTestId("git-save-modal")).toHaveCount(0);
   });
 
-  test("a stale GitHub save surfaces a reload-and-retry prompt", async ({ page }) => {
-    await installFakeProviders(page, "conflict");
+  test("Save can create a new branch", async ({ page }) => {
+    await installFakeProviders(page);
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
-    await page.getByTestId("source-github").click();
-    await page.getByRole("button", { name: /octo\/gov/ }).click();
-    await page.getByRole("button", { name: /repo\.srsj/ }).click();
+    await openGitHubDoc(page);
 
     await page.getByTestId("save-document").click();
-    await expect(page.getByTestId("save-status")).toContainText("changed since you opened it");
+    await page.getByTestId("git-save-mode-new").check();
+    await page.getByTestId("git-save-branch-input").fill("governance-edits");
+    await page.getByTestId("git-save-confirm").click();
+    await expect(page.getByTestId("save-status")).toContainText("new branch");
+  });
+
+  test("a stale GitHub save surfaces a conflict in the dialog", async ({ page }) => {
+    await installFakeProviders(page, "conflict");
+    await page.goto("/");
+    await openGitHubDoc(page);
+
+    await page.getByTestId("save-document").click();
+    await page.getByTestId("git-save-confirm").click();
+    // The dialog stays open (install hint visible) and shows the conflict.
+    await expect(page.getByTestId("git-save-error")).toContainText("changed since you opened it");
+    await expect(page.getByTestId("git-save-modal")).toBeVisible();
   });
 });

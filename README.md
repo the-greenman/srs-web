@@ -80,6 +80,12 @@ consoles before production deployment.
    governance repository. Sign in, browse your repos, open a `.srsj`, edit, and
    **Save** — each Save is a new commit whose blob SHA becomes the revision; a
    concurrent edit is reported as a conflict rather than silently clobbered.
+5. **Save dialog:** saving a git document opens a dialog to commit to the current
+   branch or **create a new branch** (useful when the default branch is
+   protected), with an optional commit message. Set `VITE_GITHUB_APP_SLUG` (the
+   app's URL slug) so the dialog can show an **Install / manage** link — a GitHub
+   App must be *installed* on the repo's account (not just authorized at sign-in)
+   before it can list private repos or write.
 
 GitHub's token endpoint requires a client secret and has no browser CORS, so the
 browser cannot exchange the auth code directly. A same-origin Worker route,

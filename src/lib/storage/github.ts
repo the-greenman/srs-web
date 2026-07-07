@@ -7,11 +7,18 @@ import {
 import {
   type GitContentsLocation,
   contentsHeaders,
+  createBranch,
   encodePath,
   readGitFile,
   writeGitFile,
 } from "./git-contents.js";
-import type { DocumentHandle, StorageEntry, StorageProvider, WriteResult } from "./types.js";
+import type {
+  DocumentHandle,
+  GitBranchAware,
+  StorageEntry,
+  StorageProvider,
+  WriteResult,
+} from "./types.js";
 
 const GITHUB_API = "https://api.github.com";
 const GITHUB_AUTHORIZE = "https://github.com/login/oauth/authorize";
@@ -134,23 +141,34 @@ export async function completeGitHubOAuthCallback(config: GitHubConfig): Promise
   return true;
 }
 
-export class GitHubDocumentHandle implements DocumentHandle {
+export class GitHubDocumentHandle implements DocumentHandle, GitBranchAware {
   readonly provider = "github" as const;
   readonly capabilities = { read: true, write: true } as const;
   private currentRevision: string | null;
+  // Mutable: saving to a new branch rebinds this handle onto that branch.
+  private location: GitContentsLocation;
 
   constructor(
     readonly id: string,
     readonly name: string,
-    private readonly location: GitContentsLocation,
+    location: GitContentsLocation,
     revision: string | null,
     private readonly token: () => string
   ) {
+    this.location = location;
     this.currentRevision = revision;
   }
 
   get revision(): string | null {
     return this.currentRevision;
+  }
+
+  get branch(): string {
+    return this.location.branch;
+  }
+
+  get repoLabel(): string {
+    return `${this.location.owner}/${this.location.repo}`;
   }
 
   async read(): Promise<string> {
@@ -168,6 +186,32 @@ export class GitHubDocumentHandle implements DocumentHandle {
       content,
       sha: expectedRevision,
     });
+    this.currentRevision = sha;
+    return { revision: sha };
+  }
+
+  /**
+   * Save to `branch`. When `createFromCurrent` is set and the target differs from
+   * the current branch, the branch is created from the current head first, then
+   * the handle rebinds onto it (subsequent saves target the new branch).
+   */
+  async saveToBranch(
+    content: string,
+    opts: { branch: string; createFromCurrent?: boolean; message?: string }
+  ): Promise<WriteResult> {
+    const target = opts.branch.trim();
+    const switching = target !== this.location.branch;
+    if (opts.createFromCurrent && switching) {
+      await createBranch(this.location, this.token(), target, this.location.branch);
+    }
+    const targetLocation: GitContentsLocation = { ...this.location, branch: target };
+    const { sha } = await writeGitFile(targetLocation, this.token(), {
+      message: opts.message?.trim() || `Update ${this.name} via srs-web`,
+      content,
+      // The blob SHA is shared across branches at branch-creation time.
+      sha: this.currentRevision,
+    });
+    this.location = targetLocation;
     this.currentRevision = sha;
     return { revision: sha };
   }
