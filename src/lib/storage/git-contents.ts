@@ -110,6 +110,13 @@ export async function writeGitFile(
   });
   // 409 Conflict / 422 Unprocessable Entity == the blob SHA moved under us.
   if (response.status === 409 || response.status === 422) throw new StorageConflictError();
+  // 403 on write with read working == the token can read but not write this repo.
+  if (response.status === 403) {
+    const detail = await parseError(response);
+    throw new StorageFetchError(
+      `Write denied (403: ${detail}). The connected GitHub App has read but not write access here — set its Contents permission to Read & write, approve the update on the installation, then sign out and back in.`
+    );
+  }
   if (!response.ok) {
     throw new StorageFetchError(`Git file write failed: ${await parseError(response)}`);
   }

@@ -354,4 +354,18 @@ describe("GitHub storage adapter", () => {
     const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, "sha-1", () => "token");
     await expect(handle.write("{}", "sha-1")).rejects.toBeInstanceOf(StorageConflictError);
   });
+
+  it("explains a 403 write as a missing Contents write permission", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ message: "Resource not accessible by integration" }), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+    );
+    const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, "sha-1", () => "token");
+    await expect(handle.write("{}", "sha-1")).rejects.toThrow(/Read & write/);
+  });
 });
