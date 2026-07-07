@@ -509,6 +509,7 @@
       }
     }
     editingRecord = selectedRecord;
+    formError = null;
     formMode = "edit";
   }
 
@@ -544,6 +545,7 @@
     if (!selectedRecord) return;
     if (statusFieldId === undefined) return;
     showSuccessorModal = false;
+    formError = null;
     try {
       const baseValues = selectedRecord.fieldValues.filter((fv) => fv.fieldId !== statusFieldId);
       const result = createRecordSuccessor(repo, selectedRecord.instanceId, {
@@ -555,6 +557,9 @@
           addContainerMember(repo, activeContainerId, result.record.instanceId);
         } catch (e: unknown) {
           console.error("addContainerMember failed for successor:", e);
+          formError = e instanceof Error
+            ? `Successor created, but container registration failed: ${e.message}`
+            : "Successor created, but could not register in container.";
         }
       }
       loadContainerNav();
@@ -844,6 +849,9 @@
                 </button>
               {/each}
             </div>
+          {/if}
+          {#if formError}
+            <p class="inspector__export-error" role="alert">{formError}</p>
           {/if}
         </InspectorSection>
       {/if}
