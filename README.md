@@ -12,6 +12,20 @@ record, Decision Log container, and root container — via the WASM
 `src/lib/governance/seed/` (RFC-014-migrated; see the README there for
 provenance and regeneration — never hand-edit it).
 
+## Autosave and session restore
+
+The governance editor autosaves the working copy to `localStorage` after every successful write
+(create, update, delete, lifecycle transition, relation, tag update). A "Saved" flash appears
+briefly in the topbar after each autosave.
+
+On reload, if a cached session is found the app goes directly to the governance file-picker
+with a **Restore session** banner. Clicking **Restore session** reloads the in-memory repository
+from the cache and resumes editing. Clicking **Discard** or opening a different file clears the
+cache.
+
+The cache is a single `localStorage` slot (`srs-web:working-copy`). It is cleared whenever the
+user opens another file or explicitly discards the session.
+
 ## Cloud storage
 
 The editor can open `.srsj` and `.json` repositories from the local device,
