@@ -56,7 +56,7 @@
   import TagChip from "$lib/components/TagChip.svelte";
 
   import { TYPE_REGISTRY, DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
-  import { getStringField, STATUS_FIELD_ID } from "$lib/governance/field-utils.js";
+  import { getStringField, findFieldId } from "$lib/governance/field-utils.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
   import { LIFECYCLE_TRANSITIONS, IMMUTABLE_STATES } from "$lib/governance/lifecycle.js";
@@ -122,6 +122,11 @@
   // fieldMetaMap is $derived so buildFieldMetaMap only runs when containerSchemas
   // changes (once at load), not on every reactive access from child components.
   const fieldMetaMap = $derived(buildFieldMetaMap(containerSchemas));
+
+  // Discover the status field ID from the loaded package schema rather than hardcoding
+  // the UUID. Returns undefined when the governance package has no "status" field —
+  // callers treat undefined as a graceful no-op (see #86).
+  const statusFieldId = $derived(findFieldId("status", fieldMetaMap));
 
   // Provide reactive field metadata to all descendant rendering components.
   setFieldMetaContext(() => fieldMetaMap);
@@ -494,12 +499,14 @@
 
   function handleEditRecord() {
     if (!selectedRecord) return;
-    const status = selectedRecord.fieldValues.find(
-      (fv) => fv.fieldId === STATUS_FIELD_ID
-    )?.value as string | undefined;
-    if (status && IMMUTABLE_STATES.has(status)) {
-      showSuccessorModal = true;
-      return;
+    if (statusFieldId !== undefined) {
+      const status = selectedRecord.fieldValues.find(
+        (fv) => fv.fieldId === statusFieldId
+      )?.value as string | undefined;
+      if (status && IMMUTABLE_STATES.has(status)) {
+        showSuccessorModal = true;
+        return;
+      }
     }
     editingRecord = selectedRecord;
     formMode = "edit";
@@ -516,8 +523,7 @@
   }
 
   function handleLifecycleTransition(toState: string) {
-    if (!selectedRecord) return;
-    const statusFieldId = STATUS_FIELD_ID;
+    if (!selectedRecord || statusFieldId === undefined) return;
     try {
       // Governance status is stored as a field value, not ext:lifecycle state.
       // Update the status field to the new state via updateRecord.
@@ -537,7 +543,7 @@
   function handleCreateSuccessor() {
     if (!selectedRecord) return;
     showSuccessorModal = false;
-    const statusFieldId = STATUS_FIELD_ID;
+    if (!statusFieldId) return;
     try {
       const baseValues = selectedRecord.fieldValues.filter((fv) => fv.fieldId !== statusFieldId);
       const result = createRecordSuccessor(repo, selectedRecord.instanceId, {

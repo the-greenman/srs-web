@@ -10,8 +10,20 @@
 import type { SrsRecord } from "../srs-client.js";
 import type { FieldFormDef } from "./types.js";
 
-/** Pre-existing UUID for the governance status field. Deferred to #86 for schema discovery. */
-export const STATUS_FIELD_ID = "aee7afe9-6650-5fa4-a61a-495c3b88994b";
+/**
+ * Find the fieldId for a field by its package-defined name in the schema-derived fieldMeta map.
+ * Returns `undefined` when the named field is not present in the map (e.g. a custom package
+ * without a "status" field). Callers must treat `undefined` as a graceful no-op.
+ */
+export function findFieldId(
+  fieldName: string,
+  fieldMeta: Map<string, FieldFormDef>
+): string | undefined {
+  for (const [fieldId, def] of fieldMeta) {
+    if (def.name === fieldName) return fieldId;
+  }
+  return undefined;
+}
 
 /**
  * Look up a named field value from a record using the schema-derived fieldMeta map.
