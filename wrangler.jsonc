@@ -8,7 +8,7 @@
 	"vars": {
 		"APP_ORIGIN": "https://app.mudemocracy.org",
 		"GITHUB_REDIRECT_URI": "https://app.mudemocracy.org/",
-		"GITHUB_CLIENT_ID": ""
+		"GITHUB_CLIENT_ID": "Iv23liFJ9ym1hcYQ6TuN"
 	},
 	"observability": {
 		"enabled": false,
