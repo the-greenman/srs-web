@@ -11,6 +11,13 @@ export default defineConfig({
       $lib: resolve(__dirname, "./src/lib"),
     },
   },
+  server: {
+    // Forward the OAuth token-exchange routes to a locally-running `wrangler dev`
+    // (default port 8787). See README → GitHub / local dev.
+    proxy: {
+      "/api": "http://localhost:8787",
+    },
+  },
   build: {
     target: "es2022",
   },

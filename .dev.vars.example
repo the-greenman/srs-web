@@ -1,0 +1,8 @@
+# Local `wrangler dev` secrets/vars for the OAuth token-exchange Worker (ADR-011).
+# Copy to `.dev.vars` (gitignored) and fill in a GitHub OAuth App's values.
+# In production these are set with `wrangler secret put GITHUB_CLIENT_SECRET`
+# (secret) and as plaintext `[vars]` in wrangler.jsonc (client id / origins).
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+APP_ORIGIN=http://localhost:5174
+GITHUB_REDIRECT_URI=http://localhost:5174/

@@ -4,6 +4,12 @@
 	"workers_dev": false,
 	"preview_urls": true,
 	"compatibility_date": "2026-07-06",
+	"main": "./worker/index.ts",
+	"vars": {
+		"APP_ORIGIN": "https://app.mudemocracy.org",
+		"GITHUB_REDIRECT_URI": "https://app.mudemocracy.org/",
+		"GITHUB_CLIENT_ID": ""
+	},
 	"observability": {
 		"enabled": false,
 		"head_sampling_rate": 1,
@@ -20,8 +26,10 @@
 		}
 	},
 	"assets": {
+		"binding": "ASSETS",
 		"directory": "./dist",
-		"not_found_handling": "single-page-application"
+		"not_found_handling": "single-page-application",
+		"run_worker_first": ["/api/*"]
 	},
 	"routes": [
 		{ "pattern": "app.mudemocracy.org", "custom_domain": true }
