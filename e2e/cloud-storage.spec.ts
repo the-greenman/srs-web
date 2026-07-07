@@ -62,30 +62,43 @@ async function installFakeProviders(page: Page, mode: FakeMode = "success"): Pro
           label: "GitHub",
           configured: true,
           authenticate: async () => failIfNeeded(),
-          // "" lists repos (folders); a repo path lists its .srsj files.
-          list: async (path?: string) =>
-            path
-              ? [{
-                  id: "octo/gov/repo.srsj",
-                  name: "repo.srsj",
-                  kind: "file",
-                  path: "octo/gov/repo.srsj",
-                  revision: "sha-1",
-                }]
-              : [
-                  { id: "octo/gov", name: "octo/gov", kind: "folder", path: "octo/gov" },
-                  { id: "octo/notes", name: "octo/notes", kind: "folder", path: "octo/notes" },
-                ],
-          // A git-aware handle so Save opens the branch/install dialog.
-          open: async () => ({
-            ...documentHandle("github", "repo.srsj"),
-            branch: "main",
-            repoLabel: "octo/gov",
-            saveToBranch: async (_content: string, opts: { branch: string }) => {
-              if (fakeMode === "conflict") throw { code: "conflict", message: "changed upstream" };
-              return { revision: opts.branch === "main" ? "sha-2" : "sha-branch" };
-            },
-          }),
+          // "" → repos; "owner/repo" → branches; "owner/repo:branch" → files.
+          list: async (path?: string) => {
+            if (!path) {
+              return [
+                { id: "octo/gov", name: "octo/gov", kind: "folder", path: "octo/gov" },
+                { id: "octo/notes", name: "octo/notes", kind: "folder", path: "octo/notes" },
+              ];
+            }
+            if (!path.includes(":")) {
+              return [
+                { id: `${path}:main`, name: "main", kind: "folder", path: `${path}:main` },
+                { id: `${path}:dev`, name: "dev", kind: "folder", path: `${path}:dev` },
+              ];
+            }
+            return [
+              {
+                id: `${path}:repo.srsj`,
+                name: "repo.srsj",
+                kind: "file",
+                path: `${path}:repo.srsj`,
+                revision: "sha-1",
+              },
+            ];
+          },
+          // A git-aware handle (branch from the browse path) so Save opens the dialog.
+          open: async (entry: { path?: string }) => {
+            const [repoPart = "octo/gov", branch = "main"] = (entry.path ?? "").split(":");
+            return {
+              ...documentHandle("github", "repo.srsj"),
+              branch,
+              repoLabel: repoPart,
+              saveToBranch: async (_content: string, opts: { branch: string }) => {
+                if (fakeMode === "conflict") throw { code: "conflict", message: "changed upstream" };
+                return { revision: opts.branch === branch ? "sha-2" : "sha-branch" };
+              },
+            };
+          },
         },
       };
     },
@@ -174,13 +187,16 @@ test.describe("Cloud storage sources", () => {
     await expect(page.locator("#srsj-file")).toBeAttached();
   });
 
-  test("opens a GitHub repository by browsing repo → file", async ({ page }) => {
+  test("opens a GitHub repository by browsing repo → branch → file", async ({ page }) => {
     await installFakeProviders(page);
     await page.goto("/");
     await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-github").click();
-    // "" lists repos as folders; drill into the repo, then pick the .srsj.
+    // "" → repos; pick repo → branches; pick branch → the .srsj.
     await page.getByRole("button", { name: /octo\/gov/ }).click();
+    await expect(page.getByRole("button", { name: /^Folder\s+main$/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Folder\s+dev$/ })).toBeVisible();
+    await page.getByRole("button", { name: /^Folder\s+main$/ }).click();
     await page.getByRole("button", { name: /repo\.srsj/ }).click();
 
     await expect(page.getByTitle("Opened from github")).toHaveText("repo");
@@ -202,8 +218,9 @@ test.describe("Cloud storage sources", () => {
   async function openGitHubDoc(page: Page): Promise<void> {
     await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-github").click();
-    await page.getByRole("button", { name: /octo\/gov/ }).click();
-    await page.getByRole("button", { name: /repo\.srsj/ }).click();
+    await page.getByRole("button", { name: /octo\/gov/ }).click(); // repo
+    await page.getByRole("button", { name: /^Folder\s+main$/ }).click(); // branch
+    await page.getByRole("button", { name: /repo\.srsj/ }).click(); // file
   }
 
   test("Save opens a branch dialog and commits to the current branch", async ({ page }) => {

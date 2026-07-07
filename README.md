@@ -77,9 +77,12 @@ consoles before production deployment.
 3. Put the app's **Client ID** in `VITE_GITHUB_CLIENT_ID` and set
    `VITE_GITHUB_REDIRECT_URI` to the matching redirect URI.
 4. The app requests the `repo` scope so a Clerk can keep a public **or private**
-   governance repository. Sign in, browse your repos, open a `.srsj`, edit, and
-   **Save** — each Save is a new commit whose blob SHA becomes the revision; a
-   concurrent edit is reported as a conflict rather than silently clobbered.
+   governance repository. Sign in, then browse **repo → branch → file** (the
+   loader lists branches after you pick a repo; the default branch sorts first),
+   open a `.srsj`, edit, and **Save** — each Save is a new commit whose blob SHA
+   becomes the revision; a concurrent edit is reported as a conflict rather than
+   silently clobbered. Opening from a branch binds the document to it, so Save
+   defaults back to that branch.
 5. **Save dialog:** saving a git document opens a dialog to commit to the current
    branch or **create a new branch** (useful when the default branch is
    protected), with an optional commit message. Set `VITE_GITHUB_APP_SLUG` (the

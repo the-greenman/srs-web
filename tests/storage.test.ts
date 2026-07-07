@@ -13,6 +13,7 @@ import {
 import {
   completeGitHubOAuthCallback,
   GitHubDocumentHandle,
+  GitHubProvider,
   parseGitHubOAuthCallback,
 } from "../src/lib/storage/github.js";
 import {
@@ -427,6 +428,26 @@ describe("GitHub storage adapter", () => {
     // The write must send the *target branch's* SHA, not the stale source SHA.
     const putBody = JSON.parse(String((fetchMock.mock.calls[3]?.[1] as RequestInit).body));
     expect(putBody.sha).toBe("target-sha");
+  });
+
+  it("binds an opened document to the branch chosen while browsing", async () => {
+    const provider = new GitHubProvider({ clientId: "c", redirectUri: "https://app.test/" });
+    // biome-ignore lint/suspicious/noExplicitAny: test seam — skip the OAuth popup
+    (provider as any).accessToken = "token";
+    // biome-ignore lint/suspicious/noExplicitAny: test seam
+    (provider as any).expiresAt = Date.now() + 3_600_000;
+
+    const handle = await provider.open({
+      id: "octo/gov:dev:governance/repo.srsj",
+      name: "repo.srsj",
+      kind: "file",
+      path: "octo/gov:dev:governance/repo.srsj",
+      revision: "sha-1",
+    });
+
+    // The handle targets the browsed branch/repo — so Save defaults there.
+    expect((handle as GitHubDocumentHandle).branch).toBe("dev");
+    expect((handle as GitHubDocumentHandle).repoLabel).toBe("octo/gov");
   });
 
   it("treats a non-SHA 422 as a fetch error, not a false conflict", async () => {

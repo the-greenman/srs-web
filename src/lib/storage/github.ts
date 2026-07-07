@@ -51,6 +51,10 @@ interface GitHubContentItem {
   type: "file" | "dir" | string;
 }
 
+interface GitHubBranch {
+  name: string;
+}
+
 export interface GitHubConfig {
   clientId: string;
   redirectUri: string;
@@ -296,9 +300,16 @@ export class GitHubProvider implements StorageProvider {
     });
   }
 
+  // Browse path grammar (":" is illegal in git branch names, so it's unambiguous):
+  //   ""                        → repositories
+  //   "owner/repo"              → branches of that repo
+  //   "owner/repo:branch"       → that branch's root
+  //   "owner/repo:branch:dir"   → a directory on that branch
   async list(path = ""): Promise<StorageEntry[]> {
     await this.authenticate();
     if (path === "") return this.listRepos();
+    const { owner, repo, branch } = parseGitHubPath(path);
+    if (!branch) return this.listBranches(owner, repo);
     return this.listContents(path);
   }
 
@@ -307,14 +318,13 @@ export class GitHubProvider implements StorageProvider {
     if (entry.kind !== "file" || !entry.path) {
       throw new StorageFetchError("GitHub did not return a usable file path.");
     }
-    const { owner, repo, filePath } = splitRepoPath(entry.path);
-    if (!filePath) throw new StorageFetchError("GitHub entry is missing a file path.");
-    const branch = await this.branchFor(owner, repo);
+    const { owner, repo, branch, dir } = parseGitHubPath(entry.path);
+    if (!branch || !dir) throw new StorageFetchError("GitHub entry is missing a branch or path.");
     const location: GitContentsLocation = {
       apiBase: GITHUB_API,
       owner,
       repo,
-      path: filePath,
+      path: dir,
       branch,
     };
     return new GitHubDocumentHandle(entry.id, entry.name, location, entry.revision ?? null, () =>
@@ -349,33 +359,49 @@ export class GitHubProvider implements StorageProvider {
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  /** Branches of a repo, as navigable folders; the default branch sorts first. */
+  private async listBranches(owner: string, repo: string): Promise<StorageEntry[]> {
+    const branches: GitHubBranch[] = [];
+    const perPage = 100;
+    for (let page = 1; page <= 20; page++) {
+      const batch = await this.api<GitHubBranch[]>(
+        `/repos/${owner}/${repo}/branches?per_page=${perPage}&page=${page}`
+      );
+      branches.push(...batch);
+      if (batch.length < perPage) break;
+    }
+    const defaultBranch = this.defaultBranches.get(`${owner}/${repo}`) ?? "";
+    return branches
+      .map((branch) => ({
+        id: `${owner}/${repo}:${branch.name}`,
+        name: branch.name,
+        kind: "folder" as const,
+        path: `${owner}/${repo}:${branch.name}`,
+      }))
+      .sort((a, b) => {
+        if (a.name === defaultBranch) return -1;
+        if (b.name === defaultBranch) return 1;
+        return a.name.localeCompare(b.name);
+      });
+  }
+
   private async listContents(path: string): Promise<StorageEntry[]> {
-    const { owner, repo, filePath } = splitRepoPath(path);
-    const branch = await this.branchFor(owner, repo);
+    const { owner, repo, branch, dir } = parseGitHubPath(path);
     const items = await this.api<GitHubContentItem[]>(
-      `/repos/${owner}/${repo}/contents/${encodePath(filePath)}?ref=${encodeURIComponent(branch)}`
+      `/repos/${owner}/${repo}/contents/${encodePath(dir)}?ref=${encodeURIComponent(branch)}`
     );
     return items
       .filter((item) => item.type === "dir" || /\.(srsj|json)$/i.test(item.name))
       .map((item) => ({
-        id: `${owner}/${repo}/${item.path}`,
+        id: `${owner}/${repo}:${branch}:${item.path}`,
         name: item.name,
         kind: item.type === "dir" ? ("folder" as const) : ("file" as const),
-        path: `${owner}/${repo}/${item.path}`,
+        path: `${owner}/${repo}:${branch}:${item.path}`,
         revision: item.type === "dir" ? null : item.sha,
       }))
       .sort((a, b) =>
         a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === "folder" ? -1 : 1
       );
-  }
-
-  private async branchFor(owner: string, repo: string): Promise<string> {
-    const key = `${owner}/${repo}`;
-    const known = this.defaultBranches.get(key);
-    if (known) return known;
-    const info = await this.api<{ default_branch: string }>(`/repos/${owner}/${repo}`);
-    this.defaultBranches.set(key, info.default_branch);
-    return info.default_branch;
   }
 
   private requireToken(): string {
@@ -394,9 +420,19 @@ export class GitHubProvider implements StorageProvider {
   }
 }
 
-/** Split "owner/repo[/dir/file]" into its parts; `filePath` is "" at a repo root. */
-function splitRepoPath(path: string): { owner: string; repo: string; filePath: string } {
-  const parts = path.split("/").filter((segment) => segment.length > 0);
-  const [owner = "", repo = "", ...rest] = parts;
-  return { owner, repo, filePath: rest.join("/") };
+/**
+ * Parse a GitHub browse path: "owner/repo", "owner/repo:branch", or
+ * "owner/repo:branch:dir/sub". `branch`/`dir` are "" when not yet selected.
+ * Git branch names cannot contain ":", so the first ":" always delimits the
+ * branch; any later ":" is kept as part of `dir` (rare, but path-legal).
+ */
+function parseGitHubPath(path: string): {
+  owner: string;
+  repo: string;
+  branch: string;
+  dir: string;
+} {
+  const [repoPart = "", branch = "", ...dirParts] = path.split(":");
+  const [owner = "", repo = ""] = repoPart.split("/").filter((segment) => segment.length > 0);
+  return { owner, repo, branch, dir: dirParts.join(":") };
 }
