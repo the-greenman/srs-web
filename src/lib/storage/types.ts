@@ -1,4 +1,4 @@
-export type StorageProviderId = "local" | "dropbox" | "google-drive";
+export type StorageProviderId = "local" | "dropbox" | "google-drive" | "github";
 
 export interface DocumentCapabilities {
   read: boolean;

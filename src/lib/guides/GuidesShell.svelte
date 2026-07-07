@@ -73,9 +73,22 @@
     repoName: string;
     documentProvider: string;
     onExport: () => void;
+    /** Write back to the opened cloud/git document. Undefined for read-only handles. */
+    onSave?: () => Promise<void>;
+    saving?: boolean;
+    saveMessage?: string | null;
     onOpenAnother: () => void;
   }
-  let { repo, repoName, documentProvider, onExport, onOpenAnother }: Props = $props();
+  let {
+    repo,
+    repoName,
+    documentProvider,
+    onExport,
+    onSave,
+    saving = false,
+    saveMessage = null,
+    onOpenAnother,
+  }: Props = $props();
 
   // ---------------------------------------------------------------------------
   // State
@@ -568,6 +581,22 @@
             <Breadcrumb items={guideCrumbItems()} />
           {/snippet}
           {#snippet actions()}
+            {#if onSave}
+              <Button
+                variant="ghost"
+                data-testid="save-document"
+                onclick={onSave}
+                disabled={saving}
+              >{saving ? "Saving…" : "Save"}</Button>
+            {/if}
+            {#if saveMessage}
+              <span
+                class="guides-save-message"
+                data-testid="save-status"
+                role="status"
+                aria-live="polite"
+              >{saveMessage}</span>
+            {/if}
             <Button
               variant="ghost"
               data-testid="guides-export-btn"
@@ -998,6 +1027,12 @@
     :global(.guides-preview-toggle) {
       display: none;
     }
+  }
+
+  .guides-save-message {
+    font-size: 0.7rem;
+    opacity: 0.75;
+    max-width: 22rem;
   }
 
 </style>
