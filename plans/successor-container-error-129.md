@@ -46,6 +46,7 @@ No new TypeScript types. `formError: string | null` already exists in `Governanc
 - Migration to an atomic `create_decision` binding (tracked in srs-rust#315)
 - Any changes to the create path or edit path (covered by #113)
 - Toast/notification system (no such system exists; inline inspector error is consistent with the export-error pattern)
+- Surfacing `createRecordSuccessor` failures (the outer catch at line ~563 still logs only; tracked separately — see filed follow-up issue)
 
 ---
 
@@ -90,11 +91,22 @@ No new TypeScript types. `formError: string | null` already exists in `Governanc
   ```
   Placement after transitions (not between actions and transitions) keeps the layout coherent: actions → transitions → error. Use the existing `.inspector__export-error` CSS class (already defined at line ~1214). No new CSS needed.
 
-- [ ] Confirm `formError` is already cleared at appropriate points:
+- [ ] In `handleEditRecord` (line ~500), add `formError = null;` before `formMode = "edit"` to prevent a stale successor-failure error from appearing inside a fresh, unrelated edit form. Without this, a user who sees the successor error and then clicks Edit will see "Successor created, but container registration failed" as the RecordForm's `saveError` — a misleading message in a new context:
+  ```typescript
+  function handleEditRecord() {
+    if (!selectedRecord) return;
+    // ... immutable check / showSuccessorModal ...
+    editingRecord = selectedRecord;
+    formError = null;    // ← add this
+    formMode = "edit";
+  }
+  ```
+
+- [ ] Confirm `formError` is cleared at all appropriate points:
   - On nav click (line 697): `formError = null` ✓
   - On `handleFormCancel` (line 496): `formError = null` ✓
   - At start of `handleFormSave` (line 433): `formError = null` ✓
-  No new clearing logic is required.
+  - In `handleEditRecord` before `formMode = "edit"` ← **add this** (Architecture Reviewer finding #1)
 
 #### Acceptance Criteria
 
@@ -102,6 +114,7 @@ No new TypeScript types. `formError: string | null` already exists in `Governanc
 - [ ] The error message is visible to the user in the inspector (not just in console)
 - [ ] The successor record is still created and selected (error is non-blocking for the record itself)
 - [ ] `formError` clears when the user navigates to another container
+- [ ] Clicking Edit after a successor container failure does NOT show the stale error in the RecordForm (`handleEditRecord` clears it)
 - [ ] `npm run typecheck` passes with no new errors
 - [ ] `npm run build` succeeds
 - [ ] No regression in the create-path error handling (#113)
@@ -137,6 +150,7 @@ Verify successor error path specifically:
 - [ ] `npm test` passes
 - [ ] After a simulated `addContainerMember` failure in `handleCreateSuccessor`, the inspector shows the error message
 - [ ] No regression in create-path error handling (the `formError` display inside the RecordForm still works when `formMode !== null`)
+- [ ] Clicking Edit after a successor container failure does NOT show the stale error in the RecordForm
 
 ## Coordination Rules
 
