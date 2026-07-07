@@ -72,7 +72,10 @@ async function installFakeProviders(page: Page, mode: FakeMode = "success"): Pro
                   path: "octo/gov/repo.srsj",
                   revision: "sha-1",
                 }]
-              : [{ id: "octo/gov", name: "octo/gov", kind: "folder", path: "octo/gov" }],
+              : [
+                  { id: "octo/gov", name: "octo/gov", kind: "folder", path: "octo/gov" },
+                  { id: "octo/notes", name: "octo/notes", kind: "folder", path: "octo/notes" },
+                ],
           open: async () => documentHandle("github", "repo.srsj"),
         },
       };
@@ -134,6 +137,25 @@ test.describe("Cloud storage sources", () => {
   });
 
   test("unconfigured providers are disabled while local files remain available", async ({ page }) => {
+    // Inject explicitly-unconfigured providers so the assertion is deterministic
+    // regardless of any ambient .env.local a developer may have.
+    await page.addInitScript(() => {
+      const stub = (id: string, label: string) => ({
+        id,
+        label,
+        configured: false,
+        authenticate: async () => {},
+        open: async () => {
+          throw new Error("unconfigured");
+        },
+      });
+      // biome-ignore lint/suspicious/noExplicitAny: test injection shape
+      (window as any).__SRS_STORAGE_PROVIDERS__ = {
+        dropbox: stub("dropbox", "Dropbox"),
+        googleDrive: stub("google-drive", "Google Drive"),
+        github: stub("github", "GitHub"),
+      };
+    });
     await page.goto("/");
     await page.getByTestId("mode-governance").click();
 
@@ -153,6 +175,19 @@ test.describe("Cloud storage sources", () => {
     await page.getByRole("button", { name: /repo\.srsj/ }).click();
 
     await expect(page.getByTitle("Opened from github")).toHaveText("repo");
+  });
+
+  test("filters the repository list by name", async ({ page }) => {
+    await installFakeProviders(page);
+    await page.goto("/");
+    await page.getByTestId("mode-governance").click();
+    await page.getByTestId("source-github").click();
+    await expect(page.getByRole("button", { name: /octo\/gov/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /octo\/notes/ })).toBeVisible();
+
+    await page.getByTestId("cloud-browser-filter").fill("notes");
+    await expect(page.getByRole("button", { name: /octo\/gov$/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /octo\/notes/ })).toBeVisible();
   });
 
   test("saves a GitHub document and reports success", async ({ page }) => {

@@ -267,8 +267,10 @@ export class GitHubProvider implements StorageProvider {
   }
 
   private async listRepos(): Promise<StorageEntry[]> {
+    // visibility=all requests private repos too; whether they actually come back
+    // depends on the GitHub App's install scope + Contents/Metadata permission.
     const repos = await this.api<GitHubRepo[]>(
-      "/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member"
+      "/user/repos?per_page=100&sort=updated&visibility=all&affiliation=owner,collaborator,organization_member"
     );
     return repos
       .map((repo) => {
