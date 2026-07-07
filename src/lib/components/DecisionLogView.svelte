@@ -4,12 +4,9 @@
 -->
 <script lang="ts">
   import type { SrsRecord, SrsRepository } from "$lib/srs-client.js";
-  import type { Status } from "$lib/types.js";
-  import { getStringField } from "$lib/governance/field-utils.js";
-  import { getFieldMeta } from "$lib/governance/field-meta.js";
   import { listDocumentViews, renderDocumentView } from "$lib/srs-client.js";
   import { triggerDownload, wrapLogHtml } from "$lib/governance/decision-export-utils.js";
-  import { computeSearchHitIds, computeTagHitIds, sortByCreatedAt } from "./decision-log-utils.js";
+  import { computeSearchHitIds, computeTagHitIds, computeLifecycleVisibleIds, sortByCreatedAt } from "./decision-log-utils.js";
   import LogTable from "./LogTable.svelte";
   import DecisionSummaryCard from "./DecisionSummaryCard.svelte";
   import TagChip from "./TagChip.svelte";
@@ -26,8 +23,6 @@
     onSelect: (id: string | null) => void;
   } = $props();
 
-  const fieldMeta = $derived(getFieldMeta());
-
   let sortOrder = $state<"newest" | "oldest">("newest");
   let topicFilter = $state<string>("all");
   let searchQuery = $state<string>("");
@@ -38,7 +33,8 @@
   // The view has the decision container baked into its own definition.
   const deliberationViewId = $derived(
     repo
-      ? listDocumentViews(repo, { namespace: "governance", name: "decision-deliberation" })[0]?.id ?? null
+      ? (listDocumentViews(repo, { namespace: "governance", name: "decision-deliberation" })
+          .find((v) => v.name === "decision-deliberation")?.id ?? null)
       : null
   );
 
@@ -65,8 +61,6 @@
     }
   }
 
-  const HIDDEN_STATUSES: ReadonlySet<Status> = new Set(["superseded", "abandoned"]);
-
   const availableTopics = $derived(
     [...new Set(records.flatMap((r) => r.tags ?? []))].sort((a, b) => a.localeCompare(b))
   );
@@ -74,6 +68,9 @@
   // Call WASM find once per query/filter change; null means "no active filter" (show all).
   const searchHitIds = $derived(computeSearchHitIds(repo, searchQuery));
   const tagHitIds = $derived(computeTagHitIds(repo, topicFilter));
+  const lifecycleVisibleIds = $derived(
+    !showAll ? computeLifecycleVisibleIds(repo, ["superseded", "abandoned"]) : null
+  );
 
   const displayedRecords = $derived(
     sortByCreatedAt(
@@ -81,11 +78,8 @@
         .filter((r) => {
           // Search filter via WASM find (ADR-001 compliant — no field names in the query)
           if (searchHitIds !== null && !searchHitIds.has(r.instanceId)) return false;
-          // Status filter (residual ADR-001 gap tracked in srs-web#118)
-          if (!showAll) {
-            const s = getStringField(r, "status", fieldMeta);
-            if (s !== undefined && HIDDEN_STATUSES.has(s as Status)) return false;
-          }
+          // Lifecycle filter via WASM find (ADR-001 compliant — no field names; ADR-022)
+          if (lifecycleVisibleIds !== null && !lifecycleVisibleIds.has(r.instanceId)) return false;
           if (tagHitIds !== null && !tagHitIds.has(r.instanceId)) return false;
           return true;
         }),

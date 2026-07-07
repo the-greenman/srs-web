@@ -119,7 +119,9 @@ export interface FieldValue {
   value: unknown;
 }
 
-export type LifecycleState = "draft" | "active" | "archived";
+// Open-ended string: the valid state vocabulary is enforced by the Rust core, not TypeScript.
+// TODO: expose lifecycle state vocabulary via a WASM binding (ADR-001 residual — srs-web#167)
+export type LifecycleState = string;
 
 export interface ListNotesResult {
   notes: NoteRecord[];
@@ -286,7 +288,7 @@ function normalizeRecord(raw: any): SrsRecord {
       value: fv.value,
     })),
     groupValues: groupValues.length > 0 ? groupValues : undefined,
-    lifecycle: raw.lifecycle,
+    lifecycle: raw.lifecycleState ?? raw.lifecycle_state ?? raw.lifecycle,
     createdAt: raw.createdAt ?? raw.created_at,
     updatedAt: raw.updatedAt ?? raw.updated_at,
     ...(Array.isArray(raw.tags) && { tags: raw.tags }),
@@ -460,7 +462,10 @@ export function createRecordSuccessor(
 }
 
 /**
- * Transition a record to a new lifecycle state.
+ * Transition `instanceId` to `state`. Valid states are defined by the record type's
+ * `ext:lifecycle` package definition. Transition rules and immutability constraints are
+ * enforced by the Rust core — this function does not validate state names client-side.
+ * ADR-001: lifecycle transition validation is the WASM engine's responsibility, not TypeScript's.
  */
 export function setLifecycleState(
   repo: SrsRepository,
