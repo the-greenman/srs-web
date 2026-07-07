@@ -33,7 +33,8 @@
   // The view has the decision container baked into its own definition.
   const deliberationViewId = $derived(
     repo
-      ? listDocumentViews(repo, { namespace: "governance", name: "decision-deliberation" })[0]?.id ?? null
+      ? (listDocumentViews(repo, { namespace: "governance", name: "decision-deliberation" })
+          .find((v) => v.name === "decision-deliberation")?.id ?? null)
       : null
   );
 
