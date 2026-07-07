@@ -9,7 +9,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 import type { SrsRepository, SrsRecord } from "../src/lib/srs-client.js";
-import { computeSearchHitIds, computeTagHitIds, sortByCreatedAt } from "../src/lib/components/decision-log-utils.js";
+import { computeSearchHitIds, computeTagHitIds, computeLifecycleVisibleIds, sortByCreatedAt } from "../src/lib/components/decision-log-utils.js";
 
 // ---------------------------------------------------------------------------
 // Mock helpers
@@ -50,6 +50,66 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
 function makeRecord(instanceId: string, createdAt: string): SrsRecord {
   return { instanceId, typeId: "t1", typeVersion: 1, fieldValues: [], createdAt };
 }
+
+// ---------------------------------------------------------------------------
+// computeLifecycleVisibleIds
+// ---------------------------------------------------------------------------
+
+describe("computeLifecycleVisibleIds", () => {
+  it("returns null when repo is undefined", () => {
+    const result = computeLifecycleVisibleIds(undefined, ["superseded"]);
+    expect(result).toBeNull();
+  });
+
+  it("returns null when excludedStates is empty", () => {
+    const spy = vi.fn();
+    const repo = mockRepo({ find: spy });
+    const result = computeLifecycleVisibleIds(repo, []);
+    expect(spy).not.toHaveBeenCalled();
+    expect(result).toBeNull();
+  });
+
+  it("calls find with excludeLifecycleStates and returns a Set of instanceIds", () => {
+    const rawResult = {
+      hits: [
+        { instanceId: "inst-001", label: "D1", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
+        { instanceId: "inst-002", label: "D2", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
+      ],
+      total: 2,
+      diagnostics: [],
+    };
+    const spy = vi.fn().mockReturnValue(rawResult);
+    const repo = mockRepo({ find: spy });
+
+    const result = computeLifecycleVisibleIds(repo, ["superseded", "abandoned"]);
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(JSON.stringify({ excludeLifecycleStates: ["superseded", "abandoned"] }));
+    expect(result).toBeInstanceOf(Set);
+    expect(result?.has("inst-001")).toBe(true);
+    expect(result?.has("inst-002")).toBe(true);
+    expect(result?.size).toBe(2);
+  });
+
+  it("returns only the subset of instanceIds returned by find", () => {
+    // find returns only active records (lifecycle not excluded); superseded/abandoned not included
+    const rawResult = {
+      hits: [
+        { instanceId: "inst-active", label: "Active", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
+      ],
+      total: 1,
+      diagnostics: [],
+    };
+    const repo = mockRepo({ find: vi.fn().mockReturnValue(rawResult) });
+
+    const result = computeLifecycleVisibleIds(repo, ["superseded", "abandoned"]);
+
+    expect(result).toBeInstanceOf(Set);
+    expect(result?.has("inst-active")).toBe(true);
+    expect(result?.has("inst-superseded")).toBe(false);
+    expect(result?.size).toBe(1);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // computeTagHitIds

@@ -522,6 +522,7 @@
       }
     }
     editingRecord = selectedRecord;
+    formError = null;
     formMode = "edit";
   }
 
@@ -557,6 +558,7 @@
     if (!selectedRecord) return;
     if (statusFieldId === undefined) return;
     showSuccessorModal = false;
+    formError = null;
     try {
       const baseValues = selectedRecord.fieldValues.filter((fv) => fv.fieldId !== statusFieldId);
       const result = createRecordSuccessor(repo, selectedRecord.instanceId, {
@@ -568,6 +570,9 @@
           addContainerMember(repo, activeContainerId, result.record.instanceId);
         } catch (e: unknown) {
           console.error("addContainerMember failed for successor:", e);
+          formError = e instanceof Error
+            ? `Successor created, but container registration failed: ${e.message}`
+            : "Successor created, but could not register in container.";
         }
       }
       loadContainerNav();
@@ -819,6 +824,7 @@
                     class:record-list__item--selected={isSelected}
                     onclick={() => {
                       selectedId = isSelected ? null : record.instanceId;
+                      formError = null;
                     }}
                   >
                     <!-- Columns come from the DocumentView spec (ADR-010), not hardcoded
@@ -873,6 +879,9 @@
                 </button>
               {/each}
             </div>
+          {/if}
+          {#if formError}
+            <p class="inspector__error" role="alert">{formError}</p>
           {/if}
         </InspectorSection>
       {/if}
@@ -949,7 +958,7 @@
             >HTML</button>
           </div>
           {#if decisionExportError}
-            <p class="inspector__export-error" role="alert">{decisionExportError}</p>
+            <p class="inspector__error" role="alert">{decisionExportError}</p>
           {/if}
         </InspectorSection>
       {/if}
@@ -1251,7 +1260,7 @@
     align-items: center;
   }
 
-  .inspector__export-error {
+  .inspector__error {
     font-size: 0.7rem;
     color: var(--error, #cc0000);
     margin: 0.25rem 0 0;

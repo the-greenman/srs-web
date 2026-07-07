@@ -58,6 +58,9 @@ here so it isn't mistaken for acceptable presentation logic:
   eliminating the TS-side scan. (The governance **list pane** no longer uses this —
   its columns are now driven by the core DocumentView column spec, see
   [ADR-010](./010-view-driven-list-columns.md); the remaining callers are the
-  inspector status/lifecycle and the decision path.)
+  inspector status/lifecycle (`GovernanceShell.svelte`), decision card display
+  (`DecisionSummaryCard.svelte`), and export path (`decision-export-utils.ts`). The
+  **filter** use in `DecisionLogView.svelte` was migrated to
+  `find(repo, { excludeLifecycleStates })` in #118 — see ADR-022 in srs-rust.)
 - **Hardcoded vocabularies** — the lifecycle `STATUS_OPTIONS` list is hardcoded in TS
   instead of derived from the type/lifecycle definition via a binding.
