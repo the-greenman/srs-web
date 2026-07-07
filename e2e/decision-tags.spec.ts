@@ -128,10 +128,10 @@ test.describe("Decision tag chips — inspector tag editor", () => {
   });
 
   test("removing a tag decrements the chip count", async ({ page }) => {
-    // Select a decision that has at least one tag
+    // Select a decision that has at least one tag. Selecting opens the record's
+    // reading view, so the remaining tag chips are the inspector's — count those.
     await page.getByTestId("topic-filter").getByRole("button", { name: "exhibitions" }).click();
     await page.getByTestId("decision-summary-card").first().click();
-    await page.getByTestId("topic-filter").getByRole("button", { name: "All" }).click();
 
     const countBefore = await page.getByTestId("tag-chip").count();
     await page.getByTestId("inspector-tags").getByTestId("tag-chip-remove").first().click();
@@ -139,10 +139,12 @@ test.describe("Decision tag chips — inspector tag editor", () => {
   });
 
   test("tag input clears after selection changes", async ({ page }) => {
-    const cards = page.getByTestId("decision-summary-card");
-    await cards.nth(0).click();
+    // Selecting a decision opens its reading view; return to the log before
+    // selecting a different decision.
+    await page.getByTestId("decision-summary-card").nth(0).click();
     await page.getByTestId("tag-input").fill("sometext");
-    await cards.nth(1).click();
+    await page.getByTestId("record-reading-back").click();
+    await page.getByTestId("decision-summary-card").nth(1).click();
     await expect(page.getByTestId("tag-input")).toHaveValue("");
   });
 });
