@@ -6,6 +6,15 @@ import {
 } from "../src/lib/storage/dropbox.js";
 import { StorageConflictError } from "../src/lib/storage/errors.js";
 import {
+  decodeBase64,
+  encodeBase64,
+  type GitContentsLocation,
+} from "../src/lib/storage/git-contents.js";
+import {
+  GitHubDocumentHandle,
+  parseGitHubOAuthCallback,
+} from "../src/lib/storage/github.js";
+import {
   GoogleDriveDocumentHandle,
   GoogleDriveProvider,
 } from "../src/lib/storage/google-drive.js";
@@ -229,5 +238,101 @@ describe("GoogleDriveProvider.create", () => {
     await expect(signedInProvider().create("x.srsj", "{}")).rejects.toThrow(
       /Google Drive create failed/
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GitHub storage adapter (srs-web#152)
+// ---------------------------------------------------------------------------
+
+describe("GitHub storage adapter", () => {
+  const location: GitContentsLocation = {
+    apiBase: "https://api.github.com",
+    owner: "octo",
+    repo: "gov",
+    path: "governance/repo.srsj",
+    branch: "main",
+  };
+
+  it("parses successful and denied OAuth callbacks", () => {
+    expect(parseGitHubOAuthCallback("https://app.test/?code=abc&state=state-1")).toEqual({
+      code: "abc",
+      state: "state-1",
+      error: null,
+    });
+    expect(
+      parseGitHubOAuthCallback(
+        "https://app.test/?error=access_denied&error_description=Nope&state=state-2"
+      )
+    ).toEqual({ code: null, state: "state-2", error: "Nope" });
+  });
+
+  it("round-trips UTF-8 through base64", () => {
+    const original = '{"emdash":"—","name":"Ωmega"}';
+    expect(decodeBase64(encodeBase64(original))).toBe(original);
+  });
+
+  it("decodes base64 content and captures the blob SHA on read", async () => {
+    const text = '{"srsVersion":"2.0-draft"}';
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ content: encodeBase64(text), encoding: "base64", sha: "sha-1" }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, null, () => "token");
+
+    await expect(handle.read()).resolves.toBe(text);
+    expect(handle.revision).toBe("sha-1");
+    const url = fetchMock.mock.calls[0]?.[0] as string;
+    expect(url).toContain("/repos/octo/gov/contents/governance/repo.srsj?ref=main");
+  });
+
+  it("sends the expected SHA and advances the revision on write", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ content: { sha: "sha-2" } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, "sha-1", () => "token");
+
+    await expect(handle.write("{}", "sha-1")).resolves.toEqual({ revision: "sha-2" });
+    expect(handle.revision).toBe("sha-2");
+    const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(request.method).toBe("PUT");
+    const body = JSON.parse(String(request.body)) as {
+      sha: string;
+      content: string;
+      branch: string;
+    };
+    expect(body.sha).toBe("sha-1");
+    expect(body.branch).toBe("main");
+    expect(decodeBase64(body.content)).toBe("{}");
+  });
+
+  it("omits the SHA when creating a new file", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ content: { sha: "sha-new" } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, null, () => "token");
+
+    await expect(handle.write("{}", null)).resolves.toEqual({ revision: "sha-new" });
+    const body = JSON.parse(String((fetchMock.mock.calls[0]?.[1] as RequestInit).body)) as {
+      sha?: string;
+    };
+    expect(body.sha).toBeUndefined();
+  });
+
+  it.each([409, 422])("maps HTTP %i on a stale SHA to a conflict", async (status) => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status })));
+    const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, "sha-1", () => "token");
+    await expect(handle.write("{}", "sha-1")).rejects.toBeInstanceOf(StorageConflictError);
   });
 });
