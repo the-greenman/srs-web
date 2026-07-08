@@ -644,7 +644,6 @@
         sourceInstanceId: selectedRecord.instanceId,
         targetInstanceId,
       });
-      linkError = null;
       showLinkPicker = false;
       loadDecisionRelations(selectedRecord.instanceId);
       refreshValidation();

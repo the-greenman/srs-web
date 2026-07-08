@@ -24,9 +24,7 @@ import type { RelationTypeOption } from "$lib/types.js";
 export function parseRelationTypesFromSrsj(raw: Record<string, unknown>): RelationTypeOption[] {
   try {
     const data = (raw.data ?? {}) as Record<string, unknown>;
-    const pkgKey = Object.keys(data).find(
-      (k) => k === "package/package.json" || k.endsWith("/package.json")
-    );
+    const pkgKey = Object.keys(data).find((k) => k === "package/package.json");
     if (!pkgKey) return [];
     const pkg = data[pkgKey] as Record<string, unknown>;
     const rtPaths = (pkg.relationTypes as string[] | undefined) ?? [];

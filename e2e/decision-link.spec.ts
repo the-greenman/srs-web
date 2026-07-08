@@ -104,35 +104,6 @@ test.describe("Decision link picker (srs-web#106)", () => {
   });
 
   // --------------------------------------------------------------------------
-  // Test 5: Relation type dropdown shows only package-installed types (srs-web#160)
-  // --------------------------------------------------------------------------
-  test("Relation type dropdown shows only package-installed types for gallery fixture", async ({ page }) => {
-    // Open the link picker
-    await page.getByTestId("add-relation-btn").click();
-    await expect(page.getByRole("heading", { name: "Link to another decision" })).toBeVisible({
-      timeout: 3000,
-    });
-
-    const select = page.getByTestId("link-relation-type");
-    await expect(select).toBeVisible();
-
-    // Gallery installs exactly 4 relation types: delegates, derived-from, evidences, precedes.
-    // None of the old hardcoded types (supersedes, depends-on) should appear.
-    const options = await select.locator("option").allTextContents();
-    expect(options).toHaveLength(4);
-
-    const optionValues = await select.locator("option").evaluateAll(
-      (els) => els.map((el) => (el as HTMLOptionElement).value)
-    );
-    expect(optionValues).toContain("delegates");
-    expect(optionValues).toContain("derived-from");
-    expect(optionValues).toContain("evidences");
-    expect(optionValues).toContain("precedes");
-    expect(optionValues).not.toContain("supersedes");
-    expect(optionValues).not.toContain("depends-on");
-  });
-
-  // --------------------------------------------------------------------------
   // Test 4: Deleting a relation removes it from the list (srs-web#116)
   // --------------------------------------------------------------------------
   test("Deleting a relation removes it from the relations list", async ({ page }) => {
@@ -159,5 +130,34 @@ test.describe("Decision link picker (srs-web#106)", () => {
 
     // Count should be back to the initial value
     await expect(page.getByTestId("relation-item")).toHaveCount(initialCount, { timeout: 3000 });
+  });
+
+  // --------------------------------------------------------------------------
+  // Test 5: Relation type dropdown shows only package-installed types (srs-web#160)
+  // --------------------------------------------------------------------------
+  test("Relation type dropdown shows only package-installed types for gallery fixture", async ({ page }) => {
+    // Open the link picker
+    await page.getByTestId("add-relation-btn").click();
+    await expect(page.getByRole("heading", { name: "Link to another decision" })).toBeVisible({
+      timeout: 3000,
+    });
+
+    const select = page.getByTestId("link-relation-type");
+    await expect(select).toBeVisible();
+
+    // Gallery installs exactly 4 relation types: delegates, derived-from, evidences, precedes.
+    // None of the old hardcoded types (supersedes, depends-on) should appear.
+    const options = await select.locator("option").allTextContents();
+    expect(options).toHaveLength(4);
+
+    const optionValues = await select.locator("option").evaluateAll(
+      (els) => els.map((el) => (el as HTMLOptionElement).value)
+    );
+    expect(optionValues).toContain("delegates");
+    expect(optionValues).toContain("derived-from");
+    expect(optionValues).toContain("evidences");
+    expect(optionValues).toContain("precedes");
+    expect(optionValues).not.toContain("supersedes");
+    expect(optionValues).not.toContain("depends-on");
   });
 });
