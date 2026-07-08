@@ -1,33 +1,55 @@
 <!--
   DecisionLinkPicker.svelte — modal for linking two decisions via a typed relation.
 
-  The user picks a relation type (supersedes / depends-on / precedes) and selects
-  a target decision from a searchable list. On confirm, onLink() is called with the
-  chosen relation type and target instanceId; the parent is responsible for calling
-  createRelation() via WASM (ADR-001).
+  The user picks a relation type from the package-installed set (derived at runtime by
+  GovernanceShell and passed as `relationTypes`) and selects a target decision from a
+  searchable list. On confirm, onLink() is called with the chosen relation type and
+  target instanceId; the parent is responsible for calling createRelation() via WASM
+  (ADR-001). Errors from createRelation() are surfaced via the `linkError` prop.
 
   srs-web#106: https://github.com/the-greenman/srs-web/issues/106
+  srs-web#160: https://github.com/the-greenman/srs-web/issues/160
 -->
 <script lang="ts">
   import type { SrsRecord } from "$lib/srs-client.js";
+  import type { RelationTypeOption } from "$lib/types.js";
 
   interface Props {
     sourceInstanceId: string;
     sourceLabel: string;
     decisions: SrsRecord[];
+    /** Relation types installed in the loaded package, derived by GovernanceShell. */
+    relationTypes: RelationTypeOption[];
     onLink: (relationType: string, targetInstanceId: string) => void;
     onCancel: () => void;
+    /**
+     * Error message from the last createRelation() attempt, or null when none.
+     * Set by GovernanceShell.handleAddRelation on failure; cleared on success or
+     * when the picker is re-opened.
+     */
+    linkError?: string | null;
   }
 
-  const { sourceInstanceId: _sourceInstanceId, sourceLabel, decisions, onLink, onCancel }: Props = $props();
+  const {
+    sourceInstanceId: _sourceInstanceId,
+    sourceLabel,
+    decisions,
+    relationTypes,
+    onLink,
+    onCancel,
+    linkError = null,
+  }: Props = $props();
 
-  const LINK_RELATION_TYPES = [
-    { value: "supersedes", label: "Supersedes (this replaces)" },
-    { value: "depends-on", label: "Depends on (this requires)" },
-    { value: "precedes",   label: "Precedes (this comes before)" },
-  ] as const;
+  // Default to the first installed relation type so the select is never empty.
+  // Initialized to "" and set reactively via $effect so the $state initializer
+  // does not capture a stale prop snapshot (Svelte 5 rune constraint).
+  let selectedRelationType = $state<string>("");
+  $effect(() => {
+    if (selectedRelationType === "" && relationTypes.length > 0) {
+      selectedRelationType = relationTypes[0].value;
+    }
+  });
 
-  let selectedRelationType = $state<string>("supersedes");
   let searchQuery = $state<string>("");
   let selectedTargetId = $state<string | null>(null);
 
@@ -41,7 +63,7 @@
   );
 
   function handleConfirm() {
-    if (selectedTargetId !== null) {
+    if (selectedTargetId !== null && selectedRelationType !== "") {
       onLink(selectedRelationType, selectedTargetId);
     }
   }
@@ -54,16 +76,22 @@
 
     <div class="dlp-field">
       <label class="dlp-label" for="dlp-relation-type">Relation type</label>
-      <select
-        id="dlp-relation-type"
-        class="dlp-select"
-        data-testid="link-relation-type"
-        bind:value={selectedRelationType}
-      >
-        {#each LINK_RELATION_TYPES as rt (rt.value)}
-          <option value={rt.value}>{rt.label}</option>
-        {/each}
-      </select>
+      {#if relationTypes.length === 0}
+        <p class="dlp-empty-types" data-testid="link-no-relation-types">
+          No relation types installed in this package.
+        </p>
+      {:else}
+        <select
+          id="dlp-relation-type"
+          class="dlp-select"
+          data-testid="link-relation-type"
+          bind:value={selectedRelationType}
+        >
+          {#each relationTypes as rt (rt.value)}
+            <option value={rt.value}>{rt.label}</option>
+          {/each}
+        </select>
+      {/if}
     </div>
 
     <div class="dlp-field">
@@ -107,12 +135,16 @@
       <button
         class="modal-btn modal-btn--primary"
         data-testid="link-confirm"
-        disabled={selectedTargetId === null}
+        disabled={selectedTargetId === null || relationTypes.length === 0}
         onclick={handleConfirm}
       >
         Add link
       </button>
     </div>
+
+    {#if linkError}
+      <p class="dlp-error" role="alert" data-testid="link-error">{linkError}</p>
+    {/if}
   </div>
 </div>
 
@@ -201,6 +233,23 @@
     margin: 0;
     opacity: 0.55;
     text-align: center;
+  }
+
+  .dlp-empty-types {
+    font-size: 0.8125rem;
+    padding: 0.3rem 0;
+    margin: 0;
+    opacity: 0.55;
+  }
+
+  .dlp-error {
+    font-size: 0.8125rem;
+    margin: 0;
+    padding: 0.4rem 0.5rem;
+    color: var(--color-error, #c00);
+    background: var(--color-error-subtle, rgba(204, 0, 0, 0.06));
+    border: 1px solid var(--color-error, #c00);
+    border-radius: 2px;
   }
 
   .dlp-list {
