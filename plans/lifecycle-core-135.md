@@ -31,6 +31,16 @@ See [agents.md](agents.md) for role definitions.
 No new ADR required. This plan executes the migration path already mandated by ADR-001 (residual
 debt item: "Hardcoded vocabularies — the lifecycle `STATUS_OPTIONS` list is hardcoded in TS").
 
+**Intentional behavioral change:** The old `IMMUTABLE_STATES = Set(["active", "closed"])` treated
+"active" records as immutable (requiring a successor). After migration, `isImmutable` is derived
+from the WASM engine (`srs-repository/src/record_store.rs` line 1011–1014): it is `true` only for
+**final** lifecycle states (where `is_final == true`). For the governance lifecycle: `closed` and
+`superseded` are immutable; `draft`, `proposed`, and `ratified` are NOT. This means ratified
+records become directly editable — users can edit them without creating a successor. This is
+correct per the SRS lifecycle definition (ratified is not final; it has outgoing transitions to
+closed/superseded). Adding an explicit `is_immutable` flag to non-final states would require a
+srs-rust change and is tracked as follow-up debt.
+
 ---
 
 ## Contracts
@@ -130,9 +140,23 @@ and the `SrsRepository` TS interface includes `get_allowed_lifecycle_transitions
   - Add `get_allowed_lifecycle_transitions(instance_id: string): any;` to the `SrsRepository`
     interface (alongside the existing `set_lifecycle_state`).
   - Add `getAllowedLifecycleTransitions(repo: SrsRepository, instanceId: string):
-    AllowedLifecycleTransitionsResult | null` — call `repo.get_allowed_lifecycle_transitions(instanceId)`,
-    cast result to `AllowedLifecycleTransitionsResult`, catch **all errors** (any error is treated
-    as LifecycleNotDefined, return null).
+    AllowedLifecycleTransitionsResult | null`. Implementation:
+    ```typescript
+    export function getAllowedLifecycleTransitions(
+      repo: SrsRepository,
+      instanceId: string
+    ): AllowedLifecycleTransitionsResult | null {
+      try {
+        return repo.get_allowed_lifecycle_transitions(instanceId) as AllowedLifecycleTransitionsResult;
+      } catch (e: unknown) {
+        if (e instanceof Error && e.message.includes("LifecycleNotDefined")) {
+          return null;
+        }
+        throw e; // re-throw non-LifecycleNotDefined errors — callers handle conservatively
+      }
+    }
+    ```
+    **Catch only `LifecycleNotDefined`; re-throw everything else.** A catch-all would silently bypass the immutability guard for WASM panics and version mismatches.
   - Export `getAllowedLifecycleTransitions` and the two new types.
 
 - [ ] In `tests/srs-client.test.ts`:
@@ -140,7 +164,8 @@ and the `SrsRepository` TS interface includes `get_allowed_lifecycle_transitions
     to the `mockRepo()` function so the existing mock continues to satisfy the interface.
   - Add a test for `getAllowedLifecycleTransitions`:
     - Case A: mock returns a valid payload → returns `AllowedLifecycleTransitionsResult`.
-    - Case B: mock throws → returns `null`.
+    - Case B: mock throws `Error("LifecycleNotDefined")` → returns `null`.
+    - Case C: mock throws `Error("some other WASM error")` → re-throws (does not return null).
 
 #### Acceptance Criteria
 
@@ -187,13 +212,19 @@ checks and transition button rendering; `handleLifecycleTransition` calls `setLi
     if (!selectedRecord) { allowedTransitions = null; return; }
     try {
       allowedTransitions = getAllowedLifecycleTransitions(repo, selectedRecord.instanceId);
+      // Note: if loadContainerNav() refreshes selectedRecord's reference, this effect
+      // fires a second time (one extra WASM call per transition — harmless).
     } catch {
-      allowedTransitions = null;
+      // Non-LifecycleNotDefined WASM error: fail-closed — treat as immutable so the
+      // user is never allowed to edit a record that might be immutable.
+      allowedTransitions = { currentState: "", isImmutable: true, transitions: [] };
     }
   });
   ```
-  (The try/catch is defensive; `getAllowedLifecycleTransitions` itself swallows errors and returns
-  null, but the effect should still guard.)
+  The try/catch in the effect handles errors re-thrown by `getAllowedLifecycleTransitions`
+  (i.e., non-LifecycleNotDefined errors). Fail-closed means WASM errors are conservative:
+  the user sees the successor modal rather than the edit form. This is correct for a
+  safety gate.
 
 - [ ] Update `handleEditRecord` (currently ~line 553–567):
   - Replace the check:
@@ -225,12 +256,21 @@ checks and transition button rendering; `handleLifecycleTransition` calls `setLi
     ```
 
 - [ ] Update `handleCreateSuccessor` (currently ~line 597–625):
-  - Remove the guard `if (statusFieldId === undefined) return;`.
-  - Remove the status field filtering: replace `selectedRecord.fieldValues.filter(fv => fv.fieldId !== statusFieldId)`
-    with simply `selectedRecord.fieldValues`.
-  - Remove the manual status→"draft" field value: the Rust `createRecordSuccessor` starts the
-    successor in the initial lifecycle state (draft) automatically.
-  - Pass `fieldValues: selectedRecord.fieldValues` (all field values as-is).
+  - Remove the module-level `statusFieldId` guard (`if (statusFieldId === undefined) return;`).
+  - **Keep** filtering the `status` field from the successor's `fieldValues` to avoid inheriting the predecessor's status display value (e.g. "ratified") in `DecisionSummaryCard.svelte`.
+    Compute the filter inline:
+    ```typescript
+    const localStatusFieldId = findFieldId("status", fieldMetaMap);
+    const baseValues = localStatusFieldId
+      ? selectedRecord.fieldValues.filter((fv) => fv.fieldId !== localStatusFieldId)
+      : selectedRecord.fieldValues;
+    ```
+  - Do **NOT** re-add a manual `{ fieldId: statusFieldId, value: "draft" }` — the Rust `createRecordSuccessor` auto-sets `lifecycleState` to the initial state (confirmed from srs-repository/src/record_store.rs line 1078). The successor will have no `status` field value (DecisionSummaryCard shows blank — acceptable residual until that component migrates to read `lifecycleState`).
+  - Pass `fieldValues: baseValues`.
+  - Keep the `findFieldId` import in `GovernanceShell.svelte` (used inline here). Only remove `getStringField` if it has no other usages.
+
+- [ ] Remove the module-level `const statusFieldId = $derived(findFieldId("status", fieldMetaMap));` (line 143).
+  The field ID is only needed inline in `handleCreateSuccessor` now — no module-level derived needed.
 
 - [ ] Update the template lifecycle transition section (currently ~lines 914–924):
   - Remove: `{@const currentStatus = getStringField(selectedRecord, "status", fieldMetaMap) ?? ""}`
@@ -257,10 +297,9 @@ checks and transition button rendering; `handleLifecycleTransition` calls `setLi
   (once no longer referenced — do this after replacing all usages above).
 
 - [ ] Remove `import { getStringField, findFieldId } from "$lib/governance/field-utils.js";`
-  from GovernanceShell.svelte **only if** neither function has any remaining usage in the file.
-  (Search the file for `getStringField` and `findFieldId` before removing.)
-
-- [ ] Remove `const statusFieldId = $derived(findFieldId("status", fieldMetaMap));` (line 143).
+  from `GovernanceShell.svelte` **only if** `getStringField` has no remaining usage. Keep `findFieldId`
+  import (it is used inline in `handleCreateSuccessor`). If removing both from a combined import,
+  keep a single-name import for `findFieldId` only.
 
 #### Acceptance Criteria
 
@@ -285,8 +324,11 @@ npm test
 
 1. All acceptance criteria above are met.
 2. `npm run typecheck` and `npm run build` both pass.
-3. Mark completed task checkboxes `[x]`.
-4. Commit: `feat: drive GovernanceShell lifecycle via WASM (set_lifecycle_state, get_allowed_lifecycle_transitions) (#135)`
+3. **Do NOT run `npm run e2e`** between Phase 2 and Phase 4. The existing lifecycle e2e tests will
+   fail because button text changed (`→ proposed` → `→ propose`) and transition behaviour changed.
+   They are intentionally broken until Phase 4 updates them.
+4. Mark completed task checkboxes `[x]`.
+5. Commit: `feat: drive GovernanceShell lifecycle via WASM (set_lifecycle_state, get_allowed_lifecycle_transitions) (#135)`
 
 ---
 
@@ -373,9 +415,13 @@ has no `lifecycleRef`. Add lifecycle support:
   Match the exact structure used in other gallery fixture lifecycle entries if any exist;
   otherwise use this structure.
 
-- [ ] Add `"lifecycleState": "ratified"` to each article record in gallery.srsj (these are the
-  records under `records/`). Ratified is the governance equivalent of the old "active" state, and
-  the fixture should have records in a non-draft state so immutability and transition tests work.
+- [ ] Add `"lifecycleState": "ratified"` to most article records in gallery.srsj. Ratified records
+  are NOT immutable (not a final state) — they have outgoing transitions ("→ supersede", "→ close")
+  and can be edited directly.
+
+- [ ] Add `"lifecycleState": "closed"` to **one** article record (to serve as the immutability
+  test fixture). Closed is a final state → `isImmutable: true` → Edit button must show the
+  successor modal instead of the edit form.
 
 - [ ] Verify the fixture is valid JSON after edits.
 
@@ -399,9 +445,10 @@ has no `lifecycleRef`. Add lifecycle support:
   4. Click "→ close" (now in `closed`, which is final — no more transition buttons).
   Verify that the transitions section is absent or empty after step 4.
 
-- [ ] **Test: "ratified record shows successor modal"** (currently "active record shows successor
-  modal"): Gallery records are now `ratified` (isImmutable). Update test description and any
-  status-specific assertions to use the ratified vocabulary.
+- [ ] **Test: "active/ratified record shows successor modal"** → rename to **"closed record shows
+  successor modal"**: `ratified` is NOT immutable (`isImmutable: false` per WASM — only final
+  states are immutable). Update the test to select the `closed`-state record from the fixture.
+  Clicking Edit on a closed record must show the successor modal (because `isImmutable: true`).
 
 - [ ] Leave passing tests unchanged (do not refactor tests that pass without changes).
 
@@ -464,15 +511,23 @@ npm run e2e
 - `get_allowed_lifecycle_transitions` is available in srs-bindings build 98 (confirmed from
   `src/lib/srs_bindings/srs_bindings.d.ts` line 103).
 - `set_lifecycle_state` is available (confirmed from srs-bindings and existing wrapper in srs-client.ts).
-- `createRecordSuccessor` in Rust creates the successor with `lifecycleState` set to the
-  initial state (draft) automatically — the TS caller does not need to pass it explicitly.
-  If this assumption is wrong, `handleCreateSuccessor` will need a follow-up to explicitly
-  set the initial lifecycle state after creation.
-- The gallery fixture `gallery.srsj` structure allows adding `lifecycleRef` to type entries
-  and `lifecycleState` to record entries as top-level fields (following the SRS schema 2.0
-  format already used by the fixture's relations and groups).
+- **Confirmed:** `createRecordSuccessor` in Rust auto-sets `lifecycleState` to the type's initial
+  state (confirmed from srs-rust `record_store.rs` line 1078 and test at line 2630:
+  `assert_eq!(result.record.lifecycle_state.as_deref(), Some("draft"))`). The TS caller does not
+  need to pass `lifecycleState` explicitly.
+- **Confirmed:** `isImmutable` in the WASM response is derived solely from `is_final` on the
+  lifecycle state (srs-rust `record_store.rs` line 1011–1014). Only `closed` and `superseded`
+  states are immutable. Ratified is NOT final → NOT immutable.
+- **Types maintenance:** `AllowedTransitionEntry` and `AllowedLifecycleTransitionsResult` are
+  manually written TS types derived from the WASM payload shape. After any future srs-rust release
+  that changes the `get_allowed_lifecycle_transitions` payload, regenerate by comparing against
+  `srs-rust/crates/srs-cli/schemas/payload/` golden files or the binding's `.d.ts`.
+- The gallery fixture `gallery.srsj` structure allows adding `lifecycleRef` to type entries and
+  `lifecycleState` to record entries as top-level fields (following the SRS schema 2.0 format
+  already used by the fixture's relations and groups).
 - E2e tests use Playwright against a running dev server. `npm run e2e` starts the server or
   expects one already running on the configured port.
 - `getStringField` and `findFieldId` from `field-utils.ts` are used by other components
-  (`DecisionSummaryCard.svelte`, `decision-export-utils.ts`) — only the import in
-  `GovernanceShell.svelte` is removed. The `field-utils.ts` file itself is not deleted.
+  (`DecisionSummaryCard.svelte`, `decision-export-utils.ts`) — only the import of `getStringField`
+  in `GovernanceShell.svelte` is removed. `findFieldId` is kept for inline use in
+  `handleCreateSuccessor`. The `field-utils.ts` file itself is not deleted.
