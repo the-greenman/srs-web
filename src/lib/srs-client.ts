@@ -466,6 +466,10 @@ export function createRecordSuccessor(
  * `ext:lifecycle` package definition. Transition rules and immutability constraints are
  * enforced by the Rust core — this function does not validate state names client-side.
  * ADR-001: lifecycle transition validation is the WASM engine's responsibility, not TypeScript's.
+ *
+ * As of srs-rust#367 the WASM binding returns `{ record, warnings }` instead of a bare Record.
+ * `raw.record ?? raw` handles both the new shape and any cached WASM bundle still emitting
+ * the old bare-Record shape (same defensive pattern as `normalizeRecordSummary`).
  */
 export function setLifecycleState(
   repo: SrsRepository,
@@ -473,7 +477,8 @@ export function setLifecycleState(
   state: LifecycleState
 ): SrsRecord {
   const raw = repo.set_lifecycle_state(instanceId, state);
-  return normalizeRecord(raw);
+  // raw is { record: Record, warnings: string[] } per srs-rust#367.
+  return normalizeRecord(raw.record ?? raw);
 }
 
 // ---------------------------------------------------------------------------
