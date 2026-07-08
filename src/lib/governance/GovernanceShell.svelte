@@ -32,7 +32,8 @@
     SchemaDefinition,
     ContainerView,
   } from "$lib/srs-client.js";
-  import type { BreadcrumbItem, Diagnostic } from "$lib/types.js";
+  import type { BreadcrumbItem, Diagnostic, RelationTypeOption } from "$lib/types.js";
+  import { parseRelationTypesFromSrsj } from "$lib/governance/relation-type-utils.js";
 
   import AppShell from "$lib/components/AppShell.svelte";
   import Breadcrumb from "$lib/components/Breadcrumb.svelte";
@@ -159,6 +160,19 @@
 
   /** Whether the decision link picker modal is shown. */
   let showLinkPicker = $state(false);
+
+  /**
+   * Relation types installed in the loaded package, derived from the srsj export.
+   * INTERIM FIX (srs-rust#411): populated by loadInstalledRelationTypes() until
+   * the list_relation_types WASM binding is available.
+   */
+  let installedRelationTypes = $state<RelationTypeOption[]>([]);
+
+  /**
+   * Error message from the last createRelation() attempt, or null when none.
+   * Surfaced to DecisionLinkPicker so failures are visible to the user.
+   */
+  let linkError = $state<string | null>(null);
 
   /** Relations (as source or target) for the currently selected decision. */
   let decisionRelations = $state<SrsRelation[]>([]);
@@ -407,6 +421,31 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Installed relation types (interim — srs-rust#411)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Extract the installed relation type definitions from the loaded package.
+   *
+   * INTERIM FIX — srs-rust#411: replace this with a single `listRelationTypes(repo)`
+   * WASM call once the `list_relation_types` binding is available. The srsj-parse
+   * approach is an approved ADR-001 residual exception recorded in
+   * `docs/adr/001-thin-client.md` and `plans/decision-link-picker-160.md`.
+   *
+   * The package definition is static within a session (relation types cannot be
+   * mutated via the editor UI), so this is called once at mount time.
+   */
+  function loadInstalledRelationTypes(): RelationTypeOption[] {
+    try {
+      const raw = JSON.parse(exportSrsj(repo)) as Record<string, unknown>;
+      return parseRelationTypesFromSrsj(raw);
+    } catch (e: unknown) {
+      console.warn("loadInstalledRelationTypes: could not export srsj:", e);
+      return [];
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Initialisation
   // ---------------------------------------------------------------------------
 
@@ -415,6 +454,7 @@
     loadContainerNav();
     buildContainerSchemas();
     refreshValidation();
+    installedRelationTypes = loadInstalledRelationTypes();
   });
 
   // ---------------------------------------------------------------------------
@@ -597,6 +637,7 @@
 
   function handleAddRelation(relationType: string, targetInstanceId: string): void {
     if (!selectedRecord) return;
+    linkError = null;
     try {
       createRelation(repo, {
         relationType,
@@ -608,6 +649,7 @@
       refreshValidation();
       persistWorkingCopy();
     } catch (e: unknown) {
+      linkError = e instanceof Error ? e.message : String(e);
       console.error("createRelation failed:", e);
     }
   }
@@ -912,7 +954,7 @@
           <button
             class="inspector__btn"
             data-testid="add-relation-btn"
-            onclick={() => { showLinkPicker = true; }}
+            onclick={() => { showLinkPicker = true; linkError = null; }}
           >Link to decision</button>
         </InspectorSection>
       {/if}
@@ -993,8 +1035,10 @@
     sourceInstanceId={selectedRecord.instanceId}
     sourceLabel={selectedRecord.displayLabel ?? selectedRecord.instanceId.slice(0, 8)}
     decisions={activeRecords.filter(r => r.instanceId !== selectedRecord.instanceId)}
+    relationTypes={installedRelationTypes}
     onLink={handleAddRelation}
     onCancel={() => { showLinkPicker = false; }}
+    linkError={linkError}
   />
 {/if}
 

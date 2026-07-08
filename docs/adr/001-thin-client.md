@@ -64,3 +64,10 @@ here so it isn't mistaken for acceptable presentation logic:
   `find(repo, { excludeLifecycleStates })` in #118 — see ADR-022 in srs-rust.)
 - **Hardcoded vocabularies** — the lifecycle `STATUS_OPTIONS` list is hardcoded in TS
   instead of derived from the type/lifecycle definition via a binding.
+- **Relation type derivation** — `loadInstalledRelationTypes()` in `GovernanceShell.svelte`
+  derives the installed relation types by parsing the output of `exportSrsj(repo)` rather
+  than calling a dedicated WASM binding. This is an approved interim exception for the
+  transitional period while `list_relation_types` is not yet exposed in `srs-bindings`
+  (tracked as srs-rust#411). Once that binding is available, `loadInstalledRelationTypes`
+  must be replaced with a direct `listRelationTypes(repo)` call and this entry removed.
+  (Added in srs-web#160.)
