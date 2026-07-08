@@ -129,6 +129,8 @@ export type LifecycleState = string;
 export type AllowedTransitionEntry = {
   name: string;
   to: string;
+  /** Whether the target state is a final (immutable) state. Mirrors the WASM payload field;
+   * reserved for future UI use (e.g. styling final-state transitions distinctly). */
   toIsFinal: boolean;
 };
 
@@ -513,6 +515,7 @@ export function getAllowedLifecycleTransitions(
   try {
     return repo.get_allowed_lifecycle_transitions(instanceId) as AllowedLifecycleTransitionsResult;
   } catch (e: unknown) {
+    // Pinned to Rust error variant `record_store::LifecycleNotDefined` — update if renamed.
     if (e instanceof Error && e.message.includes("LifecycleNotDefined")) {
       return null;
     }

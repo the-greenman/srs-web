@@ -165,9 +165,10 @@
       allowedTransitions = getAllowedLifecycleTransitions(repo, selectedRecord.instanceId);
       // Note: if loadContainerNav() refreshes selectedRecord's reference after a transition,
       // this effect fires a second time (one extra WASM call — harmless).
-    } catch {
+    } catch (e: unknown) {
       // Non-LifecycleNotDefined WASM error: fail-closed — treat record as immutable so the
       // user cannot directly edit a record whose lifecycle state is unknown.
+      console.error("getAllowedLifecycleTransitions failed for", selectedRecord.instanceId, e);
       allowedTransitions = { currentState: "", isImmutable: true, transitions: [] };
     }
   });
@@ -593,7 +594,8 @@
       loadContainerNav();
       persistWorkingCopy();
     } catch (e: unknown) {
-      // errors surface via validate()
+      console.error("setLifecycleState failed:", e);
+      formError = e instanceof Error ? e.message : "Lifecycle transition failed.";
     }
   }
 
@@ -624,6 +626,7 @@
       persistWorkingCopy();
     } catch (e: unknown) {
       console.error("Failed to create successor:", e);
+      formError = e instanceof Error ? e.message : "Failed to create successor record.";
       loadContainerNav();
     }
   }
