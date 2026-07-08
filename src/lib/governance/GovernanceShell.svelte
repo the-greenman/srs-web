@@ -60,7 +60,6 @@
   import TagChip from "$lib/components/TagChip.svelte";
 
   import { TYPE_REGISTRY, DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
-  import { findFieldId } from "$lib/governance/field-utils.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
   import { setFieldMetaContext, buildFieldMetaMap } from "$lib/governance/field-meta.js";
@@ -603,17 +602,12 @@
     showSuccessorModal = false;
     formError = null;
     try {
-      // Filter the predecessor's status field so the successor does not inherit a stale
-      // display value (e.g. "closed") in DecisionSummaryCard — which still reads the status
-      // field for display (ADR-001 residual debt). The Rust engine auto-sets lifecycleState
+      // Pass all field values from the predecessor. The Rust engine auto-sets lifecycleState
       // to the type's initial state (draft) — no need to pass it explicitly (record_store.rs#1078).
-      const localStatusFieldId = findFieldId("status", fieldMetaMap);
-      const baseValues = localStatusFieldId
-        ? selectedRecord.fieldValues.filter((fv) => fv.fieldId !== localStatusFieldId)
-        : selectedRecord.fieldValues;
+      // Do NOT filter required fields (e.g. status) — the type schema enforces them.
       const result = createRecordSuccessor(repo, selectedRecord.instanceId, {
         relationType: "supersedes",
-        fieldValues: baseValues,
+        fieldValues: selectedRecord.fieldValues,
       });
       if (activeContainerId) {
         try {
