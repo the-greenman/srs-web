@@ -19,6 +19,7 @@ import {
   deleteRelation,
   documentViewsForContainer,
   find,
+  getAllowedLifecycleTransitions,
   listBlueprints,
   listContainers,
   listDocumentViews,
@@ -29,6 +30,7 @@ import {
   resolveContainerView,
   scaffoldGovernanceDocument,
   typeSchema,
+  type AllowedLifecycleTransitionsResult,
   type ContainerListFilter,
   type DocumentViewListFilter,
 } from "../src/lib/srs-client.js";
@@ -69,6 +71,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     resolve_container_view: () => { throw new Error("not mocked"); },
     repository_navigation: () => { throw new Error("not mocked"); },
     scaffold_new_repository: () => { throw new Error("not mocked"); },
+    get_allowed_lifecycle_transitions: () => { throw new Error("not mocked"); },
   };
   return { ...base, ...overrides };
 }
@@ -1138,5 +1141,61 @@ describe("scaffoldGovernanceDocument", () => {
 describe("createGovernanceDocument", () => {
   it("throws on an empty title before loading the seed", () => {
     expect(() => createGovernanceDocument("")).toThrow(/name is required/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getAllowedLifecycleTransitions
+// ---------------------------------------------------------------------------
+
+describe("getAllowedLifecycleTransitions", () => {
+  const payload: AllowedLifecycleTransitionsResult = {
+    currentState: "draft",
+    isImmutable: false,
+    transitions: [{ name: "propose", to: "proposed", toIsFinal: false }],
+  };
+
+  it("returns the WASM payload cast as AllowedLifecycleTransitionsResult", () => {
+    const repo = mockRepo({
+      get_allowed_lifecycle_transitions: () => payload,
+    });
+    const result = getAllowedLifecycleTransitions(repo, "inst-1");
+    expect(result).toEqual(payload);
+  });
+
+  it("passes the instance_id to the WASM method", () => {
+    const spy = vi.fn().mockReturnValue(payload);
+    const repo = mockRepo({ get_allowed_lifecycle_transitions: spy });
+    getAllowedLifecycleTransitions(repo, "inst-abc");
+    expect(spy).toHaveBeenCalledWith("inst-abc");
+  });
+
+  it("returns null when WASM throws LifecycleNotDefined", () => {
+    const repo = mockRepo({
+      get_allowed_lifecycle_transitions: () => {
+        throw new Error("LifecycleNotDefined: record has no lifecycle");
+      },
+    });
+    const result = getAllowedLifecycleTransitions(repo, "inst-2");
+    expect(result).toBeNull();
+  });
+
+  it("re-throws errors that are not LifecycleNotDefined", () => {
+    const repo = mockRepo({
+      get_allowed_lifecycle_transitions: () => {
+        throw new Error("WASM panic: something went wrong");
+      },
+    });
+    expect(() => getAllowedLifecycleTransitions(repo, "inst-3")).toThrow(
+      "WASM panic: something went wrong"
+    );
+  });
+
+  it("re-throws non-Error throws", () => {
+    const repo = mockRepo({
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
+      get_allowed_lifecycle_transitions: () => { throw "raw string error"; },
+    });
+    expect(() => getAllowedLifecycleTransitions(repo, "inst-4")).toThrow();
   });
 });

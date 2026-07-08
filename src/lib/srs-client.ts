@@ -38,6 +38,8 @@ export interface SrsRepository {
   delete_relation(relation_id: string): void;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in setLifecycleState()
   set_lifecycle_state(instance_id: string, state: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getAllowedLifecycleTransitions()
+  get_allowed_lifecycle_transitions(instance_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in blueprintSchema()
   blueprint_schema(blueprint_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in renderDocumentView()
@@ -122,6 +124,20 @@ export interface FieldValue {
 // Open-ended string: the valid state vocabulary is enforced by the Rust core, not TypeScript.
 // TODO: expose lifecycle state vocabulary via a WASM binding (ADR-001 residual — srs-web#167)
 export type LifecycleState = string;
+
+/** One entry in the allowed transitions list returned by `get_allowed_lifecycle_transitions`. */
+export type AllowedTransitionEntry = {
+  name: string;
+  to: string;
+  toIsFinal: boolean;
+};
+
+/** Result shape from `get_allowed_lifecycle_transitions` (srs-rust record_store.rs). */
+export type AllowedLifecycleTransitionsResult = {
+  currentState: string;
+  isImmutable: boolean;
+  transitions: AllowedTransitionEntry[];
+};
 
 export interface ListNotesResult {
   notes: NoteRecord[];
@@ -479,6 +495,29 @@ export function setLifecycleState(
   const raw = repo.set_lifecycle_state(instanceId, state);
   // raw is { record: Record, warnings: string[] } per srs-rust#367.
   return normalizeRecord(raw.record ?? raw);
+}
+
+/**
+ * Query which lifecycle transitions are available for `instanceId` and whether the record is in
+ * an immutable (final) state. Returns `null` when the record's type has no lifecycle defined
+ * (`LifecycleNotDefined`). Re-throws all other WASM errors so callers can handle them
+ * conservatively (fail-closed: treat the record as immutable rather than allowing edits when
+ * the lifecycle state is unknown).
+ *
+ * ADR-001: no transition-rule logic in TypeScript — this is a pure WASM pass-through.
+ */
+export function getAllowedLifecycleTransitions(
+  repo: SrsRepository,
+  instanceId: string
+): AllowedLifecycleTransitionsResult | null {
+  try {
+    return repo.get_allowed_lifecycle_transitions(instanceId) as AllowedLifecycleTransitionsResult;
+  } catch (e: unknown) {
+    if (e instanceof Error && e.message.includes("LifecycleNotDefined")) {
+      return null;
+    }
+    throw e;
+  }
 }
 
 // ---------------------------------------------------------------------------
