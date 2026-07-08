@@ -145,10 +145,11 @@ test.describe("Decision link picker (srs-web#106)", () => {
     const select = page.getByTestId("link-relation-type");
     await expect(select).toBeVisible();
 
-    // Gallery installs exactly 4 relation types: delegates, derived-from, evidences, precedes.
-    // None of the old hardcoded types (supersedes, depends-on) should appear.
+    // Gallery installs exactly 5 relation types: delegates, derived-from, evidences, precedes, supersedes.
+    // The supersedes type was added to support lifecycle successor creation (srs-web#135).
+    // The old hardcoded "depends-on" type should not appear.
     const options = await select.locator("option").allTextContents();
-    expect(options).toHaveLength(4);
+    expect(options).toHaveLength(5);
 
     const optionValues = await select.locator("option").evaluateAll(
       (els) => els.map((el) => (el as HTMLOptionElement).value)
@@ -157,7 +158,7 @@ test.describe("Decision link picker (srs-web#106)", () => {
     expect(optionValues).toContain("derived-from");
     expect(optionValues).toContain("evidences");
     expect(optionValues).toContain("precedes");
-    expect(optionValues).not.toContain("supersedes");
+    expect(optionValues).toContain("supersedes");
     expect(optionValues).not.toContain("depends-on");
   });
 });
