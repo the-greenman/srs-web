@@ -20,6 +20,8 @@
     deleteRelation,
     resolveContainerView,
     exportSrsj,
+    setLifecycleState,
+    getAllowedLifecycleTransitions,
   } from "$lib/srs-client.js";
   import { saveWorkingCopy } from "$lib/browser-cache.js";
   import type {
@@ -31,6 +33,7 @@
     UpdateRecordInput,
     SchemaDefinition,
     ContainerView,
+    AllowedLifecycleTransitionsResult,
   } from "$lib/srs-client.js";
   import type { BreadcrumbItem, Diagnostic, RelationTypeOption } from "$lib/types.js";
   import { parseRelationTypesFromSrsj } from "$lib/governance/relation-type-utils.js";
@@ -57,10 +60,9 @@
   import TagChip from "$lib/components/TagChip.svelte";
 
   import { TYPE_REGISTRY, DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
-  import { getStringField, findFieldId } from "$lib/governance/field-utils.js";
+  import { findFieldId } from "$lib/governance/field-utils.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
-  import { LIFECYCLE_TRANSITIONS, IMMUTABLE_STATES } from "$lib/governance/lifecycle.js";
   import { setFieldMetaContext, buildFieldMetaMap } from "$lib/governance/field-meta.js";
   import { formatDecisionMarkdown, formatDecisionHtml, triggerDownload } from "$lib/governance/decision-export-utils.js";
 
@@ -137,11 +139,6 @@
   // changes (once at load), not on every reactive access from child components.
   const fieldMetaMap = $derived(buildFieldMetaMap(containerSchemas));
 
-  // Discover the status field ID from the loaded package schema rather than hardcoding
-  // the UUID. Returns undefined when the governance package has no "status" field —
-  // callers treat undefined as a graceful no-op (see #86).
-  const statusFieldId = $derived(findFieldId("status", fieldMetaMap));
-
   // Provide reactive field metadata to all descendant rendering components.
   setFieldMetaContext(() => fieldMetaMap);
 
@@ -157,6 +154,24 @@
 
   /** Whether the immutability guard modal is shown. */
   let showSuccessorModal = $state(false);
+
+  /** Allowed lifecycle transitions for the currently selected record, from the WASM engine.
+   * null = no lifecycle defined for this record type (type has no lifecycleRef).
+   * { isImmutable: true } = record is in a final state; Edit must show the successor modal. */
+  let allowedTransitions = $state<AllowedLifecycleTransitionsResult | null>(null);
+
+  $effect(() => {
+    if (!selectedRecord) { allowedTransitions = null; return; }
+    try {
+      allowedTransitions = getAllowedLifecycleTransitions(repo, selectedRecord.instanceId);
+      // Note: if loadContainerNav() refreshes selectedRecord's reference after a transition,
+      // this effect fires a second time (one extra WASM call — harmless).
+    } catch {
+      // Non-LifecycleNotDefined WASM error: fail-closed — treat record as immutable so the
+      // user cannot directly edit a record whose lifecycle state is unknown.
+      allowedTransitions = { currentState: "", isImmutable: true, transitions: [] };
+    }
+  });
 
   /** Whether the decision link picker modal is shown. */
   let showLinkPicker = $state(false);
@@ -552,14 +567,9 @@
 
   function handleEditRecord() {
     if (!selectedRecord) return;
-    if (statusFieldId !== undefined) {
-      const status = selectedRecord.fieldValues.find(
-        (fv) => fv.fieldId === statusFieldId
-      )?.value as string | undefined;
-      if (status && IMMUTABLE_STATES.has(status)) {
-        showSuccessorModal = true;
-        return;
-      }
+    if (allowedTransitions?.isImmutable) {
+      showSuccessorModal = true;
+      return;
     }
     editingRecord = selectedRecord;
     formError = null;
@@ -577,33 +587,33 @@
   }
 
   function handleLifecycleTransition(toState: string) {
-    if (!selectedRecord || statusFieldId === undefined) return;
+    if (!selectedRecord) return;
     try {
-      // Governance status is stored as a field value, not ext:lifecycle state.
-      // Update the status field to the new state via updateRecord.
-      const existingValues = selectedRecord.fieldValues.filter((fv) => fv.fieldId !== statusFieldId);
-      updateRecord(repo, selectedRecord.instanceId, {
-        fieldValues: [...existingValues, { fieldId: statusFieldId, value: toState }],
-        groupValues: selectedRecord.groupValues ?? null,
-      });
+      setLifecycleState(repo, selectedRecord.instanceId, toState);
+      allowedTransitions = getAllowedLifecycleTransitions(repo, selectedRecord.instanceId);
       loadContainerNav();
       persistWorkingCopy();
-      // refreshValidation(); // called by B13
     } catch (e: unknown) {
-      // silently ignore for now — errors will surface via validate()
+      // errors surface via validate()
     }
   }
 
   function handleCreateSuccessor() {
     if (!selectedRecord) return;
-    if (statusFieldId === undefined) return;
     showSuccessorModal = false;
     formError = null;
     try {
-      const baseValues = selectedRecord.fieldValues.filter((fv) => fv.fieldId !== statusFieldId);
+      // Filter the predecessor's status field so the successor does not inherit a stale
+      // display value (e.g. "closed") in DecisionSummaryCard — which still reads the status
+      // field for display (ADR-001 residual debt). The Rust engine auto-sets lifecycleState
+      // to the type's initial state (draft) — no need to pass it explicitly (record_store.rs#1078).
+      const localStatusFieldId = findFieldId("status", fieldMetaMap);
+      const baseValues = localStatusFieldId
+        ? selectedRecord.fieldValues.filter((fv) => fv.fieldId !== localStatusFieldId)
+        : selectedRecord.fieldValues;
       const result = createRecordSuccessor(repo, selectedRecord.instanceId, {
         relationType: "supersedes",
-        fieldValues: [...baseValues, { fieldId: statusFieldId, value: "draft" }],
+        fieldValues: baseValues,
       });
       if (activeContainerId) {
         try {
@@ -911,13 +921,11 @@
             <button class="inspector__btn" onclick={handleEditRecord}>Edit</button>
             <button class="inspector__btn inspector__btn--danger" onclick={handleDeleteRecord}>Delete</button>
           </div>
-          {@const currentStatus = getStringField(selectedRecord, "status", fieldMetaMap) ?? ""}
-          {@const transitions = LIFECYCLE_TRANSITIONS[currentStatus] ?? []}
-          {#if transitions.length > 0}
+          {#if allowedTransitions && allowedTransitions.transitions.length > 0}
             <div class="inspector__transitions">
-              {#each transitions as toState}
-                <button class="inspector__btn inspector__btn--transition" onclick={() => handleLifecycleTransition(toState)}>
-                  → {toState}
+              {#each allowedTransitions.transitions as transition}
+                <button class="inspector__btn inspector__btn--transition" onclick={() => handleLifecycleTransition(transition.to)}>
+                  → {transition.name}
                 </button>
               {/each}
             </div>
