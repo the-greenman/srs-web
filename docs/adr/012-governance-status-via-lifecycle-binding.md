@@ -1,4 +1,4 @@
-# ADR-011: Governance status is read and written through the lifecycle WASM binding
+# ADR-012: Governance status is read and written through the lifecycle WASM binding
 
 - **Status:** accepted
 - **Date:** 2026-07-07
