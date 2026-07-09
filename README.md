@@ -142,14 +142,12 @@ Before deploying:
 
 - Ensure `wrangler` is authenticated: `npx wrangler whoami` (run
   `wrangler login` if not).
-- Ensure a `.env.production` file exists locally (gitignored, never
-  committed) with the `VITE_*` values from `.env.example`, using the
-  production hostname for the redirect URIs:
-
-  ```text
-  VITE_DROPBOX_REDIRECT_URI=https://app.mudemocracy.org/
-  VITE_GITHUB_REDIRECT_URI=https://app.mudemocracy.org/
-  ```
+- `.env.production` is **committed** and holds every build-time value: the
+  public browser identifiers (client IDs, Dropbox app key, Google Picker API
+  key) and the production redirect URIs. They are baked into the served
+  bundle, so they were never secret; committing them is what lets isolated
+  builds (Cloudflare Workers Builds, CI) produce a working bundle with no
+  environment configuration.
 
 - Set the GitHub OAuth App **client secret** as a Worker secret (never a
   `VITE_*` var, never in the bundle):
