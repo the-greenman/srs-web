@@ -30,7 +30,7 @@
 </script>
 
 <Card
-  title={title ?? record.typeName ?? record.instanceId.slice(0, 8)}
+  title={title ?? record.displayLabel ?? record.instanceId.slice(0, 8)}
   status={toStatus(record.lifecycle)}
 >
   {#each record.fieldValues as fv}
