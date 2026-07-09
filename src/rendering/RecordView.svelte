@@ -3,6 +3,11 @@
   Renders all non-empty fieldValues in the order they appear on the record.
   Falls back gracefully for unknown field IDs (shows short UUID prefix as label).
   B5 record renderer: https://github.com/the-greenman/srs-web/issues/4
+
+  Card title priority: title prop → record.displayLabel → instanceId prefix.
+  record.displayLabel is populated for records from listRecords() (normalizeRecordSummary).
+  Records from getRecord() (bare Record shape) lack displayLabel and fall through to the
+  instanceId prefix — the honest degradation when no core label is available.
 -->
 <script lang="ts">
   import type { SrsRecord } from '$lib/srs-client.js';
