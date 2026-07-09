@@ -50,11 +50,9 @@ jobs:
         run: npm ci
 
       # WASM bindings are built and released by srs-rust, not committed here.
-      # Both repos are public, so the repo-scoped GITHUB_TOKEN can read releases.
+      # srs-rust is public, so this is an unauthenticated HTTPS download.
       - name: Fetch WASM bindings
         run: npm run fetch-bindings
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium

@@ -113,13 +113,19 @@ binding automatically, no dashboard step required. Deploys are run locally by
 a human via `npm run deploy` (`vite build && wrangler deploy`); there is no
 CI/CD deploy workflow.
 
-`npm run deploy` always ships the latest released WASM bindings: its
-`predeploy` hook runs `npm run fetch-bindings`, which pulls the newest
-`srs-bindings-web.tar.gz` from the `srs-rust` GitHub releases (built by that
-repo's `release.yml` on every merge to master) and extracts it into
-`src/lib/srs_bindings/`, overwriting whatever was there. There's no way to
-accidentally ship a stale binding on deploy. Requires `gh` to be authenticated
-locally (`gh auth status`).
+The WASM bindings are not committed here — they are fetched from the
+`srs-rust` GitHub releases (`srs-bindings-web.tar.gz`, built by that repo's
+`release.yml` on every merge to master) by `scripts/ensure-bindings.mjs`, a
+plain-HTTPS download with no auth or `gh` CLI required (srs-rust is public;
+override the source with `SRS_BINDINGS_URL`). It runs in two modes:
+
+- `npm run build` (`prebuild` hook): downloads only if
+  `src/lib/srs_bindings/` is missing, so a fresh clone — including automated
+  Cloudflare Workers builds — builds with zero setup, while a locally built
+  binding is never clobbered.
+- `npm run deploy` (`predeploy` → `npm run fetch-bindings`): always
+  re-downloads (`--force`), overwriting whatever was there, so there's no way
+  to accidentally ship a stale binding on deploy.
 
 If you're actively developing new bindings in `srs-rust` and want to test
 unreleased changes in srs-web before they're merged, build locally instead —
