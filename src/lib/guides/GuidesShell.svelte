@@ -209,7 +209,12 @@
     if (containers.length === 0) return;
     selectedContainerId = containers[0].containerId;
     const view: ContainerView = resolveContainerView(repo, selectedContainerId);
-    const sectionRecords = view.members.filter((m) => m.tier > 0).map((m) => m.record);
+    // The guide's own record is commonly also a member of its container (srs-web#189);
+    // it is the container's identity, not a section — keep it out of the section list
+    // and out of the precedes chain that add/remove/reorder rebuild from this list.
+    const sectionRecords = view.members
+      .filter((m) => m.tier > 0 && m.record.instanceId !== selectedGuideId)
+      .map((m) => m.record);
     orderedSections = orderByPrecedes(sectionRecords);
   }
 
