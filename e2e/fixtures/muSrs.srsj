@@ -125,7 +125,17 @@
     "namespace": "com.mudemocracy",
     "repositoryId": "9aa1d3bf-8988-4f38-a380-aa188ef8e443",
     "srsVersion": "2.0-draft",
-    "title": "muDemocracy"
+    "title": "muDemocracy",
+    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+    "createdAt": "2026-06-04T00:00:00Z",
+    "container": {
+      "containerId": "a61d0eff-9b8f-4126-95cd-1412ce178fb0",
+      "title": "muDemocracy",
+      "identityInstanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
+      "memberInstanceIds": [
+        "a44be813-d2b4-4214-aaa9-4b8a11ce206f"
+      ]
+    }
   },
   "data": {
     "package/fields/item-body-6fafae71.json": {
@@ -165,7 +175,7 @@
         },
         {
           "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "value": "The first step is recognising a decision exists. This can be difficult because the language we use mixes decisions with analysis and discussion. A useful definition is:\n\nIf you are choosing a path that makes it harder or impossible to go back to or do something else later — you are making a decision."
+          "value": "The first step is recognising a decision exists. This can be difficult because the language we use mixes decisions with analysis and discussion. A useful definition is:\n\nIf you are choosing a path that makes it harder or impossible to go back to or do something else later \u2014 you are making a decision."
         },
         {
           "fieldId": "138e40f4-888b-49ed-9c26-bedc9567e806",
@@ -466,7 +476,7 @@
     "package/themes/guide-prose-4f8a2c1e.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/theme.json",
       "createdAt": "2026-06-05T00:00:00Z",
-      "description": "Prose rendering theme for guide document views. Renders visible fields as plain paragraphs — no bold labels. Structural fields (slug, heading, title) are hidden via the paired L1 view.",
+      "description": "Prose rendering theme for guide document views. Renders visible fields as plain paragraphs \u2014 no bold labels. Structural fields (slug, heading, title) are hidden via the paired L1 view.",
       "elementTemplates": {
         "fieldRow": "{{field-value}}\n",
         "groupFieldRowTemplates": {
@@ -970,7 +980,7 @@
     },
     "package/blueprints/guide-7bfa600b.json": {
       "createdAt": "2026-06-08T00:00:00Z",
-      "description": "A muDemocracy guide — a root guide record with an ordered sequence of sections (text, list, table, or commentary).",
+      "description": "A muDemocracy guide \u2014 a root guide record with an ordered sequence of sections (text, list, table, or commentary).",
       "id": "7bfa600b-f7b2-4a0e-82d4-34c02d9d6770",
       "name": "guide",
       "namespace": "com.mudemocracy",
@@ -1030,7 +1040,7 @@
     },
     "package/types/guide-8f138dd6.json": {
       "createdAt": "2026-06-04T00:00:00Z",
-      "description": "A muDemocracy guide document — top-level metadata record for a guide container.",
+      "description": "A muDemocracy guide document \u2014 top-level metadata record for a guide container.",
       "fields": [
         {
           "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
@@ -1569,7 +1579,7 @@
         },
         {
           "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "value": "When a group of people meet to discuss a subject the conversation can feel like it lacks direction. Even when the group wants to take action, it is difficult to identify moments where a decision could be made. Often the language we use hides the fact that we are making a decision by default — not deciding is also a decision.\n\nThis guide helps you to recognise unhelpful language and patterns and shows you how to ask the right questions to bring clarity to your discussions."
+          "value": "When a group of people meet to discuss a subject the conversation can feel like it lacks direction. Even when the group wants to take action, it is difficult to identify moments where a decision could be made. Often the language we use hides the fact that we are making a decision by default \u2014 not deciding is also a decision.\n\nThis guide helps you to recognise unhelpful language and patterns and shows you how to ask the right questions to bring clarity to your discussions."
         },
         {
           "fieldId": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
@@ -1759,7 +1769,7 @@
     },
     "package/types/section-a6bf3a1d.json": {
       "createdAt": "2026-06-05T00:00:00Z",
-      "description": "Base section type — shared fields inherited by all guide section types.",
+      "description": "Base section type \u2014 shared fields inherited by all guide section types.",
       "fields": [
         {
           "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
@@ -2319,7 +2329,7 @@
                 },
                 {
                   "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "Specific enough to act on — it names the frequency, the day, and the summary requirement."
+                  "value": "Specific enough to act on \u2014 it names the frequency, the day, and the summary requirement."
                 }
               ]
             },
@@ -2536,6 +2546,16 @@
       "namespace": "com.mudemocracy",
       "valueType": "text",
       "version": 1
+    },
+    "containers/a61d0eff-9b8f-4126-95cd-1412ce178fb0.json": {
+      "containerId": "a61d0eff-9b8f-4126-95cd-1412ce178fb0",
+      "containerType": "document",
+      "createdAt": "2026-06-04T00:00:00Z",
+      "title": "muDemocracy",
+      "identityInstanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
+      "memberInstanceIds": [
+        "a44be813-d2b4-4214-aaa9-4b8a11ce206f"
+      ]
     }
   }
 }
