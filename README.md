@@ -8,9 +8,11 @@ The governance editor's start screen offers **Create new** alongside opening
 an existing file: enter a name, pick a destination (this device / Dropbox /
 Google Drive), and the app scaffolds a complete governance document — identity
 record, Decision Log container, and root container — via the WASM
-`scaffold_new_repository` binding. The bundled seed lives at
-`src/lib/governance/seed/` (RFC-014-migrated; see the README there for
-provenance and regeneration — never hand-edit it).
+`scaffold_new_repository` binding. The seed ships inside the
+`srs-bindings-web.tar.gz` release artifact and lands at
+`src/lib/srs_bindings/governance-seed.srsj` via `scripts/ensure-bindings.mjs`,
+so it always matches the engine that scaffolds it — never hand-edit or vendor
+a copy.
 
 ## Autosave and session restore
 
