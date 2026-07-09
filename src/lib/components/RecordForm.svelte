@@ -84,7 +84,7 @@
     {#each schema.fields as def (def.fieldId)}
       {@const inputId = `rf-${def.fieldId}`}
       <Field label={def.label} required={def.required} id={inputId}>
-        <FieldInput def={def} bind:value={fieldValues[def.fieldId]} id={inputId} disabled={saving} />
+        <FieldInput def={def} bind:value={fieldValues[def.fieldId]} id={inputId} disabled={saving} required={def.required} />
       </Field>
     {/each}
 
