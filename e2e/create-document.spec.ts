@@ -86,8 +86,10 @@ test.describe("Create new governance document (#141)", () => {
       .locator("textarea")
       .fill("We will keep our decisions in a governance document.");
     await page.getByRole("button", { name: "Save" }).click();
-    // Decisions render in the Decision Log table; the new row appears selected.
-    await expect(page.getByRole("row", { name: /First Decision/ })).toBeVisible({ timeout: 5000 });
+    // After save, the new record is auto-selected and the reading view opens (Phase A, srs-web#39).
+    await expect(page.getByTestId("record-reading")).toContainText("First Decision", {
+      timeout: 5000,
+    });
 
     // Export the mutated document
     const [download] = await Promise.all([

@@ -130,7 +130,9 @@ test.describe("Export / Import round-trip (B10)", () => {
       await fileInput2.setInputFiles(tmpPath);
       await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
 
-      // The new record must still be present after re-import
+      // The new record must still be present after re-import — navigate to Articles
+      // explicitly since the default active section on load is not guaranteed.
+      await page.getByRole("link", { name: /Articles/ }).click();
       await expect(page.locator("text=Round-Trip Test Article")).toBeVisible({ timeout: 5000 });
     } finally {
       await fs.rm(tmpPath, { force: true });

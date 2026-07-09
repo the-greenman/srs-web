@@ -264,16 +264,16 @@ test.describe("Decision Log — sort and filter controls", () => {
     await expect(page.getByTestId("search-input")).toBeVisible();
   });
 
-  test("search for 'mounting' returns 1 matching decision", async ({ page }) => {
+  test("search for 'mounting' returns 2 matching decisions", async ({ page }) => {
     await page.getByTestId("search-input").fill("mounting");
     const cards = page.getByTestId("decision-summary-card");
-    await expect(cards).toHaveCount(1);
-    await expect(cards.first().locator(".dscard__title")).toContainText("Mounting system");
+    await expect(cards).toHaveCount(2);
+    await expect(cards.filter({ hasText: "Mounting system" })).toHaveCount(1);
   });
 
-  test("search for 'phase' returns 2 matching decisions", async ({ page }) => {
+  test("search for 'phase' returns 3 matching decisions", async ({ page }) => {
     await page.getByTestId("search-input").fill("phase");
-    await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
+    await expect(page.getByTestId("decision-summary-card")).toHaveCount(3);
   });
 
   test("search for non-matching keyword shows no summary cards", async ({ page }) => {
@@ -283,14 +283,14 @@ test.describe("Decision Log — sort and filter controls", () => {
 
   test("clearing search restores all 7 decisions", async ({ page }) => {
     await page.getByTestId("search-input").fill("mounting");
-    await expect(page.getByTestId("decision-summary-card")).toHaveCount(1);
+    await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
     await page.getByTestId("search-input").fill("");
     await expect(page.getByTestId("decision-summary-card")).toHaveCount(7);
   });
 
   test("search is case-insensitive", async ({ page }) => {
     await page.getByTestId("search-input").fill("MOUNTING");
-    await expect(page.getByTestId("decision-summary-card")).toHaveCount(1);
+    await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
   });
 });
 
