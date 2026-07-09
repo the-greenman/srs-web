@@ -4,6 +4,10 @@ dist/
 .env
 .env.*
 !.env.example
+# committed deliberately: public browser identifiers only (client IDs, picker
+# API key) so isolated builds (Cloudflare Workers Builds, CI) bake them in.
+# Provider client SECRETS are Worker secrets — never in this file.
+!.env.production
 
 # wrangler local dev secrets + state for the OAuth proxy Worker
 .dev.vars
