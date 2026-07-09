@@ -210,10 +210,13 @@
     selectedContainerId = containers[0].containerId;
     const view: ContainerView = resolveContainerView(repo, selectedContainerId);
     // The guide's own record is commonly also a member of its container (srs-web#189);
-    // it is the container's identity, not a section — keep it out of the section list
-    // and out of the precedes chain that add/remove/reorder rebuild from this list.
+    // it is the container's root/identity, not a section — keep it out of the section
+    // list and out of the precedes chain that add/remove/reorder rebuild from this list.
+    // The root comes from the core's resolveContainerView; selectedGuideId is only the
+    // fallback when the binding reports no root.
+    const rootId = view.root?.instanceId ?? selectedGuideId;
     const sectionRecords = view.members
-      .filter((m) => m.tier > 0 && m.record.instanceId !== selectedGuideId)
+      .filter((m) => m.tier > 0 && m.record.instanceId !== rootId)
       .map((m) => m.record);
     orderedSections = orderByPrecedes(sectionRecords);
   }

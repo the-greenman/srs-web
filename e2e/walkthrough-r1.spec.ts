@@ -57,7 +57,7 @@ async function fillField(page: Page, label: string, value: string): Promise<void
 }
 
 async function createDecision(page: Page, title: string, statement: string): Promise<void> {
-  await page.getByRole("button", { name: "New Decision" }).click();
+  await page.locator("button.topbar__new").click();
   await expect(page.getByTestId("record-form")).toBeVisible({ timeout: 3000 });
   await fillField(page, "Title", title);
   await fillField(page, "Decision Statement", statement);
@@ -111,7 +111,7 @@ test.describe("R1 release walkthrough (#54)", () => {
       await page.getByRole("link", { name: /Decision/ }).click();
       await expect(page.getByTestId("decision-log-view")).toBeVisible({ timeout: 5000 });
 
-      await page.getByRole("button", { name: "New Decision" }).click();
+      await page.locator("button.topbar__new").click();
       await expect(page.getByTestId("record-form")).toBeVisible({ timeout: 3000 });
       // Submit with required fields empty — the form must not save.
       await page.locator("button[type=submit]").click();
@@ -165,7 +165,9 @@ test.describe("R1 release walkthrough (#54)", () => {
     });
 
     await test.step("find decisions via search, tag filter and sort", async () => {
-      await page.getByTestId("record-reading-back").click().catch(() => {});
+      // Leave the reading view if it is open; linking may have kept it open.
+      const backBtn = page.getByTestId("record-reading-back");
+      if (await backBtn.isVisible()) await backBtn.click();
       await expect(page.getByTestId("decision-log-view")).toBeVisible({ timeout: 5000 });
 
       await page.getByTestId("search-input").fill("cadence");
