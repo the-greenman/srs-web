@@ -10,7 +10,7 @@
 <script lang="ts">
   import type { SrsRecord } from "$lib/srs-client.js";
   import { getStringField } from "$lib/governance/field-utils.js";
-  import { getFieldMeta } from "$lib/governance/field-meta.js";
+  import { getFieldMetaContext } from "$lib/governance/field-meta.js";
 
   interface Props {
     record: SrsRecord;
@@ -20,7 +20,8 @@
 
   const { record, onCreateSuccessor, onCancel }: Props = $props();
 
-  const fieldMeta = $derived(getFieldMeta());
+  const _fieldMetaCtx = getFieldMetaContext();
+  const fieldMeta = $derived(_fieldMetaCtx.meta);
   const status = $derived(getStringField(record, "status", fieldMeta) ?? "immutable");
 </script>
 
