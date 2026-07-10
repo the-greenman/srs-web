@@ -135,7 +135,34 @@
       "memberInstanceIds": [
         "a44be813-d2b4-4214-aaa9-4b8a11ce206f"
       ]
-    }
+    },
+    "containerIndex": [
+      {
+        "containerId": "d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d",
+        "path": "containers/d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d.json",
+        "title": "Recognising decisions"
+      },
+      {
+        "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
+        "path": "containers/7989545d-8649-455d-96c8-5b4615447fb7.json",
+        "title": "Deciding which decisions to record"
+      },
+      {
+        "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
+        "path": "containers/1c843817-c0f9-4ba6-b65f-c6d23af161a7.json",
+        "title": "Decision Recording"
+      },
+      {
+        "containerId": "78749395-dcde-4b02-a59e-184095e0ae0b",
+        "path": "containers/78749395-dcde-4b02-a59e-184095e0ae0b.json",
+        "title": "Deliberating a decision"
+      },
+      {
+        "containerId": "a61d0eff-9b8f-4126-95cd-1412ce178fb0",
+        "path": "containers/a61d0eff-9b8f-4126-95cd-1412ce178fb0.json",
+        "title": "muDemocracy"
+      }
+    ]
   },
   "data": {
     "package/fields/item-body-6fafae71.json": {
@@ -1233,7 +1260,7 @@
       "id": "2aba4d85-317b-44e1-a600-d38a743b4cb4",
       "name": "guide-body-view",
       "namespace": "com.mudemocracy",
-      "preamble": "{{heading-1}}{{container-title}}",
+      "preamble": "{{heading-1-open}}{{container-title}}{{heading-1-close}}",
       "sections": [
         {
           "emptyBehavior": "hide",

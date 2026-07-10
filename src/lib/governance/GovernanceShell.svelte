@@ -22,6 +22,7 @@
     exportSrsj,
     setLifecycleState,
     getAllowedLifecycleTransitions,
+    getRecord,
   } from "$lib/srs-client.js";
   import { saveWorkingCopy } from "$lib/browser-cache.js";
   import type {
@@ -34,6 +35,7 @@
     SchemaDefinition,
     ContainerView,
     AllowedLifecycleTransitionsResult,
+    AllowedTransitionEntry,
   } from "$lib/srs-client.js";
   import type { BreadcrumbItem, Diagnostic, RelationTypeOption } from "$lib/types.js";
   import { parseRelationTypesFromSrsj } from "$lib/governance/relation-type-utils.js";
@@ -171,6 +173,15 @@
       console.error("getAllowedLifecycleTransitions failed for", selectedRecord.instanceId, e);
       allowedTransitions = { currentState: "", isImmutable: true, transitions: [] };
     }
+  });
+
+  /** Transition name awaiting a second confirming click (transitions into a final state, #203). */
+  let pendingFinalTransition = $state<string | null>(null);
+
+  $effect(() => {
+    // Any selection change discards a half-confirmed final transition.
+    void selectedId;
+    pendingFinalTransition = null;
   });
 
   /** Whether the decision link picker modal is shown. */
@@ -586,6 +597,16 @@
     persistWorkingCopy();
   }
 
+  /** Route a transition-button click: transitions into a final state need a confirming second click (#203). */
+  function handleTransitionClick(transition: AllowedTransitionEntry) {
+    if (transition.toIsFinal && pendingFinalTransition !== transition.name) {
+      pendingFinalTransition = transition.name;
+      return;
+    }
+    pendingFinalTransition = null;
+    handleLifecycleTransition(transition.to);
+  }
+
   function handleLifecycleTransition(toState: string) {
     if (!selectedRecord) return;
     try {
@@ -629,6 +650,36 @@
       formError = e instanceof Error ? e.message : "Failed to create successor record.";
       loadContainerNav();
     }
+  }
+
+  /** Display label for a linked record, resolved repo-wide — not just the active container (#201). */
+  function peerDisplayLabel(peerId: string): string {
+    const local = activeRecords.find((r) => r.instanceId === peerId);
+    if (local?.displayLabel) return local.displayLabel;
+    try {
+      const rec = getRecord(repo, peerId);
+      if (rec?.displayLabel) return rec.displayLabel;
+    } catch (e: unknown) {
+      console.error("peerDisplayLabel: getRecord failed for", peerId, e);
+    }
+    return `${peerId.slice(0, 8)}…`;
+  }
+
+  /** The nav container holding a record, or null when it isn't in any navigable section (#202). */
+  function containerIdForRecord(peerId: string): string | null {
+    for (const [cid, recs] of Object.entries(containerRecords)) {
+      if (recs.some((r) => r.instanceId === peerId)) return cid;
+    }
+    return null;
+  }
+
+  /** Select a linked record, switching the active section when needed (#202). */
+  function navigateToRecord(peerId: string): void {
+    const cid = containerIdForRecord(peerId);
+    if (!cid) return;
+    activeContainerId = cid;
+    selectedId = peerId;
+    showLinkPicker = false;
   }
 
   function loadDecisionRelations(instanceId: string): void {
@@ -921,8 +972,14 @@
           {#if allowedTransitions && allowedTransitions.transitions.length > 0}
             <div class="inspector__transitions">
               {#each allowedTransitions.transitions as transition}
-                <button class="inspector__btn inspector__btn--transition" onclick={() => handleLifecycleTransition(transition.to)}>
-                  → {transition.name}
+                <button
+                  class="inspector__btn inspector__btn--transition"
+                  class:inspector__btn--confirm={pendingFinalTransition === transition.name}
+                  onclick={() => handleTransitionClick(transition)}
+                >
+                  {pendingFinalTransition === transition.name
+                    ? `Confirm → ${transition.name}?`
+                    : `→ ${transition.name}`}
                 </button>
               {/each}
             </div>
@@ -940,12 +997,20 @@
             <ul class="inspector__relations" data-testid="decision-relations-list">
               {#each decisionRelations as rel (rel.relationId)}
                 {@const peerId = rel.sourceInstanceId === selectedRecord.instanceId ? rel.targetInstanceId : rel.sourceInstanceId}
-                {@const peerLabel = activeRecords.find(r => r.instanceId === peerId)?.displayLabel ?? peerId.slice(0, 8) + "…"}
+                {@const peerLabel = peerDisplayLabel(peerId)}
                 {@const direction = rel.sourceInstanceId === selectedRecord.instanceId ? "→" : "←"}
                 <li class="inspector__relation-item" data-testid="relation-item">
                   <span class="inspector__relation-type">{rel.relationType}</span>
                   <span class="inspector__relation-dir">{direction}</span>
-                  <span class="inspector__relation-peer">{peerLabel}</span>
+                  {#if containerIdForRecord(peerId) !== null}
+                    <button
+                      class="inspector__relation-peer inspector__relation-peer--link"
+                      data-testid="relation-peer-link"
+                      onclick={() => navigateToRecord(peerId)}
+                    >{peerLabel}</button>
+                  {:else}
+                    <span class="inspector__relation-peer">{peerLabel}</span>
+                  {/if}
                   <button
                     class="inspector__relation-delete"
                     data-testid="delete-relation-btn"
@@ -1208,6 +1273,12 @@
     opacity: 0.65;
   }
 
+  .inspector__btn--confirm {
+    opacity: 1;
+    color: #c00;
+    border-color: currentColor;
+  }
+
   /* ---- Inspector decision relations ---- */
   .inspector__empty {
     font-size: 0.75rem;
@@ -1248,6 +1319,22 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 8rem;
+  }
+
+  .inspector__relation-peer--link {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+    text-underline-offset: 2px;
+  }
+
+  .inspector__relation-peer--link:hover {
+    text-decoration-color: currentColor;
   }
 
   .inspector__relation-delete {
