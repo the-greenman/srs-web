@@ -53,12 +53,18 @@ test.describe("Decision create (generic RecordForm, srs-web#103)", () => {
     await page.locator("button.topbar__new").click();
     await expect(page.getByTestId("record-form")).toBeVisible({ timeout: 3000 });
 
-    // Fill the Title field
+    // Fill both required fields (Title + Decision Statement) — the form
+    // enforces the schema's required flags natively.
     await page
       .locator('[data-testid="record-form"] .field')
       .filter({ hasText: "Title" })
       .locator("input")
       .fill("E2E RecordForm Decision");
+    await page
+      .locator('[data-testid="record-form"] .field')
+      .filter({ hasText: "Decision Statement" })
+      .locator("textarea")
+      .fill("We adopt the generic RecordForm path for decision capture.");
 
     // Submit
     await page.locator("button[type=submit]").click();

@@ -22,21 +22,24 @@
     value = $bindable(""),
     id,
     disabled = false,
+    required = false,
     rows = 4,
   }: {
     def: FieldFormDef;
     value?: string;
     id: string;
     disabled?: boolean;
+    /** Native browser enforcement, set from the schema's FieldAssignment.required. */
+    required?: boolean;
     /** Forwarded to Textarea only; ignored by Input and Select branches. */
     rows?: number;
   } = $props();
 </script>
 
 {#if def.valueType === "text"}
-  <Textarea {id} bind:value {disabled} {rows} />
+  <Textarea {id} bind:value {disabled} {required} {rows} />
 {:else if def.valueType === "select" && def.options?.length}
-  <Select {id} bind:value options={def.options} {disabled} />
+  <Select {id} bind:value options={def.options} {disabled} {required} />
 {:else}
-  <Input {id} bind:value {disabled} />
+  <Input {id} bind:value {disabled} {required} />
 {/if}

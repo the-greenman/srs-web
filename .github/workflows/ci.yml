@@ -31,10 +31,6 @@ jobs:
   e2e:
     name: E2E (Playwright)
     runs-on: ubuntu-latest
-    # Non-blocking for now: the suite has known drift against the current app
-    # (tracked in #173). Results stay visible without failing PRs; remove
-    # continue-on-error once the suite is green.
-    continue-on-error: true
     # Hard backstop so a misbehaving/hanging run can never sit for 20+ minutes.
     timeout-minutes: 15
 

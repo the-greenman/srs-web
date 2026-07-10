@@ -54,9 +54,11 @@ test.describe("Create new governance document (#141)", () => {
     expect(download.suggestedFilename()).toBe("my-test-org.srsj");
     const parsed = JSON.parse(await downloadText(download));
     expect(parsed).toHaveProperty("srsj", "1");
-    // Migrated-seed marker: top-level upstreamPackage with a contentHash
-    expect(typeof parsed.manifest?.upstreamPackage?.contentHash).toBe("string");
-    expect(parsed.manifest.upstreamPackage.contentHash).toMatch(/^sha256:/);
+    // RFC-014 provenance: top-level upstreamPackage, without the schema-removed
+    // contentHash (RFC-014 Rev 4 dropped it; a document carrying it fails validation)
+    expect(parsed.manifest?.upstreamPackage?.packageId).toBeTruthy();
+    expect(parsed.manifest.upstreamPackage.version).toBeTruthy();
+    expect(parsed.manifest.upstreamPackage).not.toHaveProperty("contentHash");
     expect(parsed.manifest.title).toBe("My Test Org");
     // Scaffold output: identity + decision log + root container members exist
     expect(parsed.manifest.instanceIndex.length).toBeGreaterThanOrEqual(2);

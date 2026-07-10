@@ -9,9 +9,10 @@
  *   wasm-pack build crates/srs-bindings --target web --out-dir ../../srs-web/src/lib/srs_bindings
  */
 
-// RFC-014-migrated empty governance document — see src/lib/governance/seed/README.md
-// for provenance and the planned move into the bindings tarball (srs-rust#381).
-import GOVERNANCE_SEED_SRSJ from "./governance/seed/governance-seed.migrated.srsj?raw";
+// Empty governance document seed, shipped inside srs-bindings-web.tar.gz
+// (srs-rust#381) and refreshed by scripts/ensure-bindings.mjs alongside the WASM,
+// so the seed can never drift from the engine that scaffolds it.
+import GOVERNANCE_SEED_SRSJ from "./srs_bindings/governance-seed.srsj?raw";
 
 // ---------------------------------------------------------------------------
 // WASM module types (mirrored from srs-bindings/src/lib.rs + srs-core types)

@@ -175,7 +175,7 @@
         },
         {
           "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "value": "The first step is recognising a decision exists. This can be difficult because the language we use mixes decisions with analysis and discussion. A useful definition is:\n\nIf you are choosing a path that makes it harder or impossible to go back to or do something else later \u2014 you are making a decision."
+          "value": "The first step is recognising a decision exists. This can be difficult because the language we use mixes decisions with analysis and discussion. A useful definition is:\n\nIf you are choosing a path that makes it harder or impossible to go back to or do something else later — you are making a decision."
         },
         {
           "fieldId": "138e40f4-888b-49ed-9c26-bedc9567e806",
@@ -476,7 +476,7 @@
     "package/themes/guide-prose-4f8a2c1e.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/theme.json",
       "createdAt": "2026-06-05T00:00:00Z",
-      "description": "Prose rendering theme for guide document views. Renders visible fields as plain paragraphs \u2014 no bold labels. Structural fields (slug, heading, title) are hidden via the paired L1 view.",
+      "description": "Prose rendering theme for guide document views. Renders visible fields as plain paragraphs — no bold labels. Structural fields (slug, heading, title) are hidden via the paired L1 view.",
       "elementTemplates": {
         "fieldRow": "{{field-value}}\n",
         "groupFieldRowTemplates": {
@@ -610,7 +610,8 @@
       "id": "474e299c-5809-4f92-a40d-b3ae1be3ad17",
       "name": "section.commentary",
       "namespace": "com.mudemocracy",
-      "version": 1
+      "version": 1,
+      "identityFieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a"
     },
     "containers/7989545d-8649-455d-96c8-5b4615447fb7.json": {
       "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
@@ -856,7 +857,8 @@
       "id": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
       "name": "section.table",
       "namespace": "com.mudemocracy",
-      "version": 1
+      "version": 1,
+      "identityFieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a"
     },
     "package/fields/intro-a1517ec7.json": {
       "aiGuidance": {
@@ -980,7 +982,7 @@
     },
     "package/blueprints/guide-7bfa600b.json": {
       "createdAt": "2026-06-08T00:00:00Z",
-      "description": "A muDemocracy guide \u2014 a root guide record with an ordered sequence of sections (text, list, table, or commentary).",
+      "description": "A muDemocracy guide — a root guide record with an ordered sequence of sections (text, list, table, or commentary).",
       "id": "7bfa600b-f7b2-4a0e-82d4-34c02d9d6770",
       "name": "guide",
       "namespace": "com.mudemocracy",
@@ -1040,7 +1042,7 @@
     },
     "package/types/guide-8f138dd6.json": {
       "createdAt": "2026-06-04T00:00:00Z",
-      "description": "A muDemocracy guide document \u2014 top-level metadata record for a guide container.",
+      "description": "A muDemocracy guide document — top-level metadata record for a guide container.",
       "fields": [
         {
           "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
@@ -1548,7 +1550,8 @@
       "id": "76cdc3fb-8460-4efc-90f5-3c4a15b86cad",
       "name": "section.list",
       "namespace": "com.mudemocracy",
-      "version": 1
+      "version": 1,
+      "identityFieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a"
     },
     "package/fields/commentary-term-98be1bba.json": {
       "aiGuidance": {
@@ -1579,7 +1582,7 @@
         },
         {
           "fieldId": "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-          "value": "When a group of people meet to discuss a subject the conversation can feel like it lacks direction. Even when the group wants to take action, it is difficult to identify moments where a decision could be made. Often the language we use hides the fact that we are making a decision by default \u2014 not deciding is also a decision.\n\nThis guide helps you to recognise unhelpful language and patterns and shows you how to ask the right questions to bring clarity to your discussions."
+          "value": "When a group of people meet to discuss a subject the conversation can feel like it lacks direction. Even when the group wants to take action, it is difficult to identify moments where a decision could be made. Often the language we use hides the fact that we are making a decision by default — not deciding is also a decision.\n\nThis guide helps you to recognise unhelpful language and patterns and shows you how to ask the right questions to bring clarity to your discussions."
         },
         {
           "fieldId": "dabb80dc-a04e-48e9-afd8-37a6410bd43b",
@@ -1769,7 +1772,7 @@
     },
     "package/types/section-a6bf3a1d.json": {
       "createdAt": "2026-06-05T00:00:00Z",
-      "description": "Base section type \u2014 shared fields inherited by all guide section types.",
+      "description": "Base section type — shared fields inherited by all guide section types.",
       "fields": [
         {
           "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
@@ -1805,7 +1808,8 @@
       "id": "a6bf3a1d-a785-45e1-8b14-19162e032f99",
       "name": "section",
       "namespace": "com.mudemocracy",
-      "version": 1
+      "version": 1,
+      "identityFieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a"
     },
     "package/fields/heading-9629c9b5.json": {
       "aiGuidance": {
@@ -2329,7 +2333,7 @@
                 },
                 {
                   "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-                  "value": "Specific enough to act on \u2014 it names the frequency, the day, and the summary requirement."
+                  "value": "Specific enough to act on — it names the frequency, the day, and the summary requirement."
                 }
               ]
             },
@@ -2533,7 +2537,8 @@
       "id": "4408a98e-d23e-4bc6-aef5-d8678571e2f6",
       "name": "section.text",
       "namespace": "com.mudemocracy",
-      "version": 1
+      "version": 1,
+      "identityFieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a"
     },
     "package/fields/tags-eba84460.json": {
       "aiGuidance": {

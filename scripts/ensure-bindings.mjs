@@ -21,7 +21,7 @@ const DEFAULT_URL =
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const bindingsDir = join(root, "src", "lib", "srs_bindings");
-const entryFiles = ["srs_bindings.js", "srs_bindings_bg.wasm"];
+const entryFiles = ["srs_bindings.js", "srs_bindings_bg.wasm", "governance-seed.srsj"];
 const force = process.argv.includes("--force");
 const url = process.env.SRS_BINDINGS_URL ?? DEFAULT_URL;
 
