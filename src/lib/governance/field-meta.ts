@@ -43,7 +43,23 @@ export function setFieldMetaContext(getMeta: () => Map<string, FieldFormDef>): v
   });
 }
 
-/** Call from any rendering component that descends from App.svelte. */
+/**
+ * Call once during component init to obtain the reactive field-meta context.
+ * Then access `.meta` inside $derived to track reactive map changes:
+ *
+ *   const _fieldMetaCtx = getFieldMetaContext();
+ *   const fieldMeta = $derived(_fieldMetaCtx.meta);
+ *
+ * Do NOT call getFieldMeta() inside $derived — getContext is init-only in Svelte 5.
+ */
+export function getFieldMetaContext(): FieldMetaContext {
+  return getContext<FieldMetaContext>(FIELD_META_KEY);
+}
+
+/**
+ * @deprecated Use getFieldMetaContext() + $derived(_fieldMetaCtx.meta) instead.
+ * Has no callers after #83; may be removed in a follow-up cleanup.
+ */
 export function getFieldMeta(): Map<string, FieldFormDef> {
   return getContext<FieldMetaContext>(FIELD_META_KEY).meta;
 }

@@ -10,11 +10,12 @@
   import { Card, CardField } from '$lib/components/index.js';
   import FieldValueView from './FieldValueView.svelte';
   import { getFieldValueByName, isPresent } from './field-helpers.js';
-  import { getFieldMeta } from '$lib/governance/field-meta.js';
+  import { getFieldMetaContext } from '$lib/governance/field-meta.js';
 
   let { record }: { record: SrsRecord } = $props();
 
-  const fieldMeta = $derived(getFieldMeta());
+  const _fieldMetaCtx = getFieldMetaContext();
+  const fieldMeta = $derived(_fieldMetaCtx.meta);
 
   const SUMMARY_FIELDS = [
     { name: 'decision_statement',      label: 'Decision Statement' },

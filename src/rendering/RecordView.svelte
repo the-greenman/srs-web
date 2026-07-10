@@ -12,13 +12,14 @@
 <script lang="ts">
   import type { SrsRecord } from '$lib/srs-client.js';
   import type { Status } from '$lib/types.js';
-  import { getFieldMeta } from '$lib/governance/field-meta.js';
+  import { getFieldMetaContext } from '$lib/governance/field-meta.js';
   import { Card, CardField } from '$lib/components/index.js';
   import FieldValueView from './FieldValueView.svelte';
 
   let { record, title }: { record: SrsRecord; title?: string } = $props();
 
-  const fieldMeta = $derived(getFieldMeta());
+  const _fieldMetaCtx = getFieldMetaContext();
+  const fieldMeta = $derived(_fieldMetaCtx.meta);
 
   /** Cast lifecycle to Status — lifecycle values are a subset of Status. */
   function toStatus(lifecycle: string | undefined): Status | undefined {

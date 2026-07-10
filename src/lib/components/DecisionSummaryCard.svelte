@@ -7,7 +7,7 @@
   import type { SrsRecord } from "$lib/srs-client.js";
   import type { Status } from "$lib/types.js";
   import { getStringField } from "$lib/governance/field-utils.js";
-  import { getFieldMeta } from "$lib/governance/field-meta.js";
+  import { getFieldMetaContext } from "$lib/governance/field-meta.js";
   import Tag from "./Tag.svelte";
   import TagChip from "./TagChip.svelte";
 
@@ -21,7 +21,8 @@
     onclick: () => void;
   } = $props();
 
-  const fieldMeta = $derived(getFieldMeta());
+  const _fieldMetaCtx = getFieldMetaContext();
+  const fieldMeta = $derived(_fieldMetaCtx.meta);
 
   const title = $derived(record.displayLabel ?? "Untitled");
   const rawStatement = $derived(getStringField(record, "decision_statement", fieldMeta));
