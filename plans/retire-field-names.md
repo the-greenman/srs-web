@@ -28,7 +28,9 @@ No new ADR required. The field-meta context pattern is display plumbing already 
 
 **Note on implementation:** `rendering/field-helpers.ts` already implements the same lookup loop. However, importing it from `lib/governance/` would invert the dependency graph (`rendering/` imports from `lib/governance/types.js`). The lookup is re-implemented inline in `field-utils.ts` — a short two-line body that is an acceptable duplication given the layering constraint.
 
-**Note on Svelte context inheritance:** Svelte `setContext`/`getContext` is inherited through the entire component tree. `DecisionSummaryCard`, `SuccessorModal`, and `DecisionLogView` are all rendered (directly or transitively) inside `App.svelte`, so each can call `getFieldMeta()` independently — no prop-passing required.
+**Note on Svelte context inheritance:** Svelte `setContext`/`getContext` is inherited through the entire component tree. `DecisionSummaryCard`, `SuccessorModal`, and `DecisionLogView` are all rendered (directly or transitively) inside `App.svelte`, so each can call `getFieldMetaContext()` independently — no prop-passing required.
+
+**Note on Svelte 5 getContext pattern (#83):** `getContext` must be called at component init, not inside `$derived`. The correct pattern is the two-liner: `const _fieldMetaCtx = getFieldMetaContext(); const fieldMeta = $derived(_fieldMetaCtx.meta);`. Do NOT use `const fieldMeta = $derived(getFieldMeta())` — `getFieldMeta()` is deprecated as of #83.
 
 ---
 
@@ -83,19 +85,19 @@ No new or changed WASM methods required. This plan uses the existing `typeSchema
   - Update all 5 `getStringField(record, ...)` → `getStringField(record, ..., fieldMetaMap)`.
 
 - [ ] In `src/lib/components/DecisionSummaryCard.svelte`:
-  - Add `import { getFieldMeta } from '$lib/governance/field-meta.js';`
-  - Add `const fieldMeta = $derived(getFieldMeta());` in the script block. (This works because DecisionSummaryCard is always rendered inside App.svelte via DecisionLogView — Svelte context is inherited through the full tree.)
+  - Add `import { getFieldMetaContext } from '$lib/governance/field-meta.js';`
+  - Add the two-liner at init (not inside $derived): `const _fieldMetaCtx = getFieldMetaContext(); const fieldMeta = $derived(_fieldMetaCtx.meta);`
   - Update the 3 `getStringField(record, name)` → `getStringField(record, name, fieldMeta)`.
 
 - [ ] In `src/lib/components/SuccessorModal.svelte`:
-  - Add `import { getFieldMeta } from '$lib/governance/field-meta.js';`
-  - Add `const fieldMeta = $derived(getFieldMeta());`.
+  - Add `import { getFieldMetaContext } from '$lib/governance/field-meta.js';`
+  - Add the two-liner at init: `const _fieldMetaCtx = getFieldMetaContext(); const fieldMeta = $derived(_fieldMetaCtx.meta);`
   - Update `getStringField(record, name)` → `getStringField(record, name, fieldMeta)`.
 
 - [ ] In `src/lib/components/DecisionLogView.svelte`:
-  - Add `import { getFieldMeta } from '$lib/governance/field-meta.js';`
-  - Add `const fieldMeta = $derived(getFieldMeta());`.
-  - Update both `getStringField(r, name)` → `getStringField(r, name, fieldMeta)`. (These calls are inside a `$derived` used for search filtering — the lookup happens reactively at filter time, which is correct.)
+  - Add `import { getFieldMetaContext } from '$lib/governance/field-meta.js';`
+  - Add the two-liner at init: `const _fieldMetaCtx = getFieldMetaContext(); const fieldMeta = $derived(_fieldMetaCtx.meta);`
+  - Update both `getStringField(r, name)` → `getStringField(r, name, fieldMeta)`.
 
 #### Acceptance Criteria
 
