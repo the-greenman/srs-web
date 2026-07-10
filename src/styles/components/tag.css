@@ -3,11 +3,12 @@
    ----------------------------------------------------------------------------
    One modifier per state in the `governance/status` enum:
      draft · proposed · active · deferred · superseded · closed · rejected · archived
+     · ratified · abandoned
    (see the gallery package field status-aee7afe9.json).
 
    BRAND RULE — no accent colour. Status is distinguished by border style and
-   fill weight only: active/closed are emphatic (ink), terminal states
-   (superseded/rejected) strike through, draft is dashed/provisional.
+   fill weight only: active/closed/ratified are emphatic (ink), terminal states
+   (superseded/rejected/abandoned) strike through, draft is dashed/provisional.
 
    Status presentation + transitions are B11:
      https://github.com/the-greenman/srs-web/issues/7
@@ -54,6 +55,15 @@
 }
 .tag--archived {
   border-color: var(--grey-1);
+}
+.tag--ratified {
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+.tag--abandoned {
+  border-color: var(--grey-1);
+  text-decoration: line-through;
 }
 
 /* On-dark placement (record header sits on ink) */
