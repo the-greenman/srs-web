@@ -39,6 +39,8 @@ export interface SrsRepository {
   delete_relation(relation_id: string): void;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in setLifecycleState()
   set_lifecycle_state(instance_id: string, state: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in transitionRecord()
+  transition_record(instance_id: string, input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getAllowedLifecycleTransitions()
   get_allowed_lifecycle_transitions(instance_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in blueprintSchema()
@@ -125,6 +127,18 @@ export interface FieldValue {
 // TODO: expose lifecycle state vocabulary via a WASM binding (ADR-001 residual — srs-web#167)
 export type LifecycleState = string;
 
+/**
+ * RFC-022 relational-state obligation, as exposed on the allowed-transitions
+ * projection: the target state may only be occupied when a relation of one of
+ * `relationType` exists in `direction` (default "incoming"). Presentation routes
+ * "this transition needs a successor" UX from this structure — never from state
+ * name string-matching (ADR-001 / #167).
+ */
+export type RequiresRelation = {
+  relationType: string | string[];
+  direction?: "incoming" | "outgoing";
+};
+
 /** One entry in the allowed transitions list returned by `get_allowed_lifecycle_transitions`. */
 export type AllowedTransitionEntry = {
   name: string;
@@ -132,6 +146,8 @@ export type AllowedTransitionEntry = {
   /** Whether the target state is a final (immutable) state. Mirrors the WASM payload field;
    * reserved for future UI use (e.g. styling final-state transitions distinctly). */
   toIsFinal: boolean;
+  /** Present when the target state declares an RFC-022 relation obligation. */
+  requiresRelation?: RequiresRelation;
 };
 
 /** Result shape from `get_allowed_lifecycle_transitions` (srs-rust record_store.rs). */
@@ -223,6 +239,31 @@ export interface CreateRecordSuccessorInput {
 export interface CreateRecordSuccessorResult {
   record: SrsRecord;
   relation: SrsRelation;
+}
+
+/** RFC-022 fulfillment: how a transition into a `requiresRelation` state satisfies its obligation. */
+export interface TransitionFulfillment {
+  /** Spawn a successor of the record's type (at the lifecycle's initial state), relate it, then flip. */
+  newRecord?: { fieldValues: FieldValue[]; typeVersion?: number };
+  /** Relate an already-drafted record, then flip. */
+  existingInstanceId?: string;
+  /** Selector when the state declares an any-of relationType array; defaults to the first declared. */
+  relationType?: string;
+}
+
+/** Full input surface of the `transition_record` WASM binding (mirrors the CLI stdin contract). */
+export interface TransitionRecordInput {
+  to?: string;
+  byTransition?: string;
+  fulfillment?: TransitionFulfillment;
+}
+
+/** Result of `transition_record` — successor/relation present when the transition was fulfilled. */
+export interface TransitionRecordResult {
+  record: SrsRecord;
+  warnings: string[];
+  successor?: SrsRecord;
+  relation?: SrsRelation;
 }
 
 // ---------------------------------------------------------------------------
@@ -470,16 +511,7 @@ export function createRecordSuccessor(
   const raw: any = repo.create_record_successor(predecessorId, JSON.stringify(input));
   return {
     record: normalizeRecord(raw.record),
-    relation: {
-      relationId: raw.relation.relationId ?? raw.relation.relation_id,
-      relationType: raw.relation.relationType ?? raw.relation.relation_type,
-      sourceInstanceId: raw.relation.sourceInstanceId ?? raw.relation.source_instance_id,
-      targetInstanceId: raw.relation.targetInstanceId ?? raw.relation.target_instance_id,
-      assertedBy: raw.relation.assertedBy ?? raw.relation.asserted_by,
-      confidence: raw.relation.confidence,
-      status: raw.relation.status,
-      createdAt: raw.relation.createdAt ?? raw.relation.created_at,
-    },
+    relation: normalizeRelationRaw(raw.relation),
   };
 }
 
@@ -501,6 +533,49 @@ export function setLifecycleState(
   const raw = repo.set_lifecycle_state(instanceId, state);
   // raw is { record: Record, warnings: string[] } per srs-rust#367.
   return normalizeRecord(raw.record ?? raw);
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: WASM boundary; normalised field-by-field
+function normalizeRelationRaw(raw: any): SrsRelation {
+  return {
+    relationId: raw.relationId ?? raw.relation_id,
+    relationType: raw.relationType ?? raw.relation_type,
+    sourceInstanceId: raw.sourceInstanceId ?? raw.source_instance_id,
+    targetInstanceId: raw.targetInstanceId ?? raw.target_instance_id,
+    assertedBy: raw.assertedBy ?? raw.asserted_by,
+    confidence: raw.confidence,
+    status: raw.status,
+    createdAt: raw.createdAt ?? raw.created_at,
+  };
+}
+
+/**
+ * Transition `instanceId` with the full RFC-022 input surface, including `fulfillment`
+ * for transitions into `requiresRelation` states (atomic successor + relation + flip —
+ * the engine commits the flip last, so no orphan supersession can be observed).
+ *
+ * ADR-001: all obligation/transition validation is the WASM engine's responsibility;
+ * this is a pure pass-through with shape normalisation.
+ */
+export function transitionRecord(
+  repo: SrsRepository,
+  instanceId: string,
+  input: TransitionRecordInput
+): TransitionRecordResult {
+  if (typeof repo.transition_record !== "function") {
+    // Older WASM bundle predating RFC-022 (srs-rust#492) — fail with a actionable message
+    // rather than a TypeError deep in the call.
+    throw new Error(
+      "transition_record binding unavailable — the loaded srs-bindings WASM bundle predates RFC-022; rebuild/refresh the bundle from srs-rust"
+    );
+  }
+  const raw = repo.transition_record(instanceId, JSON.stringify(input));
+  return {
+    record: normalizeRecord(raw.record),
+    warnings: raw.warnings ?? [],
+    successor: raw.successor ? normalizeRecord(raw.successor) : undefined,
+    relation: raw.relation ? normalizeRelationRaw(raw.relation) : undefined,
+  };
 }
 
 /**

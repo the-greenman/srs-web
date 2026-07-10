@@ -18,6 +18,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     create_relation: () => { throw new Error("not mocked"); },
     delete_relation: () => { throw new Error("not mocked"); },
     set_lifecycle_state: () => { throw new Error("not mocked"); },
+    transition_record: () => { throw new Error("not mocked"); },
     blueprint_schema: () => { throw new Error("not mocked"); },
     render_document_view: () => { throw new Error("not mocked"); },
     list_containers: () => { throw new Error("not mocked"); },
