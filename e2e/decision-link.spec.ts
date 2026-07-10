@@ -162,3 +162,61 @@ test.describe("Decision link picker (srs-web#106)", () => {
     expect(optionValues).not.toContain("depends-on");
   });
 });
+
+// ----------------------------------------------------------------------------
+// Cross-container link rendering + navigation (srs-web#201, srs-web#202)
+//
+// The gallery fixture ships an `evidences` relation from the "Mounting system"
+// decision to the "Care of the building" article — a peer in a *different*
+// container. The label must resolve repo-wide (not fall back to a UUID), and
+// clicking the peer must navigate to the linked record.
+// ----------------------------------------------------------------------------
+test.describe("Decision link labels and navigation (#201, #202)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("mode-governance").click({ timeout: 15000 });
+    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
+      timeout: 5000,
+    });
+    await page
+      .locator('input[type="file"]#srsj-file')
+      .setInputFiles(path.join(__dirname, "fixtures", "gallery.srsj"));
+    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
+    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(page.getByTestId("decision-summary-card").first()).toBeVisible({ timeout: 5000 });
+
+    // Select the "Mounting system" decision (evidences → article "Care of the building")
+    await page
+      .getByTestId("decision-summary-card")
+      .filter({ hasText: "Mounting system" })
+      .first()
+      .click();
+    await expect(page.getByTestId("decision-relations-list")).toBeVisible({ timeout: 3000 });
+  });
+
+  test("cross-container peer shows the linked record's label, not a UUID (#201)", async ({ page }) => {
+    const evidencesRow = page.getByTestId("relation-item").filter({ hasText: "evidences" });
+    await expect(evidencesRow.first()).toContainText("Care of the building");
+    // No truncated-UUID fallback anywhere in the list
+    await expect(page.getByTestId("decision-relations-list")).not.toContainText(/[0-9a-f]{8}…/);
+  });
+
+  test("clicking a peer navigates to the linked record in its own section (#202)", async ({ page }) => {
+    await page
+      .getByTestId("relation-peer-link")
+      .filter({ hasText: "Care of the building" })
+      .first()
+      .click();
+
+    // The linked article opens in the reading view…
+    await expect(page.getByTestId("record-reading")).toContainText("Care of the building", {
+      timeout: 3000,
+    });
+
+    // …and the active section switched to Articles (visible once reading closes)
+    await page.getByTestId("record-reading-back").click();
+    await expect(page.getByRole("heading", { name: "Articles", level: 2 })).toBeVisible({
+      timeout: 3000,
+    });
+  });
+});
