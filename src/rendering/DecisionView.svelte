@@ -34,15 +34,12 @@
     { name: 'status',                  label: 'Status' },
   ] as const;
 
-  const displayTitle = $derived(() => {
-    const ttl = getFieldValueByName(record, 'title', fieldMeta)?.value;
-    return ttl ? String(ttl) : record.instanceId.slice(0, 8);
-  });
+  const displayTitle = $derived(record.displayLabel ?? record.instanceId.slice(0, 8));
 
   const status = $derived(record.lifecycle as Status | undefined);
 </script>
 
-<Card title={displayTitle()} {status}>
+<Card title={displayTitle} {status}>
   {#each DECISION_FIELDS as field}
     {@const fv = getFieldValueByName(record, field.name, fieldMeta)}
     {#if fv && isPresent(fv.value)}
