@@ -21,6 +21,7 @@
     resolveContainerView,
     exportSrsj,
     setLifecycleState,
+    transitionRecord,
     getAllowedLifecycleTransitions,
     getRecord,
   } from "$lib/srs-client.js";
@@ -178,10 +179,16 @@
   /** Transition name awaiting a second confirming click (transitions into a final state, #203). */
   let pendingFinalTransition = $state<string | null>(null);
 
+  /** RFC-022: a clicked transition whose target state declares `requiresRelation` — the
+   * successor modal is fulfilling this transition rather than the plain edit-on-immutable
+   * flow. The lifecycle flip happens atomically inside `transitionRecord` (#204). */
+  let pendingRelationalTransition = $state<AllowedTransitionEntry | null>(null);
+
   $effect(() => {
     // Any selection change discards a half-confirmed final transition.
     void selectedId;
     pendingFinalTransition = null;
+    pendingRelationalTransition = null;
   });
 
   /** Whether the decision link picker modal is shown. */
@@ -599,6 +606,15 @@
 
   /** Route a transition-button click: transitions into a final state need a confirming second click (#203). */
   function handleTransitionClick(transition: AllowedTransitionEntry) {
+    if (transition.requiresRelation) {
+      // RFC-022 (#204): the target state requires a successor relation — route through
+      // the successor modal; the modal itself is the confirmation, and the flip happens
+      // atomically inside the fulfilled transition (no bare setLifecycleState).
+      pendingFinalTransition = null;
+      pendingRelationalTransition = transition;
+      showSuccessorModal = true;
+      return;
+    }
     if (transition.toIsFinal && pendingFinalTransition !== transition.name) {
       pendingFinalTransition = transition.name;
       return;
@@ -624,6 +640,37 @@
     if (!selectedRecord) return;
     showSuccessorModal = false;
     formError = null;
+    if (pendingRelationalTransition) {
+      // RFC-022 fulfilled transition (#204): successor + relation + predecessor flip is
+      // one atomic engine operation — no client-side orchestration, no partial states.
+      const transition = pendingRelationalTransition;
+      pendingRelationalTransition = null;
+      try {
+        const result = transitionRecord(repo, selectedRecord.instanceId, {
+          byTransition: transition.name,
+          fulfillment: { newRecord: { fieldValues: selectedRecord.fieldValues } },
+        });
+        const successor = result.successor;
+        if (successor && activeContainerId) {
+          try {
+            addContainerMember(repo, activeContainerId, successor.instanceId);
+          } catch (e: unknown) {
+            console.error("addContainerMember failed for successor:", e);
+            formError = e instanceof Error
+              ? `Superseded, but container registration of the successor failed: ${e.message}`
+              : "Superseded, but the successor could not be registered in the container.";
+          }
+        }
+        loadContainerNav();
+        if (successor) selectedId = successor.instanceId;
+        persistWorkingCopy();
+      } catch (e: unknown) {
+        console.error("Fulfilled transition failed:", e);
+        formError = e instanceof Error ? e.message : "Supersede failed.";
+        loadContainerNav();
+      }
+      return;
+    }
     try {
       // Pass all field values from the predecessor. The Rust engine auto-sets lifecycleState
       // to the type's initial state (draft) — no need to pass it explicitly (record_store.rs#1078).
@@ -1096,7 +1143,7 @@
   <SuccessorModal
     record={selectedRecord}
     onCreateSuccessor={handleCreateSuccessor}
-    onCancel={() => { showSuccessorModal = false; }}
+    onCancel={() => { showSuccessorModal = false; pendingRelationalTransition = null; }}
   />
 {/if}
 

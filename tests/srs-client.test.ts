@@ -29,6 +29,7 @@ import {
   repositoryNavigation,
   resolveContainerView,
   scaffoldGovernanceDocument,
+  transitionRecord,
   typeSchema,
   type AllowedLifecycleTransitionsResult,
   type ContainerListFilter,
@@ -54,6 +55,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     create_relation: () => { throw new Error("not mocked"); },
     delete_relation: () => { throw new Error("not mocked"); },
     set_lifecycle_state: () => { throw new Error("not mocked"); },
+    transition_record: () => { throw new Error("not mocked"); },
     blueprint_schema: () => { throw new Error("not mocked"); },
     render_document_view: () => { throw new Error("not mocked"); },
     list_containers: () => { throw new Error("not mocked"); },
@@ -1197,5 +1199,89 @@ describe("getAllowedLifecycleTransitions", () => {
       get_allowed_lifecycle_transitions: () => { throw "raw string error"; },
     });
     expect(() => getAllowedLifecycleTransitions(repo, "inst-4")).toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// transitionRecord — RFC-022 fulfilled transitions (#204)
+// ---------------------------------------------------------------------------
+
+describe("transitionRecord", () => {
+  const rawPredecessor = {
+    instanceId: "inst-pred",
+    typeId: "type-1",
+    typeVersion: 1,
+    fieldValues: [{ fieldId: "f-1", value: "old" }],
+    lifecycleState: "superseded",
+  };
+  const rawSuccessor = {
+    instanceId: "inst-succ",
+    typeId: "type-1",
+    typeVersion: 1,
+    fieldValues: [{ fieldId: "f-1", value: "new" }],
+    lifecycleState: "draft",
+  };
+  const rawRelation = {
+    relationId: "rel-1",
+    relationType: "supersedes",
+    sourceInstanceId: "inst-succ",
+    targetInstanceId: "inst-pred",
+  };
+
+  it("serialises the fulfillment input and normalises record/successor/relation", () => {
+    const spy = vi.fn().mockReturnValue({
+      record: rawPredecessor,
+      warnings: [],
+      successor: rawSuccessor,
+      relation: rawRelation,
+    });
+    const repo = mockRepo({ transition_record: spy });
+
+    const input = {
+      byTransition: "supersede",
+      fulfillment: { newRecord: { fieldValues: [{ fieldId: "f-1", value: "new" }] } },
+    };
+    const result = transitionRecord(repo, "inst-pred", input);
+
+    expect(spy).toHaveBeenCalledWith("inst-pred", JSON.stringify(input));
+    expect(result.record.lifecycle).toBe("superseded");
+    expect(result.successor?.instanceId).toBe("inst-succ");
+    expect(result.successor?.lifecycle).toBe("draft");
+    expect(result.relation?.relationType).toBe("supersedes");
+    expect(result.relation?.sourceInstanceId).toBe("inst-succ");
+    expect(result.relation?.targetInstanceId).toBe("inst-pred");
+  });
+
+  it("omits successor/relation on an unfulfilled (plain) transition result", () => {
+    const repo = mockRepo({
+      transition_record: () => ({ record: rawPredecessor, warnings: ["LIFECYCLE_FINAL_STATE: x"] }),
+    });
+    const result = transitionRecord(repo, "inst-pred", { to: "superseded" });
+    expect(result.successor).toBeUndefined();
+    expect(result.relation).toBeUndefined();
+    expect(result.warnings).toEqual(["LIFECYCLE_FINAL_STATE: x"]);
+  });
+
+  it("propagates the engine's structured LIFECYCLE_RELATION_REQUIRED rejection", () => {
+    const repo = mockRepo({
+      transition_record: () => {
+        throw new Error(
+          "LIFECYCLE_RELATION_REQUIRED: state 'superseded' requires a satisfying 'incoming' relation of type [\"supersedes\"]"
+        );
+      },
+    });
+    expect(() => transitionRecord(repo, "inst-pred", { byTransition: "supersede" })).toThrow(
+      /LIFECYCLE_RELATION_REQUIRED/
+    );
+  });
+
+  it("fails with an actionable message when the WASM bundle predates the binding", () => {
+    const repo = mockRepo({});
+    // Simulate an old bundle: method absent entirely.
+    // biome-ignore lint/suspicious/noExplicitAny: deliberately breaking the shape
+    (repo as any).transition_record = undefined;
+    expect(() => transitionRecord(repo, "inst-pred", { to: "superseded" })).toThrow(
+      /predates RFC-022/
+    );
   });
 });
