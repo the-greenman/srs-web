@@ -225,10 +225,75 @@ test.describe("Lifecycle transitions (B11)", () => {
     await page.locator(".inspector__btn--transition", { hasText: "→ ratify" }).click();
     await expect(page.locator(".inspector__btn--transition", { hasText: "→ close" })).toBeVisible({ timeout: 3000 });
 
-    // Step 3: ratified → closed (terminal/final state)
+    // Step 3: ratified → closed (terminal/final state) — final transitions need
+    // a confirming second click (#203)
     await page.locator(".inspector__btn--transition", { hasText: "→ close" }).click();
+    await page.locator(".inspector__btn--transition", { hasText: "Confirm → close?" }).click();
 
     // No transition buttons should be visible (closed is a final state)
     await expect(page.locator(".inspector__transitions")).not.toBeVisible({ timeout: 3000 });
+  });
+});
+
+// ----------------------------------------------------------------------------
+// Final-state transitions need a confirming second click (srs-web#203)
+//
+// "→ close" (and any transition with toIsFinal) is irreversible — the record
+// becomes immutable. The first click arms the button; the second applies it.
+// ----------------------------------------------------------------------------
+test.describe("Final-state transition confirmation (#203)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("mode-governance").click({ timeout: 15000 });
+    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
+      timeout: 5000,
+    });
+    await page
+      .locator('input[type="file"]#srsj-file')
+      .setInputFiles(path.join(__dirname, "fixtures", "gallery.srsj"));
+    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    // Select a ratified (non-final) article
+    await page.locator(".record-list__item").filter({ hasText: "What this is" }).click();
+    await expect(page.locator(".inspector__transitions")).toBeVisible({ timeout: 3000 });
+  });
+
+  test("first click on → close arms the button instead of transitioning", async ({ page }) => {
+    await page.locator(".inspector__btn--transition", { hasText: "→ close" }).click();
+
+    // Button is armed, nothing transitioned yet: supersede is still offered
+    await expect(
+      page.locator(".inspector__btn--transition", { hasText: "Confirm → close?" }),
+    ).toBeVisible();
+    await expect(
+      page.locator(".inspector__btn--transition", { hasText: "→ supersede" }),
+    ).toBeVisible();
+  });
+
+  test("second click applies the final transition", async ({ page }) => {
+    await page.locator(".inspector__btn--transition", { hasText: "→ close" }).click();
+    await page.locator(".inspector__btn--transition", { hasText: "Confirm → close?" }).click();
+
+    // Closed is terminal: no transitions remain
+    await expect(page.locator(".inspector__transitions")).not.toBeVisible({ timeout: 3000 });
+  });
+
+  test("selecting another record disarms a half-confirmed final transition", async ({ page }) => {
+    await page.locator(".inspector__btn--transition", { hasText: "→ close" }).click();
+    await expect(
+      page.locator(".inspector__btn--transition", { hasText: "Confirm → close?" }),
+    ).toBeVisible();
+
+    // Switch records, then come back — the confirm state must be gone.
+    // Selecting a record opens the reading view, so return to the list first.
+    await page.getByTestId("record-reading-back").click();
+    await page.locator(".record-list__item").filter({ hasText: "What we are here to do" }).click();
+    await page.getByTestId("record-reading-back").click();
+    await page.locator(".record-list__item").filter({ hasText: "What this is" }).click();
+    await expect(
+      page.locator(".inspector__btn--transition", { hasText: "Confirm → close?" }),
+    ).not.toBeVisible();
+    await expect(
+      page.locator(".inspector__btn--transition", { hasText: "→ close" }),
+    ).toBeVisible();
   });
 });

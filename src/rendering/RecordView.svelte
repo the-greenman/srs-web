@@ -5,9 +5,9 @@
   B5 record renderer: https://github.com/the-greenman/srs-web/issues/4
 
   Card title priority: title prop → record.displayLabel → instanceId prefix.
-  record.displayLabel is populated for records from listRecords() (normalizeRecordSummary).
-  Records from getRecord() (bare Record shape) lack displayLabel and fall through to the
-  instanceId prefix — the honest degradation when no core label is available.
+  record.displayLabel is populated for records from listRecords() and getRecord()
+  (both normalize the WASM RecordSummary shape, srs-web#182). The instanceId prefix
+  remains the honest degradation when no core label is available.
 -->
 <script lang="ts">
   import type { SrsRecord } from '$lib/srs-client.js';

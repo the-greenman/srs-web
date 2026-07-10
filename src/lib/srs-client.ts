@@ -109,9 +109,8 @@ export interface SrsRecord {
   tags?: string[];
   /**
    * Core-resolved display label from `record_display_label` (srs-rust#293).
-   * Populated by `listRecords()` — the WASM `list_records` binding returns
-   * `RecordSummary { instanceId, displayLabel, record }` since srs-rust#293.
-   * Absent (`undefined`) for records returned by `getRecord()` (bare Record shape).
+   * Populated by `listRecords()` and `getRecord()` — both WASM bindings return
+   * `RecordSummary { instanceId, displayLabel, record }` (srs-rust#293/#294, srs-web#182).
    * Clients must use `displayLabel` for list labels and not re-derive titles from fieldValues.
    */
   displayLabel?: string;
@@ -363,11 +362,15 @@ export function countRecords(repo: SrsRepository): number {
 
 /**
  * Get a single record by instance ID. Returns null if not found.
+ *
+ * The WASM binding returns a `RecordSummary` (`{ instanceId, displayLabel, record }`,
+ * srs-rust#294); normalizeRecordSummary unwraps it — falling back to the bare-Record
+ * shape for older bindings — so the result carries `displayLabel` (srs-web#182).
  */
 export function getRecord(repo: SrsRepository, instanceId: string): SrsRecord | null {
   const raw = repo.get_record(instanceId);
   if (raw === null || raw === undefined) return null;
-  return normalizeRecord(raw);
+  return normalizeRecordSummary(raw);
 }
 
 /**
