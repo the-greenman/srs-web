@@ -24,7 +24,8 @@
   /** Cast lifecycle to Status — lifecycle values are a subset of Status. */
   function toStatus(lifecycle: string | undefined): Status | undefined {
     if (!lifecycle) return undefined;
-    // Status includes draft, active, archived which matches LifecycleState
+    // Status has been extended to cover the full governance lifecycle vocabulary
+    // (draft, proposed, ratified, closed, superseded, abandoned, etc.) — see types.ts.
     return lifecycle as Status;
   }
 
