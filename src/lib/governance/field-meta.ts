@@ -57,8 +57,8 @@ export function getFieldMetaContext(): FieldMetaContext {
 }
 
 /**
- * @deprecated Use getFieldMetaContext() + $derived(_ctx.meta) instead.
- * Retained for forward-compatibility; has no production callers after #83.
+ * @deprecated Use getFieldMetaContext() + $derived(_fieldMetaCtx.meta) instead.
+ * Has no callers after #83; may be removed in a follow-up cleanup.
  */
 export function getFieldMeta(): Map<string, FieldFormDef> {
   return getContext<FieldMetaContext>(FIELD_META_KEY).meta;
