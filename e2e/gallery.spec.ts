@@ -292,6 +292,15 @@ test.describe("Decision Log — sort and filter controls", () => {
     await page.getByTestId("search-input").fill("MOUNTING");
     await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
   });
+
+  test("search matches text in non-title fields (body content)", async ({ page }) => {
+    // "overextending" appears only in the concerns field of "Phase 1 scope", not its title.
+    // This verifies WASM find() searches beyond the display label.
+    await page.getByTestId("search-input").fill("overextending");
+    const cards = page.getByTestId("decision-summary-card");
+    await expect(cards).toHaveCount(1);
+    await expect(cards.filter({ hasText: "Phase 1 scope" })).toHaveCount(1);
+  });
 });
 
 test.describe("Decision Log — export buttons", () => {
