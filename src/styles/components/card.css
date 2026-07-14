@@ -66,8 +66,78 @@
   letter-spacing: var(--tracking-label);
   color: var(--grey-3);
 }
+.card__field-label-text {
+  flex: 1 1 auto;
+}
 .card__field-label .req {
   color: var(--ink);
+}
+
+/* Field help (srs-web#211) — read-view mirror of the editor's #176 treatment.
+   The caption is body-voiced (not the mono uppercase label); the info toggle and
+   revealed instructions match Field.svelte's .field__info / .field__instructions. */
+.card__field-description {
+  margin: 0 0 6px;
+  font-family: var(--font-sans);
+  font-size: var(--size-sm);
+  line-height: 1.4;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--grey-3);
+}
+/* Info toggle — a small monochrome circled "i" that reveals the instructions.
+   The button is a 24×24 hit target (WCAG 2.2 SC 2.5.8); the visible ring is the
+   smaller ::before glyph so it sits neatly beside the compact mono label. */
+.card__field-info {
+  flex: none;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.card__field-info::before {
+  content: "i";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-style: italic;
+  line-height: 1;
+  color: var(--grey-3);
+  border: 1px solid var(--grey-2);
+  border-radius: 50%;
+}
+.card__field-info:hover::before,
+.card__field-info[aria-expanded="true"]::before {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.card__field-info:focus-visible {
+  outline: none;
+}
+.card__field-info:focus-visible::before {
+  box-shadow: 0 0 0 1px var(--ink);
+}
+/* Revealed instructions — offset with a rule so it reads as expanded help. */
+.card__field-instructions {
+  margin: 0 0 6px;
+  font-family: var(--font-sans);
+  font-size: var(--size-sm);
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--grey-3);
+  padding-left: 10px;
+  border-left: 2px solid var(--grey-2);
 }
 .card__field-value {
   font-family: var(--font-sans);
