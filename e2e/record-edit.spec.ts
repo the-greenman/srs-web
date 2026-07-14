@@ -232,11 +232,13 @@ test.describe("Record edit forms (B9)", () => {
     // Fill Title
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Test Role E2E");
 
-    // Fill Authority
-    await page.locator(".field").filter({ hasText: "Authority" }).locator("textarea").fill("Test authority");
+    // Fill Authority / Boundary by accessible name — a bare `.field` hasText
+    // filter is ambiguous now that fields show their description text (srs-web#176),
+    // e.g. the Boundary field's help mentions "authority".
+    await page.getByRole("textbox", { name: "Authority required" }).fill("Test authority");
 
     // Fill Boundary
-    await page.locator(".field").filter({ hasText: "Boundary" }).locator("textarea").fill("Test boundary");
+    await page.getByRole("textbox", { name: "Boundary required" }).fill("Test boundary");
 
     // Select Status "draft"
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
