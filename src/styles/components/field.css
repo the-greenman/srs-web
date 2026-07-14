@@ -59,32 +59,46 @@
 .field__header .field__label {
   flex: 1 1 auto;
 }
-/* Info toggle — a small monochrome circled "i" that reveals .field__instructions. */
+/* Info toggle — a small monochrome circled "i" that reveals .field__instructions.
+   The button is a 24×24 hit target (WCAG 2.2 SC 2.5.8); the visible ring is the
+   smaller ::before glyph so it sits neatly beside the compact mono label. */
 .field__info {
   flex: none;
+  align-self: center;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.field__info::before {
+  content: "i";
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 15px;
   height: 15px;
-  padding: 0;
   font-family: var(--font-mono);
   font-size: 10px;
   font-style: italic;
   line-height: 1;
   color: var(--grey-3);
-  background: transparent;
   border: 1px solid var(--grey-2);
   border-radius: 50%;
-  cursor: pointer;
 }
-.field__info:hover,
-.field__info[aria-expanded="true"] {
+.field__info:hover::before,
+.field__info[aria-expanded="true"]::before {
   color: var(--ink);
   border-color: var(--ink);
 }
 .field__info:focus-visible {
   outline: none;
+}
+.field__info:focus-visible::before {
   box-shadow: 0 0 0 1px var(--ink);
 }
 /* Revealed instructions — offset with a rule so it reads as expanded help. */

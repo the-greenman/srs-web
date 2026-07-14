@@ -55,10 +55,10 @@
         class="field__info"
         aria-expanded={showInstructions}
         aria-controls={instructionsId}
-        aria-label="Show field instructions"
+        aria-label={showInstructions ? 'Hide field instructions' : 'Show field instructions'}
         title={instructions}
         onclick={() => (showInstructions = !showInstructions)}
-      >i</button>
+      ></button>
     {/if}
   </div>
   {#if helpText}<p class="field__help">{helpText}</p>{/if}
