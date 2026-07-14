@@ -59,6 +59,8 @@ async function fillField(page: Page, label: string, value: string): Promise<void
 async function createDecision(page: Page, title: string, statement: string): Promise<void> {
   await page.locator("button.topbar__new").click();
   await expect(page.getByTestId("record-form")).toBeVisible({ timeout: 3000 });
+  // srs-web#176 (delivered): each field shows its description as inline help.
+  await expect(page.locator('[data-testid="record-form"] .field__help').first()).toBeVisible();
   await fillField(page, "Title", title);
   await fillField(page, "Decision Statement", statement);
   await page.locator("button[type=submit]").click();
@@ -133,11 +135,8 @@ test.describe("R1 release walkthrough (#54)", () => {
       );
       await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
 
-      // Guidance visibility (#54 wants it; srs-web#176 tracks inline description/ⓘ)
-      const guidance = page.locator('[data-testid="record-form"] .field__description');
-      if ((await guidance.count()) === 0) {
-        gaps.push("per-field guidance not visible in RecordForm (srs-web#176)");
-      }
+      // Guidance visibility (#54): delivered by srs-web#176 — inline description
+      // help (and an ⓘ instructions toggle) is now asserted inside createDecision.
     });
 
     // ------------------------------------------------------------------
