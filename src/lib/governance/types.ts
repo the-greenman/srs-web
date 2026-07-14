@@ -17,6 +17,10 @@ export interface FieldFormDef {
   name: string;
   /** AI guidance purpose text from the package field definition, if non-empty. */
   aiGuidance?: string;
+  /** The field's own short description caption, shown as inline editor help. */
+  description?: string;
+  /** Fuller human "how to complete this field" guidance, revealed via an info toggle. */
+  instructions?: string;
 }
 
 export interface TypeFormDef {

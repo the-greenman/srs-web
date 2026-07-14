@@ -66,6 +66,8 @@ function propertyToField(name: string, prop: SchemaProperty, required: boolean):
     options: prop.enum,
     name,
     aiGuidance: prop["x-srs-ai-guidance"]?.purpose || undefined,
+    description: prop["x-srs-description"] || undefined,
+    instructions: prop["x-srs-instructions"] || undefined,
   };
 }
 
