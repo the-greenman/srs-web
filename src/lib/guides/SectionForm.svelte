@@ -197,7 +197,7 @@
   <form onsubmit={handleSubmit} class="record-form__fields">
     {#each fields as def (def.fieldId)}
       {@const inputId = `rf-${def.fieldId}`}
-      <Field label={def.label} required={def.required} id={inputId}>
+      <Field label={def.label} required={def.required} description={def.description} instructions={def.instructions} id={inputId}>
         <FieldInput def={def} bind:value={fieldValues[def.fieldId]} id={inputId} disabled={saving} required={def.required} />
       </Field>
     {/each}
@@ -211,7 +211,7 @@
           {#each groupValues[g.groupId] ?? [] as entry, i (i)}
             <div class="table-entry" data-testid="table-entry">
               {#each g.fields.filter((f) => f.name === "subheading" || f.name === "label") as meta (meta.fieldId)}
-                <Field label={meta.label} id={`g-${g.groupId}-${i}-${meta.fieldId}`}>
+                <Field label={meta.label} description={meta.description} instructions={meta.instructions} id={`g-${g.groupId}-${i}-${meta.fieldId}`}>
                   <FieldInput def={meta} bind:value={groupValues[g.groupId][i][meta.fieldId]} id={`g-${g.groupId}-${i}-${meta.fieldId}`} disabled={saving} />
                 </Field>
               {/each}
@@ -266,7 +266,7 @@
           {#each groupValues[g.groupId] ?? [] as entry, i (i)}
             <div class="group-entry" data-testid="group-entry">
               {#each g.fields as f (f.fieldId)}
-                <Field label={f.label} id={`g-${g.groupId}-${i}-${f.fieldId}`}>
+                <Field label={f.label} description={f.description} instructions={f.instructions} id={`g-${g.groupId}-${i}-${f.fieldId}`}>
                   <FieldInput def={f} bind:value={entry[f.fieldId]} id={`g-${g.groupId}-${i}-${f.fieldId}`} disabled={saving} rows={3} />
                 </Field>
               {/each}
