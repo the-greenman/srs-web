@@ -60,6 +60,21 @@ test.describe("Lifecycle transitions (B11)", () => {
   });
 
   // --------------------------------------------------------------------------
+  // srs-web#211: the read-only RecordView (the fallback view articles dispatch
+  // to — decisions use the bespoke DecisionView) surfaces each field's own
+  // description as an inline caption, mirroring the #176 editor treatment.
+  // --------------------------------------------------------------------------
+  test("RecordView shows field description captions for a selected article (#211)", async ({
+    page,
+  }) => {
+    await page.locator(".record-list__item").filter({ hasText: "What this is" }).click();
+    const reading = page.getByTestId("record-reading");
+    await expect(reading).toBeVisible({ timeout: 3000 });
+    // At least one populated field renders its description caption below the label.
+    await expect(reading.locator(".card__field-description").first()).toBeVisible();
+  });
+
+  // --------------------------------------------------------------------------
   // Test 2: Transition buttons appear for a draft record (create one first)
   // New records start with lifecycleState "draft" (auto-set by Rust engine).
   // From draft, only one transition is available: → propose.
