@@ -42,7 +42,13 @@
 >
   {#each record.fieldValues as fv}
     {#if !isEmpty(fv.value)}
-      <CardField label={fieldMeta.get(fv.fieldId)?.label ?? fv.fieldId.slice(0, 8)}>
+      {@const def = fieldMeta.get(fv.fieldId)}
+      <CardField
+        label={def?.label ?? fv.fieldId.slice(0, 8)}
+        description={def?.description}
+        instructions={def?.instructions}
+        id={fv.fieldId}
+      >
         <FieldValueView {fv} />
       </CardField>
     {/if}

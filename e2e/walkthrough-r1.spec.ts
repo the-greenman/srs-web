@@ -66,6 +66,10 @@ async function createDecision(page: Page, title: string, statement: string): Pro
   await page.locator("button[type=submit]").click();
   await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 5000 });
   await expect(page.getByTestId("record-reading")).toContainText(title);
+  // NB (srs-web#211): decisions dispatch to the bespoke DecisionView, not the generic
+  // RecordView this change touched, so no read-view caption is asserted here. RecordView's
+  // caption/toggle behaviour is covered by tests/CardField.test.ts; extending help to
+  // DecisionView is a separate follow-up.
   await page.getByTestId("record-reading-back").click();
   await expect(page.getByTestId("decision-log-view")).toBeVisible({ timeout: 3000 });
 }

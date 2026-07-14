@@ -159,14 +159,14 @@ npm test
 
 #### Tasks
 
-- [ ] In `RecordView.svelte`, resolve `const def = fieldMeta.get(fv.fieldId)` once per row and
+- [x] In `RecordView.svelte`, resolve `const def = fieldMeta.get(fv.fieldId)` once per row and
       pass `description={def?.description}`, `instructions={def?.instructions}`, and
       `id={fv.fieldId}` to `CardField` (alongside the existing `label`).
-- [ ] Regression: the other `CardField` callers (`DecisionView.svelte`,
+- [x] Regression: the other `CardField` callers (`DecisionView.svelte`,
       `DecisionSummaryCard.svelte`, `GovernanceShell.svelte`) pass none of the new props, so they
       render unchanged. Verify by running the full `npm test` suite (which covers those views) —
       not by eyeball.
-- [ ] E2e caption assertion (data-driven): check whether any field in `e2e/fixtures/gallery.srsj`
+- [x] E2e caption assertion (data-driven): check whether any field in `e2e/fixtures/gallery.srsj`
       has a distinct `title`+`description` (so the caption is not suppressed). If one exists, add
       an assertion to `e2e/walkthrough-r1.spec.ts` (or a small new spec) that its `RecordView`
       renders `.card__field-description` — giving the read path the same live, WASM-driven proof
@@ -176,13 +176,13 @@ npm test
 
 #### Acceptance Criteria
 
-- [ ] A record whose type schema defines a distinct field description shows the caption in
+- [x] A record whose type schema defines a distinct field description shows the caption in
       `RecordView`; a field with `instructions` shows the ⓘ toggle.
-- [ ] Records with no field help render exactly as before (verified by the full `npm test` run,
+- [x] Records with no field help render exactly as before (verified by the full `npm test` run,
       which exercises the other `CardField` callers).
-- [ ] The Phase-2 e2e outcome is recorded: either a live caption assertion was added, or the
+- [x] The Phase-2 e2e outcome is recorded: either a live caption assertion was added, or the
       "no distinct-description fixture field" finding is documented in the plan + PR body.
-- [ ] `npm run typecheck`, `npm run lint`, `npm run build`, `npm test` pass.
+- [x] `npm run typecheck`, `npm run lint`, `npm run build`, `npm test` pass.
 
 #### Testing
 
