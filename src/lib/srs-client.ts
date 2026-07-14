@@ -619,6 +619,10 @@ export interface SchemaProperty {
   "x-srs-composite-renderer"?: string;
   // AI guidance emitted when aiGuidance is an object in the package field definition:
   "x-srs-ai-guidance"?: { purpose?: string; [key: string]: unknown };
+  // Human help text for editors (srs-rust ADR-026): the field's own description
+  // and fuller "how to complete this field" instructions.
+  "x-srs-description"?: string;
+  "x-srs-instructions"?: string;
   items?: {
     type?: string;
     properties?: Record<string, SchemaProperty>;

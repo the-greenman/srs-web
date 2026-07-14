@@ -218,3 +218,66 @@ describe("definitionToGroups", () => {
     expect(groups[0].fields[1].fieldId).toBe(bodyId);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Field help text — x-srs-description / x-srs-instructions (srs-web#176)
+// ---------------------------------------------------------------------------
+
+describe("field help text mapping", () => {
+  it("maps x-srs-description and x-srs-instructions onto a scalar FieldFormDef", () => {
+    const def = simpleDef({
+      rationale: scalarProp({
+        "x-srs-field-id": "aaaaaaaa-0000-4000-8000-000000000001",
+        "x-srs-description": "Why this option over the alternatives.",
+        "x-srs-instructions": "Say what made this the right choice, in 2–4 sentences.",
+      }),
+    });
+
+    const [field] = definitionToFields(def);
+
+    expect(field.description).toBe("Why this option over the alternatives.");
+    expect(field.instructions).toBe("Say what made this the right choice, in 2–4 sentences.");
+  });
+
+  it("leaves description/instructions undefined when the keys are absent", () => {
+    const def = simpleDef({
+      plain: scalarProp({ "x-srs-field-id": "aaaaaaaa-0000-4000-8000-000000000001" }),
+    });
+
+    const [field] = definitionToFields(def);
+
+    expect(field.description).toBeUndefined();
+    expect(field.instructions).toBeUndefined();
+  });
+
+  it("maps the keys onto group sub-fields (shared propertyToField)", () => {
+    const termId = "11111111-0000-4000-8000-000000000001";
+    const def = simpleDef({
+      items_group: {
+        type: "array",
+        title: "Items",
+        "x-srs-group-id": "items",
+        "x-srs-order": 0,
+        "x-srs-repeatable": true,
+        items: {
+          type: "object",
+          properties: {
+            term: scalarProp({
+              "x-srs-field-id": termId,
+              title: "Term",
+              "x-srs-order": 0,
+              "x-srs-description": "The term being defined.",
+              "x-srs-instructions": "Keep it to a short noun phrase.",
+            }),
+          },
+          required: ["term"],
+        },
+      } as unknown as SchemaProperty,
+    });
+
+    const [group] = definitionToGroups(def);
+
+    expect(group.fields[0].description).toBe("The term being defined.");
+    expect(group.fields[0].instructions).toBe("Keep it to a short noun phrase.");
+  });
+});
