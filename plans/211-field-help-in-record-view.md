@@ -166,13 +166,14 @@ npm test
       `DecisionSummaryCard.svelte`, `GovernanceShell.svelte`) pass none of the new props, so they
       render unchanged. Verify by running the full `npm test` suite (which covers those views) —
       not by eyeball.
-- [x] E2e caption assertion (data-driven): check whether any field in `e2e/fixtures/gallery.srsj`
-      has a distinct `title`+`description` (so the caption is not suppressed). If one exists, add
-      an assertion to `e2e/walkthrough-r1.spec.ts` (or a small new spec) that its `RecordView`
-      renders `.card__field-description` — giving the read path the same live, WASM-driven proof
-      #176 gave the editor. If **none** exists (fixtures currently carry no `instructions` and
-      descriptions largely equal titles), record that finding in the plan and the PR body, and
-      rely on Phase 1's synthetic-prop unit tests for the caption/toggle — do not silently skip.
+- [x] E2e caption assertion (data-driven): **added** to `e2e/lifecycle.spec.ts` — gallery
+      **article** records dispatch to `RecordView` (only decisions use `DecisionView`), and their
+      fields' schema `title` (humanized name) differs from `description`, so the caption is not
+      suppressed. The test selects the "What this is" article and asserts `RecordView` renders
+      `.card__field-description`, giving the read path the same live, WASM-driven proof #176 gave
+      the editor. (The walkthrough's decision path uses `DecisionView`, so it carries a note, not
+      an assertion.) The ⓘ toggle still has no fixture data (`instructions` empty everywhere) and
+      is covered by the unit tests only — stated explicitly, not skipped.
 
 #### Acceptance Criteria
 
@@ -209,11 +210,11 @@ npm test
 - [ ] `npm run build` succeeds
 - [ ] `npm test` passes
 - [ ] `npm run e2e` passes (no regression; #176's walkthrough-r1 assertions still green)
-- [ ] WASM loads against `gallery.srsj`. Caption/toggle behaviour is fully proven by Phase 1's
+- [x] WASM loads against `gallery.srsj`. Caption/toggle behaviour is fully proven by Phase 1's
       unit tests (synthetic props). Against live fixture data: the description caption is asserted
-      in e2e **if** a gallery field has a distinct title+description; the ⓘ toggle cannot be
-      fixture-verified (no fixture carries `instructions`) and is covered by unit tests only —
-      this gap is stated explicitly, not glossed.
+      in `e2e/lifecycle.spec.ts` on a real article rendered through `RecordView`; the ⓘ toggle
+      cannot be fixture-verified (no fixture carries `instructions`) and is covered by unit tests
+      only — this gap is stated explicitly, not glossed.
 - [ ] Existing `CardField` consumers (DecisionView, DecisionSummaryCard, GovernanceShell) unchanged
 
 ## Coordination Rules
