@@ -83,7 +83,7 @@
   <form onsubmit={handleSubmit} class="record-form__fields">
     {#each schema.fields as def (def.fieldId)}
       {@const inputId = `rf-${def.fieldId}`}
-      <Field label={def.label} required={def.required} id={inputId}>
+      <Field label={def.label} required={def.required} description={def.description} instructions={def.instructions} id={inputId}>
         <FieldInput def={def} bind:value={fieldValues[def.fieldId]} id={inputId} disabled={saving} required={def.required} />
       </Field>
     {/each}

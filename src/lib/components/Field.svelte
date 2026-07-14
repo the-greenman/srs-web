@@ -14,6 +14,8 @@
     required = false,
     typeHint,
     help,
+    description,
+    instructions,
     error,
     id,
     children,
@@ -23,20 +25,46 @@
     /** e.g. "string", "text", "select". */
     typeHint?: string;
     help?: string;
+    /** The field's own short caption; shown inline as help unless it equals the label. */
+    description?: string;
+    /** Fuller "how to complete this field" guidance; revealed via the info toggle. */
+    instructions?: string;
     /** Inline validation message; presence flags the field invalid. */
     error?: string;
     /** Wire to the control's id for label association. */
     id?: string;
     children?: Snippet;
   } = $props();
+
+  // The field's description doubles as its label when no displayLabel is set
+  // (srs-rust ADR-026: type-schema `title` falls back to `description`). Suppress
+  // the inline help in that case so we don't print the same string twice.
+  const helpText = $derived(help ?? (description && description !== label ? description : undefined));
+  const instructionsId = $derived(id ? `${id}-instructions` : undefined);
+  let showInstructions = $state(false);
 </script>
 
 <div class="field" class:field--invalid={!!error}>
-  <label class="field__label" for={id}>
-    {label}{#if required}<span class="req">required</span>{/if}
-    {#if typeHint}<span class="field__type-hint">{typeHint}</span>{/if}
-  </label>
-  {#if help}<p class="field__help">{help}</p>{/if}
+  <div class="field__header">
+    <label class="field__label" for={id}>
+      {label}{#if required}<span class="req">required</span>{/if}{#if typeHint}<span class="field__type-hint">{typeHint}</span>{/if}
+    </label>
+    {#if instructions}
+      <button
+        type="button"
+        class="field__info"
+        aria-expanded={showInstructions}
+        aria-controls={instructionsId}
+        aria-label="Show field instructions"
+        title={instructions}
+        onclick={() => (showInstructions = !showInstructions)}
+      >i</button>
+    {/if}
+  </div>
+  {#if helpText}<p class="field__help">{helpText}</p>{/if}
+  {#if instructions && showInstructions}
+    <p class="field__instructions" id={instructionsId}>{instructions}</p>
+  {/if}
   {@render children?.()}
   {#if error}<span class="field__error">{error}</span>{/if}
 </div>

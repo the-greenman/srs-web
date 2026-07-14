@@ -139,19 +139,19 @@ npm test -- blueprint-utils
 
 #### Tasks
 
-- [ ] `Field.svelte`: add `description`/`instructions` props; render description in `.field__help`
+- [x] `Field.svelte`: add `description`/`instructions` props; render description in `.field__help`
   (skip when `description === label`); add the ⓘ toggle + `.field__instructions` reveal block; wire
   `title={instructions}`.
-- [ ] `src/styles/components/field.css`: styles for the ⓘ button and `.field__instructions`
+- [x] `src/styles/components/field.css`: styles for the ⓘ button and `.field__instructions`
   (muted, consistent with `.field__help`).
-- [ ] Forward props at `RecordForm.svelte:86`, `SectionForm.svelte:200`, `:214`, `:269`.
+- [x] Forward props at `RecordForm.svelte:86`, `SectionForm.svelte:200`, `:214`, `:269`.
 
 #### Acceptance Criteria
 
-- [ ] Each field shows its description as help; ⓘ appears only where instructions exist and toggles
+- [x] Each field shows its description as help; ⓘ appears only where instructions exist and toggles
   the fuller text; no duplicate description when a field lacks a `displayLabel`.
-- [ ] Governance `RecordForm` and guides `SectionForm` behave identically (shared frame).
-- [ ] `npm run typecheck`, `npm run lint`, `npm run build`, `npm test` pass.
+- [x] Governance `RecordForm` and guides `SectionForm` behave identically (shared frame).
+- [x] `npm run typecheck`, `npm run lint`, `npm run build`, `npm test` pass.
 
 #### Testing
 
