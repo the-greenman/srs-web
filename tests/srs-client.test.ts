@@ -74,6 +74,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     repository_navigation: () => { throw new Error("not mocked"); },
     scaffold_new_repository: () => { throw new Error("not mocked"); },
     get_allowed_lifecycle_transitions: () => { throw new Error("not mocked"); },
+    get_field_value_by_name: () => { throw new Error("not mocked"); },
   };
   return { ...base, ...overrides };
 }

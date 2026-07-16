@@ -8,8 +8,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { SrsRecord } from "../src/lib/srs-client.js";
-import type { FieldFormDef } from "../src/lib/governance/types.js";
+import type { SrsRecord, SrsRepository } from "../src/lib/srs-client.js";
 import {
   formatDecisionMarkdown,
   formatDecisionHtml,
@@ -20,42 +19,25 @@ import {
 // Test helpers
 // ---------------------------------------------------------------------------
 
-function makeFieldMeta(fields: { id: string; name: string }[]): Map<string, FieldFormDef> {
-  const map = new Map<string, FieldFormDef>();
-  for (const f of fields) {
-    map.set(f.id, {
-      fieldId: f.id,
-      name: f.name,
-      label: f.name,
-      type: "string",
-      required: false,
-    } as unknown as FieldFormDef);
-  }
-  return map;
+function makeRepoStub(values: Record<string, string>): Pick<SrsRepository, "get_field_value_by_name"> {
+  return { get_field_value_by_name: (_id: string, name: string) => values[name] ?? null };
 }
 
-function makeRecord(
-  fieldValues: { fieldId: string; value: string }[],
-  opts: { createdAt?: string } = {}
-): SrsRecord {
+function makeRecord(opts: { createdAt?: string } = {}): SrsRecord {
   return {
     instanceId: "test-inst-1",
     typeId: "decision-type-id",
     typeVersion: 1,
-    fieldValues: fieldValues.map((fv) => ({ fieldId: fv.fieldId, value: fv.value })),
+    fieldValues: [],
     createdAt: opts.createdAt,
   } as unknown as SrsRecord;
 }
 
-const TITLE_FIELD_ID = "field-title";
-const STATEMENT_FIELD_ID = "field-statement";
-const CONTEXT_FIELD_ID = "field-context";
-
-const basicFieldMeta = makeFieldMeta([
-  { id: TITLE_FIELD_ID, name: "title" },
-  { id: STATEMENT_FIELD_ID, name: "decision_statement" },
-  { id: CONTEXT_FIELD_ID, name: "context" },
-]);
+const basicRepo = makeRepoStub({
+  title: "My Decision",
+  decision_statement: "We decided X.",
+  context: "Background info.",
+});
 
 // ---------------------------------------------------------------------------
 // formatDecisionMarkdown
@@ -63,27 +45,21 @@ const basicFieldMeta = makeFieldMeta([
 
 describe("formatDecisionMarkdown", () => {
   it("starts with # <title> heading", () => {
-    const record = makeRecord([
-      { fieldId: TITLE_FIELD_ID, value: "My Decision" },
-      { fieldId: STATEMENT_FIELD_ID, value: "We decided X." },
-    ]);
-    const md = formatDecisionMarkdown(record, basicFieldMeta);
+    const record = makeRecord();
+    const md = formatDecisionMarkdown(record, basicRepo as SrsRepository);
     expect(md).toMatch(/^# My Decision\n/);
   });
 
   it("falls back to 'Untitled Decision' when title field is absent", () => {
-    const record = makeRecord([{ fieldId: STATEMENT_FIELD_ID, value: "We decided X." }]);
-    const md = formatDecisionMarkdown(record, basicFieldMeta);
+    const record = makeRecord();
+    const repo = makeRepoStub({ decision_statement: "We decided X." });
+    const md = formatDecisionMarkdown(record, repo as SrsRepository);
     expect(md).toMatch(/^# Untitled Decision\n/);
   });
 
   it("includes present fields as ## headings", () => {
-    const record = makeRecord([
-      { fieldId: TITLE_FIELD_ID, value: "My Decision" },
-      { fieldId: STATEMENT_FIELD_ID, value: "We decided X." },
-      { fieldId: CONTEXT_FIELD_ID, value: "Background info." },
-    ]);
-    const md = formatDecisionMarkdown(record, basicFieldMeta);
+    const record = makeRecord();
+    const md = formatDecisionMarkdown(record, basicRepo as SrsRepository);
     expect(md).toContain("## Decision Statement");
     expect(md).toContain("We decided X.");
     expect(md).toContain("## Context");
@@ -91,33 +67,32 @@ describe("formatDecisionMarkdown", () => {
   });
 
   it("skips fields absent from the record", () => {
-    const record = makeRecord([{ fieldId: TITLE_FIELD_ID, value: "My Decision" }]);
-    const md = formatDecisionMarkdown(record, basicFieldMeta);
+    const record = makeRecord();
+    const repo = makeRepoStub({ title: "My Decision" });
+    const md = formatDecisionMarkdown(record, repo as SrsRepository);
     expect(md).not.toContain("## Decision Statement");
     expect(md).not.toContain("## Context");
   });
 
   it("skips fields with empty string values", () => {
-    const record = makeRecord([
-      { fieldId: TITLE_FIELD_ID, value: "My Decision" },
-      { fieldId: STATEMENT_FIELD_ID, value: "" },
-    ]);
-    const md = formatDecisionMarkdown(record, basicFieldMeta);
+    const record = makeRecord();
+    const repo = makeRepoStub({ title: "My Decision", decision_statement: "" });
+    const md = formatDecisionMarkdown(record, repo as SrsRepository);
     expect(md).not.toContain("## Decision Statement");
   });
 
   it("includes createdAt date footer when createdAt is present", () => {
-    const record = makeRecord([{ fieldId: TITLE_FIELD_ID, value: "My Decision" }], {
-      createdAt: "2026-05-01T10:00:00Z",
-    });
-    const md = formatDecisionMarkdown(record, basicFieldMeta);
+    const record = makeRecord({ createdAt: "2026-05-01T10:00:00Z" });
+    const repo = makeRepoStub({ title: "My Decision" });
+    const md = formatDecisionMarkdown(record, repo as SrsRepository);
     expect(md).toContain("*Created: 2026-05-01*");
     expect(md).toContain("---");
   });
 
   it("omits createdAt footer when createdAt is absent", () => {
-    const record = makeRecord([{ fieldId: TITLE_FIELD_ID, value: "My Decision" }]);
-    const md = formatDecisionMarkdown(record, basicFieldMeta);
+    const record = makeRecord();
+    const repo = makeRepoStub({ title: "My Decision" });
+    const md = formatDecisionMarkdown(record, repo as SrsRepository);
     expect(md).not.toContain("*Created:");
   });
 });
@@ -128,58 +103,56 @@ describe("formatDecisionMarkdown", () => {
 
 describe("formatDecisionHtml", () => {
   it("starts with <!DOCTYPE html>", () => {
-    const record = makeRecord([{ fieldId: TITLE_FIELD_ID, value: "My Decision" }]);
-    const html = formatDecisionHtml(record, basicFieldMeta);
+    const record = makeRecord();
+    const repo = makeRepoStub({ title: "My Decision" });
+    const html = formatDecisionHtml(record, repo as SrsRepository);
     expect(html).toMatch(/^<!DOCTYPE html>/);
   });
 
   it("includes <title> tag with the decision title", () => {
-    const record = makeRecord([{ fieldId: TITLE_FIELD_ID, value: "My Decision" }]);
-    const html = formatDecisionHtml(record, basicFieldMeta);
+    const record = makeRecord();
+    const repo = makeRepoStub({ title: "My Decision" });
+    const html = formatDecisionHtml(record, repo as SrsRepository);
     expect(html).toContain("<title>My Decision</title>");
   });
 
   it("includes <h1> with the decision title", () => {
-    const record = makeRecord([{ fieldId: TITLE_FIELD_ID, value: "My Decision" }]);
-    const html = formatDecisionHtml(record, basicFieldMeta);
+    const record = makeRecord();
+    const repo = makeRepoStub({ title: "My Decision" });
+    const html = formatDecisionHtml(record, repo as SrsRepository);
     expect(html).toContain("<h1>My Decision</h1>");
   });
 
   it("wraps each field in a <section> with an <h2>", () => {
-    const record = makeRecord([
-      { fieldId: TITLE_FIELD_ID, value: "My Decision" },
-      { fieldId: STATEMENT_FIELD_ID, value: "We decided X." },
-    ]);
-    const html = formatDecisionHtml(record, basicFieldMeta);
+    const record = makeRecord();
+    const repo = makeRepoStub({ title: "My Decision", decision_statement: "We decided X." });
+    const html = formatDecisionHtml(record, repo as SrsRepository);
     expect(html).toContain("<section>");
     expect(html).toContain("<h2>Decision Statement</h2>");
     expect(html).toContain("We decided X.");
   });
 
   it("HTML-escapes & in field values", () => {
-    const record = makeRecord([
-      { fieldId: TITLE_FIELD_ID, value: "Cats & Dogs" },
-      { fieldId: STATEMENT_FIELD_ID, value: "Both & more." },
-    ]);
-    const html = formatDecisionHtml(record, basicFieldMeta);
+    const record = makeRecord();
+    const repo = makeRepoStub({ title: "Cats & Dogs", decision_statement: "Both & more." });
+    const html = formatDecisionHtml(record, repo as SrsRepository);
     expect(html).not.toContain("Cats & Dogs");
     expect(html).toContain("Cats &amp; Dogs");
     expect(html).toContain("Both &amp; more.");
   });
 
   it("HTML-escapes < and > in field values", () => {
-    const record = makeRecord([
-      { fieldId: TITLE_FIELD_ID, value: "A > B" },
-      { fieldId: STATEMENT_FIELD_ID, value: "<script>alert(1)</script>" },
-    ]);
-    const html = formatDecisionHtml(record, basicFieldMeta);
+    const record = makeRecord();
+    const repo = makeRepoStub({ title: "A > B", decision_statement: "<script>alert(1)</script>" });
+    const html = formatDecisionHtml(record, repo as SrsRepository);
     expect(html).toContain("A &gt; B");
     expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
   });
 
   it("skips absent fields", () => {
-    const record = makeRecord([{ fieldId: TITLE_FIELD_ID, value: "My Decision" }]);
-    const html = formatDecisionHtml(record, basicFieldMeta);
+    const record = makeRecord();
+    const repo = makeRepoStub({ title: "My Decision" });
+    const html = formatDecisionHtml(record, repo as SrsRepository);
     expect(html).not.toContain("Decision Statement");
     expect(html).not.toContain("Context");
   });

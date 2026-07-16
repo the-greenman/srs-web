@@ -67,6 +67,8 @@ export interface SrsRepository {
   list_document_views(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in createRecordSuccessor()
   create_record_successor(predecessor_id: string, input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; null for missing/unknown field (srs-web#179)
+  get_field_value_by_name(instance_id: string, field_name: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in find()
   find(query_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listTerms()

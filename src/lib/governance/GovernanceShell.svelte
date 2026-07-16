@@ -815,8 +815,8 @@
     try {
       const content =
         format === "html"
-          ? formatDecisionHtml(selectedRecord, fieldMetaMap)
-          : formatDecisionMarkdown(selectedRecord, fieldMetaMap);
+          ? formatDecisionHtml(selectedRecord, repo)
+          : formatDecisionMarkdown(selectedRecord, repo);
       const mimeType = format === "html" ? "text/html" : "text/markdown";
       const ext = format === "html" ? "html" : "md";
       const label = selectedRecord.displayLabel ?? selectedRecord.instanceId.slice(0, 8);
