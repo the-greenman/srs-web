@@ -1,5 +1,10 @@
 # Plan: Expose resolve_container_view in WASM bindings (srs-web #96)
 
+> **Note (srs-web#178, 2026-07-16):** The `orderByPrecedes` ADR-001 residual-debt notes below
+> are superseded. `orderByPrecedes` was migrated to the WASM `order_by_precedes` binding in
+> srs-rust#501 and removed from TypeScript in srs-web#178. The warnings below to "NOT drop
+> `orderByPrecedes()`" no longer apply; the TS implementation was intentionally deleted.
+
 ## Summary
 
 `resolve_container_view` already exists in `srs-rust/crates/srs-bindings/src/lib.rs` but is not yet wired into the `SrsRepository` TypeScript interface or `srs-client.ts`. Until it is, srs-web reconstructs the same structured data with separate `getContainer` + filtered `listRecords` calls, which duplicates membership filtering logic that belongs in the core. This plan adds the TypeScript wrapper and uses it in `GuidesShell.svelte` to replace the current `getContainer` + member-filtering workaround. The `columns` and `excludeLifecycleStates` fields it exposes unblock issues #93 and #94 (container-driven nav and list pane).
