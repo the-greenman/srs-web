@@ -13,12 +13,12 @@
 
   let {
     records,
-    repo = undefined,
+    repo,
     selectedId = null,
     onSelect,
   }: {
     records: SrsRecord[];
-    repo?: SrsRepository;
+    repo: SrsRepository;
     selectedId?: string | null;
     onSelect: (id: string | null) => void;
   } = $props();
@@ -148,6 +148,7 @@
       {#each displayedRecords as record (record.instanceId)}
         <DecisionSummaryCard
           {record}
+          {repo}
           selected={selectedId === record.instanceId}
           onclick={() => onSelect(selectedId === record.instanceId ? null : record.instanceId)}
         />

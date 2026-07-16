@@ -1,18 +1,14 @@
 /**
  * decision-export-utils.ts — export formatters for decision records.
  *
- * `formatDecisionMarkdown` / `formatDecisionHtml`: format a single already-WASM-resolved
- * SrsRecord for download. ADR-001 residual debt: field-by-name lookup, same category as
- * DecisionView.svelte. A future srs-rust issue tracks adding instance_id_filter to
- * render_document_view so this TS formatting layer can be removed.
+ * `formatDecisionMarkdown` / `formatDecisionHtml`: format a single SrsRecord for download,
+ * reading field values via `repo.get_field_value_by_name` (srs-web#179).
  *
  * `wrapLogHtml`: wraps the HTML fragment returned by renderDocumentView("html") in a
  * complete HTML document so the whole-log download is a valid standalone file.
  */
 
-import { getStringField } from "$lib/governance/field-utils.js";
-import type { FieldFormDef } from "$lib/governance/types.js";
-import type { SrsRecord } from "$lib/srs-client.js";
+import type { SrsRecord, SrsRepository } from "$lib/srs-client.js";
 
 /** Field display order for decision export — mirrors DECISION_FIELDS in DecisionView.svelte. */
 const EXPORT_FIELDS = [
@@ -34,21 +30,19 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-/**
- * Format a decision record as Markdown.
- * Presentation logic only — reads already-WASM-resolved field values.
- * ADR-001 residual debt: same category as DecisionView.svelte field rendering.
- */
-export function formatDecisionMarkdown(
-  record: SrsRecord,
-  fieldMeta: Map<string, FieldFormDef>
-): string {
-  const title = getStringField(record, "title", fieldMeta) ?? "Untitled Decision";
+/** Format a decision record as Markdown. Reads field values via WASM binding. */
+export function formatDecisionMarkdown(record: SrsRecord, repo: SrsRepository): string {
+  const title =
+    (repo.get_field_value_by_name(record.instanceId, "title") as string | null | undefined) ??
+    "Untitled Decision";
   const lines: string[] = [`# ${title}`, ""];
   for (const field of EXPORT_FIELDS) {
     if (field.name === "title") continue;
-    const value = getStringField(record, field.name, fieldMeta);
-    if (value === undefined || value === "") continue;
+    const value = repo.get_field_value_by_name(record.instanceId, field.name) as
+      | string
+      | null
+      | undefined;
+    if (value === undefined || value === null || value === "") continue;
     lines.push(`## ${field.label}`, "", value, "");
   }
   if (record.createdAt) {
@@ -57,20 +51,19 @@ export function formatDecisionMarkdown(
   return lines.join("\n");
 }
 
-/**
- * Format a decision record as a minimal HTML document.
- * Presentation logic only — same ADR-001 residual debt category as formatDecisionMarkdown.
- */
-export function formatDecisionHtml(
-  record: SrsRecord,
-  fieldMeta: Map<string, FieldFormDef>
-): string {
-  const title = getStringField(record, "title", fieldMeta) ?? "Untitled Decision";
+/** Format a decision record as a minimal HTML document. Reads field values via WASM binding. */
+export function formatDecisionHtml(record: SrsRecord, repo: SrsRepository): string {
+  const title =
+    (repo.get_field_value_by_name(record.instanceId, "title") as string | null | undefined) ??
+    "Untitled Decision";
   const sections: string[] = [];
   for (const field of EXPORT_FIELDS) {
     if (field.name === "title") continue;
-    const value = getStringField(record, field.name, fieldMeta);
-    if (value === undefined || value === "") continue;
+    const value = repo.get_field_value_by_name(record.instanceId, field.name) as
+      | string
+      | null
+      | undefined;
+    if (value === undefined || value === null || value === "") continue;
     const escaped = escapeHtml(value).replace(/\n/g, "<br>");
     sections.push(`<section><h2>${field.label}</h2><p>${escaped}</p></section>`);
   }
