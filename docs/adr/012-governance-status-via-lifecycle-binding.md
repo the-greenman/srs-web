@@ -52,3 +52,12 @@ are deleted. No TypeScript encodes the transition graph.
 - Immutability gating (srs-web#86) and hidden-status filtering (srs-web#118) read the
   `immutable` flag and current state from the `get_allowed_lifecycle_transitions` result —
   no separate field-value query is needed.
+
+## Display-only exception (srs-web#179)
+
+`DecisionSummaryCard.svelte` (list-row badge) and `decision-export-utils.ts` (export formatter)
+read status via `repo.get_field_value_by_name(instanceId, "status")` rather than
+`get_allowed_lifecycle_transitions`. This is an approved exception for display-only contexts
+where calling the lifecycle binding per list row would be prohibitively expensive (one round-trip
+per record). These callers do **not** write status and do not gate any control flow on the value.
+The lifecycle binding remains the sole write path and the authority for immutability gating.
