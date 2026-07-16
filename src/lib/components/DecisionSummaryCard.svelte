@@ -4,36 +4,41 @@
   Tag chips added in srs-web#105.
 -->
 <script lang="ts">
-  import type { SrsRecord } from "$lib/srs-client.js";
+  import type { SrsRecord, SrsRepository } from "$lib/srs-client.js";
   import type { Status } from "$lib/types.js";
-  import { getStringField } from "$lib/governance/field-utils.js";
-  import { getFieldMetaContext } from "$lib/governance/field-meta.js";
   import Tag from "./Tag.svelte";
   import TagChip from "./TagChip.svelte";
 
   let {
     record,
+    repo,
     selected = false,
     onclick,
   }: {
     record: SrsRecord;
+    repo: SrsRepository;
     selected?: boolean;
     onclick: () => void;
   } = $props();
 
-  const _fieldMetaCtx = getFieldMetaContext();
-  const fieldMeta = $derived(_fieldMetaCtx.meta);
-
   const title = $derived(record.displayLabel ?? "Untitled");
-  const rawStatement = $derived(getStringField(record, "decision_statement", fieldMeta));
+  const rawStatement = $derived(
+    repo.get_field_value_by_name(record.instanceId, "decision_statement") as
+      | string
+      | null
+      | undefined
+  );
   const statement = $derived(
-    rawStatement !== undefined
+    rawStatement != null
       ? rawStatement.length > 120
         ? rawStatement.substring(0, 120) + "…"
         : rawStatement
       : undefined
   );
-  const status = $derived(getStringField(record, "status", fieldMeta) as Status | undefined);
+  const status = $derived(
+    repo.get_field_value_by_name(record.instanceId, "status") as Status | null | undefined ??
+      undefined
+  );
   const date = $derived(record.createdAt?.slice(0, 10) ?? "—");
   const tags = $derived(record.tags ?? []);
 </script>

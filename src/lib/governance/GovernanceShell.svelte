@@ -1141,7 +1141,7 @@
 
 {#if showSuccessorModal && selectedRecord}
   <SuccessorModal
-    record={selectedRecord}
+    currentState={allowedTransitions?.currentState ?? "immutable"}
     onCreateSuccessor={handleCreateSuccessor}
     onCancel={() => { showSuccessorModal = false; pendingRelationalTransition = null; }}
   />

@@ -148,6 +148,7 @@
       {#each displayedRecords as record (record.instanceId)}
         <DecisionSummaryCard
           {record}
+          repo={repo!}
           selected={selectedId === record.instanceId}
           onclick={() => onSelect(selectedId === record.instanceId ? null : record.instanceId)}
         />

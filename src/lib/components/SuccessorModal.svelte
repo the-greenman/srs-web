@@ -8,28 +8,20 @@
   B11 lifecycle & supersession: https://github.com/the-greenman/srs-web/issues/7
 -->
 <script lang="ts">
-  import type { SrsRecord } from "$lib/srs-client.js";
-  import { getStringField } from "$lib/governance/field-utils.js";
-  import { getFieldMetaContext } from "$lib/governance/field-meta.js";
-
   interface Props {
-    record: SrsRecord;
+    currentState: string;
     onCreateSuccessor: () => void;
     onCancel: () => void;
   }
 
-  const { record, onCreateSuccessor, onCancel }: Props = $props();
-
-  const _fieldMetaCtx = getFieldMetaContext();
-  const fieldMeta = $derived(_fieldMetaCtx.meta);
-  const status = $derived(getStringField(record, "status", fieldMeta) ?? "immutable");
+  const { currentState, onCreateSuccessor, onCancel }: Props = $props();
 </script>
 
 <div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
   <div class="modal-dialog">
-    <h2 class="modal-dialog__title" id="modal-title">Record is {status}</h2>
+    <h2 class="modal-dialog__title" id="modal-title">Record is {currentState}</h2>
     <p class="modal-dialog__body">
-      This record is <strong>{status}</strong> and cannot be edited directly.
+      This record is <strong>{currentState}</strong> and cannot be edited directly.
       Create a new draft successor with the same field values, linked via a
       <em>supersedes</em> relation?
     </p>
