@@ -79,6 +79,8 @@ export interface SrsRepository {
   repository_navigation(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in scaffoldGovernanceDocument()
   scaffold_new_repository(input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in orderByPrecedes()
+  order_by_precedes(input_json: string): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -497,6 +499,12 @@ export function createRelation(repo: SrsRepository, input: CreateRelationInput):
  */
 export function deleteRelation(repo: SrsRepository, relationId: string): void {
   repo.delete_relation(relationId);
+}
+
+export function orderByPrecedes(repo: SrsRepository, instanceIds: string[]): string[] {
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary
+  const raw: any = repo.order_by_precedes(JSON.stringify({ instanceIds }));
+  return raw.orderedIds as string[];
 }
 
 /**

@@ -27,6 +27,7 @@
     listRelations,
     createRelation,
     deleteRelation,
+    orderByPrecedes,
     renderDocumentView,
   } from "$lib/srs-client.js";
   import type { SrsRepository, SrsRecord, CreateRecordInput, UpdateRecordInput, DocumentViewSummary, ContainerView } from "$lib/srs-client.js";
@@ -173,33 +174,6 @@
   /** Sections of the selected guide, scoped to its container and in precedes order. */
   let orderedSections = $state<SrsRecord[]>([]);
 
-  /** Order a set of section records by their `precedes` relation chain. */
-  function orderByPrecedes(secs: SrsRecord[]): SrsRecord[] {
-    const ids = new Set(secs.map((s) => s.instanceId));
-    const rels = listRelations(repo, { relationType: "precedes" }).filter(
-      (r) => ids.has(r.sourceInstanceId) && ids.has(r.targetInstanceId)
-    );
-    const next = new Map<string, string>();
-    const hasIncoming = new Set<string>();
-    for (const r of rels) {
-      next.set(r.sourceInstanceId, r.targetInstanceId);
-      hasIncoming.add(r.targetInstanceId);
-    }
-    const byId = new Map(secs.map((s) => [s.instanceId, s]));
-    const ordered: SrsRecord[] = [];
-    const visited = new Set<string>();
-    // The chain head has no incoming precedes edge; follow next-pointers from there.
-    let cursor = secs.find((s) => !hasIncoming.has(s.instanceId))?.instanceId;
-    while (cursor && byId.has(cursor) && !visited.has(cursor)) {
-      visited.add(cursor);
-      ordered.push(byId.get(cursor) as SrsRecord);
-      cursor = next.get(cursor);
-    }
-    // Append any section not reachable through the chain, deterministically.
-    for (const s of secs) if (!visited.has(s.instanceId)) ordered.push(s);
-    return ordered;
-  }
-
   /** Resolve the selected guide's container and rebuild the ordered section list. */
   function refreshSections() {
     selectedContainerId = null;
@@ -218,7 +192,10 @@
     const sectionRecords = view.members
       .filter((m) => m.tier > 0 && m.record.instanceId !== rootId)
       .map((m) => m.record);
-    orderedSections = orderByPrecedes(sectionRecords);
+    const ids = sectionRecords.map((s) => s.instanceId);
+    const orderedIds = orderByPrecedes(repo, ids);
+    const byId = new Map(sectionRecords.map((s) => [s.instanceId, s]));
+    orderedSections = orderedIds.map((id) => byId.get(id)).filter((r): r is SrsRecord => r !== undefined);
   }
 
   /**

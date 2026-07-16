@@ -45,10 +45,11 @@ The following client-side logic still encodes SRS semantics in TypeScript and sh
 pushed down into `srs-bindings` over time. None is new work for this ADR; it is recorded
 here so it isn't mistaken for acceptable presentation logic:
 
-- **Relation-chain traversal** — `orderByPrecedes` / `rebuildPrecedesChain` in
-  `GuidesShell.svelte` follow and rebuild `precedes` chains in TS. This is graph
-  ordering that belongs in a `srs-repository` service exposed as an ordered-relations
-  binding.
+- **Relation-chain traversal** — `orderByPrecedes` resolved: moved to the WASM
+  `order_by_precedes` binding (srs-rust#501, srs-web#178). `rebuildPrecedesChain`
+  confirmed as control flow over existing WASM bindings (`list_relations`,
+  `delete_relation`, `create_relation`) — not an ADR-001 violation; no further
+  action needed.
 - **Field-by-name lookup** — resolved in srs-web#179: `field-utils.ts` deleted;
   `getStringField` / `findFieldId` / `getFieldValue` removed; callers now use
   `repo.get_field_value_by_name(instanceId, name)` directly (binding added in
