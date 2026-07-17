@@ -14,6 +14,24 @@ record, Decision Log container, and root container — via the WASM
 so it always matches the engine that scaffolds it — never hand-edit or vendor
 a copy.
 
+## Repository tools
+
+The governance editor exposes a **"Repository"** nav group below the container-driven
+"Governance" nav. Items here invoke repository-level WASM operations that apply to the whole
+repository, not to a specific content container (ADR-013).
+
+### Migrations
+
+The **Migrations** panel (`Repository → Migrations`) lists all schema migrations available for the
+open repository, with their applicability status:
+
+- **Needed** — the migration has not been applied and applies to this repository.
+- **Applied** — the migration has already been applied.
+- **N/A** — the migration does not apply to this repository.
+
+Click **Apply** on any "Needed" migration to run it. The result payload is shown inline; the
+migration list and validation panel refresh automatically afterwards.
+
 ## Autosave and session restore
 
 The governance editor autosaves the working copy to `localStorage` after every successful write
