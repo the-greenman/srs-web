@@ -24,12 +24,12 @@
     { name: 'revisit_when',            label: 'Revisit When' },
   ] as const;
 
-  const displayTitle = $derived(() => record.displayLabel ?? record.instanceId.slice(0, 8));
+  const displayTitle = $derived(record.displayLabel ?? record.instanceId.slice(0, 8));
 
   const status = $derived(record.lifecycle as Status | undefined);
 </script>
 
-<Card title={displayTitle()} {status} grid>
+<Card title={displayTitle} {status} grid>
   {#each SUMMARY_FIELDS as field}
     {@const value = repo.get_field_value_by_name(record.instanceId, field.name)}
     {#if isPresent(value)}

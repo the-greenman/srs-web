@@ -20,6 +20,7 @@
   const fieldMeta = $derived(_fieldMetaCtx.meta);
   const _repoCtx = getRepoContext();
   const repo = $derived(_repoCtx.repo);
+  // display-only: reshapes WASM-sourced schema metadata by field name for description/instructions
   const metaByName = $derived(
     new Map([...fieldMeta.entries()].map(([_, def]) => [def.name, def]))
   );
