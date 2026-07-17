@@ -66,6 +66,7 @@
   import type { TypeFormDef } from "$lib/governance/types.js";
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
   import { setFieldMetaContext, buildFieldMetaMap } from "$lib/governance/field-meta.js";
+  import { setRepoContext } from "$lib/governance/repo-context.js";
   import { formatDecisionMarkdown, formatDecisionHtml, triggerDownload } from "$lib/governance/decision-export-utils.js";
 
   // ---------------------------------------------------------------------------
@@ -141,8 +142,9 @@
   // changes (once at load), not on every reactive access from child components.
   const fieldMetaMap = $derived(buildFieldMetaMap(containerSchemas));
 
-  // Provide reactive field metadata to all descendant rendering components.
+  // Provide reactive field metadata and repo to all descendant rendering components.
   setFieldMetaContext(() => fieldMetaMap);
+  setRepoContext(() => repo);
 
   /** Form mode: null = list view, 'create' = new record, 'edit' = edit existing. */
   let formMode = $state<"create" | "edit" | null>(null);

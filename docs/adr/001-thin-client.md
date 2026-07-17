@@ -56,9 +56,10 @@ here so it isn't mistaken for acceptable presentation logic:
 - **Field-by-name lookup** — resolved in srs-web#179: `field-utils.ts` deleted;
   `getStringField` / `findFieldId` / `getFieldValue` removed; callers now use
   `repo.get_field_value_by_name(instanceId, name)` directly (binding added in
-  srs-rust#536, srs-rust build 162). Note: an equivalent TS-side field-name scan
-  remains in `src/rendering/field-helpers.ts` (display-layer only, not yet tracked as
-  ADR-001 debt — see srs-web#217).
+  srs-rust#536, srs-rust build 162). The equivalent TS-side scan in
+  `src/rendering/field-helpers.ts` (`getFieldValueByName`, `getFieldByName`) is
+  resolved in srs-web#217: both helpers removed; rendering components now call
+  `repo.get_field_value_by_name` via the repo context (ADR-013).
 - **Hardcoded vocabularies** — the lifecycle `STATUS_OPTIONS` list is hardcoded in TS
   instead of derived from the type/lifecycle definition via a binding.
 - **Relation type derivation** — `loadInstalledRelationTypes()` in `GovernanceShell.svelte`
