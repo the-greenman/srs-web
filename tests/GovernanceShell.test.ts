@@ -37,6 +37,8 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     repository_navigation: () => { throw new Error("not mocked"); },
     scaffold_new_repository: () => { throw new Error("not mocked"); },
     get_allowed_lifecycle_transitions: () => { throw new Error("not mocked"); },
+    available_migrations: () => [],
+    apply_migration: () => { throw new Error("not mocked"); },
   };
   return { ...base, ...overrides };
 }
@@ -137,5 +139,22 @@ describe("GovernanceShell — addContainerMember failure branch", () => {
 
     // Form must transition to edit mode
     await screen.findByText("Edit Article");
+  });
+});
+
+describe("GovernanceShell — Repository nav group", () => {
+  it("renders Migrations NavItem in the Repository nav group", async () => {
+    const repo = makeBaseRepo();
+    render(GovernanceShell, {
+      props: {
+        repo,
+        repoName: "test.srsj",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+      },
+    });
+    const item = await screen.findByRole("link", { name: /Migrations/i });
+    expect(item).toBeDefined();
   });
 });

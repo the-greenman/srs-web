@@ -297,15 +297,15 @@ export function applyMigration(repo: SrsRepository, id: string): MigrationApplyR
 
 #### Tasks
 
-- [ ] In `src/lib/governance/GovernanceShell.svelte`, add state:
+- [x] In `src/lib/governance/GovernanceShell.svelte`, add state:
   ```ts
   type ActiveView = "governance" | "migrations";
   let activeView = $state<ActiveView>("governance");
   ```
 
-- [ ] Import `Migrations` from `$lib/components/Migrations.svelte`.
+- [x] Import `Migrations` from `$lib/components/Migrations.svelte`.
 
-- [ ] In the nav `{#snippet nav()}` block, add a second `<NavGroup>` below the closing `</NavGroup>` of "Governance":
+- [x] In the nav `{#snippet nav()}` block, add a second `<NavGroup>` below the closing `</NavGroup>` of "Governance":
   ```svelte
   <NavGroup label="Repository">
     {#snippet children()}
@@ -331,9 +331,9 @@ export function applyMigration(repo: SrsRepository, id: string): MigrationApplyR
   </NavGroup>
   ```
 
-- [ ] Ensure clicking any container in the Governance NavGroup also sets `activeView = "governance"`. Locate the existing `onclick` handler on the container `<div>` and add `activeView = "governance";` alongside `activeContainerId = container.containerId`.
+- [x] Ensure clicking any container in the Governance NavGroup also sets `activeView = "governance"`. Locate the existing `onclick` handler on the container `<div>` and add `activeView = "governance";` alongside `activeContainerId = container.containerId`.
 
-- [ ] In the `{#snippet main()}` block, wrap the existing main content in `{#if activeView === "governance"}` and add `{:else if activeView === "migrations"}` rendering `<Migrations>`:
+- [x] In the `{#snippet main()}` block, wrap the existing main content in `{#if activeView === "governance"}` and add `{:else if activeView === "migrations"}` rendering `<Migrations>`:
   ```svelte
   {#if activeView === "governance"}
     <!-- ... existing main content ... -->
@@ -355,7 +355,7 @@ export function applyMigration(repo: SrsRepository, id: string): MigrationApplyR
   {/if}
   ```
 
-- [ ] In `tests/GovernanceShell.test.ts`:
+- [x] In `tests/GovernanceShell.test.ts`:
   - Add `available_migrations: () => []` and `apply_migration: () => { throw new Error("not mocked"); }` stubs to the `mockRepo` base object (lines 7–42 of the existing file).
   - Add a new `describe("GovernanceShell — Repository nav group")` block with test:
     ```ts
@@ -372,14 +372,14 @@ export function applyMigration(repo: SrsRepository, id: string): MigrationApplyR
 
 #### Acceptance Criteria
 
-- [ ] A "Repository" NavGroup appears below "Governance" in the nav with a "Migrations" item.
-- [ ] Clicking "Migrations" shows the migration panel and hides the record view.
-- [ ] Clicking a container item switches back to the governance record view.
-- [ ] The breadcrumb shows "Migrations" when the migration panel is active.
-- [ ] `onMigrationApplied` triggers `loadContainerNav()` and `refreshValidation()`.
-- [ ] No regression in the existing governance record view.
-- [ ] `npm run typecheck` passes.
-- [ ] `npm test` passes.
+- [x] A "Repository" NavGroup appears below "Governance" in the nav with a "Migrations" item.
+- [x] Clicking "Migrations" shows the migration panel and hides the record view.
+- [x] Clicking a container item switches back to the governance record view.
+- [x] The breadcrumb shows "Migrations" when the migration panel is active.
+- [x] `onMigrationApplied` triggers `loadContainerNav()` and `refreshValidation()`.
+- [x] No regression in the existing governance record view.
+- [x] `npm run typecheck` passes.
+- [x] `npm test` passes.
 
 #### Milestone gate
 

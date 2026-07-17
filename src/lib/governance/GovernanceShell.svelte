@@ -61,6 +61,7 @@
   import RecordReading from "$lib/components/RecordReading.svelte";
   import DecisionLogView from "$lib/components/DecisionLogView.svelte";
   import TagChip from "$lib/components/TagChip.svelte";
+  import Migrations from "$lib/components/Migrations.svelte";
 
   import { TYPE_REGISTRY, DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
@@ -193,6 +194,10 @@
 
   /** Whether the decision link picker modal is shown. */
   let showLinkPicker = $state(false);
+
+  /** Controls which panel is shown in the main area (ADR-013). */
+  type ActiveView = "governance" | "migrations";
+  let activeView = $state<ActiveView>("governance");
 
   /**
    * Relation types installed in the loaded package, derived from the srsj export.
@@ -855,6 +860,7 @@
             <div
               onclick={(e) => {
                 e.preventDefault();
+                activeView = "governance";
                 activeContainerId = container.containerId;
                 selectedId = null;
                 formMode = null;
@@ -873,6 +879,30 @@
             </div>
           {/each}
         </NavGroup>
+        <NavGroup label="Repository">
+          {#snippet children()}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div
+              onclick={() => {
+                activeView = "migrations";
+                activeContainerId = null;
+                selectedId = null;
+                formMode = null;
+                editingRecord = null;
+                formError = null;
+                showLinkPicker = false;
+              }}
+            >
+              <NavItem
+                label="Migrations"
+                id="M"
+                active={activeView === "migrations"}
+                href="#"
+              />
+            </div>
+          {/snippet}
+        </NavGroup>
       {/snippet}
       {#snippet footer()}
         <div class="nav__footer-stat">
@@ -883,6 +913,7 @@
   {/snippet}
 
   {#snippet main()}
+    {#if activeView === "governance"}
     <Main>
       <Topbar>
         {#snippet crumb()}
@@ -996,6 +1027,22 @@
         {/if}
       </Workspace>
     </Main>
+    {:else if activeView === "migrations"}
+    <Main>
+      <Topbar>
+        {#snippet crumb()}
+          <Breadcrumb items={[{ label: repoName }, { label: "Migrations" }]} />
+        {/snippet}
+      </Topbar>
+      <Migrations
+        repo={repo}
+        onMigrationApplied={() => {
+          loadContainerNav();
+          refreshValidation();
+        }}
+      />
+    </Main>
+    {/if}
   {/snippet}
 
   {#snippet inspector()}
