@@ -9,13 +9,13 @@
   import type { Status } from '$lib/types.js';
   import { Card, CardField } from '$lib/components/index.js';
   import FieldValueView from './FieldValueView.svelte';
-  import { getFieldValueByName, isPresent } from './field-helpers.js';
-  import { getFieldMetaContext } from '$lib/governance/field-meta.js';
+  import { isPresent } from './field-helpers.js';
+  import { getRepoContext } from '$lib/governance/repo-context.js';
 
   let { record }: { record: SrsRecord } = $props();
 
-  const _fieldMetaCtx = getFieldMetaContext();
-  const fieldMeta = $derived(_fieldMetaCtx.meta);
+  const _repoCtx = getRepoContext();
+  const repo = $derived(_repoCtx.repo);
 
   const SUMMARY_FIELDS = [
     { name: 'decision_statement',      label: 'Decision Statement' },
@@ -24,20 +24,18 @@
     { name: 'revisit_when',            label: 'Revisit When' },
   ] as const;
 
-  const displayTitle = $derived(() => {
-    const ttl = getFieldValueByName(record, 'title', fieldMeta)?.value;
-    return ttl ? String(ttl) : record.instanceId.slice(0, 8);
-  });
+  const displayTitle = $derived(() => record.displayLabel ?? record.instanceId.slice(0, 8));
 
   const status = $derived(record.lifecycle as Status | undefined);
 </script>
 
 <Card title={displayTitle()} {status} grid>
   {#each SUMMARY_FIELDS as field}
-    {@const fv = getFieldValueByName(record, field.name, fieldMeta)}
-    {#if fv && isPresent(fv.value)}
+    {@const value = repo.get_field_value_by_name(record.instanceId, field.name)}
+    {#if isPresent(value)}
       <CardField label={field.label}>
-        <FieldValueView {fv} />
+        <!-- synthetic: FieldValueView reads only .value; fieldId is not semantically a UUID here -->
+        <FieldValueView fv={{ fieldId: field.name, value }} />
       </CardField>
     {/if}
   {/each}
