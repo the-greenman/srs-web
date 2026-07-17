@@ -1297,7 +1297,7 @@ describe("transitionRecord", () => {
 // ---------------------------------------------------------------------------
 
 describe("availableMigrations", () => {
-  it("calls available_migrations and returns the typed array", () => {
+  it("calls available_migrations and returns normalised summaries (object status)", () => {
     const migrations: MigrationSummary[] = [
       { id: "migrate-identity", title: "Migrate Identity", description: "Migrate Tier-0 identity to purpose record", status: { needed: true, alreadyApplied: false, notApplicable: false } },
       { id: "repo-upgrade", title: "Upgrade Repository Paths", description: "Rename files to canonical slug-id8 form", status: { needed: false, alreadyApplied: true, notApplicable: false } },
@@ -1306,8 +1306,19 @@ describe("availableMigrations", () => {
     const repo = mockRepo({ available_migrations: spy });
     const result = availableMigrations(repo);
     expect(spy).toHaveBeenCalledTimes(1);
-    expect(result).toBe(migrations);
+    expect(result).toEqual(migrations);
     expect(result).toHaveLength(2);
+  });
+
+  it("normalises string-enum status from WASM into boolean-object form", () => {
+    const raw = [
+      { id: "migrate-identity", title: "Migrate Identity", description: "desc", status: "needed" },
+      { id: "repo-upgrade", title: "Upgrade Paths", description: "desc", status: "alreadyApplied" },
+    ];
+    const repo = mockRepo({ available_migrations: vi.fn().mockReturnValue(raw) });
+    const result = availableMigrations(repo);
+    expect(result[0].status).toEqual({ needed: true, alreadyApplied: false, notApplicable: false });
+    expect(result[1].status).toEqual({ needed: false, alreadyApplied: true, notApplicable: false });
   });
 });
 

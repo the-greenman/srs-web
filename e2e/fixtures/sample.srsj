@@ -33,8 +33,7 @@
     ],
     "container": {
       "containerId": "00000000-0000-4000-8000-000000000000",
-      "title": "Test Governance",
-      "identityInstanceId": "11000000-0000-4000-8000-000000000001"
+      "title": "Test Governance"
     },
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
     "title": "Test Governance",
@@ -144,29 +143,7 @@
     },
     "relations/relations-collection.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relations-collection.json",
-      "relations": [
-        {
-          "relationId": "rel-articles-precedes-decision-log",
-          "relationType": "precedes",
-          "sourceInstanceId": "11000000-0000-4000-8000-000000000002",
-          "targetInstanceId": "11000000-0000-4000-8000-000000000003",
-          "createdAt": "2026-01-01T00:00:00Z"
-        },
-        {
-          "relationId": "rel-decision-log-precedes-roles",
-          "relationType": "precedes",
-          "sourceInstanceId": "11000000-0000-4000-8000-000000000003",
-          "targetInstanceId": "11000000-0000-4000-8000-000000000004",
-          "createdAt": "2026-01-01T00:00:00Z"
-        },
-        {
-          "relationId": "rel-roles-precedes-exercise-book",
-          "relationType": "precedes",
-          "sourceInstanceId": "11000000-0000-4000-8000-000000000004",
-          "targetInstanceId": "11000000-0000-4000-8000-000000000005",
-          "createdAt": "2026-01-01T00:00:00Z"
-        }
-      ]
+      "relations": []
     },
     "package/package.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",

@@ -1258,10 +1258,25 @@ export function createGovernanceDocument(
 
 /**
  * List all known migrations with their applicability status for this repository.
- * Returns an array of `MigrationSummary` objects from the WASM engine.
+ * Normalises the WASM payload: the engine returns `status` as a string enum
+ * ("needed" | "alreadyApplied" | "notApplicable") but TypeScript callers
+ * consume it as `MigrationStatus { needed, alreadyApplied, notApplicable }`.
  */
 export function availableMigrations(repo: SrsRepository): MigrationSummary[] {
-  return repo.available_migrations() as MigrationSummary[];
+  // biome-ignore lint/suspicious/noExplicitAny: WASM shape differs from TS type; normalised below
+  const raw: any[] = repo.available_migrations() as any[];
+  return raw.map((m) => {
+    const statusStr: string = typeof m.status === "string" ? m.status : "";
+    const status: MigrationStatus =
+      typeof m.status === "object" && m.status !== null
+        ? m.status
+        : {
+            needed: statusStr === "needed",
+            alreadyApplied: statusStr === "alreadyApplied",
+            notApplicable: statusStr === "notApplicable",
+          };
+    return { id: m.id, title: m.title, description: m.description, status };
+  });
 }
 
 /**
