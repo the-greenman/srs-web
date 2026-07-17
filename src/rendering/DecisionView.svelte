@@ -43,7 +43,8 @@
   {#each DECISION_FIELDS as field}
     {@const fv = getFieldValueByName(record, field.name, fieldMeta)}
     {#if fv && isPresent(fv.value)}
-      <CardField label={field.label}>
+      {@const def = fieldMeta.get(fv.fieldId)}
+      <CardField label={field.label} description={def?.description} instructions={def?.instructions} id={fv.fieldId}>
         <FieldValueView {fv} />
       </CardField>
     {/if}
