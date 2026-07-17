@@ -502,6 +502,7 @@ export function deleteRelation(repo: SrsRepository, relationId: string): void {
 }
 
 export function orderByPrecedes(repo: SrsRepository, instanceIds: string[]): string[] {
+  // order_by_precedes throws a JS error on failure (no error-string return path per .d.ts)
   // biome-ignore lint/suspicious/noExplicitAny: WASM boundary
   const raw: any = repo.order_by_precedes(JSON.stringify({ instanceIds }));
   return raw.orderedIds as string[];

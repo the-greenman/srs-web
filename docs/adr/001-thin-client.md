@@ -45,11 +45,14 @@ The following client-side logic still encodes SRS semantics in TypeScript and sh
 pushed down into `srs-bindings` over time. None is new work for this ADR; it is recorded
 here so it isn't mistaken for acceptable presentation logic:
 
-- **Relation-chain traversal** — `orderByPrecedes` resolved: moved to the WASM
-  `order_by_precedes` binding (srs-rust#501, srs-web#178). `rebuildPrecedesChain`
-  confirmed as control flow over existing WASM bindings (`list_relations`,
-  `delete_relation`, `create_relation`) — not an ADR-001 violation; no further
-  action needed.
+- **Relation-chain traversal (ordering) — resolved** in srs-web#178: `orderByPrecedes`
+  removed from `GuidesShell.svelte`; `srs-client.ts` now exports `orderByPrecedes(repo, ids)`
+  delegating to `repo.order_by_precedes(...)` (WASM binding, srs-rust build 166).
+- **Relation-chain traversal (mutation)** — `rebuildPrecedesChain` in `GuidesShell.svelte`
+  orchestrates WASM mutation calls (`list_relations`, `delete_relation`, `create_relation`)
+  to rebuild a linear precedes chain. It encodes domain knowledge about precedes-chain
+  structure (n-1 directed edges per sequence) and is a candidate for a future
+  `rebuild_precedes_chain` WASM binding (tracked as srs-rust#606).
 - **Field-by-name lookup** — resolved in srs-web#179: `field-utils.ts` deleted;
   `getStringField` / `findFieldId` / `getFieldValue` removed; callers now use
   `repo.get_field_value_by_name(instanceId, name)` directly (binding added in
