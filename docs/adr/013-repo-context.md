@@ -1,6 +1,6 @@
 # ADR-013: SrsRepository exposed to rendering layer via Svelte context
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-07-17
 - **Issue:** [srs-web#217](https://github.com/the-greenman/srs-web/issues/217)
 - **Supersedes:** —

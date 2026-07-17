@@ -3,6 +3,7 @@ import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect } from "vitest";
 import DecisionView from "../src/rendering/DecisionView.svelte";
 import { FIELD_META_KEY } from "../src/lib/governance/field-meta.js";
+import { REPO_CONTEXT_KEY } from "../src/lib/governance/repo-context.js";
 import type { FieldFormDef } from "../src/lib/governance/types.js";
 import type { SrsRecord, FieldValue } from "../src/lib/srs-client.js";
 
@@ -49,29 +50,48 @@ function makeRecord(fieldValues: FieldValue[]): SrsRecord {
   };
 }
 
-const ctxOptions = {
-  context: new Map([[FIELD_META_KEY, fieldMetaContext]]),
-};
+function makeCtxOptions(fieldValues: FieldValue[]) {
+  const repoMock = {
+    get_field_value_by_name(_instanceId: string, name: string): unknown {
+      for (const [fieldId, def] of fieldMetaMap) {
+        if (def.name === name) {
+          return fieldValues.find((fv) => fv.fieldId === fieldId)?.value ?? null;
+        }
+      }
+      return null;
+    },
+  };
+  const repoContext = { get repo() { return repoMock; } };
+  return {
+    context: new Map([
+      [FIELD_META_KEY, fieldMetaContext],
+      [REPO_CONTEXT_KEY, repoContext],
+    ]),
+  };
+}
 
 describe("DecisionView field help threading (srs-web#213)", () => {
   it("shows the description caption for a field that has description set", () => {
-    const record = makeRecord([{ fieldId: DECISION_STATEMENT_ID, value: "We will meet monthly." }]);
-    const { container } = render(DecisionView, { props: { record }, ...ctxOptions });
+    const fieldValues = [{ fieldId: DECISION_STATEMENT_ID, value: "We will meet monthly." }];
+    const record = makeRecord(fieldValues);
+    const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
     // "What was decided." !== "Decision Statement" → caption must appear
     expect(container.querySelector(".card__field-description")?.textContent).toBe("What was decided.");
   });
 
   it("shows the ⓘ info toggle for a field that has instructions set", () => {
-    const record = makeRecord([{ fieldId: DECISION_STATEMENT_ID, value: "We will meet monthly." }]);
-    const { container } = render(DecisionView, { props: { record }, ...ctxOptions });
+    const fieldValues = [{ fieldId: DECISION_STATEMENT_ID, value: "We will meet monthly." }];
+    const record = makeRecord(fieldValues);
+    const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
     const btn = container.querySelector<HTMLButtonElement>(".card__field-info");
     expect(btn).not.toBeNull();
     expect(btn?.getAttribute("aria-label")).toBe("Show instructions for Decision Statement");
   });
 
   it("reveals instructions paragraph on toggle click", async () => {
-    const record = makeRecord([{ fieldId: DECISION_STATEMENT_ID, value: "We will meet monthly." }]);
-    const { container } = render(DecisionView, { props: { record }, ...ctxOptions });
+    const fieldValues = [{ fieldId: DECISION_STATEMENT_ID, value: "We will meet monthly." }];
+    const record = makeRecord(fieldValues);
+    const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
     const btn = container.querySelector<HTMLButtonElement>(".card__field-info")!;
     await fireEvent.click(btn);
     expect(container.querySelector(".card__field-instructions")?.textContent).toBe(
@@ -82,17 +102,19 @@ describe("DecisionView field help threading (srs-web#213)", () => {
 
   it("renders no caption or toggle for a field with no description/instructions in fieldMeta", () => {
     // title field has no description or instructions
-    const record = makeRecord([{ fieldId: TITLE_ID, value: "Meeting cadence" }]);
-    const { container } = render(DecisionView, { props: { record }, ...ctxOptions });
+    const fieldValues = [{ fieldId: TITLE_ID, value: "Meeting cadence" }];
+    const record = makeRecord(fieldValues);
+    const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
     expect(container.querySelector(".card__field-description")).toBeNull();
     expect(container.querySelector(".card__field-info")).toBeNull();
   });
 
   it("renders no caption or toggle for a field not in fieldMeta at all", () => {
-    // field unknown to fieldMeta — getFieldValueByName returns undefined, field is skipped
+    // field unknown to fieldMeta — get_field_value_by_name returns null, field is skipped
     const unknownId = "00000000-0000-0000-0000-000000000000";
-    const record = makeRecord([{ fieldId: unknownId, value: "some value" }]);
-    const { container } = render(DecisionView, { props: { record }, ...ctxOptions });
+    const fieldValues = [{ fieldId: unknownId, value: "some value" }];
+    const record = makeRecord(fieldValues);
+    const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
     expect(container.querySelector(".card__field-description")).toBeNull();
     expect(container.querySelector(".card__field-info")).toBeNull();
   });
