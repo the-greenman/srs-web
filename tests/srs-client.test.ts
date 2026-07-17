@@ -13,6 +13,8 @@ import { describe, expect, it, vi } from "vitest";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 import {
   addContainerMember,
+  applyMigration,
+  availableMigrations,
   containersForInstance,
   createGovernanceDocument,
   createRelation,
@@ -34,6 +36,7 @@ import {
   type AllowedLifecycleTransitionsResult,
   type ContainerListFilter,
   type DocumentViewListFilter,
+  type MigrationSummary,
 } from "../src/lib/srs-client.js";
 
 // ---------------------------------------------------------------------------
@@ -75,6 +78,8 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     scaffold_new_repository: () => { throw new Error("not mocked"); },
     get_allowed_lifecycle_transitions: () => { throw new Error("not mocked"); },
     get_field_value_by_name: () => { throw new Error("not mocked"); },
+    available_migrations: () => { throw new Error("not mocked"); },
+    apply_migration: () => { throw new Error("not mocked"); },
   };
   return { ...base, ...overrides };
 }
@@ -1284,5 +1289,40 @@ describe("transitionRecord", () => {
     expect(() => transitionRecord(repo, "inst-pred", { to: "superseded" })).toThrow(
       /predates RFC-022/
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// availableMigrations
+// ---------------------------------------------------------------------------
+
+describe("availableMigrations", () => {
+  it("calls available_migrations and returns the typed array", () => {
+    const migrations: MigrationSummary[] = [
+      { id: "migrate-identity", title: "Migrate Identity", description: "Migrate Tier-0 identity to purpose record", status: { needed: true, alreadyApplied: false, notApplicable: false } },
+      { id: "repo-upgrade", title: "Upgrade Repository Paths", description: "Rename files to canonical slug-id8 form", status: { needed: false, alreadyApplied: true, notApplicable: false } },
+    ];
+    const spy = vi.fn().mockReturnValue(migrations);
+    const repo = mockRepo({ available_migrations: spy });
+    const result = availableMigrations(repo);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(result).toBe(migrations);
+    expect(result).toHaveLength(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// applyMigration
+// ---------------------------------------------------------------------------
+
+describe("applyMigration", () => {
+  it("calls apply_migration with the given id and returns the result", () => {
+    const applyResult = { id: "migrate-identity", payload: { message: "done" } };
+    const spy = vi.fn().mockReturnValue(applyResult);
+    const repo = mockRepo({ apply_migration: spy });
+    const result = applyMigration(repo, "migrate-identity");
+    expect(spy).toHaveBeenCalledWith("migrate-identity");
+    expect(result).toBe(applyResult);
+    expect(result.id).toBe("migrate-identity");
   });
 });
