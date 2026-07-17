@@ -18,9 +18,8 @@ to `isPresent` only, and removes the ADR-001 caveat note that tracks this debt.
 |---|---|
 | Lead Integrator | Main session |
 | Web App Worker | Main session |
-| Verification | Spawned in Stage 7 |
 
-See [agents.md](agents.md) for role definitions.
+See [agents.md](agents.md) for role definitions. Verification is handled by the ship-web pipeline (Stage 7) after implementation completes.
 
 ## Architecture Decisions
 
@@ -37,9 +36,12 @@ See [agents.md](agents.md) for role definitions.
 ### WASM API surface
 
 **No new WASM binding required.** `get_field_value_by_name(instance_id: string, field_name: string): any`
-is already declared in `src/lib/srs-client.ts:71` and used in:
-- `src/lib/components/DecisionSummaryCard.svelte` (lines 26, 39)
+is already declared in `src/lib/srs-client.ts:71` and used by existing code in:
+- `src/lib/components/DecisionSummaryCard.svelte` (lines 26, 39) — a separate component unrelated to this migration
 - `src/lib/governance/decision-export-utils.ts` (lines 36, 41, 57, 62)
+
+The migration targets in this plan (`src/rendering/DecisionSummaryCard.svelte` and
+`src/rendering/DecisionView.svelte`) are the only remaining callers of the TS-side scan.
 
 Return contract (srs-rust#536): returns the raw field value (string, number, boolean, array,
 or object) or `null` if the field is absent, the name is unknown, or the record is not found.
@@ -144,7 +146,10 @@ cd /home/user/srs-web && npm run typecheck
 
 #### Milestone gate
 
-Run `npm run typecheck`. Pass → mark tasks `[x]`, commit.
+```bash
+cd /home/user/srs-web && npm run typecheck && npm run lint
+```
+Both must pass. Mark tasks `[x]`, commit.
 
 ---
 
@@ -167,7 +172,10 @@ field lookups; `fieldMeta` is removed from the component.
     const _repoCtx = getRepoContext();
     const repo = $derived(_repoCtx.repo);
     ```
-  - Replace the `displayTitle` derived:
+  - Replace the `displayTitle` derived. `record.displayLabel` is the authoritative
+    pre-computed title (`srs-client.ts` doc contract: "clients must use `displayLabel`
+    for list labels and must not re-derive titles from `fieldValues`"). Use it directly —
+    no WASM call needed:
     ```ts
     // Before:
     const displayTitle = $derived(() => {
@@ -175,10 +183,7 @@ field lookups; `fieldMeta` is removed from the component.
       return ttl ? String(ttl) : record.instanceId.slice(0, 8);
     });
     // After:
-    const displayTitle = $derived(() => {
-      const ttl = repo.get_field_value_by_name(record.instanceId, 'title') as string | null | undefined;
-      return ttl ? String(ttl) : record.instanceId.slice(0, 8);
-    });
+    const displayTitle = $derived(() => record.displayLabel ?? record.instanceId.slice(0, 8));
     ```
   - Replace the `#each` block:
     ```svelte
@@ -191,12 +196,15 @@ field lookups; `fieldMeta` is removed from the component.
     {/if}
     <!-- After: -->
     {@const value = repo.get_field_value_by_name(record.instanceId, field.name)}
-    {#if value !== null && value !== undefined && isPresent(value)}
+    {#if isPresent(value)}
       <CardField label={field.label}>
+        <!-- synthetic: FieldValueView reads only .value; fieldId is not semantically a UUID here -->
         <FieldValueView fv={{ fieldId: field.name, value }} />
       </CardField>
     {/if}
     ```
+    Note: `isPresent` already returns `false` for `null` and `undefined` (see `field-helpers.ts:36–40`).
+    No additional null guard is needed.
 
 #### Acceptance Criteria
 
@@ -204,16 +212,20 @@ field lookups; `fieldMeta` is removed from the component.
 - [ ] No reference to `fieldMeta` remains in `DecisionSummaryCard.svelte`.
 - [ ] `npm run typecheck` passes.
 - [ ] `npm run build` passes.
+- [ ] `npm test` passes.
 
 #### Testing
 
 ```bash
-cd /home/user/srs-web && npm run typecheck && npm run build
+cd /home/user/srs-web && npm run typecheck && npm run lint && npm run build && npm test
 ```
 
 #### Milestone gate
 
-Run typecheck + build. Pass → mark tasks `[x]`, commit.
+```bash
+cd /home/user/srs-web && npm run typecheck && npm run lint && npm run build && npm test
+```
+All must pass. Mark tasks `[x]`, commit.
 
 ---
 
@@ -250,13 +262,15 @@ value lookups; `fieldMeta` is kept only for display metadata (description, instr
     {/if}
     <!-- After: -->
     {@const value = repo.get_field_value_by_name(record.instanceId, field.name)}
-    {#if value !== null && value !== undefined && isPresent(value)}
+    {#if isPresent(value)}
       {@const def = metaByName.get(field.name)}
       <CardField label={field.label} description={def?.description} instructions={def?.instructions} id={field.name}>
+        <!-- synthetic: FieldValueView reads only .value; fieldId is not semantically a UUID here -->
         <FieldValueView fv={{ fieldId: field.name, value }} />
       </CardField>
     {/if}
     ```
+    Note: `isPresent` already returns `false` for `null` and `undefined`. No additional null guard.
 
 #### Acceptance Criteria
 
@@ -265,16 +279,20 @@ value lookups; `fieldMeta` is kept only for display metadata (description, instr
 - [ ] `fieldMeta` is still present (for display metadata only).
 - [ ] `npm run typecheck` passes.
 - [ ] `npm run build` passes.
+- [ ] `npm test` passes.
 
 #### Testing
 
 ```bash
-cd /home/user/srs-web && npm run typecheck && npm run build
+cd /home/user/srs-web && npm run typecheck && npm run lint && npm run build && npm test
 ```
 
 #### Milestone gate
 
-Run typecheck + build. Pass → mark tasks `[x]`, commit.
+```bash
+cd /home/user/srs-web && npm run typecheck && npm run lint && npm run build && npm test
+```
+All must pass. Mark tasks `[x]`, commit.
 
 ---
 
@@ -287,15 +305,16 @@ Run typecheck + build. Pass → mark tasks `[x]`, commit.
 #### Tasks
 
 - [ ] In `rendering/field-helpers.ts`:
-  - Remove `getFieldValueByName` function (lines 14–22).
-  - Remove `getFieldByName` function (lines 27–33) and its `import` of `FieldFormDef`.
+  - Remove the `getFieldValueByName` JSDoc comment and function (lines 12–24).
+  - Remove the `getFieldByName` JSDoc comment and function (lines 26–33) and its `import` of `FieldFormDef` (line 9).
   - Update the file comment to reflect the reduced scope.
   - `isPresent` remains (export unchanged).
-- [ ] Verify no other file imports `getFieldValueByName` or `getFieldByName` from `field-helpers`:
+- [ ] Verify no other file imports `getFieldValueByName` or `getFieldByName` from `field-helpers`
+  (or anywhere):
   ```bash
   grep -rn "getFieldValueByName\|getFieldByName" /home/user/srs-web/src/
   ```
-  Expect: no results.
+  Expect: zero results.
 - [ ] In `docs/adr/001-thin-client.md`, replace the `field-helpers.ts` debt bullet:
   - **Before:** the bullet starting "**Field-by-name lookup** — resolved in srs-web#179..."
     ending with "...not yet tracked as ADR-001 debt — see srs-web#217)."
@@ -308,7 +327,8 @@ Run typecheck + build. Pass → mark tasks `[x]`, commit.
 
 #### Acceptance Criteria
 
-- [ ] `grep -rn "getFieldValueByName" /home/user/srs-web/src/` returns zero results.
+- [ ] `grep -rn "getFieldValueByName\|getFieldByName" src/` → zero results.
+- [ ] `grep -rn "getFieldByName" src/` → zero results.
 - [ ] `rendering/field-helpers.ts` exports only `isPresent`.
 - [ ] ADR-001 no longer lists `field-helpers.ts` as an open debt item.
 - [ ] ADR-013 status is `accepted`.
@@ -320,13 +340,18 @@ Run typecheck + build. Pass → mark tasks `[x]`, commit.
 
 ```bash
 cd /home/user/srs-web
-grep -rn "getFieldValueByName" src/   # expect: zero results
-npm run typecheck && npm run build && npm test
+grep -rn "getFieldValueByName\|getFieldByName" src/   # expect: zero results
+npm run typecheck && npm run lint && npm run build && npm test
 ```
 
 #### Milestone gate
 
-All tests and checks pass. Mark tasks `[x]`. Commit.
+```bash
+cd /home/user/srs-web
+grep -rn "getFieldValueByName\|getFieldByName" src/   # expect: zero results
+npm run typecheck && npm run lint && npm run build && npm test
+```
+All must pass. Mark tasks `[x]`, commit.
 
 ---
 
@@ -337,7 +362,7 @@ All tests and checks pass. Mark tasks `[x]`. Commit.
 - [ ] `npm run build` succeeds.
 - [ ] `npm test` passes.
 - [ ] `npm run e2e` passes (or pre-existing failures confirmed pre-existing).
-- [ ] `grep -rn "getFieldValueByName" src/` → zero results.
+- [ ] `grep -rn "getFieldValueByName\|getFieldByName" src/` → zero results.
 - [ ] `rendering/field-helpers.ts` exports only `isPresent`.
 - [ ] ADR-001 caveat note for `field-helpers.ts` is resolved.
 - [ ] ADR-013 is accepted.
@@ -348,8 +373,9 @@ All tests and checks pass. Mark tasks `[x]`. Commit.
 - No SRS semantics in TypeScript (ADR-001). The `metaByName` reverse map in `DecisionView`
   is display-layer presentation logic (building a name→label map from WASM-derived metadata),
   not a semantic field-name resolver.
-- Verification Agent confirms WASM loads and `get_field_value_by_name` returns correctly for
-  a loaded `.srsj` fixture.
+- Stage 7 (ship-web pipeline) spawns a Verification Agent that confirms WASM loads,
+  `get_field_value_by_name` returns correctly for a loaded `.srsj` fixture, and all
+  rendering components render without JS errors.
 
 ## Assumptions
 
