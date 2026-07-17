@@ -51,13 +51,13 @@ describe("CardField field help", () => {
     expect(btn).not.toBeNull();
     expect(btn?.getAttribute("aria-expanded")).toBe("false");
     expect(btn?.getAttribute("aria-controls")).toBe("field-abc-instructions");
-    expect(btn?.getAttribute("aria-label")).toBe("Show field instructions");
+    expect(btn?.getAttribute("aria-label")).toBe("Show instructions for Rationale");
     expect(container.querySelector(".card__field-instructions")).toBeNull();
 
     await fireEvent.click(btn as HTMLButtonElement);
 
     expect(btn?.getAttribute("aria-expanded")).toBe("true");
-    expect(btn?.getAttribute("aria-label")).toBe("Hide field instructions");
+    expect(btn?.getAttribute("aria-label")).toBe("Hide instructions for Rationale");
     const revealed = container.querySelector(".card__field-instructions");
     expect(revealed?.id).toBe("field-abc-instructions");
     expect(revealed?.textContent).toBe(instructions);

@@ -66,10 +66,10 @@ async function createDecision(page: Page, title: string, statement: string): Pro
   await page.locator("button[type=submit]").click();
   await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 5000 });
   await expect(page.getByTestId("record-reading")).toContainText(title);
-  // NB (srs-web#211): decisions dispatch to the bespoke DecisionView, not the generic
-  // RecordView this change touched, so no read-view caption is asserted here. The live
-  // RecordView caption is asserted in lifecycle.spec.ts (article path); extending help to
-  // DecisionView is a separate follow-up.
+  // srs-web#213: DecisionView now threads FieldFormDef description into CardField.
+  // title and decision_statement both have descriptions in the governance schema, so
+  // at least one .card__field-description caption must appear in the reading view.
+  await expect(page.getByTestId("record-reading").locator(".card__field-description").first()).toBeVisible();
   await page.getByTestId("record-reading-back").click();
   await expect(page.getByTestId("decision-log-view")).toBeVisible({ timeout: 3000 });
 }
