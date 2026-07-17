@@ -79,6 +79,8 @@ export interface SrsRepository {
   repository_navigation(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in scaffoldGovernanceDocument()
   scaffold_new_repository(input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in orderByPrecedes()
+  order_by_precedes(input_json: string): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -497,6 +499,13 @@ export function createRelation(repo: SrsRepository, input: CreateRelationInput):
  */
 export function deleteRelation(repo: SrsRepository, relationId: string): void {
   repo.delete_relation(relationId);
+}
+
+export function orderByPrecedes(repo: SrsRepository, instanceIds: string[]): string[] {
+  // order_by_precedes throws a JS error on failure (no error-string return path per .d.ts)
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary
+  const raw: any = repo.order_by_precedes(JSON.stringify({ instanceIds }));
+  return raw.orderedIds as string[];
 }
 
 /**
@@ -1012,7 +1021,7 @@ function normalizeColumnSpec(c: any): ColumnSpec {
  *
  * Note: `members` arrive in stored (UUID-alphabetical) order, not precedes order.
  * The root record (tier 0) is `members[0]`; section members have tier > 0.
- * To get ordered sections: `view.members.filter(m => m.tier > 0).map(m => m.record)`, then apply `orderByPrecedes()`.
+ * To get ordered sections: `view.members.filter(m => m.tier > 0).map(m => m.record)`, then apply `orderByPrecedes(repo, ids)`.
  */
 export function resolveContainerView(
   repo: SrsRepository,
