@@ -47,8 +47,10 @@ export { default as ViewPicker } from "./ViewPicker.svelte";
 // Decision link picker modal
 export { default as DecisionLinkPicker } from "./DecisionLinkPicker.svelte";
 
-// Status / actions / validation
+// Repository tools (ADR-013)
 export { default as Migrations } from "./Migrations.svelte";
+
+// Status / actions / validation
 export { default as Tag } from "./Tag.svelte";
 export { default as TagChip } from "./TagChip.svelte";
 export { default as Button } from "./Button.svelte";
