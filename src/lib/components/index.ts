@@ -48,6 +48,7 @@ export { default as ViewPicker } from "./ViewPicker.svelte";
 export { default as DecisionLinkPicker } from "./DecisionLinkPicker.svelte";
 
 // Status / actions / validation
+export { default as Migrations } from "./Migrations.svelte";
 export { default as Tag } from "./Tag.svelte";
 export { default as TagChip } from "./TagChip.svelte";
 export { default as Button } from "./Button.svelte";

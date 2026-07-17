@@ -180,7 +180,7 @@ export function applyMigration(repo: SrsRepository, id: string): MigrationApplyR
 
 #### Tasks
 
-- [ ] Create `src/lib/components/Migrations.svelte`:
+- [x] Create `src/lib/components/Migrations.svelte`:
 
   **Props:**
   ```ts
@@ -255,22 +255,22 @@ export function applyMigration(repo: SrsRepository, id: string): MigrationApplyR
 
   **Styles:** scoped `<style>` block using CSS custom properties (`--color-border`, `--color-muted`, `--color-surface-1`). No hardcoded colours. Badge variants: `--needed` uses `--color-warn` or falls back to `#c8a000`; `--applied` uses `--color-success` or `#2a7a2a`; `--na` uses `--color-muted`.
 
-- [ ] Export `Migrations` from `src/lib/components/index.ts` barrel. Add the following line under the `# Status / actions / validation` section:
+- [x] Export `Migrations` from `src/lib/components/index.ts` barrel. Add the following line under the `# Status / actions / validation` section:
   ```ts
   export { default as Migrations } from "./Migrations.svelte";
   ```
 
 #### Acceptance Criteria
 
-- [ ] Component renders "Loading migrations…" on mount before WASM call returns.
-- [ ] Component renders migration list with correct status badges once loaded.
-- [ ] Apply button is disabled when `status.alreadyApplied` or `status.notApplicable`.
-- [ ] Apply button is disabled for all rows while any migration is applying.
-- [ ] On successful apply, result payload is shown and migration list is refreshed.
-- [ ] On error apply, error message is shown inline.
-- [ ] `npm run typecheck` passes.
+- [x] Component renders "Loading migrations…" on mount before WASM call returns.
+- [x] Component renders migration list with correct status badges once loaded.
+- [x] Apply button is disabled when `status.alreadyApplied` or `status.notApplicable`.
+- [x] Apply button is disabled for all rows while any migration is applying.
+- [x] On successful apply, result payload is shown and migration list is refreshed.
+- [x] On error apply, error message is shown inline.
+- [x] `npm run typecheck` passes.
 
-- [ ] Create `tests/Migrations.test.ts` with the following tests (using the `@testing-library/svelte` + `vitest` pattern from `tests/GovernanceShell.test.ts`):
+- [x] Create `tests/Migrations.test.ts` with the following tests (using the `@testing-library/svelte` + `vitest` pattern from `tests/GovernanceShell.test.ts`):
   - `renders loading state before WASM call resolves` — mock `available_migrations` to never return; assert "Loading migrations…" is in the document.
   - `renders migration list with status badges after load` — mock `available_migrations` returning `[{ id: "m1", title: "Migrate Identity", description: "Desc", status: { needed: true, alreadyApplied: false, notApplicable: false } }]`; assert `screen.getByText("Migrate Identity")` and `screen.getByText("Needed")` are present.
   - `Apply button disabled when status is alreadyApplied` — mock a migration with `{ needed: false, alreadyApplied: true, notApplicable: false }`; assert the Apply button has `disabled` attribute.
