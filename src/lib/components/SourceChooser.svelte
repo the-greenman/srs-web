@@ -11,9 +11,10 @@
   interface Props {
     providers: StorageProviders;
     onOpen: (handle: DocumentHandle) => Promise<void>;
+    onOpenArchive?: (bytes: Uint8Array, name: string) => Promise<void>;
   }
 
-  let { providers, onOpen }: Props = $props();
+  let { providers, onOpen, onOpenArchive }: Props = $props();
 
   type Busy = "local" | "dropbox" | "google-drive" | "github";
   /** Providers that browse a folder tree in the shared modal (list + open). */
@@ -69,7 +70,14 @@
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    void run("local", () => onOpen(new LocalDocumentHandle(file)));
+    if (file.name.endsWith(".srs") && onOpenArchive) {
+      void run("local", async () => {
+        const buf = await file.arrayBuffer();
+        await onOpenArchive(new Uint8Array(buf), file.name);
+      });
+    } else {
+      void run("local", () => onOpen(new LocalDocumentHandle(file)));
+    }
     input.value = "";
   }
 
@@ -145,7 +153,7 @@
     <input
       id="srsj-file"
       type="file"
-      accept=".srsj,.json"
+      accept=".srsj,.json,.srs"
       onchange={handleLocalFile}
       disabled={busy !== null}
     />
