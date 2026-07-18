@@ -32,6 +32,7 @@ export interface SrsRepository {
   update_record(instance_id: string, input_json: string): any;
   delete_record(instance_id: string): void;
   export_srsj(): string;
+  export_archive(): Uint8Array;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; relations are untyped at this boundary
   list_relations(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`
@@ -85,6 +86,7 @@ export interface SrsRepository {
 
 export interface SrsRepositoryConstructor {
   load(srsj: string): SrsRepository;
+  load_archive(bytes: Uint8Array): SrsRepository;
 }
 
 /** Subset of the validation report returned by `SrsRepository.validate()`. */
@@ -92,6 +94,7 @@ export interface RepositoryValidationReport {
   instanceCount: number;
   errorCount: number;
   diagnostics: Diagnostic[];
+  summary: { checked: number; errors: number; warnings: number };
 }
 
 export interface Diagnostic {
@@ -311,6 +314,21 @@ function requireWasm(): SrsRepositoryConstructor {
  */
 export function loadRepo(srsj: string): SrsRepository {
   return requireWasm().load(srsj);
+}
+
+/**
+ * Load a repository from a `.srs` binary archive (ZIP bytes).
+ * Throws if the WASM module has not been initialised or if the bytes are invalid.
+ */
+export function loadRepoFromArchive(bytes: Uint8Array): SrsRepository {
+  return requireWasm().load_archive(bytes);
+}
+
+/**
+ * Export a repository as a `.srs` binary archive (ZIP bytes).
+ */
+export function exportArchive(repo: SrsRepository): Uint8Array {
+  return repo.export_archive();
 }
 
 // ---------------------------------------------------------------------------

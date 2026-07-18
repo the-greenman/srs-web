@@ -78,6 +78,7 @@
     repoName: string;
     documentProvider: string;
     onExport: () => void;
+    onExportArchive?: () => void;
     /** Write back to the opened cloud/git document. Undefined for read-only handles. */
     onSave?: () => Promise<void>;
     saving?: boolean;
@@ -89,6 +90,7 @@
     repoName,
     documentProvider,
     onExport,
+    onExportArchive,
     onSave,
     saving = false,
     saveMessage = null,
@@ -265,6 +267,9 @@
 
   /** Count of validation errors. */
   let errorCount = $derived(diagnostics.filter((d) => d.severity === "error").length);
+
+  /** Count of size warnings — derived from diagnostics[], consistent with errorCount. */
+  let warnCount = $derived(diagnostics.filter((d) => d.severity === "warn").length);
 
   /** Inspector aside: "clean" or error count. */
   let validationAside = $derived(
@@ -920,9 +925,18 @@
             >{saveMessage}</span>
           {/if}
           <button class="topbar__export" onclick={onExport}>Download .srsj</button>
+          {#if onExportArchive}
+            <button class="topbar__export" onclick={onExportArchive}>Download .srs</button>
+          {/if}
           <button class="topbar__reset" onclick={onOpenAnother}>Open another file</button>
         {/snippet}
       </Topbar>
+
+      {#if warnCount > 0 && errorCount === 0}
+        <div class="size-warning-banner" role="status">
+          {warnCount} size warning{warnCount === 1 ? "" : "s"} — see Repository panel for details.
+        </div>
+      {/if}
 
       <Workspace>
         {#if formMode !== null && activeSectionSchema}
@@ -1467,5 +1481,22 @@
 
   .topbar__save-indicator--visible {
     animation: save-fade 2s ease-out forwards;
+  }
+
+  /* ---- Size warning banner ---- */
+  .size-warning-banner {
+    padding: 0.4rem 1.25rem;
+    font-size: 0.8rem;
+    background: color-mix(in srgb, var(--warn, #b45309) 10%, transparent);
+    color: var(--warn-text, #92400e);
+    border-bottom: 1px solid color-mix(in srgb, var(--warn, #b45309) 20%, transparent);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .size-warning-banner {
+      background: color-mix(in srgb, #d97706 12%, transparent);
+      color: #fde68a;
+      border-bottom-color: color-mix(in srgb, #d97706 25%, transparent);
+    }
   }
 </style>

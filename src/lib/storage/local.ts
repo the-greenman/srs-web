@@ -33,3 +33,16 @@ export function downloadDocument(content: string, filename: string): void {
   anchor.click();
   URL.revokeObjectURL(url);
 }
+
+export function downloadArchive(bytes: Uint8Array, filename: string): void {
+  const slice = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  const blob = new Blob([slice as ArrayBuffer], { type: "application/octet-stream" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  // Defer revocation so the browser's download dispatcher can fetch the blob
+  // before it is released (click() is synchronous; download is not).
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}

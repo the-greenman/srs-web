@@ -74,6 +74,7 @@
     repoName: string;
     documentProvider: string;
     onExport: () => void;
+    onExportArchive?: () => void;
     /** Write back to the opened cloud/git document. Undefined for read-only handles. */
     onSave?: () => Promise<void>;
     saving?: boolean;
@@ -85,6 +86,7 @@
     repoName,
     documentProvider,
     onExport,
+    onExportArchive,
     onSave,
     saving = false,
     saveMessage = null,
@@ -587,6 +589,9 @@
               data-testid="guides-export-btn"
               onclick={onExport}
             >Export .srsj</Button>
+            {#if onExportArchive}
+              <Button variant="ghost" onclick={onExportArchive}>Export .srs</Button>
+            {/if}
             <Button variant="ghost" onclick={onOpenAnother}>Open another file</Button>
             <Button
               variant="ghost"

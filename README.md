@@ -30,7 +30,7 @@ user opens another file or explicitly discards the session.
 
 ## Cloud storage
 
-The editor can open `.srsj` and `.json` repositories from the local device,
+The editor can open `.srsj`, `.json`, and `.srs` binary archive repositories from the local device,
 Dropbox, Google Drive, or a GitHub repository; create new files on Dropbox or
 Google Drive (`StorageProvider.create`); and **Save** edits back to any
 write-capable cloud/git document. Cloud client IDs are public browser
@@ -198,4 +198,4 @@ await activeDocument.write(exportSrsj(repo), activeDocument.revision);
 The revision is the provider's concurrency token — Dropbox `rev`, Drive `etag`,
 GitHub blob SHA. A stale write raises `StorageConflictError`, which the UI
 surfaces as a reload-and-retry prompt instead of clobbering the newer version.
-Local browser files remain download-only (`Open` + `Download`).
+Local browser files remain download-only. Governance and Guides editors both expose "Download .srsj" (JSON) and "Download .srs" (binary archive) export buttons. A non-blocking warning banner appears in the Governance editor when the repository has size warnings (attachment-size soft limits) and no validation errors.
