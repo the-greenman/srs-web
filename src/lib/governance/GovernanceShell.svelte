@@ -268,7 +268,8 @@
   /** Count of validation errors. */
   let errorCount = $derived(diagnostics.filter((d) => d.severity === "error").length);
 
-  let warnCount = $state(0);
+  /** Count of size warnings — derived from diagnostics[], consistent with errorCount. */
+  let warnCount = $derived(diagnostics.filter((d) => d.severity === "warn").length);
 
   /** Inspector aside: "clean" or error count. */
   let validationAside = $derived(
@@ -457,7 +458,6 @@
     const report = repo.validate();
     instanceCount = report.instanceCount;
     diagnostics = report.diagnostics.map(mapDiagnostic);
-    warnCount = report.summary.warnings;
   }
 
   // ---------------------------------------------------------------------------
