@@ -43,7 +43,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
 
 function makeBaseRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
   return mockRepo({
-    validate: () => ({ instanceCount: 0, errorCount: 0, diagnostics: [] }),
+    validate: () => ({ instanceCount: 0, errorCount: 0, diagnostics: [], summary: { checked: 0, errors: 0, warnings: 0 } }),
     repository_navigation: () => ({
       rootContainerId: "c-root",
       identity: {

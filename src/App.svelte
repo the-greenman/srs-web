@@ -18,7 +18,9 @@
   import {
     initWasm,
     loadRepo,
+    loadRepoFromArchive,
     exportSrsj,
+    exportArchive,
     createGovernanceDocument,
   } from "$lib/srs-client.js";
   import type { SrsRepository } from "$lib/srs-client.js";
@@ -34,6 +36,7 @@
   import {
     createStorageProvidersFromEnv,
     downloadDocument,
+    downloadArchive,
     isGitBranchAware,
     StorageError,
     type DocumentHandle,
@@ -158,6 +161,28 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Document loading — archive (.srs)
+  // ---------------------------------------------------------------------------
+
+  async function loadArchiveDocument(bytes: Uint8Array, name: string): Promise<void> {
+    errorMsg = null;
+    try {
+      repo = loadRepoFromArchive(bytes);
+      activeDocument = null;
+      repoName = name.replace(/\.srs$/i, "");
+      cachedSession = null;
+      saveMessage = null;
+      appState = "loaded";
+    } catch (e: unknown) {
+      repo = null;
+      throw new Error(
+        `Failed to load archive: ${e instanceof Error ? e.message : String(e)}`,
+        { cause: e },
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Export
   // ---------------------------------------------------------------------------
 
@@ -165,6 +190,11 @@
     if (!repo) return;
     const json = exportSrsj(repo);
     downloadDocument(json, `${repoName}.srsj`);
+  }
+
+  function handleExportArchive() {
+    if (!repo) return;
+    downloadArchive(exportArchive(repo), `${repoName}.srs`);
   }
 
   // ---------------------------------------------------------------------------
@@ -340,7 +370,7 @@
         </div>
       {/if}
       <p class="splash__sub">Open a <code>.srsj</code> repository file to explore its governance records.</p>
-      <SourceChooser providers={storageProviders} onOpen={loadDocument} />
+      <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} />
       <p class="splash__divider">or start from scratch</p>
       <CreateGovernanceDocumentPanel providers={storageProviders} onCreate={createDocument} />
       <button class="splash__back" onclick={() => { editorMode = null; }}>← Back</button>
@@ -349,7 +379,7 @@
     <div class="splash" data-testid="guides-file-picker">
       <h1 class="splash__title">muDemocracy Guides Editor</h1>
       <p class="splash__sub">Open a <code>.srsj</code> repository file to edit guides.</p>
-      <SourceChooser providers={storageProviders} onOpen={loadDocument} />
+      <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} />
       <button class="splash__back" onclick={() => { editorMode = null; }}>← Back</button>
     </div>
   {/if}
@@ -363,6 +393,7 @@
     repoName={repoName}
     documentProvider={activeDocument?.provider ?? "local"}
     onExport={handleExport}
+    onExportArchive={handleExportArchive}
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
     saving={saving}
     saveMessage={saveMessage}
@@ -386,6 +417,7 @@
     repoName={repoName}
     documentProvider={activeDocument?.provider ?? "local"}
     onExport={handleExport}
+    onExportArchive={handleExportArchive}
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
     saving={saving}
     saveMessage={saveMessage}
