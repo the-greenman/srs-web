@@ -198,4 +198,4 @@ await activeDocument.write(exportSrsj(repo), activeDocument.revision);
 The revision is the provider's concurrency token — Dropbox `rev`, Drive `etag`,
 GitHub blob SHA. A stale write raises `StorageConflictError`, which the UI
 surfaces as a reload-and-retry prompt instead of clobbering the newer version.
-Local browser files remain download-only. Governance and Guides editors both expose "Download .srsj" (JSON) and "Download .srs" (binary archive) export buttons. A non-blocking warning banner appears in the Governance editor when the repository has size warnings (attachment-size soft limits) and no validation errors.
+Local browser files remain download-only. Governance and Guides editors both expose "Download .srsj" (JSON) and "Download .srs" (binary archive) export buttons. A non-blocking warning banner appears in both the Governance and Guides editors when the repository has size warnings (attachment-size soft limits) and no validation errors.
