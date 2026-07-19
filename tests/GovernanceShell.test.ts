@@ -95,6 +95,7 @@ function makeBaseRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
     get_allowed_lifecycle_transitions: () => {
       throw new Error("LifecycleNotDefined");
     },
+    list_attachments: () => ({ sourceDocumentsPath: "source_documents", entries: [] }),
     ...overrides,
   });
 }

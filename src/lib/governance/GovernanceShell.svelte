@@ -61,6 +61,7 @@
   import RecordReading from "$lib/components/RecordReading.svelte";
   import DecisionLogView from "$lib/components/DecisionLogView.svelte";
   import TagChip from "$lib/components/TagChip.svelte";
+  import AttachmentsPanel from "$lib/components/AttachmentsPanel.svelte";
 
   import { TYPE_REGISTRY, DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
@@ -136,6 +137,7 @@
   /** Validation diagnostics mapped to types.ts shape. */
   let diagnostics = $state<Diagnostic[]>([]);
   let instanceCount = $state<number>(0);
+  let attachmentCount = $state<number>(0);
 
   /** TypeFormDef per container, keyed by containerId, derived from root type schema. */
   let containerSchemas = $state<Record<string, TypeFormDef>>({});
@@ -1137,6 +1139,14 @@
           {/if}
         </InspectorSection>
       {/if}
+
+      <InspectorSection title="Attachments" aside={attachmentCount > 0 ? String(attachmentCount) : ""}>
+        <AttachmentsPanel
+          {repo}
+          onMutate={() => { refreshValidation(); persistWorkingCopy(); }}
+          onCountChange={(n) => { attachmentCount = n; }}
+        />
+      </InspectorSection>
 
       <InspectorSection title="Validation" aside={validationAside}>
         <Diagnostics {diagnostics} />
