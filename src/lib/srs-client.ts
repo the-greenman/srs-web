@@ -82,6 +82,15 @@ export interface SrsRepository {
   scaffold_new_repository(input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in orderByPrecedes()
   order_by_precedes(input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listAttachments()
+  list_attachments(filter_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in addAttachment()
+  add_attachment(input_json: string, file_bytes: Uint8Array): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in linkAttachment()
+  link_attachment(input_json: string): any;
+  get_attachment_bytes(document_id: string): Uint8Array;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getRecordAttachments()
+  get_record_attachments(input_json: string): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -271,6 +280,71 @@ export interface TransitionRecordResult {
   warnings: string[];
   successor?: SrsRecord;
   relation?: SrsRelation;
+}
+
+// ---------------------------------------------------------------------------
+// Attachment types (srs-rust#290, srs-rust#291, srs-web#99)
+// ---------------------------------------------------------------------------
+
+export interface AttachmentEntry {
+  path: string;
+  documentId?: string;
+  title?: string;
+  contentChecksum?: string;
+  sidecarChecksum?: string;
+  /** Absent until srs-rust#645 lands (srs-web#234 deferred). */
+  sizeBytes?: number;
+}
+
+export interface AttachmentListResult {
+  sourceDocumentsPath: string;
+  entries: AttachmentEntry[];
+}
+
+export interface AddAttachmentInput {
+  fileName: string;
+  subdir?: string;
+  title?: string;
+  contentType?: string;
+}
+
+export interface AddAttachmentResult {
+  documentId: string;
+  contentPath: string;
+  sidecarPath: string;
+  sourceDocumentsPath: string;
+  contentChecksum: string;
+  sidecarChecksum: string;
+}
+
+export interface LinkAttachmentInput {
+  instanceId: string;
+  documentId: string;
+}
+
+export interface LinkAttachmentResult {
+  instanceId: string;
+  documentId: string;
+  sourceRefsCount: number;
+}
+
+export interface ResolvedAttachment {
+  documentId: string;
+  contentPath?: string;
+  sidecarPath?: string;
+  contentChecksum?: string;
+  sidecarChecksum?: string;
+  title?: string;
+}
+
+export interface GetRecordAttachmentsInput {
+  instanceId: string;
+}
+
+export interface GetRecordAttachmentsResult {
+  instanceId: string;
+  sourceDocumentsPath: string;
+  attachments: ResolvedAttachment[];
 }
 
 // ---------------------------------------------------------------------------
@@ -1256,4 +1330,67 @@ export function createGovernanceDocument(
   const trimmed = title.trim();
   if (trimmed === "") throw new Error("A document name is required");
   return scaffoldGovernanceDocument(loadRepo(GOVERNANCE_SEED_SRSJ), trimmed, namespace);
+}
+
+// ---------------------------------------------------------------------------
+// Attachment wrappers (srs-rust#290, srs-rust#291, srs-web#99)
+// ---------------------------------------------------------------------------
+
+/**
+ * List all attachments in the repository, optionally filtered.
+ * Returns the source-documents path and an entry per attachment file.
+ * ADR-001: pure WASM pass-through; all path resolution stays in the Rust core.
+ */
+export function listAttachments(
+  repo: SrsRepository,
+  filter: Record<string, unknown> = {}
+): AttachmentListResult {
+  return repo.list_attachments(JSON.stringify(filter)) as AttachmentListResult;
+}
+
+/**
+ * Add a new attachment from raw bytes.
+ * Bytes live only in MemoryStore; persist via `exportArchive()` (`.srs` ZIP).
+ * ADR-001: no filename parsing, MIME inference, or content validation in TypeScript.
+ */
+export function addAttachment(
+  repo: SrsRepository,
+  input: AddAttachmentInput,
+  fileBytes: Uint8Array
+): AddAttachmentResult {
+  return repo.add_attachment(JSON.stringify(input), fileBytes) as AddAttachmentResult;
+}
+
+/**
+ * Link an existing attachment document to a record instance.
+ * ADR-001: referential integrity is enforced by the Rust core.
+ */
+export function linkAttachment(
+  repo: SrsRepository,
+  input: LinkAttachmentInput
+): LinkAttachmentResult {
+  return repo.link_attachment(JSON.stringify(input)) as LinkAttachmentResult;
+}
+
+/**
+ * Download the raw bytes for an attachment by document ID.
+ * Returns a `Uint8Array` suitable for constructing a `Blob` for browser download.
+ */
+export function getAttachmentBytes(repo: SrsRepository, documentId: string): Uint8Array {
+  return repo.get_attachment_bytes(documentId);
+}
+
+/**
+ * Resolve all attachments linked to a record instance.
+ * Returns `null` when the instance does not exist in the repository
+ * (mirrors the `Option<GetRecordAttachmentsResult>` return from the Rust service).
+ * ADR-001: pure WASM pass-through.
+ */
+export function getRecordAttachments(
+  repo: SrsRepository,
+  input: GetRecordAttachmentsInput
+): GetRecordAttachmentsResult | null {
+  const raw = repo.get_record_attachments(JSON.stringify(input));
+  if (raw === null || raw === undefined) return null;
+  return raw as GetRecordAttachmentsResult;
 }

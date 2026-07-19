@@ -13,6 +13,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 import {
   addContainerMember,
+  addAttachment,
   containersForInstance,
   createGovernanceDocument,
   createRelation,
@@ -20,6 +21,10 @@ import {
   documentViewsForContainer,
   find,
   getAllowedLifecycleTransitions,
+  getAttachmentBytes,
+  getRecordAttachments,
+  linkAttachment,
+  listAttachments,
   listBlueprints,
   listContainers,
   listDocumentViews,
@@ -31,9 +36,12 @@ import {
   scaffoldGovernanceDocument,
   transitionRecord,
   typeSchema,
+  type AddAttachmentInput,
   type AllowedLifecycleTransitionsResult,
   type ContainerListFilter,
   type DocumentViewListFilter,
+  type GetRecordAttachmentsInput,
+  type LinkAttachmentInput,
 } from "../src/lib/srs-client.js";
 
 // ---------------------------------------------------------------------------
@@ -75,6 +83,13 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     scaffold_new_repository: () => { throw new Error("not mocked"); },
     get_allowed_lifecycle_transitions: () => { throw new Error("not mocked"); },
     get_field_value_by_name: () => { throw new Error("not mocked"); },
+    export_archive: () => { throw new Error("not mocked"); },
+    order_by_precedes: () => { throw new Error("not mocked"); },
+    list_attachments: () => { throw new Error("not mocked"); },
+    add_attachment: () => { throw new Error("not mocked"); },
+    link_attachment: () => { throw new Error("not mocked"); },
+    get_attachment_bytes: () => { throw new Error("not mocked"); },
+    get_record_attachments: () => { throw new Error("not mocked"); },
   };
   return { ...base, ...overrides };
 }
@@ -1284,5 +1299,94 @@ describe("transitionRecord", () => {
     expect(() => transitionRecord(repo, "inst-pred", { to: "superseded" })).toThrow(
       /predates RFC-022/
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// attachment wrappers (srs-rust#290, srs-rust#291, srs-web#99)
+// ---------------------------------------------------------------------------
+
+describe("attachment wrappers", () => {
+  it("listAttachments calls list_attachments with JSON-serialised filter and returns the result", () => {
+    const listResult = {
+      sourceDocumentsPath: "source_documents",
+      entries: [{ path: "source_documents/report.pdf", documentId: "doc-001", title: "Report" }],
+    };
+    const spy = vi.fn().mockReturnValue(listResult);
+    const repo = mockRepo({ list_attachments: spy });
+
+    const result = listAttachments(repo, { subdir: "reports" });
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(JSON.stringify({ subdir: "reports" }));
+    expect(result.sourceDocumentsPath).toBe("source_documents");
+    expect(result.entries).toHaveLength(1);
+    expect(result.entries[0].documentId).toBe("doc-001");
+  });
+
+  it("listAttachments passes an empty filter when called with no filter argument", () => {
+    const spy = vi.fn().mockReturnValue({ sourceDocumentsPath: "source_documents", entries: [] });
+    const repo = mockRepo({ list_attachments: spy });
+
+    listAttachments(repo);
+
+    expect(spy).toHaveBeenCalledWith("{}");
+  });
+
+  it("addAttachment calls add_attachment with JSON input and raw Uint8Array bytes", () => {
+    const addResult = {
+      documentId: "doc-002",
+      contentPath: "source_documents/file.pdf",
+      sidecarPath: "source_documents/file.pdf.srs-meta.json",
+      sourceDocumentsPath: "source_documents",
+      contentChecksum: "sha256:abc",
+      sidecarChecksum: "sha256:def",
+    };
+    const spy = vi.fn().mockReturnValue(addResult);
+    const repo = mockRepo({ add_attachment: spy });
+    const bytes = new Uint8Array([1, 2, 3]);
+    const input: AddAttachmentInput = { fileName: "file.pdf", title: "My File" };
+
+    const result = addAttachment(repo, input, bytes);
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(JSON.stringify(input), bytes);
+    expect(result.documentId).toBe("doc-002");
+    expect(result.contentChecksum).toBe("sha256:abc");
+  });
+
+  it("linkAttachment calls link_attachment with JSON-serialised input", () => {
+    const linkResult = { instanceId: "inst-001", documentId: "doc-002", sourceRefsCount: 1 };
+    const spy = vi.fn().mockReturnValue(linkResult);
+    const repo = mockRepo({ link_attachment: spy });
+    const input: LinkAttachmentInput = { instanceId: "inst-001", documentId: "doc-002" };
+
+    const result = linkAttachment(repo, input);
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(JSON.stringify(input));
+    expect(result.instanceId).toBe("inst-001");
+    expect(result.sourceRefsCount).toBe(1);
+  });
+
+  it("getAttachmentBytes calls get_attachment_bytes with the document ID directly", () => {
+    const bytes = new Uint8Array([10, 20, 30]);
+    const spy = vi.fn().mockReturnValue(bytes);
+    const repo = mockRepo({ get_attachment_bytes: spy });
+
+    const result = getAttachmentBytes(repo, "doc-003");
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith("doc-003");
+    expect(result).toBe(bytes);
+  });
+
+  it("getRecordAttachments returns null when the WASM binding returns null", () => {
+    const repo = mockRepo({ get_record_attachments: () => null });
+    const input: GetRecordAttachmentsInput = { instanceId: "nonexistent" };
+
+    const result = getRecordAttachments(repo, input);
+
+    expect(result).toBeNull();
   });
 });

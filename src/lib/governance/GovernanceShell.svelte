@@ -61,6 +61,8 @@
   import RecordReading from "$lib/components/RecordReading.svelte";
   import DecisionLogView from "$lib/components/DecisionLogView.svelte";
   import TagChip from "$lib/components/TagChip.svelte";
+  import AttachmentsPanel from "$lib/components/AttachmentsPanel.svelte";
+  import AttachmentLinkPanel from "$lib/components/AttachmentLinkPanel.svelte";
 
   import { TYPE_REGISTRY, DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
@@ -136,6 +138,8 @@
   /** Validation diagnostics mapped to types.ts shape. */
   let diagnostics = $state<Diagnostic[]>([]);
   let instanceCount = $state<number>(0);
+  let attachmentCount = $state<number>(0);
+  let linkedAttachmentCount = $state<number>(0);
 
   /** TypeFormDef per container, keyed by containerId, derived from root type schema. */
   let containerSchemas = $state<Record<string, TypeFormDef>>({});
@@ -1135,6 +1139,25 @@
           {#if decisionExportError}
             <p class="inspector__error" role="alert">{decisionExportError}</p>
           {/if}
+        </InspectorSection>
+      {/if}
+
+      <InspectorSection title="Attachments" aside={attachmentCount > 0 ? String(attachmentCount) : ""}>
+        <AttachmentsPanel
+          {repo}
+          onMutate={() => { refreshValidation(); persistWorkingCopy(); }}
+          onCountChange={(n) => { attachmentCount = n; }}
+        />
+      </InspectorSection>
+
+      {#if selectedRecord && formMode === null}
+        <InspectorSection title="Linked Attachments" aside={linkedAttachmentCount > 0 ? String(linkedAttachmentCount) : ""}>
+          <AttachmentLinkPanel
+            {repo}
+            instanceId={selectedRecord.instanceId}
+            onMutate={() => { refreshValidation(); persistWorkingCopy(); }}
+            onCountChange={(n) => { linkedAttachmentCount = n; }}
+          />
         </InspectorSection>
       {/if}
 
