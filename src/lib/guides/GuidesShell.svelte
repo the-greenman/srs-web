@@ -141,6 +141,11 @@
   /** Export error (non-fatal; shown in the shell). */
   let exportError = $state<string | null>(null);
 
+  /** Count of size warnings from `repo.validate()`. Non-zero triggers the advisory banner. */
+  let warnCount = $state(0);
+  /** Count of validation errors from `repo.validate()`. Non-zero suppresses the warning banner. */
+  let errorCount = $state(0);
+
   /** Whether the preview inspector is force-shown on narrow screens. */
   let previewOpen = $state(false);
 
@@ -163,6 +168,16 @@
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
+
+  function refreshValidation(): void {
+    try {
+      const report = repo.validate();
+      warnCount = report.summary.warnings;
+      errorCount = report.summary.errors;
+    } catch {
+      // validate() failure leaves counts at 0 — no false-positive banner shown
+    }
+  }
 
   /** Derive the human-readable type name for a section record. */
   function sectionTypeName(record: SrsRecord): string {
@@ -297,6 +312,8 @@
       reload();
     } catch (e) {
       schemaError = `Blueprint schema load failed: ${e instanceof Error ? e.message : String(e)}`;
+    } finally {
+      refreshValidation();
     }
   });
 
@@ -602,6 +619,12 @@
             >{previewOpen ? "Hide preview" : "Preview"}</Button>
           {/snippet}
         </Topbar>
+
+        {#if warnCount > 0 && errorCount === 0}
+          <div class="size-warning-banner" role="status">
+            {warnCount} size warning{warnCount === 1 ? "" : "s"} — see Repository panel for details.
+          </div>
+        {/if}
 
         {#if schemaError}
           <div class="guides-error" role="alert">{schemaError}</div>
@@ -1023,6 +1046,23 @@
     font-size: 0.7rem;
     opacity: 0.75;
     max-width: 22rem;
+  }
+
+  /* ---- Size warning banner ---- */
+  .size-warning-banner {
+    padding: 0.4rem 1.25rem;
+    font-size: 0.8rem;
+    background: color-mix(in srgb, var(--warn, #b45309) 10%, transparent);
+    color: var(--warn-text, #92400e);
+    border-bottom: 1px solid color-mix(in srgb, var(--warn, #b45309) 20%, transparent);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .size-warning-banner {
+      background: color-mix(in srgb, #d97706 12%, transparent);
+      color: #fde68a;
+      border-bottom-color: color-mix(in srgb, #d97706 25%, transparent);
+    }
   }
 
 </style>
