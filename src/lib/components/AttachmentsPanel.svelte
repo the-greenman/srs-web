@@ -113,6 +113,9 @@
       onchange={handleUpload}
     />
   </label>
+  <p class="attachments-panel__note" data-testid="attachments-persistence-note">
+    Attachment bytes are only preserved in .srs archive exports.
+  </p>
 </div>
 
 <style>
@@ -176,5 +179,10 @@
   }
   .attachments-panel__file-input {
     display: none;
+  }
+  .attachments-panel__note {
+    color: var(--color-muted, #888);
+    font-size: 0.75em;
+    margin: 2px 0 0;
   }
 </style>

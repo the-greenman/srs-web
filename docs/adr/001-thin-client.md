@@ -69,3 +69,20 @@ here so it isn't mistaken for acceptable presentation logic:
   (tracked as srs-rust#411). Once that binding is available, `loadInstalledRelationTypes`
   must be replaced with a direct `listRelationTypes(repo)` call and this entry removed.
   (Added in srs-web#160.)
+
+## Two-tier persistence model (introduced in srs-web#99)
+
+Attachments introduce a new persistence split not present before this feature:
+
+- **`.srsj` (MemoryStore JSON)**: persisted by `persistWorkingCopy()`. Contains all records,
+  relations, containers, and manifest metadata. Does **not** contain attachment bytes — those
+  are not serialisable in the JSON format.
+- **`.srs` (ZIP archive)**: produced by `exportArchive()`. Contains everything in `.srsj` plus
+  the raw attachment bytes in `source_documents/`. This is the only format that preserves
+  attachment content across sessions.
+
+Consequence: after an `addAttachment` call, calling `persistWorkingCopy()` saves an attachment
+stub (the record/sidecar metadata) but the bytes are lost on reload unless the user also
+exports a `.srs` archive. `AttachmentsPanel.svelte` displays a visible note to this effect.
+Future work may expose a browser-side archive save (IndexedDB ZIP) to close this gap — tracked
+as part of srs-web#232 (resolve_document_view_attachments).
