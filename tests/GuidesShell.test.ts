@@ -1,0 +1,133 @@
+// @vitest-environment happy-dom
+import { render, screen } from "@testing-library/svelte";
+import { vi, describe, it, expect } from "vitest";
+import GuidesShell from "../src/lib/guides/GuidesShell.svelte";
+import type { SrsRepository } from "../src/lib/srs-client.js";
+
+function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
+  const base: SrsRepository = {
+    validate: () => { throw new Error("not mocked"); },
+    list_records: () => { throw new Error("not mocked"); },
+    get_record: () => { throw new Error("not mocked"); },
+    list_notes: () => { throw new Error("not mocked"); },
+    create_record: () => { throw new Error("not mocked"); },
+    update_record: () => { throw new Error("not mocked"); },
+    delete_record: () => { throw new Error("not mocked"); },
+    export_srsj: () => { throw new Error("not mocked"); },
+    export_archive: () => { throw new Error("not mocked"); },
+    list_relations: () => { throw new Error("not mocked"); },
+    create_relation: () => { throw new Error("not mocked"); },
+    delete_relation: () => { throw new Error("not mocked"); },
+    set_lifecycle_state: () => { throw new Error("not mocked"); },
+    transition_record: () => { throw new Error("not mocked"); },
+    blueprint_schema: () => { throw new Error("not mocked"); },
+    render_document_view: () => { throw new Error("not mocked"); },
+    list_containers: () => { throw new Error("not mocked"); },
+    get_container: () => { throw new Error("not mocked"); },
+    add_container_member: () => { throw new Error("not mocked"); },
+    remove_container_member: () => { throw new Error("not mocked"); },
+    containers_for_instance: () => { throw new Error("not mocked"); },
+    type_schema: () => { throw new Error("not mocked"); },
+    list_blueprints: () => { throw new Error("not mocked"); },
+    document_views_for_container: () => { throw new Error("not mocked"); },
+    list_document_views: () => { throw new Error("not mocked"); },
+    find: () => { throw new Error("not mocked"); },
+    list_terms: () => { throw new Error("not mocked"); },
+    create_record_successor: () => { throw new Error("not mocked"); },
+    resolve_container_view: () => { throw new Error("not mocked"); },
+    repository_navigation: () => { throw new Error("not mocked"); },
+    scaffold_new_repository: () => { throw new Error("not mocked"); },
+    get_allowed_lifecycle_transitions: () => { throw new Error("not mocked"); },
+    order_by_precedes: () => { throw new Error("not mocked"); },
+    get_field_value_by_name: () => { throw new Error("not mocked"); },
+  };
+  return { ...base, ...overrides };
+}
+
+/**
+ * Minimal repo mock for GuidesShell banner tests.
+ * list_blueprints returns no summaries so onMount exits early (schemaError path),
+ * then refreshValidation() runs unconditionally after the try/catch.
+ */
+function makeBaseRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
+  return mockRepo({
+    list_blueprints: () => ({ summaries: [] }),
+    validate: () => ({
+      instanceCount: 0,
+      errorCount: 0,
+      diagnostics: [],
+      summary: { checked: 0, errors: 0, warnings: 0 },
+    }),
+    ...overrides,
+  });
+}
+
+const defaultProps = {
+  repoName: "test.srsj",
+  documentProvider: "local",
+  onExport: vi.fn(),
+  onOpenAnother: vi.fn(),
+};
+
+describe("GuidesShell — size warning banner", () => {
+  it("shows the warning banner when validate returns warnings and no errors", async () => {
+    const repo = makeBaseRepo({
+      validate: () => ({
+        instanceCount: 5,
+        errorCount: 0,
+        diagnostics: [],
+        summary: { checked: 5, errors: 0, warnings: 1 },
+      }),
+    });
+    const { container } = render(GuidesShell, { props: { repo, ...defaultProps } });
+    // Wait for mount — the "Open another file" button is always rendered
+    await screen.findByRole("button", { name: /Open another file/i });
+    const banner = container.querySelector(".size-warning-banner");
+    expect(banner).not.toBeNull();
+    expect(banner!.textContent).toContain("1 size warning");
+  });
+
+  it("suppresses the warning banner when errors are present (safety interlock)", async () => {
+    const repo = makeBaseRepo({
+      validate: () => ({
+        instanceCount: 5,
+        errorCount: 1,
+        diagnostics: [],
+        summary: { checked: 5, errors: 1, warnings: 2 },
+      }),
+    });
+    const { container } = render(GuidesShell, { props: { repo, ...defaultProps } });
+    await screen.findByRole("button", { name: /Open another file/i });
+    expect(container.querySelector(".size-warning-banner")).toBeNull();
+  });
+
+  it("shows no banner when there are no warnings", async () => {
+    const repo = makeBaseRepo({
+      validate: () => ({
+        instanceCount: 0,
+        errorCount: 0,
+        diagnostics: [],
+        summary: { checked: 0, errors: 0, warnings: 0 },
+      }),
+    });
+    const { container } = render(GuidesShell, { props: { repo, ...defaultProps } });
+    await screen.findByRole("button", { name: /Open another file/i });
+    expect(container.querySelector(".size-warning-banner")).toBeNull();
+  });
+
+  it("shows plural form for multiple warnings", async () => {
+    const repo = makeBaseRepo({
+      validate: () => ({
+        instanceCount: 5,
+        errorCount: 0,
+        diagnostics: [],
+        summary: { checked: 5, errors: 0, warnings: 3 },
+      }),
+    });
+    const { container } = render(GuidesShell, { props: { repo, ...defaultProps } });
+    await screen.findByRole("button", { name: /Open another file/i });
+    const banner = container.querySelector(".size-warning-banner");
+    expect(banner).not.toBeNull();
+    expect(banner!.textContent).toContain("3 size warnings");
+  });
+});
