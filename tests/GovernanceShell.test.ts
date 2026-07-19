@@ -38,6 +38,13 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     repository_navigation: () => { throw new Error("not mocked"); },
     scaffold_new_repository: () => { throw new Error("not mocked"); },
     get_allowed_lifecycle_transitions: () => { throw new Error("not mocked"); },
+    order_by_precedes: () => { throw new Error("not mocked"); },
+    get_field_value_by_name: () => { throw new Error("not mocked"); },
+    list_attachments: () => { throw new Error("not mocked"); },
+    add_attachment: () => { throw new Error("not mocked"); },
+    link_attachment: () => { throw new Error("not mocked"); },
+    get_attachment_bytes: () => { throw new Error("not mocked"); },
+    get_record_attachments: () => { throw new Error("not mocked"); },
   };
   return { ...base, ...overrides };
 }
