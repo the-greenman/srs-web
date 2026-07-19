@@ -185,6 +185,16 @@ Provider authentication should remain disabled on previews unless a separate
 preview credential set and stable preview hostname are registered with both
 providers.
 
+## Attachment management
+
+The governance editor supports attaching source documents to a repository and linking them to individual records.
+
+**Attachments panel** (always visible in the right-hand inspector): lists all attachments in the repository. Use **Add file** to upload a file — the bytes are stored in the WASM `MemoryStore` under `source_documents/`. Each entry shows its truncated document ID and a **↓** download button.
+
+**Linked Attachments panel** (shown below the Attachments panel when a record is selected and no edit form is open): lists attachments already linked to the selected record, plus a collapsible picker to link any existing attachment. Clicking **Link** calls `link_attachment` (WASM) to associate the attachment's document ID with the record.
+
+**Persistence model:** attachment bytes live only in the in-memory store. `persistWorkingCopy()` (autosave / `.srsj` download) saves the attachment metadata (stub records + sidecar) but **not** the bytes. To preserve bytes across sessions, use **Download .srs** — the binary archive format includes both metadata and file content. The Attachments panel displays a visible note to this effect.
+
 ## Save-ready storage contract
 
 Cloud/git documents retain their provider ID and revision in a `DocumentHandle`.
