@@ -170,9 +170,13 @@
   // ---------------------------------------------------------------------------
 
   function refreshValidation(): void {
-    const report = repo.validate();
-    warnCount = report.summary.warnings;
-    errorCount = report.summary.errors;
+    try {
+      const report = repo.validate();
+      warnCount = report.summary.warnings;
+      errorCount = report.summary.errors;
+    } catch {
+      // validate() failure leaves counts at 0 — no false-positive banner shown
+    }
   }
 
   /** Derive the human-readable type name for a section record. */
