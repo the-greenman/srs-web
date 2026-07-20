@@ -1,28 +1,28 @@
-# Plan: Migration Registry UI (srs-web#221)
+# Plan: Expose Migration Registry in Web UI (srs-web#221)
+
+> **Issue:** [srs-web#221](https://github.com/the-greenman/srs-web/issues/221)
+> **Companion:** srs-rust#461 (closed — WASM bindings shipped in latest release)
 
 ## Summary
 
-`srs-rust#461` added `available_migrations()` and `apply_migration(id)` as WASM binding methods on `SrsRepository`. The bindings are present in the latest release (`srs-bindings-web.tar.gz`). This plan surfaces them in the web UI as a new "Migrations" inspector section in `GovernanceShell.svelte`, following the established InspectorSection pattern (Validation, Repository). Users will be able to see the applicability status of all known migrations and apply needed ones without dropping to the CLI.
+srs-rust#461 added `available_migrations()` and `apply_migration(id)` as methods on the `SrsRepository` WASM class. This plan exposes them in the governance editor: a "Migrations" section under a new "Repository" NavGroup in `GovernanceShell`, showing each migration's applicability status and providing an Apply button. Administrators can now upgrade their repository from the web UI without dropping to the CLI.
 
 ## Agent Assignments
 
 | Role | Agent |
 |---|---|
-| Lead Integrator | main loop |
-| Web App Worker | main loop |
-| Architecture Reviewer (srs-web) | Stage 3 / Stage 7 review agents |
-| Verification Agent (srs-web) | Stage 7 verification agent |
-
-See [agents.md](agents.md) for role definitions.
+| Lead Integrator | — |
+| Web App Worker | `agents.md#web-app-worker` |
+| Verification | `agents.md#verification-agent-srs-web` |
+| Architecture Reviewer | `agents.md#architecture-reviewer-srs-web` |
 
 ## Architecture Decisions
 
 | ADR | Decision | Status |
 |---|---|---|
-| [ADR-001](../docs/adr/001-thin-client.md) | Zero SRS semantics in TS — `available_migrations` / `apply_migration` are WASM pass-throughs only; badge labels are derived from WASM-provided booleans, not TS logic | accepted |
-| ADR-001 (prop pattern) | `MigrationsPanel` is a direct child of `GovernanceShell`; prop injection (`repo` as prop) is the standard pattern for first-level inspector children. ADR-013 (Svelte context) applies only to rendering-layer components dispatched through TYPE_REGISTRY — not here. | no new ADR needed |
-
-No new ADR is required: the migrations panel follows the identical WASM pass-through pattern established by Validation (ADR-001) and does not introduce any new architectural constraint.
+| [ADR-001](../docs/adr/001-thin-client.md) | All migration semantics delegated to WASM — srs-web only renders and routes calls | accepted |
+| [ADR-009](../docs/adr/009-container-driven-nav.md) | Container nav unchanged; migrations appear in a new peer "Repository" NavGroup | accepted |
+| [ADR-013](../docs/adr/013-repository-tool-sections.md) | A "Repository" NavGroup for non-container repo-level tools is the approved pattern | accepted |
 
 ---
 
@@ -30,179 +30,365 @@ No new ADR is required: the migrations panel follows the identical WASM pass-thr
 
 ### WASM API surface
 
-No new WASM methods required. Both methods are already in the latest `srs-bindings` release:
+**No new WASM bindings required.** srs-rust#461 already shipped `available_migrations()` and `apply_migration(id)` in the latest release artifact. `scripts/ensure-bindings.mjs` downloads this at build time.
 
-- `available_migrations()` → `MigrationSummary[]` — each object has `{ id: string, title: string, description: string, status: { needed: boolean, alreadyApplied: boolean, notApplicable: boolean } }`
-- `apply_migration(id: string)` → `{ id: string, payload: object }` — throws on unknown id
+Return shapes (from WASM JSDoc):
+
+```
+available_migrations() → Array<{
+  id: string,
+  title: string,
+  description: string,
+  status: {
+    needed: boolean,        // exactly one is true
+    alreadyApplied: boolean,
+    notApplicable: boolean
+  }
+}>
+
+apply_migration(id: string) → { id: string, payload: object }
+```
+
+Both throw on error (the WASM wrapper checks `ret[2]` and re-throws).
 
 ### TypeScript types
 
-Two new type exports in `src/lib/srs-client.ts`:
+Added to `src/lib/srs-client.ts`:
+
 ```ts
 export interface MigrationStatus {
   needed: boolean;
   alreadyApplied: boolean;
   notApplicable: boolean;
 }
+
 export interface MigrationSummary {
   id: string;
   title: string;
   description: string;
   status: MigrationStatus;
 }
-export interface MigrationResult {
+
+export interface MigrationApplyResult {
   id: string;
-  payload: Record<string, unknown>;
+  payload: unknown;
 }
 ```
 
-And two new wrapper functions in `srs-client.ts`:
+And on `SrsRepository` interface:
 ```ts
-export function availableMigrations(repo: SrsRepository): MigrationSummary[]
-export function applyMigration(repo: SrsRepository, id: string): MigrationResult
+// biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in availableMigrations()
+available_migrations(): any;
+// biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in applyMigration()
+apply_migration(id: string): any;
 ```
 
-Both follow the existing WASM wrapper pattern (biome-ignore + cast).
+And wrapper functions:
+```ts
+export function availableMigrations(repo: SrsRepository): MigrationSummary[]
+export function applyMigration(repo: SrsRepository, id: string): MigrationApplyResult
+```
 
 ---
 
 ## Scope
 
-**In scope:**
-
-- Add `MigrationStatus`, `MigrationSummary`, `MigrationResult` type exports to `src/lib/srs-client.ts`
-- Add `availableMigrations(repo)` and `applyMigration(repo, id)` wrapper functions to `src/lib/srs-client.ts`
-- Add `SrsRepository` interface entries for `available_migrations()` and `apply_migration(id)` in `srs-client.ts`
-- Create `src/lib/components/MigrationsPanel.svelte` — pure UI component; receives `repo` as prop
-- Wire `MigrationsPanel` into `GovernanceShell.svelte` inspector `{#snippet}` as a new `<InspectorSection title="Migrations">`
-- After a successful `apply_migration`, call `persistWorkingCopy()` in `GovernanceShell` and refresh the migration list
-- Show clear status labels: "Needed", "Already applied", "Not applicable"
-- Show the result payload (stringified JSON) after a successful apply
-- Unit tests for `availableMigrations` / `applyMigration` wrappers in `src/lib/srs-client.test.ts` (if it exists, else a new test file)
+- `src/lib/srs-client.ts` — add `MigrationStatus`, `MigrationSummary`, `MigrationApplyResult` types, extend `SrsRepository` interface, add `availableMigrations()` and `applyMigration()` wrapper functions.
+- `src/lib/components/Migrations.svelte` — new component rendering migration list + Apply buttons + result panel.
+- `src/lib/governance/GovernanceShell.svelte` — add `activeView` state, new "Repository" NavGroup with a "Migrations" NavItem, conditional render of `<Migrations>` when `activeView === "migrations"`, and `onMigrationApplied` refresh callback.
+- `docs/adr/013-repository-tool-sections.md` — new ADR.
+- `tests/srs-client.test.ts` — new unit tests for `availableMigrations()` and `applyMigration()`.
+- `tests/Migrations.test.ts` — new component-level tests for `Migrations.svelte` (6 tests covering loading, status badges, disabled states, apply success, apply error).
+- `tests/GovernanceShell.test.ts` — smoke test for Migrations nav item visibility.
 
 **Out of scope:**
 
-- Bulk "apply all" button (deferred — scope creep for a single feature)
-- Offline/retry logic for WASM errors beyond displaying the error message
-- Animation or progress spinner beyond a simple "Applying…" text state
-- Auto-applying migrations on load (security/UX policy decision, not in this plan)
-- Server-side migration tracking
+- Mutations to the `apply_migration` WASM binding or srs-rust (already shipped).
+- A dedicated e2e spec for migrations (no live WASM fixture with a migration-needed repo; the flow is covered by the unit test and component-level test).
+- Styling beyond the existing CSS variable system and `.nav*`/`.diag*` class patterns.
+- Exposing migrations in the Guides editor (governance-specific operation).
 
 ---
 
 ## Phases
 
-### Phase 1: WASM wrapper + types
+### Phase 1: WASM facade in srs-client.ts
 
-**Goal:** `srs-client.ts` exposes typed `availableMigrations()` and `applyMigration()` wrappers with tests passing.
+**Goal:** Typed wrappers for `availableMigrations()` and `applyMigration()` added to `srs-client.ts`; unit tests pass.
 
 **Agent:** Web App Worker
 
 #### Tasks
 
-- [ ] Add `available_migrations(): any` and `apply_migration(id: string): any` to the `SrsRepository` interface in `src/lib/srs-client.ts`
-- [ ] Add `MigrationStatus`, `MigrationSummary`, `MigrationResult` interfaces to `src/lib/srs-client.ts`
-- [ ] Implement `availableMigrations(repo: SrsRepository): MigrationSummary[]` — calls `repo.available_migrations()`, casts, returns array
-- [ ] Implement `applyMigration(repo: SrsRepository, id: string): MigrationResult` — calls `repo.apply_migration(id)`, casts, returns result
-- [ ] Add unit tests (mock the `repo` object):
-  - `availableMigrations` returns typed array from WASM output
-  - `applyMigration` passes `id` and returns typed result
+- [x] In `src/lib/srs-client.ts`, add to the `SrsRepository` interface:
+  ```ts
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in availableMigrations()
+  available_migrations(): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in applyMigration()
+  apply_migration(id: string): any;
+  ```
+  Place these after the existing `scaffold_new_repository` line.
+
+- [x] Add the three new exported interfaces (`MigrationStatus`, `MigrationSummary`, `MigrationApplyResult`) in `srs-client.ts` after the `TransitionRecordResult` interface.
+
+- [x] Add two exported wrapper functions near the bottom of `srs-client.ts`:
+  ```ts
+  export function availableMigrations(repo: SrsRepository): MigrationSummary[] {
+    return repo.available_migrations() as MigrationSummary[];
+  }
+
+  export function applyMigration(repo: SrsRepository, id: string): MigrationApplyResult {
+    return repo.apply_migration(id) as MigrationApplyResult;
+  }
+  ```
+
+- [x] In `tests/srs-client.test.ts`:
+  - Import `availableMigrations`, `applyMigration`, `MigrationSummary`, `MigrationApplyResult` from `srs-client.js`.
+  - Add `available_migrations` and `apply_migration` stubs to the `mockRepo` base.
+  - Add test `availableMigrations_calls_wasm_and_returns_typed_array`:
+    - Mock `available_migrations` to return a sample array of two `MigrationSummary` objects.
+    - Call `availableMigrations(repo)`.
+    - Assert the result is the same array.
+  - Add test `applyMigration_calls_wasm_with_id_and_returns_result`:
+    - Mock `apply_migration` to return `{ id: "migrate-identity", payload: { message: "done" } }`.
+    - Call `applyMigration(repo, "migrate-identity")`.
+    - Assert result equals the mock value.
 
 #### Acceptance Criteria
 
-- [ ] `npm run typecheck` passes with no new errors
-- [ ] `npm run lint` passes
-- [ ] Unit tests pass (`npm test`)
+- [x] `SrsRepository` interface has `available_migrations()` and `apply_migration(id)` stubs.
+- [x] `availableMigrations()` and `applyMigration()` are exported from `srs-client.ts`.
+- [x] Both new unit tests pass.
+- [x] No existing tests broken.
 
 #### Milestone gate
 
-1. All acceptance criteria above met.
-2. Run `npm run typecheck && npm run lint && npm test`.
-3. Mark completed task checkboxes `[x]`.
-4. Commit: `feat(srs-client): add availableMigrations/applyMigration wrappers (#221)`.
+1. `npm run typecheck` — zero errors.
+2. `npm run lint` — zero errors.
+3. `npm run build` — succeeds.
+4. `npm test` — all tests pass including the two new ones.
+5. Mark checkboxes `[x]`.
+6. Commit: `feat(migrations): WASM facade in srs-client (#221)`.
 
 ---
 
-### Phase 2: MigrationsPanel component
+### Phase 2: Migrations.svelte component
 
-**Goal:** `MigrationsPanel.svelte` exists, lists migrations with status, and has a working Apply button.
+**Goal:** `Migrations.svelte` renders migration list, status badges, Apply buttons, and result feedback.
 
 **Agent:** Web App Worker
 
 #### Tasks
 
-- [ ] Create `src/lib/components/MigrationsPanel.svelte`:
-  - Props: `repo: SrsRepository`, `onApplied: () => void` (callback after successful apply so GovernanceShell can re-render)
-  - On mount: call `availableMigrations(repo)` in a `try/catch`; on success store result in local `$state migrations`; on error store error message in `$state initError` and display it in the panel (do not crash the shell)
-  - Render each migration as a row: title, description, status badge ("Needed" / "Applied" / "N/A")
-  - For "Needed" migrations: show an "Apply" button; the button must be `disabled` while `applying` is set (i.e., while another migration is in progress). **Do not** change the button label to "Applying…" — `apply_migration` is synchronous; Svelte 5 batches all synchronous `$state` mutations in one tick, so the intermediate label would never render.
-  - On Apply click: set local `$state applying = id`, call `applyMigration(repo, id)` in a `try/catch`, on success show result payload in a `<pre>` block (JSON.stringify(result.payload, null, 2)), call `onApplied()`, refresh migration list (re-call `availableMigrations(repo)` in try/catch and update state), clear `applying`
-  - On error from `apply_migration`: show error message in an `<p class="migration-panel__error">` element; clear `applying`
-  - When the array from `availableMigrations()` is empty: render "No migrations registered."
-  - When the list is non-empty but **zero** migrations have `status.needed === true`: render "Repository is up to date." message alongside the full list (the list always renders; the message appears as a summary below it)
-- [ ] Style the panel using existing `.inspector__*` CSS classes. Only add new CSS if an existing class cannot accommodate the element (e.g., the result `<pre>` block). New CSS goes in a `<style>` block scoped to the component, not a global stylesheet.
-- [ ] Add `data-testid` attributes: `migration-list`, `migration-item-{id}`, `migration-status-{id}`, `migration-apply-btn-{id}`, `migration-result-{id}`, `migration-error`
+- [x] Create `src/lib/components/Migrations.svelte`:
+
+  **Props:**
+  ```ts
+  let {
+    repo,
+    onMigrationApplied,
+  }: {
+    repo: SrsRepository;
+    onMigrationApplied: () => void;
+  } = $props();
+  ```
+
+  **State:**
+  - `migrations = $state<MigrationSummary[]>([])` — loaded on mount.
+  - `loading = $state(true)` — shows "Loading migrations…" during WASM call.
+  - `loadError = $state<string | null>(null)` — shown if `availableMigrations` throws.
+  - `applying = $state<string | null>(null)` — the id of the migration currently being applied.
+  - `applyResults = $state<Map<string, { ok: true; result: MigrationApplyResult } | { ok: false; error: string }>>( new Map())`.
+
+  **onMount:** wrap `availableMigrations(repo)` in try/catch. On success, store result in `migrations`. On error, set `loadError` to `e instanceof Error ? e.message : String(e)`. Always set `loading = false` in a `finally` block.
+
+  **handleApply(id: string):** set `applying = id`, call `applyMigration(repo, id)`, store success result in `applyResults`, call `onMigrationApplied()`, reload migrations via `availableMigrations(repo)`. On error, store error in `applyResults`. Clear `applying`.
+
+  **Render structure:**
+  ```html
+  <div class="migrations">
+    <h2 class="migrations__heading">Migrations</h2>
+    {#if loading}
+      <p class="migrations__loading">Loading migrations…</p>
+    {:else if loadError}
+      <p class="migrations__error" role="alert">{loadError}</p>
+    {:else if migrations.length === 0}
+      <p class="migrations__empty">No migrations available.</p>
+    {:else}
+      {#each migrations as m (m.id)}
+        <div class="migration-row">
+          <div class="migration-row__info">
+            <span class="migration-row__title">{m.title}</span>
+            <span class="migration-row__desc">{m.description}</span>
+          </div>
+          <div class="migration-row__status">
+            {#if m.status.needed}
+              <span class="migration-badge migration-badge--needed">Needed</span>
+            {:else if m.status.alreadyApplied}
+              <span class="migration-badge migration-badge--applied">Applied</span>
+            {:else}
+              <span class="migration-badge migration-badge--na">N/A</span>
+            {/if}
+          </div>
+          <div class="migration-row__actions">
+            <button
+              class="migration-row__apply"
+              disabled={!m.status.needed || applying !== null}
+              onclick={() => handleApply(m.id)}
+            >{applying === m.id ? 'Applying…' : 'Apply'}</button>
+          </div>
+          {#if applyResults.has(m.id)}
+            {@const r = applyResults.get(m.id)!}
+            {#if r.ok}
+              <div class="migration-result migration-result--ok" role="status">
+                Applied. <pre class="migration-result__payload">{JSON.stringify(r.result.payload, null, 2)}</pre>
+              </div>
+            {:else}
+              <p class="migration-result migration-result--error" role="alert">Error: {r.error}</p>
+            {/if}
+          {/if}
+        </div>
+      {/each}
+    {/if}
+  </div>
+  ```
+
+  **Styles:** scoped `<style>` block using CSS custom properties (`--color-border`, `--color-muted`, `--color-surface-1`). No hardcoded colours. Badge variants: `--needed` uses `--color-warn` or falls back to `#c8a000`; `--applied` uses `--color-success` or `#2a7a2a`; `--na` uses `--color-muted`.
+
+- [x] Export `Migrations` from `src/lib/components/index.ts` barrel. Add the following line under the `# Status / actions / validation` section:
+  ```ts
+  export { default as Migrations } from "./Migrations.svelte";
+  ```
 
 #### Acceptance Criteria
 
-- [ ] Panel renders a list of migrations from `availableMigrations(repo)` output (on mount; one load per lifecycle)
-- [ ] Error from `availableMigrations()` on mount is displayed in the panel; shell does not crash
-- [ ] "Apply" button only appears for migrations with `status.needed === true`
-- [ ] Apply button is `disabled` while any migration is being applied (`applying !== null`)
-- [ ] Clicking Apply calls `applyMigration(repo, id)` and shows the result payload in a `<pre>` block
-- [ ] After a successful apply, `availableMigrations(repo)` is re-called and the list updates
-- [ ] `onApplied()` is called after a successful apply
-- [ ] Error from `apply_migration` is displayed (not swallowed); `applying` is cleared on error
-- [ ] When list is non-empty but zero migrations are `needed`, "Repository is up to date." message appears
-- [ ] When list is empty, "No migrations registered." appears
-- [ ] `npm run typecheck` passes
-- [ ] Component test: mount `MigrationsPanel` with a mocked `repo` (vitest + `@testing-library/svelte`), assert migration list renders, assert Apply button calls `applyMigration`, assert `onApplied` fires on success, assert `initError` shown when `availableMigrations` throws
+- [x] Component renders "Loading migrations…" on mount before WASM call returns.
+- [x] Component renders migration list with correct status badges once loaded.
+- [x] Apply button is disabled when `status.alreadyApplied` or `status.notApplicable`.
+- [x] Apply button is disabled for all rows while any migration is applying.
+- [x] On successful apply, result payload is shown and migration list is refreshed.
+- [x] On error apply, error message is shown inline.
+- [x] `npm run typecheck` passes.
+
+- [x] Create `tests/Migrations.test.ts` with the following tests (using the `@testing-library/svelte` + `vitest` pattern from `tests/GovernanceShell.test.ts`):
+  - `renders loading state before WASM call resolves` — mock `available_migrations` to never return; assert "Loading migrations…" is in the document.
+  - `renders migration list with status badges after load` — mock `available_migrations` returning `[{ id: "m1", title: "Migrate Identity", description: "Desc", status: { needed: true, alreadyApplied: false, notApplicable: false } }]`; assert `screen.getByText("Migrate Identity")` and `screen.getByText("Needed")` are present.
+  - `Apply button disabled when status is alreadyApplied` — mock a migration with `{ needed: false, alreadyApplied: true, notApplicable: false }`; assert the Apply button has `disabled` attribute.
+  - `Apply button disabled when status is notApplicable` — mock a migration with `{ needed: false, alreadyApplied: false, notApplicable: true }`; assert the Apply button has `disabled` attribute.
+  - `shows success result and calls onMigrationApplied after apply` — mock `available_migrations` (returns one needed migration) and `apply_migration` (returns `{ id: "m1", payload: { message: "ok" } }`); click Apply; assert result payload visible and `onMigrationApplied` was called.
+  - `shows error message when apply throws` — mock `apply_migration` to throw `new Error("apply failed")`; click Apply; assert `screen.getByRole("alert")` contains "apply failed".
 
 #### Milestone gate
 
-1. All acceptance criteria above met.
-2. Run `npm run typecheck && npm run lint && npm run build`.
-3. Mark completed task checkboxes `[x]`.
-4. Commit: `feat: add MigrationsPanel component (#221)`.
+1. `npm run typecheck` — zero errors.
+2. `npm run lint` — zero errors.
+3. `npm run build` — succeeds.
+4. `npm test` — all tests pass including the six new Migrations.test.ts tests.
+5. Mark checkboxes `[x]`.
+6. Commit: `feat(migrations): Migrations.svelte component + tests (#221)`.
 
 ---
 
 ### Phase 3: Wire into GovernanceShell
 
-**Goal:** The Migrations inspector section appears in the GovernanceShell for all loaded repositories, and applying a migration triggers a working-copy persist.
+**Goal:** "Repository → Migrations" nav item appears in GovernanceShell and clicking it renders `<Migrations>` in the main area.
 
 **Agent:** Web App Worker
 
 #### Tasks
 
-- [ ] In `GovernanceShell.svelte`:
-  - Import `MigrationsPanel` from `$lib/components/MigrationsPanel.svelte`
-  - Inside `{#snippet inspector()}`, after `<InspectorSection title="Repository" …>`, add:
-    ```svelte
-    <InspectorSection title="Migrations">
-      <MigrationsPanel
-        {repo}
-        onApplied={() => { persistWorkingCopy(); }}
+- [x] In `src/lib/governance/GovernanceShell.svelte`, add state:
+  ```ts
+  type ActiveView = "governance" | "migrations";
+  let activeView = $state<ActiveView>("governance");
+  ```
+
+- [x] Import `Migrations` from `$lib/components/Migrations.svelte`.
+
+- [x] In the nav `{#snippet nav()}` block, add a second `<NavGroup>` below the closing `</NavGroup>` of "Governance":
+  ```svelte
+  <NavGroup label="Repository">
+    {#snippet children()}
+      <div
+        onclick={() => {
+          activeView = "migrations";
+          activeContainerId = null;
+          selectedId = null;
+          formMode = null;
+          editingRecord = null;
+          formError = null;
+          showLinkPicker = false;
+        }}
+      >
+        <NavItem
+          label="Migrations"
+          id="migrations"
+          active={activeView === "migrations"}
+          href="#"
+        />
+      </div>
+    {/snippet}
+  </NavGroup>
+  ```
+
+- [x] Ensure clicking any container in the Governance NavGroup also sets `activeView = "governance"`. Locate the existing `onclick` handler on the container `<div>` and add `activeView = "governance";` alongside `activeContainerId = container.containerId`.
+
+- [x] In the `{#snippet main()}` block, wrap the existing main content in `{#if activeView === "governance"}` and add `{:else if activeView === "migrations"}` rendering `<Migrations>`:
+  ```svelte
+  {#if activeView === "governance"}
+    <!-- ... existing main content ... -->
+  {:else if activeView === "migrations"}
+    <Main>
+      <Topbar>
+        {#snippet crumb()}
+          <Breadcrumb items={[{ label: repoName }, { label: "Migrations" }]} />
+        {/snippet}
+      </Topbar>
+      <Migrations
+        repo={repo}
+        onMigrationApplied={() => {
+          loadContainerNav();
+          refreshValidation();
+        }}
       />
-    </InspectorSection>
+    </Main>
+  {/if}
+  ```
+
+- [x] In `tests/GovernanceShell.test.ts`:
+  - Add `available_migrations: () => []` and `apply_migration: () => { throw new Error("not mocked"); }` stubs to the `mockRepo` base object (lines 7–42 of the existing file).
+  - Add a new `describe("GovernanceShell — Repository nav group")` block with test:
+    ```ts
+    it("renders Migrations NavItem in the Repository nav group", async () => {
+      const repo = makeBaseRepo();
+      render(GovernanceShell, {
+        props: { repo, repoName: "test.srsj", documentProvider: "local", onExport: vi.fn(), onOpenAnother: vi.fn() },
+      });
+      const item = await screen.findByRole("link", { name: /Migrations/i });
+      expect(item).toBeDefined();
+    });
     ```
-  - The `repo` prop is the reactive `$state` variable already in scope; `persistWorkingCopy()` is the existing function that calls `exportSrsj(repo)` and saves the working copy
-- [ ] Verify that `onSave` (the optional prop for GitHub/Git persistence) does NOT need to be called here: migration is an in-place mutation; `persistWorkingCopy()` saves to browser cache; the user can trigger a full Git save separately via the existing Save button. This is intentional — migrations are low-level and should not force a remote push.
+  - Use the same `makeBaseRepo()` helper established at line 44 — no new mock infrastructure needed.
 
 #### Acceptance Criteria
 
-- [ ] "Migrations" InspectorSection appears in the right rail for a loaded repository
-- [ ] Migration list loads when the inspector is visible
-- [ ] Applying a migration calls `persistWorkingCopy()` (browser cache updated)
-- [ ] No regression in existing inspector sections (Validation, Repository)
-- [ ] `npm run typecheck && npm run lint && npm run build && npm test` all pass
+- [x] A "Repository" NavGroup appears below "Governance" in the nav with a "Migrations" item.
+- [x] Clicking "Migrations" shows the migration panel and hides the record view.
+- [x] Clicking a container item switches back to the governance record view.
+- [x] The breadcrumb shows "Migrations" when the migration panel is active.
+- [x] `onMigrationApplied` triggers `loadContainerNav()` and `refreshValidation()`.
+- [x] No regression in the existing governance record view.
+- [x] `npm run typecheck` passes.
+- [x] `npm test` passes.
 
 #### Milestone gate
 
-1. All acceptance criteria above met.
-2. Run full gate: `npm run typecheck && npm run lint && npm run build && npm test`.
-3. Mark completed task checkboxes `[x]`.
-4. Commit: `feat: wire MigrationsPanel into GovernanceShell inspector (#221)`.
+1. `npm run typecheck` — zero errors.
+2. `npm run lint` — zero errors.
+3. `npm run build` — succeeds.
+4. `npm test` — all tests pass including the new GovernanceShell test.
+5. Mark checkboxes `[x]`.
+6. Commit: `feat(migrations): wire Migrations panel into GovernanceShell (#221)`.
 
 ---
 
@@ -211,25 +397,25 @@ Both follow the existing WASM wrapper pattern (biome-ignore + cast).
 - [ ] `npm run typecheck` passes
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
-- [ ] `npm test` passes
-- [ ] WASM loads; `availableMigrations(repo)` returns an array (possibly empty) without throwing
-- [ ] "Migrations" section visible in GovernanceShell inspector rail
-- [ ] Apply button fires `applyMigration` and shows result payload
-- [ ] `persistWorkingCopy()` called after successful apply
-- [ ] No regression in Validation and Repository inspector sections
+- [ ] `npm test` passes — all unit + component tests green
+- [ ] `availableMigrations()` and `applyMigration()` are exported from `srs-client.ts`
+- [ ] Migrations panel visible in governance nav under "Repository"
+- [ ] Apply button disabled for `alreadyApplied` / `notApplicable` migrations
+- [ ] On apply success, result payload is shown and list refreshes
+- [ ] On apply error, inline error shown
+- [ ] No regression in existing governance view, container nav, or record forms
 
 ## Coordination Rules
 
 - Web App Worker keeps to `srs-web/**` only.
-- No SRS semantics in TypeScript (ADR-001). `availableMigrations` / `applyMigration` are pure WASM pass-throughs.
-- Lead Integrator reviews phase output before proceeding to next phase.
-- `npm run typecheck` must pass after every change.
+- No SRS semantics in TypeScript (ADR-001). Wrappers in srs-client.ts are thin facades — no interpretation of migration IDs or payloads.
+- Phases are strictly ordered: Phase 1 complete before Phase 2 begins; Phase 2 before Phase 3.
+- At each milestone gate: verify acceptance criteria, confirm tests pass, commit.
 
 ## Assumptions
 
-- `apply_migration` mutates the `SrsRepository` WASM object in-place; `export_srsj()` on the same handle reflects the migrated state.
-- The WASM binding throws a JS `Error` on unknown migration ID; no special error type check needed — display `e.message`.
-- No migration currently ships that requires user interaction beyond a single click (i.e., no multi-step wizard needed in scope).
-- `available_migrations()` returns a bare array (not an envelope), consistent with the WASM docstring.
-- WASM build must be ≥ the release that resolved `srs-rust#461` (confirmed present in the latest `srs-bindings-web.tar.gz` as of plan writing). The Phase 1 wrapper test setup asserts `typeof repo.available_migrations === 'function'` to catch stale builds early.
-- `persistWorkingCopy()` (browser-cache local save) is the correct post-migration save trigger — not `onSave` (remote Git push). This matches the established pattern for all other mutations in `GovernanceShell`: local cache is updated immediately; remote push is always user-initiated via the Save button.
+- `available_migrations()` on any loaded repo is safe to call (even repos with no migrations applicable).
+- The WASM `apply_migration` mutates the in-memory `SrsRepository` object in place; a full `loadRepo()` reload is not needed — calling `loadContainerNav()` and `loadAndValidate()` after apply is sufficient to refresh shell state.
+- The `refreshValidation()` function exists in GovernanceShell at line 450 (`function refreshValidation(): void`), called in `onMount` at line 489. It calls `repo.validate()` and updates `instanceCount` and `diagnostics` state — safe to call after an in-place WASM mutation. Call both `loadContainerNav()` and `refreshValidation()` in the `onMigrationApplied` callback.
+- Badge colours respect the existing `--color-*` CSS custom-property system.
+- The `NavItem` component accepts an `id` prop that is used as a CSS key / icon slot; "migrations" will render without an icon (no existing icon mapping) — this is acceptable for Release 1.

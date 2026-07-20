@@ -80,6 +80,10 @@ export interface SrsRepository {
   repository_navigation(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in scaffoldGovernanceDocument()
   scaffold_new_repository(input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in availableMigrations()
+  available_migrations(): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in applyMigration()
+  apply_migration(id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in orderByPrecedes()
   order_by_precedes(input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listAttachments()
@@ -280,6 +284,27 @@ export interface TransitionRecordResult {
   warnings: string[];
   successor?: SrsRecord;
   relation?: SrsRelation;
+}
+
+/** Status of a single migration for the current repository. Exactly one field is true. */
+export interface MigrationStatus {
+  needed: boolean;
+  alreadyApplied: boolean;
+  notApplicable: boolean;
+}
+
+/** Summary of a migration from `available_migrations()`. */
+export interface MigrationSummary {
+  id: string;
+  title: string;
+  description: string;
+  status: MigrationStatus;
+}
+
+/** Result of `apply_migration(id)`. */
+export interface MigrationApplyResult {
+  id: string;
+  payload: unknown;
 }
 
 // ---------------------------------------------------------------------------
@@ -1330,6 +1355,37 @@ export function createGovernanceDocument(
   const trimmed = title.trim();
   if (trimmed === "") throw new Error("A document name is required");
   return scaffoldGovernanceDocument(loadRepo(GOVERNANCE_SEED_SRSJ), trimmed, namespace);
+}
+
+/**
+ * List all known migrations with their applicability status for this repository.
+ * Normalises the WASM payload: the engine returns `status` as a string enum
+ * ("needed" | "alreadyApplied" | "notApplicable") but TypeScript callers
+ * consume it as `MigrationStatus { needed, alreadyApplied, notApplicable }`.
+ */
+export function availableMigrations(repo: SrsRepository): MigrationSummary[] {
+  // biome-ignore lint/suspicious/noExplicitAny: WASM shape differs from TS type; normalised below
+  const raw: any[] = repo.available_migrations() as any[];
+  return raw.map((m) => {
+    const statusStr: string = typeof m.status === "string" ? m.status : "";
+    const status: MigrationStatus =
+      typeof m.status === "object" && m.status !== null
+        ? m.status
+        : {
+            needed: statusStr === "needed",
+            alreadyApplied: statusStr === "alreadyApplied",
+            notApplicable: statusStr === "notApplicable",
+          };
+    return { id: m.id, title: m.title, description: m.description, status };
+  });
+}
+
+/**
+ * Apply a migration by ID and return its result payload.
+ * Throws if the ID is unknown or the migration fails.
+ */
+export function applyMigration(repo: SrsRepository, id: string): MigrationApplyResult {
+  return repo.apply_migration(id) as MigrationApplyResult;
 }
 
 // ---------------------------------------------------------------------------

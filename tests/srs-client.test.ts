@@ -13,6 +13,8 @@ import { describe, expect, it, vi } from "vitest";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 import {
   addContainerMember,
+  applyMigration,
+  availableMigrations,
   addAttachment,
   containersForInstance,
   createGovernanceDocument,
@@ -40,6 +42,7 @@ import {
   type AllowedLifecycleTransitionsResult,
   type ContainerListFilter,
   type DocumentViewListFilter,
+  type MigrationSummary,
   type GetRecordAttachmentsInput,
   type LinkAttachmentInput,
 } from "../src/lib/srs-client.js";
@@ -83,6 +86,8 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     scaffold_new_repository: () => { throw new Error("not mocked"); },
     get_allowed_lifecycle_transitions: () => { throw new Error("not mocked"); },
     get_field_value_by_name: () => { throw new Error("not mocked"); },
+    available_migrations: () => { throw new Error("not mocked"); },
+    apply_migration: () => { throw new Error("not mocked"); },
     export_archive: () => { throw new Error("not mocked"); },
     order_by_precedes: () => { throw new Error("not mocked"); },
     list_attachments: () => { throw new Error("not mocked"); },
@@ -1299,6 +1304,52 @@ describe("transitionRecord", () => {
     expect(() => transitionRecord(repo, "inst-pred", { to: "superseded" })).toThrow(
       /predates RFC-022/
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// availableMigrations
+// ---------------------------------------------------------------------------
+
+describe("availableMigrations", () => {
+  it("calls available_migrations and returns normalised summaries (object status)", () => {
+    const migrations: MigrationSummary[] = [
+      { id: "migrate-identity", title: "Migrate Identity", description: "Migrate Tier-0 identity to purpose record", status: { needed: true, alreadyApplied: false, notApplicable: false } },
+      { id: "repo-upgrade", title: "Upgrade Repository Paths", description: "Rename files to canonical slug-id8 form", status: { needed: false, alreadyApplied: true, notApplicable: false } },
+    ];
+    const spy = vi.fn().mockReturnValue(migrations);
+    const repo = mockRepo({ available_migrations: spy });
+    const result = availableMigrations(repo);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(migrations);
+    expect(result).toHaveLength(2);
+  });
+
+  it("normalises string-enum status from WASM into boolean-object form", () => {
+    const raw = [
+      { id: "migrate-identity", title: "Migrate Identity", description: "desc", status: "needed" },
+      { id: "repo-upgrade", title: "Upgrade Paths", description: "desc", status: "alreadyApplied" },
+    ];
+    const repo = mockRepo({ available_migrations: vi.fn().mockReturnValue(raw) });
+    const result = availableMigrations(repo);
+    expect(result[0].status).toEqual({ needed: true, alreadyApplied: false, notApplicable: false });
+    expect(result[1].status).toEqual({ needed: false, alreadyApplied: true, notApplicable: false });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// applyMigration
+// ---------------------------------------------------------------------------
+
+describe("applyMigration", () => {
+  it("calls apply_migration with the given id and returns the result", () => {
+    const applyResult = { id: "migrate-identity", payload: { message: "done" } };
+    const spy = vi.fn().mockReturnValue(applyResult);
+    const repo = mockRepo({ apply_migration: spy });
+    const result = applyMigration(repo, "migrate-identity");
+    expect(spy).toHaveBeenCalledWith("migrate-identity");
+    expect(result).toBe(applyResult);
+    expect(result.id).toBe("migrate-identity");
   });
 });
 
