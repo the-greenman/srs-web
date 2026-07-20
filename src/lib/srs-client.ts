@@ -32,6 +32,7 @@ export interface SrsRepository {
   update_record(instance_id: string, input_json: string): any;
   delete_record(instance_id: string): void;
   export_srsj(): string;
+  export_archive(): Uint8Array;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; relations are untyped at this boundary
   list_relations(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`
@@ -83,10 +84,22 @@ export interface SrsRepository {
   available_migrations(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in applyMigration()
   apply_migration(id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in orderByPrecedes()
+  order_by_precedes(input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listAttachments()
+  list_attachments(filter_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in addAttachment()
+  add_attachment(input_json: string, file_bytes: Uint8Array): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in linkAttachment()
+  link_attachment(input_json: string): any;
+  get_attachment_bytes(document_id: string): Uint8Array;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getRecordAttachments()
+  get_record_attachments(input_json: string): any;
 }
 
 export interface SrsRepositoryConstructor {
   load(srsj: string): SrsRepository;
+  load_archive(bytes: Uint8Array): SrsRepository;
 }
 
 /** Subset of the validation report returned by `SrsRepository.validate()`. */
@@ -94,6 +107,7 @@ export interface RepositoryValidationReport {
   instanceCount: number;
   errorCount: number;
   diagnostics: Diagnostic[];
+  summary: { checked: number; errors: number; warnings: number };
 }
 
 export interface Diagnostic {
@@ -294,6 +308,71 @@ export interface MigrationApplyResult {
 }
 
 // ---------------------------------------------------------------------------
+// Attachment types (srs-rust#290, srs-rust#291, srs-web#99)
+// ---------------------------------------------------------------------------
+
+export interface AttachmentEntry {
+  path: string;
+  documentId?: string;
+  title?: string;
+  contentChecksum?: string;
+  sidecarChecksum?: string;
+  /** Absent until srs-rust#645 lands (srs-web#234 deferred). */
+  sizeBytes?: number;
+}
+
+export interface AttachmentListResult {
+  sourceDocumentsPath: string;
+  entries: AttachmentEntry[];
+}
+
+export interface AddAttachmentInput {
+  fileName: string;
+  subdir?: string;
+  title?: string;
+  contentType?: string;
+}
+
+export interface AddAttachmentResult {
+  documentId: string;
+  contentPath: string;
+  sidecarPath: string;
+  sourceDocumentsPath: string;
+  contentChecksum: string;
+  sidecarChecksum: string;
+}
+
+export interface LinkAttachmentInput {
+  instanceId: string;
+  documentId: string;
+}
+
+export interface LinkAttachmentResult {
+  instanceId: string;
+  documentId: string;
+  sourceRefsCount: number;
+}
+
+export interface ResolvedAttachment {
+  documentId: string;
+  contentPath?: string;
+  sidecarPath?: string;
+  contentChecksum?: string;
+  sidecarChecksum?: string;
+  title?: string;
+}
+
+export interface GetRecordAttachmentsInput {
+  instanceId: string;
+}
+
+export interface GetRecordAttachmentsResult {
+  instanceId: string;
+  sourceDocumentsPath: string;
+  attachments: ResolvedAttachment[];
+}
+
+// ---------------------------------------------------------------------------
 // WASM loader
 // ---------------------------------------------------------------------------
 
@@ -334,6 +413,21 @@ function requireWasm(): SrsRepositoryConstructor {
  */
 export function loadRepo(srsj: string): SrsRepository {
   return requireWasm().load(srsj);
+}
+
+/**
+ * Load a repository from a `.srs` binary archive (ZIP bytes).
+ * Throws if the WASM module has not been initialised or if the bytes are invalid.
+ */
+export function loadRepoFromArchive(bytes: Uint8Array): SrsRepository {
+  return requireWasm().load_archive(bytes);
+}
+
+/**
+ * Export a repository as a `.srs` binary archive (ZIP bytes).
+ */
+export function exportArchive(repo: SrsRepository): Uint8Array {
+  return repo.export_archive();
 }
 
 // ---------------------------------------------------------------------------
@@ -522,6 +616,13 @@ export function createRelation(repo: SrsRepository, input: CreateRelationInput):
  */
 export function deleteRelation(repo: SrsRepository, relationId: string): void {
   repo.delete_relation(relationId);
+}
+
+export function orderByPrecedes(repo: SrsRepository, instanceIds: string[]): string[] {
+  // order_by_precedes throws a JS error on failure (no error-string return path per .d.ts)
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary
+  const raw: any = repo.order_by_precedes(JSON.stringify({ instanceIds }));
+  return raw.orderedIds as string[];
 }
 
 /**
@@ -1037,7 +1138,7 @@ function normalizeColumnSpec(c: any): ColumnSpec {
  *
  * Note: `members` arrive in stored (UUID-alphabetical) order, not precedes order.
  * The root record (tier 0) is `members[0]`; section members have tier > 0.
- * To get ordered sections: `view.members.filter(m => m.tier > 0).map(m => m.record)`, then apply `orderByPrecedes()`.
+ * To get ordered sections: `view.members.filter(m => m.tier > 0).map(m => m.record)`, then apply `orderByPrecedes(repo, ids)`.
  */
 export function resolveContainerView(
   repo: SrsRepository,
@@ -1285,4 +1386,67 @@ export function availableMigrations(repo: SrsRepository): MigrationSummary[] {
  */
 export function applyMigration(repo: SrsRepository, id: string): MigrationApplyResult {
   return repo.apply_migration(id) as MigrationApplyResult;
+}
+
+// ---------------------------------------------------------------------------
+// Attachment wrappers (srs-rust#290, srs-rust#291, srs-web#99)
+// ---------------------------------------------------------------------------
+
+/**
+ * List all attachments in the repository, optionally filtered.
+ * Returns the source-documents path and an entry per attachment file.
+ * ADR-001: pure WASM pass-through; all path resolution stays in the Rust core.
+ */
+export function listAttachments(
+  repo: SrsRepository,
+  filter: Record<string, unknown> = {}
+): AttachmentListResult {
+  return repo.list_attachments(JSON.stringify(filter)) as AttachmentListResult;
+}
+
+/**
+ * Add a new attachment from raw bytes.
+ * Bytes live only in MemoryStore; persist via `exportArchive()` (`.srs` ZIP).
+ * ADR-001: no filename parsing, MIME inference, or content validation in TypeScript.
+ */
+export function addAttachment(
+  repo: SrsRepository,
+  input: AddAttachmentInput,
+  fileBytes: Uint8Array
+): AddAttachmentResult {
+  return repo.add_attachment(JSON.stringify(input), fileBytes) as AddAttachmentResult;
+}
+
+/**
+ * Link an existing attachment document to a record instance.
+ * ADR-001: referential integrity is enforced by the Rust core.
+ */
+export function linkAttachment(
+  repo: SrsRepository,
+  input: LinkAttachmentInput
+): LinkAttachmentResult {
+  return repo.link_attachment(JSON.stringify(input)) as LinkAttachmentResult;
+}
+
+/**
+ * Download the raw bytes for an attachment by document ID.
+ * Returns a `Uint8Array` suitable for constructing a `Blob` for browser download.
+ */
+export function getAttachmentBytes(repo: SrsRepository, documentId: string): Uint8Array {
+  return repo.get_attachment_bytes(documentId);
+}
+
+/**
+ * Resolve all attachments linked to a record instance.
+ * Returns `null` when the instance does not exist in the repository
+ * (mirrors the `Option<GetRecordAttachmentsResult>` return from the Rust service).
+ * ADR-001: pure WASM pass-through.
+ */
+export function getRecordAttachments(
+  repo: SrsRepository,
+  input: GetRecordAttachmentsInput
+): GetRecordAttachmentsResult | null {
+  const raw = repo.get_record_attachments(JSON.stringify(input));
+  if (raw === null || raw === undefined) return null;
+  return raw as GetRecordAttachmentsResult;
 }

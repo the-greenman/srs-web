@@ -189,8 +189,8 @@ test.describe("Gallery fixture — real records render", () => {
     await expect(page.locator('[data-testid="record-reading"]')).not.toBeAttached();
     // Record list is visible again
     await expect(page.locator(".record-list__item").first()).toBeVisible();
-    // Validation inspector section remains visible
-    await expect(page.locator(".inspector__section").first()).toContainText("Validation");
+    // Validation inspector section remains visible (not necessarily first — Attachments is now always-visible before it)
+    await expect(page.locator(".inspector__section").filter({ hasText: "Validation" })).toBeVisible();
   });
 
   // Quarantined (#173): .topbar__repo was replaced by the Breadcrumb component

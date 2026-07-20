@@ -51,7 +51,7 @@
         class="card__field-info"
         aria-expanded={showInstructions}
         aria-controls={instructionsId}
-        aria-label={showInstructions ? 'Hide field instructions' : 'Show field instructions'}
+        aria-label={showInstructions ? `Hide instructions for ${label}` : `Show instructions for ${label}`}
         title={instructions}
         onclick={() => (showInstructions = !showInstructions)}
       ></button>

@@ -9,7 +9,7 @@ import { expect, test } from "@playwright/test";
  * in `status: needed` state. Verifies the Repository → Migrations panel,
  * the apply flow, and that governance nav is unaffected after apply.
  *
- * ADR-013: Migrations surface via "Repository" NavGroup in GovernanceShell.
+ * ADR-014: Migrations surface via "Repository" NavGroup in GovernanceShell.
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

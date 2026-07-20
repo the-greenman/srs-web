@@ -38,11 +38,13 @@ describe("Field help text and instructions toggle", () => {
     expect(btn).not.toBeNull();
     expect(btn?.getAttribute("aria-expanded")).toBe("false");
     expect(btn?.getAttribute("aria-controls")).toBe("f4-instructions");
+    expect(btn?.getAttribute("aria-label")).toBe("Show instructions for Rationale");
     expect(container.querySelector(".field__instructions")).toBeNull();
 
     await fireEvent.click(btn as HTMLButtonElement);
 
     expect(btn?.getAttribute("aria-expanded")).toBe("true");
+    expect(btn?.getAttribute("aria-label")).toBe("Hide instructions for Rationale");
     const revealed = container.querySelector(".field__instructions");
     expect(revealed?.id).toBe("f4-instructions");
     expect(revealed?.textContent).toBe(instructions);

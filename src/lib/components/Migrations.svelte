@@ -3,7 +3,7 @@
   Calls available_migrations() on mount, shows status badges, and provides
   Apply buttons that invoke apply_migration(id). ADR-001: no SRS semantics here —
   all logic delegated to WASM; this component renders and routes calls only.
-  ADR-013: surfaced via the "Repository" NavGroup in GovernanceShell.
+  ADR-014: surfaced via the "Repository" NavGroup in GovernanceShell.
 -->
 <script lang="ts">
   import { onMount } from 'svelte';

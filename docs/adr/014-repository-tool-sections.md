@@ -1,4 +1,4 @@
-# ADR-013: Repository-level tool sections in the governance nav
+# ADR-014: Repository-level tool sections in the governance nav
 
 - **Status:** accepted
 - **Date:** 2026-07-17

@@ -45,16 +45,21 @@ The following client-side logic still encodes SRS semantics in TypeScript and sh
 pushed down into `srs-bindings` over time. None is new work for this ADR; it is recorded
 here so it isn't mistaken for acceptable presentation logic:
 
-- **Relation-chain traversal** — `orderByPrecedes` / `rebuildPrecedesChain` in
-  `GuidesShell.svelte` follow and rebuild `precedes` chains in TS. This is graph
-  ordering that belongs in a `srs-repository` service exposed as an ordered-relations
-  binding.
+- **Relation-chain traversal (ordering) — resolved** in srs-web#178: `orderByPrecedes`
+  removed from `GuidesShell.svelte`; `srs-client.ts` now exports `orderByPrecedes(repo, ids)`
+  delegating to `repo.order_by_precedes(...)` (WASM binding, srs-rust build 166).
+- **Relation-chain traversal (mutation)** — `rebuildPrecedesChain` in `GuidesShell.svelte`
+  orchestrates WASM mutation calls (`list_relations`, `delete_relation`, `create_relation`)
+  to rebuild a linear precedes chain. It encodes domain knowledge about precedes-chain
+  structure (n-1 directed edges per sequence) and is a candidate for a future
+  `rebuild_precedes_chain` WASM binding (tracked as srs-rust#606).
 - **Field-by-name lookup** — resolved in srs-web#179: `field-utils.ts` deleted;
   `getStringField` / `findFieldId` / `getFieldValue` removed; callers now use
   `repo.get_field_value_by_name(instanceId, name)` directly (binding added in
-  srs-rust#536, srs-rust build 162). Note: an equivalent TS-side field-name scan
-  remains in `src/rendering/field-helpers.ts` (display-layer only, not yet tracked as
-  ADR-001 debt — see srs-web#217).
+  srs-rust#536, srs-rust build 162). The equivalent TS-side scan in
+  `src/rendering/field-helpers.ts` (`getFieldValueByName`, `getFieldByName`) is
+  resolved in srs-web#217: both helpers removed; rendering components now call
+  `repo.get_field_value_by_name` via the repo context (ADR-013).
 - **Hardcoded vocabularies** — the lifecycle `STATUS_OPTIONS` list is hardcoded in TS
   instead of derived from the type/lifecycle definition via a binding.
 - **Relation type derivation** — `loadInstalledRelationTypes()` in `GovernanceShell.svelte`
@@ -64,3 +69,20 @@ here so it isn't mistaken for acceptable presentation logic:
   (tracked as srs-rust#411). Once that binding is available, `loadInstalledRelationTypes`
   must be replaced with a direct `listRelationTypes(repo)` call and this entry removed.
   (Added in srs-web#160.)
+
+## Two-tier persistence model (introduced in srs-web#99)
+
+Attachments introduce a new persistence split not present before this feature:
+
+- **`.srsj` (MemoryStore JSON)**: persisted by `persistWorkingCopy()`. Contains all records,
+  relations, containers, and manifest metadata. Does **not** contain attachment bytes — those
+  are not serialisable in the JSON format.
+- **`.srs` (ZIP archive)**: produced by `exportArchive()`. Contains everything in `.srsj` plus
+  the raw attachment bytes in `source_documents/`. This is the only format that preserves
+  attachment content across sessions.
+
+Consequence: after an `addAttachment` call, calling `persistWorkingCopy()` saves an attachment
+stub (the record/sidecar metadata) but the bytes are lost on reload unless the user also
+exports a `.srs` archive. `AttachmentsPanel.svelte` displays a visible note to this effect.
+Future work may expose a browser-side archive save (IndexedDB ZIP) to close this gap — tracked
+as part of srs-web#232 (resolve_document_view_attachments).

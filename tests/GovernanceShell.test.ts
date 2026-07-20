@@ -14,6 +14,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     update_record: () => { throw new Error("not mocked"); },
     delete_record: () => { throw new Error("not mocked"); },
     export_srsj: () => { throw new Error("not mocked"); },
+    export_archive: () => { throw new Error("not mocked"); },
     list_relations: () => { throw new Error("not mocked"); },
     create_relation: () => { throw new Error("not mocked"); },
     delete_relation: () => { throw new Error("not mocked"); },
@@ -39,13 +40,20 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     get_allowed_lifecycle_transitions: () => { throw new Error("not mocked"); },
     available_migrations: () => [],
     apply_migration: () => { throw new Error("not mocked"); },
+    order_by_precedes: () => { throw new Error("not mocked"); },
+    get_field_value_by_name: () => { throw new Error("not mocked"); },
+    list_attachments: () => { throw new Error("not mocked"); },
+    add_attachment: () => { throw new Error("not mocked"); },
+    link_attachment: () => { throw new Error("not mocked"); },
+    get_attachment_bytes: () => { throw new Error("not mocked"); },
+    get_record_attachments: () => { throw new Error("not mocked"); },
   };
   return { ...base, ...overrides };
 }
 
 function makeBaseRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
   return mockRepo({
-    validate: () => ({ instanceCount: 0, errorCount: 0, diagnostics: [] }),
+    validate: () => ({ instanceCount: 0, errorCount: 0, diagnostics: [], summary: { checked: 0, errors: 0, warnings: 0 } }),
     repository_navigation: () => ({
       rootContainerId: "c-root",
       identity: {
@@ -89,9 +97,71 @@ function makeBaseRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
     get_allowed_lifecycle_transitions: () => {
       throw new Error("LifecycleNotDefined");
     },
+    list_attachments: () => ({ sourceDocumentsPath: "source_documents", entries: [] }),
     ...overrides,
   });
 }
+
+describe("GovernanceShell — size warning banner", () => {
+  it("shows the warning banner when validate returns warning diagnostics and no errors", async () => {
+    const repo = makeBaseRepo({
+      validate: () => ({
+        instanceCount: 1,
+        errorCount: 0,
+        diagnostics: [{ severity: "warning", message: "Attachment exceeds recommended size" }],
+        summary: { checked: 1, errors: 0, warnings: 1 },
+      }),
+    });
+    const { container } = render(GovernanceShell, {
+      props: { repo, repoName: "test", documentProvider: "local", onExport: vi.fn(), onOpenAnother: vi.fn() },
+    });
+    // Wait for mount to complete then check the banner by its specific class
+    await screen.findByRole("button", { name: /Open another file/i });
+    const banner = container.querySelector(".size-warning-banner");
+    expect(banner).not.toBeNull();
+    expect(banner!.textContent).toContain("1 size warning");
+  });
+
+  it("suppresses the warning banner when there are errors (errors take priority)", async () => {
+    const repo = makeBaseRepo({
+      validate: () => ({
+        instanceCount: 1,
+        errorCount: 1,
+        diagnostics: [
+          { severity: "error", message: "Validation error" },
+          { severity: "warning", message: "Size warning" },
+        ],
+        summary: { checked: 1, errors: 1, warnings: 1 },
+      }),
+    });
+    const { container } = render(GovernanceShell, {
+      props: { repo, repoName: "test", documentProvider: "local", onExport: vi.fn(), onOpenAnother: vi.fn() },
+    });
+    await screen.findByRole("button", { name: /Open another file/i });
+    expect(container.querySelector(".size-warning-banner")).toBeNull();
+  });
+
+  it("shows plural form for multiple warnings", async () => {
+    const repo = makeBaseRepo({
+      validate: () => ({
+        instanceCount: 2,
+        errorCount: 0,
+        diagnostics: [
+          { severity: "warning", message: "Size warning 1" },
+          { severity: "warning", message: "Size warning 2" },
+        ],
+        summary: { checked: 2, errors: 0, warnings: 2 },
+      }),
+    });
+    const { container } = render(GovernanceShell, {
+      props: { repo, repoName: "test", documentProvider: "local", onExport: vi.fn(), onOpenAnother: vi.fn() },
+    });
+    await screen.findByRole("button", { name: /Open another file/i });
+    const banner = container.querySelector(".size-warning-banner");
+    expect(banner).not.toBeNull();
+    expect(banner!.textContent).toContain("2 size warnings");
+  });
+});
 
 describe("GovernanceShell — addContainerMember failure branch", () => {
   it("transitions to edit mode and shows error when addContainerMember throws", async () => {

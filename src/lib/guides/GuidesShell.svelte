@@ -27,6 +27,7 @@
     listRelations,
     createRelation,
     deleteRelation,
+    orderByPrecedes,
     renderDocumentView,
   } from "$lib/srs-client.js";
   import type { SrsRepository, SrsRecord, CreateRecordInput, UpdateRecordInput, DocumentViewSummary, ContainerView } from "$lib/srs-client.js";
@@ -73,6 +74,7 @@
     repoName: string;
     documentProvider: string;
     onExport: () => void;
+    onExportArchive?: () => void;
     /** Write back to the opened cloud/git document. Undefined for read-only handles. */
     onSave?: () => Promise<void>;
     saving?: boolean;
@@ -84,6 +86,7 @@
     repoName,
     documentProvider,
     onExport,
+    onExportArchive,
     onSave,
     saving = false,
     saveMessage = null,
@@ -138,6 +141,11 @@
   /** Export error (non-fatal; shown in the shell). */
   let exportError = $state<string | null>(null);
 
+  /** Count of size warnings from `repo.validate()`. Non-zero triggers the advisory banner. */
+  let warnCount = $state(0);
+  /** Count of validation errors from `repo.validate()`. Non-zero suppresses the warning banner. */
+  let errorCount = $state(0);
+
   /** Whether the preview inspector is force-shown on narrow screens. */
   let previewOpen = $state(false);
 
@@ -161,6 +169,16 @@
   // Helpers
   // ---------------------------------------------------------------------------
 
+  function refreshValidation(): void {
+    try {
+      const report = repo.validate();
+      warnCount = report.summary.warnings;
+      errorCount = report.summary.errors;
+    } catch {
+      // validate() failure leaves counts at 0 — no false-positive banner shown
+    }
+  }
+
   /** Derive the human-readable type name for a section record. */
   function sectionTypeName(record: SrsRecord): string {
     const st = sectionTypeList.find((s) => s.typeId === record.typeId);
@@ -172,33 +190,6 @@
 
   /** Sections of the selected guide, scoped to its container and in precedes order. */
   let orderedSections = $state<SrsRecord[]>([]);
-
-  /** Order a set of section records by their `precedes` relation chain. */
-  function orderByPrecedes(secs: SrsRecord[]): SrsRecord[] {
-    const ids = new Set(secs.map((s) => s.instanceId));
-    const rels = listRelations(repo, { relationType: "precedes" }).filter(
-      (r) => ids.has(r.sourceInstanceId) && ids.has(r.targetInstanceId)
-    );
-    const next = new Map<string, string>();
-    const hasIncoming = new Set<string>();
-    for (const r of rels) {
-      next.set(r.sourceInstanceId, r.targetInstanceId);
-      hasIncoming.add(r.targetInstanceId);
-    }
-    const byId = new Map(secs.map((s) => [s.instanceId, s]));
-    const ordered: SrsRecord[] = [];
-    const visited = new Set<string>();
-    // The chain head has no incoming precedes edge; follow next-pointers from there.
-    let cursor = secs.find((s) => !hasIncoming.has(s.instanceId))?.instanceId;
-    while (cursor && byId.has(cursor) && !visited.has(cursor)) {
-      visited.add(cursor);
-      ordered.push(byId.get(cursor) as SrsRecord);
-      cursor = next.get(cursor);
-    }
-    // Append any section not reachable through the chain, deterministically.
-    for (const s of secs) if (!visited.has(s.instanceId)) ordered.push(s);
-    return ordered;
-  }
 
   /** Resolve the selected guide's container and rebuild the ordered section list. */
   function refreshSections() {
@@ -218,7 +209,10 @@
     const sectionRecords = view.members
       .filter((m) => m.tier > 0 && m.record.instanceId !== rootId)
       .map((m) => m.record);
-    orderedSections = orderByPrecedes(sectionRecords);
+    const ids = sectionRecords.map((s) => s.instanceId);
+    const orderedIds = orderByPrecedes(repo, ids);
+    const byId = new Map(sectionRecords.map((s) => [s.instanceId, s]));
+    orderedSections = orderedIds.map((id) => byId.get(id)).filter((r): r is SrsRecord => r !== undefined);
   }
 
   /**
@@ -318,6 +312,8 @@
       reload();
     } catch (e) {
       schemaError = `Blueprint schema load failed: ${e instanceof Error ? e.message : String(e)}`;
+    } finally {
+      refreshValidation();
     }
   });
 
@@ -610,6 +606,9 @@
               data-testid="guides-export-btn"
               onclick={onExport}
             >Export .srsj</Button>
+            {#if onExportArchive}
+              <Button variant="ghost" onclick={onExportArchive}>Export .srs</Button>
+            {/if}
             <Button variant="ghost" onclick={onOpenAnother}>Open another file</Button>
             <Button
               variant="ghost"
@@ -620,6 +619,12 @@
             >{previewOpen ? "Hide preview" : "Preview"}</Button>
           {/snippet}
         </Topbar>
+
+        {#if warnCount > 0 && errorCount === 0}
+          <div class="size-warning-banner" role="status">
+            {warnCount} size warning{warnCount === 1 ? "" : "s"} — see Repository panel for details.
+          </div>
+        {/if}
 
         {#if schemaError}
           <div class="guides-error" role="alert">{schemaError}</div>
@@ -1041,6 +1046,23 @@
     font-size: 0.7rem;
     opacity: 0.75;
     max-width: 22rem;
+  }
+
+  /* ---- Size warning banner ---- */
+  .size-warning-banner {
+    padding: 0.4rem 1.25rem;
+    font-size: 0.8rem;
+    background: color-mix(in srgb, var(--warn, #b45309) 10%, transparent);
+    color: var(--warn-text, #92400e);
+    border-bottom: 1px solid color-mix(in srgb, var(--warn, #b45309) 20%, transparent);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .size-warning-banner {
+      background: color-mix(in srgb, #d97706 12%, transparent);
+      color: #fde68a;
+      border-bottom-color: color-mix(in srgb, #d97706 25%, transparent);
+    }
   }
 
 </style>

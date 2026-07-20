@@ -62,11 +62,14 @@
   import DecisionLogView from "$lib/components/DecisionLogView.svelte";
   import TagChip from "$lib/components/TagChip.svelte";
   import Migrations from "$lib/components/Migrations.svelte";
+  import AttachmentsPanel from "$lib/components/AttachmentsPanel.svelte";
+  import AttachmentLinkPanel from "$lib/components/AttachmentLinkPanel.svelte";
 
   import { TYPE_REGISTRY, DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
   import { setFieldMetaContext, buildFieldMetaMap } from "$lib/governance/field-meta.js";
+  import { setRepoContext } from "$lib/governance/repo-context.js";
   import { formatDecisionMarkdown, formatDecisionHtml, triggerDownload } from "$lib/governance/decision-export-utils.js";
 
   // ---------------------------------------------------------------------------
@@ -78,6 +81,7 @@
     repoName: string;
     documentProvider: string;
     onExport: () => void;
+    onExportArchive?: () => void;
     /** Write back to the opened cloud/git document. Undefined for read-only handles. */
     onSave?: () => Promise<void>;
     saving?: boolean;
@@ -89,6 +93,7 @@
     repoName,
     documentProvider,
     onExport,
+    onExportArchive,
     onSave,
     saving = false,
     saveMessage = null,
@@ -134,6 +139,8 @@
   /** Validation diagnostics mapped to types.ts shape. */
   let diagnostics = $state<Diagnostic[]>([]);
   let instanceCount = $state<number>(0);
+  let attachmentCount = $state<number>(0);
+  let linkedAttachmentCount = $state<number>(0);
 
   /** TypeFormDef per container, keyed by containerId, derived from root type schema. */
   let containerSchemas = $state<Record<string, TypeFormDef>>({});
@@ -142,8 +149,9 @@
   // changes (once at load), not on every reactive access from child components.
   const fieldMetaMap = $derived(buildFieldMetaMap(containerSchemas));
 
-  // Provide reactive field metadata to all descendant rendering components.
+  // Provide reactive field metadata and repo to all descendant rendering components.
   setFieldMetaContext(() => fieldMetaMap);
+  setRepoContext(() => repo);
 
   /** Form mode: null = list view, 'create' = new record, 'edit' = edit existing. */
   let formMode = $state<"create" | "edit" | null>(null);
@@ -195,7 +203,7 @@
   /** Whether the decision link picker modal is shown. */
   let showLinkPicker = $state(false);
 
-  /** Controls which panel is shown in the main area (ADR-013). */
+  /** Controls which panel is shown in the main area (ADR-014). */
   type ActiveView = "governance" | "migrations";
   let activeView = $state<ActiveView>("governance");
 
@@ -268,6 +276,9 @@
 
   /** Count of validation errors. */
   let errorCount = $derived(diagnostics.filter((d) => d.severity === "error").length);
+
+  /** Count of size warnings — derived from diagnostics[], consistent with errorCount. */
+  let warnCount = $derived(diagnostics.filter((d) => d.severity === "warn").length);
 
   /** Inspector aside: "clean" or error count. */
   let validationAside = $derived(
@@ -949,9 +960,18 @@
             >{saveMessage}</span>
           {/if}
           <button class="topbar__export" onclick={onExport}>Download .srsj</button>
+          {#if onExportArchive}
+            <button class="topbar__export" onclick={onExportArchive}>Download .srs</button>
+          {/if}
           <button class="topbar__reset" onclick={onOpenAnother}>Open another file</button>
         {/snippet}
       </Topbar>
+
+      {#if warnCount > 0 && errorCount === 0}
+        <div class="size-warning-banner" role="status">
+          {warnCount} size warning{warnCount === 1 ? "" : "s"} — see Repository panel for details.
+        </div>
+      {/if}
 
       <Workspace>
         {#if formMode !== null && activeSectionSchema}
@@ -1166,6 +1186,25 @@
           {#if decisionExportError}
             <p class="inspector__error" role="alert">{decisionExportError}</p>
           {/if}
+        </InspectorSection>
+      {/if}
+
+      <InspectorSection title="Attachments" aside={attachmentCount > 0 ? String(attachmentCount) : ""}>
+        <AttachmentsPanel
+          {repo}
+          onMutate={() => { refreshValidation(); persistWorkingCopy(); }}
+          onCountChange={(n) => { attachmentCount = n; }}
+        />
+      </InspectorSection>
+
+      {#if selectedRecord && formMode === null}
+        <InspectorSection title="Linked Attachments" aside={linkedAttachmentCount > 0 ? String(linkedAttachmentCount) : ""}>
+          <AttachmentLinkPanel
+            {repo}
+            instanceId={selectedRecord.instanceId}
+            onMutate={() => { refreshValidation(); persistWorkingCopy(); }}
+            onCountChange={(n) => { linkedAttachmentCount = n; }}
+          />
         </InspectorSection>
       {/if}
 
@@ -1512,5 +1551,22 @@
 
   .topbar__save-indicator--visible {
     animation: save-fade 2s ease-out forwards;
+  }
+
+  /* ---- Size warning banner ---- */
+  .size-warning-banner {
+    padding: 0.4rem 1.25rem;
+    font-size: 0.8rem;
+    background: color-mix(in srgb, var(--warn, #b45309) 10%, transparent);
+    color: var(--warn-text, #92400e);
+    border-bottom: 1px solid color-mix(in srgb, var(--warn, #b45309) 20%, transparent);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .size-warning-banner {
+      background: color-mix(in srgb, #d97706 12%, transparent);
+      color: #fde68a;
+      border-bottom-color: color-mix(in srgb, #d97706 25%, transparent);
+    }
   }
 </style>
