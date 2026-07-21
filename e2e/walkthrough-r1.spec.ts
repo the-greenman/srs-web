@@ -184,7 +184,7 @@ test.describe("R1 release walkthrough (#54)", () => {
     // ------------------------------------------------------------------
     // 4. Export a single decision (#43) — MD + HTML; whole log (#44).
     // ------------------------------------------------------------------
-    await test.step("export a single decision (Markdown + HTML)", async () => {
+    await test.step("export a single decision (Markdown + HTML + plain text)", async () => {
       await page.getByTestId("decision-summary-card").filter({ hasText: "Meeting cadence" }).click();
       await expect(page.getByTestId("decision-export-group")).toBeVisible({ timeout: 3000 });
 
@@ -200,9 +200,15 @@ test.describe("R1 release walkthrough (#54)", () => {
       ]);
       expect(await downloadText(html)).toContain("Meeting cadence");
 
-      if ((await page.getByTestId("decision-export-txt").count()) === 0) {
-        gaps.push("plain-text single-decision export missing (#43 wants text/MD/HTML)");
-      }
+      // Plain-text export (#43, srs-web#243): view-driven render → markdownToText.
+      const [txt] = await Promise.all([
+        page.waitForEvent("download"),
+        page.getByTestId("decision-export-txt").click(),
+      ]);
+      const txtContent = await downloadText(txt);
+      expect(txtContent).toContain("Meeting cadence");
+      // It is plain text, not Markdown: no ATX heading markers survive.
+      expect(txtContent).not.toMatch(/^#{1,6}\s/m);
     });
 
     await test.step("export the whole log", async () => {

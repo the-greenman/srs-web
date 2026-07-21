@@ -1,86 +1,51 @@
 /**
- * decision-export-utils.ts — export formatters for decision records.
+ * decision-export-utils.ts — presentation glue for decision-document export.
  *
- * `formatDecisionMarkdown` / `formatDecisionHtml`: format a single SrsRecord for download,
- * reading field values via `repo.get_field_value_by_name` (srs-web#179).
+ * Single-decision and whole-log export both render through the core document-view
+ * engine (`renderDocumentView`) — there is no decision-type-specific TypeScript
+ * formatting (muDemocracy.org#43 acceptance box 4; ADR-001). These helpers cover only
+ * the presentation the browser needs *around* the core render output:
  *
- * `wrapLogHtml`: wraps the HTML fragment returned by renderDocumentView("html") in a
- * complete HTML document so the whole-log download is a valid standalone file.
+ * - `markdownToText`: derive plain text from the core Markdown output. The engine has no
+ *   `"text"` render format, and stripping Markdown syntax is format-generic (it does not
+ *   know about decision fields), so it belongs in the client, not the core.
+ * - `wrapLogHtml`: wrap the HTML fragment from `renderDocumentView("html")` in a complete
+ *   HTML document so a download is a valid standalone file.
+ * - `triggerDownload`: browser file-download helper.
  */
-
-import type { SrsRecord, SrsRepository } from "$lib/srs-client.js";
-
-/** Field display order for decision export — mirrors DECISION_FIELDS in DecisionView.svelte. */
-const EXPORT_FIELDS = [
-  { name: "title", label: "Title" },
-  { name: "decision_statement", label: "Decision Statement" },
-  { name: "decision_question", label: "Decision Question" },
-  { name: "context", label: "Context" },
-  { name: "friction", label: "Friction" },
-  { name: "key_requirements", label: "Key Requirements" },
-  { name: "rationale", label: "Rationale" },
-  { name: "alternatives_considered", label: "Alternatives Considered" },
-  { name: "revisit_when", label: "Revisit When" },
-  { name: "next_steps", label: "Next Steps" },
-  { name: "owner", label: "Owner" },
-  { name: "status", label: "Status" },
-] as const;
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-/** Format a decision record as Markdown. Reads field values via WASM binding. */
-export function formatDecisionMarkdown(record: SrsRecord, repo: SrsRepository): string {
-  const title =
-    (repo.get_field_value_by_name(record.instanceId, "title") as string | null | undefined) ??
-    "Untitled Decision";
-  const lines: string[] = [`# ${title}`, ""];
-  for (const field of EXPORT_FIELDS) {
-    if (field.name === "title") continue;
-    const value = repo.get_field_value_by_name(record.instanceId, field.name) as
-      | string
-      | null
-      | undefined;
-    if (value === undefined || value === null || value === "") continue;
-    lines.push(`## ${field.label}`, "", value, "");
-  }
-  if (record.createdAt) {
-    lines.push("---", "", `*Created: ${record.createdAt.slice(0, 10)}*`, "");
-  }
-  return lines.join("\n");
-}
-
-/** Format a decision record as a minimal HTML document. Reads field values via WASM binding. */
-export function formatDecisionHtml(record: SrsRecord, repo: SrsRepository): string {
-  const title =
-    (repo.get_field_value_by_name(record.instanceId, "title") as string | null | undefined) ??
-    "Untitled Decision";
-  const sections: string[] = [];
-  for (const field of EXPORT_FIELDS) {
-    if (field.name === "title") continue;
-    const value = repo.get_field_value_by_name(record.instanceId, field.name) as
-      | string
-      | null
-      | undefined;
-    if (value === undefined || value === null || value === "") continue;
-    const escaped = escapeHtml(value).replace(/\n/g, "<br>");
-    sections.push(`<section><h2>${field.label}</h2><p>${escaped}</p></section>`);
-  }
-  const date = record.createdAt
-    ? `<footer><small>Created: ${record.createdAt.slice(0, 10)}</small></footer>`
-    : "";
-  return [
-    "<!DOCTYPE html>",
-    `<html><head><meta charset="utf-8">`,
-    `<title>${escapeHtml(title)}</title>`,
-    "<style>body{font-family:system-ui,sans-serif;max-width:60ch;margin:2rem auto;padding:0 1rem}h1,h2{line-height:1.2}section{margin-bottom:1.5rem}footer{margin-top:2rem;color:#666}</style>",
-    "</head><body>",
-    `<h1>${escapeHtml(title)}</h1>`,
-    ...sections,
-    date,
-    "</body></html>",
-  ].join("\n");
+/**
+ * Convert Markdown (as produced by `renderDocumentView("markdown")`) to plain text.
+ *
+ * Format-generic — it strips Markdown syntax, not decision fields — so it stays
+ * presentation-only and does not re-introduce the per-type formatting that box 4 removed.
+ * Handles the constructs the document-view renderer emits: ATX headings, emphasis, inline
+ * code, links, blockquotes, list bullets, and horizontal rules.
+ */
+export function markdownToText(md: string): string {
+  return md
+    .split("\n")
+    .map((line) => {
+      // Horizontal rules (---, ***, ___) drop out entirely.
+      if (/^\s*([-*_])\1{2,}\s*$/.test(line)) return "";
+      let l = line;
+      l = l.replace(/^#{1,6}\s+/, ""); // ATX headings → text
+      l = l.replace(/^\s*>\s?/, ""); // blockquotes
+      l = l.replace(/^(\s*)[-*+]\s+/, "$1• "); // list bullets
+      l = l.replace(/`([^`]+)`/g, "$1"); // inline code
+      l = l.replace(/\*\*([^*]+)\*\*/g, "$1"); // bold
+      l = l.replace(/(^|[^*])\*([^*\n]+)\*/g, "$1$2"); // italic (*)
+      l = l.replace(/\b_([^_\n]+)_\b/g, "$1"); // italic (_)
+      l = l.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1"); // links → text
+      return l;
+    })
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n") // collapse blank-line runs
+    .trim();
 }
 
 /**
@@ -102,7 +67,7 @@ export function triggerDownload(blob: Blob, filename: string): void {
 /**
  * Wrap an HTML fragment (e.g. from renderDocumentView "html") in a full HTML document.
  * renderDocumentView returns a bare <div class="srs-document">…</div> fragment, not a
- * complete document — this makes the whole-log download a valid standalone file.
+ * complete document — this makes the download a valid standalone file.
  */
 export function wrapLogHtml(fragment: string, title: string): string {
   return [

@@ -24,6 +24,8 @@
     transitionRecord,
     getAllowedLifecycleTransitions,
     getRecord,
+    listDocumentViews,
+    renderDocumentView,
   } from "$lib/srs-client.js";
   import { saveWorkingCopy } from "$lib/browser-cache.js";
   import type {
@@ -70,7 +72,7 @@
   import { definitionToFields } from "$lib/guides/blueprint-utils.js";
   import { setFieldMetaContext, buildFieldMetaMap } from "$lib/governance/field-meta.js";
   import { setRepoContext } from "$lib/governance/repo-context.js";
-  import { formatDecisionMarkdown, formatDecisionHtml, triggerDownload } from "$lib/governance/decision-export-utils.js";
+  import { triggerDownload, markdownToText, wrapLogHtml } from "$lib/governance/decision-export-utils.js";
 
   // ---------------------------------------------------------------------------
   // Props
@@ -837,17 +839,47 @@
     decisionExportError = null;
   });
 
-  function handleExportDecision(format: "markdown" | "html"): void {
+  // The decision-deliberation document view, discovered at runtime. Single-decision
+  // export renders through it (scoped to one record via instanceIdFilter, srs-rust#373)
+  // so formatting is view-driven with no decision-type-specific TS (muDemocracy.org#43).
+  const deliberationViewId = $derived(
+    listDocumentViews(repo, { namespace: "governance", name: "decision-deliberation" }).find(
+      (v) => v.name === "decision-deliberation"
+    )?.id ?? null
+  );
+
+  const EXPORT_META: Record<"markdown" | "html" | "text", { mimeType: string; ext: string }> = {
+    markdown: { mimeType: "text/markdown", ext: "md" },
+    html: { mimeType: "text/html", ext: "html" },
+    text: { mimeType: "text/plain", ext: "txt" },
+  };
+
+  function handleExportDecision(format: "markdown" | "html" | "text"): void {
     decisionExportError = null;
     if (!selectedRecord) return;
+    if (!deliberationViewId) {
+      decisionExportError = "No decision document view found — export unavailable.";
+      return;
+    }
     try {
-      const content =
-        format === "html"
-          ? formatDecisionHtml(selectedRecord, repo)
-          : formatDecisionMarkdown(selectedRecord, repo);
-      const mimeType = format === "html" ? "text/html" : "text/markdown";
-      const ext = format === "html" ? "html" : "md";
       const label = selectedRecord.displayLabel ?? selectedRecord.instanceId.slice(0, 8);
+      // Core render has no "text" format; derive plain text from the Markdown render.
+      const renderFormat = format === "text" ? "markdown" : format;
+      const result = renderDocumentView(
+        repo,
+        deliberationViewId,
+        renderFormat,
+        null,
+        selectedRecord.instanceId
+      );
+      if (!result.rendered) {
+        decisionExportError = "Export produced no content.";
+        return;
+      }
+      let content = result.rendered;
+      if (format === "html") content = wrapLogHtml(content, label);
+      else if (format === "text") content = markdownToText(content);
+      const { mimeType, ext } = EXPORT_META[format];
       const slug = label
         .toLowerCase()
         .replace(/\s+/g, "-")
@@ -1196,6 +1228,11 @@
               data-testid="decision-export-html"
               onclick={() => handleExportDecision("html")}
             >HTML</button>
+            <button
+              class="inspector__btn"
+              data-testid="decision-export-txt"
+              onclick={() => handleExportDecision("text")}
+            >TXT</button>
           </div>
           {#if decisionExportError}
             <p class="inspector__error" role="alert">{decisionExportError}</p>

@@ -1,160 +1,57 @@
 /**
- * Unit tests for decision-export-utils.ts — formatters for decision record export.
+ * Unit tests for decision-export-utils.ts — presentation glue for decision-document export.
  *
- * Tests verify:
- *   - formatDecisionMarkdown: title heading, field skipping, createdAt footer
- *   - formatDecisionHtml: complete HTML document structure, escaping, field skipping
- *   - wrapLogHtml: wraps a bare fragment in a full HTML document
+ * Single-decision and whole-log export now render through the core document-view engine
+ * (`renderDocumentView`), so there are no decision-type-specific TS formatters to test
+ * (muDemocracy.org#43 box 4). These tests cover the presentation helpers that remain:
+ *   - markdownToText: format-generic Markdown → plain-text conversion (plain-text export)
+ *   - wrapLogHtml: wraps a bare HTML fragment in a full HTML document
  */
 
 import { describe, expect, it } from "vitest";
-import type { SrsRecord, SrsRepository } from "../src/lib/srs-client.js";
-import {
-  formatDecisionMarkdown,
-  formatDecisionHtml,
-  wrapLogHtml,
-} from "../src/lib/governance/decision-export-utils.js";
+import { markdownToText, wrapLogHtml } from "../src/lib/governance/decision-export-utils.js";
 
 // ---------------------------------------------------------------------------
-// Test helpers
+// markdownToText
 // ---------------------------------------------------------------------------
 
-function makeRepoStub(values: Record<string, string>): Pick<SrsRepository, "get_field_value_by_name"> {
-  return { get_field_value_by_name: (_id: string, name: string) => values[name] ?? null };
-}
-
-function makeRecord(opts: { createdAt?: string } = {}): SrsRecord {
-  return {
-    instanceId: "test-inst-1",
-    typeId: "decision-type-id",
-    typeVersion: 1,
-    fieldValues: [],
-    createdAt: opts.createdAt,
-  } as unknown as SrsRecord;
-}
-
-const basicRepo = makeRepoStub({
-  title: "My Decision",
-  decision_statement: "We decided X.",
-  context: "Background info.",
-});
-
-// ---------------------------------------------------------------------------
-// formatDecisionMarkdown
-// ---------------------------------------------------------------------------
-
-describe("formatDecisionMarkdown", () => {
-  it("starts with # <title> heading", () => {
-    const record = makeRecord();
-    const md = formatDecisionMarkdown(record, basicRepo as SrsRepository);
-    expect(md).toMatch(/^# My Decision\n/);
+describe("markdownToText", () => {
+  it("strips ATX heading markers, keeping the text", () => {
+    const text = markdownToText("# Meeting cadence\n\n## Decision Statement\n\nWe decided X.");
+    expect(text).toContain("Meeting cadence");
+    expect(text).toContain("Decision Statement");
+    expect(text).not.toContain("#");
   });
 
-  it("falls back to 'Untitled Decision' when title field is absent", () => {
-    const record = makeRecord();
-    const repo = makeRepoStub({ decision_statement: "We decided X." });
-    const md = formatDecisionMarkdown(record, repo as SrsRepository);
-    expect(md).toMatch(/^# Untitled Decision\n/);
+  it("removes bold, italic, and inline-code markers", () => {
+    expect(markdownToText("**bold** and *italic* and `code`")).toBe("bold and italic and code");
+    expect(markdownToText("some _emphasis_ here")).toBe("some emphasis here");
   });
 
-  it("includes present fields as ## headings", () => {
-    const record = makeRecord();
-    const md = formatDecisionMarkdown(record, basicRepo as SrsRepository);
-    expect(md).toContain("## Decision Statement");
-    expect(md).toContain("We decided X.");
-    expect(md).toContain("## Context");
-    expect(md).toContain("Background info.");
+  it("renders links as their text", () => {
+    expect(markdownToText("see [the decision](https://example.com/d/1)")).toBe("see the decision");
   });
 
-  it("skips fields absent from the record", () => {
-    const record = makeRecord();
-    const repo = makeRepoStub({ title: "My Decision" });
-    const md = formatDecisionMarkdown(record, repo as SrsRepository);
-    expect(md).not.toContain("## Decision Statement");
-    expect(md).not.toContain("## Context");
+  it("drops horizontal rules", () => {
+    const text = markdownToText("Above\n\n---\n\nBelow");
+    expect(text).not.toContain("---");
+    expect(text).toContain("Above");
+    expect(text).toContain("Below");
   });
 
-  it("skips fields with empty string values", () => {
-    const record = makeRecord();
-    const repo = makeRepoStub({ title: "My Decision", decision_statement: "" });
-    const md = formatDecisionMarkdown(record, repo as SrsRepository);
-    expect(md).not.toContain("## Decision Statement");
+  it("converts list bullets to a bullet glyph", () => {
+    const text = markdownToText("- first\n- second");
+    expect(text).toContain("• first");
+    expect(text).toContain("• second");
+    expect(text).not.toMatch(/^- /m);
   });
 
-  it("includes createdAt date footer when createdAt is present", () => {
-    const record = makeRecord({ createdAt: "2026-05-01T10:00:00Z" });
-    const repo = makeRepoStub({ title: "My Decision" });
-    const md = formatDecisionMarkdown(record, repo as SrsRepository);
-    expect(md).toContain("*Created: 2026-05-01*");
-    expect(md).toContain("---");
+  it("strips blockquote markers", () => {
+    expect(markdownToText("> quoted line")).toBe("quoted line");
   });
 
-  it("omits createdAt footer when createdAt is absent", () => {
-    const record = makeRecord();
-    const repo = makeRepoStub({ title: "My Decision" });
-    const md = formatDecisionMarkdown(record, repo as SrsRepository);
-    expect(md).not.toContain("*Created:");
-  });
-});
-
-// ---------------------------------------------------------------------------
-// formatDecisionHtml
-// ---------------------------------------------------------------------------
-
-describe("formatDecisionHtml", () => {
-  it("starts with <!DOCTYPE html>", () => {
-    const record = makeRecord();
-    const repo = makeRepoStub({ title: "My Decision" });
-    const html = formatDecisionHtml(record, repo as SrsRepository);
-    expect(html).toMatch(/^<!DOCTYPE html>/);
-  });
-
-  it("includes <title> tag with the decision title", () => {
-    const record = makeRecord();
-    const repo = makeRepoStub({ title: "My Decision" });
-    const html = formatDecisionHtml(record, repo as SrsRepository);
-    expect(html).toContain("<title>My Decision</title>");
-  });
-
-  it("includes <h1> with the decision title", () => {
-    const record = makeRecord();
-    const repo = makeRepoStub({ title: "My Decision" });
-    const html = formatDecisionHtml(record, repo as SrsRepository);
-    expect(html).toContain("<h1>My Decision</h1>");
-  });
-
-  it("wraps each field in a <section> with an <h2>", () => {
-    const record = makeRecord();
-    const repo = makeRepoStub({ title: "My Decision", decision_statement: "We decided X." });
-    const html = formatDecisionHtml(record, repo as SrsRepository);
-    expect(html).toContain("<section>");
-    expect(html).toContain("<h2>Decision Statement</h2>");
-    expect(html).toContain("We decided X.");
-  });
-
-  it("HTML-escapes & in field values", () => {
-    const record = makeRecord();
-    const repo = makeRepoStub({ title: "Cats & Dogs", decision_statement: "Both & more." });
-    const html = formatDecisionHtml(record, repo as SrsRepository);
-    expect(html).not.toContain("Cats & Dogs");
-    expect(html).toContain("Cats &amp; Dogs");
-    expect(html).toContain("Both &amp; more.");
-  });
-
-  it("HTML-escapes < and > in field values", () => {
-    const record = makeRecord();
-    const repo = makeRepoStub({ title: "A > B", decision_statement: "<script>alert(1)</script>" });
-    const html = formatDecisionHtml(record, repo as SrsRepository);
-    expect(html).toContain("A &gt; B");
-    expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
-  });
-
-  it("skips absent fields", () => {
-    const record = makeRecord();
-    const repo = makeRepoStub({ title: "My Decision" });
-    const html = formatDecisionHtml(record, repo as SrsRepository);
-    expect(html).not.toContain("Decision Statement");
-    expect(html).not.toContain("Context");
+  it("collapses runs of blank lines and trims", () => {
+    expect(markdownToText("\n\nA\n\n\n\nB\n\n")).toBe("A\n\nB");
   });
 });
 
@@ -179,7 +76,7 @@ describe("wrapLogHtml", () => {
   });
 
   it("includes the raw fragment without escaping it", () => {
-    const fragment = `<div><h2>Section</h2><p>Text &amp; more</p></div>`;
+    const fragment = "<div><h2>Section</h2><p>Text &amp; more</p></div>";
     const html = wrapLogHtml(fragment, "Log");
     expect(html).toContain(fragment);
   });

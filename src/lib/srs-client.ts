@@ -46,8 +46,13 @@ export interface SrsRepository {
   get_allowed_lifecycle_transitions(instance_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in blueprintSchema()
   blueprint_schema(blueprint_id: string): any;
-  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in renderDocumentView()
-  render_document_view(view_id: string, format: string, container_id?: string | null): any;
+  render_document_view(
+    view_id: string,
+    format: string,
+    container_id?: string | null,
+    instance_id_filter?: string | null
+    // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in renderDocumentView()
+  ): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listContainers()
   list_containers(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainer()
@@ -809,14 +814,22 @@ export interface DocumentViewResult {
  * - `"html"`: `rendered` is an HTML fragment (`<div class="srs-document">…</div>`); `projection` is null.
  * - `"markdown"`: `rendered` is a Markdown string; `projection` is null.
  * `containerId` scopes ContainerSubset sections (e.g. selecting which guide to render).
+ * `instanceIdFilter` scopes ContainerSubset sections to a single record, producing a
+ * per-record export document (srs-rust#373) — used for single-decision export.
  */
 export function renderDocumentView(
   repo: SrsRepository,
   viewId: string,
   format: string,
-  containerId?: string | null
+  containerId?: string | null,
+  instanceIdFilter?: string | null
 ): DocumentViewResult {
-  return repo.render_document_view(viewId, format, containerId) as DocumentViewResult;
+  return repo.render_document_view(
+    viewId,
+    format,
+    containerId,
+    instanceIdFilter
+  ) as DocumentViewResult;
 }
 
 // ---------------------------------------------------------------------------
