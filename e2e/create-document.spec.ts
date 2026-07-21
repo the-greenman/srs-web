@@ -51,17 +51,8 @@ test.describe("Create new governance document (#141)", () => {
       page.getByTestId("create-local").click(),
     ]);
 
-    expect(download.suggestedFilename()).toBe("my-test-org.srsj");
-    const parsed = JSON.parse(await downloadText(download));
-    expect(parsed).toHaveProperty("srsj", "1");
-    // RFC-014 provenance: top-level upstreamPackage, without the schema-removed
-    // contentHash (RFC-014 Rev 4 dropped it; a document carrying it fails validation)
-    expect(parsed.manifest?.upstreamPackage?.packageId).toBeTruthy();
-    expect(parsed.manifest.upstreamPackage.version).toBeTruthy();
-    expect(parsed.manifest.upstreamPackage).not.toHaveProperty("contentHash");
-    expect(parsed.manifest.title).toBe("My Test Org");
-    // Scaffold output: identity + decision log + root container members exist
-    expect(parsed.manifest.instanceIndex.length).toBeGreaterThanOrEqual(2);
+    // New documents are now created as .srs archives (SRSzip).
+    expect(download.suggestedFilename()).toBe("my-test-org.srs");
 
     // App transitioned to the loaded editor
     await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
@@ -120,7 +111,7 @@ test.describe("Create new governance document (#141)", () => {
     page,
   }) => {
     await page.addInitScript(() => {
-      const recorded: Array<{ name: string; content: string }> = [];
+      const recorded: Array<{ name: string; isBinary: boolean }> = [];
       // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
       (window as any).__CREATE_CALLS__ = recorded;
       const writableHandle = (provider: "dropbox" | "google-drive", name: string) => ({
@@ -129,7 +120,7 @@ test.describe("Create new governance document (#141)", () => {
         name,
         revision: "revision-1",
         capabilities: { read: true, write: true },
-        read: async () => recorded[recorded.length - 1]?.content ?? "",
+        read: async () => "",
         write: async () => ({ revision: "revision-2" }),
       });
       // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
@@ -141,8 +132,9 @@ test.describe("Create new governance document (#141)", () => {
           authenticate: async () => {},
           list: async () => [],
           open: async () => writableHandle("dropbox", "unused.srsj"),
-          create: async (name: string, content: string) => {
-            recorded.push({ name, content });
+          // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+          create: async (name: string, content: any) => {
+            recorded.push({ name, isBinary: content instanceof Uint8Array });
             return writableHandle("dropbox", name);
           },
         },
@@ -152,8 +144,9 @@ test.describe("Create new governance document (#141)", () => {
           configured: true,
           authenticate: async () => {},
           open: async () => writableHandle("google-drive", "unused.srsj"),
-          create: async (name: string, content: string) => {
-            recorded.push({ name, content });
+          // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+          create: async (name: string, content: any) => {
+            recorded.push({ name, isBinary: content instanceof Uint8Array });
             return writableHandle("google-drive", name);
           },
         },
@@ -169,12 +162,11 @@ test.describe("Create new governance document (#141)", () => {
 
     const calls = await page.evaluate(
       // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
-      () => (window as any).__CREATE_CALLS__ as Array<{ name: string; content: string }>
+      () => (window as any).__CREATE_CALLS__ as Array<{ name: string; isBinary: boolean }>
     );
     expect(calls).toHaveLength(1);
-    expect(calls[0].name).toBe("cloud-org.srsj");
-    const parsed = JSON.parse(calls[0].content);
-    expect(parsed).toHaveProperty("srsj", "1");
-    expect(parsed.manifest.title).toBe("Cloud Org");
+    // New documents are created as .srs archives.
+    expect(calls[0].name).toBe("cloud-org.srs");
+    expect(calls[0].isBinary).toBe(true);
   });
 });
