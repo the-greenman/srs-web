@@ -81,3 +81,6 @@ is out of scope for this change).
 **Neutral:**
 - `fetch` body accepts `Uint8Array` natively; no base64 encoding or multipart workaround is
   needed for Dropbox or Google Drive binary uploads.
+- Cloud browser entries for `.srs` files flow through `onOpen(handle)` → `loadDocument()`;
+  the extension dispatch happens inside `loadDocument()`, not in the caller. This keeps the
+  handle intact for subsequent saves.
