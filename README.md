@@ -1,6 +1,69 @@
 # srs-web
 
-Opinionated SRS governance web editor (WASM + Vite).
+An opinionated **SRS governance web editor** — a browser app for creating, viewing, and editing SRS (Semantic Record System) governance documents (`.srsj` / `.json`). Deployed as a Cloudflare Worker at [`app.mudemocracy.org`](https://app.mudemocracy.org).
+
+It is a **thin client** (ADR-001): it carries zero SRS semantics in TypeScript. All record, type, relation, container, lifecycle, validation, and rendering logic is delegated to the Rust engine (`srs-rust`) compiled to WASM; the web app adds presentation only.
+
+## The ecosystem
+
+Part of the SemanticOps monorepo — four independent git repos under a shared parent:
+
+| Repo | Role |
+|------|------|
+| [`srs`](../srs) | Canonical spec: RFCs, JSON schemas, spec-as-records |
+| [`srs-rust`](../srs-rust) | Reference implementation — the `srs` CLI engine + WASM bindings |
+| [`srs-vscode`](../srs-vscode) | VS Code extension (thin client over the `srs` CLI) |
+| **srs-web** (this repo) | Governance web editor (thin client over the WASM bindings) |
+
+## Tech stack
+
+Svelte 5 (runes) + Vite 6 · TypeScript · `vite-plugin-wasm` · **Biome** (lint/format) · `svelte-check` (typecheck) · **Vitest** + `@testing-library/svelte` (unit) · **Playwright** (e2e) · **Cloudflare Workers** / `wrangler` (deploy). It is a single-page app (a state machine in `App.svelte`, no client-side router), not SvelteKit.
+
+## Quickstart
+
+```bash
+npm install
+npm run dev        # Vite dev server (proxies /api/* to a local Worker for GitHub OAuth)
+npm run build      # prebuild fetches WASM bindings if missing, then vite build
+npm run preview    # preview a production build
+npm test           # Vitest unit tests
+npm run e2e        # Playwright e2e specs
+npm run typecheck  # svelte-check
+npm run lint       # Biome
+```
+
+The WASM bindings are **not committed** — `scripts/ensure-bindings.mjs` downloads `srs-bindings-web.tar.gz` from the `srs-rust` GitHub releases over plain HTTPS (no auth). `prebuild` fetches only if `src/lib/srs_bindings/` is missing (so fresh clones and CI build with zero setup); `predeploy`/`fetch-bindings` always re-download with `--force` so a stale binding can never ship. See [Cloudflare Workers production](#cloudflare-workers-production) for building bindings locally against an unreleased engine.
+
+## How it uses SRS
+
+`src/lib/srs-client.ts` is a typed facade over the WASM `SrsRepository` class from `srs-bindings`. It dynamically imports the generated `srs_bindings.js` and calls engine methods for records, relations, containers, blueprints, discovery (`find`), rendering, navigation, lifecycle transitions, type schemas, and repository scaffolding. `.srsj` files load through `loadRepo(text)` and serialize back through `exportSrsj(repo)`; new documents are scaffolded from the `governance-seed.srsj` shipped inside the same release artifact, so seed and engine never drift.
+
+## Project structure (`src/`)
+
+```
+App.svelte            app shell — WASM init, repo loading, boot/idle/loaded/error state machine
+main.ts               Vite entry
+lib/srs-client.ts     the WASM facade (~1,150 LOC)
+lib/components/        design-system Svelte components (Nav, Inspector, RecordForm, Lifecycle, ...)
+lib/governance/        GovernanceShell + type-registry, sections, decision-export helpers
+lib/guides/            GuidesShell — blueprint-schema-driven guides editor (ADR-003)
+lib/storage/           pluggable providers: local, dropbox, google-drive, github, git-contents
+lib/srs_bindings/      generated WASM bindings + governance-seed.srsj (NOT committed)
+rendering/             read-only record renderers (RecordView, DecisionView, ...)
+styles/                CSS token / utility / layout system
+worker/index.ts        the only server code — GitHub OAuth token-exchange proxy (ADR-011)
+```
+
+~10,800 LOC across `src/` + `worker/` (47 Svelte components), 13 ADRs in `docs/adr/`.
+
+## Editor modes
+
+The app offers two editors (ADR-002):
+
+- **Governance editor** — create/open/edit governance documents: schema-driven record forms, lifecycle transitions (driven entirely by the WASM core, ADR-012), relations including a Decision-Link picker, supersession/successor flow, tags, a Decision Log view with lifecycle filtering, and a diagnostics panel from `validate()`.
+- **Guides editor** — a blueprint-schema-driven editor whose forms are generated generically from `blueprintSchema()`.
+
+---
 
 ## Creating a new governance document
 
@@ -8,30 +71,11 @@ The governance editor's start screen offers **Create new** alongside opening
 an existing file: enter a name, pick a destination (this device / Dropbox /
 Google Drive), and the app scaffolds a complete governance document — identity
 record, Decision Log container, and root container — via the WASM
-`scaffold_new_repository` binding. New documents are saved as `.srs` binary
-archives (SRSzip). The seed ships inside the
+`scaffold_new_repository` binding. The seed ships inside the
 `srs-bindings-web.tar.gz` release artifact and lands at
 `src/lib/srs_bindings/governance-seed.srsj` via `scripts/ensure-bindings.mjs`,
 so it always matches the engine that scaffolds it — never hand-edit or vendor
 a copy.
-
-## Repository tools
-
-The governance editor exposes a **"Repository"** nav group below the container-driven
-"Governance" nav. Items here invoke repository-level WASM operations that apply to the whole
-repository, not to a specific content container (ADR-014).
-
-### Migrations
-
-The **Migrations** panel (`Repository → Migrations`) lists all schema migrations available for the
-open repository, with their applicability status:
-
-- **Needed** — the migration has not been applied and applies to this repository.
-- **Applied** — the migration has already been applied.
-- **N/A** — the migration does not apply to this repository.
-
-Click **Apply** on any "Needed" migration to run it. The result payload is shown inline; the
-migration list and validation panel refresh automatically afterwards.
 
 ## Autosave and session restore
 
@@ -49,7 +93,7 @@ user opens another file or explicitly discards the session.
 
 ## Cloud storage
 
-The editor can open `.srsj`, `.json`, and `.srs` binary archive repositories from the local device,
+The editor can open `.srsj` and `.json` repositories from the local device,
 Dropbox, Google Drive, or a GitHub repository; create new files on Dropbox or
 Google Drive (`StorageProvider.create`); and **Save** edits back to any
 write-capable cloud/git document. Cloud client IDs are public browser
@@ -97,7 +141,7 @@ consoles before production deployment.
    (and the production origin — see below — before deploying).
 3. Put the app's **Client ID** in `VITE_GITHUB_CLIENT_ID` and set
    `VITE_GITHUB_REDIRECT_URI` to the matching redirect URI.
-4. The app requests the `repo` scope so a Clerk can keep a public **or private**
+4. The app requests the `repo` scope so it can read/write a public **or private**
    governance repository. Sign in, then browse **repo → branch → file** (the
    loader lists branches after you pick a repo; the default branch sorts first),
    open a `.srsj`, edit, and **Save** — each Save is a new commit whose blob SHA
@@ -204,28 +248,22 @@ Provider authentication should remain disabled on previews unless a separate
 preview credential set and stable preview hostname are registered with both
 providers.
 
-## Attachment management
-
-The governance editor supports attaching source documents to a repository and linking them to individual records.
-
-**Attachments panel** (always visible in the right-hand inspector): lists all attachments in the repository. Use **Add file** to upload a file — the bytes are stored in the WASM `MemoryStore` under `source_documents/`. Each entry shows its truncated document ID and a **↓** download button.
-
-**Linked Attachments panel** (shown below the Attachments panel when a record is selected and no edit form is open): lists attachments already linked to the selected record, plus a collapsible picker to link any existing attachment. Clicking **Link** calls `link_attachment` (WASM) to associate the attachment's document ID with the record.
-
-**Persistence model:** attachment bytes live only in the in-memory store. `persistWorkingCopy()` (autosave / `.srsj` download) saves the attachment metadata (stub records + sidecar) but **not** the bytes. To preserve bytes across sessions, use **Download .srs** — the binary archive format includes both metadata and file content. The Attachments panel displays a visible note to this effect.
-
 ## Save-ready storage contract
 
 Cloud/git documents retain their provider ID and revision in a `DocumentHandle`.
 The **Save** button (shown for write-capable handles) exports the WASM
-repository and writes it back via the binary archive path for `.srs` handles or
-falls back to `.srsj` JSON for legacy handles. Opening a `.srsj` cloud file and
-saving auto-upgrades it to a new `.srs` file (the old `.srsj` is left in place).
+repository and calls the provider-agnostic, revision-aware `write()`:
+
+```ts
+await activeDocument.write(exportSrsj(repo), activeDocument.revision);
+```
 
 The revision is the provider's concurrency token — Dropbox `rev`, Drive `etag`,
 GitHub blob SHA. A stale write raises `StorageConflictError`, which the UI
 surfaces as a reload-and-retry prompt instead of clobbering the newer version.
-Local browser files remain download-only. Governance and Guides editors expose
-**Download .srs** (binary archive, primary) and **Download .srsj** (JSON, legacy)
-export buttons. A non-blocking warning banner appears in both editors when the
-repository has size warnings (attachment-size soft limits) and no validation errors.
+Local browser files remain download-only (`Open` + `Download`).
+
+## Documentation
+
+- [`docs/adr/`](docs/adr/) — 13 architecture decision records (001 thin client, 002 editor modes, 011 OAuth proxy, 012 lifecycle-via-WASM, …).
+- [`CLAUDE.md`](CLAUDE.md) — contributor guidance.
