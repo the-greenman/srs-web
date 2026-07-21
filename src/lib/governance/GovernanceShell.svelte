@@ -81,7 +81,7 @@
     repoName: string;
     documentProvider: string;
     onExport: () => void;
-    onExportArchive?: () => void;
+    onExportSrsj?: () => void;
     /** Write back to the opened cloud/git document. Undefined for read-only handles. */
     onSave?: () => Promise<void>;
     saving?: boolean;
@@ -93,7 +93,7 @@
     repoName,
     documentProvider,
     onExport,
-    onExportArchive,
+    onExportSrsj,
     onSave,
     saving = false,
     saveMessage = null,
@@ -959,9 +959,9 @@
               aria-live="polite"
             >{saveMessage}</span>
           {/if}
-          <button class="topbar__export" onclick={onExport}>Download .srsj</button>
-          {#if onExportArchive}
-            <button class="topbar__export" onclick={onExportArchive}>Download .srs</button>
+          <button class="topbar__export" onclick={onExport}>Download .srs</button>
+          {#if onExportSrsj}
+            <button class="topbar__export" onclick={onExportSrsj}>Download .srsj</button>
           {/if}
           <button class="topbar__reset" onclick={onOpenAnother}>Open another file</button>
         {/snippet}

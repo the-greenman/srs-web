@@ -104,10 +104,16 @@
   async function loadDocument(handle: DocumentHandle): Promise<void> {
     errorMsg = null;
     try {
-      const text = await handle.read();
-      repo = loadRepo(text);
+      if (/\.srs$/i.test(handle.name)) {
+        if (!handle.readBytes) throw new Error("This storage provider does not support binary archive reads.");
+        const bytes = await handle.readBytes();
+        repo = loadRepoFromArchive(bytes);
+      } else {
+        const text = await handle.read();
+        repo = loadRepo(text);
+      }
       activeDocument = handle;
-      repoName = handle.name.replace(/\.(srsj|json)$/i, "");
+      repoName = handle.name.replace(/\.(srsj|json|srs)$/i, "");
       cachedSession = null;
       saveMessage = null;
       appState = "loaded";
@@ -133,11 +139,10 @@
    */
   async function createDocument(name: string, destination: StorageProviderId): Promise<void> {
     const { repo: newRepo } = createGovernanceDocument(name);
-    const json = exportSrsj(newRepo);
-    const filename = `${slugifyFilename(name)}.srsj`;
+    const filename = `${slugifyFilename(name)}.srs`;
 
     if (destination === "local") {
-      downloadDocument(json, filename);
+      downloadArchive(exportArchive(newRepo), filename);
       activeDocument = null;
     } else {
       // Resolve explicitly so a new provider id can never silently misroute here.
@@ -150,7 +155,7 @@
       if (!provider?.create) {
         throw new Error(`${provider?.label ?? destination} cannot create new files.`);
       }
-      activeDocument = await provider.create(filename, json);
+      activeDocument = await provider.create(filename, exportArchive(newRepo));
     }
 
     repo = newRepo;
@@ -234,8 +239,27 @@
     saving = true;
     saveMessage = null;
     try {
-      await activeDocument.write(exportSrsj(repo), activeDocument.revision);
-      saveMessage = "Saved.";
+      if (/\.srs$/i.test(activeDocument.name) && activeDocument.writeBytes) {
+        await activeDocument.writeBytes(exportArchive(repo), activeDocument.revision);
+        saveMessage = "Saved.";
+      } else {
+        // Auto-upgrade: create a new .srs file and switch the active handle to it.
+        const provider =
+          activeDocument.provider === "dropbox"
+            ? storageProviders.dropbox
+            : activeDocument.provider === "google-drive"
+              ? storageProviders.googleDrive
+              : storageProviders.github;
+        if (provider?.create) {
+          const newName = activeDocument.name.replace(/\.(srsj|json)$/i, ".srs");
+          const newHandle = await provider.create(newName, exportArchive(repo));
+          activeDocument = newHandle;
+          saveMessage = `Saved as ${newHandle.name}.`;
+        } else {
+          await activeDocument.write(exportSrsj(repo), activeDocument.revision);
+          saveMessage = "Saved.";
+        }
+      }
       clearWorkingCopy();
     } catch (e: unknown) {
       saveMessage = saveErrorMessage(e);
@@ -369,7 +393,7 @@
           </div>
         </div>
       {/if}
-      <p class="splash__sub">Open a <code>.srsj</code> repository file to explore its governance records.</p>
+      <p class="splash__sub">Open a <code>.srs</code> or <code>.srsj</code> repository file to explore its governance records.</p>
       <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} />
       <p class="splash__divider">or start from scratch</p>
       <CreateGovernanceDocumentPanel providers={storageProviders} onCreate={createDocument} />
@@ -378,7 +402,7 @@
   {:else}
     <div class="splash" data-testid="guides-file-picker">
       <h1 class="splash__title">muDemocracy Guides Editor</h1>
-      <p class="splash__sub">Open a <code>.srsj</code> repository file to edit guides.</p>
+      <p class="splash__sub">Open a <code>.srs</code> or <code>.srsj</code> repository file to edit guides.</p>
       <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} />
       <button class="splash__back" onclick={() => { editorMode = null; }}>← Back</button>
     </div>
@@ -392,8 +416,8 @@
     repo={repo!}
     repoName={repoName}
     documentProvider={activeDocument?.provider ?? "local"}
-    onExport={handleExport}
-    onExportArchive={handleExportArchive}
+    onExport={handleExportArchive}
+    onExportSrsj={handleExport}
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
     saving={saving}
     saveMessage={saveMessage}
@@ -416,8 +440,8 @@
     repo={repo!}
     repoName={repoName}
     documentProvider={activeDocument?.provider ?? "local"}
-    onExport={handleExport}
-    onExportArchive={handleExportArchive}
+    onExport={handleExportArchive}
+    onExportSrsj={handleExport}
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
     saving={saving}
     saveMessage={saveMessage}

@@ -120,18 +120,46 @@ export class GoogleDriveDocumentHandle implements DocumentHandle {
     return response.text();
   }
 
+  async readBytes(): Promise<Uint8Array> {
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(this.id)}?alt=media`,
+      { headers: { Authorization: `Bearer ${await this.token()}` } }
+    );
+    if (!response.ok) {
+      throw new StorageFetchError(
+        `Google Drive download failed: ${await responseMessage(response)}`
+      );
+    }
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
   async write(
     content: string,
     expectedRevision: string | null = this.currentRevision
   ): Promise<WriteResult> {
+    return this._upload(content, "application/json", expectedRevision);
+  }
+
+  async writeBytes(
+    bytes: Uint8Array,
+    expectedRevision: string | null = this.currentRevision
+  ): Promise<WriteResult> {
+    return this._upload(bytes, "application/octet-stream", expectedRevision);
+  }
+
+  private async _upload(
+    body: string | Uint8Array,
+    contentType: string,
+    expectedRevision: string | null
+  ): Promise<WriteResult> {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${await this.token()}`,
-      "Content-Type": "application/json",
+      "Content-Type": contentType,
     };
     if (expectedRevision) headers["If-Match"] = expectedRevision;
     const response = await fetch(
       `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(this.id)}?uploadType=media&fields=id,name,version`,
-      { method: "PATCH", headers, body: content }
+      { method: "PATCH", headers, body: body as BodyInit }
     );
     if (response.status === 409 || response.status === 412) throw new StorageConflictError();
     if (!response.ok) {
@@ -188,8 +216,8 @@ export class GoogleDriveProvider implements StorageProvider {
         }
         if (data.action !== pickerApi.Action.PICKED) return;
         const selected = data.docs?.[0];
-        if (!selected || !/\.(srsj|json)$/i.test(selected.name)) {
-          reject(new StorageFetchError("Choose a .srsj or .json file."));
+        if (!selected || !/\.(srsj|json|srs)$/i.test(selected.name)) {
+          reject(new StorageFetchError("Choose a .srs, .srsj, or .json file."));
           return;
         }
         void this.open({ id: selected.id, name: selected.name, kind: "file" }).then(
@@ -215,7 +243,9 @@ export class GoogleDriveProvider implements StorageProvider {
     }
     const metadata = (await response.json()) as { id: string; name: string; mimeType: string };
     if (metadata.mimeType.startsWith("application/vnd.google-apps.")) {
-      throw new StorageFetchError("Google Workspace documents cannot contain an .srsj repository.");
+      throw new StorageFetchError(
+        "Google Workspace documents cannot be opened as SRS repositories."
+      );
     }
     const revision = response.headers.get("etag");
     return new GoogleDriveDocumentHandle(metadata.id, metadata.name, revision, () =>
@@ -223,20 +253,36 @@ export class GoogleDriveProvider implements StorageProvider {
     );
   }
 
-  async create(name: string, content: string): Promise<DocumentHandle> {
+  async create(name: string, content: string | Uint8Array): Promise<DocumentHandle> {
     const token = await this.requireToken();
     const boundary = "srs-drive-create";
-    const body = [
-      `--${boundary}`,
-      "Content-Type: application/json; charset=UTF-8",
-      "",
-      JSON.stringify({ name, mimeType: "application/json" }),
-      `--${boundary}`,
-      "Content-Type: application/json",
-      "",
-      content,
-      `--${boundary}--`,
-    ].join("\r\n");
+    const isBinary = content instanceof Uint8Array;
+    const mimeType = isBinary ? "application/octet-stream" : "application/json";
+    let body: string | Uint8Array;
+    if (isBinary) {
+      const enc = new TextEncoder();
+      const preamble = enc.encode(
+        `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name, mimeType })}\r\n--${boundary}\r\nContent-Type: application/octet-stream\r\n\r\n`
+      );
+      const epilogue = enc.encode(`\r\n--${boundary}--`);
+      const merged = new Uint8Array(preamble.length + content.length + epilogue.length);
+      merged.set(preamble, 0);
+      merged.set(content, preamble.length);
+      merged.set(epilogue, preamble.length + content.length);
+      body = merged;
+    } else {
+      body = [
+        `--${boundary}`,
+        "Content-Type: application/json; charset=UTF-8",
+        "",
+        JSON.stringify({ name, mimeType }),
+        `--${boundary}`,
+        "Content-Type: application/json",
+        "",
+        content,
+        `--${boundary}--`,
+      ].join("\r\n");
+    }
     const response = await fetch(
       "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,version",
       {
@@ -245,7 +291,7 @@ export class GoogleDriveProvider implements StorageProvider {
           Authorization: `Bearer ${token}`,
           "Content-Type": `multipart/related; boundary=${boundary}`,
         },
-        body,
+        body: body as BodyInit,
       }
     );
     if (!response.ok) {

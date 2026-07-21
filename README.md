@@ -8,7 +8,8 @@ The governance editor's start screen offers **Create new** alongside opening
 an existing file: enter a name, pick a destination (this device / Dropbox /
 Google Drive), and the app scaffolds a complete governance document — identity
 record, Decision Log container, and root container — via the WASM
-`scaffold_new_repository` binding. The seed ships inside the
+`scaffold_new_repository` binding. New documents are saved as `.srs` binary
+archives (SRSzip). The seed ships inside the
 `srs-bindings-web.tar.gz` release artifact and lands at
 `src/lib/srs_bindings/governance-seed.srsj` via `scripts/ensure-bindings.mjs`,
 so it always matches the engine that scaffolds it — never hand-edit or vendor
@@ -217,13 +218,14 @@ The governance editor supports attaching source documents to a repository and li
 
 Cloud/git documents retain their provider ID and revision in a `DocumentHandle`.
 The **Save** button (shown for write-capable handles) exports the WASM
-repository and calls the provider-agnostic, revision-aware `write()`:
-
-```ts
-await activeDocument.write(exportSrsj(repo), activeDocument.revision);
-```
+repository and writes it back via the binary archive path for `.srs` handles or
+falls back to `.srsj` JSON for legacy handles. Opening a `.srsj` cloud file and
+saving auto-upgrades it to a new `.srs` file (the old `.srsj` is left in place).
 
 The revision is the provider's concurrency token — Dropbox `rev`, Drive `etag`,
 GitHub blob SHA. A stale write raises `StorageConflictError`, which the UI
 surfaces as a reload-and-retry prompt instead of clobbering the newer version.
-Local browser files remain download-only. Governance and Guides editors both expose "Download .srsj" (JSON) and "Download .srs" (binary archive) export buttons. A non-blocking warning banner appears in both the Governance and Guides editors when the repository has size warnings (attachment-size soft limits) and no validation errors.
+Local browser files remain download-only. Governance and Guides editors expose
+**Download .srs** (binary archive, primary) and **Download .srsj** (JSON, legacy)
+export buttons. A non-blocking warning banner appears in both editors when the
+repository has size warnings (attachment-size soft limits) and no validation errors.

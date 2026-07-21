@@ -17,6 +17,10 @@ export interface DocumentHandle {
   readonly revision: string | null;
   read(): Promise<string>;
   write(content: string, expectedRevision?: string | null): Promise<WriteResult>;
+  /** Read the document as raw bytes. Available on all cloud handles; used for .srs archives. */
+  readBytes?(): Promise<Uint8Array>;
+  /** Write raw bytes to the document. Available on all cloud handles; used for .srs archives. */
+  writeBytes?(bytes: Uint8Array, expectedRevision?: string | null): Promise<WriteResult>;
 }
 
 /**
@@ -56,6 +60,7 @@ export interface StorageProvider {
   list?(path?: string): Promise<StorageEntry[]>;
   open(entry: StorageEntry): Promise<DocumentHandle>;
   /** Create a brand-new document with the given name and content, returning a
-   * writable handle. Optional — absent on providers that cannot create files. */
-  create?(name: string, content: string): Promise<DocumentHandle>;
+   * writable handle. Optional — absent on providers that cannot create files.
+   * Accepts either a string (for .srsj JSON) or Uint8Array bytes (for .srs archives). */
+  create?(name: string, content: string | Uint8Array): Promise<DocumentHandle>;
 }

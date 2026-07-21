@@ -253,9 +253,9 @@ test.describe("Guides editor (C8)", () => {
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
     await expect(page.getByTestId("guides-section-list")).toBeVisible({ timeout: 3000 });
 
-    // Export .srsj — capture the download.
+    // Export .srsj (legacy text format) for round-trip — capture the download.
     const downloadPromise = page.waitForEvent("download");
-    await page.getByTestId("guides-export-btn").click();
+    await page.getByRole("button", { name: "Export .srsj" }).click();
     const download = await downloadPromise;
 
     // Read the downloaded .srsj content.

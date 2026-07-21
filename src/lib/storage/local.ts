@@ -17,6 +17,11 @@ export class LocalDocumentHandle implements DocumentHandle {
     return this.file.text();
   }
 
+  async readBytes(): Promise<Uint8Array> {
+    const buf = await this.file.arrayBuffer();
+    return new Uint8Array(buf);
+  }
+
   write(_content: string, _expectedRevision?: string | null): Promise<WriteResult> {
     return Promise.reject(
       new StorageError("unsupported", "Local browser files cannot be overwritten directly.")

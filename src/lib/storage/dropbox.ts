@@ -164,9 +164,37 @@ export class DropboxDocumentHandle implements DocumentHandle {
     return response.text();
   }
 
+  async readBytes(): Promise<Uint8Array> {
+    const response = await fetch(`${CONTENT}/files/download`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.token()}`,
+        "Dropbox-API-Arg": JSON.stringify({ path: this.id }),
+      },
+    });
+    if (!response.ok) {
+      throw new StorageFetchError(`Dropbox download failed: ${await parseError(response)}`);
+    }
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
   async write(
     content: string,
     expectedRevision: string | null = this.currentRevision
+  ): Promise<WriteResult> {
+    return this._upload(content, expectedRevision);
+  }
+
+  async writeBytes(
+    bytes: Uint8Array,
+    expectedRevision: string | null = this.currentRevision
+  ): Promise<WriteResult> {
+    return this._upload(bytes, expectedRevision);
+  }
+
+  private async _upload(
+    body: string | Uint8Array,
+    expectedRevision: string | null
   ): Promise<WriteResult> {
     const mode = expectedRevision ? { ".tag": "update", update: expectedRevision } : "overwrite";
     const response = await fetch(`${CONTENT}/files/upload`, {
@@ -181,7 +209,7 @@ export class DropboxDocumentHandle implements DocumentHandle {
           mute: false,
         }),
       },
-      body: content,
+      body: body as BodyInit,
     });
     if (response.status === 409) throw new StorageConflictError();
     if (!response.ok) {
@@ -271,7 +299,7 @@ export class DropboxProvider implements StorageProvider {
       entries.push(...response.entries);
     }
     return entries
-      .filter((entry) => entry[".tag"] === "folder" || /\.(srsj|json)$/i.test(entry.name))
+      .filter((entry) => entry[".tag"] === "folder" || /\.(srsj|json|srs)$/i.test(entry.name))
       .map((entry) => ({
         id: entry.id,
         name: entry.name,
@@ -294,7 +322,7 @@ export class DropboxProvider implements StorageProvider {
     );
   }
 
-  async create(name: string, content: string): Promise<DocumentHandle> {
+  async create(name: string, content: string | Uint8Array): Promise<DocumentHandle> {
     await this.authenticate();
     const response = await fetch(`${CONTENT}/files/upload`, {
       method: "POST",
@@ -308,7 +336,7 @@ export class DropboxProvider implements StorageProvider {
           mute: false,
         }),
       },
-      body: content,
+      body: content as BodyInit,
     });
     if (!response.ok) {
       throw new StorageFetchError(`Dropbox create failed: ${await parseError(response)}`);
