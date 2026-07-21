@@ -223,13 +223,13 @@
         {/if}
         {#each visibleEntries ?? [] as entry (entry.id)}
           <button class="cloud-browser__entry" onclick={() => chooseEntry(entry)}>
-            <span class="cloud-browser__kind">{entry.kind === "folder" ? "Folder" : "SRSJ"}</span>
+            <span class="cloud-browser__kind">{entry.kind === "folder" ? "Folder" : entry.name.toLowerCase().endsWith(".srs") ? "SRS" : "SRSJ"}</span>
             <span>{entry.name}</span>
           </button>
         {:else}
           <p class="cloud-browser__empty">
             {filter.trim() === ""
-              ? "No .srsj or .json files in this folder."
+              ? "No .srs, .srsj, or .json files in this folder."
               : `Nothing matches “${filter.trim()}”.`}
           </p>
         {/each}
