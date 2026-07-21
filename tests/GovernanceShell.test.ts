@@ -212,6 +212,60 @@ describe("GovernanceShell — addContainerMember failure branch", () => {
   });
 });
 
+describe("GovernanceShell — sections sharing one container", () => {
+  it("renders every root-level section as a distinct nav item (no duplicate-key blank-out)", async () => {
+    // Regression: muSrs has several sections that are direct members of the root
+    // container, so repository_navigation returns sections sharing a
+    // sectionContainerId. Keying the sidebar {#each} by containerId collided on the
+    // duplicate key and blanked the whole Governance nav ("0 records"). Each section
+    // must render as its own nav item.
+    const section = (instanceId: string, label: string, containerId: string) => ({
+      instanceId,
+      typeId: "com.test/guide",
+      typeVersion: 1,
+      typeNamespace: "com.test",
+      typeName: "guide",
+      displayLabel: label,
+      sectionContainerId: containerId,
+    });
+    const repo = makeBaseRepo({
+      repository_navigation: () => ({
+        rootContainerId: "c-root",
+        identity: {
+          instanceId: "id-1",
+          typeId: "com.test/identity",
+          typeVersion: 1,
+          typeNamespace: "com.test",
+          typeName: "identity",
+          displayLabel: "Repo",
+        },
+        sections: [
+          // Two sections share the root container id — the duplicate-key trigger.
+          section("guide-a", "Guide A", "c-root"),
+          section("guide-b", "Guide B", "c-root"),
+          section("decision-log", "Decision Log", "c-decision"),
+        ],
+        diagnostics: [],
+      }),
+      get_container: (id: string) => ({
+        containerId: id,
+        title: id,
+        memberInstanceIds: [],
+        rootInstanceIds: [],
+      }),
+      list_records: () => [],
+    });
+    render(GovernanceShell, {
+      props: { repo, repoName: "test", documentProvider: "local", onExport: vi.fn(), onOpenAnother: vi.fn() },
+    });
+    await screen.findByRole("button", { name: /Open another file/i });
+    // All three sections must be present — the shared containerId must not collapse them.
+    expect(await screen.findByRole("link", { name: /Guide A/i })).toBeDefined();
+    expect(await screen.findByRole("link", { name: /Guide B/i })).toBeDefined();
+    expect(await screen.findByRole("link", { name: /Decision Log/i })).toBeDefined();
+  });
+});
+
 describe("GovernanceShell — Repository nav group", () => {
   it("renders Migrations NavItem in the Repository nav group", async () => {
     const repo = makeBaseRepo();
