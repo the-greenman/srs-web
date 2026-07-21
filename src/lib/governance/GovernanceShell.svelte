@@ -105,6 +105,11 @@
   // ---------------------------------------------------------------------------
 
   interface ContainerNavEntry {
+    /** Stable, unique key for the sidebar `{#each}`. Several sections can share a
+     * `containerId` (e.g. multiple root-level sections that all belong to the root
+     * container), so the section's own instanceId keys the list — a duplicate
+     * `containerId` key blanks the whole Governance nav. */
+    navKey: string;
     /** Maps to `section.sectionContainerId` in the RFC-013 nav path. */
     containerId: string;
     title: string;
@@ -132,6 +137,10 @@
 
   /** Active sidebar container — null until first data load. */
   let activeContainerId = $state<string | null>(null);
+
+  /** Active sidebar entry key (unique per section; see ContainerNavEntry.navKey).
+   * Drives highlight so sibling sections sharing a container don't all light up. */
+  let activeNavKey = $state<string | null>(null);
 
   /** Selected record instance ID. */
   let selectedId = $state<string | null>(null);
@@ -333,6 +342,7 @@
 
         const regEntry = TYPE_REGISTRY[section.typeId];
         navEntries.push({
+          navKey: section.instanceId,
           containerId,
           title: section.displayLabel,
           rootTypeId: section.typeId,
@@ -353,6 +363,7 @@
 
     if (activeContainerId === null && containers.length > 0) {
       activeContainerId = containers[0].containerId;
+      activeNavKey = containers[0].navKey;
     }
   }
 
@@ -384,6 +395,7 @@
       const regEntry = rootTypeId ? TYPE_REGISTRY[rootTypeId] : undefined;
 
       navEntries.push({
+        navKey: summary.containerId,
         containerId: summary.containerId,
         title: summary.title,
         rootTypeId,
@@ -865,7 +877,7 @@
     <Nav repo={repoName} eyebrow="srs · governance">
       {#snippet children()}
         <NavGroup label="Governance">
-          {#each containers as container (container.containerId)}
+          {#each containers as container (container.navKey)}
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
@@ -873,6 +885,7 @@
                 e.preventDefault();
                 activeView = "governance";
                 activeContainerId = container.containerId;
+                activeNavKey = container.navKey;
                 selectedId = null;
                 formMode = null;
                 editingRecord = null;
@@ -884,7 +897,7 @@
                 label={container.title}
                 id={container.icon}
                 count={containerRecords[container.containerId]?.length ?? 0}
-                active={activeContainerId === container.containerId}
+                active={activeNavKey === container.navKey}
                 href="#"
               />
             </div>
@@ -898,6 +911,7 @@
               onclick={() => {
                 activeView = "migrations";
                 activeContainerId = null;
+                activeNavKey = null;
                 selectedId = null;
                 formMode = null;
                 editingRecord = null;
