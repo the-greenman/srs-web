@@ -277,13 +277,19 @@
 
       const result = blueprintSchema(repo, blueprint.id);
       if (result.diagnostics.length > 0) {
-        schemaError = result.diagnostics.join("; ");
-        return;
+        // Non-fatal: the WASM projection degrades gracefully (e.g. an unparsed
+        // relation cardinality omits minItems/maxItems) but still returns a usable
+        // schema. Only a missing root type below is fatal to the guides editor —
+        // surfacing warnings here previously blanked the whole editor.
+        console.warn("blueprintSchema diagnostics:", result.diagnostics);
       }
       const schema = result.schema;
       const rootId = rootTypeId(schema);
       if (!rootId) {
-        schemaError = `Blueprint schema has no root type (${WELL_KNOWN_BLUEPRINT.namespace}/${WELL_KNOWN_BLUEPRINT.name})`;
+        schemaError =
+          result.diagnostics.length > 0
+            ? result.diagnostics.join("; ")
+            : `Blueprint schema has no root type (${WELL_KNOWN_BLUEPRINT.namespace}/${WELL_KNOWN_BLUEPRINT.name})`;
         return;
       }
 

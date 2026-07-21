@@ -136,3 +136,65 @@ describe("GuidesShell — size warning banner", () => {
     expect(banner!.textContent).toContain("3 size warnings");
   });
 });
+
+describe("GuidesShell — blueprint schema with non-fatal diagnostics", () => {
+  const GUIDE_TYPE_ID = "8f138dd6-11d2-42a5-99ec-3d6e23bed54f";
+
+  /** A usable guide blueprint schema (root $ref resolves; no section types). */
+  function guideSchema() {
+    return {
+      properties: {
+        root: { $ref: `#/definitions/${GUIDE_TYPE_ID}` },
+        contains: { type: "array", items: { oneOf: [] } },
+      },
+      definitions: {
+        [GUIDE_TYPE_ID]: { type: "object", properties: {} },
+      },
+    };
+  }
+
+  function guidesRepo(diagnostics: string[]): SrsRepository {
+    return makeBaseRepo({
+      list_blueprints: () => ({
+        summaries: [
+          { id: "bp-guide", namespace: "com.mudemocracy", name: "guide", version: 1 },
+        ],
+      }),
+      blueprint_schema: () => ({ schema: guideSchema(), diagnostics }),
+      list_document_views: () => [],
+      list_records: () => [
+        {
+          instanceId: "guide-1",
+          displayLabel: "My Guide",
+          record: {
+            instanceId: "guide-1",
+            typeId: GUIDE_TYPE_ID,
+            typeVersion: 1,
+            typeNamespace: "com.mudemocracy",
+            typeName: "guide",
+            fieldValues: [],
+          },
+        },
+      ],
+      list_containers: () => [],
+      order_by_precedes: (ids: string[]) => ids,
+    });
+  }
+
+  it("still lists guides when blueprintSchema returns a non-fatal warning", async () => {
+    // Regression: muSrs's guide blueprint uses cardinality "one-to-many", which the
+    // WASM projection can't map to minItems/maxItems — it warns but still returns a
+    // usable schema. The boot used to treat any diagnostic as fatal and return early,
+    // blanking the editor ("No guides yet"). It must now log and continue.
+    const repo = guidesRepo([
+      "cardinality 'one-to-many' on relation 'contains' could not be parsed; minItems/maxItems omitted",
+    ]);
+    render(GuidesShell, { props: { repo, ...defaultProps } });
+    await screen.findByRole("button", { name: /Open another file/i });
+
+    const items = await screen.findAllByTestId("guides-guide-item");
+    expect(items).toHaveLength(1);
+    expect(items[0].textContent).toContain("My Guide");
+    expect(screen.queryByText("No guides yet")).toBeNull();
+  });
+});
