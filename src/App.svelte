@@ -104,7 +104,8 @@
   async function loadDocument(handle: DocumentHandle): Promise<void> {
     errorMsg = null;
     try {
-      if (/\.srs$/i.test(handle.name) && handle.readBytes) {
+      if (/\.srs$/i.test(handle.name)) {
+        if (!handle.readBytes) throw new Error("This storage provider does not support binary archive reads.");
         const bytes = await handle.readBytes();
         repo = loadRepoFromArchive(bytes);
       } else {
@@ -253,7 +254,7 @@
           const newName = activeDocument.name.replace(/\.(srsj|json)$/i, ".srs");
           const newHandle = await provider.create(newName, exportArchive(repo));
           activeDocument = newHandle;
-          saveMessage = `Saved as ${newName}.`;
+          saveMessage = `Saved as ${newHandle.name}.`;
         } else {
           await activeDocument.write(exportSrsj(repo), activeDocument.revision);
           saveMessage = "Saved.";
