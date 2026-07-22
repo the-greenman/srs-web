@@ -149,7 +149,7 @@ ref-update conflict detection — entirely WASM-independent, fully unit-testable
 
 #### Tasks
 
-- [ ] `src/lib/storage/git-data.ts`:
+- [x] `src/lib/storage/git-data.ts`:
   ```ts
   export interface GitDataLocation { apiBase: string; owner: string; repo: string; branch: string; dir: string; }
   export interface TreeEntry { mode: string; sha: string; }
@@ -191,7 +191,7 @@ ref-update conflict detection — entirely WASM-independent, fully unit-testable
   (`github.ts`, `srs-client.ts`, `App.svelte`) only ever sees dir-relative paths, matching what
   `load_tree`/`export_tree` expect (their `files` map is scoped to the SRS-tree root, not the git
   repo root).
-- [ ] `readBranchBase`: `GET /repos/{o}/{r}/git/refs/heads/{branch}` → commit SHA → `GET
+- [x] `readBranchBase`: `GET /repos/{o}/{r}/git/refs/heads/{branch}` → commit SHA → `GET
       /repos/{o}/{r}/git/commits/{sha}` → root tree SHA → **one** `GET
       /repos/{o}/{r}/git/trees/{rootTreeSha}?recursive=1` call (recursive listings include
       intermediate directory entries, so this single call yields everything needed). From that
@@ -207,19 +207,19 @@ ref-update conflict detection — entirely WASM-independent, fully unit-testable
       - If the response has `truncated: true`, throw `StorageFetchError` naming the branch and
         pointing at GitHub's recursive-tree size limit — fail loud, do not silently return a
         partial tree.
-- [ ] `readBlob`: `GET /repos/{o}/{r}/git/blobs/{sha}` (the **Git Data API** blob endpoint — not
+- [x] `readBlob`: `GET /repos/{o}/{r}/git/blobs/{sha}` (the **Git Data API** blob endpoint — not
       the Contents API's `/contents/{path}`, which has a different response shape and no raw-sha
       lookup) → base64-decode `content` (reuse `decodeBase64` from `git-contents.ts`, extended for
       arbitrary bytes not just UTF-8 text — note `git-contents.ts`'s `decodeBase64` returns a
       `string`; `git-data.ts` needs a bytes-returning variant, e.g. `atob` + `Uint8Array.from`).
       `readBlobs` runs `readBlob` with a small concurrency pool (default 6) via a local
       `pLimit`-style helper — no new dependency, hand-roll a `Promise` pool.
-- [ ] `gitBlobSha(bytes)`: compute the git blob object hash — SHA-1 over
+- [x] `gitBlobSha(bytes)`: compute the git blob object hash — SHA-1 over
       `` `blob ${bytes.byteLength}\0` `` (as UTF-8 bytes) concatenated with `bytes`, via
       `crypto.subtle.digest("SHA-1", ...)`, formatted as lowercase hex. This lets callers
       (Phase 2's `commitTree`) detect "unchanged" paths without a network round-trip, by
       comparing against `baseEntries[path].sha`.
-- [ ] `commitFiles`: build tree entries only for keys in `params.files` (already sparse/diffed —
+- [x] `commitFiles`: build tree entries only for keys in `params.files` (already sparse/diffed —
       this function does no diffing itself):
       - Deletion (`files[path] === null`): only emit `{ path, mode: baseEntries[path].mode,
         sha: null }` if `path in baseEntries`; silently skip otherwise (deleting a path that was
@@ -258,7 +258,7 @@ ref-update conflict detection — entirely WASM-independent, fully unit-testable
 
 #### Acceptance Criteria
 
-- [ ] `readBranchBase` returns the correct dir-relative base map for a fixture tree response, for
+- [x] `readBranchBase` returns the correct dir-relative base map for a fixture tree response, for
       `dir === ""`, a single-segment subdirectory (e.g. `"governance"`), **and a multi-level
       nested subdirectory (e.g. `"docs/governance/tree"`, ≥2 levels deep)** — the single-entry
       `base_tree` override technique used by `commitFiles` is well-documented for blob entries at
@@ -266,20 +266,20 @@ ref-update conflict detection — entirely WASM-independent, fully unit-testable
       behavior for a **tree-type** override entry, which is untested by a single-segment case
       alone; submodules and symlinks are excluded from `entries`; a `dir` that doesn't exist in
       the tree throws `StorageFetchError`. (Fixes Architecture Reviewer round-2 finding 3.)
-- [ ] `commitFiles` on a subdirectory-mounted tree (`dir !== ""`, including the multi-level case
+- [x] `commitFiles` on a subdirectory-mounted tree (`dir !== ""`, including the multi-level case
       above) leaves every path outside `dir` byte-identical in the resulting commit (assert via
       the fixture's untouched-paths' blob SHAs unchanged) — this is the regression test for
       Architecture Reviewer round-1 finding 1.
-- [ ] `truncated: true` throws `StorageFetchError`, not a silent partial result.
-- [ ] `gitBlobSha` matches real git's blob hashing for a known fixture (e.g. hash of empty file
+- [x] `truncated: true` throws `StorageFetchError`, not a silent partial result.
+- [x] `gitBlobSha` matches real git's blob hashing for a known fixture (e.g. hash of empty file
       is the well-known `e69de29b...`).
-- [ ] `commitFiles` with an empty `files` map makes zero fetch calls and returns `null`.
-- [ ] `commitFiles` emits `content` for UTF-8-decodable bytes and a separate blob POST for
+- [x] `commitFiles` with an empty `files` map makes zero fetch calls and returns `null`.
+- [x] `commitFiles` emits `content` for UTF-8-decodable bytes and a separate blob POST for
       non-UTF-8 bytes; preserves the base mode on update; defaults to `100644` on create.
-- [ ] A deletion for a path not in `baseEntries` is silently dropped, not sent to the API.
-- [ ] `422` with "not a fast forward" in the body → `StorageConflictError`; any other `422`/non-2xx
+- [x] A deletion for a path not in `baseEntries` is silently dropped, not sent to the API.
+- [x] `422` with "not a fast forward" in the body → `StorageConflictError`; any other `422`/non-2xx
       → `StorageFetchError`, not misclassified as a conflict.
-- [ ] `npm run typecheck`, `npm run lint`, `npm run build`, `npm test` pass.
+- [x] `npm run typecheck`, `npm run lint`, `npm run build`, `npm test` pass.
 
 #### Testing
 
@@ -308,12 +308,12 @@ WASM plumbing is Phase 3.
 
 #### Tasks
 
-- [ ] `src/lib/storage/types.ts`:
+- [x] `src/lib/storage/types.ts`:
   - Add `readonly kind: "text" | "bytes" | "tree"` to `DocumentHandle`.
   - Add `RepoTreeAware` interface (see Contracts above).
   - `StorageEntry.kind` becomes `"file" | "folder" | "repository"`.
   - `StorageProvider` gains `openTree?(entry: StorageEntry): Promise<DocumentHandle & RepoTreeAware>`.
-- [ ] Give every **existing** handle a `kind`. This is new logic, not a consolidation of an
+- [x] Give every **existing** handle a `kind`. This is new logic, not a consolidation of an
       existing check — today the `.srs`-vs-not decision lives solely in `App.svelte`
       (`loadDocument`/`saveDirect`), not inside any provider/handle. Each handle constructor sets
       `kind` once from the same test `App.svelte` currently applies:
@@ -334,7 +334,7 @@ WASM plumbing is Phase 3.
     do a one-off `npm run e2e` run at the end of this phase (in addition to the normal
     typecheck/lint/build/test gate) specifically to confirm these fixtures still pass, even though
     full tree-mode e2e coverage isn't added until Phase 5.
-- [ ] `src/lib/storage/github.ts`:
+- [x] `src/lib/storage/github.ts`:
   ```ts
   export class GitHubRepoTreeHandle implements DocumentHandle, GitBranchAware, RepoTreeAware {
     readonly provider = "github" as const;
@@ -414,22 +414,22 @@ WASM plumbing is Phase 3.
 
 #### Acceptance Criteria
 
-- [ ] `readTree()` round-trips a fixture branch's tree into a `Record<path, Uint8Array>` matching
+- [x] `readTree()` round-trips a fixture branch's tree into a `Record<path, Uint8Array>` matching
       the fixture's blob content exactly.
-- [ ] `commitTree()` with no actual changes vs. the retained base is a no-op (zero fetch calls
+- [x] `commitTree()` with no actual changes vs. the retained base is a no-op (zero fetch calls
       beyond what `gitBlobSha` needs, which is none — it's local compute).
-- [ ] `commitTree()` correctly identifies added, changed, and deleted paths against the retained
+- [x] `commitTree()` correctly identifies added, changed, and deleted paths against the retained
       base and only sends those to `commitFiles`.
-- [ ] `listContents` emits the synthetic "Open as SRS repository" entry only for directories
+- [x] `listContents` emits the synthetic "Open as SRS repository" entry only for directories
       containing `manifest.json`; the raw `manifest.json` file entry itself is excluded from the
       returned list; existing `.srsj`/`.json`/folder listing behaviour is otherwise unaffected.
-- [ ] `GitHubDocumentHandle.kind === "text"` for `.srsj`; existing single-file tests unaffected.
-- [ ] `isGitBranchAware(treeHandle)` returns `true` for a `GitHubRepoTreeHandle` instance (proves
+- [x] `GitHubDocumentHandle.kind === "text"` for `.srsj`; existing single-file tests unaffected.
+- [x] `isGitBranchAware(treeHandle)` returns `true` for a `GitHubRepoTreeHandle` instance (proves
       `saveToBranch`'s presence actually satisfies the duck-type check used at the `GitSaveModal`
       call site).
-- [ ] `e2e/cloud-storage.spec.ts` and `e2e/create-document.spec.ts` still pass with `kind` added to
+- [x] `e2e/cloud-storage.spec.ts` and `e2e/create-document.spec.ts` still pass with `kind` added to
       their fixtures (`npm run e2e`, this phase only — not full tree-mode e2e coverage yet).
-- [ ] `npm run typecheck`, `npm run lint`, `npm run build`, `npm test` pass.
+- [x] `npm run typecheck`, `npm run lint`, `npm run build`, `npm test` pass.
 
 #### Testing
 
@@ -460,7 +460,7 @@ Run the four commands above; mark checkboxes `[x]`; commit
 
 #### Tasks
 
-- [ ] `src/lib/srs-client.ts`:
+- [x] `src/lib/srs-client.ts`:
   ```ts
   export interface SrsRepositoryConstructor {
     load(srsj: string): SrsRepository;
@@ -470,11 +470,11 @@ Run the four commands above; mark checkboxes `[x]`; commit
   // on the SrsRepository instance interface:
   export_tree(): Record<string, Uint8Array>;
   ```
-- [ ] `export function loadRepoFromTree(files: Record<string, Uint8Array>): SrsRepository` —
+- [x] `export function loadRepoFromTree(files: Record<string, Uint8Array>): SrsRepository` —
       `requireWasm().load_tree(files)`, placed beside `loadRepoFromArchive` (same shape/pattern).
-- [ ] `export function exportTree(repo: SrsRepository): Record<string, Uint8Array>` —
+- [x] `export function exportTree(repo: SrsRepository): Record<string, Uint8Array>` —
       `repo.export_tree()`, placed beside `exportArchive`.
-- [ ] Run `npm run fetch-bindings` and check its output log names `srs-rust` release
+- [x] Run `npm run fetch-bindings` and check its output log names `srs-rust` release
       `v0.1.0-build.226` or later (it fetches `srs-bindings-web.tar.gz` from the latest srs-rust
       release via `scripts/ensure-bindings.mjs`, unchanged). No source changes are expected in
       that script — this is a verification step, not an implementation task — but it must be run
@@ -483,12 +483,12 @@ Run the four commands above; mark checkboxes `[x]`; commit
 
 #### Acceptance Criteria
 
-- [ ] `loadRepoFromTree(files)` on a fixture tree produces a repo whose `list_records()` matches
+- [x] `loadRepoFromTree(files)` on a fixture tree produces a repo whose `list_records()` matches
       the same fixture loaded via `loadRepo(srsj)` (cross-format equivalence).
-- [ ] `exportTree(loadRepoFromTree(files))` returns files byte-identical to the input for every
+- [x] `exportTree(loadRepoFromTree(files))` returns files byte-identical to the input for every
       untouched path (the "clean-git-diff guarantee" the WASM doc comment promises) —
       round-trip test.
-- [ ] `npm run typecheck`, `npm run lint`, `npm run build`, `npm test` pass with the real fetched
+- [x] `npm run typecheck`, `npm run lint`, `npm run build`, `npm test` pass with the real fetched
       bindings (not a stub).
 
 #### Testing
@@ -515,15 +515,15 @@ the `kind` dispatch replacing name-sniffing, not adding a parallel path).
 
 #### Tasks
 
-- [ ] `App.svelte` `loadDocument(handle)`: replace the `/\.srs$/i.test(handle.name)` dispatch
+- [x] `App.svelte` `loadDocument(handle)`: replace the `/\.srs$/i.test(handle.name)` dispatch
       (line 107) with a `switch (handle.kind)`:
       - `"text"` → existing `handle.read()` + `loadRepo(text)` path, unchanged.
       - `"bytes"` → existing `handle.readBytes()` + `loadRepoFromArchive(bytes)` path, unchanged.
       - `"tree"` → new: `(handle as RepoTreeAware).readTree()` + `loadRepoFromTree(files)`.
-- [ ] `App.svelte` `saveDirect()`: replace the line-242 `.srs` check with
+- [x] `App.svelte` `saveDirect()`: replace the line-242 `.srs` check with
       `activeDocument.kind === "bytes" && activeDocument.writeBytes` — same behaviour, sourced
       from the discriminant instead of a regex re-test of a name that's already known.
-- [ ] `App.svelte` `confirmGitSave(opts)` (defined at lines 272–301; the `saveToBranch` call to
+- [x] `App.svelte` `confirmGitSave(opts)` (defined at lines 272–301; the `saveToBranch` call to
       replace is at line 285): branch on `activeDocument.kind` before deciding what to export/send:
       - `"text"` → unchanged: `handle.saveToBranch(exportSrsj(repo), opts)`.
       - `"tree"` → new: `(handle as RepoTreeAware).commitTree(exportTree(repo), opts)`.
@@ -532,11 +532,11 @@ the `kind` dispatch replacing name-sniffing, not adding a parallel path).
         it explicitly (throw a clear "git save is not supported for binary documents yet" error)
         rather than silently falling through to the text path — this is the fix-in-passing for
         the latent corruption risk described in the issue.
-- [ ] `GitSaveModal` usage (lines 460-473 today) needs no prop changes — it's already
+- [x] `GitSaveModal` usage (lines 460-473 today) needs no prop changes — it's already
       content-format-agnostic (confirmed: no `.srsj`/tree-specific props). The `isGitBranchAware`
       guard at that call site continues to work unmodified since `GitHubRepoTreeHandle`
       structurally satisfies `GitBranchAware` too.
-- [ ] `SourceChooser.svelte` `chooseEntry(entry)`: add a branch for `entry.kind === "repository"`
+- [x] `SourceChooser.svelte` `chooseEntry(entry)`: add a branch for `entry.kind === "repository"`
       that calls `provider.openTree?.(entry)` then `onOpen(handle)` (same `onOpen` callback
       single-file entries already use — `App.svelte`'s `loadDocument` now handles `kind: "tree"`
       internally, so no new prop is needed on `SourceChooser`).
@@ -547,16 +547,16 @@ the `kind` dispatch replacing name-sniffing, not adding a parallel path).
 
 #### Acceptance Criteria
 
-- [ ] Existing single-file `.srsj`/`.srs`/Dropbox/Drive/local open+save flows behave identically
+- [x] Existing single-file `.srsj`/`.srs`/Dropbox/Drive/local open+save flows behave identically
       to before this change (no regression) — verified by the existing `tests/storage.test.ts`
       and `e2e/cloud-storage.spec.ts` suites passing unmodified in their pre-existing cases.
-- [ ] Choosing "Open as SRS repository" loads every file into the WASM repo and the governance UI
+- [x] Choosing "Open as SRS repository" loads every file into the WASM repo and the governance UI
       renders records from it.
-- [ ] Editing a record and saving via the git-save modal produces exactly one commit containing
+- [x] Editing a record and saving via the git-save modal produces exactly one commit containing
       only the changed files.
-- [ ] A stale-branch tree save (branch moved since read) surfaces `StorageConflictError` through
+- [x] A stale-branch tree save (branch moved since read) surfaces `StorageConflictError` through
       the same reload-and-retry UX the single-file path already has.
-- [ ] `npm run typecheck`, `npm run lint`, `npm run build`, `npm test` pass.
+- [x] `npm run typecheck`, `npm run lint`, `npm run build`, `npm test` pass.
 
 #### Testing
 
@@ -581,7 +581,7 @@ Git Data API primitives → WASM tree load/export → git-save modal → commit)
 
 #### Tasks
 
-- [ ] `e2e/fixtures/exploded/` — generated with the real `srs` CLI (verified during this plan's
+- [x] `e2e/fixtures/exploded/` — generated with the real `srs` CLI (verified during this plan's
       review — fixes Plan Reviewer finding 3, Stage 3 review): download
       `srs-x86_64-unknown-linux-gnu.tar.gz` from the srs-rust `v0.1.0-build.226` release (same
       release as the bindings), then, with the release's bundled `governance-seed.srsj`:
@@ -598,7 +598,7 @@ Git Data API primitives → WASM tree load/export → git-save modal → commit)
       requires internal consistency, not the full seed's breadth) — but do not hand-author the
       fixture from scratch; always start from this generated tree so its shape matches what
       `load_tree`/`export_tree` actually produce.
-- [ ] `e2e/cloud-storage.spec.ts`: extend the injected fake GitHub provider
+- [x] `e2e/cloud-storage.spec.ts`: extend the injected fake GitHub provider
       (`window.__SRS_STORAGE_PROVIDERS__`) with `list()` returning a folder containing
       `manifest.json` (triggering the synthetic entry) and an `openTree`/`readTree`/`commitTree`
       implementation backed by the new fixture's in-memory file map. Add tests: synthetic entry
@@ -607,15 +607,15 @@ Git Data API primitives → WASM tree load/export → git-save modal → commit)
       `files` argument contains only the edited path; a `commitTree` rejection (simulated
       `StorageConflictError`) surfaces via the same `git-save-error` testid the single-file
       conflict test already asserts on.
-- [ ] `tests/storage.test.ts` or the new `git-data.test.ts` (whichever already houses the
+- [x] `tests/storage.test.ts` or the new `git-data.test.ts` (whichever already houses the
       `SourceChooser`-adjacent expectations) — confirm the plan's Phase 2 "synthetic-entry test"
       commitment from the issue's item 4 is covered (may already be satisfied by Phase 2's
       `listContents` test; if so, this task is a no-op check, not new code).
 
 #### Acceptance Criteria
 
-- [ ] `npm run e2e` passes including the new exploded-repo scenarios.
-- [ ] The new e2e test asserts commit granularity (only changed paths sent), not just "a save
+- [x] `npm run e2e` passes including the new exploded-repo scenarios.
+- [x] The new e2e test asserts commit granularity (only changed paths sent), not just "a save
       happened" — this is the behaviour the whole feature exists to deliver.
 
 #### Testing
@@ -633,15 +633,15 @@ Run the commands above; mark checkboxes `[x]`; commit
 
 ## Final Acceptance
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm run build` succeeds
-- [ ] `npm test` passes
-- [ ] `npm run e2e` passes
-- [ ] WASM loads and `load_tree`/`export_tree` round-trip against a real fixture
-- [ ] Existing single-file GitHub/Dropbox/Drive/local flows show no regression
-- [ ] A tree-mode save produces exactly one commit containing only genuinely changed paths
-- [ ] Stale-branch tree saves surface `StorageConflictError` via the existing reload-and-retry UX
+- [x] `npm run typecheck` passes
+- [x] `npm run lint` passes
+- [x] `npm run build` succeeds
+- [x] `npm test` passes
+- [x] `npm run e2e` passes
+- [x] WASM loads and `load_tree`/`export_tree` round-trip against a real fixture
+- [x] Existing single-file GitHub/Dropbox/Drive/local flows show no regression
+- [x] A tree-mode save produces exactly one commit containing only genuinely changed paths
+- [x] Stale-branch tree saves surface `StorageConflictError` via the existing reload-and-retry UX
 
 ## Coordination Rules
 

@@ -1,6 +1,6 @@
 # ADR-016: Exploded-repo git tree storage via the GitHub Git Data API
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-07-22
 - **Issue:** [srs-web#246](https://github.com/the-greenman/srs-web/issues/246)
 - **Supersedes:** —
