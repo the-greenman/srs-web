@@ -5,7 +5,7 @@
 The OAuth token-exchange Worker (`worker/index.ts`) guards its `/api/oauth/github/token` endpoint
 by comparing the request `Origin` header against `APP_ORIGIN` (a static var in `wrangler.jsonc`).
 With `preview_urls: true`, every preview deployment gets a unique per-deployment URL, so sign-in
-always 403s with `forbidden_origin` on previews. This plan adds a `[env.preview]` configuration
+always 403s with `forbidden_origin` on previews. This plan adds a `"preview"` env block configuration
 block in `wrangler.jsonc` that points `APP_ORIGIN` + `GITHUB_REDIRECT_URI` at the **stable**
 workers.dev hostname for the preview environment (enabled via `workers_dev: true`), and updates the
 README to document the required operator steps (create a separate preview GitHub OAuth App, fill in
@@ -204,14 +204,14 @@ permanently disabled on previews.
   3. Register that URL as the Authorization callback URL in the preview GitHub OAuth App.
   4. Copy `.env.preview.example` to `.env.preview` (gitignored) and fill in the preview OAuth
      App's client ID and the stable redirect URI — Vite bakes these into the bundle and they
-     **must match** the `[env.preview]` vars in `wrangler.jsonc`.
+     **must match** the `"preview"` env vars in `wrangler.jsonc`.
   5. Set the preview secret: `wrangler secret put GITHUB_CLIENT_SECRET --env preview`.
   6. Deploy: `npm run deploy:preview` (`vite build --mode preview && wrangler deploy --env preview`).
      Plain `npm run deploy` always targets production — the `:preview` variant is required.
 
   If `GITHUB_CLIENT_SECRET` is not set for the preview environment, the Worker returns
   `{ "error": "server_misconfigured" }` (HTTP 500) — no secret is exposed. Arbitrary
-  per-deployment preview URLs (`preview_urls` disabled in `[env.preview]`) remain auth-disabled
+  per-deployment preview URLs (`preview_urls` disabled in the `"preview"` env block) remain auth-disabled
   by design; only the stable workers.dev env URL gets OAuth support. Dropbox and Google Drive
   OAuth remain disabled on preview unless separately registered with their provider consoles.
   ```
