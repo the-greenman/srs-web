@@ -12,10 +12,17 @@
 import { describe, expect, it, vi } from "vitest";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 import {
+  type AddAttachmentInput,
+  type AllowedLifecycleTransitionsResult,
+  type ContainerListFilter,
+  type DocumentViewListFilter,
+  type GetRecordAttachmentsInput,
+  type LinkAttachmentInput,
+  type MigrationSummary,
+  addAttachment,
   addContainerMember,
   applyMigration,
   availableMigrations,
-  addAttachment,
   containersForInstance,
   createGovernanceDocument,
   createRelation,
@@ -38,13 +45,6 @@ import {
   scaffoldGovernanceDocument,
   transitionRecord,
   typeSchema,
-  type AddAttachmentInput,
-  type AllowedLifecycleTransitionsResult,
-  type ContainerListFilter,
-  type DocumentViewListFilter,
-  type MigrationSummary,
-  type GetRecordAttachmentsInput,
-  type LinkAttachmentInput,
 } from "../src/lib/srs-client.js";
 
 // ---------------------------------------------------------------------------
@@ -54,47 +54,132 @@ import {
 /** Build a minimal SrsRepository mock where every method throws unless overridden. */
 function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
   const base: SrsRepository = {
-    validate: () => { throw new Error("not mocked"); },
-    list_records: () => { throw new Error("not mocked"); },
-    get_record: () => { throw new Error("not mocked"); },
-    list_notes: () => { throw new Error("not mocked"); },
-    create_record: () => { throw new Error("not mocked"); },
-    update_record: () => { throw new Error("not mocked"); },
-    delete_record: () => { throw new Error("not mocked"); },
-    export_srsj: () => { throw new Error("not mocked"); },
-    list_relations: () => { throw new Error("not mocked"); },
-    create_relation: () => { throw new Error("not mocked"); },
-    delete_relation: () => { throw new Error("not mocked"); },
-    set_lifecycle_state: () => { throw new Error("not mocked"); },
-    transition_record: () => { throw new Error("not mocked"); },
-    blueprint_schema: () => { throw new Error("not mocked"); },
-    render_document_view: () => { throw new Error("not mocked"); },
-    list_containers: () => { throw new Error("not mocked"); },
-    get_container: () => { throw new Error("not mocked"); },
-    add_container_member: () => { throw new Error("not mocked"); },
-    remove_container_member: () => { throw new Error("not mocked"); },
-    containers_for_instance: () => { throw new Error("not mocked"); },
-    type_schema: () => { throw new Error("not mocked"); },
-    list_blueprints: () => { throw new Error("not mocked"); },
-    document_views_for_container: () => { throw new Error("not mocked"); },
-    list_document_views: () => { throw new Error("not mocked"); },
-    find: () => { throw new Error("not mocked"); },
-    list_terms: () => { throw new Error("not mocked"); },
-    create_record_successor: () => { throw new Error("not mocked"); },
-    resolve_container_view: () => { throw new Error("not mocked"); },
-    repository_navigation: () => { throw new Error("not mocked"); },
-    scaffold_new_repository: () => { throw new Error("not mocked"); },
-    get_allowed_lifecycle_transitions: () => { throw new Error("not mocked"); },
-    get_field_value_by_name: () => { throw new Error("not mocked"); },
-    available_migrations: () => { throw new Error("not mocked"); },
-    apply_migration: () => { throw new Error("not mocked"); },
-    export_archive: () => { throw new Error("not mocked"); },
-    order_by_precedes: () => { throw new Error("not mocked"); },
-    list_attachments: () => { throw new Error("not mocked"); },
-    add_attachment: () => { throw new Error("not mocked"); },
-    link_attachment: () => { throw new Error("not mocked"); },
-    get_attachment_bytes: () => { throw new Error("not mocked"); },
-    get_record_attachments: () => { throw new Error("not mocked"); },
+    validate: () => {
+      throw new Error("not mocked");
+    },
+    list_records: () => {
+      throw new Error("not mocked");
+    },
+    get_record: () => {
+      throw new Error("not mocked");
+    },
+    list_notes: () => {
+      throw new Error("not mocked");
+    },
+    create_record: () => {
+      throw new Error("not mocked");
+    },
+    update_record: () => {
+      throw new Error("not mocked");
+    },
+    delete_record: () => {
+      throw new Error("not mocked");
+    },
+    export_srsj: () => {
+      throw new Error("not mocked");
+    },
+    list_relations: () => {
+      throw new Error("not mocked");
+    },
+    create_relation: () => {
+      throw new Error("not mocked");
+    },
+    delete_relation: () => {
+      throw new Error("not mocked");
+    },
+    set_lifecycle_state: () => {
+      throw new Error("not mocked");
+    },
+    transition_record: () => {
+      throw new Error("not mocked");
+    },
+    blueprint_schema: () => {
+      throw new Error("not mocked");
+    },
+    render_document_view: () => {
+      throw new Error("not mocked");
+    },
+    list_containers: () => {
+      throw new Error("not mocked");
+    },
+    get_container: () => {
+      throw new Error("not mocked");
+    },
+    add_container_member: () => {
+      throw new Error("not mocked");
+    },
+    remove_container_member: () => {
+      throw new Error("not mocked");
+    },
+    containers_for_instance: () => {
+      throw new Error("not mocked");
+    },
+    type_schema: () => {
+      throw new Error("not mocked");
+    },
+    list_blueprints: () => {
+      throw new Error("not mocked");
+    },
+    document_views_for_container: () => {
+      throw new Error("not mocked");
+    },
+    list_document_views: () => {
+      throw new Error("not mocked");
+    },
+    find: () => {
+      throw new Error("not mocked");
+    },
+    list_terms: () => {
+      throw new Error("not mocked");
+    },
+    create_record_successor: () => {
+      throw new Error("not mocked");
+    },
+    resolve_container_view: () => {
+      throw new Error("not mocked");
+    },
+    repository_navigation: () => {
+      throw new Error("not mocked");
+    },
+    scaffold_new_repository: () => {
+      throw new Error("not mocked");
+    },
+    get_allowed_lifecycle_transitions: () => {
+      throw new Error("not mocked");
+    },
+    get_field_value_by_name: () => {
+      throw new Error("not mocked");
+    },
+    available_migrations: () => {
+      throw new Error("not mocked");
+    },
+    apply_migration: () => {
+      throw new Error("not mocked");
+    },
+    export_archive: () => {
+      throw new Error("not mocked");
+    },
+    export_tree: () => {
+      throw new Error("not mocked");
+    },
+    order_by_precedes: () => {
+      throw new Error("not mocked");
+    },
+    list_attachments: () => {
+      throw new Error("not mocked");
+    },
+    add_attachment: () => {
+      throw new Error("not mocked");
+    },
+    link_attachment: () => {
+      throw new Error("not mocked");
+    },
+    get_attachment_bytes: () => {
+      throw new Error("not mocked");
+    },
+    get_record_attachments: () => {
+      throw new Error("not mocked");
+    },
   };
   return { ...base, ...overrides };
 }
@@ -162,7 +247,11 @@ describe("typeSchema", () => {
   });
 
   it("propagates WASM throw when the type cannot be resolved", () => {
-    const repo = mockRepo({ type_schema: () => { throw new Error("type not found"); } });
+    const repo = mockRepo({
+      type_schema: () => {
+        throw new Error("type not found");
+      },
+    });
     expect(() => typeSchema(repo, "nonexistent-type")).toThrow("type not found");
   });
 });
@@ -315,7 +404,7 @@ describe("listDocumentViews", () => {
 
   it("exposes rootTypeRefs when present on a view", () => {
     const repo = mockRepo({
-      list_document_views: () => ([
+      list_document_views: () => [
         {
           id: "dv-002",
           namespace: "com.test",
@@ -325,7 +414,7 @@ describe("listDocumentViews", () => {
           containerType: "typed-container",
           rootTypeRefs: [{ typeId: "type-abc", typeVersion: 2 }],
         },
-      ]),
+      ],
     });
 
     const result = listDocumentViews(repo);
@@ -336,7 +425,11 @@ describe("listDocumentViews", () => {
   });
 
   it("propagates WASM throw when the binding fails", () => {
-    const repo = mockRepo({ list_document_views: () => { throw new Error("wasm error"); } });
+    const repo = mockRepo({
+      list_document_views: () => {
+        throw new Error("wasm error");
+      },
+    });
     expect(() => listDocumentViews(repo)).toThrow("wasm error");
   });
 
@@ -417,9 +510,13 @@ describe("addContainerMember", () => {
 
   it("propagates WASM throw when the container does not exist", () => {
     const repo = mockRepo({
-      add_container_member: () => { throw new Error("container not found"); },
+      add_container_member: () => {
+        throw new Error("container not found");
+      },
     });
-    expect(() => addContainerMember(repo, "nonexistent", "inst-abc")).toThrow("container not found");
+    expect(() => addContainerMember(repo, "nonexistent", "inst-abc")).toThrow(
+      "container not found"
+    );
   });
 
   it("returns an empty array when the container starts empty (idempotent first add)", () => {
@@ -437,7 +534,13 @@ describe("listRecords", () => {
   const baseInner = { instanceId: "r1", typeId: "t1", typeVersion: 1, fieldValues: [], tags: [] };
 
   it("populates displayLabel from the RecordSummary wrapper and propagates inner record fields", () => {
-    const innerRecord = { instanceId: "r1", typeId: "t1", typeVersion: 1, fieldValues: [{ fieldId: "f1", value: "hello" }], tags: [] };
+    const innerRecord = {
+      instanceId: "r1",
+      typeId: "t1",
+      typeVersion: 1,
+      fieldValues: [{ fieldId: "f1", value: "hello" }],
+      tags: [],
+    };
     const summaries = [{ instanceId: "r1", displayLabel: "My Label", record: innerRecord }];
     const repo = mockRepo({ list_records: () => summaries });
 
@@ -454,7 +557,13 @@ describe("listRecords", () => {
   it("accepts display_label snake_case (defensive dual-lookup, consistent with normalizeRecord convention)", () => {
     // RecordSummary uses #[serde(rename_all = "camelCase")] so real WASM always emits displayLabel.
     // The snake_case branch exists defensively, consistent with the dual-lookup pattern in normalizeRecord.
-    const summaries = [{ instanceId: "r2", display_label: "Snake Label", record: { ...baseInner, instanceId: "r2" } }];
+    const summaries = [
+      {
+        instanceId: "r2",
+        display_label: "Snake Label",
+        record: { ...baseInner, instanceId: "r2" },
+      },
+    ];
     const repo = mockRepo({ list_records: () => summaries });
 
     const result = listRecords(repo, {});
@@ -480,7 +589,9 @@ describe("listRecords", () => {
     listRecords(repo, { typeNamespace: "com.example", typeName: "decision" });
 
     expect(spy).toHaveBeenCalledOnce();
-    expect(spy).toHaveBeenCalledWith(JSON.stringify({ typeNamespace: "com.example", typeName: "decision" }));
+    expect(spy).toHaveBeenCalledWith(
+      JSON.stringify({ typeNamespace: "com.example", typeName: "decision" })
+    );
   });
 });
 
@@ -533,7 +644,9 @@ describe("listRelations", () => {
   });
 
   it("accepts RelationSummary sourceId / targetId aliases", () => {
-    const raw = [{ relation_id: "rel-003", relation_type: "precedes", sourceId: "inst-e", targetId: "inst-f" }];
+    const raw = [
+      { relation_id: "rel-003", relation_type: "precedes", sourceId: "inst-e", targetId: "inst-f" },
+    ];
     const repo = mockRepo({ list_relations: () => raw });
 
     const result = listRelations(repo, {});
@@ -581,7 +694,11 @@ describe("createRelation", () => {
 
     expect(spy).toHaveBeenCalledOnce();
     expect(spy).toHaveBeenCalledWith(
-      JSON.stringify({ relationType: "supersedes", sourceInstanceId: "inst-src", targetInstanceId: "inst-tgt" })
+      JSON.stringify({
+        relationType: "supersedes",
+        sourceInstanceId: "inst-src",
+        targetInstanceId: "inst-tgt",
+      })
     );
     expect(result.relationId).toBe("rel-new-001");
     expect(result.relationType).toBe("supersedes");
@@ -611,9 +728,17 @@ describe("createRelation", () => {
   });
 
   it("propagates WASM throw when the relation cannot be created", () => {
-    const repo = mockRepo({ create_relation: () => { throw new Error("duplicate relation"); } });
+    const repo = mockRepo({
+      create_relation: () => {
+        throw new Error("duplicate relation");
+      },
+    });
     expect(() =>
-      createRelation(repo, { relationType: "supersedes", sourceInstanceId: "a", targetInstanceId: "b" })
+      createRelation(repo, {
+        relationType: "supersedes",
+        sourceInstanceId: "a",
+        targetInstanceId: "b",
+      })
     ).toThrow("duplicate relation");
   });
 });
@@ -634,7 +759,11 @@ describe("deleteRelation", () => {
   });
 
   it("propagates WASM throw when the relation ID does not exist", () => {
-    const repo = mockRepo({ delete_relation: () => { throw new Error("relation not found"); } });
+    const repo = mockRepo({
+      delete_relation: () => {
+        throw new Error("relation not found");
+      },
+    });
     expect(() => deleteRelation(repo, "nonexistent")).toThrow("relation not found");
   });
 });
@@ -718,7 +847,11 @@ describe("find", () => {
   });
 
   it("propagates WASM throw", () => {
-    const repo = mockRepo({ find: () => { throw new Error("find failed"); } });
+    const repo = mockRepo({
+      find: () => {
+        throw new Error("find failed");
+      },
+    });
     expect(() => find(repo, { contentMatch: "x" })).toThrow("find failed");
   });
 });
@@ -730,7 +863,13 @@ describe("find", () => {
 describe("listTerms", () => {
   it("calls list_terms with no arguments and returns normalised Term[]", () => {
     const rawTerms = [
-      { id: "term-001", label: "Risk", description: "A potential issue", aliases: ["hazard"], roles: ["governance"] },
+      {
+        id: "term-001",
+        label: "Risk",
+        description: "A potential issue",
+        aliases: ["hazard"],
+        roles: ["governance"],
+      },
       { id: "term-002", label: "Decision" },
     ];
     const spy = vi.fn().mockReturnValue(rawTerms);
@@ -765,7 +904,11 @@ describe("listTerms", () => {
   });
 
   it("propagates WASM throw", () => {
-    const repo = mockRepo({ list_terms: () => { throw new Error("terms failed"); } });
+    const repo = mockRepo({
+      list_terms: () => {
+        throw new Error("terms failed");
+      },
+    });
     expect(() => listTerms(repo)).toThrow("terms failed");
   });
 });
@@ -791,7 +934,13 @@ describe("resolveContainerView", () => {
   };
 
   it("calls resolve_container_view with containerId and null when viewId is omitted", () => {
-    const rawView = { containerId: "c1", members: [], columns: [], excludeLifecycleStates: [], diagnostics: [] };
+    const rawView = {
+      containerId: "c1",
+      members: [],
+      columns: [],
+      excludeLifecycleStates: [],
+      diagnostics: [],
+    };
     const spy = vi.fn().mockReturnValue(rawView);
     const repo = mockRepo({ resolve_container_view: spy });
 
@@ -802,7 +951,13 @@ describe("resolveContainerView", () => {
   });
 
   it("passes viewId when provided", () => {
-    const rawView = { containerId: "c1", members: [], columns: [], excludeLifecycleStates: [], diagnostics: [] };
+    const rawView = {
+      containerId: "c1",
+      members: [],
+      columns: [],
+      excludeLifecycleStates: [],
+      diagnostics: [],
+    };
     const spy = vi.fn().mockReturnValue(rawView);
     const repo = mockRepo({ resolve_container_view: spy });
 
@@ -938,7 +1093,13 @@ describe("resolveContainerView", () => {
   });
 
   it("sets root to undefined when absent from WASM response", () => {
-    const rawView = { containerId: "c1", members: [], columns: [], excludeLifecycleStates: [], diagnostics: [] };
+    const rawView = {
+      containerId: "c1",
+      members: [],
+      columns: [],
+      excludeLifecycleStates: [],
+      diagnostics: [],
+    };
     const repo = mockRepo({ resolve_container_view: () => rawView });
 
     const result = resolveContainerView(repo, "c1");
@@ -977,7 +1138,11 @@ describe("resolveContainerView", () => {
   });
 
   it("propagates WASM throw", () => {
-    const repo = mockRepo({ resolve_container_view: () => { throw new Error("container not found"); } });
+    const repo = mockRepo({
+      resolve_container_view: () => {
+        throw new Error("container not found");
+      },
+    });
     expect(() => resolveContainerView(repo, "missing")).toThrow("container not found");
   });
 });
@@ -1061,9 +1226,18 @@ describe("repositoryNavigation", () => {
   it("returns empty sections and diagnostic for pre-RFC-013 repo (no manifest.container)", () => {
     const rawNav = {
       rootContainerId: "",
-      identity: { instanceId: "", typeId: "", typeVersion: 0, typeNamespace: "", typeName: "", displayLabel: "" },
+      identity: {
+        instanceId: "",
+        typeId: "",
+        typeVersion: 0,
+        typeNamespace: "",
+        typeName: "",
+        displayLabel: "",
+      },
       sections: [],
-      diagnostics: ["repository-navigation: manifest.container is absent; repo predates RFC-013 root container (epic #95)"],
+      diagnostics: [
+        "repository-navigation: manifest.container is absent; repo predates RFC-013 root container (epic #95)",
+      ],
     };
     const repo = mockRepo({ repository_navigation: () => rawNav });
 
@@ -1089,7 +1263,11 @@ describe("repositoryNavigation", () => {
   });
 
   it("propagates WASM throw", () => {
-    const repo = mockRepo({ repository_navigation: () => { throw new Error("nav failed"); } });
+    const repo = mockRepo({
+      repository_navigation: () => {
+        throw new Error("nav failed");
+      },
+    });
     expect(() => repositoryNavigation(repo)).toThrow("nav failed");
   });
 });
@@ -1217,7 +1395,9 @@ describe("getAllowedLifecycleTransitions", () => {
   it("re-throws non-Error throws", () => {
     const repo = mockRepo({
       // eslint-disable-next-line @typescript-eslint/only-throw-error
-      get_allowed_lifecycle_transitions: () => { throw "raw string error"; },
+      get_allowed_lifecycle_transitions: () => {
+        throw "raw string error";
+      },
     });
     expect(() => getAllowedLifecycleTransitions(repo, "inst-4")).toThrow();
   });
@@ -1314,8 +1494,18 @@ describe("transitionRecord", () => {
 describe("availableMigrations", () => {
   it("calls available_migrations and returns normalised summaries (object status)", () => {
     const migrations: MigrationSummary[] = [
-      { id: "migrate-identity", title: "Migrate Identity", description: "Migrate Tier-0 identity to purpose record", status: { needed: true, alreadyApplied: false, notApplicable: false } },
-      { id: "repo-upgrade", title: "Upgrade Repository Paths", description: "Rename files to canonical slug-id8 form", status: { needed: false, alreadyApplied: true, notApplicable: false } },
+      {
+        id: "migrate-identity",
+        title: "Migrate Identity",
+        description: "Migrate Tier-0 identity to purpose record",
+        status: { needed: true, alreadyApplied: false, notApplicable: false },
+      },
+      {
+        id: "repo-upgrade",
+        title: "Upgrade Repository Paths",
+        description: "Rename files to canonical slug-id8 form",
+        status: { needed: false, alreadyApplied: true, notApplicable: false },
+      },
     ];
     const spy = vi.fn().mockReturnValue(migrations);
     const repo = mockRepo({ available_migrations: spy });

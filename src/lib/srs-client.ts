@@ -33,6 +33,9 @@ export interface SrsRepository {
   delete_record(instance_id: string): void;
   export_srsj(): string;
   export_archive(): Uint8Array;
+  /** Export the session as an exploded file tree (ADR-038): a JS object of
+   * `{ path: Uint8Array }`. Untouched files are byte-identical to what was loaded. */
+  export_tree(): Record<string, Uint8Array>;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; relations are untyped at this boundary
   list_relations(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`
@@ -105,6 +108,9 @@ export interface SrsRepository {
 export interface SrsRepositoryConstructor {
   load(srsj: string): SrsRepository;
   load_archive(bytes: Uint8Array): SrsRepository;
+  /** Load a repository from an exploded file tree (ADR-038). `files` maps
+   * repo-relative forward-slash paths to their `Uint8Array` contents. */
+  load_tree(files: Record<string, Uint8Array>): SrsRepository;
 }
 
 /** Subset of the validation report returned by `SrsRepository.validate()`. */
@@ -433,6 +439,24 @@ export function loadRepoFromArchive(bytes: Uint8Array): SrsRepository {
  */
 export function exportArchive(repo: SrsRepository): Uint8Array {
   return repo.export_archive();
+}
+
+/**
+ * Load a repository from an exploded file tree (ADR-038) — `files` maps
+ * repo-relative forward-slash paths to their `Uint8Array` contents, e.g. every
+ * blob of a fetched git tree. Throws if the WASM module has not been initialised.
+ */
+export function loadRepoFromTree(files: Record<string, Uint8Array>): SrsRepository {
+  return requireWasm().load_tree(files);
+}
+
+/**
+ * Export a repository as an exploded file tree (ADR-038): a `{ path: Uint8Array }`
+ * map. Files untouched since load are byte-identical to what was loaded — the
+ * clean-git-diff guarantee callers rely on for minimal tree-mode commits.
+ */
+export function exportTree(repo: SrsRepository): Record<string, Uint8Array> {
+  return repo.export_tree();
 }
 
 // ---------------------------------------------------------------------------
