@@ -534,6 +534,167 @@ describe("GitHub storage adapter", () => {
     });
   });
 
+  // ---------------------------------------------------------------------------
+  // Token-refresh paths (srs-web#163)
+  // ---------------------------------------------------------------------------
+
+  it("completeGitHubOAuthCallback forwards refresh_token to the opener", async () => {
+    const postMessageMock = vi.fn();
+    vi.stubGlobal("window", {
+      location: { href: "https://app.test/?code=code-abc&state=state-xyz", origin: "https://app.test" },
+      opener: { postMessage: postMessageMock },
+      close: vi.fn(),
+    });
+    vi.stubGlobal("sessionStorage", {
+      getItem: vi.fn().mockImplementation((key: string) => {
+        if (key === "srs.github.oauth.state") return "state-xyz";
+        if (key === "srs.github.oauth.verifier") return "verifier-abc";
+        return null;
+      }),
+      removeItem: vi.fn(),
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            access_token: "gha_new",
+            expires_in: 28800,
+            refresh_token: "ghr_new",
+            refresh_token_expires_in: 15897600,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        )
+      )
+    );
+
+    await expect(
+      completeGitHubOAuthCallback({ clientId: "c", redirectUri: "https://app.test/" })
+    ).resolves.toBe(true);
+
+    const [msg] = postMessageMock.mock.calls[0] as [Record<string, unknown>, string];
+    expect(msg.accessToken).toBe("gha_new");
+    expect(msg.refreshToken).toBe("ghr_new");
+    expect(msg.refreshTokenExpiresAt as number).toBeGreaterThan(Date.now());
+  });
+
+  describe("silent token refresh", () => {
+    function providerWithNearExpiryToken(): GitHubProvider {
+      const provider = new GitHubProvider({ clientId: "c", redirectUri: "https://app.test/" });
+      // biome-ignore lint/suspicious/noExplicitAny: test seam — pre-seed near-expiry token and valid refresh token
+      (provider as any).accessToken = "gha_old";
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      (provider as any).expiresAt = Date.now() + 10_000; // within the 30s near-expiry window
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      (provider as any).refreshToken = "ghr_rt";
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      (provider as any).refreshTokenExpiresAt = Date.now() + 1_000_000;
+      return provider;
+    }
+
+    it("refreshes silently when the access token is near expiry", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              access_token: "gha_new",
+              expires_in: 28800,
+              refresh_token: "ghr_new",
+              refresh_token_expires_in: 15897600,
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } }
+          )
+        )
+      );
+
+      const provider = providerWithNearExpiryToken();
+      await provider.authenticate();
+
+      // biome-ignore lint/suspicious/noExplicitAny: test seam — inspect private fields
+      expect((provider as any).accessToken).toBe("gha_new");
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      expect((provider as any).refreshToken).toBe("ghr_new");
+    });
+
+    it("falls back to popup when the refresh endpoint returns an error", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          new Response(JSON.stringify({ error: "bad_refresh_token" }), { status: 400 })
+        )
+      );
+      vi.stubGlobal("sessionStorage", {
+        getItem: vi.fn().mockReturnValue(null),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+      });
+      vi.stubGlobal("window", {
+        location: { origin: "https://app.test" },
+        open: vi.fn().mockReturnValue(null),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        clearInterval: vi.fn(),
+        setInterval: vi.fn().mockReturnValue(123),
+      });
+
+      const provider = providerWithNearExpiryToken();
+      await expect(provider.authenticate()).rejects.toThrow("popup was blocked");
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      expect((provider as any).refreshToken).toBeNull();
+    });
+
+    it("goes straight to popup when no refresh token is stored", async () => {
+      const fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
+      vi.stubGlobal("sessionStorage", {
+        getItem: vi.fn().mockReturnValue(null),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+      });
+      vi.stubGlobal("window", {
+        location: { origin: "https://app.test" },
+        open: vi.fn().mockReturnValue(null),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        clearInterval: vi.fn(),
+        setInterval: vi.fn().mockReturnValue(123),
+      });
+
+      const provider = new GitHubProvider({ clientId: "c", redirectUri: "https://app.test/" });
+      // biome-ignore lint/suspicious/noExplicitAny: test seam — near-expiry token, no refresh token
+      (provider as any).accessToken = "gha_old";
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      (provider as any).expiresAt = Date.now() + 10_000;
+
+      await expect(provider.authenticate()).rejects.toThrow("popup was blocked");
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("does not clear the refresh token on a network error during silent refresh", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("network error")));
+      vi.stubGlobal("sessionStorage", {
+        getItem: vi.fn().mockReturnValue(null),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+      });
+      vi.stubGlobal("window", {
+        location: { origin: "https://app.test" },
+        open: vi.fn().mockReturnValue(null),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        clearInterval: vi.fn(),
+        setInterval: vi.fn().mockReturnValue(123),
+      });
+
+      const provider = providerWithNearExpiryToken();
+      await expect(provider.authenticate()).rejects.toThrow("popup was blocked");
+      // TypeError (network failure) must NOT clear the refresh token.
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      expect((provider as any).refreshToken).toBe("ghr_rt");
+    });
+  });
+
   describe("GitHubRepoTreeHandle", () => {
     const treeLocation: GitDataLocation = {
       apiBase: "https://api.github.com",
