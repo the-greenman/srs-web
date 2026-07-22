@@ -6,20 +6,20 @@ import {
 } from "../src/lib/storage/dropbox.js";
 import { StorageConflictError } from "../src/lib/storage/errors.js";
 import {
+  type GitContentsLocation,
   decodeBase64,
   encodeBase64,
-  type GitContentsLocation,
 } from "../src/lib/storage/git-contents.js";
+import { type GitDataLocation, gitBlobSha } from "../src/lib/storage/git-data.js";
 import {
-  completeGitHubOAuthCallback,
   GitHubDocumentHandle,
   GitHubProvider,
+  GitHubRepoTreeHandle,
+  completeGitHubOAuthCallback,
   parseGitHubOAuthCallback,
 } from "../src/lib/storage/github.js";
-import {
-  GoogleDriveDocumentHandle,
-  GoogleDriveProvider,
-} from "../src/lib/storage/google-drive.js";
+import { GoogleDriveDocumentHandle, GoogleDriveProvider } from "../src/lib/storage/google-drive.js";
+import { isGitBranchAware } from "../src/lib/storage/index.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -273,7 +273,10 @@ describe("GitHub storage adapter", () => {
     // A Dropbox popup redirect also carries ?code&state; the GitHub handler must
     // ignore it (return false, no token exchange) so the right handler runs.
     vi.stubGlobal("window", {
-      location: { href: "http://localhost:5173/?code=abc&state=s1", origin: "http://localhost:5173" },
+      location: {
+        href: "http://localhost:5173/?code=abc&state=s1",
+        origin: "http://localhost:5173",
+      },
       opener: {},
       close: () => {},
     });
@@ -294,12 +297,14 @@ describe("GitHub storage adapter", () => {
 
   it("decodes base64 content and captures the blob SHA on read", async () => {
     const text = '{"srsVersion":"2.0-draft"}';
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({ content: encodeBase64(text), encoding: "base64", sha: "sha-1" }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      )
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ content: encodeBase64(text), encoding: "base64", sha: "sha-1" }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        )
+      );
     vi.stubGlobal("fetch", fetchMock);
     const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, null, () => "token");
 
@@ -389,7 +394,10 @@ describe("GitHub storage adapter", () => {
 
   it("saveToBranch creates a new branch, writes to it, and rebinds the handle", async () => {
     const json = (body: unknown, status = 200) =>
-      new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { "Content-Type": "application/json" },
+      });
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(json({ object: { sha: "commit-1" } })) // GET source head ref
@@ -412,7 +420,10 @@ describe("GitHub storage adapter", () => {
 
   it("saveToBranch on an existing branch uses that branch's SHA, not the source's", async () => {
     const json = (body: unknown, status = 200) =>
-      new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { "Content-Type": "application/json" },
+      });
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(json({ object: { sha: "commit-1" } })) // GET source head ref
@@ -464,5 +475,224 @@ describe("GitHub storage adapter", () => {
     const err = await handle.write("{}", "sha-1").catch((e) => e);
     expect(err).not.toBeInstanceOf(StorageConflictError);
     expect(String(err)).toMatch(/Branch name is invalid/);
+  });
+
+  it("kind is 'text' for a .srsj handle", () => {
+    const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, "sha-1", () => "token");
+    expect(handle.kind).toBe("text");
+  });
+
+  describe("listContents synthetic 'Open as SRS repository' entry", () => {
+    function json(body: unknown, status = 200): Response {
+      return new Response(JSON.stringify(body), {
+        status,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    it("prepends the synthetic entry and excludes manifest.json when present", async () => {
+      const provider = new GitHubProvider({ clientId: "c", redirectUri: "https://app.test/" });
+      // biome-ignore lint/suspicious/noExplicitAny: test seam — skip the OAuth popup
+      (provider as any).accessToken = "token";
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      (provider as any).expiresAt = Date.now() + 3_600_000;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          json([
+            { name: "manifest.json", path: "governance/manifest.json", sha: "sha-m", type: "file" },
+            { name: "package", path: "governance/package", sha: "sha-p", type: "dir" },
+            { name: "notes.srsj", path: "governance/notes.srsj", sha: "sha-n", type: "file" },
+          ])
+        )
+      );
+
+      const entries = await provider.list("octo/gov:main:governance");
+      expect(entries[0]).toMatchObject({ kind: "repository", name: "Open as SRS repository" });
+      expect(entries.some((e) => e.name === "manifest.json")).toBe(false);
+      expect(entries.some((e) => e.name === "package")).toBe(true);
+      expect(entries.some((e) => e.name === "notes.srsj")).toBe(true);
+    });
+
+    it("does not add the synthetic entry when manifest.json is absent", async () => {
+      const provider = new GitHubProvider({ clientId: "c", redirectUri: "https://app.test/" });
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      (provider as any).accessToken = "token";
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      (provider as any).expiresAt = Date.now() + 3_600_000;
+      vi.stubGlobal(
+        "fetch",
+        vi
+          .fn()
+          .mockResolvedValue(
+            json([{ name: "repo.srsj", path: "governance/repo.srsj", sha: "sha-1", type: "file" }])
+          )
+      );
+
+      const entries = await provider.list("octo/gov:main:governance");
+      expect(entries.some((e) => e.kind === "repository")).toBe(false);
+    });
+  });
+
+  describe("GitHubRepoTreeHandle", () => {
+    const treeLocation: GitDataLocation = {
+      apiBase: "https://api.github.com",
+      owner: "octo",
+      repo: "gov",
+      branch: "main",
+      dir: "governance",
+    };
+
+    function json(body: unknown, status = 200): Response {
+      return new Response(JSON.stringify(body), {
+        status,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    it("kind is 'tree'", () => {
+      const handle = new GitHubRepoTreeHandle("id:1", "gov", treeLocation, () => "token");
+      expect(handle.kind).toBe("tree");
+    });
+
+    it("satisfies isGitBranchAware() so the Git Save modal opens for tree handles", () => {
+      const handle = new GitHubRepoTreeHandle("id:1", "gov", treeLocation, () => "token");
+      expect(isGitBranchAware(handle)).toBe(true);
+    });
+
+    it("readTree() round-trips fixture blob content into a path -> bytes map", async () => {
+      const manifestBytes = new TextEncoder().encode('{"v":1}');
+      const manifestB64 = btoa(String.fromCharCode(...manifestBytes));
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(json({ object: { sha: "commit-1" } })) // ref
+        .mockResolvedValueOnce(json({ tree: { sha: "tree-root" } })) // commit
+        .mockResolvedValueOnce(
+          json({
+            sha: "tree-root",
+            tree: [
+              { path: "governance", mode: "040000", type: "tree", sha: "sha-governance" },
+              {
+                path: "governance/manifest.json",
+                mode: "100644",
+                type: "blob",
+                sha: "sha-manifest",
+              },
+            ],
+          })
+        ) // recursive tree
+        .mockResolvedValueOnce(json({ content: manifestB64, encoding: "base64" })); // blob
+      vi.stubGlobal("fetch", fetchMock);
+
+      const handle = new GitHubRepoTreeHandle("id:1", "gov", treeLocation, () => "token");
+      const files = await handle.readTree();
+      expect(Array.from(files["manifest.json"])).toEqual(Array.from(manifestBytes));
+      expect(handle.revision).toBe("commit-1");
+    });
+
+    it("commitTree() is a no-op when nothing changed", async () => {
+      const bytes = new TextEncoder().encode('{"v":1}');
+      const b64 = btoa(String.fromCharCode(...bytes));
+      // The base entry's sha must be the *real* git blob sha of `bytes`, or the diff
+      // (which compares against the real hash) will always see it as "changed".
+      const realSha = await gitBlobSha(bytes);
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(json({ object: { sha: "commit-1" } }))
+        .mockResolvedValueOnce(json({ tree: { sha: "tree-root" } }))
+        .mockResolvedValueOnce(
+          json({
+            sha: "tree-root",
+            tree: [
+              { path: "governance", mode: "040000", type: "tree", sha: "sha-governance" },
+              {
+                path: "governance/manifest.json",
+                mode: "100644",
+                type: "blob",
+                sha: realSha,
+              },
+            ],
+          })
+        )
+        .mockResolvedValueOnce(json({ content: b64, encoding: "base64" }));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const handle = new GitHubRepoTreeHandle("id:1", "gov", treeLocation, () => "token");
+      const files = await handle.readTree();
+      const callsBeforeCommit = fetchMock.mock.calls.length;
+
+      const result = await handle.commitTree(files, { branch: "main" });
+      expect(result.revision).toBe("commit-1");
+      // No additional network calls — the diff found nothing changed.
+      expect(fetchMock.mock.calls.length).toBe(callsBeforeCommit);
+    });
+
+    it("commitTree() sends only the changed path", async () => {
+      const bytes = new TextEncoder().encode('{"v":1}');
+      const b64 = btoa(String.fromCharCode(...bytes));
+      const emptyB64 = "";
+      // Base shas must be the *real* git blob sha of their content so the diff correctly
+      // sees "unchanged.json" as unchanged and ".srs/.gitkeep" as already present.
+      const realSha = await gitBlobSha(bytes);
+      const emptySha = await gitBlobSha(new Uint8Array(0));
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(json({ object: { sha: "commit-1" } }))
+        .mockResolvedValueOnce(json({ tree: { sha: "tree-root" } }))
+        .mockResolvedValueOnce(
+          json({
+            sha: "tree-root",
+            tree: [
+              { path: "governance", mode: "040000", type: "tree", sha: "sha-governance" },
+              {
+                path: "governance/manifest.json",
+                mode: "100644",
+                type: "blob",
+                sha: realSha,
+              },
+              {
+                path: "governance/unchanged.json",
+                mode: "100644",
+                type: "blob",
+                sha: realSha,
+              },
+              // A pre-existing .srs/ dir suppresses the auto .gitkeep insertion below,
+              // so the assertion can check for exactly one changed path.
+              { path: "governance/.srs", mode: "040000", type: "tree", sha: "sha-srs-dir" },
+              {
+                path: "governance/.srs/.gitkeep",
+                mode: "100644",
+                type: "blob",
+                sha: emptySha,
+              },
+            ],
+          })
+        )
+        .mockResolvedValueOnce(json({ content: b64, encoding: "base64" }))
+        .mockResolvedValueOnce(json({ content: b64, encoding: "base64" }))
+        .mockResolvedValueOnce(json({ content: emptyB64, encoding: "base64" }))
+        // commitFiles: subtree, root splice, commit, ref patch
+        .mockResolvedValueOnce(json({ sha: "new-subtree" }))
+        .mockResolvedValueOnce(json({ sha: "new-root" }))
+        .mockResolvedValueOnce(json({ sha: "new-commit" }))
+        .mockResolvedValueOnce(json({}));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const handle = new GitHubRepoTreeHandle("id:1", "gov", treeLocation, () => "token");
+      const files = await handle.readTree();
+      files["manifest.json"] = new TextEncoder().encode('{"v":2}');
+
+      const result = await handle.commitTree(files, { branch: "main" });
+      expect(result.revision).toBe("new-commit");
+
+      const subtreeCallIndex = fetchMock.mock.calls.findIndex((call) => {
+        const init = call[1] as RequestInit | undefined;
+        return init?.method === "POST" && String(call[0]).endsWith("/git/trees");
+      });
+      const subtreeBody = JSON.parse(
+        (fetchMock.mock.calls[subtreeCallIndex][1] as RequestInit).body as string
+      ) as { tree: Array<{ path: string }> };
+      expect(subtreeBody.tree.map((e) => e.path)).toEqual(["manifest.json"]);
+    });
   });
 });

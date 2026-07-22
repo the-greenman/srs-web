@@ -111,6 +111,15 @@
       });
       return;
     }
+    if (entry.kind === "repository") {
+      void run(id, async () => {
+        const handle = await provider.openTree?.(entry);
+        if (!handle) return;
+        closeBrowser();
+        await onOpen(handle);
+      });
+      return;
+    }
     void run(id, async () => {
       const handle = await provider.open(entry);
       closeBrowser();
@@ -223,7 +232,7 @@
         {/if}
         {#each visibleEntries ?? [] as entry (entry.id)}
           <button class="cloud-browser__entry" onclick={() => chooseEntry(entry)}>
-            <span class="cloud-browser__kind">{entry.kind === "folder" ? "Folder" : entry.name.toLowerCase().endsWith(".srs") ? "SRS" : "SRSJ"}</span>
+            <span class="cloud-browser__kind">{entry.kind === "folder" ? "Folder" : entry.kind === "repository" ? "Repo" : entry.name.toLowerCase().endsWith(".srs") ? "SRS" : "SRSJ"}</span>
             <span>{entry.name}</span>
           </button>
         {:else}

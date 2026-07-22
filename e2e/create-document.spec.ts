@@ -1,6 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { expect, test, type Download, type Page } from "@playwright/test";
+import { type Download, type Page, expect, test } from "@playwright/test";
 
 /**
  * create-document.spec.ts — "Create new governance document" onboarding (#141).
@@ -119,6 +119,7 @@ test.describe("Create new governance document (#141)", () => {
         id: `${provider}-created`,
         name,
         revision: "revision-1",
+        kind: "text",
         capabilities: { read: true, write: true },
         read: async () => "",
         write: async () => ({ revision: "revision-2" }),

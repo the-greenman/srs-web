@@ -134,6 +134,7 @@ export async function completeDropboxOAuthCallback(config: DropboxConfig): Promi
 export class DropboxDocumentHandle implements DocumentHandle {
   readonly provider = "dropbox" as const;
   readonly capabilities = { read: true, write: true } as const;
+  readonly kind: "text" | "bytes";
   private currentRevision: string | null;
 
   constructor(
@@ -144,6 +145,7 @@ export class DropboxDocumentHandle implements DocumentHandle {
     private readonly token: () => string
   ) {
     this.currentRevision = revision;
+    this.kind = /\.srs$/i.test(name) ? "bytes" : "text";
   }
 
   get revision(): string | null {

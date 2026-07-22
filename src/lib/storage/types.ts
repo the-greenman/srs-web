@@ -15,6 +15,14 @@ export interface DocumentHandle {
   readonly name: string;
   readonly capabilities: DocumentCapabilities;
   readonly revision: string | null;
+  /**
+   * How this document's content is shaped, replacing `.srs`-suffix name-sniffing as the
+   * load/save dispatch key (ADR-016). "text" — a `.srsj` JSON string via read()/write().
+   * "bytes" — a `.srs` binary archive via readBytes()/writeBytes(). "tree" — an exploded
+   * multi-file SRS repository via RepoTreeAware's readTree()/commitTree(); read()/write()
+   * are not meaningful on a "tree" handle.
+   */
+  readonly kind: "text" | "bytes" | "tree";
   read(): Promise<string>;
   write(content: string, expectedRevision?: string | null): Promise<WriteResult>;
   /** Read the document as raw bytes. Available on all cloud handles; used for .srs archives. */
@@ -38,6 +46,18 @@ export interface GitBranchAware {
   ): Promise<WriteResult>;
 }
 
+/**
+ * A DocumentHandle (`kind: "tree"`) backed by a whole exploded (multi-file) SRS repository,
+ * read/committed as a unit rather than one file at a time (ADR-016).
+ */
+export interface RepoTreeAware {
+  readTree(): Promise<Record<string, Uint8Array>>;
+  commitTree(
+    files: Record<string, Uint8Array>,
+    opts: { branch: string; createFromCurrent?: boolean; message?: string }
+  ): Promise<WriteResult>;
+}
+
 export interface OpenDocument {
   handle: DocumentHandle;
   text: string;
@@ -46,7 +66,7 @@ export interface OpenDocument {
 export interface StorageEntry {
   id: string;
   name: string;
-  kind: "file" | "folder";
+  kind: "file" | "folder" | "repository";
   path?: string;
   revision?: string | null;
 }
@@ -63,4 +83,7 @@ export interface StorageProvider {
    * writable handle. Optional — absent on providers that cannot create files.
    * Accepts either a string (for .srsj JSON) or Uint8Array bytes (for .srs archives). */
   create?(name: string, content: string | Uint8Array): Promise<DocumentHandle>;
+  /** Open a `kind: "repository"` entry as a tree-mode handle. Optional — only providers
+   * that support exploded-repo mode (currently GitHub) implement this. */
+  openTree?(entry: StorageEntry): Promise<DocumentHandle & RepoTreeAware>;
 }
