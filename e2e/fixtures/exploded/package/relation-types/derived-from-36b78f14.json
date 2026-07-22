@@ -1,0 +1,10 @@
+{
+  "category": "derivation",
+  "createdAt": "2026-05-31T00:00:00Z",
+  "description": "Target was derived or adapted from source.",
+  "id": "36b78f14-c6dc-46c4-845d-ed107528a88c",
+  "key": "derived-from",
+  "label": "Derived From",
+  "namespace": "governance",
+  "version": 1
+}

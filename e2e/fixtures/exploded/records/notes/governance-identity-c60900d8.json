@@ -1,0 +1,11 @@
+{
+  "$schema": "https://srs.semanticops.com/schema/2.0/note.json",
+  "instanceId": "c60900d8-6b19-4f7a-96bd-6b6cd6ad72e6",
+  "sections": [
+    {
+      "content": "Root identity note for this repository.",
+      "name": "overview"
+    }
+  ],
+  "title": "Governance Identity"
+}
