@@ -19,8 +19,10 @@
     initWasm,
     loadRepo,
     loadRepoFromArchive,
+    loadRepoFromTree,
     exportSrsj,
     exportArchive,
+    exportTree,
     createGovernanceDocument,
   } from "$lib/srs-client.js";
   import type { SrsRepository } from "$lib/srs-client.js";
@@ -40,6 +42,7 @@
     isGitBranchAware,
     StorageError,
     type DocumentHandle,
+    type RepoTreeAware,
     type StorageProviderId,
   } from "$lib/storage/index.js";
 
@@ -104,13 +107,22 @@
   async function loadDocument(handle: DocumentHandle): Promise<void> {
     errorMsg = null;
     try {
-      if (/\.srs$/i.test(handle.name)) {
-        if (!handle.readBytes) throw new Error("This storage provider does not support binary archive reads.");
-        const bytes = await handle.readBytes();
-        repo = loadRepoFromArchive(bytes);
-      } else {
-        const text = await handle.read();
-        repo = loadRepo(text);
+      switch (handle.kind) {
+        case "bytes": {
+          if (!handle.readBytes) throw new Error("This storage provider does not support binary archive reads.");
+          const bytes = await handle.readBytes();
+          repo = loadRepoFromArchive(bytes);
+          break;
+        }
+        case "tree": {
+          const files = await (handle as DocumentHandle & RepoTreeAware).readTree();
+          repo = loadRepoFromTree(files);
+          break;
+        }
+        default: {
+          const text = await handle.read();
+          repo = loadRepo(text);
+        }
       }
       activeDocument = handle;
       repoName = handle.name.replace(/\.(srsj|json|srs)$/i, "");
@@ -239,7 +251,7 @@
     saving = true;
     saveMessage = null;
     try {
-      if (/\.srs$/i.test(activeDocument.name) && activeDocument.writeBytes) {
+      if (activeDocument.kind === "bytes" && activeDocument.writeBytes) {
         await activeDocument.writeBytes(exportArchive(repo), activeDocument.revision);
         saveMessage = "Saved.";
       } else {
@@ -282,11 +294,27 @@
       const branch = opts.mode === "new" ? opts.newBranch : handle.branch;
       // "new" only truly branches when the name differs from the current branch.
       const branchedOff = opts.mode === "new" && branch !== handle.branch;
-      await handle.saveToBranch(exportSrsj(repo), {
+      const branchOpts = {
         branch,
         createFromCurrent: opts.mode === "new",
         message: opts.message,
-      });
+      };
+      switch (handle.kind) {
+        case "text":
+          await handle.saveToBranch(exportSrsj(repo), branchOpts);
+          break;
+        case "tree":
+          await (handle as unknown as DocumentHandle & RepoTreeAware).commitTree(
+            exportTree(repo),
+            branchOpts
+          );
+          break;
+        default:
+          // Not reachable today (no "bytes" handle is also GitBranchAware — GitHub git
+          // saves stay "text"-only per ADR-015), but guard explicitly rather than
+          // silently falling through and corrupting a binary document.
+          throw new Error("Git save is not supported for this document type yet.");
+      }
       saveMessage = branchedOff
         ? `Saved to new branch “${branch}”. Open a pull request on GitHub to merge it.`
         : "Saved.";
