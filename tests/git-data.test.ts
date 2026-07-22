@@ -330,6 +330,45 @@ describe("git-data: commitFiles", () => {
     });
   });
 
+  it("splices correctly for a multi-level nested dir (docs/governance/tree)", async () => {
+    // Fixes Architecture Reviewer round-2 (Stage 7) finding 2: the single-entry
+    // base_tree override technique is well-documented for blob entries at a
+    // multi-segment path, but this plan relies on the same automatic
+    // intermediate-tree-creation behavior for a tree-type override entry — assert
+    // the request we actually send targets the full nested path, not just one segment.
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValueOnce(jsonResponse({ sha: "new-nested-subtree" })); // subtree
+    fetchMock.mockResolvedValueOnce(jsonResponse({ sha: "new-root" })); // root splice
+    fetchMock.mockResolvedValueOnce(jsonResponse({ sha: "new-commit" })); // commit
+    fetchMock.mockResolvedValueOnce(jsonResponse({})); // ref patch
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await commitFiles(nestedLocation, "token", {
+      ...baseParams,
+      baseRootTreeSha: "tree-root",
+      baseSubtreeSha: "sha-nested-subtree",
+      files: { "manifest.json": new TextEncoder().encode("{}") },
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    const subtreeBody = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string) as {
+      base_tree: string;
+    };
+    expect(subtreeBody.base_tree).toBe("sha-nested-subtree");
+    const rootSpliceBody = JSON.parse(
+      (fetchMock.mock.calls[1][1] as RequestInit).body as string
+    ) as { base_tree: string; tree: Array<Record<string, unknown>> };
+    expect(rootSpliceBody.base_tree).toBe("tree-root");
+    expect(rootSpliceBody.tree).toEqual([
+      { path: "docs/governance/tree", mode: "040000", type: "tree", sha: "new-nested-subtree" },
+    ]);
+    expect(result).toEqual({
+      commitSha: "new-commit",
+      rootTreeSha: "new-root",
+      subtreeSha: "new-nested-subtree",
+    });
+  });
+
   it('does not splice when dir === "" — the new subtree IS the new root tree', async () => {
     const fetchMock = vi.fn();
     fetchMock.mockResolvedValueOnce(jsonResponse({ sha: "new-root" })); // subtree === root

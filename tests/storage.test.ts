@@ -694,5 +694,59 @@ describe("GitHub storage adapter", () => {
       ) as { tree: Array<{ path: string }> };
       expect(subtreeBody.tree.map((e) => e.path)).toEqual(["manifest.json"]);
     });
+
+    it("adds .srs/.gitkeep on the first real commit when .srs/ is entirely absent", async () => {
+      // Fixes Architecture Reviewer round-2 (Stage 7) finding 1: the shipped e2e fixture
+      // pre-seeds .srs/.gitkeep (needed for its own byte-identical round-trip assertion),
+      // which left the *positive* gitkeep-insertion trigger with no coverage anywhere.
+      // This base has no .srs/ path at all, matching the trigger's precondition exactly.
+      const bytes = new TextEncoder().encode('{"v":1}');
+      const b64 = btoa(String.fromCharCode(...bytes));
+      const realSha = await gitBlobSha(bytes);
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(json({ object: { sha: "commit-1" } }))
+        .mockResolvedValueOnce(json({ tree: { sha: "tree-root" } }))
+        .mockResolvedValueOnce(
+          json({
+            sha: "tree-root",
+            tree: [
+              { path: "governance", mode: "040000", type: "tree", sha: "sha-governance" },
+              {
+                path: "governance/manifest.json",
+                mode: "100644",
+                type: "blob",
+                sha: realSha,
+              },
+            ],
+          })
+        )
+        .mockResolvedValueOnce(json({ content: b64, encoding: "base64" }))
+        // commitFiles: subtree, root splice, commit, ref patch
+        .mockResolvedValueOnce(json({ sha: "new-subtree" }))
+        .mockResolvedValueOnce(json({ sha: "new-root" }))
+        .mockResolvedValueOnce(json({ sha: "new-commit" }))
+        .mockResolvedValueOnce(json({}));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const handle = new GitHubRepoTreeHandle("id:1", "gov", treeLocation, () => "token");
+      const files = await handle.readTree();
+      files["manifest.json"] = new TextEncoder().encode('{"v":2}'); // one real change, so a commit actually happens
+
+      await handle.commitTree(files, { branch: "main" });
+
+      const subtreeCallIndex = fetchMock.mock.calls.findIndex((call) => {
+        const init = call[1] as RequestInit | undefined;
+        return init?.method === "POST" && String(call[0]).endsWith("/git/trees");
+      });
+      const subtreeBody = JSON.parse(
+        (fetchMock.mock.calls[subtreeCallIndex][1] as RequestInit).body as string
+      ) as { tree: Array<{ path: string; content?: string }> };
+      const paths = subtreeBody.tree.map((e) => e.path);
+      expect(paths).toContain(".srs/.gitkeep");
+      expect(paths).toContain("manifest.json");
+      const gitkeepEntry = subtreeBody.tree.find((e) => e.path === ".srs/.gitkeep");
+      expect(gitkeepEntry?.content).toBe("");
+    });
   });
 });
