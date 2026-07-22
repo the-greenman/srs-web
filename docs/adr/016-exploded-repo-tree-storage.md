@@ -41,10 +41,12 @@ interface DocumentHandle {
 }
 ```
 
-Every existing handle sets `kind` once, at construction/open time, from the same extension check
-each provider already performs when opening a file (`/\.srs$/i.test(name) ? "bytes" : "text"`) —
-centralizing a check that was previously repeated at each call site into a single
-construction-time decision. `GitHubRepoTreeHandle` (new) is always `kind: "tree"`.
+Every existing handle sets `kind` once, at construction/open time, from the same test
+`App.svelte` currently applies (`/\.srs$/i.test(name) ? "bytes" : "text"`) — this is new logic
+pushed into each provider for the first time (today the check lives solely in `App.svelte`), not
+a consolidation of an existing per-provider check; the payoff is that after this change the check
+is made once per handle instead of re-tested at every call site. `GitHubRepoTreeHandle` (new) is
+always `kind: "tree"`.
 
 This differs from ADR-015's approach (optional `readBytes?`/`writeBytes?` capability methods) —
 ADR-015's problem was binary-vs-text with a two-way choice best expressed as an *optional*
@@ -65,13 +67,18 @@ interface RepoTreeAware {
 }
 ```
 
-`GitHubRepoTreeHandle implements DocumentHandle, GitBranchAware, RepoTreeAware` — it structurally
-satisfies `GitBranchAware` too, so it reuses the existing `GitSaveModal` / `isGitBranchAware()`
-guard in `App.svelte` unmodified. `App.svelte`'s `confirmGitSave` branches on `handle.kind` to
-choose `saveToBranch(exportSrsj(repo), ...)` (text) vs `commitTree(exportTree(repo), ...)` (tree),
-and explicitly rejects the `"bytes"` case rather than falling through — this is the fix for the
-latent corruption risk described above, shipped in the same change that first makes a non-text
-`GitBranchAware` handle reachable.
+`GitHubRepoTreeHandle implements DocumentHandle, GitBranchAware, RepoTreeAware` and therefore
+implements a `saveToBranch` method too — a thin method that exists solely so
+`isGitBranchAware()`'s runtime duck-type check (`storage/index.ts`) finds it and the existing
+`GitSaveModal` call site in `App.svelte` opens for tree handles without modification; it is never
+actually invoked, because `App.svelte`'s `confirmGitSave` branches on `handle.kind` directly and
+calls `commitTree(exportTree(repo), ...)` for the `"tree"` case instead (text handles still go
+through `saveToBranch(exportSrsj(repo), ...)` as before). `confirmGitSave` explicitly rejects the
+`"bytes"` case rather than falling through — this is the fix for the latent corruption risk
+described above, shipped in the same change that first makes a non-text `GitBranchAware` handle
+reachable. (An earlier draft of this ADR omitted `saveToBranch` from `GitHubRepoTreeHandle`
+entirely, which would have made `isGitBranchAware()` return `false` for tree handles and the
+Git Save modal never open for them — caught in Stage 3 plan review.)
 
 **3. Git Data API primitives live in a new sibling module, `git-data.ts`**, not inside
 `git-contents.ts` — the two modules target different GitHub REST surfaces (Contents API vs Git
@@ -90,7 +97,21 @@ tree's recorded blob SHA for that path. This lets an unchanged path (including o
 before any network call, with no extra GitHub API round-trips — the comparison is entirely local
 compute against data already fetched by `readTree()`.
 
-**5. Conflict mapping:** a tree commit's conflict signal is the ref-update PATCH returning `422`
+**5. Every tree handle is scoped to a `dir` within the repo, never the whole branch.** The
+"Open as SRS repository" entry can appear at any directory depth (wherever `manifest.json` is
+found — the existing single-file browse UX already supports opening from any depth, so tree mode
+must too). `GitDataLocation`/`RepoTreeBase` carry a `dir` field; `readBranchBase` resolves `dir`'s
+subtree SHA from one recursive tree listing and returns only **dir-relative** paths; `commitTree`'s
+diff (and thus its "path in base but absent from the new files → deletion" inference) can
+therefore only ever see paths inside `dir`. Committing splices the rebuilt subtree back into the
+root tree via a single-entry `base_tree` override (`{ path: dir, mode: "040000", type: "tree",
+sha: newSubtreeSha }` against the root tree), rather than committing a flat full-branch tree —
+this is what guarantees paths outside `dir` are left byte-identical. (An earlier draft of this ADR
+and the accompanying plan treated the whole branch as the tree scope; this would have let a
+tree-mode save on a non-root-mounted repo infer and delete every file elsewhere in the branch —
+caught in Stage 3 plan review before any implementation existed.)
+
+**6. Conflict mapping:** a tree commit's conflict signal is the ref-update PATCH returning `422`
 with a "not a fast forward" message — mapped to the same `StorageConflictError` the single-file
 path already throws on a stale blob SHA, so `App.svelte`'s existing reload-and-retry UX
 (`saveErrorMessage`'s generic `e.code === "conflict"` check) needs no changes to handle it.
