@@ -211,11 +211,18 @@ test.describe("R1 release walkthrough (#54)", () => {
       expect(txtContent).not.toMatch(/^#{1,6}\s/m);
     });
 
-    await test.step("export the whole log", async () => {
-      const wholeLog = page.getByTestId("export-log-md");
-      if ((await wholeLog.count()) === 0) {
-        gaps.push("whole-log Markdown export not implemented (#44 / srs-web#138)");
-      }
+    await test.step("export the whole log (#44)", async () => {
+      // Shipped via renderDocumentView on the decision-deliberation view; the old
+      // gap-check here looked for a stale testid (export-log-md) and mis-reported
+      // the shipped feature as missing. Hard assertion now, matching gallery.spec.
+      // The log controls bar only renders on the log view — navigate back first.
+      await page.getByTestId("record-reading-back").click();
+      await expect(page.getByTestId("decision-log-view")).toBeVisible({ timeout: 3000 });
+      const [log] = await Promise.all([
+        page.waitForEvent("download"),
+        page.getByTestId("log-export-md").click(),
+      ]);
+      expect(await downloadText(log)).toContain("Meeting cadence");
     });
 
     // ------------------------------------------------------------------
