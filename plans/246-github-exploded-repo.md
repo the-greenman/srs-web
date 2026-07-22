@@ -166,8 +166,9 @@ ref-update conflict detection — entirely WASM-independent, fully unit-testable
   export async function gitBlobSha(bytes: Uint8Array): Promise<string>
 
   export interface CommitFilesParams {
-    branch: string;
-    dir: string;
+    // No branch/dir here (round-2 review nit) — commitFiles takes those from `location`
+    // exclusively, avoiding a divergent-value footgun; `location.branch` is what the ref
+    // PATCH targets, `location.dir` is what the subtree splice targets.
     baseCommitSha: string;
     baseRootTreeSha: string;
     baseSubtreeSha: string;
@@ -258,11 +259,17 @@ ref-update conflict detection — entirely WASM-independent, fully unit-testable
 #### Acceptance Criteria
 
 - [ ] `readBranchBase` returns the correct dir-relative base map for a fixture tree response, for
-      both `dir === ""` and a subdirectory-mounted fixture; submodules and symlinks are excluded
-      from `entries`; a `dir` that doesn't exist in the tree throws `StorageFetchError`.
-- [ ] `commitFiles` on a subdirectory-mounted tree (`dir !== ""`) leaves every path outside `dir`
-      byte-identical in the resulting commit (assert via the fixture's untouched-paths' blob SHAs
-      unchanged) — this is the regression test for Architecture Reviewer finding 1.
+      `dir === ""`, a single-segment subdirectory (e.g. `"governance"`), **and a multi-level
+      nested subdirectory (e.g. `"docs/governance/tree"`, ≥2 levels deep)** — the single-entry
+      `base_tree` override technique used by `commitFiles` is well-documented for blob entries at
+      a multi-segment path, but this plan relies on the same automatic intermediate-tree-creation
+      behavior for a **tree-type** override entry, which is untested by a single-segment case
+      alone; submodules and symlinks are excluded from `entries`; a `dir` that doesn't exist in
+      the tree throws `StorageFetchError`. (Fixes Architecture Reviewer round-2 finding 3.)
+- [ ] `commitFiles` on a subdirectory-mounted tree (`dir !== ""`, including the multi-level case
+      above) leaves every path outside `dir` byte-identical in the resulting commit (assert via
+      the fixture's untouched-paths' blob SHAs unchanged) — this is the regression test for
+      Architecture Reviewer round-1 finding 1.
 - [ ] `truncated: true` throws `StorageFetchError`, not a silent partial result.
 - [ ] `gitBlobSha` matches real git's blob hashing for a known fixture (e.g. hash of empty file
       is the well-known `e69de29b...`).
@@ -363,9 +370,16 @@ WASM plumbing is Phase 3.
       `createBranch` (already exported, reusable as-is per the research) from the current branch,
       then commit against the new branch's base (mirrors `saveToBranch`'s existing 3-scenario
       logic — same-branch / new-branch-from-current / existing-target-branch — for the tree case).
-      After a successful commit, update the retained base map from the returned tree so a
-      subsequent `commitTree` call in the same session diffs against the new state (no
-      re-`readTree()` needed).
+      After a successful commit, update the retained base state **locally** — `commitFiles`'s
+      return value (`{commitSha, rootTreeSha, subtreeSha}`) carries no `entries` map, so
+      `commitTree` merges its own already-computed diff into the retained `entries` (each changed
+      path's new `gitBlobSha`/mode it already computed while diffing; each deleted path removed)
+      rather than re-deriving it from the response. This is what lets a subsequent `commitTree`
+      call in the same session diff against the new state without a `readTree()` round-trip.
+      (Clarifies Architecture Reviewer round-2 nit 5.) When `commitFiles` returns `null` (empty
+      diff — nothing to commit), `commitTree` resolves its `Promise<WriteResult>` with
+      `{ revision: <the retained commitSha, unchanged> }` — a no-op save reports the current
+      revision, not an error and not a new one. (Clarifies round-2 nit 6.)
   - **`.srs/.gitkeep` trigger (fixes Plan Reviewer finding 2 — Stage 3 review), specified
     precisely:** this check runs **only inside `commitTree`, only on a commit that is actually
     happening** (i.e. after the caller's diff against the base map is non-empty — never on a
