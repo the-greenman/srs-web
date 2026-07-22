@@ -154,6 +154,15 @@ consoles before production deployment.
    app's URL slug) so the dialog can show an **Install / manage** link — a GitHub
    App must be *installed* on the repo's account (not just authorized at sign-in)
    before it can list private repos or write.
+6. **Exploded-repo mode (Epic 10):** browsing into a directory that contains
+   `manifest.json` (a git-diffable, multi-file SRS repository — every record,
+   type, and field as its own file — rather than a single `.srsj` blob) shows an
+   **"Open as SRS repository"** entry instead of listing `manifest.json` itself.
+   Opening it loads every file in that directory via the GitHub Git Data API
+   (not the Contents API the single-file flow above uses); the same Save dialog
+   then commits only the files that actually changed, in one commit, scoped to
+   that directory — everything else in the repo is left byte-identical. See
+   [ADR-016](docs/adr/016-exploded-repo-tree-storage.md).
 
 GitHub's token endpoint requires a client secret and has no browser CORS, so the
 browser cannot exchange the auth code directly. A same-origin Worker route,
