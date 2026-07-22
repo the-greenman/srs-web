@@ -13,9 +13,18 @@ import {
   readGitFileSha,
   writeGitFile,
 } from "./git-contents.js";
+import {
+  type GitDataLocation,
+  type TreeEntry,
+  commitFiles,
+  gitBlobSha,
+  readBlobs,
+  readBranchBase,
+} from "./git-data.js";
 import type {
   DocumentHandle,
   GitBranchAware,
+  RepoTreeAware,
   StorageEntry,
   StorageProvider,
   WriteResult,
@@ -149,6 +158,9 @@ export async function completeGitHubOAuthCallback(config: GitHubConfig): Promise
 export class GitHubDocumentHandle implements DocumentHandle, GitBranchAware {
   readonly provider = "github" as const;
   readonly capabilities = { read: true, write: true } as const;
+  // Always "text" in practice today — listContents never surfaces .srs files — but
+  // derived generically (not hardcoded) so it stays correct if that filter ever widens.
+  readonly kind: "text" | "bytes";
   private currentRevision: string | null;
   // Mutable: saving to a new branch rebinds this handle onto that branch.
   private location: GitContentsLocation;
@@ -162,6 +174,7 @@ export class GitHubDocumentHandle implements DocumentHandle, GitBranchAware {
   ) {
     this.location = location;
     this.currentRevision = revision;
+    this.kind = /\.srs$/i.test(name) ? "bytes" : "text";
   }
 
   get revision(): string | null {
@@ -230,6 +243,158 @@ export class GitHubDocumentHandle implements DocumentHandle, GitBranchAware {
     this.location = targetLocation;
     this.currentRevision = sha;
     return { revision: sha };
+  }
+}
+
+/**
+ * A whole exploded (multi-file) SRS repository, read/committed as a unit via the Git Data
+ * API (ADR-016) instead of the single-file Contents API `GitHubDocumentHandle` uses.
+ */
+export class GitHubRepoTreeHandle implements DocumentHandle, GitBranchAware, RepoTreeAware {
+  readonly provider = "github" as const;
+  readonly kind = "tree" as const;
+  readonly capabilities = { read: true, write: true } as const;
+  private base: Awaited<ReturnType<typeof readBranchBase>> | null = null;
+  // Mutable: committing to a new branch rebinds this handle onto that branch.
+  private location: GitDataLocation;
+
+  constructor(
+    readonly id: string,
+    readonly name: string,
+    location: GitDataLocation,
+    private readonly token: () => string
+  ) {
+    this.location = location;
+  }
+
+  get revision(): string | null {
+    return this.base?.commitSha ?? null;
+  }
+
+  get branch(): string {
+    return this.location.branch;
+  }
+
+  get repoLabel(): string {
+    return `${this.location.owner}/${this.location.repo}`;
+  }
+
+  /** Read every file under this handle's directory into memory, retaining the base state
+   * so a subsequent commitTree() can diff against it. */
+  async readTree(): Promise<Record<string, Uint8Array>> {
+    const base = await readBranchBase(this.location, this.token());
+    this.base = base;
+    const shas = Object.values(base.entries).map((entry) => entry.sha);
+    const blobs = await readBlobs(this.location, this.token(), shas);
+    const files: Record<string, Uint8Array> = {};
+    for (const [path, entry] of Object.entries(base.entries)) {
+      const bytes = blobs.get(entry.sha);
+      if (bytes) files[path] = bytes;
+    }
+    return files;
+  }
+
+  /**
+   * Commit the changed subset of `files` (diffed against the retained base by git blob
+   * SHA) as one commit. Mirrors saveToBranch's 3-scenario branch handling (same-branch /
+   * new-branch-from-current / existing-target-branch).
+   */
+  async commitTree(
+    files: Record<string, Uint8Array>,
+    opts: { branch: string; createFromCurrent?: boolean; message?: string }
+  ): Promise<WriteResult> {
+    if (!this.base) {
+      throw new StorageFetchError("Cannot commit a tree that has not been read yet.");
+    }
+    const target = opts.branch.trim();
+    const switching = target !== this.location.branch;
+    const targetLocation: GitDataLocation = { ...this.location, branch: target };
+
+    let base = this.base;
+    if (switching) {
+      const created = opts.createFromCurrent
+        ? await createBranch(this.location, this.token(), target, this.location.branch)
+        : false;
+      // A freshly created branch starts identical to the source — the retained base
+      // still applies. An existing target branch may have diverged — re-read it.
+      if (!created) {
+        base = await readBranchBase(targetLocation, this.token());
+      }
+    }
+
+    const changed: Record<string, Uint8Array | null> = {};
+    const newShas = new Map<string, string>();
+    for (const [path, bytes] of Object.entries(files)) {
+      const baseEntry = base.entries[path];
+      const newSha = await gitBlobSha(bytes);
+      if (!baseEntry || baseEntry.sha !== newSha) {
+        changed[path] = bytes;
+        newShas.set(path, newSha);
+      }
+    }
+    for (const path of Object.keys(base.entries)) {
+      if (!(path in files)) changed[path] = null;
+    }
+
+    // .srs/.gitkeep: only on an actual commit, and only when .srs/ is entirely absent
+    // from both the new and the base state (never added purely to create the marker).
+    if (Object.keys(changed).length > 0) {
+      const hasSrsDir =
+        Object.keys(changed).some((path) => path.startsWith(".srs/")) ||
+        Object.keys(base.entries).some((path) => path.startsWith(".srs/"));
+      if (!hasSrsDir) {
+        const gitkeep = new Uint8Array(0);
+        changed[".srs/.gitkeep"] = gitkeep;
+        newShas.set(".srs/.gitkeep", await gitBlobSha(gitkeep));
+      }
+    }
+
+    const result = await commitFiles(targetLocation, this.token(), {
+      baseCommitSha: base.commitSha,
+      baseRootTreeSha: base.rootTreeSha,
+      baseSubtreeSha: base.subtreeSha,
+      baseEntries: base.entries,
+      files: changed,
+      message: opts.message?.trim() || `Update ${this.name} via srs-web`,
+    });
+
+    this.location = targetLocation;
+    if (!result) {
+      // Empty diff — nothing committed; the current revision is unchanged.
+      this.base = base;
+      return { revision: base.commitSha };
+    }
+
+    const newEntries: Record<string, TreeEntry> = { ...base.entries };
+    for (const [path, value] of Object.entries(changed)) {
+      if (value === null) {
+        delete newEntries[path];
+      } else {
+        const sha = newShas.get(path);
+        if (sha) newEntries[path] = { mode: base.entries[path]?.mode ?? "100644", sha };
+      }
+    }
+    this.base = {
+      commitSha: result.commitSha,
+      rootTreeSha: result.rootTreeSha,
+      subtreeSha: result.subtreeSha,
+      entries: newEntries,
+    };
+    return { revision: result.commitSha };
+  }
+
+  // Present only so isGitBranchAware()'s duck-type check finds it and GitSaveModal opens
+  // for tree handles — App.svelte's kind-based branch calls commitTree() directly, never this.
+  saveToBranch(): Promise<WriteResult> {
+    throw new StorageFetchError("Tree-mode documents commit via commitTree(), not saveToBranch().");
+  }
+
+  read(): Promise<string> {
+    throw new StorageFetchError("Tree-mode documents are read via readTree(), not read().");
+  }
+
+  write(): Promise<WriteResult> {
+    throw new StorageFetchError("Tree-mode documents are committed via commitTree(), not write().");
   }
 }
 
@@ -332,6 +497,20 @@ export class GitHubProvider implements StorageProvider {
     );
   }
 
+  /** Open a `kind: "repository"` entry (the synthetic "Open as SRS repository" entry) as a
+   * tree-mode handle. Does not eagerly read — that happens once loadDocument() calls
+   * readTree(), consistent with open() not eagerly reading file content either. */
+  async openTree(entry: StorageEntry): Promise<GitHubRepoTreeHandle> {
+    await this.authenticate();
+    if (entry.kind !== "repository" || !entry.path) {
+      throw new StorageFetchError("GitHub did not return a usable repository path.");
+    }
+    const { owner, repo, branch, dir } = parseGitHubPath(entry.path);
+    if (!branch) throw new StorageFetchError("GitHub entry is missing a branch.");
+    const location: GitDataLocation = { apiBase: GITHUB_API, owner, repo, branch, dir };
+    return new GitHubRepoTreeHandle(entry.id, entry.name, location, () => this.requireToken());
+  }
+
   private async listRepos(): Promise<StorageEntry[]> {
     // visibility=all requests private repos too; whether they actually come back
     // depends on the GitHub App's install scope + Contents/Metadata permission.
@@ -390,8 +569,17 @@ export class GitHubProvider implements StorageProvider {
     const items = await this.api<GitHubContentItem[]>(
       `/repos/${owner}/${repo}/contents/${encodePath(dir)}?ref=${encodeURIComponent(branch)}`
     );
-    return items
-      .filter((item) => item.type === "dir" || /\.(srsj|json)$/i.test(item.name))
+    // A directory containing manifest.json is an exploded SRS repository root — surface a
+    // synthetic "Open as SRS repository" entry for it, and exclude the raw manifest.json
+    // file entry (opening it alone via the single-file path is never valid — it isn't a
+    // .srsj payload).
+    const hasManifest = items.some((item) => item.type === "file" && item.name === "manifest.json");
+    const entries: StorageEntry[] = items
+      .filter(
+        (item) =>
+          item.type === "dir" ||
+          (/\.(srsj|json)$/i.test(item.name) && item.name !== "manifest.json")
+      )
       .map((item) => ({
         id: `${owner}/${repo}:${branch}:${item.path}`,
         name: item.name,
@@ -402,6 +590,16 @@ export class GitHubProvider implements StorageProvider {
       .sort((a, b) =>
         a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === "folder" ? -1 : 1
       );
+    if (hasManifest) {
+      entries.unshift({
+        id: `${owner}/${repo}:${branch}:${dir}#repo`,
+        name: "Open as SRS repository",
+        kind: "repository",
+        path: `${owner}/${repo}:${branch}:${dir}`,
+        revision: null,
+      });
+    }
+    return entries;
   }
 
   private requireToken(): string {

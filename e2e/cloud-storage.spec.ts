@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { expect, test, type Page } from "@playwright/test";
+import { type Page, expect, test } from "@playwright/test";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SAMPLE_TEXT = fs.readFileSync(path.join(__dirname, "fixtures", "sample.srsj"), "utf8");
@@ -11,16 +11,14 @@ type FakeMode = "success" | "cancel" | "auth-error" | "malformed" | "conflict";
 async function installFakeProviders(page: Page, mode: FakeMode = "success"): Promise<void> {
   await page.addInitScript(
     ({ sampleText, fakeMode }) => {
-      const documentHandle = (
-        provider: "dropbox" | "google-drive" | "github",
-        name: string,
-      ) => ({
+      const documentHandle = (provider: "dropbox" | "google-drive" | "github", name: string) => ({
         provider,
         id: `${provider}-file`,
         name,
         revision: "revision-1",
+        kind: "text",
         capabilities: { read: true, write: true },
-        read: async () => fakeMode === "malformed" ? "{not-json" : sampleText,
+        read: async () => (fakeMode === "malformed" ? "{not-json" : sampleText),
         write: async () => {
           // A stale-write surfaces as a conflict rather than clobbering.
           if (fakeMode === "conflict") throw { code: "conflict", message: "changed upstream" };
@@ -37,13 +35,15 @@ async function installFakeProviders(page: Page, mode: FakeMode = "success"): Pro
           label: "Dropbox",
           configured: true,
           authenticate: async () => failIfNeeded(),
-          list: async () => [{
-            id: "db-file",
-            name: "dropbox-sample.srsj",
-            kind: "file",
-            path: "/dropbox-sample.srsj",
-            revision: "revision-1",
-          }],
+          list: async () => [
+            {
+              id: "db-file",
+              name: "dropbox-sample.srsj",
+              kind: "file",
+              path: "/dropbox-sample.srsj",
+              revision: "revision-1",
+            },
+          ],
           open: async () => documentHandle("dropbox", "dropbox-sample.srsj"),
         },
         googleDrive: {
@@ -94,7 +94,8 @@ async function installFakeProviders(page: Page, mode: FakeMode = "success"): Pro
               branch,
               repoLabel: repoPart,
               saveToBranch: async (_content: string, opts: { branch: string }) => {
-                if (fakeMode === "conflict") throw { code: "conflict", message: "changed upstream" };
+                if (fakeMode === "conflict")
+                  throw { code: "conflict", message: "changed upstream" };
                 return { revision: opts.branch === branch ? "sha-2" : "sha-branch" };
               },
             };
@@ -102,7 +103,7 @@ async function installFakeProviders(page: Page, mode: FakeMode = "success"): Pro
         },
       };
     },
-    { sampleText: SAMPLE_TEXT, fakeMode: mode },
+    { sampleText: SAMPLE_TEXT, fakeMode: mode }
   );
 }
 
@@ -158,7 +159,9 @@ test.describe("Cloud storage sources", () => {
     await expect(page.getByTestId("governance-file-picker")).toBeVisible();
   });
 
-  test("unconfigured providers are disabled while local files remain available", async ({ page }) => {
+  test("unconfigured providers are disabled while local files remain available", async ({
+    page,
+  }) => {
     // Inject explicitly-unconfigured providers so the assertion is deterministic
     // regardless of any ambient .env.local a developer may have.
     await page.addInitScript(() => {

@@ -7,10 +7,12 @@ export class LocalDocumentHandle implements DocumentHandle {
   readonly name: string;
   readonly revision = null;
   readonly capabilities = { read: true, write: false } as const;
+  readonly kind: "text" | "bytes";
 
   constructor(private readonly file: File) {
     this.id = `${file.name}:${file.size}:${file.lastModified}`;
     this.name = file.name;
+    this.kind = /\.srs$/i.test(file.name) ? "bytes" : "text";
   }
 
   read(): Promise<string> {

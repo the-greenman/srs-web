@@ -92,6 +92,7 @@ async function responseMessage(response: Response): Promise<string> {
 export class GoogleDriveDocumentHandle implements DocumentHandle {
   readonly provider = "google-drive" as const;
   readonly capabilities = { read: true, write: true } as const;
+  readonly kind: "text" | "bytes";
   private currentRevision: string | null;
 
   constructor(
@@ -101,6 +102,7 @@ export class GoogleDriveDocumentHandle implements DocumentHandle {
     private readonly token: () => Promise<string>
   ) {
     this.currentRevision = revision;
+    this.kind = /\.srs$/i.test(name) ? "bytes" : "text";
   }
 
   get revision(): string | null {
