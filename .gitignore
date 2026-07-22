@@ -8,6 +8,7 @@ dist/
 # API key) so isolated builds (Cloudflare Workers Builds, CI) bake them in.
 # Provider client SECRETS are Worker secrets — never in this file.
 !.env.production
+!.env.preview.example
 
 # wrangler local dev secrets + state for the OAuth proxy Worker
 .dev.vars
