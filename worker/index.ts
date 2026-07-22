@@ -151,12 +151,6 @@ async function handleTokenRefresh(
   const origin = request.headers.get("Origin");
   if (!origin || origin !== env.APP_ORIGIN) return json({ error: "forbidden_origin" }, 403);
 
-  const clientId = provider.clientId(env);
-  const clientSecret = provider.clientSecret(env);
-  if (!clientId || !clientSecret) {
-    return json({ error: "server_misconfigured" }, 500);
-  }
-
   let payload: TokenRefreshBody;
   try {
     payload = (await request.json()) as TokenRefreshBody;
@@ -166,6 +160,12 @@ async function handleTokenRefresh(
 
   const { refresh_token } = payload;
   if (!refresh_token) return json({ error: "missing_parameters" }, 400);
+
+  const clientId = provider.clientId(env);
+  const clientSecret = provider.clientSecret(env);
+  if (!clientId || !clientSecret) {
+    return json({ error: "server_misconfigured" }, 500);
+  }
 
   const body = new URLSearchParams({
     client_id: clientId,

@@ -671,6 +671,31 @@ describe("GitHub storage adapter", () => {
       expect(fetchMock).not.toHaveBeenCalled();
     });
 
+    it("clears the refresh token and falls back to popup when the 200 response is not JSON", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(new Response("not-json", { status: 200 }))
+      );
+      vi.stubGlobal("sessionStorage", {
+        getItem: vi.fn().mockReturnValue(null),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+      });
+      vi.stubGlobal("window", {
+        location: { origin: "https://app.test" },
+        open: vi.fn().mockReturnValue(null),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        clearInterval: vi.fn(),
+        setInterval: vi.fn().mockReturnValue(123),
+      });
+
+      const provider = providerWithNearExpiryToken();
+      await expect(provider.authenticate()).rejects.toThrow("popup was blocked");
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      expect((provider as any).refreshToken).toBeNull();
+    });
+
     it("does not clear the refresh token on a network error during silent refresh", async () => {
       vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("network error")));
       vi.stubGlobal("sessionStorage", {

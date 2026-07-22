@@ -437,7 +437,7 @@ export class GitHubProvider implements StorageProvider {
     if (this.accessToken && Date.now() < this.expiresAt - 30_000) return;
 
     // Near-expiry (or expired) and we had a token: try silent refresh before popup.
-    if (this.accessToken && Date.now() >= this.expiresAt - 30_000) {
+    if (this.accessToken) {
       if (await this.refreshSilently()) return;
     }
 
