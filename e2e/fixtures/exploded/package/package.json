@@ -1,0 +1,66 @@
+{
+  "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
+  "blueprints": [
+    "blueprints/decision-log-e2e09a77.json"
+  ],
+  "createdAt": "2026-01-01T00:00:00Z",
+  "description": "",
+  "documentViews": [
+    "document-views/articles-and-roles-78b11038.json",
+    "document-views/decision-deliberation-5a3ce87e.json",
+    "document-views/decision-log-b5c8d124.json",
+    "document-views/governance-document-732a982b.json"
+  ],
+  "fields": [
+    "fields/alternativesconsidered-636ce948.json",
+    "fields/amendmentrule-1f01bc6b.json",
+    "fields/articlenumber-60be1468.json",
+    "fields/articletext-8aa3eba2.json",
+    "fields/authority-d25da548.json",
+    "fields/boundary-3c39ee1f.json",
+    "fields/context-9889052c.json",
+    "fields/decisionquestion-73cd845a.json",
+    "fields/decisionstatement-de1296e0.json",
+    "fields/externallinks-fc434475.json",
+    "fields/friction-1a1c0a5d.json",
+    "fields/keyrequirements-a952604c.json",
+    "fields/nextsteps-4181f210.json",
+    "fields/owner-4b34847c.json",
+    "fields/protectedstatus-0df40543.json",
+    "fields/rationale-3340532b.json",
+    "fields/revisitwhen-c04b7f84.json",
+    "fields/roleholder-a6c19b95.json",
+    "fields/sourceofauthority-9a32dc01.json",
+    "fields/statement-3b000001.json",
+    "fields/title-3b000002.json",
+    "fields/title-d7e82557.json"
+  ],
+  "id": "1cd9622e-3d05-4214-a683-4cb81d0c44d9",
+  "lifecycles": [
+    "lifecycles/governancelifecycle-3c504040.json"
+  ],
+  "name": "governance",
+  "namespace": "com.mudemocracy.governance",
+  "relationTypes": [
+    "relation-types/delegates-31c82363.json",
+    "relation-types/derived-from-36b78f14.json",
+    "relation-types/evidences-35c7aba2.json",
+    "relation-types/precedes-b24aaf29.json",
+    "relation-types/supersedes-6e86ebd3.json"
+  ],
+  "status": "active",
+  "themes": [],
+  "title": "governance",
+  "types": [
+    "types/article-a1142ac3.json",
+    "types/decision-1fcad6a2.json",
+    "types/decisionlog-5a061505.json",
+    "types/purpose-3c000001.json",
+    "types/role-e53dce11.json"
+  ],
+  "version": "1.0.0",
+  "views": [
+    "views/decision-log-faebd240.json"
+  ],
+  "vocabularies": []
+}

@@ -1,0 +1,11 @@
+{
+  "category": "sequence",
+  "createdAt": "2026-05-31T00:00:00Z",
+  "description": "Source comes before target in a sequence.",
+  "id": "b24aaf29-73b2-4ac2-8dfb-3c848ccbd9ed",
+  "irreflexive": true,
+  "key": "precedes",
+  "label": "Precedes",
+  "namespace": "governance",
+  "version": 1
+}
