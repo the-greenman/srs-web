@@ -252,10 +252,34 @@ secrets. Their protection comes from exact provider redirect/origin rules,
 minimal OAuth scopes, and restricting the Google API key to the production
 hostname and Google Picker API.
 
-Do not configure these production values for arbitrary Cloudflare preview URLs.
-Provider authentication should remain disabled on previews unless a separate
-preview credential set and stable preview hostname are registered with both
-providers.
+Do not configure these production values for arbitrary Cloudflare preview URLs —
+each deployment gets a unique hash URL that cannot be statically registered as an
+OAuth redirect URI. Only the stable workers.dev hostname for the `preview`
+environment (see below) gets OAuth support.
+
+#### Preview deployments
+
+To enable GitHub sign-in on a stable preview deployment:
+
+1. Create a **separate** GitHub OAuth App for preview (Settings → Developer settings
+   → OAuth Apps). Keep it independent from the production app so their credential
+   lifecycles don't interfere.
+2. Find your stable preview URL: run `wrangler whoami` to get your workers.dev
+   subdomain; the URL is `https://srs-web-preview.<account>.workers.dev`.
+3. Register that URL as the Authorization callback URL in the preview GitHub OAuth App.
+4. Copy `.env.preview.example` to `.env.preview` (gitignored) and fill in the preview
+   OAuth App's client ID and the stable redirect URI — Vite bakes these into the bundle
+   and they **must match** the `[env.preview]` vars in `wrangler.jsonc`.
+5. Set the preview secret: `wrangler secret put GITHUB_CLIENT_SECRET --env preview`.
+6. Deploy: `npm run deploy:preview` (`vite build --mode preview && wrangler deploy --env preview`).
+   Plain `npm run deploy` always targets production — the `:preview` variant is required.
+
+If `GITHUB_CLIENT_SECRET` is not set for the preview environment, the Worker returns
+`{ "error": "server_misconfigured" }` (HTTP 500) — no secret is exposed. Arbitrary
+per-deployment preview URLs (`preview_urls` is disabled in `[env.preview]`) remain
+auth-disabled by design; only the stable workers.dev env URL gets OAuth support.
+Dropbox and Google Drive OAuth remain disabled on preview unless separately registered
+with their provider consoles.
 
 ## Save-ready storage contract
 
