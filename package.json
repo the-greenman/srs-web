@@ -15,7 +15,8 @@
     "e2e:ui": "playwright test --ui",
     "fetch-bindings": "node scripts/ensure-bindings.mjs --force",
     "predeploy": "npm run fetch-bindings",
-    "deploy": "vite build && wrangler deploy"
+    "deploy": "vite build && wrangler deploy",
+    "deploy:preview": "vite build --mode preview && wrangler deploy --env preview"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

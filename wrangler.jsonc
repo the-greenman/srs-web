@@ -33,5 +33,28 @@
 	},
 	"routes": [
 		{ "pattern": "app.mudemocracy.org", "custom_domain": true }
-	]
+	],
+	"env": {
+		// Preview environment — stable workers.dev deployment for pre-prod OAuth testing.
+		// Deploy with: npm run deploy:preview
+		// Set the secret: wrangler secret put GITHUB_CLIENT_SECRET --env preview
+		//
+		// Find your account subdomain: run `wrangler whoami` (look for "workers.dev subdomain").
+		// The stable preview URL will be: https://srs-web-preview.<account>.workers.dev
+		//
+		// Register that URL as the Authorization callback URL in a SEPARATE GitHub OAuth App
+		// (keep preview and production apps independent — different client ID + secret).
+		"preview": {
+			"name": "srs-web-preview",
+			"workers_dev": true,
+			"preview_urls": false,
+			"vars": {
+				// PLACEHOLDER: replace <account> with your Cloudflare workers.dev subdomain
+				"APP_ORIGIN": "https://srs-web-preview.<account>.workers.dev",
+				"GITHUB_REDIRECT_URI": "https://srs-web-preview.<account>.workers.dev/",
+				// PLACEHOLDER: replace with the preview OAuth App's public client ID
+				"GITHUB_CLIENT_ID": "<preview-github-oauth-app-client-id>"
+			}
+		}
+	}
 }
