@@ -1,6 +1,6 @@
 # ADR-018: Picker SRS discovery — detection module, presentation-layer filter, bounded scan seam
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-07-23
 - **Issue:** [srs-web#259](https://github.com/the-greenman/srs-web/issues/259) (story [muDemocracy.org#131](https://github.com/the-greenman/muDemocracy.org/issues/131))
 - **Supersedes:** —

@@ -30,7 +30,7 @@ See [agents.md](agents.md) for role definitions.
 |---|---|---|
 | [ADR-001](../docs/adr/001-thin-client.md) | Discovery is *detection only* — name/extension matching and marker-file spotting, never validation. Full validation stays in the WASM engine on open. No SRS semantics enter TS. | accepted |
 | [ADR-016](../docs/adr/016-exploded-repo-tree-storage.md) | Repository entries (`kind:"repository"`) route through `openTree()`; the "Open as SRS repository" entry may appear at any directory depth. Scan results reuse this exact plumbing. | accepted |
-| [ADR-018](../docs/adr/018-picker-srs-discovery.md) (new) | Discovery scan seam: optional provider-native `scanForSrs()` with a generic BFS fallback over `list()`; repo markers are `.srs/` dir **or** `manifest.json`; extension filtering moves from provider `list()` to the picker UI (presentation) with a Show-all toggle; auto/explicit budget model in one config file. | proposed |
+| [ADR-018](../docs/adr/018-picker-srs-discovery.md) (new) | Discovery scan seam: optional provider-native `scanForSrs()` with a generic BFS fallback over `list()`; repo markers are `.srs/` dir **or** `manifest.json`; extension filtering moves from provider `list()` to the picker UI (presentation) with a Show-all toggle; auto/explicit budget model in one config file. | accepted |
 
 Positioning-research consult: not applicable — no interop format, export/import surface, or
 agent-facing contract is touched; this is picker presentation inside one client.
@@ -313,7 +313,7 @@ npm run typecheck && npm run lint && npm test && npm run e2e
 - [ ] `npm test` (vitest) passes
 - [ ] `npm run e2e` (playwright) passes, including the existing walkthrough/cloud-storage suites
 - [ ] No inline SRS extension regex outside `srs-detect.ts`
-- [ ] ADR-018 committed (status `proposed`) and consistent with the implementation
+- [ ] ADR-018 committed (status `accepted` — shipped under it) and consistent with the implementation
 
 ## Coordination Rules
 
