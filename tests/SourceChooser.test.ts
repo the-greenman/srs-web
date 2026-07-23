@@ -99,6 +99,27 @@ describe("SourceChooser — cloud browser default filter", () => {
     { id: "4", name: "readme.md", kind: "file", path: "/readme.md" },
   ];
 
+  it("renders the SRS mark on repository entries only", async () => {
+    const withRepo = [
+      ...listing,
+      { id: "5", name: "Open as SRS repository", kind: "repository", path: "/gov" },
+    ];
+    const { getByTestId, container } = render(SourceChooser, {
+      // biome-ignore lint/suspicious/noExplicitAny: minimal provider fake
+      props: { providers: makeBrowsingProviders(withRepo) as any, onOpen: vi.fn() },
+    });
+
+    await fireEvent.click(getByTestId("source-dropbox"));
+    await new Promise((r) => setTimeout(r, 0));
+
+    // Exactly one mark: on the repository row, not on the .srsj/.srs file rows.
+    expect(container.querySelectorAll(".srs-mark")).toHaveLength(1);
+    const repoRow = Array.from(container.querySelectorAll(".cloud-browser__entry")).find((el) =>
+      el.textContent?.includes("Open as SRS repository")
+    );
+    expect(repoRow?.querySelector(".srs-mark")).toBeTruthy();
+  });
+
   it("hides non-SRS files by default; 'Show all files' reveals them", async () => {
     const { getByTestId, queryByText, getByText } = render(SourceChooser, {
       // biome-ignore lint/suspicious/noExplicitAny: minimal provider fake

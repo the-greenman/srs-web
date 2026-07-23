@@ -16,6 +16,7 @@
     StorageError,
   } from "$lib/storage/index.js";
   import Button from "./Button.svelte";
+  import SrsMark from "./SrsMark.svelte";
 
   interface Props {
     providers: StorageProviders;
@@ -348,7 +349,10 @@
               onclick={() => chooseEntry(entry)}
             >
               <span class="cloud-browser__kind">{entry.kind === "repository" ? "Repo" : isSrsArchiveName(entry.name) ? "SRS" : "SRSJ"}</span>
-              <span>{entry.displayPath ?? entry.name}</span>
+              <span class="cloud-browser__name">
+                {#if entry.kind === "repository"}<SrsMark />{/if}
+                {entry.displayPath ?? entry.name}
+              </span>
             </button>
           {/each}
           <p class="cloud-browser__section">In this folder</p>
@@ -356,7 +360,10 @@
         {#each visibleEntries ?? [] as entry (entry.id)}
           <button class="cloud-browser__entry" onclick={() => chooseEntry(entry)}>
             <span class="cloud-browser__kind">{entry.kind === "folder" ? "Folder" : entry.kind === "repository" ? "Repo" : isSrsArchiveName(entry.name) ? "SRS" : isSrsDocumentName(entry.name) ? "SRSJ" : "File"}</span>
-            <span>{entry.name}</span>
+            <span class="cloud-browser__name">
+              {#if entry.kind === "repository"}<SrsMark />{/if}
+              {entry.name}
+            </span>
           </button>
         {:else}
           <p class="cloud-browser__empty">
@@ -567,6 +574,13 @@
 
   .cloud-browser__entry--found {
     background: color-mix(in srgb, var(--grey-1) 60%, transparent);
+  }
+
+  .cloud-browser__name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
   }
 
   .cloud-browser__list {
