@@ -514,6 +514,47 @@ describe("GitHub storage adapter", () => {
       expect(entries.some((e) => e.name === "notes.srsj")).toBe(true);
     });
 
+    it("returns the complete listing — .srs archives and non-SRS files included", async () => {
+      const provider = new GitHubProvider({ clientId: "c", redirectUri: "https://app.test/" });
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      (provider as any).accessToken = "token";
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      (provider as any).expiresAt = Date.now() + 3_600_000;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          json([
+            { name: "data.srs", path: "governance/data.srs", sha: "sha-a", type: "file" },
+            { name: "readme.md", path: "governance/readme.md", sha: "sha-r", type: "file" },
+          ])
+        )
+      );
+
+      const entries = await provider.list("octo/gov:main:governance");
+      expect(entries.some((e) => e.name === "data.srs")).toBe(true);
+      expect(entries.some((e) => e.name === "readme.md")).toBe(true);
+    });
+
+    it("adds the synthetic entry for a .srs marker directory without manifest.json", async () => {
+      const provider = new GitHubProvider({ clientId: "c", redirectUri: "https://app.test/" });
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      (provider as any).accessToken = "token";
+      // biome-ignore lint/suspicious/noExplicitAny: test seam
+      (provider as any).expiresAt = Date.now() + 3_600_000;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          json([
+            { name: ".srs", path: "governance/.srs", sha: "sha-m", type: "dir" },
+            { name: "records", path: "governance/records", sha: "sha-r", type: "dir" },
+          ])
+        )
+      );
+
+      const entries = await provider.list("octo/gov:main:governance");
+      expect(entries[0]).toMatchObject({ kind: "repository", name: "Open as SRS repository" });
+    });
+
     it("does not add the synthetic entry when manifest.json is absent", async () => {
       const provider = new GitHubProvider({ clientId: "c", redirectUri: "https://app.test/" });
       // biome-ignore lint/suspicious/noExplicitAny: test seam

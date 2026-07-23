@@ -5,7 +5,13 @@
     StorageProvider,
     StorageProviders,
   } from "$lib/storage/index.js";
-  import { LocalDocumentHandle, StorageError } from "$lib/storage/index.js";
+  import {
+    isOpenableName,
+    isSrsArchiveName,
+    isSrsDocumentName,
+    LocalDocumentHandle,
+    StorageError,
+  } from "$lib/storage/index.js";
   import Button from "./Button.svelte";
 
   interface Props {
@@ -31,17 +37,20 @@
   let path = $state("");
   let parents = $state<string[]>([]);
   let filter = $state("");
+  let showAll = $state(false);
 
-  // Case-insensitive name filter over the current folder's entries.
-  const visibleEntries = $derived(
-    entries === null
-      ? null
-      : filter.trim() === ""
-        ? entries
-        : entries.filter((entry) =>
-            entry.name.toLowerCase().includes(filter.trim().toLowerCase())
-          )
-  );
+  // Default filter (folders, repositories, and SRS-openable files — providers
+  // return complete listings per ADR-018), then the case-insensitive name filter.
+  const visibleEntries = $derived.by(() => {
+    if (entries === null) return null;
+    const relevant = showAll
+      ? entries
+      : entries.filter((entry) => entry.kind !== "file" || isOpenableName(entry.name));
+    const needle = filter.trim().toLowerCase();
+    return needle === ""
+      ? relevant
+      : relevant.filter((entry) => entry.name.toLowerCase().includes(needle));
+  });
 
   function browseProvider(id: BrowseId): StorageProvider | undefined {
     return id === "dropbox" ? providers.dropbox : providers.github;
@@ -70,7 +79,7 @@
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    if (file.name.endsWith(".srs") && onOpenArchive) {
+    if (isSrsArchiveName(file.name) && onOpenArchive) {
       void run("local", async () => {
         const buf = await file.arrayBuffer();
         await onOpenArchive(new Uint8Array(buf), file.name);
@@ -92,6 +101,7 @@
       path = "";
       parents = [];
       filter = "";
+      showAll = false;
       entries = listed;
     });
   }
@@ -146,6 +156,7 @@
     entries = null;
     browsing = null;
     filter = "";
+    showAll = false;
   }
 
   function openGoogleDrive(): void {
@@ -215,14 +226,20 @@
       <div class="cloud-browser__path">
         {path || (browsing === "github" ? "All repositories" : "All files")}
       </div>
-      <input
-        class="cloud-browser__filter"
-        data-testid="cloud-browser-filter"
-        type="text"
-        placeholder={browsing === "github" && path === "" ? "Filter repositories…" : "Filter…"}
-        bind:value={filter}
-        aria-label="Filter this folder"
-      />
+      <div class="cloud-browser__controls">
+        <input
+          class="cloud-browser__filter"
+          data-testid="cloud-browser-filter"
+          type="text"
+          placeholder={browsing === "github" && path === "" ? "Filter repositories…" : "Filter…"}
+          bind:value={filter}
+          aria-label="Filter this folder"
+        />
+        <label class="cloud-browser__show-all">
+          <input type="checkbox" data-testid="cloud-browser-show-all" bind:checked={showAll} />
+          Show all files
+        </label>
+      </div>
       <div class="cloud-browser__list">
         {#if parents.length > 0}
           <button class="cloud-browser__entry" onclick={goUp}>
@@ -232,14 +249,16 @@
         {/if}
         {#each visibleEntries ?? [] as entry (entry.id)}
           <button class="cloud-browser__entry" onclick={() => chooseEntry(entry)}>
-            <span class="cloud-browser__kind">{entry.kind === "folder" ? "Folder" : entry.kind === "repository" ? "Repo" : entry.name.toLowerCase().endsWith(".srs") ? "SRS" : "SRSJ"}</span>
+            <span class="cloud-browser__kind">{entry.kind === "folder" ? "Folder" : entry.kind === "repository" ? "Repo" : isSrsArchiveName(entry.name) ? "SRS" : isSrsDocumentName(entry.name) ? "SRSJ" : "File"}</span>
             <span>{entry.name}</span>
           </button>
         {:else}
           <p class="cloud-browser__empty">
-            {filter.trim() === ""
-              ? "No .srs, .srsj, or .json files in this folder."
-              : `Nothing matches “${filter.trim()}”.`}
+            {filter.trim() !== ""
+              ? `Nothing matches “${filter.trim()}”.`
+              : showAll
+                ? "This folder is empty."
+                : "No .srs, .srsj, or .json files in this folder."}
           </p>
         {/each}
       </div>
@@ -354,15 +373,36 @@
     color: var(--grey-3);
   }
 
+  .cloud-browser__controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid var(--grey-2);
+  }
+
   .cloud-browser__filter {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     box-sizing: border-box;
     padding: 0.625rem 1.5rem;
     border: 0;
-    border-bottom: 1px solid var(--grey-2);
     background: var(--paper);
     font-family: var(--font-sans);
     font-size: 0.9rem;
+  }
+
+  .cloud-browser__show-all {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding-right: 1.5rem;
+    white-space: nowrap;
+    color: var(--grey-3);
+    font-family: var(--font-mono);
+    font-size: var(--size-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    cursor: pointer;
   }
 
   .cloud-browser__filter:focus {

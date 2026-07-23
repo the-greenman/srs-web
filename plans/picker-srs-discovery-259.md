@@ -57,6 +57,8 @@ export function isSrsArchiveName(name: string): boolean;   // *.srs
 export function isSrsDocumentName(name: string): boolean;  // *.srsj | *.json
 export function isOpenableName(name: string): boolean;     // archive || document
 export function isScanTargetName(name: string): boolean;   // *.srs | *.srsj only (high signal — no bare .json)
+export function stripSrsExtension(name: string): string;   // "gov.srsj" → "gov"; non-SRS names unchanged
+export function toArchiveName(name: string): string;       // "gov.srsj" → "gov.srs" (ADR-015 auto-upgrade rename)
 export function listingHasRepoMarker(entries: StorageEntry[]): boolean; // contains ".srs" folder or "manifest.json" file
 // Full membership (exhaustive): .git, .srs, node_modules, .svelte-kit, .next, .cache, dist, build, target, vendor
 export const SCAN_SKIP_DIRS: ReadonlySet<string>;
@@ -91,7 +93,8 @@ them through the existing `open()` / `openTree()` switch untouched.
 - Shared detection module `src/lib/storage/srs-detect.ts`; all four inline extension regexes
   (`App.svelte`, `dropbox.ts`, `google-drive.ts`, `github.ts`) and the handle-kind checks
   (`local.ts`, `dropbox.ts`, `google-drive.ts`, `github.ts`) replaced with it.
-- GitHub `listContents` filter gains `.srs` archives (today wrongly excluded).
+- GitHub `listContents` extension filtering is deleted outright (it also wrongly excluded
+  `.srs` archives); the complete listing is returned.
 - Extension filtering moves out of `dropbox.ts list()` / `github.ts listContents()` into
   `SourceChooser.svelte` presentation, with a **"Show all files"** toggle. Providers return full
   listings (GitHub still emits the synthetic repository entry and still hides `manifest.json`
@@ -129,15 +132,15 @@ with a Show-all escape hatch; GitHub surfaces `.srs` archives.
 
 #### Tasks
 
-- [ ] Create `src/lib/storage/srs-detect.ts` with the exports in Contracts (pure functions, no I/O).
-- [ ] Replace every inline extension check with the named detect function (line numbers are
+- [x] Create `src/lib/storage/srs-detect.ts` with the exports in Contracts (pure functions, no I/O).
+- [x] Replace every inline extension check with the named detect function (line numbers are
       hints, not anchors — locate by context):
 
       | Site | Replace with |
       |---|---|
-      | `App.svelte:128` name-strip on open | `isOpenableName` strip helper (`stripSrsExtension`) |
+      | `App.svelte:128` name-strip on open | `stripSrsExtension` |
       | `App.svelte:189` archive name-strip | `stripSrsExtension` |
-      | `App.svelte:266` document name-strip | `stripSrsExtension` |
+      | `App.svelte:266` auto-upgrade **rename** (strip + append `.srs`, not a bare strip — a bare `stripSrsExtension` would create extensionless files) | `toArchiveName` (unit-tested) |
       | `dropbox.ts:304` list filter | **delete** file filtering — `list()` returns all entries |
       | `github.ts` listContents filter | **delete** extension filtering — returns dirs + all files, still excluding `manifest.json` behind the synthetic repository entry |
       | `dropbox.ts:148`, `google-drive.ts:105`, `github.ts:193`, `local.ts:15` handle-kind | `isSrsArchiveName` |
@@ -145,27 +148,29 @@ with a Show-all escape hatch; GitHub surfaces `.srs` archives.
       | `SourceChooser.svelte:73` local `.srs` routing | `isSrsArchiveName` |
       | `SourceChooser.svelte:235` row kind label | `isSrsArchiveName` |
 
-- [ ] `github.ts listContents`: detect the repository via `listingHasRepoMarker` (manifest.json
+- [x] `github.ts listContents`: detect the repository via `listingHasRepoMarker` (manifest.json
       **or** `.srs/` dir) instead of manifest-only `hasManifest`. **The marker check must run on
       the raw pre-exclusion item view** — `manifest.json` is excluded from the returned entries
       by construction, so running it on the final array would silently break manifest detection.
-- [ ] `SourceChooser.svelte`: `visibleEntries` applies the default filter (folders + repository
+- [x] `SourceChooser.svelte`: `visibleEntries` applies the default filter (folders + repository
       entries + `isOpenableName` files, then the existing name filter); add a "Show all files"
       checkbox (`data-testid="cloud-browser-show-all"`) that bypasses the extension filter;
       empty-state message reflects filter state.
-- [ ] Update `tests/storage.test.ts` (Dropbox list now returns all files; GitHub listContents
+- [x] Update `tests/storage.test.ts` (Dropbox list now returns all files; GitHub listContents
       includes `.srs`; repository entry appears for a `.srs/`-marker dir without manifest.json)
       and `tests/SourceChooser.test.ts` (filter + toggle).
 
 #### Acceptance Criteria
 
-- [ ] No inline extension matching outside `srs-detect.ts` — verified by both
-      `rg -n '\.\(srsj\|json\|srs\)' src/ --glob '!**/srs-detect.ts'` and
-      `rg -n 'endsWith\("\.srs' src/ --glob '!**/srs-detect.ts'` returning nothing, plus review.
-- [ ] A GitHub directory listing containing `data.srs` shows the archive by default.
-- [ ] A GitHub directory with `.srs/` but no `manifest.json` yields the "Open as SRS repository" entry.
-- [ ] "Show all files" reveals non-SRS files; default hides them.
-- [ ] `npm run typecheck`, `npm run lint`, `npm test` pass.
+- [x] No inline extension matching outside `srs-detect.ts` — verified by
+      `rg -n '\.\(srsj\|json\|srs\)' src/ --glob '!**/srs-detect.ts'`,
+      `rg -n 'endsWith\("\.srs' src/ --glob '!**/srs-detect.ts'`, and
+      `rg -n '\\\.srs\$|\\\.\(srsj' src/ --glob '!**/srs-detect.ts'` (the bare-`\.srs$` and
+      two-way shapes, the ones easiest to miss) all returning nothing, plus review.
+- [x] A GitHub directory listing containing `data.srs` shows the archive by default.
+- [x] A GitHub directory with `.srs/` but no `manifest.json` yields the "Open as SRS repository" entry.
+- [x] "Show all files" reveals non-SRS files; default hides them.
+- [x] `npm run typecheck`, `npm run lint`, `npm test` pass.
 
 #### Testing
 

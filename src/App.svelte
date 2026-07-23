@@ -40,6 +40,8 @@
     downloadDocument,
     downloadArchive,
     isGitBranchAware,
+    stripSrsExtension,
+    toArchiveName,
     StorageError,
     type DocumentHandle,
     type RepoTreeAware,
@@ -125,7 +127,7 @@
         }
       }
       activeDocument = handle;
-      repoName = handle.name.replace(/\.(srsj|json|srs)$/i, "");
+      repoName = stripSrsExtension(handle.name);
       cachedSession = null;
       saveMessage = null;
       appState = "loaded";
@@ -186,7 +188,7 @@
     try {
       repo = loadRepoFromArchive(bytes);
       activeDocument = null;
-      repoName = name.replace(/\.srs$/i, "");
+      repoName = stripSrsExtension(name);
       cachedSession = null;
       saveMessage = null;
       appState = "loaded";
@@ -263,7 +265,7 @@
               ? storageProviders.googleDrive
               : storageProviders.github;
         if (provider?.create) {
-          const newName = activeDocument.name.replace(/\.(srsj|json)$/i, ".srs");
+          const newName = toArchiveName(activeDocument.name);
           const newHandle = await provider.create(newName, exportArchive(repo));
           activeDocument = newHandle;
           saveMessage = `Saved as ${newHandle.name}.`;

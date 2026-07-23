@@ -5,6 +5,7 @@ import {
   StorageConflictError,
   StorageFetchError,
 } from "./errors.js";
+import { isSrsArchiveName } from "./srs-detect.js";
 import type { DocumentHandle, StorageEntry, StorageProvider, WriteResult } from "./types.js";
 
 const API = "https://api.dropboxapi.com/2";
@@ -145,7 +146,7 @@ export class DropboxDocumentHandle implements DocumentHandle {
     private readonly token: () => string
   ) {
     this.currentRevision = revision;
-    this.kind = /\.srs$/i.test(name) ? "bytes" : "text";
+    this.kind = isSrsArchiveName(name) ? "bytes" : "text";
   }
 
   get revision(): string | null {
@@ -300,8 +301,9 @@ export class DropboxProvider implements StorageProvider {
       });
       entries.push(...response.entries);
     }
+    // Complete listing — SRS-relevance filtering is presentation and lives in the
+    // picker UI (ADR-018), so "Show all files" can actually show everything.
     return entries
-      .filter((entry) => entry[".tag"] === "folder" || /\.(srsj|json|srs)$/i.test(entry.name))
       .map((entry) => ({
         id: entry.id,
         name: entry.name,
