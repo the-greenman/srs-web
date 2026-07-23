@@ -1,3 +1,5 @@
+import type { ScanMode, ScanOutcome } from "./srs-scan.js";
+
 export type StorageProviderId = "local" | "dropbox" | "google-drive" | "github";
 
 export interface DocumentCapabilities {
@@ -86,4 +88,10 @@ export interface StorageProvider {
   /** Open a `kind: "repository"` entry as a tree-mode handle. Optional — only providers
    * that support exploded-repo mode (currently GitHub) implement this. */
   openTree?(entry: StorageEntry): Promise<DocumentHandle & RepoTreeAware>;
+  /** Bounded discovery scan for SRS content below `path` (ADR-018). Optional —
+   * providers with a cheaper bulk primitive implement it natively (GitHub: one
+   * recursive-tree request); callers fall back to `genericScanForSrs` over
+   * `list()` when absent. `seed` is the already-fetched listing of `path`, so
+   * the root is not re-listed. */
+  scanForSrs?(path: string, mode: ScanMode, seed?: StorageEntry[]): Promise<ScanOutcome>;
 }

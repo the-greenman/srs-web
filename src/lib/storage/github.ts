@@ -17,11 +17,26 @@ import {
   type GitDataLocation,
   type TreeEntry,
   commitFiles,
+  fetchRecursiveTree,
   gitBlobSha,
   readBlobs,
   readBranchBase,
 } from "./git-data.js";
-import { MANIFEST_FILE, isSrsArchiveName, listingHasRepoMarker } from "./srs-detect.js";
+import {
+  GITHUB_AUTO_MAX_REPOS,
+  GITHUB_EXPLICIT_REPO_BUDGET,
+  SCAN_MAX_DEPTH,
+  SCAN_MAX_RESULTS,
+} from "./scan-config.js";
+import {
+  MANIFEST_FILE,
+  SCAN_SKIP_DIRS,
+  SRS_MARKER_DIR,
+  isScanTargetName,
+  isSrsArchiveName,
+  listingHasRepoMarker,
+} from "./srs-detect.js";
+import type { ScanMode, ScanOutcome } from "./srs-scan.js";
 import type {
   DocumentHandle,
   GitBranchAware,
@@ -652,6 +667,160 @@ export class GitHubProvider implements StorageProvider {
       });
   }
 
+  /**
+   * Native discovery scan (ADR-018). In-repo: one recursive-tree request for
+   * the whole branch. Account root (""): bounded fan-out, one tree request per
+   * repo, most recently pushed first.
+   */
+  async scanForSrs(path: string, mode: ScanMode, seed?: StorageEntry[]): Promise<ScanOutcome> {
+    await this.authenticate();
+    if (path === "") return this.scanAccount(mode, seed);
+    const { owner, repo, branch } = parseGitHubPath(path);
+    const scanBranch = branch || (await this.defaultBranchOf(owner, repo));
+    if (!scanBranch) return { status: "skipped", entries: [], foldersListed: 0 };
+    return this.scanBranchTree(path, owner, repo, scanBranch);
+  }
+
+  /**
+   * Scan one branch (scoped to the dir in `path`) via a single tree request.
+   * The scan root itself is included when it carries a marker: its entry id
+   * matches listContents' synthetic entry exactly, so browse-mode dedup drops
+   * it while account fan-out surfaces it.
+   */
+  private async scanBranchTree(
+    path: string,
+    owner: string,
+    repo: string,
+    branch: string
+  ): Promise<ScanOutcome> {
+    const { dir } = parseGitHubPath(path);
+    const location = { apiBase: GITHUB_API, owner, repo };
+    const { tree, truncated } = await fetchRecursiveTree(location, this.requireToken(), branch);
+    const prefix = dir === "" ? "" : `${dir}/`;
+
+    // Directories carrying a repo marker (a `manifest.json` blob or `.srs` tree child),
+    // keyed by prefix-relative path ("" = the scan root itself).
+    const repoDirs = new Set<string>();
+    for (const item of tree) {
+      if (prefix !== "" && !item.path.startsWith(prefix)) continue;
+      const rel = item.path.slice(prefix.length);
+      if (rel === "") continue;
+      const isManifest = item.type === "blob" && basenameOf(rel) === MANIFEST_FILE;
+      const isMarkerDir = item.type === "tree" && basenameOf(rel) === SRS_MARKER_DIR;
+      if (isManifest || isMarkerDir) repoDirs.add(parentOf(rel));
+    }
+
+    const inRepoDir = (rel: string): boolean => {
+      for (const dirPath of repoDirs) {
+        if (dirPath !== "" && rel.startsWith(`${dirPath}/`)) return true;
+      }
+      return false;
+    };
+    const hasSkipSegment = (segments: string[]): boolean =>
+      segments.some((segment) => SCAN_SKIP_DIRS.has(segment));
+
+    const results: StorageEntry[] = [];
+    for (const dirPath of repoDirs) {
+      const segments = dirPath === "" ? [] : dirPath.split("/");
+      if (segments.length > SCAN_MAX_DEPTH || inRepoDir(dirPath) || hasSkipSegment(segments))
+        continue;
+      const fullDir = dirPath === "" ? dir : prefix + dirPath;
+      results.push({
+        id: `${owner}/${repo}:${branch}:${fullDir}#repo`,
+        name: dirPath,
+        kind: "repository",
+        path: `${owner}/${repo}:${branch}:${fullDir}`,
+        revision: null,
+      });
+    }
+    for (const item of tree) {
+      if (item.type !== "blob") continue;
+      if (prefix !== "" && !item.path.startsWith(prefix)) continue;
+      const rel = item.path.slice(prefix.length);
+      if (rel === "" || !isScanTargetName(rel)) continue;
+      const segments = rel.split("/");
+      if (
+        segments.length > SCAN_MAX_DEPTH ||
+        inRepoDir(rel) ||
+        hasSkipSegment(segments.slice(0, -1))
+      )
+        continue;
+      results.push({
+        id: `${owner}/${repo}:${branch}:${item.path}`,
+        name: rel,
+        kind: "file",
+        path: `${owner}/${repo}:${branch}:${item.path}`,
+        revision: item.sha,
+      });
+    }
+    results.sort((a, b) =>
+      a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === "repository" ? -1 : 1
+    );
+
+    const capped = results.length > SCAN_MAX_RESULTS;
+    return {
+      status: truncated || capped ? "partial" : "complete",
+      entries: results.slice(0, SCAN_MAX_RESULTS),
+      foldersListed: tree.filter((item) => item.type === "tree").length + 1,
+      reason: truncated ? "truncated" : capped ? "budget-exhausted" : undefined,
+    };
+  }
+
+  /** Account-level fan-out: one tree request per repo, most recently pushed first. */
+  private async scanAccount(mode: ScanMode, seed?: StorageEntry[]): Promise<ScanOutcome> {
+    const repoCount = seed ? seed.length : (await this.listRepos()).length;
+    if (mode === "auto" && repoCount > GITHUB_AUTO_MAX_REPOS) {
+      return { status: "skipped", entries: [], foldersListed: 0, reason: "too-large" };
+    }
+    const budget = mode === "auto" ? GITHUB_AUTO_MAX_REPOS : GITHUB_EXPLICIT_REPO_BUDGET;
+    const recent = await this.api<GitHubRepo[]>(
+      "/user/repos?per_page=100&sort=pushed&visibility=all&affiliation=owner,collaborator,organization_member"
+    );
+    const toScan = recent.slice(0, budget);
+
+    const results: StorageEntry[] = [];
+    let foldersListed = 0;
+    for (const repo of toScan) {
+      this.defaultBranches.set(repo.full_name, repo.default_branch);
+      const [owner = "", name = ""] = repo.full_name.split("/");
+      try {
+        const scan = await this.scanBranchTree(
+          `${repo.full_name}:${repo.default_branch}`,
+          owner,
+          name,
+          repo.default_branch
+        );
+        for (const entry of scan.entries) {
+          results.push({
+            ...entry,
+            name: entry.name === "" ? repo.full_name : `${repo.full_name}/${entry.name}`,
+          });
+        }
+      } catch {
+        // Unreadable repo (empty, no access) — skip it, keep scanning the rest.
+      }
+      foldersListed += 1;
+      if (results.length >= SCAN_MAX_RESULTS) break;
+    }
+
+    const partial = repoCount > toScan.length || results.length >= SCAN_MAX_RESULTS;
+    return {
+      status: partial ? "partial" : "complete",
+      entries: results.slice(0, SCAN_MAX_RESULTS),
+      foldersListed,
+      reason: partial ? "budget-exhausted" : undefined,
+    };
+  }
+
+  /** Cached default branch, fetching repo metadata only when the cache is cold. */
+  private async defaultBranchOf(owner: string, repo: string): Promise<string> {
+    const cached = this.defaultBranches.get(`${owner}/${repo}`);
+    if (cached) return cached;
+    const info = await this.api<GitHubRepo>(`/repos/${owner}/${repo}`);
+    this.defaultBranches.set(`${owner}/${repo}`, info.default_branch);
+    return info.default_branch;
+  }
+
   private async listContents(path: string): Promise<StorageEntry[]> {
     const { owner, repo, branch, dir } = parseGitHubPath(path);
     const items = await this.api<GitHubContentItem[]>(
@@ -719,4 +888,16 @@ function parseGitHubPath(path: string): {
   const [repoPart = "", branch = "", ...dirParts] = path.split(":");
   const [owner = "", repo = ""] = repoPart.split("/").filter((segment) => segment.length > 0);
   return { owner, repo, branch, dir: dirParts.join(":") };
+}
+
+/** "a/b/c" → "c" (the last path segment). */
+function basenameOf(relPath: string): string {
+  const idx = relPath.lastIndexOf("/");
+  return idx < 0 ? relPath : relPath.slice(idx + 1);
+}
+
+/** "a/b/c" → "a/b"; a top-level entry's parent is "". */
+function parentOf(relPath: string): string {
+  const idx = relPath.lastIndexOf("/");
+  return idx < 0 ? "" : relPath.slice(0, idx);
 }

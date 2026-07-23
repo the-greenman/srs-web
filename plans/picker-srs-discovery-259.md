@@ -195,7 +195,7 @@ single-request implementation for GitHub.
 
 #### Tasks
 
-- [ ] Create `src/lib/storage/scan-config.ts`: `SCAN_MAX_DEPTH = 3`;
+- [x] Create `src/lib/storage/scan-config.ts`: `SCAN_MAX_DEPTH = 3`;
       auto mode: `AUTO_MAX_ROOT_ENTRIES = 50`, `AUTO_MAX_LIST_REQUESTS = 20`;
       explicit mode: `EXPLICIT_MAX_LIST_REQUESTS = 60`;
       GitHub account fan-out: `GITHUB_AUTO_MAX_REPOS = 25`, `GITHUB_EXPLICIT_REPO_BUDGET = 40`;
@@ -204,18 +204,18 @@ single-request implementation for GitHub.
       folder drains the budget instead of hiding its cost). All in one file, each knob commented —
       including that `SCAN_MAX_DEPTH` is a network-cost bound for the generic BFS but only a
       result-reporting bound for GitHub's single-request native scan.
-- [ ] Create `src/lib/storage/srs-scan.ts`: `genericScanForSrs` — BFS from `seed ?? await list(path)`;
+- [x] Create `src/lib/storage/srs-scan.ts`: `genericScanForSrs` — BFS from `seed ?? await list(path)`;
       never descends into `SCAN_SKIP_DIRS`; collects `isScanTargetName` files; when a listed
       folder's own listing has a repo marker: emit a `kind:"repository"` entry if the provider has
       `openTree`, else do not emit and do not descend further into it; auto mode returns
       `{status:"skipped", reason:"too-large"}` when the seed listing exceeds
       `AUTO_MAX_ROOT_ENTRIES`; stops at request/result budgets with `status:"partial"`.
-- [ ] `types.ts`: add optional `scanForSrs?` to `StorageProvider` (shape in Contracts).
-- [ ] `git-data.ts`: extract a shared non-throwing tree-fetch primitive
+- [x] `types.ts`: add optional `scanForSrs?` to `StorageProvider` (shape in Contracts).
+- [x] `git-data.ts`: extract a shared non-throwing tree-fetch primitive
       `fetchRecursiveTree(location): Promise<{ entries, truncated: boolean }>`; `readBranchBase`
       keeps its current throw-on-truncated behaviour, now built on it. (Without this the scan
       would have to duplicate raw tree fetching or string-match the truncation error.)
-- [ ] `github.ts`: implement `scanForSrs`:
+- [x] `github.ts`: implement `scanForSrs`:
       - in-repo paths (`owner/repo:branch[:dir]`): one `fetchRecursiveTree` call; directories
         with `manifest.json` or `.srs/` entries → repository entries; `isScanTargetName` blobs →
         file entries; truncated tree → `partial` with `reason:"truncated"`. Depth-bound results
@@ -225,18 +225,18 @@ single-request implementation for GitHub.
         explicit mode scans up to `GITHUB_EXPLICIT_REPO_BUDGET` repos most-recently-pushed first
         (`/user/repos?sort=pushed`), one tree request each; reports `partial` with
         `reason:"budget-exhausted"` when unscanned repos remain.
-- [ ] Unit tests: `tests/srs-scan.test.ts` — generic BFS depth bound, request budget → partial,
+- [x] Unit tests: `tests/srs-scan.test.ts` — generic BFS depth bound, request budget → partial,
       skip-dirs, auto too-large skip, repo-marker emission with/without `openTree`, dedup-safe ids;
       GitHub native scan with stubbed `fetch` (nested repo found, truncated → partial, account
       fan-out budget + ordering).
 
 #### Acceptance Criteria
 
-- [ ] Generic scan of a 3-deep fake provider finds `.srs`/`.srsj` files and marker folders within
+- [x] Generic scan of a 3-deep fake provider finds `.srs`/`.srsj` files and marker folders within
       budget; never lists inside `.git`/`node_modules`/`.srs`.
-- [ ] Auto mode on a >50-entry root returns `skipped/too-large` without a single extra `list()` call.
-- [ ] GitHub in-branch scan issues exactly one tree request.
-- [ ] `npm run typecheck`, `npm run lint`, `npm test` pass.
+- [x] Auto mode on a >50-entry root returns `skipped/too-large` without a single extra `list()` call.
+- [x] GitHub in-branch scan issues exactly one tree request.
+- [x] `npm run typecheck`, `npm run lint`, `npm test` pass.
 
 #### Testing
 
