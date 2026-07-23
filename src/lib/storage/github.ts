@@ -710,7 +710,10 @@ export class GitHubProvider implements StorageProvider {
       if (isManifest || isMarkerDir) repoDirs.add(parentOf(rel));
     }
 
+    const rootIsRepo = repoDirs.has("");
     const inRepoDir = (rel: string): boolean => {
+      // When the scan root itself is a repo, everything below it is inside that repo.
+      if (rel !== "" && rootIsRepo) return true;
       for (const dirPath of repoDirs) {
         if (dirPath !== "" && rel.startsWith(`${dirPath}/`)) return true;
       }
