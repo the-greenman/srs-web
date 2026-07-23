@@ -307,13 +307,13 @@ npm run typecheck && npm run lint && npm test && npm run e2e
 
 ## Final Acceptance
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm run build` succeeds
-- [ ] `npm test` (vitest) passes
-- [ ] `npm run e2e` (playwright) passes, including the existing walkthrough/cloud-storage suites
-- [ ] No inline SRS extension regex outside `srs-detect.ts`
-- [ ] ADR-018 committed (status `accepted` — shipped under it) and consistent with the implementation
+- [x] `npm run typecheck` passes
+- [x] `npm run lint` passes
+- [x] `npm run build` succeeds
+- [x] `npm test` (vitest) passes
+- [x] `npm run e2e` (playwright) passes, including the existing walkthrough/cloud-storage suites
+- [x] No inline SRS extension regex outside `srs-detect.ts`
+- [x] ADR-018 committed (status `accepted` — shipped under it) and consistent with the implementation
 
 ## Coordination Rules
 
