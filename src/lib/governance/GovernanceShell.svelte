@@ -1081,7 +1081,7 @@
                           label={col.displayLabel}
                           empty={value === undefined || value === null || value === ""}
                         >
-                          <FieldValueView fv={{ fieldId: col.fieldId, value }} />
+                          <FieldValueView fv={{ fieldId: col.fieldId, value }} valueType={fieldMetaMap.get(col.fieldId)?.valueType} />
                         </CardField>
                       {/each}
                     </Card>

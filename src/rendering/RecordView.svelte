@@ -49,7 +49,7 @@
         instructions={def?.instructions}
         id={fv.fieldId}
       >
-        <FieldValueView {fv} />
+        <FieldValueView {fv} valueType={def?.valueType} />
       </CardField>
     {/if}
   {/each}

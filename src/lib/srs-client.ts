@@ -766,6 +766,8 @@ export function getAllowedLifecycleTransitions(
 export interface SchemaProperty {
   title?: string;
   type?: string;
+  /** Populated by WASM typeSchema() for url valueType fields (srs-rust type_schema_service.rs). Value "uri" → valueType "url" in blueprint-utils.ts. */
+  format?: string;
   enum?: string[];
   "x-srs-field-id"?: string;
   "x-srs-order"?: number;

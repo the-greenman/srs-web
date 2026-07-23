@@ -35,14 +35,25 @@
   } = $props();
 
   // Compute initial field values from the record prop (or defaults for create mode).
+  // Returns [stringValues, nonStringValues]: the latter preserves array values (e.g. url
+  // repeatable fields) that this string-keyed form cannot edit, so handleSubmit can pass
+  // them through unchanged (update_record does a full field_values replace).
+  // TODO: url repeatable fields can only be read, not edited, via this form; a dedicated
+  //   multi-url input (srs-web#N) is needed to allow adding/removing individual URLs.
   // For select fields with no existing value, default to the first option so the
   // bound value matches what the browser renders.
-  function computeInitialValues(): Record<string, string> {
-    return Object.fromEntries(
+  function computeInitialValues(): [Record<string, string>, Map<string, unknown>] {
+    const nonStringValues = new Map<string, unknown>();
+    const stringValues = Object.fromEntries(
       schema.fields.map((f) => {
         if (record) {
           const fv = record.fieldValues.find((rv) => rv.fieldId === f.fieldId);
-          return [f.fieldId, typeof fv?.value === "string" ? fv.value : ""];
+          if (typeof fv?.value === "string") {
+            return [f.fieldId, fv.value];
+          } else if (fv?.value != null) {
+            nonStringValues.set(f.fieldId, fv.value);
+          }
+          return [f.fieldId, ""];
         }
         // Create mode: default selects to first option.
         if (f.valueType === "select" && f.options && f.options.length > 0) {
@@ -51,25 +62,35 @@
         return [f.fieldId, ""];
       })
     );
+    return [stringValues, nonStringValues];
   }
 
+  let [initialStringValues, initialNonStringValues] = computeInitialValues();
   // Reactive field values map — keyed by fieldId.
-  let fieldValues = $state<Record<string, string>>(computeInitialValues());
+  let fieldValues = $state<Record<string, string>>(initialStringValues);
+  let originalNonStringValues = $state<Map<string, unknown>>(initialNonStringValues);
 
   // Sync fieldValues when the record identity or schema changes (switching between records).
   $effect(() => {
     // Access reactive props to create tracking dependencies before calling the helper.
     void record?.instanceId;
     void schema.fields.length;
-    fieldValues = computeInitialValues();
+    [fieldValues, originalNonStringValues] = computeInitialValues();
   });
 
   function handleSubmit(e: Event) {
     e.preventDefault();
-    // Build fieldValues array — skip empty optional fields.
+    // Build fieldValues array — skip empty optional fields, but pass through any
+    // original non-string values (arrays) that this form cannot edit.
     const fvs = schema.fields
-      .filter((def) => def.required || fieldValues[def.fieldId] !== "")
-      .map((def) => ({ fieldId: def.fieldId, value: fieldValues[def.fieldId] }));
+      .filter((def) => def.required || fieldValues[def.fieldId] !== "" || originalNonStringValues.has(def.fieldId))
+      .map((def) => {
+        const strVal = fieldValues[def.fieldId];
+        if (strVal === "" && originalNonStringValues.has(def.fieldId)) {
+          return { fieldId: def.fieldId, value: originalNonStringValues.get(def.fieldId) };
+        }
+        return { fieldId: def.fieldId, value: strVal };
+      });
 
     onSave({ fieldValues: fvs });
   }

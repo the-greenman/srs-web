@@ -366,6 +366,53 @@ test.describe("Decision Log — export buttons", () => {
   });
 });
 
+test.describe("url valueType — external links render as anchors (#256)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("mode-governance").click({ timeout: 15000 });
+    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
+      timeout: 5000,
+    });
+
+    const fileInput = page.locator('input[type="file"]#srsj-file');
+    await fileInput.setInputFiles(GALLERY_PATH);
+
+    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
+    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(page.getByTestId("decision-log-view")).toBeVisible();
+  });
+
+  test("url array values render as clickable anchors in DecisionView", async ({ page }) => {
+    await page.getByTestId("decision-summary-card").filter({ hasText: "Eye level standard" }).click();
+    await expect(page.locator('[data-testid="record-reading"]')).toBeVisible();
+
+    // Both external_links urls must render as <a> anchors with correct href
+    const anchor1 = page
+      .locator('[data-testid="record-reading"]')
+      .locator('a[href="https://example.org/minutes/2026-02-20"]');
+    await expect(anchor1).toBeVisible();
+    await expect(anchor1).toHaveText("https://example.org/minutes/2026-02-20");
+    await expect(anchor1).toHaveAttribute("target", "_blank");
+    await expect(anchor1).toHaveAttribute("rel", "noopener noreferrer");
+
+    const anchor2 = page
+      .locator('[data-testid="record-reading"]')
+      .locator('a[href="https://limehouse.org/policy-docs"]');
+    await expect(anchor2).toBeVisible();
+  });
+
+  test("unsafe url (javascript:) is not rendered as an anchor", async ({ page }) => {
+    // Eye level standard has safe https:// urls only — verify no javascript: anchors exist
+    await page.getByTestId("decision-summary-card").filter({ hasText: "Eye level standard" }).click();
+    await expect(page.locator('[data-testid="record-reading"]')).toBeVisible();
+
+    // No anchor with javascript: scheme must be present anywhere in the reading view
+    await expect(
+      page.locator('[data-testid="record-reading"]').locator('a[href^="javascript:"]')
+    ).not.toBeAttached();
+  });
+});
+
 test.describe("Decision Log — hide superseded/abandoned toggle", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");

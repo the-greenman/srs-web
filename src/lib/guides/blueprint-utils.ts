@@ -55,6 +55,8 @@ function propertyToField(name: string, prop: SchemaProperty, required: boolean):
     valueType = "select";
   } else if (prop["x-srs-widget"] === "textarea") {
     valueType = "text";
+  } else if (prop.format === "uri") {
+    valueType = "url";
   } else {
     valueType = "string";
   }
