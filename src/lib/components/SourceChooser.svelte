@@ -6,10 +6,13 @@
     StorageProviders,
   } from "$lib/storage/index.js";
   import {
+    genericScanForSrs,
     isOpenableName,
     isSrsArchiveName,
     isSrsDocumentName,
     LocalDocumentHandle,
+    type ScanMode,
+    type ScanOutcome,
     StorageError,
   } from "$lib/storage/index.js";
   import Button from "./Button.svelte";
@@ -51,6 +54,70 @@
       ? relevant
       : relevant.filter((entry) => entry.name.toLowerCase().includes(needle));
   });
+
+  // Discovery scan (ADR-018): auto after each listing, explicit via "Scan for SRS".
+  // In-flight scans are ignored (not aborted) when the user navigates — `scanRun`
+  // is the staleness token.
+  let scanOutcome = $state<ScanOutcome | null>(null);
+  let scanning = $state(false);
+  let scanFailed = $state(false);
+  let lastScanMode = $state<ScanMode>("auto");
+  let scanRun = 0;
+
+  // Scan results not already on screen, subject to the same name filter.
+  const discoveredEntries = $derived.by(() => {
+    if (!scanOutcome || entries === null) return [];
+    const listedIds = new Set(entries.map((entry) => entry.id));
+    const found = scanOutcome.entries.filter((entry) => !listedIds.has(entry.id));
+    const needle = filter.trim().toLowerCase();
+    return needle === ""
+      ? found
+      : found.filter((entry) =>
+          (entry.displayPath ?? entry.name).toLowerCase().includes(needle)
+        );
+  });
+
+  // Offer the explicit scan whenever a bigger scan could find more: auto skipped,
+  // or auto stopped early. An explicit partial re-run would hit the same budgets.
+  const showScanButton = $derived(
+    !scanning &&
+      scanOutcome !== null &&
+      (scanOutcome.status === "skipped" ||
+        (scanOutcome.status === "partial" && lastScanMode === "auto"))
+  );
+
+  function startScan(mode: ScanMode): void {
+    const id = browsing;
+    const provider = id ? browseProvider(id) : undefined;
+    const seed = entries;
+    if (!id || !provider || seed === null) return;
+    const token = ++scanRun;
+    scanning = true;
+    scanFailed = false;
+    lastScanMode = mode;
+    const request = provider.scanForSrs
+      ? provider.scanForSrs(path, mode, seed)
+      : genericScanForSrs(provider, path, mode, seed);
+    request.then(
+      (outcome) => {
+        if (token !== scanRun) return; // navigated away — stale result
+        scanOutcome = outcome;
+        scanning = false;
+      },
+      () => {
+        if (token !== scanRun) return;
+        scanFailed = true; // quiet degradation — scanning never blocks browsing
+        scanning = false;
+      }
+    );
+  }
+
+  function resetScan(): void {
+    scanRun += 1; // invalidate any in-flight scan
+    scanOutcome = null;
+    scanning = false;
+    scanFailed = false;
+  }
 
   function browseProvider(id: BrowseId): StorageProvider | undefined {
     return id === "dropbox" ? providers.dropbox : providers.github;
@@ -103,6 +170,8 @@
       filter = "";
       showAll = false;
       entries = listed;
+      resetScan();
+      startScan("auto");
     });
   }
 
@@ -118,6 +187,8 @@
         path = nextPath;
         filter = "";
         entries = listed;
+        resetScan();
+        startScan("auto");
       });
       return;
     }
@@ -149,6 +220,8 @@
       path = parent;
       filter = "";
       entries = listed;
+      resetScan();
+      startScan("auto");
     });
   }
 
@@ -157,6 +230,7 @@
     browsing = null;
     filter = "";
     showAll = false;
+    resetScan();
   }
 
   function openGoogleDrive(): void {
@@ -240,12 +314,44 @@
           Show all files
         </label>
       </div>
+      <div class="cloud-browser__scanbar" data-testid="cloud-browser-scanbar">
+        {#if scanning}
+          <span class="cloud-browser__scan-status">Scanning subfolders…</span>
+        {:else if scanFailed}
+          <span class="cloud-browser__scan-status">Subfolder scan unavailable.</span>
+        {:else if scanOutcome?.status === "partial"}
+          <span class="cloud-browser__scan-status">Showing what was found before the scan budget ran out.</span>
+        {/if}
+        {#if showScanButton}
+          <button
+            type="button"
+            class="cloud-browser__scan-btn"
+            data-testid="cloud-browser-scan"
+            onclick={() => startScan("explicit")}
+          >Scan for SRS</button>
+        {/if}
+      </div>
       <div class="cloud-browser__list">
         {#if parents.length > 0}
           <button class="cloud-browser__entry" onclick={goUp}>
             <span class="cloud-browser__kind">↑</span>
             <span>Parent folder</span>
           </button>
+        {/if}
+        {#if discoveredEntries.length > 0}
+          <p class="cloud-browser__section" data-testid="cloud-browser-discovered">
+            Found in subfolders
+          </p>
+          {#each discoveredEntries as entry (entry.id)}
+            <button
+              class="cloud-browser__entry cloud-browser__entry--found"
+              onclick={() => chooseEntry(entry)}
+            >
+              <span class="cloud-browser__kind">{entry.kind === "repository" ? "Repo" : isSrsArchiveName(entry.name) ? "SRS" : "SRSJ"}</span>
+              <span>{entry.displayPath ?? entry.name}</span>
+            </button>
+          {/each}
+          <p class="cloud-browser__section">In this folder</p>
         {/if}
         {#each visibleEntries ?? [] as entry (entry.id)}
           <button class="cloud-browser__entry" onclick={() => chooseEntry(entry)}>
@@ -408,6 +514,59 @@
   .cloud-browser__filter:focus {
     outline: 2px solid var(--black);
     outline-offset: -2px;
+  }
+
+  .cloud-browser__scanbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 1.5rem;
+    padding: 0.5rem 1.5rem;
+    border-bottom: 1px solid var(--grey-2);
+  }
+
+  .cloud-browser__scanbar:empty {
+    display: none;
+  }
+
+  .cloud-browser__scan-status {
+    color: var(--grey-3);
+    font-family: var(--font-mono);
+    font-size: var(--size-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  .cloud-browser__scan-btn {
+    margin-left: auto;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--black);
+    background: var(--paper);
+    font-family: var(--font-mono);
+    font-size: var(--size-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .cloud-browser__scan-btn:hover {
+    background: var(--grey-1);
+  }
+
+  .cloud-browser__section {
+    margin: 0;
+    padding: 0.5rem 1.5rem;
+    background: var(--grey-1);
+    color: var(--grey-3);
+    font-family: var(--font-mono);
+    font-size: var(--size-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  .cloud-browser__entry--found {
+    background: color-mix(in srgb, var(--grey-1) 60%, transparent);
   }
 
   .cloud-browser__list {

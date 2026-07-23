@@ -43,8 +43,10 @@ describe("genericScanForSrs", () => {
   it("finds .srs/.srsj files in subfolders, labels them with relative paths, skips root files and non-targets", async () => {
     const provider = fakeProvider(nested);
     const outcome = await genericScanForSrs(provider, "", "auto", nested[""]);
-    const names = outcome.entries.map((entry) => entry.name).sort();
-    expect(names).toEqual(["a/data.srs", "a/gov.srsj", "deep/s1/s2/deep.srsj"]);
+    const paths = outcome.entries.map((entry) => entry.displayPath).sort();
+    expect(paths).toEqual(["a/data.srs", "a/gov.srsj", "deep/s1/s2/deep.srsj"]);
+    // The base filename is preserved so opening produces a clean handle name.
+    expect(outcome.entries.every((entry) => !entry.name.includes("/"))).toBe(true);
     expect(outcome.status).toBe("complete");
   });
 
@@ -63,7 +65,7 @@ describe("genericScanForSrs", () => {
     const outcome = await genericScanForSrs(provider, "", "auto", tree[""]);
     expect(provider.list).not.toHaveBeenCalledWith("/node_modules");
     expect(provider.list).not.toHaveBeenCalledWith("/.git");
-    expect(outcome.entries.map((entry) => entry.name)).toEqual(["ok/x.srsj"]);
+    expect(outcome.entries.map((entry) => entry.displayPath)).toEqual(["ok/x.srsj"]);
   });
 
   it("emits a repository entry for a marker folder when the provider can open trees", async () => {
@@ -74,7 +76,12 @@ describe("genericScanForSrs", () => {
     const withTrees = fakeProvider(tree, true);
     const found = await genericScanForSrs(withTrees, "", "auto", tree[""]);
     expect(found.entries).toHaveLength(1);
-    expect(found.entries[0]).toMatchObject({ kind: "repository", name: "repo", path: "/repo" });
+    expect(found.entries[0]).toMatchObject({
+      kind: "repository",
+      name: "repo",
+      path: "/repo",
+      displayPath: "repo",
+    });
     // Never collects files inside a detected repo, and never descends into it.
     expect(withTrees.list).not.toHaveBeenCalledWith("/repo/.srs");
 
@@ -157,21 +164,24 @@ describe("GitHubProvider.scanForSrs", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain("/git/trees/main?recursive=1");
 
-    const repoNames = outcome.entries
+    const repoPaths = outcome.entries
       .filter((entry) => entry.kind === "repository")
-      .map((entry) => entry.name)
+      .map((entry) => entry.displayPath)
       .sort();
-    expect(repoNames).toEqual(["nested/repo2", "sub"]);
-    const fileNames = outcome.entries
+    expect(repoPaths).toEqual(["nested/repo2", "sub"]);
+    const filePaths = outcome.entries
       .filter((entry) => entry.kind === "file")
-      .map((entry) => entry.name);
+      .map((entry) => entry.displayPath);
     // x.srsj is inside a detected repo; toodeep.srsj exceeds depth; node_modules is skipped.
-    expect(fileNames).toEqual(["exports/export.srsj"]);
+    expect(filePaths).toEqual(["exports/export.srsj"]);
     expect(outcome.status).toBe("complete");
 
-    // Repository entries route through openTree via the standard path grammar.
-    const sub = outcome.entries.find((entry) => entry.name === "sub");
-    expect(sub).toMatchObject({ path: "octo/gov:main:sub", id: "octo/gov:main:sub#repo" });
+    // Repository entries route through openTree via the standard path grammar,
+    // and keep a clean base name for the handle.
+    const sub = outcome.entries.find((entry) => entry.displayPath === "sub");
+    expect(sub).toMatchObject({ path: "octo/gov:main:sub", id: "octo/gov:main:sub#repo", name: "sub" });
+    const nested = outcome.entries.find((entry) => entry.displayPath === "nested/repo2");
+    expect(nested).toMatchObject({ name: "repo2" });
   });
 
   it("reports a truncated tree as partial", async () => {
@@ -225,9 +235,9 @@ describe("GitHubProvider.scanForSrs", () => {
     const seed = [folder("octo/gov"), folder("octo/misc")];
     const outcome = await provider.scanForSrs("", "auto", seed);
     expect(outcome.status).toBe("complete");
-    const byName = Object.fromEntries(outcome.entries.map((entry) => [entry.name, entry]));
+    const byPath = Object.fromEntries(outcome.entries.map((entry) => [entry.displayPath, entry]));
     // Root-marker repo surfaces as the repo itself; file results carry the repo prefix.
-    expect(byName["octo/gov"]).toMatchObject({ kind: "repository", path: "octo/gov:main:" });
-    expect(byName["octo/misc/notes/log.srsj"]).toMatchObject({ kind: "file" });
+    expect(byPath["octo/gov"]).toMatchObject({ kind: "repository", path: "octo/gov:main:" });
+    expect(byPath["octo/misc/notes/log.srsj"]).toMatchObject({ kind: "file", name: "log.srsj" });
   });
 });

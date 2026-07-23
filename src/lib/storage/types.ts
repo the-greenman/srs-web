@@ -71,6 +71,10 @@ export interface StorageEntry {
   kind: "file" | "folder" | "repository";
   path?: string;
   revision?: string | null;
+  /** Scan-relative path for display (e.g. "records/board.srsj"), set by a discovery
+   * scan (ADR-018). `name` stays the base name so opening produces a clean handle name;
+   * pickers show `displayPath ?? name`. */
+  displayPath?: string;
 }
 
 export interface StorageProvider {
