@@ -33,7 +33,13 @@ only job is OAuth token exchange:
 - `POST /api/oauth/{provider}/token` reads `{ code, code_verifier, redirect_uri }`, validates the
   `Origin` and `redirect_uri` against an allow-list (so the proxy is not an open token oracle),
   injects `client_id` + `client_secret` from Worker secrets, exchanges at the provider token
-  endpoint, and returns `{ access_token, expires_in? }`.
+  endpoint, and returns `{ access_token, expires_in?, refresh_token?, refresh_token_expires_in? }`.
+  The optional refresh fields are present only when the GitHub App has "Expire user authorization
+  tokens" enabled; they are passed through verbatim without being stored server-side.
+- `POST /api/oauth/{provider}/refresh` (srs-web#163, ADR-017) reads `{ refresh_token }`, validates
+  `Origin`, exchanges with the provider using `grant_type=refresh_token`, and returns a new token
+  pair in the same shape as `/token`. This allows silent mid-session re-authentication without a
+  popup; the refresh token itself is kept in-memory only in the browser (ADR-017).
 - Every other request falls through to `env.ASSETS.fetch(request)`, preserving the SPA and its
   single-page-application not-found handling.
 - `wrangler.jsonc` gains `main`, an `ASSETS` binding, and `run_worker_first` for `/api/*`. Secrets

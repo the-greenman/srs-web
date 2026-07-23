@@ -33,6 +33,8 @@ import type {
 const GITHUB_API = "https://api.github.com";
 const GITHUB_AUTHORIZE = "https://github.com/login/oauth/authorize";
 const TOKEN_ENDPOINT = "/api/oauth/github/token";
+// Named with provider prefix so a future Codeberg constant doesn't conflict (srs-web#254).
+const GITHUB_REFRESH_ENDPOINT = "/api/oauth/github/refresh";
 const OAUTH_STATE = "srs.github.oauth.state";
 const OAUTH_VERIFIER = "srs.github.oauth.verifier";
 const OAUTH_MESSAGE = "srs.github.oauth.complete";
@@ -44,6 +46,8 @@ interface GitHubAuthMessage {
   state: string;
   accessToken?: string;
   expiresAt?: number;
+  refreshToken?: string;
+  refreshTokenExpiresAt?: number;
   error?: string;
 }
 
@@ -139,10 +143,22 @@ export async function completeGitHubOAuthCallback(config: GitHubConfig): Promise
       }),
     });
     if (!response.ok) throw new Error(await parseApiError(response));
-    const token = (await response.json()) as { access_token: string; expires_in?: number };
+    const token = (await response.json()) as {
+      access_token: string;
+      expires_in?: number;
+      refresh_token?: string;
+      refresh_token_expires_in?: number;
+    };
     message.accessToken = token.access_token;
     // GitHub OAuth-app tokens don't expire by default; only set expiry if given.
     if (token.expires_in) message.expiresAt = Date.now() + token.expires_in * 1000;
+    // Refresh token is present only when "Expire user authorization tokens" is on in the GitHub App.
+    if (token.refresh_token) {
+      message.refreshToken = token.refresh_token;
+      message.refreshTokenExpiresAt = token.refresh_token_expires_in
+        ? Date.now() + token.refresh_token_expires_in * 1000
+        : Number.POSITIVE_INFINITY;
+    }
   } catch (error) {
     message.error = error instanceof Error ? error.message : String(error);
   } finally {
@@ -404,6 +420,9 @@ export class GitHubProvider implements StorageProvider {
   readonly configured: boolean;
   private accessToken: string | null = null;
   private expiresAt = 0;
+  private refreshToken: string | null = null;
+  // Zero means "not set" — refreshSilently() guards on null refreshToken first.
+  private refreshTokenExpiresAt = 0;
   private readonly defaultBranches = new Map<string, string>();
 
   constructor(private readonly config: GitHubConfig) {
@@ -414,7 +433,13 @@ export class GitHubProvider implements StorageProvider {
     if (!this.configured) {
       throw new StorageConfigurationError("GitHub is not configured.");
     }
+    // Token still valid — nothing to do.
     if (this.accessToken && Date.now() < this.expiresAt - 30_000) return;
+
+    // Near-expiry (or expired) and we had a token: try silent refresh before popup.
+    if (this.accessToken) {
+      if (await this.refreshSilently()) return;
+    }
 
     const state = randomUrlSafe();
     const verifier = randomUrlSafe(64);
@@ -453,6 +478,9 @@ export class GitHubProvider implements StorageProvider {
         this.accessToken = event.data.accessToken;
         // No expiry reported → treat as long-lived so we don't re-prompt each call.
         this.expiresAt = event.data.expiresAt ?? Number.POSITIVE_INFINITY;
+        // Capture refresh credentials when the GitHub App has token expiry enabled (ADR-017).
+        this.refreshToken = event.data.refreshToken ?? null;
+        this.refreshTokenExpiresAt = event.data.refreshTokenExpiresAt ?? Number.POSITIVE_INFINITY;
         resolve();
       };
       const cleanup = () => {
@@ -463,6 +491,65 @@ export class GitHubProvider implements StorageProvider {
       };
       window.addEventListener("message", onMessage);
     });
+  }
+
+  /**
+   * Attempt a silent token refresh using the stored refresh token. Returns true
+   * on success (accessToken updated). Returns false without throwing when the
+   * refresh token is absent, expired, or the endpoint returns a non-ok response
+   * (caller should fall back to the popup). Network-level errors (TypeError) do
+   * not clear the refresh token — the token may still be valid; only a definitive
+   * HTTP error from the endpoint clears it.
+   */
+  private async refreshSilently(): Promise<boolean> {
+    if (!this.refreshToken || Date.now() >= this.refreshTokenExpiresAt) return false;
+
+    let response: Response;
+    try {
+      response = await fetch(GITHUB_REFRESH_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: this.refreshToken }),
+      });
+    } catch {
+      // Network failure — the refresh token is still valid; don't clear it.
+      return false;
+    }
+
+    if (!response.ok) {
+      // Definitive endpoint rejection — refresh token is invalid or revoked.
+      this.refreshToken = null;
+      return false;
+    }
+
+    let token: {
+      access_token?: string;
+      expires_in?: number;
+      refresh_token?: string;
+      refresh_token_expires_in?: number;
+    };
+    try {
+      token = await response.json();
+    } catch {
+      this.refreshToken = null;
+      return false;
+    }
+
+    if (!token.access_token) {
+      this.refreshToken = null;
+      return false;
+    }
+
+    this.accessToken = token.access_token;
+    this.expiresAt = token.expires_in
+      ? Date.now() + token.expires_in * 1000
+      : Number.POSITIVE_INFINITY;
+    // GitHub rotates the refresh token on each use; fall back to the current one if absent.
+    this.refreshToken = token.refresh_token ?? this.refreshToken;
+    this.refreshTokenExpiresAt = token.refresh_token_expires_in
+      ? Date.now() + token.refresh_token_expires_in * 1000
+      : Number.POSITIVE_INFINITY;
+    return true;
   }
 
   // Browse path grammar (":" is illegal in git branch names, so it's unambiguous):
