@@ -40,7 +40,7 @@ export interface RepoTreeBase {
   entries: Record<string, TreeEntry>;
 }
 
-interface GitHubTreeEntry {
+export interface GitHubTreeEntry {
   path: string;
   mode: string;
   type: "blob" | "tree" | "commit";
@@ -89,6 +89,30 @@ function encodeBase64Bytes(bytes: Uint8Array): string {
 }
 
 /**
+ * Fetch a full recursive tree listing in one request, without interpreting
+ * truncation. `treeIsh` may be a tree SHA, a commit SHA, or a branch/tag name
+ * (the API resolves refs) — which is what lets a discovery scan (ADR-018)
+ * enumerate a whole branch in a single request. Callers that require a
+ * complete tree (readBranchBase) throw on `truncated`; callers that can
+ * degrade (scans) report partial results instead.
+ */
+export async function fetchRecursiveTree(
+  location: Pick<GitDataLocation, "apiBase" | "owner" | "repo">,
+  token: string,
+  treeIsh: string
+): Promise<{ sha: string; tree: GitHubTreeEntry[]; truncated: boolean }> {
+  const treeRes = await fetch(
+    `${repoBase(location)}/git/trees/${encodeURIComponent(treeIsh)}?recursive=1`,
+    { headers: authHeaders(token) }
+  );
+  if (!treeRes.ok) {
+    throw new StorageFetchError(`Could not read tree "${treeIsh}": ${await parseError(treeRes)}`);
+  }
+  const tree = (await treeRes.json()) as GitHubTreeResponse;
+  return { sha: tree.sha, tree: tree.tree, truncated: tree.truncated === true };
+}
+
+/**
  * Read a branch's base state, scoped to `location.dir`: the commit/root-tree/subtree SHAs
  * and a dir-relative map of every blob under `dir` (submodules and symlinks excluded).
  */
@@ -122,15 +146,7 @@ export async function readBranchBase(
   const rootTreeSha = commit.tree?.sha;
   if (!rootTreeSha) throw new StorageFetchError(`Commit "${commitSha}" has no tree.`);
 
-  const treeRes = await fetch(`${base}/git/trees/${rootTreeSha}?recursive=1`, {
-    headers: authHeaders(token),
-  });
-  if (!treeRes.ok) {
-    throw new StorageFetchError(
-      `Could not read tree "${rootTreeSha}": ${await parseError(treeRes)}`
-    );
-  }
-  const tree = (await treeRes.json()) as GitHubTreeResponse;
+  const tree = await fetchRecursiveTree(location, token, rootTreeSha);
   if (tree.truncated) {
     throw new StorageFetchError(
       `Branch "${location.branch}" has too many files for a single tree read (GitHub truncated the response). Chunked/paginated reads are not yet supported.`
