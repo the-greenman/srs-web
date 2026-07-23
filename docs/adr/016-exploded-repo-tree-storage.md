@@ -5,6 +5,8 @@
 - **Issue:** [srs-web#246](https://github.com/the-greenman/srs-web/issues/246)
 - **Supersedes:** —
 - **Superseded by:** —
+- **Partially amended by:** [ADR-018](018-picker-srs-discovery.md) — Decision 5's repository
+  marker widened from `manifest.json`-only to `manifest.json` or a `.srs/` directory.
 
 ## Context
 
