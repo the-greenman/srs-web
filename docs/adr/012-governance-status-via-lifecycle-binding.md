@@ -53,11 +53,20 @@ are deleted. No TypeScript encodes the transition graph.
   `immutable` flag and current state from the `get_allowed_lifecycle_transitions` result —
   no separate field-value query is needed.
 
-## Display-only exception (srs-web#179)
+## Display-only exception — retired (srs-web#195)
 
-`DecisionSummaryCard.svelte` (list-row badge) and `decision-export-utils.ts` (export formatter)
-read status via `repo.get_field_value_by_name(instanceId, "status")` rather than
-`get_allowed_lifecycle_transitions`. This is an approved exception for display-only contexts
-where calling the lifecycle binding per list row would be prohibitively expensive (one round-trip
-per record). These callers do **not** write status and do not gate any control flow on the value.
-The lifecycle binding remains the sole write path and the authority for immutability gating.
+The display-only exception recorded here is now retired.
+
+`DecisionSummaryCard.svelte` previously read status via
+`repo.get_field_value_by_name(instanceId, "status")` as an approved exception for display-only
+list rows, where an extra `get_allowed_lifecycle_transitions` call per row was considered
+expensive. `SrsRecord.lifecycle` is normalised from the WASM payload on every record returned
+by `listRecords()` / `getRecord()` — no additional round-trip is required.
+`DecisionSummaryCard.svelte` now reads `record.lifecycle` directly (same pattern as
+`RecordView.svelte`), resolving the stale-display bug introduced when `setLifecycleState()`
+replaced raw `status` field writes (srs-web#135).
+
+`decision-export-utils.ts` was separately refactored to use `renderDocumentView` and no longer
+reads any status field.
+
+No approved exceptions to this ADR remain.

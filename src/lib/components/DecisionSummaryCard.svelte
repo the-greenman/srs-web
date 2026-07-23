@@ -35,10 +35,7 @@
         : rawStatement
       : undefined
   );
-  const status = $derived(
-    repo.get_field_value_by_name(record.instanceId, "status") as Status | null | undefined ??
-      undefined
-  );
+  const status = $derived(record.lifecycle ? (record.lifecycle as Status) : undefined);
   const date = $derived(record.createdAt?.slice(0, 10) ?? "—");
   const tags = $derived(record.tags ?? []);
 </script>
