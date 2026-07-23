@@ -80,10 +80,13 @@ export function genericScanForSrs(
 
 // types.ts — StorageProvider gains one optional method
 scanForSrs?(path: string, mode: ScanMode, seed?: StorageEntry[]): Promise<ScanOutcome>;
+// types.ts — StorageEntry gains one optional display-only field
+displayPath?: string;              // scan-relative path e.g. "governance/2026/board.srsj"
 ```
 
-`StorageEntry` is unchanged. Discovered entries carry their scan-relative display path in `name`
-(e.g. `governance/2026/board.srsj`) and a normal provider `id`/`path` so `chooseEntry` routes
+Discovered entries keep `name` as the **base** filename/foldername (so `open()`/`openTree()`
+produce a clean handle name) and carry the scan-relative path in the new `displayPath` field,
+which the picker shows. `id`/`path` are the normal provider values, so `chooseEntry` routes
 them through the existing `open()` / `openTree()` switch untouched.
 
 ---
