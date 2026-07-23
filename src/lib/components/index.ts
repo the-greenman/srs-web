@@ -51,6 +51,7 @@ export { default as DecisionLinkPicker } from "./DecisionLinkPicker.svelte";
 export { default as Migrations } from "./Migrations.svelte";
 
 // Status / actions / validation
+export { default as SrsMark } from "./SrsMark.svelte";
 export { default as Tag } from "./Tag.svelte";
 export { default as TagChip } from "./TagChip.svelte";
 export { default as Button } from "./Button.svelte";
