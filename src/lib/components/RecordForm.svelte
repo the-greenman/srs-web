@@ -34,15 +34,26 @@
     saveError?: string | null;
   } = $props();
 
+  // Non-string values (e.g. url arrays for repeatable fields) cannot be edited by this
+  // string-keyed form — captured here so handleSubmit can pass them through unchanged
+  // and avoid silently clearing them (update_record does a full field_values replace).
+  let originalNonStringValues = new Map<string, unknown>();
+
   // Compute initial field values from the record prop (or defaults for create mode).
   // For select fields with no existing value, default to the first option so the
   // bound value matches what the browser renders.
   function computeInitialValues(): Record<string, string> {
+    originalNonStringValues = new Map();
     return Object.fromEntries(
       schema.fields.map((f) => {
         if (record) {
           const fv = record.fieldValues.find((rv) => rv.fieldId === f.fieldId);
-          return [f.fieldId, typeof fv?.value === "string" ? fv.value : ""];
+          if (typeof fv?.value === "string") {
+            return [f.fieldId, fv.value];
+          } else if (fv?.value != null) {
+            originalNonStringValues.set(f.fieldId, fv.value);
+          }
+          return [f.fieldId, ""];
         }
         // Create mode: default selects to first option.
         if (f.valueType === "select" && f.options && f.options.length > 0) {
@@ -66,10 +77,17 @@
 
   function handleSubmit(e: Event) {
     e.preventDefault();
-    // Build fieldValues array — skip empty optional fields.
+    // Build fieldValues array — skip empty optional fields, but pass through any
+    // original non-string values (arrays) that this form cannot edit.
     const fvs = schema.fields
-      .filter((def) => def.required || fieldValues[def.fieldId] !== "")
-      .map((def) => ({ fieldId: def.fieldId, value: fieldValues[def.fieldId] }));
+      .filter((def) => def.required || fieldValues[def.fieldId] !== "" || originalNonStringValues.has(def.fieldId))
+      .map((def) => {
+        const strVal = fieldValues[def.fieldId];
+        if (strVal === "" && originalNonStringValues.has(def.fieldId)) {
+          return { fieldId: def.fieldId, value: originalNonStringValues.get(def.fieldId) };
+        }
+        return { fieldId: def.fieldId, value: strVal };
+      });
 
     onSave({ fieldValues: fvs });
   }

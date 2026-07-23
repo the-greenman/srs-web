@@ -40,6 +40,8 @@
   <Textarea {id} bind:value {disabled} {required} {rows} />
 {:else if def.valueType === "select" && def.options?.length}
   <Select {id} bind:value options={def.options} {disabled} {required} />
+{:else if def.valueType === "url"}
+  <Input type="url" {id} bind:value {disabled} {required} />
 {:else}
   <Input {id} bind:value {disabled} {required} />
 {/if}

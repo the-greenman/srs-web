@@ -271,6 +271,10 @@
         {
           "fieldId": "aee7afe9-6650-5fa4-a61a-495c3b88994b",
           "value": "active"
+        },
+        {
+          "fieldId": "fc434475-b25e-46d5-8536-c2cc2e4e5f98",
+          "value": ["https://example.org/minutes/2026-02-20", "https://limehouse.org/policy-docs"]
         }
       ],
       "instanceId": "3be7b057-9167-42a4-b0db-2a8b30666cef",
@@ -1351,7 +1355,8 @@
         "fields/tensions-f2e00002.json",
         "fields/unresolvedquestions-f3e00003.json",
         "fields/blocking-f4e00004.json",
-        "fields/nextaction-f5e00005.json"
+        "fields/nextaction-f5e00005.json",
+        "fields/externallinks-fc434475.json"
       ],
       "id": "90677fae-16a7-49ec-8aee-1872cbf8e381",
       "name": "governance-core",
@@ -1605,6 +1610,13 @@
           "order": 11,
           "repeatable": false,
           "required": true
+        },
+        {
+          "displayLabel": "External Links",
+          "fieldId": "fc434475-b25e-46d5-8536-c2cc2e4e5f98",
+          "order": 12,
+          "repeatable": true,
+          "required": false
         }
       ],
       "id": "1fcad6a2-9f78-5e41-94ba-d82e88b822f3",
@@ -1903,6 +1915,18 @@
       "name": "next_action",
       "namespace": "governance",
       "valueType": "text",
+      "version": 1
+    },
+    "package/fields/externallinks-fc434475.json": {
+      "aiGuidance": {
+        "purpose": ""
+      },
+      "createdAt": "2026-02-20T00:00:00Z",
+      "description": "Links to external documents, minutes, or resources related to this decision.",
+      "id": "fc434475-b25e-46d5-8536-c2cc2e4e5f98",
+      "name": "external_links",
+      "namespace": "governance",
+      "valueType": "url",
       "version": 1
     },
     "containers/ece00010-0000-4000-8000-000000000010.json": {

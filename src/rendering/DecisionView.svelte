@@ -39,6 +39,7 @@
     { name: 'next_steps',              label: 'Next Steps' },
     { name: 'owner',                   label: 'Owner' },
     { name: 'status',                  label: 'Status' },
+    { name: 'external_links',          label: 'External Links' },
   ] as const;
 
   const displayTitle = $derived(record.displayLabel ?? record.instanceId.slice(0, 8));
@@ -53,7 +54,7 @@
       {@const def = metaByName.get(field.name)}
       <CardField label={field.label} description={def?.description} instructions={def?.instructions} id={field.name}>
         <!-- synthetic: FieldValueView reads only .value; fieldId is not semantically a UUID here -->
-        <FieldValueView fv={{ fieldId: field.name, value }} />
+        <FieldValueView fv={{ fieldId: field.name, value }} valueType={def?.valueType} />
       </CardField>
     {/if}
   {/each}
