@@ -17,7 +17,8 @@
     return String(v);
   }
 
-  function isSafeUrl(v: unknown): boolean {
+  // XSS guard: only http/https schemes are safe to open as <a href> in a new tab
+  function isRenderableAsAnchor(v: unknown): boolean {
     if (typeof v !== 'string') return false;
     return v.startsWith('https://') || v.startsWith('http://');
   }
@@ -29,16 +30,18 @@
   <ul class="repeat__list">
     {#each values as v}
       <li class="repeat__item">
-        {#if isUrl && isSafeUrl(v)}
-          <a href={formatValue(v)} target="_blank" rel="noopener noreferrer">{formatValue(v)}</a>
+        {#if isUrl && isRenderableAsAnchor(v)}
+          {@const href = formatValue(v)}
+          <a {href} target="_blank" rel="noopener noreferrer">{href}</a>
         {:else}
           {formatValue(v)}
         {/if}
       </li>
     {/each}
   </ul>
-{:else if isUrl && isSafeUrl(fv.value)}
-  <a href={formatValue(fv.value)} target="_blank" rel="noopener noreferrer">{formatValue(fv.value)}</a>
+{:else if isUrl && isRenderableAsAnchor(fv.value)}
+  {@const href = formatValue(fv.value)}
+  <a {href} target="_blank" rel="noopener noreferrer">{href}</a>
 {:else}
   <span>{formatValue(fv.value)}</span>
 {/if}

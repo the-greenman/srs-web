@@ -97,6 +97,19 @@ describe("definitionToFields", () => {
     expect(fields[0].valueType).toBe("text");
   });
 
+  it("maps a url field when format is uri", () => {
+    const def = simpleDef({
+      external_links: scalarProp({
+        "x-srs-field-id": "fc434475-b25e-46d5-8536-c2cc2e4e5f98",
+        format: "uri",
+      }),
+    });
+
+    const fields = definitionToFields(def);
+
+    expect(fields[0].valueType).toBe("url");
+  });
+
   it("sorts fields by x-srs-order", () => {
     const def = simpleDef({
       second: scalarProp({
