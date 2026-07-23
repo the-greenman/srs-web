@@ -60,8 +60,9 @@ here so it isn't mistaken for acceptable presentation logic:
   `src/rendering/field-helpers.ts` (`getFieldValueByName`, `getFieldByName`) is
   resolved in srs-web#217: both helpers removed; rendering components now call
   `repo.get_field_value_by_name` via the repo context (ADR-013).
-- **Hardcoded vocabularies** — the lifecycle `STATUS_OPTIONS` list is hardcoded in TS
-  instead of derived from the type/lifecycle definition via a binding.
+- **Hardcoded vocabularies** — resolved in srs-web#135 / ADR-012: `lifecycle.ts` deleted
+  (hardcoded `LIFECYCLE_TRANSITIONS` / `IMMUTABLE_STATES`); `STATUS_OPTIONS` removed. All
+  lifecycle vocabulary is now derived from `get_allowed_lifecycle_transitions` at runtime.
 - **Relation type derivation** — `loadInstalledRelationTypes()` in `GovernanceShell.svelte`
   derives the installed relation types by parsing the output of `exportSrsj(repo)` rather
   than calling a dedicated WASM binding. This is an approved interim exception for the
