@@ -83,16 +83,17 @@ export async function genericScanForSrs(
         if (provider.openTree) {
           results.push({
             id: `${folder.id}#scan-repo`,
-            name: prefix.replace(/\/$/, ""),
+            name: folder.name,
             kind: "repository",
             path: folder.path,
+            displayPath: prefix.replace(/\/$/, ""),
           });
         }
         continue;
       }
       for (const entry of listing) {
         if (entry.kind === "file" && isScanTargetName(entry.name)) {
-          results.push({ ...entry, name: `${prefix}${entry.name}` });
+          results.push({ ...entry, displayPath: `${prefix}${entry.name}` });
         }
       }
     }

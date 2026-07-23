@@ -261,35 +261,35 @@ on demand otherwise.
 
 #### Tasks
 
-- [ ] `SourceChooser.svelte`: after every successful listing (`openBrowser`, `chooseEntry` folder
+- [x] `SourceChooser.svelte`: after every successful listing (`openBrowser`, `chooseEntry` folder
       navigation, `goUp`), fire `provider.scanForSrs?.(path, "auto", entries) ??
       genericScanForSrs(provider, path, "auto", entries)` without blocking the listing render;
       a navigation token discards stale scan results; scan errors are swallowed into a quiet
       "scan unavailable" state (never block browsing). Stale scans are *ignored, not aborted* —
       no `AbortController` in v1; superseded scans run to completion in the background (accepted
       cost, noted here deliberately).
-- [ ] Render a "Found in subfolders" section above the listing when results exist: each result is
+- [x] Render a "Found in subfolders" section above the listing when results exist: each result is
       clickable through the existing `chooseEntry` routing; results deduped against the current
       listing by entry id; show the scan-relative path as the entry label; cap display at
       `SCAN_MAX_RESULTS`.
-- [ ] Status line + button: `scanning…` while in flight; on `skipped` or `partial`, show
+- [x] Status line + button: `scanning…` while in flight; on `skipped` or `partial`, show
       **"Scan for SRS"** (`data-testid="cloud-browser-scan"`) which reruns in explicit mode;
       `partial` results render with a "showing what was found before the budget ran out" note.
-- [ ] Unit tests (`tests/SourceChooser.test.ts`): auto-scan renders discovered entries; stale
+- [x] Unit tests (`tests/SourceChooser.test.ts`): auto-scan renders discovered entries; stale
       results discarded on navigation; skipped → button visible; button triggers explicit scan.
-- [ ] e2e (`e2e/cloud-storage.spec.ts`): extend fake providers — small fake Dropbox tree with a
+- [x] e2e (`e2e/cloud-storage.spec.ts`): extend fake providers — small fake Dropbox tree with a
       nested `.srsj` (auto-scan surfaces it; clicking opens it), large fake folder (no auto-scan,
       button appears, explicit scan surfaces results), fake GitHub nested repository discovered by
       scan opens via `openTree` round-trip; "Show all files" toggle e2e.
 
 #### Acceptance Criteria
 
-- [ ] Opening a small Dropbox folder shows nested `.srsj` files without any user action.
-- [ ] A large folder shows no auto results, offers "Scan for SRS", and the button produces results.
-- [ ] A scan-discovered GitHub repository entry opens in tree mode identically to one reached by
+- [x] Opening a small Dropbox folder shows nested `.srsj` files without any user action.
+- [x] A large folder shows no auto results, offers "Scan for SRS", and the button produces results.
+- [x] A scan-discovered GitHub repository entry opens in tree mode identically to one reached by
       manual navigation.
-- [ ] Navigating away mid-scan never paints stale results.
-- [ ] `npm run typecheck`, `npm run lint`, `npm test`, `npm run e2e` pass.
+- [x] Navigating away mid-scan never paints stale results.
+- [x] `npm run typecheck`, `npm run lint`, `npm test`, `npm run e2e` pass.
 
 #### Testing
 

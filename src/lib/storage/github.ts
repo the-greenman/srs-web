@@ -727,10 +727,11 @@ export class GitHubProvider implements StorageProvider {
       const fullDir = dirPath === "" ? dir : prefix + dirPath;
       results.push({
         id: `${owner}/${repo}:${branch}:${fullDir}#repo`,
-        name: dirPath,
+        name: dirPath === "" ? repo : basenameOf(dirPath),
         kind: "repository",
         path: `${owner}/${repo}:${branch}:${fullDir}`,
         revision: null,
+        displayPath: dirPath,
       });
     }
     for (const item of tree) {
@@ -747,15 +748,18 @@ export class GitHubProvider implements StorageProvider {
         continue;
       results.push({
         id: `${owner}/${repo}:${branch}:${item.path}`,
-        name: rel,
+        name: basenameOf(rel),
         kind: "file",
         path: `${owner}/${repo}:${branch}:${item.path}`,
         revision: item.sha,
+        displayPath: rel,
       });
     }
-    results.sort((a, b) =>
-      a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === "repository" ? -1 : 1
-    );
+    results.sort((a, b) => {
+      const an = a.displayPath ?? a.name;
+      const bn = b.displayPath ?? b.name;
+      return a.kind === b.kind ? an.localeCompare(bn) : a.kind === "repository" ? -1 : 1;
+    });
 
     const capped = results.length > SCAN_MAX_RESULTS;
     return {
@@ -791,9 +795,10 @@ export class GitHubProvider implements StorageProvider {
           repo.default_branch
         );
         for (const entry of scan.entries) {
+          const rel = entry.displayPath ?? "";
           results.push({
             ...entry,
-            name: entry.name === "" ? repo.full_name : `${repo.full_name}/${entry.name}`,
+            displayPath: rel === "" ? repo.full_name : `${repo.full_name}/${rel}`,
           });
         }
       } catch {

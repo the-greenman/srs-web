@@ -117,3 +117,56 @@ describe("SourceChooser — cloud browser default filter", () => {
     expect(queryByText("readme.md")).toBeTruthy();
   });
 });
+
+describe("SourceChooser — auto-scan", () => {
+  function scanningDropbox(outcome: unknown, listing: unknown[]) {
+    return {
+      ...makeProviders(),
+      dropbox: {
+        configured: true,
+        label: "Dropbox",
+        authenticate: vi.fn().mockResolvedValue(undefined),
+        open: vi.fn(),
+        list: vi.fn().mockResolvedValue(listing),
+        scanForSrs: vi.fn().mockResolvedValue(outcome),
+      },
+    };
+  }
+  const rootListing = [{ id: "1", name: "sub", kind: "folder", path: "/sub" }];
+
+  it("renders auto-discovered entries in a 'Found in subfolders' section", async () => {
+    const providers = scanningDropbox(
+      {
+        status: "complete",
+        entries: [{ id: "d1", name: "sub/nested.srsj", kind: "file", path: "/sub/nested.srsj" }],
+        foldersListed: 2,
+      },
+      rootListing
+    );
+    const { getByTestId, findByText } = render(SourceChooser, {
+      // biome-ignore lint/suspicious/noExplicitAny: minimal provider fake
+      props: { providers: providers as any, onOpen: vi.fn() },
+    });
+    await fireEvent.click(getByTestId("source-dropbox"));
+
+    expect(await findByText("sub/nested.srsj")).toBeTruthy();
+    expect(getByTestId("cloud-browser-discovered")).toBeTruthy();
+    expect(providers.dropbox.scanForSrs).toHaveBeenCalledWith("", "auto", rootListing);
+  });
+
+  it("offers 'Scan for SRS' when the auto scan was skipped", async () => {
+    const providers = scanningDropbox(
+      { status: "skipped", entries: [], foldersListed: 0, reason: "too-large" },
+      rootListing
+    );
+    const { getByTestId, findByTestId } = render(SourceChooser, {
+      // biome-ignore lint/suspicious/noExplicitAny: minimal provider fake
+      props: { providers: providers as any, onOpen: vi.fn() },
+    });
+    await fireEvent.click(getByTestId("source-dropbox"));
+
+    const scanBtn = await findByTestId("cloud-browser-scan");
+    await fireEvent.click(scanBtn);
+    expect(providers.dropbox.scanForSrs).toHaveBeenLastCalledWith("", "explicit", rootListing);
+  });
+});
