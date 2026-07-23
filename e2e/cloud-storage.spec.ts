@@ -498,6 +498,73 @@ test.describe("Cloud storage sources", () => {
     await expect(page.getByTitle("Opened from dropbox")).toHaveText("dropbox-nested");
   });
 
+  test("a large folder skips auto-scan, offers 'Scan for SRS', and the explicit scan finds results", async ({
+    page,
+  }) => {
+    // A Dropbox root with >AUTO_MAX_ROOT_ENTRIES (50) folders: auto-scan skips it
+    // (too-large), so no discovered section appears until the user clicks the button.
+    // No scanForSrs override → the generic BFS fallback in SourceChooser is exercised.
+    await page.addInitScript(() => {
+      const rootFolders = Array.from({ length: 55 }, (_, i) => ({
+        id: `big-f${i}`,
+        name: `f${i}`,
+        kind: "folder",
+        path: `/f${i}`,
+      }));
+      const tree: Record<string, unknown[]> = { "": rootFolders };
+      tree["/f0"] = [
+        { id: "big-hit", name: "buried.srsj", kind: "file", path: "/f0/buried.srsj", revision: "r1" },
+      ];
+      const doc = (name: string) => ({
+        provider: "dropbox",
+        id: `dropbox-${name}`,
+        name,
+        revision: "r1",
+        kind: "text",
+        capabilities: { read: true, write: true },
+        read: async () => '{"srsVersion":"2.0-draft","records":[]}',
+        write: async () => ({ revision: "r2" }),
+      });
+      // biome-ignore lint/suspicious/noExplicitAny: test injection shape
+      (window as any).__SRS_STORAGE_PROVIDERS__ = {
+        dropbox: {
+          id: "dropbox",
+          label: "Dropbox",
+          configured: true,
+          authenticate: async () => {},
+          list: async (path?: string) => tree[path ?? ""] ?? [],
+          open: async (entry: { name?: string }) => doc(entry?.name ?? "x.srsj"),
+        },
+        googleDrive: {
+          id: "google-drive",
+          label: "Google Drive",
+          configured: false,
+          authenticate: async () => {},
+          open: async () => doc("x"),
+          select: async () => doc("x"),
+        },
+        github: {
+          id: "github",
+          label: "GitHub",
+          configured: false,
+          authenticate: async () => {},
+          open: async () => doc("x"),
+        },
+      };
+    });
+    await page.goto("/");
+    await page.getByTestId("mode-governance").click();
+    await page.getByTestId("source-dropbox").click();
+
+    // Auto-scan skipped → no discovered section, but the button is offered.
+    await expect(page.getByTestId("cloud-browser-scan")).toBeVisible();
+    await expect(page.getByTestId("cloud-browser-discovered")).toHaveCount(0);
+
+    await page.getByTestId("cloud-browser-scan").click();
+    await expect(page.getByTestId("cloud-browser-discovered")).toBeVisible();
+    await expect(page.getByRole("button", { name: /f0\/buried\.srsj/ })).toBeVisible();
+  });
+
   test("'Show all files' toggles non-SRS files in the listing", async ({ page }) => {
     await installFakeProviders(page);
     await page.goto("/");

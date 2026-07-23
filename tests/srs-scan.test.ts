@@ -184,6 +184,34 @@ describe("GitHubProvider.scanForSrs", () => {
     expect(nested).toMatchObject({ name: "repo2" });
   });
 
+  it("when the scan root is itself a repo, emits only the root and suppresses nested content", async () => {
+    const provider = makeProvider();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        json({
+          sha: "t1",
+          truncated: false,
+          tree: [
+            { path: "manifest.json", mode: "100644", type: "blob", sha: "s1" },
+            { path: "records", mode: "040000", type: "tree", sha: "s2" },
+            { path: "records/a.srsj", mode: "100644", type: "blob", sha: "s3" },
+            { path: "sub/manifest.json", mode: "100644", type: "blob", sha: "s4" },
+          ],
+        })
+      )
+    );
+    const outcome = await provider.scanForSrs("octo/gov:main", "auto");
+    // The root repo is surfaced once; the nested a.srsj and sub/ repo are inside it → suppressed.
+    expect(outcome.entries).toHaveLength(1);
+    expect(outcome.entries[0]).toMatchObject({
+      kind: "repository",
+      name: "gov",
+      path: "octo/gov:main:",
+      displayPath: "",
+    });
+  });
+
   it("reports a truncated tree as partial", async () => {
     const provider = makeProvider();
     vi.stubGlobal(
