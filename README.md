@@ -136,25 +136,35 @@ consoles before production deployment.
 
 ### GitHub
 
-1. Create a **GitHub OAuth App** (Settings → Developer settings → OAuth Apps).
-2. Set the Authorization callback URL to `http://localhost:5173/` for local dev
+1. Create a **GitHub App** (Settings → Developer settings → GitHub Apps) with
+   **Contents: Read & write** and **Metadata: Read** repository permissions.
+   (Production uses the `mudemocracy` GitHub App; a classic OAuth App also
+   works with this code, but a GitHub App is preferred — fine-grained
+   permissions, and tokens scoped to installations.)
+2. **Make the app public** (app settings → Advanced → Make public). A private
+   GitHub App's authorize page returns **GitHub's 404** for every user except
+   the app owner — sign-in appears to work for the owner while every new user
+   gets a 404 in the OAuth popup. Public is required for anyone else to sign
+   in or install the app.
+3. Set the Authorization callback URL to `http://localhost:5173/` for local dev
    (and the production origin — see below — before deploying).
-3. Put the app's **Client ID** in `VITE_GITHUB_CLIENT_ID` and set
+4. Put the app's **Client ID** in `VITE_GITHUB_CLIENT_ID` and set
    `VITE_GITHUB_REDIRECT_URI` to the matching redirect URI.
-4. The app requests the `repo` scope so it can read/write a public **or private**
+5. The app requests the `repo` scope (GitHub Apps ignore the scope parameter
+   and use their installation permissions instead) so it can read/write a public **or private**
    governance repository. Sign in, then browse **repo → branch → file** (the
    loader lists branches after you pick a repo; the default branch sorts first),
    open a `.srsj`, edit, and **Save** — each Save is a new commit whose blob SHA
    becomes the revision; a concurrent edit is reported as a conflict rather than
    silently clobbered. Opening from a branch binds the document to it, so Save
    defaults back to that branch.
-5. **Save dialog:** saving a git document opens a dialog to commit to the current
+6. **Save dialog:** saving a git document opens a dialog to commit to the current
    branch or **create a new branch** (useful when the default branch is
    protected), with an optional commit message. Set `VITE_GITHUB_APP_SLUG` (the
    app's URL slug) so the dialog can show an **Install / manage** link — a GitHub
    App must be *installed* on the repo's account (not just authorized at sign-in)
    before it can list private repos or write.
-6. **Exploded-repo mode (Epic 10):** browsing into a directory that contains
+7. **Exploded-repo mode (Epic 10):** browsing into a directory that contains
    `manifest.json` (a git-diffable, multi-file SRS repository — every record,
    type, and field as its own file — rather than a single `.srsj` blob) shows an
    **"Open as SRS repository"** entry instead of listing `manifest.json` itself.
@@ -223,7 +233,7 @@ Before deploying:
   builds (Cloudflare Workers Builds, CI) produce a working bundle with no
   environment configuration.
 
-- Set the GitHub OAuth App **client secret** as a Worker secret (never a
+- Set the GitHub App **client secret** as a Worker secret (never a
   `VITE_*` var, never in the bundle):
 
   ```bash
@@ -244,7 +254,9 @@ Configure the provider consoles with:
 - Dropbox redirect URI: `https://app.mudemocracy.org/`
 - Google authorized JavaScript origin: `https://app.mudemocracy.org`
 - Google API key website restriction: `https://app.mudemocracy.org/*`
-- GitHub OAuth App authorization callback URL: `https://app.mudemocracy.org/`
+- GitHub App authorization callback URL: `https://app.mudemocracy.org/`
+- GitHub App visibility: **public** (Advanced → Make public) — private apps
+  404 the authorize page for every user except the owner
 
 The Dropbox app key, Google OAuth client ID, Google API key, and Google project
 number are compiled into the browser bundle by Vite. They are identifiers, not
