@@ -21,6 +21,7 @@ import {
   readBlobs,
   readBranchBase,
 } from "./git-data.js";
+import { MANIFEST_FILE, isSrsArchiveName, listingHasRepoMarker } from "./srs-detect.js";
 import type {
   DocumentHandle,
   GitBranchAware,
@@ -190,7 +191,7 @@ export class GitHubDocumentHandle implements DocumentHandle, GitBranchAware {
   ) {
     this.location = location;
     this.currentRevision = revision;
-    this.kind = /\.srs$/i.test(name) ? "bytes" : "text";
+    this.kind = isSrsArchiveName(name) ? "bytes" : "text";
   }
 
   get revision(): string | null {
@@ -656,28 +657,26 @@ export class GitHubProvider implements StorageProvider {
     const items = await this.api<GitHubContentItem[]>(
       `/repos/${owner}/${repo}/contents/${encodePath(dir)}?ref=${encodeURIComponent(branch)}`
     );
-    // A directory containing manifest.json is an exploded SRS repository root — surface a
-    // synthetic "Open as SRS repository" entry for it, and exclude the raw manifest.json
-    // file entry (opening it alone via the single-file path is never valid — it isn't a
-    // .srsj payload).
-    const hasManifest = items.some((item) => item.type === "file" && item.name === "manifest.json");
-    const entries: StorageEntry[] = items
-      .filter(
-        (item) =>
-          item.type === "dir" ||
-          (/\.(srsj|json)$/i.test(item.name) && item.name !== "manifest.json")
-      )
-      .map((item) => ({
-        id: `${owner}/${repo}:${branch}:${item.path}`,
-        name: item.name,
-        kind: item.type === "dir" ? ("folder" as const) : ("file" as const),
-        path: `${owner}/${repo}:${branch}:${item.path}`,
-        revision: item.type === "dir" ? null : item.sha,
-      }))
+    // A directory carrying a repo marker (`.srs/` dir or manifest.json — ADR-018) is an
+    // exploded SRS repository root — surface a synthetic "Open as SRS repository" entry
+    // for it. The marker check runs on the raw pre-exclusion view: manifest.json is then
+    // excluded from the returned entries (opening it alone via the single-file path is
+    // never valid — it isn't a .srsj payload). Extension filtering is presentation and
+    // lives in the picker UI, so the complete listing is returned.
+    const rawEntries: StorageEntry[] = items.map((item) => ({
+      id: `${owner}/${repo}:${branch}:${item.path}`,
+      name: item.name,
+      kind: item.type === "dir" ? ("folder" as const) : ("file" as const),
+      path: `${owner}/${repo}:${branch}:${item.path}`,
+      revision: item.type === "dir" ? null : item.sha,
+    }));
+    const isRepoRoot = listingHasRepoMarker(rawEntries);
+    const entries = rawEntries
+      .filter((entry) => !(entry.kind === "file" && entry.name === MANIFEST_FILE))
       .sort((a, b) =>
         a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === "folder" ? -1 : 1
       );
-    if (hasManifest) {
+    if (isRepoRoot) {
       entries.unshift({
         id: `${owner}/${repo}:${branch}:${dir}#repo`,
         name: "Open as SRS repository",

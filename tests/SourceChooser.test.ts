@@ -78,3 +78,42 @@ describe("SourceChooser — local file routing", () => {
     expect(input.getAttribute("accept")).toContain(".srs");
   });
 });
+
+describe("SourceChooser — cloud browser default filter", () => {
+  function makeBrowsingProviders(entries: unknown[]) {
+    return {
+      ...makeProviders(),
+      dropbox: {
+        configured: true,
+        label: "Dropbox",
+        authenticate: vi.fn().mockResolvedValue(undefined),
+        open: vi.fn(),
+        list: vi.fn().mockResolvedValue(entries),
+      },
+    };
+  }
+  const listing = [
+    { id: "1", name: "sub", kind: "folder", path: "/sub" },
+    { id: "2", name: "gov.srsj", kind: "file", path: "/gov.srsj" },
+    { id: "3", name: "data.srs", kind: "file", path: "/data.srs" },
+    { id: "4", name: "readme.md", kind: "file", path: "/readme.md" },
+  ];
+
+  it("hides non-SRS files by default; 'Show all files' reveals them", async () => {
+    const { getByTestId, queryByText, getByText } = render(SourceChooser, {
+      // biome-ignore lint/suspicious/noExplicitAny: minimal provider fake
+      props: { providers: makeBrowsingProviders(listing) as any, onOpen: vi.fn() },
+    });
+
+    await fireEvent.click(getByTestId("source-dropbox"));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(getByText("sub")).toBeTruthy();
+    expect(getByText("gov.srsj")).toBeTruthy();
+    expect(getByText("data.srs")).toBeTruthy();
+    expect(queryByText("readme.md")).toBeNull();
+
+    await fireEvent.click(getByTestId("cloud-browser-show-all"));
+    expect(queryByText("readme.md")).toBeTruthy();
+  });
+});

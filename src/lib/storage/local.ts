@@ -1,4 +1,5 @@
 import { StorageError } from "./errors.js";
+import { isSrsArchiveName } from "./srs-detect.js";
 import type { DocumentHandle, WriteResult } from "./types.js";
 
 export class LocalDocumentHandle implements DocumentHandle {
@@ -12,7 +13,7 @@ export class LocalDocumentHandle implements DocumentHandle {
   constructor(private readonly file: File) {
     this.id = `${file.name}:${file.size}:${file.lastModified}`;
     this.name = file.name;
-    this.kind = /\.srs$/i.test(file.name) ? "bytes" : "text";
+    this.kind = isSrsArchiveName(file.name) ? "bytes" : "text";
   }
 
   read(): Promise<string> {

@@ -5,6 +5,7 @@ import type { DocumentHandle, GitBranchAware, StorageProvider } from "./types.js
 
 export * from "./errors.js";
 export * from "./local.js";
+export * from "./srs-detect.js";
 export * from "./types.js";
 
 /** A handle that supports branch-aware git saves (currently GitHub). */

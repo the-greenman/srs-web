@@ -6,6 +6,7 @@ import {
   StorageFetchError,
 } from "./errors.js";
 import { loadScript } from "./script-loader.js";
+import { isOpenableName, isSrsArchiveName } from "./srs-detect.js";
 import type { DocumentHandle, StorageEntry, StorageProvider, WriteResult } from "./types.js";
 
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
@@ -102,7 +103,7 @@ export class GoogleDriveDocumentHandle implements DocumentHandle {
     private readonly token: () => Promise<string>
   ) {
     this.currentRevision = revision;
-    this.kind = /\.srs$/i.test(name) ? "bytes" : "text";
+    this.kind = isSrsArchiveName(name) ? "bytes" : "text";
   }
 
   get revision(): string | null {
@@ -218,7 +219,7 @@ export class GoogleDriveProvider implements StorageProvider {
         }
         if (data.action !== pickerApi.Action.PICKED) return;
         const selected = data.docs?.[0];
-        if (!selected || !/\.(srsj|json|srs)$/i.test(selected.name)) {
+        if (!selected || !isOpenableName(selected.name)) {
           reject(new StorageFetchError("Choose a .srs, .srsj, or .json file."));
           return;
         }
