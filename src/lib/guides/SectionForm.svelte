@@ -157,7 +157,13 @@
   function setHeader(g: GroupFormDef, i: number, ci: number, value: string) {
     const entry = groupValues[g.groupId][i];
     const cols = tableCols(g, entry);
-    while (cols.length <= ci) cols.push("");
+    // Pad to the table's true column count (colCount falls back to row width
+    // when `columns` starts empty), not just to `ci` — otherwise editing an
+    // earlier header cell first collapses `columns` shorter than the rows,
+    // and colCount() then hides every column past the collapsed length
+    // (srs-web#266).
+    const n = Math.max(colCount(g, entry), ci + 1);
+    while (cols.length < n) cols.push("");
     cols[ci] = value;
     setCols(g, i, cols);
   }
