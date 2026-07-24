@@ -133,9 +133,9 @@ test.describe("Decision link picker (srs-web#106)", () => {
   });
 
   // --------------------------------------------------------------------------
-  // Test 5: Relation type dropdown shows only package-installed types (srs-web#160)
+  // Test 5: Relation type dropdown shows package-installed + core canonical types (srs-web#160)
   // --------------------------------------------------------------------------
-  test("Relation type dropdown shows only package-installed types for gallery fixture", async ({ page }) => {
+  test("Relation type dropdown shows package-installed and core canonical types for gallery fixture", async ({ page }) => {
     // Open the link picker
     await page.getByTestId("add-relation-btn").click();
     await expect(page.getByRole("heading", { name: "Link to another decision" })).toBeVisible({
@@ -145,12 +145,14 @@ test.describe("Decision link picker (srs-web#106)", () => {
     const select = page.getByTestId("link-relation-type");
     await expect(select).toBeVisible();
 
-    // Gallery installs exactly 5 relation types: delegates, derived-from, evidences, precedes, supersedes.
-    // The supersedes type was added to support lifecycle successor creation (srs-web#135).
-    // The old hardcoded "depends-on" type should not appear.
-    const options = await select.locator("option").allTextContents();
-    expect(options).toHaveLength(5);
-
+    // The gallery package installs its own "delegates" extension type, plus
+    // derived-from/evidences/precedes/supersedes (supersedes added for lifecycle
+    // successor creation, srs-web#135). Since ADR-025's amendment (srs-rust#685),
+    // the WASM engine also implicitly merges the seven canonical core relation
+    // types (contains, depends-on, supersedes, refines, derived-from, evidences,
+    // precedes) into every loaded package, so "depends-on" and friends now
+    // legitimately appear too — don't assert an exact option count or exclude
+    // canonical types, since the core set can grow independently of the package.
     const optionValues = await select.locator("option").evaluateAll(
       (els) => els.map((el) => (el as HTMLOptionElement).value)
     );
@@ -159,7 +161,9 @@ test.describe("Decision link picker (srs-web#106)", () => {
     expect(optionValues).toContain("evidences");
     expect(optionValues).toContain("precedes");
     expect(optionValues).toContain("supersedes");
-    expect(optionValues).not.toContain("depends-on");
+    expect(optionValues).toContain("contains");
+    expect(optionValues).toContain("depends-on");
+    expect(optionValues).toContain("refines");
   });
 });
 
