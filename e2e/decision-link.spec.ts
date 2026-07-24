@@ -145,12 +145,9 @@ test.describe("Decision link picker (srs-web#106)", () => {
     const select = page.getByTestId("link-relation-type");
     await expect(select).toBeVisible();
 
-    // Gallery installs exactly 5 relation types: delegates, derived-from, evidences, precedes, supersedes.
-    // The supersedes type was added to support lifecycle successor creation (srs-web#135).
-    // The old hardcoded "depends-on" type should not appear.
-    const options = await select.locator("option").allTextContents();
-    expect(options).toHaveLength(5);
-
+    // Gallery installs 5 relation types: delegates, derived-from, evidences, precedes, supersedes.
+    // The WASM binary also surfaces canonical types (contains, depends-on, refines) so the total
+    // count varies with the binary version — assert only that package types are present (srs-web#273).
     const optionValues = await select.locator("option").evaluateAll(
       (els) => els.map((el) => (el as HTMLOptionElement).value)
     );
@@ -159,7 +156,6 @@ test.describe("Decision link picker (srs-web#106)", () => {
     expect(optionValues).toContain("evidences");
     expect(optionValues).toContain("precedes");
     expect(optionValues).toContain("supersedes");
-    expect(optionValues).not.toContain("depends-on");
   });
 });
 
