@@ -828,10 +828,79 @@ export function blueprintSchema(repo: SrsRepository, blueprintId: string): Bluep
 // Document view types + wrapper (C3 / C10)
 // ---------------------------------------------------------------------------
 
+/** Mirrors `ProjectedRelationTarget` in srs-rust `render_service.rs`. */
+export interface ProjectedRelationTarget {
+  instanceId: string;
+  displayLabel: string;
+}
+
+/** Mirrors `ProjectedRelationRow` in srs-rust `render_service.rs`. */
+export interface ProjectedRelationRow {
+  label: string;
+  targets: ProjectedRelationTarget[];
+}
+
+/** Mirrors `ProjectedGroupEntry` in srs-rust `render_service.rs`. */
+export interface ProjectedGroupEntry {
+  entryId?: string;
+  fields: Record<string, unknown>;
+}
+
+/** Mirrors `ProjectedFieldGroup` in srs-rust `render_service.rs`. */
+export interface ProjectedFieldGroup {
+  groupId: string;
+  label?: string;
+  entries: ProjectedGroupEntry[];
+}
+
+/**
+ * A projected record row in a `DocumentViewProjection` section.
+ * Mirrors `ProjectedRecord` in srs-rust `render_service.rs`.
+ * `relations` is present when the document view defines a `relationsPresentation`.
+ */
+export interface ProjectedRecord {
+  instanceId: string;
+  typeId: string;
+  typeNamespace: string;
+  typeName: string;
+  recordHeading?: string;
+  preamble?: string;
+  fields: Record<string, unknown>;
+  orderedFieldKeys: string[];
+  fieldGroups?: ProjectedFieldGroup[];
+  relations?: ProjectedRelationRow[];
+}
+
+/**
+ * A section within a `DocumentViewProjection`.
+ * Mirrors `ProjectedSection` in srs-rust `render_service.rs`.
+ */
+export interface ProjectedSection {
+  sectionId: string;
+  title?: string;
+  order: number;
+  records: ProjectedRecord[];
+}
+
+/**
+ * The JSON projection output of `renderDocumentView("json")`.
+ * Mirrors `DocumentViewProjection` in srs-rust `render_service.rs`.
+ * `projection` in `DocumentViewResult` is this type when `format === "json"`.
+ */
+export interface DocumentViewProjection {
+  $schema: string;
+  documentViewId: string;
+  containerId: string | null;
+  generatedAt: string;
+  containerTitle: string;
+  preamble?: string;
+  sections: ProjectedSection[];
+}
+
 export interface DocumentViewResult {
   rendered: string;
   diagnostics: string[];
-  projection: unknown | null;
+  projection: DocumentViewProjection | null;
 }
 
 /**
