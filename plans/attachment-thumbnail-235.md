@@ -2,7 +2,7 @@
 
 ## Summary
 
-`AttachmentsPanel.svelte` currently supports upload and download of attachment files, but renders every attachment as a plain filename row with no visual preview. When a user attaches an image file they have no way to confirm the content without downloading it. This plan adds a lazy per-attachment **Preview** toggle: clicking the button fetches bytes via `getAttachmentBytes`, constructs a Blob URL, and renders an `<img>` element inline. If the browser cannot decode the bytes as an image the `onerror` handler revokes the URL and shows "Not previewable". No MIME detection or extension inspection happens in TypeScript (ADR-001); the browser's built-in content sniffing determines whether the data is renderable.
+`AttachmentsPanel.svelte` currently supports upload and download of attachment files, but renders every attachment as a plain filename row with no visual preview. When a user attaches an image file they have no way to confirm the content without downloading it. This plan adds a lazy per-attachment **Preview** toggle: clicking the button fetches bytes via `getAttachmentBytes`, constructs a Blob URL, and renders an `<img>` element inline. If the browser cannot decode the bytes as an image the `onerror` handler revokes the URL and shows "Cannot display as image". If `getAttachmentBytes` throws (bytes not in session), it shows "Attachment bytes unavailable — export a .srs archive to preserve attachment content." No MIME detection or extension inspection happens in TypeScript (ADR-001); the browser's built-in content sniffing determines whether the data is renderable.
 
 ## Agent Assignments
 
@@ -39,7 +39,8 @@ No new exported TS types. A local `type PreviewState = 'idle' | 'loading' | 'loa
 - Add a **Preview** toggle button to each row in `AttachmentsPanel.svelte` that has a `documentId`.
 - On toggle-on: call `getAttachmentBytes`, create `Blob` (no MIME type — browser sniffs), create URL, display `<img>`.
 - On toggle-off (or `onerror`): revoke Blob URL, hide `<img>`.
-- If image fails to load (`onerror`): show "Not previewable" text inline, revoke URL.
+- If image fails to load (`onerror`): show "Cannot display as image" text inline, revoke URL.
+- If `getAttachmentBytes` throws: show "Attachment bytes unavailable — export a .srs archive to preserve attachment content."
 - Loading state: show a brief "Loading…" text while bytes are being fetched.
 
 **Out of scope:**
