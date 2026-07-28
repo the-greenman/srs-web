@@ -64,15 +64,18 @@
       if (url) {
         URL.revokeObjectURL(url);
         previewUrls.delete(id);
-        // trigger reactivity
         previewUrls = new Map(previewUrls);
       }
+      previewErrors.delete(id);
+      previewErrors = new Map(previewErrors);
       previewState.set(id, 'idle');
       previewState = new Map(previewState);
       return;
     }
 
     // idle or error → start/retry fetch
+    previewErrors.delete(id);
+    previewErrors = new Map(previewErrors);
     previewState.set(id, 'loading');
     previewState = new Map(previewState);
 
@@ -83,15 +86,24 @@
     try {
       bytes = getAttachmentBytes(repo, id);
     } catch (e: unknown) {
-      if (destroyed) return;
-      previewErrors.set(id, "Attachment bytes unavailable — export a .srs archive to preserve attachment content.");
+      if (destroyed) {
+        previewState.set(id, 'idle');
+        previewState = new Map(previewState);
+        return;
+      }
+      const detail = e instanceof Error ? e.message : String(e);
+      previewErrors.set(id, `Preview unavailable: ${detail}`);
       previewErrors = new Map(previewErrors);
       previewState.set(id, 'error');
       previewState = new Map(previewState);
       return;
     }
 
-    if (destroyed) return;
+    if (destroyed) {
+      previewState.set(id, 'idle');
+      previewState = new Map(previewState);
+      return;
+    }
 
     let url: string;
     try {

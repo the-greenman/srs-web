@@ -1,11 +1,11 @@
 // @vitest-environment happy-dom
-import { render, screen, fireEvent } from "@testing-library/svelte";
+import { render, screen, fireEvent, cleanup } from "@testing-library/svelte";
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import AttachmentsPanel from "../src/lib/components/AttachmentsPanel.svelte";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 
 const FAKE_URL = "blob:fake-url";
-const FAKE_BYTES = new Uint8Array([0xff, 0xd8, 0xff]); // JPEG magic bytes
+const FAKE_BYTES = new Uint8Array([0xff, 0xd8, 0xff]); // arbitrary bytes — happy-dom never decodes them
 
 function makeRepo(overrides: Partial<SrsRepository>): SrsRepository {
   const base: SrsRepository = {
@@ -118,7 +118,7 @@ describe("AttachmentsPanel — preview toggle", () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(FAKE_URL);
   });
 
-  it("path 3: idle→error via WASM throw — shows unavailable message, no URL created", async () => {
+  it("path 3: idle→error via WASM throw — shows error detail, no URL created", async () => {
     const repo = makeAttachmentRepo(() => { throw new Error("bytes not in session"); });
     render(AttachmentsPanel, { props: { repo, onMutate: vi.fn(), onCountChange: vi.fn() } });
 
@@ -127,8 +127,8 @@ describe("AttachmentsPanel — preview toggle", () => {
     await flushAsync();
 
     const errEl = screen.getByTestId("attachment-preview-error");
-    expect(errEl.textContent).toContain("Attachment bytes unavailable");
-    expect(errEl.textContent).toContain(".srs archive");
+    expect(errEl.textContent).toContain("Preview unavailable");
+    expect(errEl.textContent).toContain("bytes not in session");
     expect(URL.createObjectURL).not.toHaveBeenCalled();
     expect(screen.queryByTestId("attachment-preview-img")).toBeNull();
   });
@@ -184,6 +184,21 @@ describe("AttachmentsPanel — preview toggle", () => {
     await flushAsync();
     expect(getBytesImpl).toHaveBeenCalledTimes(2);
     expect(screen.getByTestId("attachment-preview-img")).toBeTruthy();
+  });
+
+  it("onDestroy: Blob URLs are revoked when component unmounts with preview open", async () => {
+    const repo = makeAttachmentRepo(() => FAKE_BYTES);
+    render(AttachmentsPanel, { props: { repo, onMutate: vi.fn(), onCountChange: vi.fn() } });
+
+    const btn = screen.getByTestId("attachment-preview-btn");
+    await fireEvent.click(btn);
+    await flushAsync();
+    expect(screen.getByTestId("attachment-preview-img")).toBeTruthy();
+
+    // Unmount the component — onDestroy should revoke the Blob URL
+    cleanup();
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(FAKE_URL);
   });
 
   it("preview button only appears when documentId is present", () => {
