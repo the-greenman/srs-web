@@ -1,7 +1,8 @@
 /**
  * field-meta.ts — Svelte context for schema-derived field metadata.
  *
- * Provides a Map<fieldId, FieldFormDef> built from sectionSchemas at load time.
+ * Provides a Map<fieldName, FieldFormDef> built from sectionSchemas at load time.
+ * Keyed by field NAME — the RFC-039 carrier key into `record.fieldValues`.
  * ADR-001: all field metadata is sourced from WASM typeSchema(), not hardcoded here.
  */
 
@@ -15,8 +16,8 @@ export interface FieldMetaContext {
 }
 
 /**
- * Build a fieldId → FieldFormDef map from all section schemas.
- * Shared fields (same fieldId across types, e.g. title/status) overwrite on
+ * Build a field name → FieldFormDef map from all section schemas.
+ * Shared fields (same name across types, e.g. title/status) overwrite on
  * each iteration — safe because shared fields have identical metadata in all
  * governance type schemas.
  */
@@ -24,7 +25,7 @@ export function buildFieldMetaMap(schemas: Record<string, TypeFormDef>): Map<str
   const map = new Map<string, FieldFormDef>();
   for (const schema of Object.values(schemas)) {
     for (const field of schema.fields) {
-      map.set(field.fieldId, field);
+      map.set(field.name, field);
     }
   }
   return map;

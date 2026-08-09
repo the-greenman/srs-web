@@ -68,6 +68,8 @@ export interface SrsRepository {
   containers_for_instance(instance_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in typeSchema()
   type_schema(type_id: string, type_version?: number): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listTypes()
+  list_types(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listBlueprints()
   list_blueprints(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in documentViewsForContainer()
@@ -127,6 +129,23 @@ export interface Diagnostic {
   instanceId?: string;
 }
 
+/**
+ * RFC-039 carrier: `fieldValues` is an object keyed by `Field.name` verbatim.
+ * Each value is a scalar, an array (cardinality list), a map object, or a
+ * nested fieldValues object for inline composites (a list composite is an
+ * array of such objects).
+ */
+export type FieldValues = Record<string, unknown>;
+
+/** Per-field provenance metadata, keyed by field name identically to `fieldValues` (RFC-039). */
+export interface FieldMetaEntry {
+  source?: string;
+  editedAt?: string;
+  sourceRefs?: unknown[];
+}
+
+export type FieldMeta = Record<string, FieldMetaEntry>;
+
 /** Minimal record shape (Tier 2). Full type definitions derive from payload schemas. */
 export interface SrsRecord {
   instanceId: string;
@@ -134,8 +153,8 @@ export interface SrsRecord {
   typeVersion: number;
   typeNamespace?: string;
   typeName?: string;
-  fieldValues: FieldValue[];
-  groupValues?: GroupFieldValue[];
+  fieldValues: FieldValues;
+  fieldMeta?: FieldMeta;
   lifecycle?: LifecycleState;
   createdAt?: string;
   updatedAt?: string;
@@ -147,11 +166,6 @@ export interface SrsRecord {
    * Clients must use `displayLabel` for list labels and not re-derive titles from fieldValues.
    */
   displayLabel?: string;
-}
-
-export interface FieldValue {
-  fieldId: string;
-  value: unknown;
 }
 
 // Open-ended string: the valid state vocabulary is enforced by the Rust core, not TypeScript.
@@ -211,25 +225,16 @@ export interface RecordListFilter {
 }
 
 export interface CreateRecordInput {
-  fieldValues: FieldValue[];
-  groupValues?: GroupFieldValue[];
+  fieldValues: FieldValues;
+  fieldMeta?: FieldMeta;
   tags?: string[];
 }
 
 export interface UpdateRecordInput {
-  fieldValues: FieldValue[];
-  groupValues?: GroupFieldValue[] | null;
+  fieldValues: FieldValues;
+  fieldMeta?: FieldMeta;
   tags?: string[];
-}
-
-export interface GroupEntry {
-  fieldValues: FieldValue[];
-  entryId?: string;
-}
-
-export interface GroupFieldValue {
-  groupId: string;
-  entries: GroupEntry[];
+  typeVersion?: number;
 }
 
 export interface SrsRelation {
@@ -262,7 +267,8 @@ export interface CreateRelationInput {
 
 export interface CreateRecordSuccessorInput {
   relationType: "supersedes" | "refines";
-  fieldValues: FieldValue[];
+  fieldValues: FieldValues;
+  fieldMeta?: FieldMeta;
   lifecycleState?: string;
   typeVersion?: number;
 }
@@ -275,7 +281,7 @@ export interface CreateRecordSuccessorResult {
 /** RFC-022 fulfillment: how a transition into a `requiresRelation` state satisfies its obligation. */
 export interface TransitionFulfillment {
   /** Spawn a successor of the record's type (at the lifecycle's initial state), relate it, then flip. */
-  newRecord?: { fieldValues: FieldValue[]; typeVersion?: number };
+  newRecord?: { fieldValues: FieldValues; fieldMeta?: FieldMeta; typeVersion?: number };
   /** Relate an already-drafted record, then flip. */
   existingInstanceId?: string;
   /** Selector when the state declares an any-of relationType array; defaults to the first declared. */
@@ -470,33 +476,17 @@ export function exportTree(repo: SrsRepository): Record<string, Uint8Array> {
  */
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM output has unknown shape
 function normalizeRecord(raw: any): SrsRecord {
-  // biome-ignore lint/suspicious/noExplicitAny: raw fv has unknown shape
-  const rawFvs: any[] = raw.fieldValues ?? raw.field_values ?? [];
-  // biome-ignore lint/suspicious/noExplicitAny: raw group values have unknown shape
-  const rawGvs: any[] = raw.groupValues ?? raw.group_values ?? [];
-  const groupValues = rawGvs.map((gv) => ({
-    groupId: gv.groupId ?? gv.group_id,
-    // biome-ignore lint/suspicious/noExplicitAny: raw entry has unknown shape
-    entries: (gv.entries ?? []).map((e: any) => ({
-      // biome-ignore lint/suspicious/noExplicitAny: raw entry fv has unknown shape
-      fieldValues: (e.fieldValues ?? e.field_values ?? []).map((fv: any) => ({
-        fieldId: fv.fieldId ?? fv.field_id,
-        value: fv.value,
-      })),
-      entryId: e.entryId ?? e.entry_id,
-    })),
-  }));
+  // RFC-039 carrier: fieldValues is a name-keyed object, passed through verbatim
+  // so a read-back record can be re-serialised exactly on write round trips.
+  const fieldMeta = raw.fieldMeta ?? raw.field_meta;
   return {
     instanceId: raw.instanceId ?? raw.instance_id,
     typeId: raw.typeId ?? raw.type_id,
     typeVersion: raw.typeVersion ?? raw.type_version,
     typeNamespace: raw.typeNamespace ?? raw.type_namespace,
     typeName: raw.typeName ?? raw.type_name,
-    fieldValues: rawFvs.map((fv) => ({
-      fieldId: fv.fieldId ?? fv.field_id,
-      value: fv.value,
-    })),
-    groupValues: groupValues.length > 0 ? groupValues : undefined,
+    fieldValues: raw.fieldValues ?? raw.field_values ?? {},
+    ...(fieldMeta != null && { fieldMeta }),
     lifecycle: raw.lifecycleState ?? raw.lifecycle_state ?? raw.lifecycle,
     createdAt: raw.createdAt ?? raw.created_at,
     updatedAt: raw.updatedAt ?? raw.updated_at,
@@ -769,23 +759,26 @@ export interface SchemaProperty {
   /** Populated by WASM typeSchema() for url valueType fields (srs-rust type_schema_service.rs). Value "uri" → valueType "url" in blueprint-utils.ts. */
   format?: string;
   enum?: string[];
+  /** May be absent (RFC-039 projections do not guarantee it) — never require it. */
   "x-srs-field-id"?: string;
   "x-srs-order"?: number;
   "x-srs-widget"?: string;
-  // Field-group (ext:field-groups) array/object properties carry these:
-  "x-srs-group-id"?: string;
-  "x-srs-repeatable"?: boolean;
-  "x-srs-composite-renderer"?: string;
   // AI guidance emitted when aiGuidance is an object in the package field definition:
   "x-srs-ai-guidance"?: { purpose?: string; [key: string]: unknown };
   // Human help text for editors (srs-rust ADR-026): the field's own description
   // and fuller "how to complete this field" instructions.
   "x-srs-description"?: string;
   "x-srs-instructions"?: string;
+  /** Composite-range fields (RFC-039) project as arrays of objects: `items.properties`
+   * carries the sub-field schema and `x-srs-range-type-*` names the range Type. */
   items?: {
     type?: string;
+    /** Present on list-cardinality scalar fields (e.g. "uri" for url lists). */
+    format?: string;
     properties?: Record<string, SchemaProperty>;
     required?: string[];
+    "x-srs-range-type-id"?: string;
+    "x-srs-range-type-version"?: number;
   };
 }
 
@@ -840,19 +833,6 @@ export interface ProjectedRelationRow {
   targets: ProjectedRelationTarget[];
 }
 
-/** Mirrors `ProjectedGroupEntry` in srs-rust `render_service.rs`. */
-export interface ProjectedGroupEntry {
-  entryId?: string;
-  fields: Record<string, unknown>;
-}
-
-/** Mirrors `ProjectedFieldGroup` in srs-rust `render_service.rs`. */
-export interface ProjectedFieldGroup {
-  groupId: string;
-  label?: string;
-  entries: ProjectedGroupEntry[];
-}
-
 /**
  * A projected record row in a `DocumentViewProjection` section.
  * Mirrors `ProjectedRecord` in srs-rust `render_service.rs`.
@@ -867,7 +847,6 @@ export interface ProjectedRecord {
   preamble?: string;
   fields: Record<string, unknown>;
   orderedFieldKeys: string[];
-  fieldGroups?: ProjectedFieldGroup[];
   relations?: ProjectedRelationRow[];
 }
 
@@ -1055,6 +1034,29 @@ export function typeSchema(
   typeVersion?: number
 ): TypeSchemaResult {
   return repo.type_schema(typeId, typeVersion) as TypeSchemaResult;
+}
+
+// --- listTypes -------------------------------------------------------------
+
+/** Lightweight type summary from `list_types` (latest version per type lineage). */
+export interface TypeSummary {
+  id: string;
+  namespace: string;
+  name: string;
+  version: number;
+  description?: string;
+  sourcePackage?: string;
+}
+
+/**
+ * List type definitions from the compiled package. Used to resolve the current
+ * version of a type UUID (e.g. blueprint `$ref`s carry no version).
+ */
+export function listTypes(
+  repo: SrsRepository,
+  filter: Record<string, unknown> = {}
+): TypeSummary[] {
+  return repo.list_types(JSON.stringify(filter)) as TypeSummary[];
 }
 
 // --- listBlueprints --------------------------------------------------------
