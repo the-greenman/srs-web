@@ -1,19 +1,21 @@
 <!--
-  FieldValueView — renders a single FieldValue.
-  Pass valueType="url" to render url values as clickable anchors.
+  FieldValueView — renders a single field value (RFC-039 carrier: scalar,
+  array, or nested composite object). Pass valueType="url" to render url
+  values as clickable anchors.
   B5 record renderer: https://github.com/the-greenman/srs-web/issues/4
 -->
 <script lang="ts">
-  import type { FieldValue } from '$lib/srs-client.js';
+  let { value, valueType }: { value: unknown; valueType?: string } = $props();
 
-  let { fv, valueType }: { fv: FieldValue; valueType?: string } = $props();
-
-  const isArray = $derived(Array.isArray(fv.value));
-  const values = $derived(isArray ? (fv.value as unknown[]) : [fv.value]);
+  const isArray = $derived(Array.isArray(value));
+  const values = $derived(isArray ? (value as unknown[]) : [value]);
   const isUrl = $derived(valueType === 'url');
 
   function formatValue(v: unknown): string {
     if (v === null || v === undefined) return '';
+    // Composite entries / map objects: honest structural fallback until a
+    // dedicated composite read view exists.
+    if (typeof v === 'object') return JSON.stringify(v);
     return String(v);
   }
 
@@ -27,9 +29,9 @@
 {#if isArray && values.length === 0}
   <span class="t-muted">—</span>
 {:else if isArray}
-  <ul class="repeat__list">
+  <ul class="fv-list">
     {#each values as v}
-      <li class="repeat__item">
+      <li class="fv-item">
         {#if isUrl && isRenderableAsAnchor(v)}
           {@const href = formatValue(v)}
           <a {href} target="_blank" rel="noopener noreferrer">{href}</a>
@@ -39,9 +41,19 @@
       </li>
     {/each}
   </ul>
-{:else if isUrl && isRenderableAsAnchor(fv.value)}
-  {@const href = formatValue(fv.value)}
+{:else if isUrl && isRenderableAsAnchor(value)}
+  {@const href = formatValue(value)}
   <a {href} target="_blank" rel="noopener noreferrer">{href}</a>
 {:else}
-  <span>{formatValue(fv.value)}</span>
+  <span>{formatValue(value)}</span>
 {/if}
+
+<style>
+  .fv-list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+</style>

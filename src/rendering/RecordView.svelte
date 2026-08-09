@@ -1,7 +1,7 @@
 <!--
   RecordView — full record field list. Uses fieldMeta to label each value.
-  Renders all non-empty fieldValues in the order they appear on the record.
-  Falls back gracefully for unknown field IDs (shows short UUID prefix as label).
+  Renders all non-empty fieldValues (RFC-039 name-keyed object) in the order
+  they appear on the record. Falls back to the raw field name as label.
   B5 record renderer: https://github.com/the-greenman/srs-web/issues/4
 
   Card title priority: title prop → record.displayLabel → instanceId prefix.
@@ -40,16 +40,16 @@
   title={title ?? record.displayLabel ?? record.instanceId.slice(0, 8)}
   status={toStatus(record.lifecycle)}
 >
-  {#each record.fieldValues as fv}
-    {#if !isEmpty(fv.value)}
-      {@const def = fieldMeta.get(fv.fieldId)}
+  {#each Object.entries(record.fieldValues) as [name, value] (name)}
+    {#if !isEmpty(value)}
+      {@const def = fieldMeta.get(name)}
       <CardField
-        label={def?.label ?? fv.fieldId.slice(0, 8)}
+        label={def?.label ?? name}
         description={def?.description}
         instructions={def?.instructions}
-        id={fv.fieldId}
+        id={name}
       >
-        <FieldValueView {fv} valueType={def?.valueType} />
+        <FieldValueView {value} valueType={def?.valueType} />
       </CardField>
     {/if}
   {/each}
