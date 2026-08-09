@@ -531,8 +531,9 @@
       if (formMode === "create") {
         items.push({ label: `New ${(activeContainer?.title ?? "").replace(/s$/, "")}` });
       } else if (editingRecord) {
-        const title = editingRecord.fieldValues[0]?.value as string | undefined;
-        items.push({ label: title ?? "Record" });
+        // RFC-039: fieldValues is a name-keyed object — no positional "first field".
+        // The core-resolved displayLabel is the honest title source.
+        items.push({ label: editingRecord.displayLabel ?? "Record" });
       }
     } else {
       items.push({ label: activeContainer?.title ?? "" });
@@ -678,7 +679,13 @@
       try {
         const result = transitionRecord(repo, selectedRecord.instanceId, {
           byTransition: transition.name,
-          fulfillment: { newRecord: { fieldValues: selectedRecord.fieldValues } },
+          // RFC-039 round trip: pass the read-back name-keyed object verbatim.
+          fulfillment: {
+            newRecord: {
+              fieldValues: selectedRecord.fieldValues,
+              ...(selectedRecord.fieldMeta && { fieldMeta: selectedRecord.fieldMeta }),
+            },
+          },
         });
         const successor = result.successor;
         if (successor && activeContainerId) {
@@ -707,7 +714,9 @@
       // Do NOT filter required fields (e.g. status) — the type schema enforces them.
       const result = createRecordSuccessor(repo, selectedRecord.instanceId, {
         relationType: "supersedes",
+        // RFC-039 round trip: pass the read-back name-keyed object verbatim.
         fieldValues: selectedRecord.fieldValues,
+        ...(selectedRecord.fieldMeta && { fieldMeta: selectedRecord.fieldMeta }),
       });
       if (activeContainerId) {
         try {
@@ -805,8 +814,9 @@
     if (!selectedRecord) return;
     try {
       updateRecord(repo, selectedRecord.instanceId, {
+        // RFC-039 round trip: pass the read-back name-keyed object verbatim.
         fieldValues: selectedRecord.fieldValues,
-        groupValues: selectedRecord.groupValues ?? null,
+        ...(selectedRecord.fieldMeta && { fieldMeta: selectedRecord.fieldMeta }),
         tags: newTags,
       });
       loadContainerNav();
@@ -1072,16 +1082,16 @@
                     }}
                   >
                     <!-- Columns come from the DocumentView spec (ADR-010), not hardcoded
-                         per type. Values are read positionally by the core-provided
-                         fieldId; empty columns → title-only card. -->
+                         per type. Values are read by the core-provided fieldName —
+                         the RFC-039 carrier key; empty columns → title-only card. -->
                     <Card title={title} grid={activeColumns.length > 0}>
-                      {#each activeColumns as col (col.fieldId)}
-                        {@const value = record.fieldValues.find((fv) => fv.fieldId === col.fieldId)?.value}
+                      {#each activeColumns as col (col.fieldName)}
+                        {@const value = record.fieldValues[col.fieldName]}
                         <CardField
                           label={col.displayLabel}
                           empty={value === undefined || value === null || value === ""}
                         >
-                          <FieldValueView fv={{ fieldId: col.fieldId, value }} valueType={fieldMetaMap.get(col.fieldId)?.valueType} />
+                          <FieldValueView {value} valueType={fieldMetaMap.get(col.fieldName)?.valueType} />
                         </CardField>
                       {/each}
                     </Card>

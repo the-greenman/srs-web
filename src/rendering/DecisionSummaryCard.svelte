@@ -34,8 +34,7 @@
     {@const value = repo.get_field_value_by_name(record.instanceId, field.name)}
     {#if isPresent(value)}
       <CardField label={field.label}>
-        <!-- synthetic: FieldValueView reads only .value; fieldId is not semantically a UUID here -->
-        <FieldValueView fv={{ fieldId: field.name, value }} />
+        <FieldValueView {value} />
       </CardField>
     {/if}
   {/each}

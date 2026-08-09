@@ -35,11 +35,12 @@
   } = $props();
 
   // Compute initial field values from the record prop (or defaults for create mode).
-  // Returns [stringValues, nonStringValues]: the latter preserves array values (e.g. url
-  // repeatable fields) that this string-keyed form cannot edit, so handleSubmit can pass
-  // them through unchanged (update_record does a full field_values replace).
-  // TODO: url repeatable fields can only be read, not edited, via this form; a dedicated
-  //   multi-url input (srs-web#N) is needed to allow adding/removing individual URLs.
+  // State is keyed by field NAME — the RFC-039 carrier key into `fieldValues`.
+  // Returns [stringValues, nonStringValues]: the latter preserves non-string values
+  // (arrays, composites) that this string-keyed form cannot edit, so handleSubmit can
+  // pass them through unchanged (update_record does a full fieldValues replace).
+  // TODO: list-cardinality url fields can only be read, not edited, via this form; a
+  //   dedicated multi-url input (srs-web#N) is needed to add/remove individual URLs.
   // For select fields with no existing value, default to the first option so the
   // bound value matches what the browser renders.
   function computeInitialValues(): [Record<string, string>, Map<string, unknown>] {
@@ -47,26 +48,26 @@
     const stringValues = Object.fromEntries(
       schema.fields.map((f) => {
         if (record) {
-          const fv = record.fieldValues.find((rv) => rv.fieldId === f.fieldId);
-          if (typeof fv?.value === "string") {
-            return [f.fieldId, fv.value];
-          } else if (fv?.value != null) {
-            nonStringValues.set(f.fieldId, fv.value);
+          const value = record.fieldValues[f.name];
+          if (typeof value === "string") {
+            return [f.name, value];
+          } else if (value != null) {
+            nonStringValues.set(f.name, value);
           }
-          return [f.fieldId, ""];
+          return [f.name, ""];
         }
         // Create mode: default selects to first option.
         if (f.valueType === "select" && f.options && f.options.length > 0) {
-          return [f.fieldId, f.options[0]];
+          return [f.name, f.options[0]];
         }
-        return [f.fieldId, ""];
+        return [f.name, ""];
       })
     );
     return [stringValues, nonStringValues];
   }
 
   let [initialStringValues, initialNonStringValues] = computeInitialValues();
-  // Reactive field values map — keyed by fieldId.
+  // Reactive field values map — keyed by field name.
   let fieldValues = $state<Record<string, string>>(initialStringValues);
   let originalNonStringValues = $state<Map<string, unknown>>(initialNonStringValues);
 
@@ -80,18 +81,17 @@
 
   function handleSubmit(e: Event) {
     e.preventDefault();
-    // Build fieldValues array — skip empty optional fields, but pass through any
-    // original non-string values (arrays) that this form cannot edit.
-    const fvs = schema.fields
-      .filter((def) => def.required || fieldValues[def.fieldId] !== "" || originalNonStringValues.has(def.fieldId))
-      .map((def) => {
-        const strVal = fieldValues[def.fieldId];
-        if (strVal === "" && originalNonStringValues.has(def.fieldId)) {
-          return { fieldId: def.fieldId, value: originalNonStringValues.get(def.fieldId) };
-        }
-        return { fieldId: def.fieldId, value: strVal };
-      });
-
+    // Build the RFC-039 name-keyed fieldValues object — skip empty optional fields,
+    // but pass through any original non-string values this form cannot edit.
+    const fvs: Record<string, unknown> = {};
+    for (const def of schema.fields) {
+      const strVal = fieldValues[def.name];
+      if (strVal === "" && originalNonStringValues.has(def.name)) {
+        fvs[def.name] = originalNonStringValues.get(def.name);
+      } else if (def.required || strVal !== "") {
+        fvs[def.name] = strVal;
+      }
+    }
     onSave({ fieldValues: fvs });
   }
 
@@ -102,10 +102,10 @@
 <div class="record-form" class:record-form--wide={wide} data-testid="record-form">
   <h2 class="record-form__title">{title}</h2>
   <form onsubmit={handleSubmit} class="record-form__fields">
-    {#each schema.fields as def (def.fieldId)}
-      {@const inputId = `rf-${def.fieldId}`}
+    {#each schema.fields as def (def.name)}
+      {@const inputId = `rf-${def.name}`}
       <Field label={def.label} required={def.required} description={def.description} instructions={def.instructions} id={inputId}>
-        <FieldInput def={def} bind:value={fieldValues[def.fieldId]} id={inputId} disabled={saving} required={def.required} />
+        <FieldInput def={def} bind:value={fieldValues[def.name]} id={inputId} disabled={saving} required={def.required} />
       </Field>
     {/each}
 

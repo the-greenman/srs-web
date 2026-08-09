@@ -15,6 +15,7 @@
   import {
     blueprintSchema,
     listBlueprints,
+    listTypes,
     listDocumentViews,
     listRecords,
     createRecord,
@@ -304,12 +305,15 @@
         schemaError = `No document views found for blueprint ${WELL_KNOWN_BLUEPRINT.namespace}/${WELL_KNOWN_BLUEPRINT.name} — preview and export unavailable.`;
       }
 
-      sectionTypeList = sectionTypes(schema);
+      // Blueprint $refs carry no type version — resolve current versions from the
+      // package (post-RFC-039 migrations bump section types past @1).
+      const versionByTypeId = new Map(listTypes(repo).map((t) => [t.id, t.version]));
+      sectionTypeList = sectionTypes(schema, versionByTypeId);
       guideTypeId = rootId;
       const fields = rootFields(schema);
       guideFormDef = {
         typeId: rootId,
-        typeVersion: 1,
+        typeVersion: versionByTypeId.get(rootId) ?? 1,
         typeNamespace: "com.mudemocracy",
         typeName: "guide",
         label: "Guide",
@@ -428,7 +432,7 @@
     formError = null;
     try {
       if (formMode === "create-guide" && guideTypeId) {
-        const created = createRecord(repo, guideTypeId, 1, input as CreateRecordInput);
+        const created = createRecord(repo, guideTypeId, guideFormDef?.typeVersion ?? 1, input as CreateRecordInput);
         reload();
         selectedGuideId = created.instanceId;
         cancelForm();
@@ -642,7 +646,7 @@
               <SectionForm
                 label={activeSectionDescriptor.label}
                 fields={activeSectionDescriptor.fields}
-                groups={activeSectionDescriptor.groups}
+                composites={activeSectionDescriptor.composites}
                 record={editingRecord}
                 wide
                 onSave={handleSave}

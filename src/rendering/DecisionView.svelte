@@ -17,13 +17,10 @@
   let { record }: { record: SrsRecord } = $props();
 
   const _fieldMetaCtx = getFieldMetaContext();
+  // fieldMeta is keyed by field name (the RFC-039 carrier key).
   const fieldMeta = $derived(_fieldMetaCtx.meta);
   const _repoCtx = getRepoContext();
   const repo = $derived(_repoCtx.repo);
-  // display-only: reshapes WASM-sourced schema metadata by field name for description/instructions
-  const metaByName = $derived(
-    new Map([...fieldMeta.entries()].map(([_, def]) => [def.name, def]))
-  );
 
   /** Profile-ordered field names for decision (§10.1). */
   const DECISION_FIELDS = [
@@ -51,10 +48,9 @@
   {#each DECISION_FIELDS as field}
     {@const value = repo.get_field_value_by_name(record.instanceId, field.name)}
     {#if isPresent(value)}
-      {@const def = metaByName.get(field.name)}
+      {@const def = fieldMeta.get(field.name)}
       <CardField label={field.label} description={def?.description} instructions={def?.instructions} id={field.name}>
-        <!-- synthetic: FieldValueView reads only .value; fieldId is not semantically a UUID here -->
-        <FieldValueView fv={{ fieldId: field.name, value }} valueType={def?.valueType} />
+        <FieldValueView {value} valueType={def?.valueType} />
       </CardField>
     {/if}
   {/each}
