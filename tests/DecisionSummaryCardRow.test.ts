@@ -21,7 +21,7 @@ function makeRecord(lifecycle?: string): SrsRecord {
     instanceId: "abc12345-0000-0000-0000-000000000000",
     typeId: "type-id",
     typeVersion: 1,
-    fieldValues: [],
+    fieldValues: {},
     displayLabel: "My Decision",
     lifecycle,
   };

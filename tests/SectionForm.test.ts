@@ -1,29 +1,22 @@
 // @vitest-environment happy-dom
 import { render, fireEvent } from "@testing-library/svelte";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import SectionForm from "../src/lib/guides/SectionForm.svelte";
-import type { GroupFormDef } from "../src/lib/guides/blueprint-utils.js";
-import type { SrsRecord } from "../src/lib/srs-client.js";
+import type { CompositeFormDef } from "../src/lib/guides/blueprint-utils.js";
+import type { CreateRecordInput, SrsRecord } from "../src/lib/srs-client.js";
 
-// srs-web#266 — editing the top-left header cell of a table group wipes every
-// other column. Root cause: setHeader() only pads the `columns` sub-field array
-// up to the index being edited, not to the table's true column count (which,
-// when `columns` starts empty, is inferred from `rows[0].length`). Editing
-// column 0 first collapses `columns` to length 1, and colCount() then trusts
-// `columns.length` over the row width — hiding every column past the first.
+// srs-web#266 — editing the top-left header cell of a table composite wipes
+// every other column. Root cause: setHeader() only pads the `columns` sub-field
+// array up to the index being edited, not to the table's true column count
+// (which, when `columns` starts empty, is inferred from `rows[0].length`).
 
-const COLUMNS_FIELD = "field-columns";
-const ROWS_FIELD = "field-rows";
-
-const tableGroup: GroupFormDef = {
-  groupId: "group-table",
+const tableComposite: CompositeFormDef = {
+  name: "tables",
   label: "Decisions",
   order: 0,
-  repeatable: true,
-  compositeRenderer: "table",
   fields: [
-    { fieldId: COLUMNS_FIELD, label: "Columns", valueType: "text", required: false, name: "columns" },
-    { fieldId: ROWS_FIELD, label: "Rows", valueType: "text", required: false, name: "rows" },
+    { label: "Columns", valueType: "text", required: false, name: "columns" },
+    { label: "Rows", valueType: "text", required: true, name: "rows" },
   ],
 };
 
@@ -32,21 +25,14 @@ function recordWithTwoColumnRows(): SrsRecord {
     instanceId: "rec-1",
     typeId: "type-1",
     typeVersion: 1,
-    fieldValues: [],
-    groupValues: [
-      {
-        groupId: "group-table",
-        entries: [
-          {
-            fieldValues: [
-              // columns intentionally empty — headers were never typed for this table
-              { fieldId: COLUMNS_FIELD, value: "" },
-              { fieldId: ROWS_FIELD, value: JSON.stringify([["A1", "B1"], ["A2", "B2"]]) },
-            ],
-          },
-        ],
-      },
-    ],
+    fieldValues: {
+      tables: [
+        {
+          // columns intentionally absent — headers were never typed for this table
+          rows: JSON.stringify([["A1", "B1"], ["A2", "B2"]]),
+        },
+      ],
+    },
   };
 }
 
@@ -56,7 +42,7 @@ describe("SectionForm table grid editor (srs-web#266)", () => {
       props: {
         label: "Table Section",
         fields: [],
-        groups: [tableGroup],
+        composites: [tableComposite],
         record: recordWithTwoColumnRows(),
         onSave: () => {},
         onCancel: () => {},
@@ -83,7 +69,7 @@ describe("SectionForm table grid editor (srs-web#266)", () => {
       props: {
         label: "Table Section",
         fields: [],
-        groups: [tableGroup],
+        composites: [tableComposite],
         record: recordWithTwoColumnRows(),
         onSave: () => {},
         onCancel: () => {},
@@ -95,5 +81,43 @@ describe("SectionForm table grid editor (srs-web#266)", () => {
 
     const headersAfter = container.querySelectorAll<HTMLTextAreaElement>('[data-testid="te-header"]');
     expect(headersAfter.length).toBe(2);
+  });
+
+  it("emits the RFC-039 carrier: composite list as an array of name-keyed objects", async () => {
+    const onSave = vi.fn();
+    const { container } = render(SectionForm, {
+      props: {
+        label: "Table Section",
+        fields: [{ label: "Heading", valueType: "string" as const, required: true, name: "heading" }],
+        composites: [tableComposite],
+        record: {
+          ...recordWithTwoColumnRows(),
+          fieldValues: {
+            heading: "Process",
+            ...recordWithTwoColumnRows().fieldValues,
+          },
+        },
+        onSave,
+        onCancel: () => {},
+      },
+    });
+
+    const cell = container.querySelector<HTMLTextAreaElement>('[data-testid="te-cell"]');
+    expect(cell).not.toBeNull();
+    if (cell) await fireEvent.input(cell, { target: { value: "EDITED" } });
+
+    const form = container.querySelector("form");
+    expect(form).not.toBeNull();
+    if (form) await fireEvent.submit(form);
+
+    expect(onSave).toHaveBeenCalledOnce();
+    const input = onSave.mock.calls[0][0] as CreateRecordInput;
+    expect(input.fieldValues.heading).toBe("Process");
+    const tables = input.fieldValues.tables as Array<Record<string, string>>;
+    expect(Array.isArray(tables)).toBe(true);
+    expect(tables).toHaveLength(1);
+    expect(JSON.parse(tables[0].rows)).toEqual([["EDITED", "B1"], ["A2", "B2"]]);
+    // No groupValues in the RFC-039 input surface.
+    expect("groupValues" in input).toBe(false);
   });
 });

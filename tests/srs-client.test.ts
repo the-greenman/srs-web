@@ -117,6 +117,9 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     type_schema: () => {
       throw new Error("not mocked");
     },
+    list_types: () => {
+      throw new Error("not mocked");
+    },
     list_blueprints: () => {
       throw new Error("not mocked");
     },
@@ -531,14 +534,14 @@ describe("addContainerMember", () => {
 // ---------------------------------------------------------------------------
 
 describe("listRecords", () => {
-  const baseInner = { instanceId: "r1", typeId: "t1", typeVersion: 1, fieldValues: [], tags: [] };
+  const baseInner = { instanceId: "r1", typeId: "t1", typeVersion: 1, fieldValues: {}, tags: [] };
 
   it("populates displayLabel from the RecordSummary wrapper and propagates inner record fields", () => {
     const innerRecord = {
       instanceId: "r1",
       typeId: "t1",
       typeVersion: 1,
-      fieldValues: [{ fieldId: "f1", value: "hello" }],
+      fieldValues: { f1: "hello" },
       tags: [],
     };
     const summaries = [{ instanceId: "r1", displayLabel: "My Label", record: innerRecord }];
@@ -550,8 +553,8 @@ describe("listRecords", () => {
     expect(result[0].instanceId).toBe("r1");
     expect(result[0].displayLabel).toBe("My Label");
     expect(result[0].typeId).toBe("t1");
-    // Verify inner record's fieldValues reach the caller (backward-compat for existing callers)
-    expect(result[0].fieldValues).toEqual([{ fieldId: "f1", value: "hello" }]);
+    // Verify the inner record's RFC-039 name-keyed fieldValues object reaches the caller verbatim
+    expect(result[0].fieldValues).toEqual({ f1: "hello" });
   });
 
   it("accepts display_label snake_case (defensive dual-lookup, consistent with normalizeRecord convention)", () => {
@@ -573,7 +576,7 @@ describe("listRecords", () => {
   });
 
   it("falls back gracefully for a bare Record shape (no wrapper); displayLabel is undefined", () => {
-    const bare = [{ instanceId: "r3", typeId: "t1", typeVersion: 1, fieldValues: [], tags: [] }];
+    const bare = [{ instanceId: "r3", typeId: "t1", typeVersion: 1, fieldValues: {}, tags: [] }];
     const repo = mockRepo({ list_records: () => bare });
 
     const result = listRecords(repo, {});
@@ -918,7 +921,7 @@ describe("listTerms", () => {
 // ---------------------------------------------------------------------------
 
 describe("resolveContainerView", () => {
-  const baseRecord = { instanceId: "r1", typeId: "t1", typeVersion: 1, fieldValues: [], tags: [] };
+  const baseRecord = { instanceId: "r1", typeId: "t1", typeVersion: 1, fieldValues: {}, tags: [] };
   const rawMemberCamel = {
     instanceId: "m1",
     tier: 2,
@@ -1029,7 +1032,7 @@ describe("resolveContainerView", () => {
       instance_id: "m2",
       tier: 1,
       display_label: "Root Guide",
-      record: { instance_id: "r2", type_id: "t2", type_version: 1, field_values: [], tags: [] },
+      record: { instance_id: "r2", type_id: "t2", type_version: 1, field_values: {}, tags: [] },
     };
     const rawView = {
       containerId: "c1",
@@ -1412,14 +1415,14 @@ describe("transitionRecord", () => {
     instanceId: "inst-pred",
     typeId: "type-1",
     typeVersion: 1,
-    fieldValues: [{ fieldId: "f-1", value: "old" }],
+    fieldValues: { "f-1": "old" },
     lifecycleState: "superseded",
   };
   const rawSuccessor = {
     instanceId: "inst-succ",
     typeId: "type-1",
     typeVersion: 1,
-    fieldValues: [{ fieldId: "f-1", value: "new" }],
+    fieldValues: { "f-1": "new" },
     lifecycleState: "draft",
   };
   const rawRelation = {
@@ -1440,7 +1443,7 @@ describe("transitionRecord", () => {
 
     const input = {
       byTransition: "supersede",
-      fulfillment: { newRecord: { fieldValues: [{ fieldId: "f-1", value: "new" }] } },
+      fulfillment: { newRecord: { fieldValues: { "f-1": "new" } } },
     };
     const result = transitionRecord(repo, "inst-pred", input);
 

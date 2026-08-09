@@ -1,21 +1,24 @@
 {
+  "id": "636ce948-2110-57b4-a3ed-04354ec17843",
+  "namespace": "governance",
+  "name": "alternatives_considered",
+  "version": 1,
+  "description": "Genuine options the group considered, including doing nothing.",
+  "instructions": "List the options that had genuine support, including doing nothing. Do not write “none” or leave it blank — if there was no competing proposal, the real alternative was leaving things as they are, so state what would have happened if you had not decided. Keep distinct options distinct rather than blending them into one.",
   "aiGuidance": {
+    "purpose": "Records the genuine options the group weighed before settling on a direction — including doing nothing. Alternatives show the decision was a real choice, not a foregone conclusion.",
+    "extraction": "Look for options mentioned, proposals floated, or alternatives explicitly compared. Include any option that received real consideration, even if dismissed quickly. Include doing nothing or no change if the group acknowledged it.",
+    "negativeGuidance": "Do not write none unless truly no alternatives were discussed — that is almost never accurate. Do not merge distinct alternatives into a single blended option.",
     "examples": [
       {
         "description": "Meeting-frequency decision",
         "output": "Monthly (predictable, low commitment); Fortnightly (more regular touchpoints); Quarterly (minimal disruption to schedules); No fixed schedule (continue ad hoc coordination)."
       }
-    ],
-    "extraction": "Look for options mentioned, proposals floated, or alternatives explicitly compared. Include any option that received real consideration, even if dismissed quickly. Include doing nothing or no change if the group acknowledged it.",
-    "negativeGuidance": "Do not write none unless truly no alternatives were discussed — that is almost never accurate. Do not merge distinct alternatives into a single blended option.",
-    "purpose": "Records the genuine options the group weighed before settling on a direction — including doing nothing. Alternatives show the decision was a real choice, not a foregone conclusion."
+    ]
   },
-  "createdAt": "2026-05-25T00:00:00Z",
-  "description": "Genuine options the group considered, including doing nothing.",
-  "id": "636ce948-2110-57b4-a3ed-04354ec17843",
-  "instructions": "List the options that had genuine support, including doing nothing. Do not write “none” or leave it blank — if there was no competing proposal, the real alternative was leaving things as they are, so state what would have happened if you had not decided. Keep distinct options distinct rather than blending them into one.",
-  "name": "alternatives_considered",
-  "namespace": "governance",
-  "valueType": "text",
-  "version": 1
+  "fieldType": {
+    "datatype": "string",
+    "format": "plain"
+  },
+  "createdAt": "2026-05-25T00:00:00Z"
 }

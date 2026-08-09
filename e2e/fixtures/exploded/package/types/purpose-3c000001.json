@@ -10,14 +10,12 @@
       "displayLabel": "Statement",
       "fieldId": "3b000001-0000-4000-a000-000000000001",
       "order": 0,
-      "repeatable": false,
       "required": true
     },
     {
       "displayLabel": "Title",
       "fieldId": "3b000002-0000-4000-a000-000000000002",
       "order": 1,
-      "repeatable": false,
       "required": false
     }
   ],

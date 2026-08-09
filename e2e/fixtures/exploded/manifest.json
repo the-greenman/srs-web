@@ -1,23 +1,24 @@
 {
-  "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-  "container": {
-    "containerId": "395ebea2-d8f6-497b-b18c-04c9eacafc94",
-    "identityInstanceId": "c60900d8-6b19-4f7a-96bd-6b6cd6ad72e6",
-    "memberInstanceIds": [
-      "c60900d8-6b19-4f7a-96bd-6b6cd6ad72e6"
-    ],
-    "title": "Empty Governance Document"
-  },
-  "createdAt": "2026-07-22T15:04:02.641971589+00:00",
-  "description": "An empty governance document: the canonical MuDemocracy governance package installed with zero records, ready for a clerk to capture their first decision.",
   "instanceIndex": [
     {
       "instanceId": "c60900d8-6b19-4f7a-96bd-6b6cd6ad72e6",
-      "path": "records/notes/governance-identity-c60900d8.json",
       "tier": 0,
+      "path": "records/notes/governance-identity-c60900d8.json",
       "title": "Governance Identity"
     }
   ],
+  "container": {
+    "containerId": "395ebea2-d8f6-497b-b18c-04c9eacafc94",
+    "title": "Empty Governance Document",
+    "identityInstanceId": "c60900d8-6b19-4f7a-96bd-6b6cd6ad72e6",
+    "memberInstanceIds": [
+      "c60900d8-6b19-4f7a-96bd-6b6cd6ad72e6"
+    ]
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+  "createdAt": "2026-07-22T15:04:02.641971589+00:00",
+  "dataModelRevision": 2,
+  "description": "An empty governance document: the canonical MuDemocracy governance package installed with zero records, ready for a clerk to capture their first decision.",
   "namespace": "com.mudemocracy.governance",
   "repositoryId": "395ebea2-d8f6-497b-b18c-04c9eacafc94",
   "srsVersion": "2.0-draft",

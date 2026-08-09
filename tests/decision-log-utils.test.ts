@@ -49,7 +49,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
 }
 
 function makeRecord(instanceId: string, createdAt: string): SrsRecord {
-  return { instanceId, typeId: "t1", typeVersion: 1, fieldValues: [], createdAt };
+  return { instanceId, typeId: "t1", typeVersion: 1, fieldValues: {}, createdAt };
 }
 
 // ---------------------------------------------------------------------------
@@ -265,7 +265,7 @@ describe("sortByCreatedAt", () => {
   it("handles records with missing createdAt (treated as empty string, sorts last in newest-first)", () => {
     const withMissing = [
       makeRecord("inst-dated", "2026-01-01T10:00:00Z"),
-      { instanceId: "inst-nodates", typeId: "t1", typeVersion: 1, fieldValues: [] } as SrsRecord,
+      { instanceId: "inst-nodates", typeId: "t1", typeVersion: 1, fieldValues: {} } as SrsRecord,
     ];
     const sorted = sortByCreatedAt(withMissing, "newest");
     expect(sorted[0].instanceId).toBe("inst-dated");
