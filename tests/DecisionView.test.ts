@@ -5,19 +5,15 @@ import DecisionView from "../src/rendering/DecisionView.svelte";
 import { FIELD_META_KEY } from "../src/lib/governance/field-meta.js";
 import { REPO_CONTEXT_KEY } from "../src/lib/governance/repo-context.js";
 import type { FieldFormDef } from "../src/lib/governance/types.js";
-import type { SrsRecord, FieldValue } from "../src/lib/srs-client.js";
+import type { FieldValues, SrsRecord } from "../src/lib/srs-client.js";
 
-// srs-web#213 — DecisionView now threads FieldFormDef description/instructions
-// into CardField, matching the RecordView treatment from #211.
-
-const DECISION_STATEMENT_ID = "de1296e0-e083-58d9-97a0-cb2b91fec02e";
-const TITLE_ID = "d7e82557-9045-5e92-a494-d99112bbec4a";
+// srs-web#213 — DecisionView threads FieldFormDef description/instructions
+// into CardField. Post-RFC-039 the fieldMeta map is keyed by field NAME.
 
 const fieldMetaMap: Map<string, FieldFormDef> = new Map([
   [
-    DECISION_STATEMENT_ID,
+    "decision_statement",
     {
-      fieldId: DECISION_STATEMENT_ID,
       name: "decision_statement",
       label: "Decision Statement",
       description: "What was decided.",
@@ -27,9 +23,8 @@ const fieldMetaMap: Map<string, FieldFormDef> = new Map([
     },
   ],
   [
-    TITLE_ID,
+    "title",
     {
-      fieldId: TITLE_ID,
       name: "title",
       label: "Title",
       // no description, no instructions — regression case
@@ -41,7 +36,7 @@ const fieldMetaMap: Map<string, FieldFormDef> = new Map([
 
 const fieldMetaContext = { get meta() { return fieldMetaMap; } };
 
-function makeRecord(fieldValues: FieldValue[]): SrsRecord {
+function makeRecord(fieldValues: FieldValues): SrsRecord {
   return {
     instanceId: "test-record-id",
     typeId: "1fcad6a2-9f78-5e41-94ba-d82e88b822f3",
@@ -50,15 +45,10 @@ function makeRecord(fieldValues: FieldValue[]): SrsRecord {
   };
 }
 
-function makeCtxOptions(fieldValues: FieldValue[]) {
+function makeCtxOptions(fieldValues: FieldValues) {
   const repoMock = {
     get_field_value_by_name(_instanceId: string, name: string): unknown {
-      for (const [fieldId, def] of fieldMetaMap) {
-        if (def.name === name) {
-          return fieldValues.find((fv) => fv.fieldId === fieldId)?.value ?? null;
-        }
-      }
-      return null;
+      return fieldValues[name] ?? null;
     },
   };
   const repoContext = { get repo() { return repoMock; } };
@@ -72,7 +62,7 @@ function makeCtxOptions(fieldValues: FieldValue[]) {
 
 describe("DecisionView field help threading (srs-web#213)", () => {
   it("shows the description caption for a field that has description set", () => {
-    const fieldValues = [{ fieldId: DECISION_STATEMENT_ID, value: "We will meet monthly." }];
+    const fieldValues = { decision_statement: "We will meet monthly." };
     const record = makeRecord(fieldValues);
     const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
     // "What was decided." !== "Decision Statement" → caption must appear
@@ -80,7 +70,7 @@ describe("DecisionView field help threading (srs-web#213)", () => {
   });
 
   it("shows the ⓘ info toggle for a field that has instructions set", () => {
-    const fieldValues = [{ fieldId: DECISION_STATEMENT_ID, value: "We will meet monthly." }];
+    const fieldValues = { decision_statement: "We will meet monthly." };
     const record = makeRecord(fieldValues);
     const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
     const btn = container.querySelector<HTMLButtonElement>(".card__field-info");
@@ -89,7 +79,7 @@ describe("DecisionView field help threading (srs-web#213)", () => {
   });
 
   it("reveals instructions paragraph on toggle click", async () => {
-    const fieldValues = [{ fieldId: DECISION_STATEMENT_ID, value: "We will meet monthly." }];
+    const fieldValues = { decision_statement: "We will meet monthly." };
     const record = makeRecord(fieldValues);
     const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
     const btn = container.querySelector<HTMLButtonElement>(".card__field-info")!;
@@ -102,7 +92,7 @@ describe("DecisionView field help threading (srs-web#213)", () => {
 
   it("renders no caption or toggle for a field with no description/instructions in fieldMeta", () => {
     // title field has no description or instructions
-    const fieldValues = [{ fieldId: TITLE_ID, value: "Meeting cadence" }];
+    const fieldValues = { title: "Meeting cadence" };
     const record = makeRecord(fieldValues);
     const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
     expect(container.querySelector(".card__field-description")).toBeNull();
@@ -110,9 +100,8 @@ describe("DecisionView field help threading (srs-web#213)", () => {
   });
 
   it("renders no caption or toggle for a field not in fieldMeta at all", () => {
-    // field unknown to fieldMeta — get_field_value_by_name returns null, field is skipped
-    const unknownId = "00000000-0000-0000-0000-000000000000";
-    const fieldValues = [{ fieldId: unknownId, value: "some value" }];
+    // field unknown to the decision profile — get_field_value_by_name returns null, field is skipped
+    const fieldValues = { some_unknown_field: "some value" };
     const record = makeRecord(fieldValues);
     const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
     expect(container.querySelector(".card__field-description")).toBeNull();

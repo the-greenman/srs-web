@@ -6,7 +6,6 @@
       "displayLabel": "Title",
       "fieldId": "d7e82557-9045-5e92-a494-d99112bbec4a",
       "order": 0,
-      "repeatable": false,
       "required": true
     }
   ],

@@ -1,6 +1,7 @@
 /**
  * Unit tests for buildFieldMetaMap in field-meta.ts (srs-web#55).
  * Pure function — no Svelte context required.
+ * Post-RFC-039 the map is keyed by field NAME (the carrier key).
  */
 
 import { describe, expect, it } from "vitest";
@@ -9,7 +10,7 @@ import type { TypeFormDef } from "../src/lib/governance/types.js";
 
 function makeSchema(
   typeName: string,
-  fields: Array<{ fieldId: string; name: string; label: string }>,
+  fields: Array<{ name: string; label: string }>,
 ): TypeFormDef {
   return {
     typeId: `type-${typeName}`,
@@ -18,7 +19,6 @@ function makeSchema(
     typeName,
     label: typeName,
     fields: fields.map((f) => ({
-      fieldId: f.fieldId,
       name: f.name,
       label: f.label,
       valueType: "string" as const,
@@ -33,38 +33,38 @@ describe("buildFieldMetaMap", () => {
     expect(map.size).toBe(0);
   });
 
-  it("includes all fields from a single schema", () => {
+  it("includes all fields from a single schema, keyed by name", () => {
     const schema = makeSchema("article", [
-      { fieldId: "uuid-title", name: "title", label: "Title" },
-      { fieldId: "uuid-body", name: "article_text", label: "Article Text" },
+      { name: "title", label: "Title" },
+      { name: "article_text", label: "Article Text" },
     ]);
     const map = buildFieldMetaMap({ articles: schema });
     expect(map.size).toBe(2);
-    expect(map.get("uuid-title")?.name).toBe("title");
-    expect(map.get("uuid-body")?.name).toBe("article_text");
+    expect(map.get("title")?.label).toBe("Title");
+    expect(map.get("article_text")?.label).toBe("Article Text");
   });
 
   it("merges fields from multiple schemas", () => {
     const articles = makeSchema("article", [
-      { fieldId: "uuid-title", name: "title", label: "Title" },
-      { fieldId: "uuid-body", name: "article_text", label: "Article Text" },
+      { name: "title", label: "Title" },
+      { name: "article_text", label: "Article Text" },
     ]);
     const decisions = makeSchema("decision", [
-      { fieldId: "uuid-title", name: "title", label: "Title" },
-      { fieldId: "uuid-stmt", name: "decision_statement", label: "Decision Statement" },
+      { name: "title", label: "Title" },
+      { name: "decision_statement", label: "Decision Statement" },
     ]);
     const map = buildFieldMetaMap({ articles, decisions });
-    // uuid-title appears in both schemas (shared field) — 3 unique fieldIds total
+    // "title" appears in both schemas (shared field) — 3 unique names total
     expect(map.size).toBe(3);
-    expect(map.get("uuid-title")?.label).toBe("Title");
-    expect(map.get("uuid-stmt")?.name).toBe("decision_statement");
+    expect(map.get("title")?.label).toBe("Title");
+    expect(map.get("decision_statement")?.label).toBe("Decision Statement");
   });
 
-  it("last-write-wins for shared fieldIds with identical metadata (shared fields)", () => {
-    const a = makeSchema("a", [{ fieldId: "shared", name: "title", label: "Title" }]);
-    const b = makeSchema("b", [{ fieldId: "shared", name: "title", label: "Title" }]);
+  it("last-write-wins for shared names with identical metadata (shared fields)", () => {
+    const a = makeSchema("a", [{ name: "title", label: "Title" }]);
+    const b = makeSchema("b", [{ name: "title", label: "Title" }]);
     const map = buildFieldMetaMap({ a, b });
     expect(map.size).toBe(1);
-    expect(map.get("shared")?.name).toBe("title");
+    expect(map.get("title")?.label).toBe("Title");
   });
 });

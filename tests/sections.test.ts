@@ -24,7 +24,7 @@ function makeRecord(typeId: string, typeName?: string, overrides: Partial<SrsRec
     typeVersion: 1,
     typeNamespace: "governance",
     typeName,
-    fieldValues: [],
+    fieldValues: {},
     ...overrides,
   };
 }
@@ -99,7 +99,7 @@ describe("buildDynamicSections", () => {
   it("skips records with falsy typeId", () => {
     const records = [
       makeRecord("", "article"),
-      { instanceId: "x", typeId: "", typeVersion: 1, fieldValues: [] } as SrsRecord,
+      { instanceId: "x", typeId: "", typeVersion: 1, fieldValues: {} } as SrsRecord,
     ];
     const sections = buildDynamicSections(records);
     // Only TYPE_REGISTRY entry (decision)

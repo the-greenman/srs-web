@@ -62,5 +62,6 @@
   "views": [
     "views/decision-log-faebd240.json"
   ],
-  "vocabularies": []
+  "vocabularies": [],
+  "dataModelRevision": 2
 }

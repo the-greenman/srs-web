@@ -28,6 +28,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     remove_container_member: () => { throw new Error("not mocked"); },
     containers_for_instance: () => { throw new Error("not mocked"); },
     type_schema: () => { throw new Error("not mocked"); },
+    list_types: () => { throw new Error("not mocked"); },
     list_blueprints: () => { throw new Error("not mocked"); },
     document_views_for_container: () => { throw new Error("not mocked"); },
     list_document_views: () => { throw new Error("not mocked"); },
@@ -171,7 +172,7 @@ describe("GovernanceShell — addContainerMember failure branch", () => {
       typeVersion: 1,
       typeNamespace: "com.test",
       typeName: "Article",
-      fieldValues: [],
+      fieldValues: {},
     };
 
     const repo = makeBaseRepo({

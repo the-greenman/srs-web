@@ -1,21 +1,24 @@
 {
+  "id": "9889052c-9313-5e2f-a2ac-15baa3c6983e",
+  "namespace": "governance",
+  "name": "context",
+  "version": 1,
+  "description": "Background that makes the matter meaningful.",
+  "instructions": "Set the scene: what happened before, and the limits you are working within — prior agreements, history, or constraints like budget, law, or deadlines. Explain the environment the group is in now. Do not name the problem itself here — that goes in Friction; context is the backdrop, not the pain.",
   "aiGuidance": {
+    "purpose": "Captures the history, constraints, and trigger event that make this decision matter — the scene-setting before the problem itself is named.",
+    "extraction": "Look for background information stated before the decision point: prior agreements, historical context, changes in circumstances, or what happened to prompt this discussion. Extract the scene, not the problem.",
+    "negativeGuidance": "Do not include the friction or problem itself — that belongs in the Friction field. Context sets the stage; it does not name the pain.",
     "examples": [
       {
         "description": "Meeting-frequency decision — LiMoMa founding session",
         "output": "The group formed in March 2026 and agreed to trial a flat structure for six months. That trial period ends in December, and the group now needs to decide how to structure ongoing work."
       }
-    ],
-    "extraction": "Look for background information stated before the decision point: prior agreements, historical context, changes in circumstances, or what happened to prompt this discussion. Extract the scene, not the problem.",
-    "negativeGuidance": "Do not include the friction or problem itself — that belongs in the Friction field. Context sets the stage; it does not name the pain.",
-    "purpose": "Captures the history, constraints, and trigger event that make this decision matter — the scene-setting before the problem itself is named."
+    ]
   },
-  "createdAt": "2026-05-25T00:00:00Z",
-  "description": "Background that makes the matter meaningful.",
-  "id": "9889052c-9313-5e2f-a2ac-15baa3c6983e",
-  "instructions": "Set the scene: what happened before, and the limits you are working within — prior agreements, history, or constraints like budget, law, or deadlines. Explain the environment the group is in now. Do not name the problem itself here — that goes in Friction; context is the backdrop, not the pain.",
-  "name": "context",
-  "namespace": "governance",
-  "valueType": "text",
-  "version": 1
+  "fieldType": {
+    "datatype": "string",
+    "format": "plain"
+  },
+  "createdAt": "2026-05-25T00:00:00Z"
 }

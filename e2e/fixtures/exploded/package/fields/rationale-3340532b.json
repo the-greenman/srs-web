@@ -1,21 +1,24 @@
 {
+  "id": "3340532b-d845-5e54-92b3-819ed05365c5",
+  "namespace": "governance",
+  "name": "rationale",
+  "version": 1,
+  "description": "Why this option over the alternatives.",
+  "instructions": "Say what made this the right choice — the deciding factor, in two to four sentences. Focus on the outcome logic, not a blow-by-blow of the debate: this is here to remind your future selves, and anyone not in the room, why the choice made sense. Include the key evidence that tipped it.",
   "aiGuidance": {
+    "purpose": "Explains the deciding factor — why this option was chosen over the alternatives. One to three sentences capturing the core reasoning.",
+    "extraction": "Look for statements about why the group chose what they chose: the reasoning given for the final decision, what made this option preferable to the others. Capture the outcome logic, not the deliberation process.",
+    "negativeGuidance": "Do not write a blow-by-blow account of the discussion. Do not include objections that were not ultimately deciding factors. The rationale is the deciding logic, not a summary of the meeting.",
     "examples": [
       {
         "description": "Meeting-frequency decision",
         "output": "Fortnightly maintains momentum without becoming a burden. Monthly felt too infrequent for a new group still finding its rhythm; quarterly too sparse to build shared understanding."
       }
-    ],
-    "extraction": "Look for statements about why the group chose what they chose: the reasoning given for the final decision, what made this option preferable to the others. Capture the outcome logic, not the deliberation process.",
-    "negativeGuidance": "Do not write a blow-by-blow account of the discussion. Do not include objections that were not ultimately deciding factors. The rationale is the deciding logic, not a summary of the meeting.",
-    "purpose": "Explains the deciding factor — why this option was chosen over the alternatives. One to three sentences capturing the core reasoning."
+    ]
   },
-  "createdAt": "2026-05-25T00:00:00Z",
-  "description": "Why this option over the alternatives.",
-  "id": "3340532b-d845-5e54-92b3-819ed05365c5",
-  "instructions": "Say what made this the right choice — the deciding factor, in two to four sentences. Focus on the outcome logic, not a blow-by-blow of the debate: this is here to remind your future selves, and anyone not in the room, why the choice made sense. Include the key evidence that tipped it.",
-  "name": "rationale",
-  "namespace": "governance",
-  "valueType": "text",
-  "version": 1
+  "fieldType": {
+    "datatype": "string",
+    "format": "plain"
+  },
+  "createdAt": "2026-05-25T00:00:00Z"
 }
