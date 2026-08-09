@@ -25,27 +25,12 @@ export function refToTypeId(ref: string): string {
 /**
  * Convert a blueprint SchemaDefinition into a sorted FieldFormDef array
  * suitable for RecordForm. Properties are sorted by `x-srs-order`.
+ *
+ * A composite-range field (RFC-039) projects as an array of objects — detected
+ * by `items.properties` — and is edited by the composite editor, not a flat input.
  */
-function isGroup(prop: SchemaProperty): boolean {
-  return prop["x-srs-group-id"] != null;
-}
-
-function requireFieldId(fieldId: string | undefined, propertyName: string): string {
-  if (!fieldId) {
-    throw new Error(
-      `[blueprint-utils] x-srs-field-id missing on schema property "${propertyName}". The WASM typeSchema/blueprintSchema output must include x-srs-field-id on every field property.`
-    );
-  }
-  return fieldId;
-}
-
-function requireGroupId(groupId: string | undefined, propertyName: string): string {
-  if (!groupId) {
-    throw new Error(
-      `[blueprint-utils] x-srs-group-id missing on schema property "${propertyName}". The WASM typeSchema/blueprintSchema output must include x-srs-group-id on every group property.`
-    );
-  }
-  return groupId;
+function isComposite(prop: SchemaProperty): boolean {
+  return prop.items?.properties != null;
 }
 
 /** Map a single scalar schema property to a FieldFormDef. */
@@ -55,13 +40,14 @@ function propertyToField(name: string, prop: SchemaProperty, required: boolean):
     valueType = "select";
   } else if (prop["x-srs-widget"] === "textarea") {
     valueType = "text";
-  } else if (prop.format === "uri") {
+  } else if (prop.format === "uri" || prop.items?.format === "uri") {
+    // A list-cardinality url field projects as an array of uri-format strings.
     valueType = "url";
   } else {
     valueType = "string";
   }
   return {
-    fieldId: requireFieldId(prop["x-srs-field-id"], name),
+    fieldId: prop["x-srs-field-id"],
     label: prop.title || name,
     valueType,
     required,
@@ -75,29 +61,28 @@ function propertyToField(name: string, prop: SchemaProperty, required: boolean):
 
 export function definitionToFields(def: SchemaDefinition): FieldFormDef[] {
   return Object.entries(def.properties)
-    .filter(([, prop]) => !isGroup(prop))
+    .filter(([, prop]) => !isComposite(prop))
     .sort(([, a], [, b]) => (a["x-srs-order"] ?? 0) - (b["x-srs-order"] ?? 0))
     .map(([name, prop]) => propertyToField(name, prop, def.required?.includes(name) ?? false));
 }
 
 /**
- * A resolved field-group descriptor (ext:field-groups) derived from a section
- * definition. Repeatable groups carry one or more entries; each entry is a set
- * of values for `fields`. `compositeRenderer` (e.g. "table") selects a widget.
+ * A composite-range list field (RFC-039) derived from a section definition:
+ * `record.fieldValues[name]` is an array of sub-field-name-keyed objects.
+ * Sub-field metadata comes from the projected schema's `items.properties`.
  */
-export interface GroupFormDef {
-  groupId: string;
+export interface CompositeFormDef {
+  /** Carrier key into `fieldValues` (e.g. "tables", "items"). */
+  name: string;
   label: string;
   order: number;
-  repeatable: boolean;
-  compositeRenderer?: string;
   fields: FieldFormDef[];
 }
 
-/** Extract field groups (array/object group properties) from a definition. */
-export function definitionToGroups(def: SchemaDefinition): GroupFormDef[] {
+/** Extract composite-range list fields (arrays of objects) from a definition. */
+export function definitionToComposites(def: SchemaDefinition): CompositeFormDef[] {
   return Object.entries(def.properties)
-    .filter(([, prop]) => isGroup(prop))
+    .filter(([, prop]) => isComposite(prop))
     .sort(([, a], [, b]) => (a["x-srs-order"] ?? 0) - (b["x-srs-order"] ?? 0))
     .map(([name, prop]) => {
       const itemProps = prop.items?.properties ?? {};
@@ -106,11 +91,9 @@ export function definitionToGroups(def: SchemaDefinition): GroupFormDef[] {
         .sort(([, a], [, b]) => (a["x-srs-order"] ?? 0) - (b["x-srs-order"] ?? 0))
         .map(([fname, fprop]) => propertyToField(fname, fprop, itemRequired.includes(fname)));
       return {
-        groupId: requireGroupId(prop["x-srs-group-id"], name),
+        name,
         label: prop.title || name,
         order: prop["x-srs-order"] ?? 0,
-        repeatable: prop["x-srs-repeatable"] ?? false,
-        compositeRenderer: prop["x-srs-composite-renderer"],
         fields,
       };
     });
@@ -124,7 +107,7 @@ export interface SectionTypeDescriptor {
   typeVersion: number;
   label: string;
   fields: FieldFormDef[];
-  groups: GroupFormDef[];
+  composites: CompositeFormDef[];
 }
 
 /**
@@ -132,19 +115,25 @@ export interface SectionTypeDescriptor {
  * Uses `contains.items.oneOf` entries to identify section types, then builds
  * FieldFormDef arrays from the corresponding definitions.
  *
+ * `versionByTypeId` resolves each type's current version (blueprint `$ref`s carry
+ * no version) — build it from `listTypes()`; absent entries fall back to 1.
+ *
  * Returned types are in the order they appear in the schema.
  */
-export function sectionTypes(schema: BlueprintSchema): SectionTypeDescriptor[] {
+export function sectionTypes(
+  schema: BlueprintSchema,
+  versionByTypeId?: Map<string, number>
+): SectionTypeDescriptor[] {
   const oneOf = schema.properties.contains?.items?.oneOf ?? [];
   return oneOf.map((ref) => {
     const typeId = refToTypeId(ref.$ref);
     const def = schema.definitions[typeId];
     return {
       typeId,
-      typeVersion: 1,
+      typeVersion: versionByTypeId?.get(typeId) ?? 1,
       label: labelForTypeId(typeId),
       fields: def ? definitionToFields(def) : [],
-      groups: def ? definitionToGroups(def) : [],
+      composites: def ? definitionToComposites(def) : [],
     };
   });
 }

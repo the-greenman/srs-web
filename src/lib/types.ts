@@ -22,17 +22,6 @@ export type Status =
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "mono";
 
-/** SRS field valueType — drives which control a generated form renders (B9). */
-export type ValueType =
-  | "string"
-  | "text"
-  | "number"
-  | "boolean"
-  | "date"
-  | "url"
-  | "select"
-  | "multiselect";
-
 export type DiagnosticSeverity = "error" | "warn" | "info";
 
 /** One entry from the CLI/WASM `diagnostics[]` array. */
