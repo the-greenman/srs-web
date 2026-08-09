@@ -1,6 +1,6 @@
 <!--
   Field — the label/help/error frame around a form control. The control itself
-  (Input / Textarea / Select / Repeatable) is passed as children, so one frame
+  (Input / Textarea / Select) is passed as children, so one frame
   serves every valueType. Adds .field--invalid when `error` is set.
   Wraps .field (src/styles/components/field.css).
   B9 generated edit forms: https://github.com/the-greenman/srs-web/issues/5

@@ -37,8 +37,6 @@ export { default as FieldInput } from "./FieldInput.svelte";
 export { default as Input } from "./Input.svelte";
 export { default as Textarea } from "./Textarea.svelte";
 export { default as Select } from "./Select.svelte";
-export { default as Repeatable } from "./Repeatable.svelte";
-export { default as FieldGroup } from "./FieldGroup.svelte";
 export { default as SaveBar } from "./SaveBar.svelte";
 
 // View selection
@@ -63,7 +61,6 @@ export type {
   BreadcrumbItem,
   Status,
   ButtonVariant,
-  ValueType,
   DiagnosticSeverity,
   Diagnostic,
   LifecycleTransition,
