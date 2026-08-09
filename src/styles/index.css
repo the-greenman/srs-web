@@ -42,8 +42,6 @@
 @import url("./components/card.css") layer(components);
 @import url("./components/log-table.css") layer(components);
 @import url("./components/field.css") layer(components);
-@import url("./components/repeatable.css") layer(components);
-@import url("./components/field-group.css") layer(components);
 @import url("./components/diagnostics.css") layer(components);
 @import url("./components/lifecycle.css") layer(components);
 

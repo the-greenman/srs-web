@@ -32,8 +32,6 @@ src/styles/
     card.css           .card         record reading view
     log-table.css      .log-table    tabular profile views (decision log)
     field.css          .field        form control + label/help/error + save bar
-    repeatable.css     .repeat       array-valued field widget
-    field-group.css    .field-group  labelled cluster of fields
     diagnostics.css    .diag         validation panel
     lifecycle.css      .lifecycle    status transition control
 ```
@@ -72,7 +70,7 @@ The Vite entry wires `index.css` in once **B1** lands
 | tokens, base, utilities, button | B1 scaffold [#2](https://github.com/the-greenman/srs-web/issues/2) |
 | layout, nav, inspector | B4 viewer [#3](https://github.com/the-greenman/srs-web/issues/3) |
 | card, log-table | B5 renderer [#4](https://github.com/the-greenman/srs-web/issues/4), B12 [#8](https://github.com/the-greenman/srs-web/issues/8) |
-| field, repeatable, field-group | B9 edit forms [#5](https://github.com/the-greenman/srs-web/issues/5), B5 [#4](https://github.com/the-greenman/srs-web/issues/4) |
+| field | B9 edit forms [#5](https://github.com/the-greenman/srs-web/issues/5), B5 [#4](https://github.com/the-greenman/srs-web/issues/4) |
 | diagnostics | B4 [#3](https://github.com/the-greenman/srs-web/issues/3), B13 validate-on-save [#9](https://github.com/the-greenman/srs-web/issues/9) |
 | tag, lifecycle | B11 lifecycle/supersession [#7](https://github.com/the-greenman/srs-web/issues/7) |
 | button (`--mono`) | B10 import/export [#6](https://github.com/the-greenman/srs-web/issues/6) |
@@ -94,7 +92,7 @@ import './styles/index.css';
 populated with the LiMoMa gallery fixture:
 
 - `viewer.html` — read-only governance viewer (B4/B5)
-- `editor.html` — generated edit form with repeatable + field-group widgets (B9/B13)
+- `editor.html` — generated edit form widgets (B9/B13)
 
 These are static HTML (no build needed) and are the verified visual reference;
 the Svelte components mirror them 1:1.
