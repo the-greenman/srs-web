@@ -4,9 +4,9 @@
   Renders flat fields (like RecordForm) plus composite-range list fields
   (RFC-039): `fieldValues[name]` is an array of sub-field-name-keyed objects,
   edited as repeatable entry sub-forms driven by the projected schema's
-  `items.properties`. Table composites (sub-fields `columns` + `rows`, which
-  carry JSON-encoded arrays per the muSrs package field definitions) get a
-  grid editor; other composites (e.g. term/body items) get entry rows.
+  `items.properties`. Table composites (sub-fields `columns: string[]` and
+  `rows: [{cells: string[]}]` — real lists, RFC-036) get a grid editor;
+  other composites (e.g. term/body items) get entry rows.
 
   ADR-001: zero SRS semantics in TypeScript — the field/composite structure
   comes from the schema; values round-trip verbatim through the SRS store.
@@ -42,6 +42,9 @@
     saveError?: string | null;
   } = $props();
 
+  /** One composite entry: sub-field name → value (strings, string[], {cells}[]). */
+  type Entry = Record<string, unknown>;
+
   // ---- flat field state (keyed by field name — the RFC-039 carrier key) ----
   function initialFields(): Record<string, string> {
     return Object.fromEntries(
@@ -54,27 +57,20 @@
     );
   }
 
-  // ---- composite state: name -> entries[]; each entry keyed by sub-field name
-  function initialComposites(): Record<string, Array<Record<string, string>>> {
-    const out: Record<string, Array<Record<string, string>>> = {};
+  // ---- composite state: name -> entries[]; values kept structured -----------
+  function initialComposites(): Record<string, Entry[]> {
+    const out: Record<string, Entry[]> = {};
     for (const c of composites) {
-      const raw = record?.fieldValues[c.name];
-      const entries = (Array.isArray(raw) ? raw : []).map((entry) => {
-        const row: Record<string, string> = {};
-        const obj = (entry ?? {}) as Record<string, unknown>;
-        for (const f of c.fields) {
-          const v = obj[f.name];
-          row[f.name] = typeof v === "string" ? v : "";
-        }
-        return row;
-      });
-      out[c.name] = entries;
+      // $state.snapshot: the record prop may be a $state proxy (GuidesShell state);
+      // structuredClone throws on proxies, and we need a detached deep copy to edit.
+      const raw = $state.snapshot(record?.fieldValues[c.name]);
+      out[c.name] = Array.isArray(raw) ? (raw as Entry[]) : [];
     }
     return out;
   }
 
   let fieldValues = $state<Record<string, string>>(initialFields());
-  let compositeValues = $state<Record<string, Array<Record<string, string>>>>(initialComposites());
+  let compositeValues = $state<Record<string, Entry[]>>(initialComposites());
 
   $effect(() => {
     void record?.instanceId;
@@ -83,95 +79,67 @@
     compositeValues = initialComposites();
   });
 
-  // A "table" composite carries JSON-array-encoded `columns` and `rows` sub-fields.
+  // A "table" composite carries `columns` (string list) + `rows` ({cells} list).
   // ponytail: name-shape heuristic replaces the retired x-srs-composite-renderer
-  // marker; upgrade to the RFC-036 view-owned renderer binding when the schema
-  // projection exposes it.
+  // marker; upgrade to reading the view's RFC-036 compositeRenderer binding when
+  // a schema/binding surface exposes it to the editor.
   function isTable(c: CompositeFormDef): boolean {
     const names = new Set(c.fields.map((f) => f.name));
     return names.has("columns") && names.has("rows");
   }
 
-  function parseArr(value: string | undefined): string[] {
-    if (!value) return [];
-    try {
-      const v = JSON.parse(value);
-      return Array.isArray(v) ? v : [];
-    } catch {
-      return [];
-    }
-  }
-  function parseGrid(value: string | undefined): string[][] {
-    if (!value) return [];
-    try {
-      const v = JSON.parse(value);
-      return Array.isArray(v) ? v : [];
-    } catch {
-      return [];
-    }
+  /** String view of a sub-field value for text inputs (non-strings edit as empty). */
+  function strOf(entry: Entry, name: string): string {
+    const v = entry[name];
+    return typeof v === "string" ? v : "";
   }
 
-  function emptyEntry(c: CompositeFormDef): Record<string, string> {
-    return Object.fromEntries(c.fields.map((f) => [f.name, ""]));
-  }
   function addEntry(c: CompositeFormDef) {
-    compositeValues[c.name] = [...(compositeValues[c.name] ?? []), emptyEntry(c)];
+    compositeValues[c.name] = [...(compositeValues[c.name] ?? []), {}];
   }
   function removeEntry(c: CompositeFormDef, i: number) {
     compositeValues[c.name] = compositeValues[c.name].filter((_, idx) => idx !== i);
   }
 
-  // table mutations operate on the columns/rows JSON-encoded sub-fields
-  function tableCols(entry: Record<string, string>): string[] {
-    return parseArr(entry.columns);
+  // ---- table grid helpers (real lists — RFC-036 shape) ---------------------
+  function tableCols(entry: Entry): string[] {
+    return Array.isArray(entry.columns) ? (entry.columns as string[]) : [];
   }
-  function tableRows(entry: Record<string, string>): string[][] {
-    return parseGrid(entry.rows);
+  function tableRows(entry: Entry): { cells: string[] }[] {
+    return Array.isArray(entry.rows) ? (entry.rows as { cells: string[] }[]) : [];
   }
-  function setCols(c: CompositeFormDef, i: number, cols: string[]) {
-    compositeValues[c.name][i].columns = JSON.stringify(cols);
-  }
-  function setRows(c: CompositeFormDef, i: number, rows: string[][]) {
-    compositeValues[c.name][i].rows = JSON.stringify(rows);
-  }
-  function colCount(entry: Record<string, string>): number {
+  function colCount(entry: Entry): number {
     const cols = tableCols(entry);
     if (cols.length) return cols.length;
-    const rows = tableRows(entry);
-    return rows[0]?.length ?? 2;
+    return tableRows(entry)[0]?.cells?.length ?? 2;
   }
   function addColumn(c: CompositeFormDef, i: number) {
     const entry = compositeValues[c.name][i];
-    setCols(c, i, [...tableCols(entry), ""]);
-    setRows(c, i, tableRows(entry).map((row) => [...row, ""]));
+    entry.columns = [...tableCols(entry), ""];
+    entry.rows = tableRows(entry).map((r) => ({ cells: [...r.cells, ""] }));
   }
   function addRow(c: CompositeFormDef, i: number) {
     const entry = compositeValues[c.name][i];
-    const n = colCount(entry);
-    setRows(c, i, [...tableRows(entry), Array(n).fill("")]);
+    entry.rows = [...tableRows(entry), { cells: Array(colCount(entry)).fill("") }];
   }
   function removeRow(c: CompositeFormDef, i: number, ri: number) {
     const entry = compositeValues[c.name][i];
-    setRows(c, i, tableRows(entry).filter((_, idx) => idx !== ri));
+    entry.rows = tableRows(entry).filter((_, idx) => idx !== ri);
   }
   function setHeader(c: CompositeFormDef, i: number, ci: number, value: string) {
     const entry = compositeValues[c.name][i];
-    const cols = tableCols(entry);
+    const cols = [...tableCols(entry)];
     // Pad to the table's true column count (colCount falls back to row width
     // when `columns` starts empty), not just to `ci` — otherwise editing an
     // earlier header cell first collapses `columns` shorter than the rows,
-    // and colCount() then hides every column past the collapsed length
-    // (srs-web#266).
+    // hiding every column past the collapsed length (srs-web#266).
     const n = Math.max(colCount(entry), ci + 1);
     while (cols.length < n) cols.push("");
     cols[ci] = value;
-    setCols(c, i, cols);
+    entry.columns = cols;
   }
   function setCell(c: CompositeFormDef, i: number, ri: number, ci: number, value: string) {
-    const entry = compositeValues[c.name][i];
-    const rows = tableRows(entry);
-    rows[ri][ci] = value;
-    setRows(c, i, rows);
+    tableRows(compositeValues[c.name][i])[ri].cells[ci] = value;
   }
 
   // ---- submit -------------------------------------------------------------
@@ -191,9 +159,11 @@
     }
     for (const c of composites) {
       const entries = (compositeValues[c.name] ?? []).map((entry) => {
-        const obj: Record<string, string> = {};
-        for (const f of c.fields) {
-          if ((entry[f.name] ?? "") !== "") obj[f.name] = entry[f.name];
+        const obj: Entry = {};
+        for (const [k, v] of Object.entries(entry)) {
+          if (v === "" || v == null) continue;
+          if (Array.isArray(v) && v.length === 0) continue;
+          obj[k] = v;
         }
         return obj;
       });
@@ -225,7 +195,12 @@
             <div class="table-entry" data-testid="table-entry">
               {#each c.fields.filter((f) => f.name === "subheading" || f.name === "label") as meta (meta.name)}
                 <Field label={meta.label} description={meta.description} instructions={meta.instructions} id={`g-${c.name}-${i}-${meta.name}`}>
-                  <FieldInput def={meta} bind:value={compositeValues[c.name][i][meta.name]} id={`g-${c.name}-${i}-${meta.name}`} disabled={saving} />
+                  <FieldInput
+                    def={meta}
+                    bind:value={() => strOf(entry, meta.name), (v) => { entry[meta.name] = v; }}
+                    id={`g-${c.name}-${i}-${meta.name}`}
+                    disabled={saving}
+                  />
                 </Field>
               {/each}
               <table class="te-table">
@@ -256,7 +231,7 @@
                             rows={2}
                             oninput={(e) => setCell(c, i, ri, ci, e.currentTarget.value)}
                             disabled={saving}
-                          >{row[ci] ?? ""}</textarea>
+                          >{row.cells[ci] ?? ""}</textarea>
                         </td>
                       {/each}
                       <td class="te-actions">
@@ -280,7 +255,13 @@
             <div class="group-entry" data-testid="group-entry">
               {#each c.fields as f (f.name)}
                 <Field label={f.label} description={f.description} instructions={f.instructions} id={`g-${c.name}-${i}-${f.name}`}>
-                  <FieldInput def={f} bind:value={entry[f.name]} id={`g-${c.name}-${i}-${f.name}`} disabled={saving} rows={3} />
+                  <FieldInput
+                    def={f}
+                    bind:value={() => strOf(entry, f.name), (v) => { entry[f.name] = v; }}
+                    id={`g-${c.name}-${i}-${f.name}`}
+                    disabled={saving}
+                    rows={3}
+                  />
                 </Field>
               {/each}
               <button type="button" class="te-btn te-btn--danger" data-testid="group-remove-entry" onclick={() => removeEntry(c, i)}>Remove</button>

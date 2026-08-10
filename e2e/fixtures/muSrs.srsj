@@ -430,49 +430,49 @@
       "version": 1
     },
     "package/fields/columns-15d81030.json": {
+      "id": "15d81030-07db-40a7-9885-d23b1d6b39f7",
+      "namespace": "com.mudemocracy",
+      "name": "columns",
+      "version": 2,
+      "description": "Column header labels, in display order.",
       "aiGuidance": {
         "purpose": "JSON array of column header label strings"
       },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "JSON array of column header label strings",
       "fieldType": {
         "datatype": "string",
-        "format": "plain"
+        "cardinality": "list"
       },
-      "id": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-      "name": "columns",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-04T00:00:00Z"
     },
     "package/fields/commentary-body-82df4f78.json": {
+      "id": "82df4f78-1180-4cc8-8c01-f1b96bd8d0fe",
+      "namespace": "com.mudemocracy",
+      "name": "commentary-body",
+      "version": 1,
+      "description": "Body prose for an item in a commentary section's items group.",
       "aiGuidance": {
         "purpose": "Body prose for an item in a commentary section's items group (target schema: commentary item.body)."
       },
-      "createdAt": "2026-06-08T00:00:00Z",
-      "description": "Body prose for an item in a commentary section's items group.",
       "fieldType": {
         "datatype": "string",
         "format": "plain"
       },
-      "id": "82df4f78-1180-4cc8-8c01-f1b96bd8d0fe",
-      "name": "commentary-body",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-08T00:00:00Z"
     },
     "package/fields/commentary-term-98be1bba.json": {
+      "id": "98be1bba-e609-4754-933e-853e884807b8",
+      "namespace": "com.mudemocracy",
+      "name": "commentary-term",
+      "version": 1,
+      "description": "Term or label for an item in a commentary section's items group.",
       "aiGuidance": {
         "purpose": "Term or label for an item in a commentary section's items group (target schema: commentary item.term)."
       },
-      "createdAt": "2026-06-08T00:00:00Z",
-      "description": "Term or label for an item in a commentary section's items group.",
       "fieldType": {
         "datatype": "string",
         "format": "plain"
       },
-      "id": "98be1bba-e609-4754-933e-853e884807b8",
-      "name": "commentary-term",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-08T00:00:00Z"
     },
     "package/fields/confirmation-8b647900.json": {
       "aiGuidance": {
@@ -564,104 +564,64 @@
       "version": 1
     },
     "package/fields/intro-a1517ec7.json": {
+      "id": "a1517ec7-7509-4021-9a47-fb3da8014eb7",
+      "namespace": "com.mudemocracy",
+      "name": "intro",
+      "version": 1,
+      "description": "Introductory prose rendered above the tables in a table section.",
       "aiGuidance": {
         "purpose": "Introductory prose rendered above the tables in a table section (target schema: table section intro). Distinct from the base section body, which carries the main content of text and list sections."
       },
-      "createdAt": "2026-06-08T00:00:00Z",
-      "description": "Introductory prose rendered above the tables in a table section.",
       "fieldType": {
         "datatype": "string",
         "format": "plain"
       },
-      "id": "a1517ec7-7509-4021-9a47-fb3da8014eb7",
-      "name": "intro",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-08T00:00:00Z"
     },
     "package/fields/item-body-6fafae71.json": {
+      "id": "6fafae71-f6f1-4e83-b091-19765517ff80",
+      "namespace": "com.mudemocracy",
+      "name": "item-body",
+      "version": 1,
+      "description": "Body text for an item in a structured list, tips group, or commentary.",
       "aiGuidance": {
         "purpose": "Body text for an item in a structured list, tips group, or commentary."
       },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Body text for an item in a structured list, tips group, or commentary.",
       "fieldType": {
         "datatype": "string",
         "format": "plain"
       },
-      "id": "6fafae71-f6f1-4e83-b091-19765517ff80",
-      "name": "item-body",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-04T00:00:00Z"
     },
     "package/fields/item-term-a02b147b.json": {
+      "id": "a02b147b-4319-4cdd-b263-781640c93fcb",
+      "namespace": "com.mudemocracy",
+      "name": "item-term",
+      "version": 1,
+      "description": "Optional term or title label for an item in a structured list or tips group.",
       "aiGuidance": {
         "purpose": "Optional term or title label for an item in a structured list or tips group."
       },
-      "createdAt": "2026-06-05T00:00:00Z",
-      "description": "Optional term or title label for an item in a structured list or tips group.",
       "fieldType": {
         "datatype": "string",
         "format": "plain"
       },
-      "id": "a02b147b-4319-4cdd-b263-781640c93fcb",
-      "name": "item-term",
-      "namespace": "com.mudemocracy",
-      "version": 1
-    },
-    "package/fields/items-35310aeb.json": {
-      "aiGuidance": {
-        "purpose": "Items"
-      },
-      "createdAt": "2026-06-08T00:00:00Z",
-      "description": "Items",
-      "fieldType": {
-        "cardinality": "list",
-        "datatype": "ref",
-        "mode": "inline",
-        "rangeType": {
-          "typeId": "0a4494cc-38ad-4670-af5a-586e5052f47d",
-          "typeVersion": 1
-        }
-      },
-      "id": "35310aeb-50c2-4bdc-9e9e-7403c5c9ffdc",
-      "name": "items",
-      "namespace": "com.mudemocracy",
-      "version": 1
-    },
-    "package/fields/items-e6381600.json": {
-      "aiGuidance": {
-        "purpose": "Items"
-      },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Items",
-      "fieldType": {
-        "cardinality": "list",
-        "datatype": "ref",
-        "mode": "inline",
-        "rangeType": {
-          "typeId": "d200962c-9078-4314-9ab7-22985fbcd923",
-          "typeVersion": 1
-        }
-      },
-      "id": "e6381600-6900-4688-a79a-f27fd62d7f0e",
-      "name": "items",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-05T00:00:00Z"
     },
     "package/fields/label-920fd0a2.json": {
+      "id": "920fd0a2-5fb2-40c4-9362-7c6c86ab8ccd",
+      "namespace": "com.mudemocracy",
+      "name": "label",
+      "version": 1,
+      "description": "Optional paragraph displayed above a table (below subheading)",
       "aiGuidance": {
         "purpose": "Optional paragraph displayed above a table (below subheading)"
       },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Optional paragraph displayed above a table (below subheading)",
       "fieldType": {
         "datatype": "string",
         "format": "plain"
       },
-      "id": "920fd0a2-5fb2-40c4-9362-7c6c86ab8ccd",
-      "name": "label",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-04T00:00:00Z"
     },
     "package/fields/list-items-e5e6ebce.json": {
       "aiGuidance": {
@@ -693,34 +653,34 @@
       "version": 1
     },
     "package/fields/note-2fa78abf.json": {
+      "id": "2fa78abf-c801-4d2a-8ddb-de218f079d1a",
+      "namespace": "com.mudemocracy",
+      "name": "note",
+      "version": 1,
+      "description": "Optional note prose displayed below the tables in a table section.",
       "aiGuidance": {
         "purpose": "Optional note prose displayed below the tables in a table section (target schema: table section note)."
       },
-      "createdAt": "2026-06-08T00:00:00Z",
-      "description": "Optional note prose displayed below the tables in a table section.",
       "fieldType": {
         "datatype": "string",
         "format": "plain"
       },
-      "id": "2fa78abf-c801-4d2a-8ddb-de218f079d1a",
-      "name": "note",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-08T00:00:00Z"
     },
     "package/fields/outro-04ce57ec.json": {
+      "id": "04ce57ec-46bc-4e1e-9238-34bf7247905a",
+      "namespace": "com.mudemocracy",
+      "name": "outro",
+      "version": 1,
+      "description": "Optional closing prose displayed below the main section content.",
       "aiGuidance": {
         "purpose": "Optional closing prose displayed below the main section content."
       },
-      "createdAt": "2026-06-05T17:25:25.894834329+00:00",
-      "description": "Optional closing prose displayed below the main section content.",
       "fieldType": {
         "datatype": "string",
         "format": "plain"
       },
-      "id": "04ce57ec-46bc-4e1e-9238-34bf7247905a",
-      "name": "outro",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-05T17:25:25.894834329+00:00"
     },
     "package/fields/page-c83931f4.json": {
       "aiGuidance": {
@@ -737,19 +697,25 @@
       "version": 1
     },
     "package/fields/rows-876daf6a.json": {
+      "id": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
+      "namespace": "com.mudemocracy",
+      "name": "rows",
+      "version": 2,
+      "description": "Table rows: each an ordered list of cell values.",
       "aiGuidance": {
         "purpose": "JSON array of arrays representing table rows and cells"
       },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "JSON array of arrays representing table rows and cells",
       "fieldType": {
-        "datatype": "string",
-        "format": "plain"
+        "datatype": "ref",
+        "mode": "inline",
+        "cardinality": "list",
+        "minItems": 1,
+        "rangeType": {
+          "typeId": "b9ee89ae-6a5b-4c95-90be-cd2ad3dde423",
+          "typeVersion": 1
+        }
       },
-      "id": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-      "name": "rows",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-04T00:00:00Z"
     },
     "package/fields/slug-2e3be0f8.json": {
       "aiGuidance": {
@@ -766,18 +732,18 @@
       "version": 1
     },
     "package/fields/subheading-4523e0e0.json": {
+      "id": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
+      "namespace": "com.mudemocracy",
+      "name": "subheading",
+      "version": 1,
+      "description": "Optional sub-heading displayed above a table",
       "aiGuidance": {
         "purpose": "Optional sub-heading displayed above a table"
       },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Optional sub-heading displayed above a table",
       "fieldType": {
         "datatype": "string"
       },
-      "id": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
-      "name": "subheading",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-04T00:00:00Z"
     },
     "package/fields/subtitle-9bb3d21d.json": {
       "aiGuidance": {
@@ -790,26 +756,6 @@
       },
       "id": "9bb3d21d-3a02-4b87-863d-99fdfcdb8a3e",
       "name": "subtitle",
-      "namespace": "com.mudemocracy",
-      "version": 1
-    },
-    "package/fields/tables-e52879ab.json": {
-      "aiGuidance": {
-        "purpose": "Tables"
-      },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Tables",
-      "fieldType": {
-        "cardinality": "list",
-        "datatype": "ref",
-        "mode": "inline",
-        "rangeType": {
-          "typeId": "c0d400fa-0d59-4414-963e-7f2f80fe2a9b",
-          "typeVersion": 1
-        }
-      },
-      "id": "e52879ab-9e6e-45e3-a8a6-2c237d57f484",
-      "name": "tables",
       "namespace": "com.mudemocracy",
       "version": 1
     },
@@ -863,19 +809,19 @@
       "version": 1
     },
     "package/fields/widths-8d98614d.json": {
+      "id": "8d98614d-f420-4597-90fd-c141e8584b06",
+      "namespace": "com.mudemocracy",
+      "name": "widths",
+      "version": 1,
+      "description": "JSON array of CSS width strings per column",
       "aiGuidance": {
         "purpose": "JSON array of CSS width strings per column"
       },
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "JSON array of CSS width strings per column",
       "fieldType": {
         "datatype": "string",
         "format": "plain"
       },
-      "id": "8d98614d-f420-4597-90fd-c141e8584b06",
-      "name": "widths",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-04T00:00:00Z"
     },
     "package/package.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
@@ -919,9 +865,10 @@
         "fields/note-2fa78abf.json",
         "fields/confirmation-8b647900.json",
         "fields/intro-a1517ec7.json",
-        "fields/tables-e52879ab.json",
-        "fields/items-e6381600.json",
-        "fields/items-35310aeb.json"
+        "fields/cells-0ba00b45.json",
+        "fields/tables-3f7c53f0.json",
+        "fields/items-d720e9f3.json",
+        "fields/items-1a96b71f.json"
       ],
       "id": "1881df16-af1e-4dd3-a2e1-db19ff7c8fd6",
       "name": "primary",
@@ -946,7 +893,8 @@
         "types/section-a6bf3a1d.json",
         "types/section.table_tables.json",
         "types/section.table_items.json",
-        "types/section.commentary_items.json"
+        "types/section.commentary_items.json",
+        "types/table_rows-b9ee89ae.json"
       ],
       "version": "1.0.0",
       "views": [
@@ -1131,7 +1079,10 @@
     },
     "package/types/section.commentary_items.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
-      "createdAt": "2026-06-08T00:00:00Z",
+      "id": "5da0b977-c5b1-42f4-a729-9d5f7768e449",
+      "namespace": "com.mudemocracy",
+      "name": "section.commentary_items",
+      "version": 1,
       "description": "Items",
       "fields": [
         {
@@ -1145,14 +1096,14 @@
           "required": true
         }
       ],
-      "id": "0a4494cc-38ad-4670-af5a-586e5052f47d",
-      "name": "section.commentary_items",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-08T00:00:00Z"
     },
     "package/types/section.table_items.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
-      "createdAt": "2026-06-04T00:00:00Z",
+      "id": "b280dddf-db1b-45d6-b404-25b8ce54ff47",
+      "namespace": "com.mudemocracy",
+      "name": "section.table_items",
+      "version": 1,
       "description": "Items",
       "fields": [
         {
@@ -1166,14 +1117,14 @@
           "required": true
         }
       ],
-      "id": "d200962c-9078-4314-9ab7-22985fbcd923",
-      "name": "section.table_items",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-04T00:00:00Z"
     },
     "package/types/section.table_tables.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
-      "createdAt": "2026-06-04T00:00:00Z",
+      "id": "0ebabd02-e237-4ff3-886b-909f7d5b768e",
+      "namespace": "com.mudemocracy",
+      "name": "section.table_tables",
+      "version": 1,
       "description": "Tables",
       "fields": [
         {
@@ -1202,37 +1153,33 @@
           "required": false
         }
       ],
-      "id": "c0d400fa-0d59-4414-963e-7f2f80fe2a9b",
-      "name": "section.table_tables",
-      "namespace": "com.mudemocracy",
-      "version": 1
+      "createdAt": "2026-06-04T00:00:00Z"
     },
     "package/types/sectioncommentary-474e299c.json": {
       "createdAt": "2026-06-08T00:00:00Z",
       "description": "A guide section presenting a list of commentary items, each a term paired with body prose.",
       "extendsTypeId": "a6bf3a1d-a785-45e1-8b14-19162e032f99",
       "extendsTypeVersion": 1,
+      "version": 2,
       "fieldOrder": [
         "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
         "9629c9b5-3b17-4766-b3d3-b2890902821a",
         "cd97f7d2-29e4-435e-a991-9be8281d6a78",
-        "35310aeb-50c2-4bdc-9e9e-7403c5c9ffdc",
+        "1a96b71f-b5af-4064-8a91-8487dfeca0b6",
         "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
         "c83931f4-620c-4f8e-b3c5-54f106fb6dc6"
       ],
       "fields": [
         {
-          "displayLabel": "Items",
-          "fieldId": "35310aeb-50c2-4bdc-9e9e-7403c5c9ffdc",
+          "fieldId": "1a96b71f-b5af-4064-8a91-8487dfeca0b6",
           "order": 0,
-          "required": false
+          "required": false,
+          "displayLabel": "Items"
         }
       ],
       "id": "474e299c-5809-4f92-a40d-b3ae1be3ad17",
-      "identityFieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
       "name": "section.commentary",
-      "namespace": "com.mudemocracy",
-      "version": 2
+      "namespace": "com.mudemocracy"
     },
     "package/types/sectionlist-76cdc3fb.json": {
       "createdAt": "2026-06-04T00:00:00Z",
@@ -1278,14 +1225,15 @@
       "description": "A guide section containing one or more data tables, optional items (tips/commentary), and optional body and outro text.",
       "extendsTypeId": "a6bf3a1d-a785-45e1-8b14-19162e032f99",
       "extendsTypeVersion": 1,
+      "version": 2,
       "fieldOrder": [
         "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
         "9629c9b5-3b17-4766-b3d3-b2890902821a",
         "cd97f7d2-29e4-435e-a991-9be8281d6a78",
         "a1517ec7-7509-4021-9a47-fb3da8014eb7",
-        "e52879ab-9e6e-45e3-a8a6-2c237d57f484",
+        "3f7c53f0-74ae-4fe3-9c13-0969e31dc2d9",
         "2fa78abf-c801-4d2a-8ddb-de218f079d1a",
-        "e6381600-6900-4688-a79a-f27fd62d7f0e",
+        "d720e9f3-379d-430b-8360-7b8e63b93ad3",
         "04ce57ec-46bc-4e1e-9238-34bf7247905a",
         "cf0ab5be-de33-4c41-9cf8-f61af4842eb7",
         "c83931f4-620c-4f8e-b3c5-54f106fb6dc6"
@@ -1307,23 +1255,21 @@
           "required": false
         },
         {
-          "displayLabel": "Tables",
-          "fieldId": "e52879ab-9e6e-45e3-a8a6-2c237d57f484",
+          "fieldId": "3f7c53f0-74ae-4fe3-9c13-0969e31dc2d9",
           "order": 0,
-          "required": false
+          "required": false,
+          "displayLabel": "Tables"
         },
         {
-          "displayLabel": "Items",
-          "fieldId": "e6381600-6900-4688-a79a-f27fd62d7f0e",
+          "fieldId": "d720e9f3-379d-430b-8360-7b8e63b93ad3",
           "order": 1,
-          "required": false
+          "required": false,
+          "displayLabel": "Items"
         }
       ],
       "id": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
-      "identityFieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
       "name": "section.table",
-      "namespace": "com.mudemocracy",
-      "version": 2
+      "namespace": "com.mudemocracy"
     },
     "package/types/sectiontext-4408a98e.json": {
       "createdAt": "2026-06-04T00:00:00Z",
@@ -1415,17 +1361,20 @@
           "visible": false
         },
         {
-          "fieldId": "e52879ab-9e6e-45e3-a8a6-2c237d57f484",
+          "fieldId": "3f7c53f0-74ae-4fe3-9c13-0969e31dc2d9",
           "order": 10,
-          "visible": true
+          "visible": true,
+          "compositeRenderer": {
+            "renderer": "table"
+          }
         },
         {
-          "fieldId": "e6381600-6900-4688-a79a-f27fd62d7f0e",
+          "fieldId": "d720e9f3-379d-430b-8360-7b8e63b93ad3",
           "order": 11,
           "visible": true
         },
         {
-          "fieldId": "35310aeb-50c2-4bdc-9e9e-7403c5c9ffdc",
+          "fieldId": "1a96b71f-b5af-4064-8a91-8487dfeca0b6",
           "order": 12,
           "visible": true
         }
@@ -1470,8 +1419,48 @@
         "body": "If you have noticed any of the specific indicators or are simply feeling stuck, you or anyone in the group, can gently interrupt and ask a question. The following questions can help to bring clarity to the conversation and bring the focus to what is specifically being decided.",
         "tables": [
           {
-            "columns": "[\"Question\", \"Explanation\"]",
-            "rows": "[[\"What is the actual choice we are making here?\", \"Are we choosing between venue A or venue B or are we deciding whether to have the event at all?\"], [\"If we say 'yes' to this, what are we saying 'no' to?\", \"This identifies which doors are closing\"], [\"What happens if we don't decide today?\", \"This identifies the hidden decision to stay the same\"], [\"What decision are we avoiding?\", \"Identifies what is not being said\"], [\"What information do we actually need to decide responsibly?\", \"Uncovers when we will know 'enough'\"], [\"What is stopping us from making a commitment?\", \"Surfaces what is not being said\"]]"
+            "columns": [
+              "Question",
+              "Explanation"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "What is the actual choice we are making here?",
+                  "Are we choosing between venue A or venue B or are we deciding whether to have the event at all?"
+                ]
+              },
+              {
+                "cells": [
+                  "If we say 'yes' to this, what are we saying 'no' to?",
+                  "This identifies which doors are closing"
+                ]
+              },
+              {
+                "cells": [
+                  "What happens if we don't decide today?",
+                  "This identifies the hidden decision to stay the same"
+                ]
+              },
+              {
+                "cells": [
+                  "What decision are we avoiding?",
+                  "Identifies what is not being said"
+                ]
+              },
+              {
+                "cells": [
+                  "What information do we actually need to decide responsibly?",
+                  "Uncovers when we will know 'enough'"
+                ]
+              },
+              {
+                "cells": [
+                  "What is stopping us from making a commitment?",
+                  "Surfaces what is not being said"
+                ]
+              }
+            ]
           }
         ],
         "items": [
@@ -1530,8 +1519,41 @@
         "heading": "Strategy vs tasks",
         "tables": [
           {
-            "columns": "[\"What\", \"Task \\u2014 ignore\", \"Strategy \\u2014 record\"]",
-            "rows": "[[\"Project planning\", \"John will draft a social media post for Tuesday\", \"We are committing to a digital first marketing strategy for this campaign\"], [\"Meeting flow\", \"Let's move onto the next agenda item about budget\", \"We have decided to cap all spending on non-essential items until Q4\"], [\"Group conflict\", \"We should talk to Sarah about her being late\", \"We are adopting a new standard attendance policy for all core members\"], [\"Event planning\", \"What shall we do next? Let's book the caterer\", \"We have decided that the event must be self-funding through ticket sales\"]]"
+            "columns": [
+              "What",
+              "Task — ignore",
+              "Strategy — record"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "Project planning",
+                  "John will draft a social media post for Tuesday",
+                  "We are committing to a digital first marketing strategy for this campaign"
+                ]
+              },
+              {
+                "cells": [
+                  "Meeting flow",
+                  "Let's move onto the next agenda item about budget",
+                  "We have decided to cap all spending on non-essential items until Q4"
+                ]
+              },
+              {
+                "cells": [
+                  "Group conflict",
+                  "We should talk to Sarah about her being late",
+                  "We are adopting a new standard attendance policy for all core members"
+                ]
+              },
+              {
+                "cells": [
+                  "Event planning",
+                  "What shall we do next? Let's book the caterer",
+                  "We have decided that the event must be self-funding through ticket sales"
+                ]
+              }
+            ]
           }
         ]
       },
@@ -1566,8 +1588,36 @@
         "body": "When vague or general language is being used, translate it into choice language as this helps the group to understand what is being discussed",
         "tables": [
           {
-            "columns": "[\"What is said\", \"Translation\"]",
-            "rows": "[[\"This feels a bit risky\", \"Are we deciding that safety is more important than growth today?\"], [\"Let's not rush into this\", \"Are we deciding to wait, even if it means we might miss the deadline\"], [\"We need to explore more options\", \"Are we deciding that the current options aren't good enough to commit to?\"], [\"We need more time to think\", \"Are we deciding that avoiding a mistake is worth the cost of doing nothing\"]]"
+            "columns": [
+              "What is said",
+              "Translation"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "This feels a bit risky",
+                  "Are we deciding that safety is more important than growth today?"
+                ]
+              },
+              {
+                "cells": [
+                  "Let's not rush into this",
+                  "Are we deciding to wait, even if it means we might miss the deadline?"
+                ]
+              },
+              {
+                "cells": [
+                  "We need to explore more options",
+                  "Are we deciding that the current options aren't good enough to commit to?"
+                ]
+              },
+              {
+                "cells": [
+                  "We need more time to think",
+                  "Are we deciding that avoiding a mistake is worth the cost of doing nothing?"
+                ]
+              }
+            ]
           }
         ],
         "items": [
@@ -1576,14 +1626,11 @@
             "item-body": "If you hear 'we really should do X' more than twice, then gently interrupt asking for either a concrete proposal or an explicit decision to not take action."
           },
           {
-            "item-term": "Monitor language in real-time",
-            "item-body": "Pick up on vague language as soon as it is used. If someone says 'let's think about it some more' rephrase to 'are we deciding to delay this until next week/month/quarter'"
-          },
-          {
             "item-term": "Commit",
             "item-body": "Remember that a decision is a commitment that reduces future options. If no doors are closing, you are just chatting. If doors are closing, name it."
           }
-        ]
+        ],
+        "theme": "default"
       },
       "instanceId": "26f98f5b-f49a-4ac1-8bac-41aedccabc31",
       "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
@@ -1617,25 +1664,69 @@
         "body": "Work through these steps in order during your meeting and write down the answers as you go. Use the detailed section below if the discussion gets stuck.",
         "tables": [
           {
-            "columns": "[\"Title\", \"Headline\"]",
-            "rows": "[[\"Background\", \"What happened before this?\"], [\"Friction\", \"What's the problem we need to fix?\"], [\"Decision question\", \"What exactly are we deciding?\"], [\"Options\", \"What are our other choices?\"], [\"Key requirements\", \"What matters most to us here?\"], [\"Decision\", \"What is the decision?\"], [\"Why\", \"Why does this option win?\"], [\"Review triggers\", \"When should we look at it again?\"], [\"Next steps\", \"What is still left to do?\"]]"
+            "columns": [
+              "Title",
+              "Headline"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "Background",
+                  "What happened before this?"
+                ]
+              },
+              {
+                "cells": [
+                  "Friction",
+                  "What's the problem we need to fix?"
+                ]
+              },
+              {
+                "cells": [
+                  "Decision question",
+                  "What exactly are we deciding?"
+                ]
+              },
+              {
+                "cells": [
+                  "Options",
+                  "What are our other choices?"
+                ]
+              },
+              {
+                "cells": [
+                  "Key requirements",
+                  "What matters most to us here?"
+                ]
+              },
+              {
+                "cells": [
+                  "Resolution",
+                  "What did we decide?"
+                ]
+              },
+              {
+                "cells": [
+                  "Why",
+                  "Why does this option win?"
+                ]
+              },
+              {
+                "cells": [
+                  "Review triggers",
+                  "When should we look at it again?"
+                ]
+              },
+              {
+                "cells": [
+                  "Next steps",
+                  "What is still left to do?"
+                ]
+              }
+            ]
           }
         ],
-        "items": [
-          {
-            "item-term": "Interruptions",
-            "item-body": "If people interrupt or debate prematurely, point back to the guide and remind them that there is a specific time for every part of the conversation."
-          },
-          {
-            "item-term": "Silence is a sign",
-            "item-body": "If the room goes quiet, it usually means the question is too vague or people are overwhelmed. Go back to the decision question and try rephrasing it."
-          },
-          {
-            "item-term": "Write it where people can see it",
-            "item-body": "If meeting in person or online, share your screen or use a whiteboard to write the answers live. This stops people from repeating themselves."
-          }
-        ],
-        "outro": ""
+        "theme": "default"
       },
       "instanceId": "2b512f4c-522f-4081-bb07-a1cfe7ad94f0",
       "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
@@ -1668,8 +1759,36 @@
         "body": "A decision record for a community group deciding how often to meet.",
         "tables": [
           {
-            "columns": "[\"Question\", \"What to write\"]",
-            "rows": "[[\"What was decided?\", \"We will meet monthly on the first Sunday with a brief written summary sent to all members within 48 hours.\"], [\"Why?\", \"Monthly is frequent enough to address decisions in time and infrequent enough that attendance is sustainable. The written summary addresses the concerns of 3 members who work weekends and cannot attend.\"], [\"What were the options?\", \"Fortnightly, rejected as unsustainable for working members. Quarterly, rejected as too slow for timely decisions\"], [\"When to revisit?\", \"If attendance drops below 3 members for 2 consecutive meetings or a time-sensitive decision is delayed because we couldn't meet in time - whichever comes first.\"]]"
+            "columns": [
+              "Question",
+              "What to write"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "What was decided?",
+                  "We will meet monthly on the first Sunday with a brief written summary sent to all members within 48 hours."
+                ]
+              },
+              {
+                "cells": [
+                  "Why?",
+                  "Monthly is frequent enough to address decisions in time and infrequent enough that attendance is sustainable. The written summary addresses the concerns of 3 members who work weekends and cannot attend."
+                ]
+              },
+              {
+                "cells": [
+                  "What were the options?",
+                  "Fortnightly, rejected as unsustainable for working members. Quarterly, rejected as too slow for timely decisions"
+                ]
+              },
+              {
+                "cells": [
+                  "When to revisit?",
+                  "If attendance drops below 3 members for 2 consecutive meetings or a time-sensitive decision is delayed because we couldn't meet in time - whichever comes first."
+                ]
+              }
+            ]
           }
         ],
         "page": 3
@@ -1694,8 +1813,21 @@
           {
             "item-term": "Hidden decisions",
             "item-body": "If the group say 'We need more information' you can ask 'Are we making a strategic decision to delay this? And if so what is the review trigger for when we have enough information."
+          },
+          {
+            "item-term": "Interruptions",
+            "item-body": "If people interrupt or debate prematurely, point back to the guide and remind them that there is a specific time for every part of the conversation."
+          },
+          {
+            "item-term": "Silence is a sign",
+            "item-body": "If the room goes quiet, it usually means the question is too vague or people are overwhelmed. Go back to the decision question and try rephrasing it"
+          },
+          {
+            "item-term": "Write it where people can see it",
+            "item-body": "If meeting in person or online, share your screen or use a whiteboard to write the answers live. This stops people from repeating themselves."
           }
-        ]
+        ],
+        "theme": "supporting-copy"
       },
       "instanceId": "3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c",
       "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
@@ -1727,7 +1859,7 @@
             "item-body": "The decisions made should be stored where everyone relevant can review them. This could be a print out stored in a filing cabinet or shared notice board or a shared folder on the internet."
           }
         ],
-        "page": 4
+        "theme": "default"
       },
       "instanceId": "6ddd3472-a70d-4382-bd57-6bb24708a764",
       "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
@@ -1744,8 +1876,36 @@
         "body": "The decisions that you record should all follow the same format. This is helpful when you want to compare decisions or update a previous decision.",
         "tables": [
           {
-            "columns": "[\"Question\", \"What to write\"]",
-            "rows": "[[\"What was decided?\", \"One clear sentence written in the active voice stating what was decided. Eg We agree/we will/we decide\\u2026\"], [\"Why?\", \"What made this the right choice? Avoid giving a summary of the discussion. Include key evidence in 2 - 4 sentences\"], [\"What were the options?\", \"The option (s) that had genuine support. \"], [\"When to revisit?\", \"What would happen for us to decide to review this decision? This should be specific and linked to the why. \"]]"
+            "columns": [
+              "Question",
+              "What to write"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "What was decided?",
+                  "One clear sentence, called the \"Resolution\",  written in the active voice. Eg We agree/we will/we decide…"
+                ]
+              },
+              {
+                "cells": [
+                  "Why?",
+                  "What made this the right choice? Avoid giving a summary of the discussion. Include key evidence in 2 - 4 sentences"
+                ]
+              },
+              {
+                "cells": [
+                  "What were the options?",
+                  "The option (s) that had genuine support. "
+                ]
+              },
+              {
+                "cells": [
+                  "When to revisit?",
+                  "How do we know that we need to review this decision? Be specific, describe conditions that show the decision isn't working. "
+                ]
+              }
+            ]
           }
         ],
         "items": [
@@ -1759,10 +1919,10 @@
           },
           {
             "item-term": "When to revisit",
-            "item-body": "Avoid setting a date i.e. review in six months unless you put a calendar reminder in place. It is best for a review to be triggered by a noticeable event or change in your data."
+            "item-body": "Avoid only setting a date. A review is triggered by an event or data connected to your \"why\". "
           }
         ],
-        "page": 2
+        "theme": "default"
       },
       "instanceId": "8b33ce73-8e9f-45bb-90a3-c782c004db1e",
       "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
@@ -1794,13 +1954,68 @@
         "body": "Not all decisions are equal. Recording minor decisions causes unnecessary admin. It is important to distinguish between recording tasks and strategy. This is the difference between doing vs deciding.",
         "tables": [
           {
-            "columns": "[\"Type\", \"Description\", \"Example\", \"Action\"]",
-            "rows": "[[\"Strategic\", \"Choosing a goal or priority\", \"We will prioritise growth over stability this year\", \"Record\"], [\"Tactical\", \"Choosing a method or system\", \"We will use email instead of Whatsapp for formal votes\", \"Record\"], [\"Operational\", \"Assigning work or picking the next step\", \"John will call the venue tomorrow\", \"Ignore\"]]"
+            "columns": [
+              "Type",
+              "Description",
+              "Example",
+              "Action"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "Strategic",
+                  "Choosing a goal or priority",
+                  "We will prioritise growth over stability this year",
+                  "Record"
+                ]
+              },
+              {
+                "cells": [
+                  "Tactical",
+                  "Choosing a method or system",
+                  "We will use email instead of Whatsapp for formal votes",
+                  "Record"
+                ]
+              },
+              {
+                "cells": [
+                  "Operational",
+                  "Assigning work or picking the next step",
+                  "John will call the venue tomorrow",
+                  "Ignore"
+                ]
+              }
+            ]
           },
           {
             "label": "If you are unsure whether to record a decision, ask these four questions. If you answer yes to at least two, record the decision.",
-            "columns": "[]",
-            "rows": "[[\"Will this matter in six months?\", \"Does this have long term consequences or is it just for today?\"], [\"Is this a policy now?\", \"Does this change our purpose or scope?\"], [\"Was there a trade-off?\", \"Did we actively consider and say no to viable alternatives?\"], [\"Would a review be useful?\", \"If the decision proves to be wrong, do we need to know what we discussed at the time?\"]]"
+            "columns": [],
+            "rows": [
+              {
+                "cells": [
+                  "Will this matter in six months?",
+                  "Does this have long term consequences or is it just for today?"
+                ]
+              },
+              {
+                "cells": [
+                  "Is this a policy now?",
+                  "Does this change our purpose or scope?"
+                ]
+              },
+              {
+                "cells": [
+                  "Was there a trade-off?",
+                  "Did we actively consider and say no to viable alternatives?"
+                ]
+              },
+              {
+                "cells": [
+                  "Would a review be useful?",
+                  "If the decision proves to be wrong, do we need to know what we discussed at the time?"
+                ]
+              }
+            ]
           }
         ]
       },
@@ -1820,14 +2035,58 @@
         "tables": [
           {
             "subheading": "Examples",
-            "columns": "[\"Statement\", \"Hidden decision\"]",
-            "rows": "[[\"We need more information before we can move forward\", \"Delay the project\"], [\"We need to make sure everyone is 100% happy with this first\", \"Giving everyone a veto which usually means staying exactly where you are\"], [\"Let's just keep this on the radar for next month\", \"This issue is not a priority\"]]"
+            "columns": [
+              "Statement",
+              "Hidden decision"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "We need more information before we can move forward",
+                  "Delay the project"
+                ]
+              },
+              {
+                "cells": [
+                  "We need to make sure everyone is 100% happy with this first",
+                  "Giving everyone a veto which usually means staying exactly where you are"
+                ]
+              },
+              {
+                "cells": [
+                  "Let's just keep this on the radar for next month",
+                  "This issue is not a priority"
+                ]
+              }
+            ]
           },
           {
             "subheading": "Indicators",
             "label": "There are some things that you can look out for which would indicate if a decision is hiding in the room. If you notice some of these signs it could mean that there is a decision that needs to be named and surfaced.",
-            "columns": "[\"Behaviour\", \"Explanation\"]",
-            "rows": "[[\"Circular talk\", \"The same topic has come up in the last three meetings\"], [\"'Should' loop\", \"Repeatedly saying 'We really should do something about X' without any proposals for a next step\"], [\"Low energy\", \"The room feels heavy or bored. This is a sign of analysing rather than choosing\"]]"
+            "columns": [
+              "Behaviour",
+              "Explanation"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "Circular talk",
+                  "The same topic has come up in the last three meetings"
+                ]
+              },
+              {
+                "cells": [
+                  "'Should' loop",
+                  "Repeatedly saying 'We really should do something about X' without any proposals for a next step"
+                ]
+              },
+              {
+                "cells": [
+                  "Low energy",
+                  "The room feels heavy or bored. This is a sign of analysing rather than choosing"
+                ]
+              }
+            ]
           }
         ]
       },
@@ -1873,7 +2132,7 @@
         "items": [
           {
             "item-term": "What was decided",
-            "item-body": "Specific enough to act on — it names the frequency, the day, and the summary requirement."
+            "item-body": "Specific enough to act on - it names the frequency, the day, and the summary requirement."
           },
           {
             "item-term": "Why?",
@@ -1888,7 +2147,7 @@
             "item-body": "Revisit is condition-based and linked to the 'why'. If attendance drops (testing sustainability) or a decision gets delayed (testing timeliness), the record tells you exactly why the trigger matters."
           }
         ],
-        "theme": "default"
+        "theme": "supporting-copy"
       },
       "instanceId": "e89f9184-6c54-4c99-936a-9ae3baf5595b",
       "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
@@ -1902,29 +2161,89 @@
       "fieldValues": {
         "slug": "detail-1",
         "heading": "Detailed explanations",
-        "body": "A detailed explanation for each section and the suggested questions help to tease out the answers if the discussion seems to get stuck.",
         "tables": [
           {
-            "subheading": "Background",
-            "columns": "[]",
-            "rows": "[[\"Headline\", \"What happened before?\"], [\"Explanation\", \"This is the background to understand why this matters. It can include the history, any limits such a budget or law and the specific trigger or event that started the conversation. It aims to explain the environment we are in currently.\"], [\"Questions\", \"What has happened this week/month/recently that has brought us to this topic? Is this new or have we previously made decisions on this issue? Are there any constraints such as budget, laws or deadlines we must respect?\"]]"
+            "columns": [
+              "Background",
+              "What happened before?"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "Explanation",
+                  "The background to understand why this matters.  Aim to explain the environment we are in currently."
+                ]
+              },
+              {
+                "cells": [
+                  "Questions",
+                  "What has brought us to this? Have we previously made decisions on this issue?  Any constraints?"
+                ]
+              }
+            ]
           },
           {
-            "subheading": "Friction",
-            "columns": "[]",
-            "rows": "[[\"Headline\", \"What's the problem we need to fix?\"], [\"Explanation\", \"This is used to explore the gap between where we are now and where we want to be. The goal is to surface the specific pressure, conflict or issue that makes a decision necessary.\"], [\"Questions\", \"What is the specific pain we are feeling? If we do nothing, what happens next? What is the gap between where we are and where we want to be?\"]]"
+            "columns": [
+              "Friction",
+              "What's the problem we need to fix?"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "Explanation",
+                  "The gap between where we are now and where we want to be. Surface the specific tension or issue that makes a decision necessary."
+                ]
+              },
+              {
+                "cells": [
+                  "Questions",
+                  "What is the specific pain? What if we do nothing? What lies between where we are and where we want to be?"
+                ]
+              }
+            ]
           },
           {
-            "subheading": "Decision question",
-            "columns": "[]",
-            "rows": "[[\"Headline\", \"What exactly are we deciding?\"], [\"Explanation\", \"A clear, concrete question that forces a real choice. It must be specific and answerable with different options.\"], [\"Questions\", \"If we could only answer one question today, what would it be? Can we rephrase that using \\u2018Should we\\u2026 or how can we? Are we actually just deciding the next task? If so, what is the higher level decision?\"]]"
+            "columns": [
+              "Decision question",
+              "What exactly are we deciding?"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "Explanation",
+                  "A clear, concrete question that forces a real choice. Be specific and answerable."
+                ]
+              },
+              {
+                "cells": [
+                  "Questions",
+                  "What question are actually asking?  Rephrase it using 'Should we…' or 'How can we...'? Focus on priorities not tasks. "
+                ]
+              }
+            ]
           },
           {
-            "subheading": "Alternatives",
-            "columns": "[]",
-            "rows": "[[\"Headline\", \"What were our other choices?\"], [\"Explanation\", \"This is all the genuine alternatives that are considered. It can include doing nothing.\"], [\"Questions\", \"What are three different things we could do to solve this? What does \\u2018doing nothing\\u2019 look like? Is there a more radical option we haven\\u2019t considered?\"]]"
+            "columns": [
+              "Alternatives",
+              "What were our other choices?"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "Explanation",
+                  "This is all the genuine alternatives that are considered. It can include doing nothing."
+                ]
+              },
+              {
+                "cells": [
+                  "Questions",
+                  "What three different things we could do to solve this? What about doing nothing? Is there a more radical option?"
+                ]
+              }
+            ]
           }
-        ]
+        ],
+        "theme": "header-half"
       },
       "instanceId": "f82ca8a8-63f7-49b9-89df-94597277025b",
       "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
@@ -1940,31 +2259,107 @@
         "heading": "Detailed explanations",
         "tables": [
           {
-            "subheading": "Key requirements",
-            "columns": "[]",
-            "rows": "[[\"Headline\", \"What matters most to us here?\"], [\"Explanation\", \"These are the standards we use to judge our choices and record how the alternatives perform against our requirements. We may consider cost, ease of use, values and trade-offs. It explains what a good decision looks like for this problem and records any disagreements.\"], [\"Questions\", \"What are the non-negotiables? Cost, deadline, legal? How does the decision hold up against our values - do we value cost or quality? What are we giving up if we choose option B? What was the main point of disagreement in our discussion?\"]]"
+            "columns": [
+              "Key requirements",
+              "What matters most to us here?"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "Explanation",
+                  "The standards we use to judge our choices. What does a good decision looks like? "
+                ]
+              },
+              {
+                "cells": [
+                  "Questions",
+                  "What is non-negotiable? How does this hold up to our values? What might we give up? "
+                ]
+              }
+            ]
           },
           {
-            "subheading": "Verdict",
-            "columns": "[]",
-            "rows": "[[\"Headline\", \"What did we decide?\"], [\"Explanation\", \"One clear, short sentence stating what we are going to do. Start with active words like 'We will, we have decided to..' so the outcome is clear\"], [\"Questions\", \"Can someone state the decision in one sentence?\"]]"
+            "columns": [
+              "Resolution",
+              "What did we decide?"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "Explanation",
+                  "One clear, short sentence stating what we are going to do. Start with active words like 'We will...\"."
+                ]
+              },
+              {
+                "cells": [
+                  "Questions",
+                  "Can someone state the decision in one sentence?"
+                ]
+              }
+            ]
           },
           {
-            "subheading": "Why",
-            "columns": "[]",
-            "rows": "[[\"Headline\", \"Why did this option win?\"], [\"Explanation\", \"Record the reason for the choice.\"], [\"Questions\", \"What was the deciding factor that got us to this decision? How do we explain to someone who is not here why we made this choice?\"]]"
+            "columns": [
+              "Why",
+              "Why did this option win?"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "Explanation",
+                  "Record the reason for the choice."
+                ]
+              },
+              {
+                "cells": [
+                  "Questions",
+                  "What was the deciding factor? How do we explain why we made this choice?"
+                ]
+              }
+            ]
           },
           {
-            "subheading": "Review triggers",
-            "columns": "[]",
-            "rows": "[[\"Headline\", \"When should we look at this again?\"], [\"Explanation\", \"These are the signs that the decision may not be working anymore. It can include specific dates for a review or specific conditions that would trigger a review.\"], [\"Questions\", \"What would have to happen for us to realise this decision was not correct? Is there a specific date when we should review? What specific conditions should we look out for?\"]]"
+            "columns": [
+              "Review triggers",
+              "When should we look at this again?"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "Explanation",
+                  "What would indicate this decision may not be working anymore?  "
+                ]
+              },
+              {
+                "cells": [
+                  "Questions",
+                  "How would we realise that this decision was not correct? Is there a date when we should review? "
+                ]
+              }
+            ]
           },
           {
-            "subheading": "Next steps",
-            "columns": "[]",
-            "rows": "[[\"Headline\", \"What's still left to do?\"], [\"Explanation\", \"Record any tasks that emerge from the decision being made. There may be none.\"], [\"Questions\", \"Who is taking ownership of this task and by when?\"]]"
+            "columns": [
+              "Next steps",
+              "What's still left to do?"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "Explanation",
+                  "Record any tasks that emerge from the decision being made. There may be none."
+                ]
+              },
+              {
+                "cells": [
+                  "Questions",
+                  "Who is taking ownership of this task and by when?"
+                ]
+              }
+            ]
           }
-        ]
+        ],
+        "theme": "header-half"
       },
       "instanceId": "f889bfae-3798-43ab-8e7c-b0a42d6f5291",
       "typeId": "d8d09d3b-8253-4d8d-b187-42f35c8446a7",
@@ -2064,6 +2459,97 @@
           "targetInstanceId": "6ddd3472-a70d-4382-bd57-6bb24708a764"
         }
       ]
+    },
+    "package/fields/cells-0ba00b45.json": {
+      "id": "0ba00b45-8e9b-4739-88ce-21faa93e4f6c",
+      "namespace": "com.mudemocracy",
+      "name": "cells",
+      "version": 1,
+      "description": "Cell values for one table row, in column order.",
+      "aiGuidance": {
+        "purpose": "One table row: cell strings in column order, aligned with the owning table's columns list."
+      },
+      "fieldType": {
+        "datatype": "string",
+        "cardinality": "list"
+      },
+      "createdAt": "2026-08-09T22:45:00Z"
+    },
+    "package/fields/tables-3f7c53f0.json": {
+      "id": "3f7c53f0-74ae-4fe3-9c13-0969e31dc2d9",
+      "namespace": "com.mudemocracy",
+      "name": "tables",
+      "version": 1,
+      "description": "Tables",
+      "aiGuidance": {
+        "purpose": "Tables"
+      },
+      "fieldType": {
+        "datatype": "ref",
+        "mode": "inline",
+        "rangeType": {
+          "typeId": "0ebabd02-e237-4ff3-886b-909f7d5b768e",
+          "typeVersion": 1
+        },
+        "cardinality": "list"
+      },
+      "createdAt": "2026-06-04T00:00:00Z"
+    },
+    "package/fields/items-d720e9f3.json": {
+      "id": "d720e9f3-379d-430b-8360-7b8e63b93ad3",
+      "namespace": "com.mudemocracy",
+      "name": "items",
+      "version": 1,
+      "description": "Items",
+      "aiGuidance": {
+        "purpose": "Items"
+      },
+      "fieldType": {
+        "datatype": "ref",
+        "mode": "inline",
+        "rangeType": {
+          "typeId": "b280dddf-db1b-45d6-b404-25b8ce54ff47",
+          "typeVersion": 1
+        },
+        "cardinality": "list"
+      },
+      "createdAt": "2026-06-04T00:00:00Z"
+    },
+    "package/fields/items-1a96b71f.json": {
+      "id": "1a96b71f-b5af-4064-8a91-8487dfeca0b6",
+      "namespace": "com.mudemocracy",
+      "name": "items",
+      "version": 1,
+      "description": "Items",
+      "aiGuidance": {
+        "purpose": "Items"
+      },
+      "fieldType": {
+        "datatype": "ref",
+        "mode": "inline",
+        "rangeType": {
+          "typeId": "5da0b977-c5b1-42f4-a729-9d5f7768e449",
+          "typeVersion": 1
+        },
+        "cardinality": "list"
+      },
+      "createdAt": "2026-06-08T00:00:00Z"
+    },
+    "package/types/table_rows-b9ee89ae.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "id": "b9ee89ae-6a5b-4c95-90be-cd2ad3dde423",
+      "namespace": "com.mudemocracy",
+      "name": "table_rows",
+      "version": 1,
+      "description": "A table row: an ordered list of cell values (project-local per RFC-036 OQ3).",
+      "fields": [
+        {
+          "fieldId": "0ba00b45-8e9b-4739-88ce-21faa93e4f6c",
+          "order": 0,
+          "required": true
+        }
+      ],
+      "createdAt": "2026-08-09T22:45:00Z"
     }
   }
 }
