@@ -1,11 +1,15 @@
 {
-  "id": "a6c19b95-4f8f-5b07-93f8-3426c545277e",
-  "namespace": "governance",
-  "name": "role_holder",
-  "version": 1,
+  "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+  "aiGuidance": {
+    "purpose": "The person, team, group, or function currently holding this role."
+  },
+  "createdAt": "2026-05-26T00:00:00Z",
   "description": "The person, team, group, or function currently holding this role.",
   "fieldType": {
     "datatype": "string"
   },
-  "createdAt": "2026-05-26T00:00:00Z"
+  "id": "a6c19b95-4f8f-5b07-93f8-3426c545277e",
+  "name": "role_holder",
+  "namespace": "governance",
+  "version": 1
 }

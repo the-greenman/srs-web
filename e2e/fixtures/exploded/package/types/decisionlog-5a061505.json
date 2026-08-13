@@ -1,4 +1,5 @@
 {
+  "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
   "createdAt": "2026-06-25T00:00:00Z",
   "description": "Header root record for a decision-log container. Carries the log title and acts as the typed anchor for RFC-009 rootTypeRefs dispatch.",
   "fields": [

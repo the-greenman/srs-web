@@ -1,12 +1,16 @@
 {
-  "id": "3c39ee1f-6fe0-5da7-a0b6-928aa3a63211",
-  "namespace": "governance",
-  "name": "boundary",
-  "version": 1,
+  "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+  "aiGuidance": {
+    "purpose": "The limits of this role — where the role's authority ends or must be shared."
+  },
+  "createdAt": "2026-05-26T00:00:00Z",
   "description": "The limits of this role — where the role's authority ends or must be shared.",
   "fieldType": {
     "datatype": "string",
     "format": "plain"
   },
-  "createdAt": "2026-05-26T00:00:00Z"
+  "id": "3c39ee1f-6fe0-5da7-a0b6-928aa3a63211",
+  "name": "boundary",
+  "namespace": "governance",
+  "version": 1
 }

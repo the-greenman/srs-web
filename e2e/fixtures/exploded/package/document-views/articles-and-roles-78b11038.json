@@ -1,4 +1,5 @@
 {
+  "$schema": "https://srs.semanticops.com/schema/2.0/document-view.json",
   "createdAt": "2026-05-31T00:00:00Z",
   "description": "Renders the Articles of Association together with the current role holders.",
   "format": "markdown",

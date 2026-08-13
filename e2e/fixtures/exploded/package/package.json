@@ -4,6 +4,7 @@
     "blueprints/decision-log-e2e09a77.json"
   ],
   "createdAt": "2026-01-01T00:00:00Z",
+  "dataModelRevision": 2,
   "description": "",
   "documentViews": [
     "document-views/articles-and-roles-78b11038.json",
@@ -62,6 +63,5 @@
   "views": [
     "views/decision-log-faebd240.json"
   ],
-  "vocabularies": [],
-  "dataModelRevision": 2
+  "vocabularies": []
 }

@@ -1,22 +1,23 @@
 {
-  "id": "4b34847c-26d1-56be-bc10-844aeb704df7",
-  "namespace": "governance",
-  "name": "owner",
-  "version": 1,
-  "description": "Person, role, group, or function responsible for stewardship of this record.",
-  "instructions": "Name the person or role who holds this decision — who is accountable for carrying it out and who can revisit it. A role title (“Coordination lead”) is often more durable than a person’s name, since it survives people coming and going.",
+  "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
   "aiGuidance": {
-    "purpose": "Identifies the person or role who holds accountability for this decision — who can revisit it, who is responsible for its implementation.",
-    "extraction": "Look for explicit ownership statements: X owns this, this sits with the coordination lead, or an implicit assignment when a role is described as responsible. May be a person name or a role title.",
     "examples": [
       {
         "description": "Role-based ownership",
         "output": "Coordination lead"
       }
-    ]
+    ],
+    "extraction": "Look for explicit ownership statements: X owns this, this sits with the coordination lead, or an implicit assignment when a role is described as responsible. May be a person name or a role title.",
+    "purpose": "Identifies the person or role who holds accountability for this decision — who can revisit it, who is responsible for its implementation."
   },
+  "createdAt": "2026-05-25T00:00:00Z",
+  "description": "Person, role, group, or function responsible for stewardship of this record.",
   "fieldType": {
     "datatype": "string"
   },
-  "createdAt": "2026-05-25T00:00:00Z"
+  "id": "4b34847c-26d1-56be-bc10-844aeb704df7",
+  "instructions": "Name the person or role who holds this decision — who is accountable for carrying it out and who can revisit it. A role title (“Coordination lead”) is often more durable than a person’s name, since it survives people coming and going.",
+  "name": "owner",
+  "namespace": "governance",
+  "version": 1
 }

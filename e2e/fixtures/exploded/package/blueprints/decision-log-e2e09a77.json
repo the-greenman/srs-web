@@ -1,4 +1,5 @@
 {
+  "$schema": "https://srs.semanticops.com/schema/2.0/blueprint.json",
   "aiGuidance": {
     "extraction": "Extract every decision made or crystallised during the conversation. Each decision gets its own Record. Link a decision to the one it replaces with supersedes, and to decisions it relies on with depends-on.",
     "purpose": "A decision log assembled from the decisions extracted out of a meeting transcript. Each decision becomes its own Record; supersession and dependency relations connect them over time."

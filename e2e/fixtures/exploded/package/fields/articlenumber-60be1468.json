@@ -1,11 +1,15 @@
 {
-  "id": "60be1468-01bc-5d12-9eea-628f02801893",
-  "namespace": "governance",
-  "name": "article_number",
-  "version": 1,
+  "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+  "aiGuidance": {
+    "purpose": "Stable local reference identifier for the article, e.g. A-001."
+  },
+  "createdAt": "2026-05-26T00:00:00Z",
   "description": "Stable local reference identifier for the article, e.g. A-001.",
   "fieldType": {
     "datatype": "string"
   },
-  "createdAt": "2026-05-26T00:00:00Z"
+  "id": "60be1468-01bc-5d12-9eea-628f02801893",
+  "name": "article_number",
+  "namespace": "governance",
+  "version": 1
 }

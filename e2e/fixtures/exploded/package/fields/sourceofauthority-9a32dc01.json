@@ -1,11 +1,15 @@
 {
-  "id": "9a32dc01-f348-5e05-9f54-bb6d21239f04",
-  "namespace": "governance",
-  "name": "source_of_authority",
-  "version": 1,
+  "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+  "aiGuidance": {
+    "purpose": "How this authority was conferred: inherited, delegated, elected, appointed, constitutional, etc."
+  },
+  "createdAt": "2026-05-26T00:00:00Z",
   "description": "How this authority was conferred: inherited, delegated, elected, appointed, constitutional, etc.",
   "fieldType": {
     "datatype": "string"
   },
-  "createdAt": "2026-05-26T00:00:00Z"
+  "id": "9a32dc01-f348-5e05-9f54-bb6d21239f04",
+  "name": "source_of_authority",
+  "namespace": "governance",
+  "version": 1
 }

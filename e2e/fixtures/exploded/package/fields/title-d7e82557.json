@@ -1,22 +1,23 @@
 {
-  "id": "d7e82557-9045-5e92-a494-d99112bbec4a",
-  "namespace": "governance",
-  "name": "title",
-  "version": 1,
-  "description": "Short label for this record.",
-  "instructions": "Give the decision a short, scannable label — a few words naming the topic, not a full sentence. Write it as the subject of the decision (e.g. “Meeting frequency for pilot”), not as “We will…”. It is what people see first in a list, so make it recognisable at a glance.",
+  "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
   "aiGuidance": {
-    "purpose": "A short, scannable label (3–8 words) that identifies this decision at a glance in a list or document view.",
-    "extraction": "Infer from the decision question or statement: compress to a short noun phrase identifying the topic. Do not start with We will — use the subject of the decision instead.",
     "examples": [
       {
         "description": "Meeting-frequency decision",
         "output": "Meeting frequency for pilot"
       }
-    ]
+    ],
+    "extraction": "Infer from the decision question or statement: compress to a short noun phrase identifying the topic. Do not start with We will — use the subject of the decision instead.",
+    "purpose": "A short, scannable label (3–8 words) that identifies this decision at a glance in a list or document view."
   },
+  "createdAt": "2026-05-25T00:00:00Z",
+  "description": "Short label for this record.",
   "fieldType": {
     "datatype": "string"
   },
-  "createdAt": "2026-05-25T00:00:00Z"
+  "id": "d7e82557-9045-5e92-a494-d99112bbec4a",
+  "instructions": "Give the decision a short, scannable label — a few words naming the topic, not a full sentence. Write it as the subject of the decision (e.g. “Meeting frequency for pilot”), not as “We will…”. It is what people see first in a list, so make it recognisable at a glance.",
+  "name": "title",
+  "namespace": "governance",
+  "version": 1
 }

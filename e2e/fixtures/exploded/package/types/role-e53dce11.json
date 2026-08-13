@@ -1,4 +1,5 @@
 {
+  "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
   "createdAt": "2026-05-26T00:00:00Z",
   "description": "An authority boundary. Defines who may decide or act on what, without requiring group agreement.",
   "fields": [
