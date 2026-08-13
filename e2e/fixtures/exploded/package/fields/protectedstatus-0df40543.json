@@ -1,11 +1,15 @@
 {
-  "id": "0df40543-f72a-5471-a7f1-c85c1f1f93e4",
-  "namespace": "governance",
-  "name": "protected_status",
-  "version": 1,
+  "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+  "aiGuidance": {
+    "purpose": "Whether this article is protected from ordinary amendment by the group."
+  },
+  "createdAt": "2026-05-26T00:00:00Z",
   "description": "Whether this article is protected from ordinary amendment by the group.",
   "fieldType": {
     "datatype": "string"
   },
-  "createdAt": "2026-05-26T00:00:00Z"
+  "id": "0df40543-f72a-5471-a7f1-c85c1f1f93e4",
+  "name": "protected_status",
+  "namespace": "governance",
+  "version": 1
 }

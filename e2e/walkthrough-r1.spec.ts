@@ -263,7 +263,7 @@ test.describe("R1 release walkthrough (#54)", () => {
         page.getByRole("button", { name: "Download .srsj" }).click(),
       ]);
       const exported = await downloadText(download);
-      expect(JSON.parse(exported)).toHaveProperty("srsj", "1");
+      expect(JSON.parse(exported)).toHaveProperty("srsj", "2");
 
       const cli = resolveSrsCli();
       if (!cli) {

@@ -60,7 +60,7 @@ test.describe("Export / Import round-trip (B10)", () => {
     const text = Buffer.concat(chunks).toString("utf8");
     const parsed = JSON.parse(text);
 
-    expect(parsed).toHaveProperty("srsj", "1");
+    expect(parsed).toHaveProperty("srsj", "2");
     expect(parsed).toHaveProperty("manifest");
     expect(parsed).toHaveProperty("data");
   });
@@ -79,9 +79,13 @@ test.describe("Export / Import round-trip (B10)", () => {
     const text = Buffer.concat(chunks).toString("utf8");
     const parsed = JSON.parse(text);
 
-    // gallery.srsj has 16 instances (6 articles + 7 decisions + 3 roles)
-    const instanceIndex: unknown[] = parsed.manifest?.instanceIndex ?? [];
-    expect(instanceIndex.length).toBeGreaterThanOrEqual(16);
+    // gallery.srsj has 16 instances (6 articles + 7 decisions + 3 roles).
+    // RFC-038: the tree is the catalog — membership is the set of record
+    // objects in `data`, not a manifest inventory ([R2] retires those).
+    const records = Object.keys(parsed.data ?? {}).filter((p) => p.startsWith("records/"));
+    expect(records.length).toBeGreaterThanOrEqual(16);
+    expect(parsed.manifest).not.toHaveProperty("instanceIndex");
+    expect(parsed.manifest).not.toHaveProperty("containerIndex");
   });
 
   test("mutation survives export → re-import round-trip", async ({ page }) => {

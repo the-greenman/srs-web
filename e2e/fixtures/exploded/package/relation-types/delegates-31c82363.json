@@ -1,4 +1,5 @@
 {
+  "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
   "category": "governance",
   "createdAt": "2026-05-31T00:00:00Z",
   "description": "Source delegates responsibility or authority to target.",

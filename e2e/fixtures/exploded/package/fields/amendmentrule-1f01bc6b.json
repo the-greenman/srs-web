@@ -1,12 +1,16 @@
 {
-  "id": "1f01bc6b-39c8-58d7-b1a3-79142623fece",
-  "namespace": "governance",
-  "name": "amendment_rule",
-  "version": 1,
+  "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+  "aiGuidance": {
+    "purpose": "The process or conditions under which this article may be amended or repealed."
+  },
+  "createdAt": "2026-05-26T00:00:00Z",
   "description": "The process or conditions under which this article may be amended or repealed.",
   "fieldType": {
     "datatype": "string",
     "format": "plain"
   },
-  "createdAt": "2026-05-26T00:00:00Z"
+  "id": "1f01bc6b-39c8-58d7-b1a3-79142623fece",
+  "name": "amendment_rule",
+  "namespace": "governance",
+  "version": 1
 }

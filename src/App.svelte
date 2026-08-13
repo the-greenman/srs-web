@@ -78,6 +78,15 @@
 
   let repo = $state<SrsRepository | null>(null);
 
+  /**
+   * Catalog diagnostics from the load-time `validate()` pass (RFC-038 [R24]).
+   * Under tree-authoritative storage a malformed or duplicate object is a
+   * diagnostic, not a silent omission — the repository still opens, so the
+   * only way the user learns an object was rejected is if we show it.
+   */
+  let catalogDiagnostics = $state<{ severity: string; message: string }[]>([]);
+  let catalogDiagnosticsOpen = $state(true);
+
   /** Cached working copy loaded from localStorage on WASM init. */
   let cachedSession = $state<WorkingCopyEntry | null>(null);
   let restoreError = $state<string | null>(null);
@@ -130,6 +139,8 @@
       repoName = stripSrsExtension(handle.name);
       cachedSession = null;
       saveMessage = null;
+      catalogDiagnostics = collectCatalogDiagnostics(repo);
+      catalogDiagnosticsOpen = true;
       appState = "loaded";
     } catch (e: unknown) {
       repo = null;
@@ -138,6 +149,25 @@
         `Failed to load repository: ${e instanceof Error ? e.message : String(e)}`,
         { cause: e },
       );
+    }
+  }
+
+  /**
+   * Run the core's validation pass and keep the entries that mean "an object
+   * in the tree was not catalogued as-authored". Presentation only — the core
+   * decides what is a diagnostic; we only decide that the user sees it.
+   */
+  function collectCatalogDiagnostics(r: SrsRepository): { severity: string; message: string }[] {
+    try {
+      const report = r.validate();
+      // Errors only: these are the objects the catalog refused ([R8]/[R13]
+      // shape and resolution failures). Warnings are advisory about content
+      // that did load, and belong to the per-record Diagnostics panel.
+      return (report?.diagnostics ?? []).filter((d) => d.severity === "error");
+    } catch (e: unknown) {
+      // A validate() failure must not block opening the repository, but it is
+      // itself the kind of thing that must not pass silently.
+      return [{ severity: "error", message: `Could not validate repository: ${e instanceof Error ? e.message : String(e)}` }];
     }
   }
 
@@ -334,6 +364,28 @@
 <!-- =========================================================================
      Boot state
      ========================================================================= -->
+{#snippet catalogBanner()}
+  {#if catalogDiagnostics.length > 0 && catalogDiagnosticsOpen}
+    <div class="catalog-banner" role="alert" data-testid="catalog-diagnostics">
+      <p class="catalog-banner__msg">
+        {catalogDiagnostics.length} catalog diagnostic{catalogDiagnostics.length === 1 ? "" : "s"} in
+        <strong>{repoName}</strong> — objects reported by the engine, not silently dropped.
+      </p>
+      <ul class="catalog-banner__list">
+        {#each catalogDiagnostics.slice(0, 10) as d}
+          <li class="catalog-banner__item" data-severity={d.severity}>{d.severity}: {d.message}</li>
+        {/each}
+      </ul>
+      {#if catalogDiagnostics.length > 10}
+        <p class="catalog-banner__more">…and {catalogDiagnostics.length - 10} more.</p>
+      {/if}
+      <button class="catalog-banner__dismiss" onclick={() => { catalogDiagnosticsOpen = false; }}>
+        Dismiss
+      </button>
+    </div>
+  {/if}
+{/snippet}
+
 {#if appState === "boot"}
   <div class="splash">
     <p class="splash__status">Loading engine…</p>
@@ -442,6 +494,7 @@
      Loaded state — guides shell
      ========================================================================= -->
 {:else if editorMode === "guides"}
+  {@render catalogBanner()}
   <GuidesShell
     repo={repo!}
     repoName={repoName}
@@ -466,6 +519,7 @@
      Loaded state — governance shell
      ========================================================================= -->
 {:else}
+  {@render catalogBanner()}
   <GovernanceShell
     repo={repo!}
     repoName={repoName}
@@ -594,6 +648,31 @@
   .mode-picker__btn span {
     font-size: 0.75rem;
     color: var(--color-muted, #888);
+  }
+
+  /* ---- Catalog diagnostics banner (RFC-038 [R24]) ---- */
+  .catalog-banner {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-border, #ddd);
+    background: var(--color-warn-bg, #fff8e1);
+    font-size: 0.875rem;
+  }
+  .catalog-banner__msg {
+    margin: 0 0 0.5rem;
+  }
+  .catalog-banner__list {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+  .catalog-banner__item[data-severity="error"] {
+    color: var(--color-error, #b3261e);
+  }
+  .catalog-banner__more {
+    margin: 0.25rem 0 0;
+    opacity: 0.8;
+  }
+  .catalog-banner__dismiss {
+    margin-top: 0.5rem;
   }
 
   /* ---- Restore banner ---- */

@@ -1,4 +1,5 @@
 {
+  "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
   "createdAt": "2026-06-01T00:00:00Z",
   "description": "Compact decision log field view showing statement, alternatives, rationale, and revisit trigger.",
   "fieldViews": [
