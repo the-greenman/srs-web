@@ -14,7 +14,8 @@ giving the app ergonomic, reusable building blocks.
 - The CSS system is the single source of truth — visual changes happen in one
   place and stay consistent across HTML showcases and Svelte alike.
 - Components carry **no SRS semantics** (ADR-001) — they render what the WASM
-  engine produces. State logic here is UI-only (e.g. Repeatable add/remove).
+  engine produces. State logic here is UI-only (e.g. dirty-count tracking in
+  `SaveBar`).
 - A rebrand is still a one-file change in `tokens.css`.
 
 ## Usage
@@ -50,8 +51,6 @@ rail + record headers their printed-ink texture) — see `docs/design/*.html`.
 | `LogTable` | `columns` + row children | `.log-table` | B5 [#4](https://github.com/the-greenman/srs-web/issues/4), B12 [#8](https://github.com/the-greenman/srs-web/issues/8) |
 | `Field` | `label` `required?` `typeHint?` `error?` | `.field` | B9 [#5](https://github.com/the-greenman/srs-web/issues/5), B13 [#9](https://github.com/the-greenman/srs-web/issues/9) |
 | `Input` / `Textarea` / `Select` | `bind:value` `options` | `.input` `.textarea` `.select` | B9 [#5](https://github.com/the-greenman/srs-web/issues/5) |
-| `Repeatable` | `bind:values` `min?` `max?` | `.repeat` | B9 [#5](https://github.com/the-greenman/srs-web/issues/5), B5 [#4](https://github.com/the-greenman/srs-web/issues/4) |
-| `FieldGroup` | `legend` `help?` | `.field-group` | B9 [#5](https://github.com/the-greenman/srs-web/issues/5) |
 | `SaveBar` | `dirtyCount` + action children | `.save-bar` | B9 [#5](https://github.com/the-greenman/srs-web/issues/5) |
 | `Tag` | `status` `onDark?` | `.tag` | B11 [#7](https://github.com/the-greenman/srs-web/issues/7) |
 | `Button` | `variant` `onDark?` `active?` | `.btn` | B1 [#2](https://github.com/the-greenman/srs-web/issues/2), B10 [#6](https://github.com/the-greenman/srs-web/issues/6) |
