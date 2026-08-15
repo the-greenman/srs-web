@@ -28,6 +28,22 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Advisory only — never fails the run. The srs-rust pin in scripts/ensure-bindings.mjs is
+      # correct by design but goes stale silently, and a stale pin renders a migrated corpus as
+      # empty instead of failing. Pins lag deliberately during a cutover, so this is a visible
+      # warning rather than a gate. See the-greenman/srs#392 row 3.
+      #
+      # `!cancelled()`, so a lint failure does not also swallow the pin signal — otherwise a PR
+      # with one lint error and a six-build-stale pin costs two round trips to learn both.
+      # GITHUB_TOKEN, because unauthenticated api.github.com is rate-limited per source IP and
+      # runners share egress IPs: without it the check silently reports "unchecked" instead of
+      # reporting a stale pin.
+      - name: Check srs-rust pin freshness
+        if: ${{ !cancelled() }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/check-pin-freshness.mjs
+
   e2e:
     name: E2E (Playwright)
     runs-on: ubuntu-latest
