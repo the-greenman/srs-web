@@ -90,7 +90,14 @@ async function main() {
 	// moments — would otherwise be reported as "behind" on the very PR that fixed the staleness.
 	const pinnedBuild = BUILD_NUMBER.exec(pinned)?.[1];
 	const latestBuild = BUILD_NUMBER.exec(latest)?.[1];
-	if (pinnedBuild && latestBuild && Number(pinnedBuild) > Number(latestBuild)) {
+	// The build counter only orders tags WITHIN one version. Compared across versions it reads
+	// `v0.1.0-build.285` as ahead of `v0.2.0-build.3` (285 > 3) and calls a pin that is a whole minor
+	// version stale "not stale" — and AHEAD is the one branch that stays silent, so that would fail
+	// open. AHEAD therefore requires equal version prefixes; every other case falls through to the
+	// warning below, which is the safe direction.
+	const versionOf = (tag) => tag.replace(BUILD_NUMBER, "");
+	const sameVersion = versionOf(pinned) === versionOf(latest);
+	if (sameVersion && pinnedBuild && latestBuild && Number(pinnedBuild) > Number(latestBuild)) {
 		console.log(
 			`srs-bindings pin ${pinned} is AHEAD of the latest published release ${latest} — ` +
 				`expected briefly after a bump, or if that build was cut as a prerelease. Not stale.`,
@@ -99,7 +106,9 @@ async function main() {
 	}
 
 	const behindBy =
-		pinnedBuild && latestBuild ? ` (${Number(latestBuild) - Number(pinnedBuild)} builds behind)` : "";
+		sameVersion && pinnedBuild && latestBuild
+			? ` (${Number(latestBuild) - Number(pinnedBuild)} builds behind)`
+			: "";
 	warn(
 		`srs-bindings pin is behind: pinned ${pinned}, latest srs-rust release ${latest}${behindBy}. ` +
 			`A stale pin renders an up-to-date corpus as empty rather than failing — bump it deliberately ` +

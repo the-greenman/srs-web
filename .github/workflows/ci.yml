@@ -38,8 +38,15 @@ jobs:
       # GITHUB_TOKEN, because unauthenticated api.github.com is rate-limited per source IP and
       # runners share egress IPs: without it the check silently reports "unchecked" instead of
       # reporting a stale pin.
+      #
+      # `continue-on-error`, because this advisory step lives inside a GATING job. The script cannot
+      # exit non-zero, but the step can — if the script itself is renamed, deleted, or picks up a
+      # syntax error, `node scripts/check-pin-freshness.mjs` exits 1 and turns an otherwise-green PR
+      # red on a check documented as never failing. (muDemocracy.org's copy is a standalone job, so
+      # it does not need this; the asymmetry is the reason it is here.)
       - name: Check srs-rust pin freshness
         if: ${{ !cancelled() }}
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/check-pin-freshness.mjs
