@@ -115,10 +115,13 @@ export interface SrsRepositoryConstructor {
   load_tree(files: Record<string, Uint8Array>): SrsRepository;
 }
 
-/** Subset of the validation report returned by `SrsRepository.validate()`. */
+/**
+ * Subset of the validation report returned by `SrsRepository.validate()`.
+ * Matches the WASM binding's actual shape exactly (srs_bindings.d.ts) — there
+ * is no flat `instanceCount`/`errorCount`; the instance count is
+ * `summary.checked` and the error count is `summary.errors`.
+ */
 export interface RepositoryValidationReport {
-  instanceCount: number;
-  errorCount: number;
   diagnostics: Diagnostic[];
   summary: { checked: number; errors: number; warnings: number };
 }

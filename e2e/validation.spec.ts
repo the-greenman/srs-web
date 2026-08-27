@@ -46,9 +46,16 @@ test.describe("Validation inspector", () => {
 
   test("shows record count in inspector", async ({ page }) => {
     // Empty repo — inspector Repository aside shows "0" (String(instanceCount))
-    // and the inspector kv rows show the "Records" label
-    await expect(
-      page.locator(".inspector__section").filter({ hasText: "Repository" })
-    ).toContainText("Records");
+    // and the inspector kv rows show the "Records" label.
+    //
+    // Scoped by .inspector__title (the section's own heading), not a
+    // whole-section hasText match: a broad match on ".inspector__section"
+    // also picks up the Validation section once its diagnostics contain the
+    // word "repository" (e.g. the dataModelRevision compatibility warning),
+    // which produced a strict-mode violation under build.297.
+    const repositorySection = page
+      .locator(".inspector__section")
+      .filter({ has: page.locator(".inspector__title", { hasText: "Repository" }) });
+    await expect(repositorySection).toContainText("Records");
   });
 });
