@@ -59,8 +59,6 @@ function makeBaseRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
   return mockRepo({
     list_blueprints: () => ({ summaries: [] }),
     validate: () => ({
-      instanceCount: 0,
-      errorCount: 0,
       diagnostics: [],
       summary: { checked: 0, errors: 0, warnings: 0 },
     }),
@@ -79,8 +77,6 @@ describe("GuidesShell — size warning banner", () => {
   it("shows the warning banner when validate returns warnings and no errors", async () => {
     const repo = makeBaseRepo({
       validate: () => ({
-        instanceCount: 5,
-        errorCount: 0,
         diagnostics: [],
         summary: { checked: 5, errors: 0, warnings: 1 },
       }),
@@ -96,8 +92,6 @@ describe("GuidesShell — size warning banner", () => {
   it("suppresses the warning banner when errors are present (safety interlock)", async () => {
     const repo = makeBaseRepo({
       validate: () => ({
-        instanceCount: 5,
-        errorCount: 1,
         diagnostics: [],
         summary: { checked: 5, errors: 1, warnings: 2 },
       }),
@@ -110,8 +104,6 @@ describe("GuidesShell — size warning banner", () => {
   it("shows no banner when there are no warnings", async () => {
     const repo = makeBaseRepo({
       validate: () => ({
-        instanceCount: 0,
-        errorCount: 0,
         diagnostics: [],
         summary: { checked: 0, errors: 0, warnings: 0 },
       }),
@@ -124,8 +116,6 @@ describe("GuidesShell — size warning banner", () => {
   it("shows plural form for multiple warnings", async () => {
     const repo = makeBaseRepo({
       validate: () => ({
-        instanceCount: 5,
-        errorCount: 0,
         diagnostics: [],
         summary: { checked: 5, errors: 0, warnings: 3 },
       }),

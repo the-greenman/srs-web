@@ -54,7 +54,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
 
 function makeBaseRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
   return mockRepo({
-    validate: () => ({ instanceCount: 0, errorCount: 0, diagnostics: [], summary: { checked: 0, errors: 0, warnings: 0 } }),
+    validate: () => ({ diagnostics: [], summary: { checked: 0, errors: 0, warnings: 0 } }),
     repository_navigation: () => ({
       rootContainerId: "c-root",
       identity: {
@@ -107,8 +107,6 @@ describe("GovernanceShell — size warning banner", () => {
   it("shows the warning banner when validate returns warning diagnostics and no errors", async () => {
     const repo = makeBaseRepo({
       validate: () => ({
-        instanceCount: 1,
-        errorCount: 0,
         diagnostics: [{ severity: "warning", message: "Attachment exceeds recommended size" }],
         summary: { checked: 1, errors: 0, warnings: 1 },
       }),
@@ -126,8 +124,6 @@ describe("GovernanceShell — size warning banner", () => {
   it("suppresses the warning banner when there are errors (errors take priority)", async () => {
     const repo = makeBaseRepo({
       validate: () => ({
-        instanceCount: 1,
-        errorCount: 1,
         diagnostics: [
           { severity: "error", message: "Validation error" },
           { severity: "warning", message: "Size warning" },
@@ -145,8 +141,6 @@ describe("GovernanceShell — size warning banner", () => {
   it("shows plural form for multiple warnings", async () => {
     const repo = makeBaseRepo({
       validate: () => ({
-        instanceCount: 2,
-        errorCount: 0,
         diagnostics: [
           { severity: "warning", message: "Size warning 1" },
           { severity: "warning", message: "Size warning 2" },
@@ -161,6 +155,31 @@ describe("GovernanceShell — size warning banner", () => {
     const banner = container.querySelector(".size-warning-banner");
     expect(banner).not.toBeNull();
     expect(banner!.textContent).toContain("2 size warnings");
+  });
+});
+
+describe("GovernanceShell — Repository inspector count", () => {
+  // Regression: `report.instanceCount` isn't a field the WASM binding returns
+  // (only `diagnostics` and `summary: { checked, errors, warnings }`) —
+  // reading the non-existent flat field rendered "undefined" in the
+  // Repository panel instead of the real count (caught against srs-rust
+  // build.297's bindings, srs-web#pin-297).
+  it("shows summary.checked as the record count, not 'undefined'", async () => {
+    const repo = makeBaseRepo({
+      validate: () => ({
+        diagnostics: [],
+        summary: { checked: 3, errors: 0, warnings: 0 },
+      }),
+    });
+    const { container } = render(GovernanceShell, {
+      props: { repo, repoName: "test", documentProvider: "local", onExport: vi.fn(), onOpenAnother: vi.fn() },
+    });
+    await screen.findByRole("button", { name: /Open another file/i });
+    const sections = Array.from(container.querySelectorAll(".inspector__section"));
+    const repositorySection = sections.find((s) => s.querySelector(".inspector__title")?.textContent?.includes("Repository"));
+    expect(repositorySection).toBeDefined();
+    expect(repositorySection!.textContent).toContain("3");
+    expect(repositorySection!.textContent).not.toContain("undefined");
   });
 });
 

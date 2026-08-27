@@ -479,7 +479,12 @@
 
   function refreshValidation(): void {
     const report = repo.validate();
-    instanceCount = report.instanceCount;
+    // `report.instanceCount` is not a field the WASM binding returns (see
+    // srs_bindings.d.ts: only `diagnostics` and `summary: { checked, errors,
+    // warnings }`) — `summary.checked` is the instance count. Reading the
+    // non-existent flat field silently produced "undefined" in the Repository
+    // inspector panel (caught against srs-rust build.297's bindings).
+    instanceCount = report.summary.checked;
     diagnostics = report.diagnostics.map(mapDiagnostic);
   }
 

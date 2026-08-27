@@ -7,10 +7,22 @@ import { expect, test } from "@playwright/test";
  *
  * After loading the fixture, verifies that clicking each nav item changes the
  * active section heading shown in the main content area.
+ *
+ * Uses gallery.srsj, not sample.srsj: sample.srsj is deliberately left
+ * without manifest.container.identityInstanceId set (migrations.spec.ts's
+ * fixture, exercising the "needs migration" state) — as of srs-rust
+ * build.297, repository_navigation() surfaces that as a diagnostic, and
+ * GovernanceShell's loadContainerNav() falls back to the legacy
+ * listContainers() path whenever any diagnostic is present, whose first
+ * entry is the repo's own identity-shaped record rather than "Articles".
+ * That's a real, RFC-029-permitted "no identity node" state for an
+ * unmigrated document (not a content-loss bug) — this spec just doesn't
+ * need to exercise it, so it uses the already-migrated gallery fixture
+ * instead, like gallery.spec.ts / decision-link.spec.ts already do.
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const FIXTURE_PATH = path.join(__dirname, "fixtures", "sample.srsj");
+const FIXTURE_PATH = path.join(__dirname, "fixtures", "gallery.srsj");
 
 test.describe("Navigation", () => {
   test.beforeEach(async ({ page }) => {

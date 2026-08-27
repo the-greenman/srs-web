@@ -195,14 +195,11 @@ test.describe("Record edit forms (B9)", () => {
   // Pre-existing gallery articles are part of sequence relations and cannot be
   // deleted. Instead, create a fresh article (no relations), then delete it.
   // --------------------------------------------------------------------------
-  // BLOCKED by the-greenman/srs-rust#834: `delete_record`'s scoped cascade covers
-  // incident relations but not container membership, so deleting a record that is a
-  // container member leaves a dangling memberInstanceIds reference — [R13], fatal
-  // under [R24] — and the delete throws instead of applying. Marked `fail` rather
-  // than skipped so this goes red the moment the core fix lands and the annotation
-  // must be removed.
+  // the-greenman/srs-rust#834 (delete_record's scoped cascade not covering
+  // container membership, [R13]/[R24]) is fixed as of srs-rust build.297 —
+  // this test went from an annotated `test.fail()` to a genuine, unannotated
+  // pass; the annotation is removed per its own "must be removed" note.
   test("Delete a newly-created record — record count decreases by 1", async ({ page }) => {
-    test.fail();
     // Count articles before creating
     const initialCount = await page.locator(".record-list__item").count();
 
