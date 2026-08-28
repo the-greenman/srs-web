@@ -64,18 +64,18 @@ No type changes — `RepositoryValidationReport`'s shape is unchanged.
 
 #### Tasks
 
-- [ ] In `GovernanceShell.svelte`, replace the `errorCount`/`warnCount` `$derived` declarations with `$state<number>(0)` declarations, initialized near `instanceCount`/`attachmentCount` (line 152–154).
-- [ ] In `refreshValidation()`, after `instanceCount = report.summary.checked;`, add `errorCount = report.summary.errors;` and `warnCount = report.summary.warnings;`.
-- [ ] Remove the now-unused severity-filter derivation and its two doc comments (lines 288–292).
-- [ ] Add the reciprocal one-line comment to `e2e/migrations.spec.ts` explaining why `sample.srsj` must stay unmigrated.
-- [ ] Update/adjust any unit test in `GovernanceShell.test.ts` that mocked `diagnostics` expecting `errorCount`/`warnCount` to be derived from it — mocks should instead set `report.summary.errors`/`.warnings` directly (mirroring `GuidesShell.test.ts`'s existing mock shape), so the test continues to exercise the real code path.
+- [x] In `GovernanceShell.svelte`, replace the `errorCount`/`warnCount` `$derived` declarations with `$state<number>(0)` declarations, initialized near `instanceCount`/`attachmentCount` (line 152–154).
+- [x] In `refreshValidation()`, after `instanceCount = report.summary.checked;`, add `errorCount = report.summary.errors;` and `warnCount = report.summary.warnings;`.
+- [x] Remove the now-unused severity-filter derivation and its two doc comments (lines 288–292).
+- [x] Add the reciprocal one-line comment to `e2e/migrations.spec.ts` explaining why `sample.srsj` must stay unmigrated.
+- [x] Update/adjust any unit test in `GovernanceShell.test.ts` that mocked `diagnostics` expecting `errorCount`/`warnCount` to be derived from it — confirmed (per Architecture Reviewer, verified by running `npm test`) every existing mock already sets `summary.errors`/`.warnings` consistently with `diagnostics`; zero changes needed.
 
 #### Acceptance Criteria
 
-- [ ] `errorCount`/`warnCount` are populated from `report.summary.errors`/`report.summary.warnings`, not from filtering `diagnostics[]`.
-- [ ] `validationAside` and the size-warning banner display unchanged (same values, same conditions).
-- [ ] `GovernanceShell.test.ts` passes and its mocks reflect the new read path.
-- [ ] No regression in `GuidesShell.svelte` (untouched).
+- [x] `errorCount`/`warnCount` are populated from `report.summary.errors`/`report.summary.warnings`, not from filtering `diagnostics[]`.
+- [x] `validationAside` and the size-warning banner display unchanged (same values, same conditions).
+- [x] `GovernanceShell.test.ts` passes and its mocks reflect the new read path.
+- [x] No regression in `GuidesShell.svelte` (untouched).
 
 #### Testing
 

@@ -150,6 +150,8 @@
   /** Validation diagnostics mapped to types.ts shape. */
   let diagnostics = $state<Diagnostic[]>([]);
   let instanceCount = $state<number>(0);
+  let errorCount = $state<number>(0);
+  let warnCount = $state<number>(0);
   let attachmentCount = $state<number>(0);
   let linkedAttachmentCount = $state<number>(0);
 
@@ -284,12 +286,6 @@
   let activeSectionSchema = $derived(
     activeContainerId !== null ? (containerSchemas[activeContainerId] ?? null) : null,
   );
-
-  /** Count of validation errors. */
-  let errorCount = $derived(diagnostics.filter((d) => d.severity === "error").length);
-
-  /** Count of size warnings — derived from diagnostics[], consistent with errorCount. */
-  let warnCount = $derived(diagnostics.filter((d) => d.severity === "warn").length);
 
   /** Inspector aside: "clean" or error count. */
   let validationAside = $derived(
@@ -485,6 +481,8 @@
     // non-existent flat field silently produced "undefined" in the Repository
     // inspector panel (caught against srs-rust build.297's bindings).
     instanceCount = report.summary.checked;
+    errorCount = report.summary.errors;
+    warnCount = report.summary.warnings;
     diagnostics = report.diagnostics.map(mapDiagnostic);
   }
 
