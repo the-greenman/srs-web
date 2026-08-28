@@ -9,6 +9,11 @@ import { expect, test } from "@playwright/test";
  * in `status: needed` state. Verifies the Repository → Migrations panel,
  * the apply flow, and that governance nav is unaffected after apply.
  *
+ * sample.srsj is deliberately left without manifest.container.identityInstanceId
+ * set so `migrate-identity` has something to report as "needed" — do not
+ * "fix" the fixture by migrating it. See navigation.spec.ts's comment for
+ * why other specs use gallery.srsj instead of this one.
+ *
  * ADR-014: Migrations surface via "Repository" NavGroup in GovernanceShell.
  */
 
