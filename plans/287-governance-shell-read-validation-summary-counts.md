@@ -91,7 +91,7 @@ Specific tests to verify: any `GovernanceShell.test.ts` case that asserts the in
 #### Milestone gate
 
 1. Verify all acceptance criteria above.
-2. Run `npm run typecheck` and `npm run build` — both must pass.
+2. Run all four Testing commands — `npm run typecheck`, `npm run lint`, `npm run build`, `npm test` — all must pass.
 3. Update this plan file: mark completed task checkboxes `[x]`.
 4. Commit with a message referencing the issue (`... (#287)`).
 
