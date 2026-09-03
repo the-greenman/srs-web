@@ -2,7 +2,7 @@
   "$schema": "https://srs.semanticops.com/schema/2.0/composition.json",
   "createdAt": "2026-07-06T00:00:00Z",
   "description": "Renders the complete governance corpus — articles of association, roles, and decision log — as a single whole-document export.",
-  "format": "markdown",
+  "version": 1,
   "id": "732a982b-3765-4f22-90e0-e456463bac54",
   "name": "governance-document",
   "namespace": "governance",
@@ -45,5 +45,7 @@
       "titleFieldId": "d7e82557-9045-5e92-a494-d99112bbec4a"
     }
   ],
-  "version": 1
+  "exportConfig": {
+    "format": "markdown"
+  }
 }

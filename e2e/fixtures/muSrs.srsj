@@ -12,7 +12,7 @@
       "title": "muDemocracy"
     },
     "createdAt": "2026-06-04T00:00:00Z",
-    "dataModelRevision": 6,
+    "dataModelRevision": 7,
     "declaredExtensions": [
       "ext:type-inheritance"
     ],
@@ -163,11 +163,13 @@
       "containerType": "guide",
       "createdAt": "2026-06-04T00:00:00Z",
       "description": "Renders a full guide in precedes order using ContainerSubset. Use --container to select the guide.",
-      "format": "markdown",
+      "exportConfig": {
+        "format": "markdown",
+        "preamble": "{{heading-1-open}}{{container-title}}{{heading-1-close}}"
+      },
       "id": "2aba4d85-317b-44e1-a600-d38a743b4cb4",
       "name": "guide-body-view",
       "namespace": "com.mudemocracy",
-      "preamble": "{{heading-1-open}}{{container-title}}{{heading-1-close}}",
       "rootTypeRefs": [
         {
           "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
