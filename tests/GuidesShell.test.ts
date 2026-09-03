@@ -21,7 +21,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     set_lifecycle_state: () => { throw new Error("not mocked"); },
     transition_record: () => { throw new Error("not mocked"); },
     blueprint_schema: () => { throw new Error("not mocked"); },
-    render_document_view: () => { throw new Error("not mocked"); },
+    render_composition: () => { throw new Error("not mocked"); },
     list_containers: () => { throw new Error("not mocked"); },
     get_container: () => { throw new Error("not mocked"); },
     add_container_member: () => { throw new Error("not mocked"); },
@@ -30,8 +30,8 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     type_schema: () => { throw new Error("not mocked"); },
     list_types: () => { throw new Error("not mocked"); },
     list_blueprints: () => { throw new Error("not mocked"); },
-    document_views_for_container: () => { throw new Error("not mocked"); },
-    list_document_views: () => { throw new Error("not mocked"); },
+    compositions_for_container: () => { throw new Error("not mocked"); },
+    list_compositions: () => { throw new Error("not mocked"); },
     find: () => { throw new Error("not mocked"); },
     list_terms: () => { throw new Error("not mocked"); },
     create_record_successor: () => { throw new Error("not mocked"); },
@@ -155,7 +155,7 @@ describe("GuidesShell — blueprint schema with non-fatal diagnostics", () => {
       list_types: () => [
         { id: GUIDE_TYPE_ID, namespace: "com.mudemocracy", name: "guide", version: 1 },
       ],
-      list_document_views: () => [],
+      list_compositions: () => [],
       list_records: () => [
         {
           instanceId: "guide-1",
