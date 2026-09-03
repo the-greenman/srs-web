@@ -65,8 +65,8 @@ test.describe("Blueprint↔view discovery (srs-web#43)", () => {
     }
     const projection = JSON.parse(Buffer.concat(chunks).toString("utf8"));
 
-    // The exported projection's documentViewId must match the fixture view,
+    // The exported projection's compositionId must match the fixture view,
     // confirming the view was discovered by name (not a hardcoded literal in the app).
-    expect(projection.documentViewId).toBe(FIXTURE_GUIDE_VIEW_ID);
+    expect(projection.compositionId).toBe(FIXTURE_GUIDE_VIEW_ID);
   });
 });

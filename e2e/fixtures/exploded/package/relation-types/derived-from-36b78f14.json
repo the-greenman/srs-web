@@ -1,11 +1,11 @@
 {
   "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
-  "category": "derivation",
-  "createdAt": "2026-05-31T00:00:00Z",
-  "description": "Target was derived or adapted from source.",
   "id": "36b78f14-c6dc-46c4-845d-ed107528a88c",
+  "version": 1,
   "key": "derived-from",
-  "label": "Derived From",
   "namespace": "governance",
-  "version": 1
+  "label": "Derived From",
+  "description": "Target was derived or adapted from source.",
+  "category": "derivation",
+  "createdAt": "2026-05-31T00:00:00Z"
 }

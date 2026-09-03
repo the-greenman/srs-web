@@ -49,7 +49,11 @@ export interface SrsRepository {
   get_allowed_lifecycle_transitions(instance_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in blueprintSchema()
   blueprint_schema(blueprint_id: string): any;
-  render_document_view(
+  // RFC-041/rfc-decision-92d2da05: DocumentView renamed to Composition on the
+  // WASM surface (srs-rust#910). Presentation-layer rename only — the app's
+  // own DocumentView/documentViewsForContainer naming is unaffected, only the
+  // underlying binding call changes.
+  render_composition(
     view_id: string,
     format: string,
     container_id?: string | null,
@@ -73,9 +77,9 @@ export interface SrsRepository {
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listBlueprints()
   list_blueprints(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in documentViewsForContainer()
-  document_views_for_container(container_id: string): any;
+  compositions_for_container(container_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listDocumentViews()
-  list_document_views(filter_json: string): any;
+  list_compositions(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in createRecordSuccessor()
   create_record_successor(predecessor_id: string, input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; null for missing/unknown field (srs-web#179)
@@ -871,7 +875,11 @@ export interface ProjectedSection {
  */
 export interface DocumentViewProjection {
   $schema: string;
-  documentViewId: string;
+  // RFC-041/rfc-decision-92d2da05: the WASM projection's own key is
+  // `compositionId`, not `documentViewId` (srs-rust#910) — nothing in this
+  // app reads this field today, but the type must match what render_composition
+  // actually returns.
+  compositionId: string;
   containerId: string | null;
   generatedAt: string;
   containerTitle: string;
@@ -901,7 +909,7 @@ export function renderDocumentView(
   containerId?: string | null,
   instanceIdFilter?: string | null
 ): DocumentViewResult {
-  return repo.render_document_view(
+  return repo.render_composition(
     viewId,
     format,
     containerId,
@@ -1147,7 +1155,7 @@ export function documentViewsForContainer(
   repo: SrsRepository,
   containerId: string
 ): DocumentView[] {
-  return repo.document_views_for_container(containerId) as DocumentView[];
+  return repo.compositions_for_container(containerId) as DocumentView[];
 }
 
 // --- listDocumentViews -------------------------------------------------------
@@ -1189,7 +1197,7 @@ export function listDocumentViews(
   repo: SrsRepository,
   filter: DocumentViewListFilter = {}
 ): DocumentViewSummary[] {
-  return repo.list_document_views(JSON.stringify(filter)) as DocumentViewSummary[];
+  return repo.list_compositions(JSON.stringify(filter)) as DocumentViewSummary[];
 }
 
 // ---------------------------------------------------------------------------
@@ -1262,7 +1270,11 @@ export function resolveContainerView(
   const raw: any = repo.resolve_container_view(containerId, viewId ?? null);
   return {
     containerId: raw.containerId ?? raw.container_id,
-    documentViewId: raw.documentViewId ?? raw.document_view_id,
+    // RFC-041/rfc-decision-92d2da05 (srs-rust#910): resolve_container_view's
+    // wire key may have moved to compositionId along with render_composition's;
+    // tolerate either shape rather than assume.
+    documentViewId:
+      raw.documentViewId ?? raw.document_view_id ?? raw.compositionId ?? raw.composition_id,
     root: raw.root ? normalizeMember(raw.root) : undefined,
     members: (raw.members ?? []).map(normalizeMember),
     columns: (raw.columns ?? []).map(normalizeColumnSpec),

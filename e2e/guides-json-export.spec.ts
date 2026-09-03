@@ -52,8 +52,9 @@ test.describe("Guide JSON-view export (C10)", () => {
 
     const projection = JSON.parse(await readDownload(download));
 
-    // Projection envelope from the guide-body document view.
-    expect(projection.documentViewId).toBe(FIXTURE_GUIDE_VIEW_ID);
+    // Projection envelope from the guide-body composition (RFC-041/
+    // rfc-decision-92d2da05: documentViewId -> compositionId, srs-rust#910).
+    expect(projection.compositionId).toBe(FIXTURE_GUIDE_VIEW_ID);
     expect(typeof projection.containerTitle).toBe("string");
     expect(projection.containerTitle.length).toBeGreaterThan(0);
     expect(Array.isArray(projection.sections)).toBe(true);

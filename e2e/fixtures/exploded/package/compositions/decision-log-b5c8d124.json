@@ -1,5 +1,5 @@
 {
-  "$schema": "https://srs.semanticops.com/schema/2.0/document-view.json",
+  "$schema": "https://srs.semanticops.com/schema/2.0/composition.json",
   "createdAt": "2026-05-31T00:00:00Z",
   "description": "Decision log view — compact summary showing only decision statement, alternatives considered, rationale, and revisit trigger.",
   "format": "markdown",
@@ -28,8 +28,8 @@
           "closed",
           "abandoned"
         ],
-        "semanticObjectType": "governance/decision",
-        "type": "type-query"
+        "type": "type-query",
+        "typeKey": "governance/decision"
       },
       "title": "Decision Log",
       "titleFieldId": "d7e82557-9045-5e92-a494-d99112bbec4a"

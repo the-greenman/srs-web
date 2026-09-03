@@ -1,5 +1,5 @@
 {
-  "$schema": "https://srs.semanticops.com/schema/2.0/document-view.json",
+  "$schema": "https://srs.semanticops.com/schema/2.0/composition.json",
   "createdAt": "2026-05-31T00:00:00Z",
   "description": "Full deliberation view — shows all fields including question, context, friction, alternatives, requirements, statement, rationale, next steps, owner, revisit, and status.",
   "format": "markdown",

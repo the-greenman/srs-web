@@ -96,7 +96,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     blueprint_schema: () => {
       throw new Error("not mocked");
     },
-    render_document_view: () => {
+    render_composition: () => {
       throw new Error("not mocked");
     },
     list_containers: () => {
@@ -123,10 +123,10 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     list_blueprints: () => {
       throw new Error("not mocked");
     },
-    document_views_for_container: () => {
+    compositions_for_container: () => {
       throw new Error("not mocked");
     },
-    list_document_views: () => {
+    list_compositions: () => {
       throw new Error("not mocked");
     },
     find: () => {
@@ -327,7 +327,7 @@ describe("listBlueprints", () => {
 // ---------------------------------------------------------------------------
 
 describe("documentViewsForContainer", () => {
-  it("calls document_views_for_container with the container id and returns full views", () => {
+  it("calls compositions_for_container with the container id and returns full views", () => {
     const views = [
       {
         id: "view-001",
@@ -348,7 +348,7 @@ describe("documentViewsForContainer", () => {
       },
     ];
     const spy = vi.fn().mockReturnValue(views);
-    const repo = mockRepo({ document_views_for_container: spy });
+    const repo = mockRepo({ compositions_for_container: spy });
 
     const result = documentViewsForContainer(repo, "cont-001");
 
@@ -361,7 +361,7 @@ describe("documentViewsForContainer", () => {
   });
 
   it("returns an empty array when no views match the container root type", () => {
-    const repo = mockRepo({ document_views_for_container: () => [] });
+    const repo = mockRepo({ compositions_for_container: () => [] });
 
     const result = documentViewsForContainer(repo, "unbound-container");
 
@@ -374,7 +374,7 @@ describe("documentViewsForContainer", () => {
 // ---------------------------------------------------------------------------
 
 describe("listDocumentViews", () => {
-  it("calls list_document_views with an empty filter and returns summaries", () => {
+  it("calls list_compositions with an empty filter and returns summaries", () => {
     const summaries = [
       {
         id: "dv-001",
@@ -386,7 +386,7 @@ describe("listDocumentViews", () => {
       },
     ];
     const spy = vi.fn().mockReturnValue(summaries);
-    const repo = mockRepo({ list_document_views: spy });
+    const repo = mockRepo({ list_compositions: spy });
 
     const result = listDocumentViews(repo);
 
@@ -398,7 +398,7 @@ describe("listDocumentViews", () => {
   });
 
   it("returns an empty array when no document views are registered", () => {
-    const repo = mockRepo({ list_document_views: () => [] });
+    const repo = mockRepo({ list_compositions: () => [] });
 
     const result = listDocumentViews(repo);
 
@@ -407,7 +407,7 @@ describe("listDocumentViews", () => {
 
   it("exposes rootTypeRefs when present on a view", () => {
     const repo = mockRepo({
-      list_document_views: () => [
+      list_compositions: () => [
         {
           id: "dv-002",
           namespace: "com.test",
@@ -429,7 +429,7 @@ describe("listDocumentViews", () => {
 
   it("propagates WASM throw when the binding fails", () => {
     const repo = mockRepo({
-      list_document_views: () => {
+      list_compositions: () => {
         throw new Error("wasm error");
       },
     });
@@ -438,7 +438,7 @@ describe("listDocumentViews", () => {
 
   it("passes a filter when provided", () => {
     const spy = vi.fn().mockReturnValue([]);
-    const repo = mockRepo({ list_document_views: spy });
+    const repo = mockRepo({ list_compositions: spy });
     const filter: DocumentViewListFilter = { namespace: "com.test" };
 
     listDocumentViews(repo, filter);

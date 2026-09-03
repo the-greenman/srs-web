@@ -6,12 +6,7 @@
   "createdAt": "2026-01-01T00:00:00Z",
   "dataModelRevision": 2,
   "description": "",
-  "documentViews": [
-    "document-views/articles-and-roles-78b11038.json",
-    "document-views/decision-deliberation-5a3ce87e.json",
-    "document-views/decision-log-b5c8d124.json",
-    "document-views/governance-document-732a982b.json"
-  ],
+  "vocabularies": [],
   "fields": [
     "fields/alternativesconsidered-636ce948.json",
     "fields/amendmentrule-1f01bc6b.json",
@@ -63,5 +58,10 @@
   "views": [
     "views/decision-log-faebd240.json"
   ],
-  "vocabularies": []
+  "compositions": [
+    "compositions/articles-and-roles-78b11038.json",
+    "compositions/decision-deliberation-5a3ce87e.json",
+    "compositions/decision-log-b5c8d124.json",
+    "compositions/governance-document-732a982b.json"
+  ]
 }
