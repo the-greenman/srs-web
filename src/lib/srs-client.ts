@@ -1273,7 +1273,8 @@ export function resolveContainerView(
     // RFC-041/rfc-decision-92d2da05 (srs-rust#910): resolve_container_view's
     // wire key may have moved to compositionId along with render_composition's;
     // tolerate either shape rather than assume.
-    documentViewId: raw.documentViewId ?? raw.document_view_id ?? raw.compositionId ?? raw.composition_id,
+    documentViewId:
+      raw.documentViewId ?? raw.document_view_id ?? raw.compositionId ?? raw.composition_id,
     root: raw.root ? normalizeMember(raw.root) : undefined,
     members: (raw.members ?? []).map(normalizeMember),
     columns: (raw.columns ?? []).map(normalizeColumnSpec),
