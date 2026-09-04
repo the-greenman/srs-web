@@ -1270,11 +1270,10 @@ export function resolveContainerView(
   const raw: any = repo.resolve_container_view(containerId, viewId ?? null);
   return {
     containerId: raw.containerId ?? raw.container_id,
-    // RFC-041/rfc-decision-92d2da05 (srs-rust#910): resolve_container_view's
-    // wire key may have moved to compositionId along with render_composition's;
-    // tolerate either shape rather than assume.
-    documentViewId:
-      raw.documentViewId ?? raw.document_view_id ?? raw.compositionId ?? raw.composition_id,
+    // Wire key is `compositionId` (ContainerView.composition_id, srs-rust
+    // crates/srs-repository/src/container_view_service.rs, serde camelCase) —
+    // confirmed at the source; resolve_container_view never emitted documentViewId.
+    documentViewId: raw.compositionId ?? raw.composition_id,
     root: raw.root ? normalizeMember(raw.root) : undefined,
     members: (raw.members ?? []).map(normalizeMember),
     columns: (raw.columns ?? []).map(normalizeColumnSpec),

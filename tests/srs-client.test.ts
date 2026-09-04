@@ -972,7 +972,7 @@ describe("resolveContainerView", () => {
   it("normalises camelCase ContainerView fields", () => {
     const rawView = {
       containerId: "c1",
-      documentViewId: "dv-001",
+      compositionId: "dv-001",
       root: rawMemberCamel,
       members: [rawMemberCamel],
       columns: [rawColumnCamel],
@@ -992,7 +992,7 @@ describe("resolveContainerView", () => {
   it("normalises snake_case ContainerView fields", () => {
     const rawView = {
       container_id: "c2",
-      document_view_id: "dv-002",
+      composition_id: "dv-002",
       members: [],
       columns: [],
       exclude_lifecycle_states: ["draft"],
