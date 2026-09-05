@@ -17,7 +17,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DEFAULT_URL =
-	"https://github.com/the-greenman/srs-rust/releases/download/v0.1.0-build.320/srs-bindings-web.tar.gz";
+	"https://github.com/the-greenman/srs-rust/releases/download/v0.1.0-build.330/srs-bindings-web.tar.gz";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const bindingsDir = join(root, "src", "lib", "srs_bindings");
