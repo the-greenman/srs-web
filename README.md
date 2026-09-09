@@ -312,3 +312,9 @@ Local browser files remain download-only (`Open` + `Download`).
 
 - [`docs/adr/`](docs/adr/) — 13 architecture decision records (001 thin client, 002 editor modes, 011 OAuth proxy, 012 lifecycle-via-WASM, …).
 - [`CLAUDE.md`](CLAUDE.md) — contributor guidance.
+
+## Licence
+
+The SRS web editor is released under the [Apache License 2.0](LICENSE).
+
+Contributions to this repository are made under the terms of the [Developer Certificate of Origin](CONTRIBUTING.md#developer-certificate-of-origin). By submitting a pull request, you certify that you have the right to submit that work under the Apache License 2.0 by signing off your commits with `git commit -s`.
