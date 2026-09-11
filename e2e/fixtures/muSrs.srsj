@@ -186,7 +186,15 @@
             "containerId": "00000000-0000-0000-0000-000000000000",
             "type": "container-subset"
           },
-          "titleFieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a"
+          "titleFieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
+          "relationsPresentation": {
+            "include": [
+              {
+                "relationType": "precedes",
+                "directions": "both"
+              }
+            ]
+          }
         }
       ],
       "themeRef": {
@@ -1347,6 +1355,11 @@
         {
           "fieldId": "1a96b71f-b5af-4064-8a91-8487dfeca0b6",
           "order": 12,
+          "visible": true
+        },
+        {
+          "property": "createdAt",
+          "order": 13,
           "visible": true
         }
       ],
