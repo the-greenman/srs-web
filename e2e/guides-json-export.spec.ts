@@ -61,9 +61,7 @@ test.describe("Guide JSON-view export (C10)", () => {
     expect(projection.sections.length).toBeGreaterThan(0);
 
     // Records carry resolved field content + ordering metadata.
-    const records = projection.sections.flatMap(
-      (s: { records?: unknown[] }) => s.records ?? []
-    );
+    const records = projection.sections.flatMap((s: { records?: unknown[] }) => s.records ?? []);
     expect(records.length).toBeGreaterThan(0);
     for (const r of records) {
       expect(r).toHaveProperty("typeName");
@@ -82,6 +80,39 @@ test.describe("Guide JSON-view export (C10)", () => {
     expect(typeNames.has("guide")).toBe(true);
     const hasSection = [...typeNames].some((t) => String(t).startsWith("section."));
     expect(hasSection).toBe(true);
+
+    // srs-web#301 also fixed `relations`/`properties` on ProjectedRecord —
+    // assert their shape too, not just typeVersion, so a regression on
+    // either is actually caught. The fixture's guide-body-view section
+    // declares a `precedes` relationsPresentation and a `createdAt`
+    // RecordPropertyView row specifically so these are populated.
+    type RelationRow = {
+      relationType: string;
+      direction: string;
+      label: string;
+      targets: unknown[];
+    };
+    type PropertyRow = { property: string; label: string; value: string | string[] };
+    const recordsWithRelations = records.filter(
+      (r: { relations?: RelationRow[] }) => r.relations && r.relations.length > 0
+    );
+    expect(recordsWithRelations.length).toBeGreaterThan(0);
+    for (const relation of recordsWithRelations[0].relations as RelationRow[]) {
+      expect(relation).toHaveProperty("relationType");
+      expect(relation).toHaveProperty("direction");
+      expect(["forward", "inverse"]).toContain(relation.direction);
+      expect(Array.isArray(relation.targets)).toBe(true);
+    }
+
+    const recordsWithProperties = records.filter(
+      (r: { properties?: PropertyRow[] }) => r.properties && r.properties.length > 0
+    );
+    expect(recordsWithProperties.length).toBeGreaterThan(0);
+    for (const property of recordsWithProperties[0].properties as PropertyRow[]) {
+      expect(property).toHaveProperty("property");
+      expect(property).toHaveProperty("label");
+      expect(typeof property.value === "string" || Array.isArray(property.value)).toBe(true);
+    }
   });
 
   test("no export error is shown on a successful export", async ({ page }) => {
