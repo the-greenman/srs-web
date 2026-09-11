@@ -834,20 +834,38 @@ export interface ProjectedRelationTarget {
   displayLabel: string;
 }
 
-/** Mirrors `ProjectedRelationRow` in srs-rust `render_service.rs`. */
+/**
+ * Mirrors `ProjectedRelationRow` in srs-rust `render_service.rs`.
+ * `direction` reflects whether the record is the source (`forward`) or
+ * target (`inverse`) of the listed edges (RFC-027); a `directions: "both"`
+ * entry emits one row per direction, never a single collapsed row, so
+ * `relationType` alone does not uniquely key a record's relation rows.
+ */
 export interface ProjectedRelationRow {
+  relationType: string;
+  direction: "forward" | "inverse";
   label: string;
   targets: ProjectedRelationTarget[];
+}
+
+/** RFC-041 [R8] resolved `RecordPropertyView` row. Mirrors `ProjectedPropertyRow` in srs-rust `render_service.rs`. */
+export interface ProjectedPropertyRow {
+  property: "lifecycleState" | "tags" | "createdAt" | "updatedAt";
+  label: string;
+  value: string | string[];
 }
 
 /**
  * A projected record row in a `DocumentViewProjection` section.
  * Mirrors `ProjectedRecord` in srs-rust `render_service.rs`.
  * `relations` is present when the document view defines a `relationsPresentation`.
+ * `properties` is present when the section's render view declares at least
+ * one `RecordPropertyView` row with a surviving value (RFC-041 [R8]).
  */
 export interface ProjectedRecord {
   instanceId: string;
   typeId: string;
+  typeVersion: number;
   typeNamespace: string;
   typeName: string;
   recordHeading?: string;
@@ -855,6 +873,7 @@ export interface ProjectedRecord {
   fields: Record<string, unknown>;
   orderedFieldKeys: string[];
   relations?: ProjectedRelationRow[];
+  properties?: ProjectedPropertyRow[];
 }
 
 /**
