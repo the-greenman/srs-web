@@ -69,6 +69,12 @@ test.describe("Guide JSON-view export (C10)", () => {
       expect(r).toHaveProperty("typeName");
       expect(r).toHaveProperty("fields");
       expect(r).toHaveProperty("orderedFieldKeys");
+      // srs-web#301: typeVersion is required by the canonical
+      // document-view-output.json schema (RFC-032/RFC-039 PINNED binding)
+      // but the srs-client.ts ProjectedRecord mirror had gone stale and
+      // omitted it — assert it's really emitted, not just declared.
+      expect(r).toHaveProperty("typeVersion");
+      expect(typeof (r as { typeVersion: unknown }).typeVersion).toBe("number");
     }
 
     // The projection includes the guide root and at least one section type.
