@@ -25,7 +25,7 @@ function readTreeFixture(dir: string): Record<string, string> {
 }
 const EXPLODED_TREE = readTreeFixture(path.join(__dirname, "fixtures", "exploded"));
 
-type FakeMode = "success" | "cancel" | "auth-error" | "malformed" | "conflict";
+type FakeMode = "success" | "cancel" | "auth-error" | "malformed" | "conflict" | "pending";
 
 async function installFakeProviders(page: Page, mode: FakeMode = "success"): Promise<void> {
   await page.addInitScript(
@@ -95,6 +95,14 @@ async function installFakeProviders(page: Page, mode: FakeMode = "success"): Pro
         write: async () => {
           // A stale-write surfaces as a conflict rather than clobbering.
           if (fakeMode === "conflict") throw { code: "conflict", message: "changed upstream" };
+          if (fakeMode === "pending") {
+            // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+            (window as any).__PENDING_WRITE_STARTED__ = true;
+            return new Promise((resolve) => {
+              // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+              (window as any).__RESOLVE_PENDING_WRITE__ = () => resolve({ revision: "revision-2" });
+            });
+          }
           return { revision: "revision-2" };
         },
       });
@@ -266,6 +274,38 @@ test.describe("Cloud storage sources", () => {
 
     await expect(page.getByTestId("guides-shell")).toBeVisible();
     await expect(page.getByTitle("Opened from google-drive")).toHaveText("drive-sample");
+  });
+
+  test("a mutation during a pending provider save remains dirty and recoverable", async ({ page }) => {
+    await installFakeProviders(page, "pending");
+    await page.goto("/");
+    await page.getByTestId("mode-governance").click();
+    await page.getByTestId("source-dropbox").click();
+    await page.getByRole("button", { name: /dropbox-sample\.srsj/ }).click();
+
+    // The provider captures an exported snapshot, then deliberately keeps its
+    // write pending while a second writer changes the in-memory WASM repository.
+    await page.getByTestId("save-document").click();
+    await expect.poll(() => page.evaluate(
+      // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+      () => Boolean((window as any).__PENDING_WRITE_STARTED__)
+    )).toBe(true);
+
+    await page.locator("button.topbar__new").click();
+    await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Later unsaved article");
+    await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Written after the provider snapshot.");
+    await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
+    await page.locator("button[type=submit]", { hasText: "Save" }).click();
+    await expect(page.getByTestId("document-dirty-status")).toBeVisible();
+
+    await page.evaluate(() => {
+      // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+      (window as any).__RESOLVE_PENDING_WRITE__();
+    });
+    await expect(page.getByTestId("save-status")).toContainText("Newer changes remain unsaved.");
+
+    const recoveryCopy = await page.evaluate(() => localStorage.getItem("srs-web:working-copy"));
+    expect(recoveryCopy).toContain("Later unsaved article");
   });
 
   test("provider cancellation leaves the chooser open without an error", async ({ page }) => {
