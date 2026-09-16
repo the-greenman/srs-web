@@ -276,36 +276,30 @@ test.describe("Cloud storage sources", () => {
     await expect(page.getByTitle("Opened from google-drive")).toHaveText("drive-sample");
   });
 
-  test("a mutation during a pending provider save remains dirty and recoverable", async ({ page }) => {
+  test("provider save pauses UI mutation admission until the write completes", async ({ page }) => {
     await installFakeProviders(page, "pending");
     await page.goto("/");
     await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-dropbox").click();
     await page.getByRole("button", { name: /dropbox-sample\.srsj/ }).click();
 
-    // The provider captures an exported snapshot, then deliberately keeps its
-    // write pending while a second writer changes the in-memory WASM repository.
+    // The provider deliberately keeps its write pending. UI mutations are
+    // paused during this window; the future MCP executor race is separately
+    // covered by #308 because it is an independent writer.
     await page.getByTestId("save-document").click();
     await expect.poll(() => page.evaluate(
       // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
       () => Boolean((window as any).__PENDING_WRITE_STARTED__)
     )).toBe(true);
 
-    await page.locator("button.topbar__new").click();
-    await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Later unsaved article");
-    await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Written after the provider snapshot.");
-    await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
-    await page.locator("button[type=submit]", { hasText: "Save" }).click();
-    await expect(page.getByTestId("document-dirty-status")).toBeVisible();
+    await expect(page.locator("button.topbar__new")).toBeDisabled();
 
     await page.evaluate(() => {
       // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
       (window as any).__RESOLVE_PENDING_WRITE__();
     });
-    await expect(page.getByTestId("save-status")).toContainText("Newer changes remain unsaved.");
-
-    const recoveryCopy = await page.evaluate(() => localStorage.getItem("srs-web:working-copy"));
-    expect(recoveryCopy).toContain("Later unsaved article");
+    await expect(page.getByTestId("save-status")).toContainText("Saved.");
+    await expect(page.locator("button.topbar__new")).toBeEnabled();
   });
 
   test("provider cancellation leaves the chooser open without an error", async ({ page }) => {

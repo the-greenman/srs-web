@@ -608,6 +608,7 @@
             onDark
             data-testid="guides-new-guide"
             onclick={openNewGuide}
+            disabled={saving}
           >+ New guide</Button>
         {/snippet}
       </Nav>

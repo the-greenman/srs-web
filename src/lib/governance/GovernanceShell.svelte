@@ -1013,6 +1013,7 @@
             <button
               class="topbar__new"
               onclick={() => { formMode = "create"; editingRecord = null; }}
+              disabled={saving}
             >New {activeSectionSchema.label}</button>
           {/if}
           <span
