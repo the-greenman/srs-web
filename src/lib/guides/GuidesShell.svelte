@@ -80,6 +80,12 @@
     onSave?: () => Promise<void>;
     saving?: boolean;
     saveMessage?: string | null;
+    /** App-owned dirty state, shared with non-UI repository writers. */
+    documentDirty?: boolean;
+    /** Changes after mount invalidate derived browser projections of the repository. */
+    documentRevision?: number;
+    /** Report a successful in-place repository mutation to the App shell. */
+    onDocumentMutation?: () => void;
     onOpenAnother: () => void;
   }
   let {
@@ -91,6 +97,9 @@
     onSave,
     saving = false,
     saveMessage = null,
+    documentDirty = false,
+    documentRevision = 0,
+    onDocumentMutation = () => {},
     onOpenAnother,
   }: Props = $props();
 
@@ -188,6 +197,16 @@
 
   /** The selected guide's container id (the guide is its root), or null. */
   let selectedContainerId = $state<string | null>(null);
+
+  // The loaded WASM repository is mutated in place, so external writers need
+  // this App-owned revision signal to refresh editor projections.
+  let observedDocumentRevision = $state<number | null>(null);
+  $effect(() => {
+    if (documentRevision === observedDocumentRevision) return;
+    observedDocumentRevision = documentRevision;
+    reload();
+    refreshValidation();
+  });
 
   /** Sections of the selected guide, scoped to its container and in precedes order. */
   let orderedSections = $state<SrsRecord[]>([]);
@@ -413,6 +432,7 @@
     [ids[index], ids[j]] = [ids[j], ids[index]];
     rebuildPrecedesChain(ids, ids);
     reload();
+    onDocumentMutation();
   }
 
   /** Remove a section: drop it from the chain + container membership, then delete it. */
@@ -425,6 +445,7 @@
     }
     deleteRecord(repo, section.instanceId);
     reload();
+    onDocumentMutation();
   }
 
   async function handleSave(input: CreateRecordInput | UpdateRecordInput) {
@@ -436,10 +457,12 @@
         reload();
         selectedGuideId = created.instanceId;
         cancelForm();
+        onDocumentMutation();
       } else if (formMode === "edit-guide" && editingRecord) {
         updateRecord(repo, editingRecord.instanceId, input as UpdateRecordInput);
         reload();
         cancelForm();
+        onDocumentMutation();
       } else if (formMode === "create-section" && createSectionTypeId) {
         const created = createRecord(
           repo,
@@ -461,10 +484,12 @@
         }
         reload();
         cancelForm();
+        onDocumentMutation();
       } else if (formMode === "edit-section" && editingRecord) {
         updateRecord(repo, editingRecord.instanceId, input as UpdateRecordInput);
         reload();
         cancelForm();
+        onDocumentMutation();
       }
     } catch (e) {
       formError = e instanceof Error ? e.message : String(e);
@@ -583,6 +608,7 @@
             onDark
             data-testid="guides-new-guide"
             onclick={openNewGuide}
+            disabled={saving}
           >+ New guide</Button>
         {/snippet}
       </Nav>
@@ -602,6 +628,9 @@
                 onclick={onSave}
                 disabled={saving}
               >{saving ? "Saving…" : "Save"}</Button>
+            {/if}
+            {#if documentDirty}
+              <span class="guides-save-message" data-testid="document-dirty-status">Unsaved changes</span>
             {/if}
             {#if saveMessage}
               <span

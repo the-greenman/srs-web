@@ -26,8 +26,9 @@
     createGovernanceDocument,
   } from "$lib/srs-client.js";
   import type { SrsRepository } from "$lib/srs-client.js";
-  import { loadWorkingCopy, clearWorkingCopy } from "$lib/browser-cache.js";
+  import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
+  import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
   import GuidesShell from "$lib/guides/GuidesShell.svelte";
   import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
@@ -79,6 +80,16 @@
   let repo = $state<SrsRepository | null>(null);
 
   /**
+   * One in-place WASM repository can be mutated by more than one UI/executor.
+   * This tracker is the sole authority for whether an exported save snapshot is
+   * still current when an asynchronous provider write completes.
+   */
+  const documentMutations = new DocumentMutationTracker();
+  let documentDirty = $state(false);
+  /** Reactive invalidation signal for UI projections of the in-place repository. */
+  let documentRevision = $state(0);
+
+  /**
    * Catalog diagnostics from the load-time `validate()` pass (RFC-038 [R24]).
    * Under tree-authoritative storage a malformed or duplicate object is a
    * diagnostic, not a silent omission — the repository still opens, so the
@@ -90,6 +101,31 @@
   /** Cached working copy loaded from localStorage on WASM init. */
   let cachedSession = $state<WorkingCopyEntry | null>(null);
   let restoreError = $state<string | null>(null);
+
+  function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
+    const revision = documentMutations.beginDocument({ dirty });
+    documentDirty = documentMutations.dirty;
+    documentRevision = revision.revision;
+  }
+
+  /**
+   * Shared mutation entry point for every writer of the active WASM repository.
+   * MCP hosting will call the same function after a successful external write.
+   */
+  function handleDocumentMutation(): void {
+    if (!repo) return;
+    const revision = documentMutations.recordMutation();
+    documentDirty = documentMutations.dirty;
+    documentRevision = revision.revision;
+    saveWorkingCopy(repoName, exportSrsj(repo));
+  }
+
+  function completeDocumentSave(snapshot: ReturnType<typeof documentMutations.captureSave>): boolean {
+    const savedCurrentRevision = documentMutations.completeSave(snapshot);
+    documentDirty = documentMutations.dirty;
+    if (savedCurrentRevision) clearWorkingCopy();
+    return savedCurrentRevision;
+  }
 
   // ---------------------------------------------------------------------------
   // WASM initialisation
@@ -136,6 +172,7 @@
         }
       }
       activeDocument = handle;
+      beginDocument();
       repoName = stripSrsExtension(handle.name);
       cachedSession = null;
       saveMessage = null;
@@ -203,6 +240,7 @@
     }
 
     repo = newRepo;
+    beginDocument();
     repoName = name;
     cachedSession = null;
     saveMessage = null;
@@ -217,6 +255,7 @@
     errorMsg = null;
     try {
       repo = loadRepoFromArchive(bytes);
+      beginDocument();
       activeDocument = null;
       repoName = stripSrsExtension(name);
       cachedSession = null;
@@ -268,7 +307,7 @@
    * dialog (branch choice + install hint); other cloud handles write directly.
    */
   async function handleSave(): Promise<void> {
-    if (!repo || !activeDocument?.capabilities.write) return;
+    if (saving || !repo || !activeDocument?.capabilities.write) return;
     if (isGitBranchAware(activeDocument)) {
       gitSaveError = null;
       gitSaveOpen = true;
@@ -280,31 +319,35 @@
   /** Direct revision-aware write for non-git cloud handles (Dropbox/Drive). */
   async function saveDirect(): Promise<void> {
     if (!repo || !activeDocument?.capabilities.write) return;
+    const repository = repo;
+    const handle = activeDocument;
+    const saveSnapshot = documentMutations.captureSave();
     saving = true;
     saveMessage = null;
     try {
-      if (activeDocument.kind === "bytes" && activeDocument.writeBytes) {
-        await activeDocument.writeBytes(exportArchive(repo), activeDocument.revision);
-        saveMessage = "Saved.";
+      if (handle.kind === "bytes" && handle.writeBytes) {
+        await handle.writeBytes(exportArchive(repository), handle.revision);
+        saveMessage = completeDocumentSave(saveSnapshot) ? "Saved." : "Saved. Newer changes remain unsaved.";
       } else {
         // Auto-upgrade: create a new .srs file and switch the active handle to it.
         const provider =
-          activeDocument.provider === "dropbox"
+          handle.provider === "dropbox"
             ? storageProviders.dropbox
-            : activeDocument.provider === "google-drive"
+            : handle.provider === "google-drive"
               ? storageProviders.googleDrive
               : storageProviders.github;
         if (provider?.create) {
-          const newName = toArchiveName(activeDocument.name);
-          const newHandle = await provider.create(newName, exportArchive(repo));
+          const newName = toArchiveName(handle.name);
+          const newHandle = await provider.create(newName, exportArchive(repository));
           activeDocument = newHandle;
-          saveMessage = `Saved as ${newHandle.name}.`;
+          saveMessage = completeDocumentSave(saveSnapshot)
+            ? `Saved as ${newHandle.name}.`
+            : `Saved as ${newHandle.name}. Newer changes remain unsaved.`;
         } else {
-          await activeDocument.write(exportSrsj(repo), activeDocument.revision);
-          saveMessage = "Saved.";
+          await handle.write(exportSrsj(repository), handle.revision);
+          saveMessage = completeDocumentSave(saveSnapshot) ? "Saved." : "Saved. Newer changes remain unsaved.";
         }
       }
-      clearWorkingCopy();
     } catch (e: unknown) {
       saveMessage = saveErrorMessage(e);
     } finally {
@@ -319,7 +362,9 @@
     message: string;
   }): Promise<void> {
     if (!repo || !isGitBranchAware(activeDocument)) return;
+    const repository = repo;
     const handle = activeDocument;
+    const saveSnapshot = documentMutations.captureSave();
     saving = true;
     gitSaveError = null;
     try {
@@ -333,11 +378,11 @@
       };
       switch (handle.kind) {
         case "text":
-          await handle.saveToBranch(exportSrsj(repo), branchOpts);
+          await handle.saveToBranch(exportSrsj(repository), branchOpts);
           break;
         case "tree":
           await (handle as unknown as DocumentHandle & RepoTreeAware).commitTree(
-            exportTree(repo),
+            exportTree(repository),
             branchOpts
           );
           break;
@@ -347,10 +392,10 @@
           // silently falling through and corrupting a binary document.
           throw new Error("Git save is not supported for this document type yet.");
       }
+      const saveIsCurrent = completeDocumentSave(saveSnapshot);
       saveMessage = branchedOff
-        ? `Saved to new branch “${branch}”. Open a pull request on GitHub to merge it.`
-        : "Saved.";
-      clearWorkingCopy();
+        ? `Saved to new branch “${branch}”. Open a pull request on GitHub to merge it.${saveIsCurrent ? "" : " Newer changes remain unsaved."}`
+        : saveIsCurrent ? "Saved." : "Saved. Newer changes remain unsaved.";
       gitSaveOpen = false;
     } catch (e: unknown) {
       // Keep the dialog open so the install hint stays visible on a permission error.
@@ -453,6 +498,7 @@
                 if (!entry) return;
                 try {
                   repo = loadRepo(entry.srsj);
+                  beginDocument({ dirty: true });
                   repoName = entry.name;
                   activeDocument = null;
                   appState = "loaded";
@@ -504,11 +550,15 @@
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
     saving={saving}
     saveMessage={saveMessage}
+    documentDirty={documentDirty}
+    documentRevision={documentRevision}
+    onDocumentMutation={handleDocumentMutation}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;
       saveMessage = null;
       repo = null;
+      beginDocument();
       activeDocument = null;
       editorMode = null;
       appState = "idle";
@@ -529,11 +579,15 @@
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
     saving={saving}
     saveMessage={saveMessage}
+    documentDirty={documentDirty}
+    documentRevision={documentRevision}
+    onDocumentMutation={handleDocumentMutation}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;
       saveMessage = null;
       repo = null;
+      beginDocument();
       activeDocument = null;
       editorMode = null;
       appState = "idle";

@@ -27,7 +27,6 @@
     listDocumentViews,
     renderDocumentView,
   } from "$lib/srs-client.js";
-  import { saveWorkingCopy } from "$lib/browser-cache.js";
   import type {
     SrsRepository,
     SrsRecord,
@@ -88,6 +87,12 @@
     onSave?: () => Promise<void>;
     saving?: boolean;
     saveMessage?: string | null;
+    /** App-owned dirty state, shared with non-UI repository writers. */
+    documentDirty?: boolean;
+    /** Changes after mount invalidate derived browser projections of the repository. */
+    documentRevision?: number;
+    /** Report a successful in-place repository mutation to the App shell. */
+    onDocumentMutation?: () => void;
     onOpenAnother: () => void;
   }
   let {
@@ -99,6 +104,9 @@
     onSave,
     saving = false,
     saveMessage = null,
+    documentDirty = false,
+    documentRevision = 0,
+    onDocumentMutation = () => {},
     onOpenAnother,
   }: Props = $props();
 
@@ -298,6 +306,18 @@
     selectedId != null ? (activeRecords.find((r) => r.instanceId === selectedId) ?? null) : null,
   );
 
+  // `repo` is mutated in place. An external writer (for example the browser
+  // MCP host) therefore needs an explicit invalidation signal rather than a
+  // new repository object identity.
+  let observedDocumentRevision = $state<number | null>(null);
+  $effect(() => {
+    if (documentRevision === observedDocumentRevision) return;
+    observedDocumentRevision = documentRevision;
+    loadContainerNav();
+    buildContainerSchemas();
+    refreshValidation();
+  });
+
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
@@ -456,8 +476,7 @@
 
   function persistWorkingCopy(): void {
     try {
-      const saved = saveWorkingCopy(repoName, exportSrsj(repo));
-      if (!saved) return;
+      onDocumentMutation();
       if (saveIndicatorTimer !== null) clearTimeout(saveIndicatorTimer);
       saveIndicator = "saved";
       saveIndicatorTimer = setTimeout(() => {
@@ -994,6 +1013,7 @@
             <button
               class="topbar__new"
               onclick={() => { formMode = "create"; editingRecord = null; }}
+              disabled={saving}
             >New {activeSectionSchema.label}</button>
           {/if}
           <span
@@ -1009,6 +1029,9 @@
               onclick={onSave}
               disabled={saving}
             >{saving ? "Saving…" : "Save"}</button>
+          {/if}
+          {#if documentDirty}
+            <span class="topbar__save-message" data-testid="document-dirty-status">Unsaved changes</span>
           {/if}
           {#if saveMessage}
             <span
