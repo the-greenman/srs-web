@@ -111,13 +111,17 @@
   /**
    * Shared mutation entry point for every writer of the active WASM repository.
    * MCP hosting will call the same function after a successful external write.
+   *
+   * Returns whether the local recovery-copy write succeeded, so callers (e.g.
+   * GovernanceShell's save indicator) can reflect a failed `localStorage` write
+   * instead of silently claiming "saved" (srs-web#312).
    */
-  function handleDocumentMutation(): void {
-    if (!repo) return;
+  function handleDocumentMutation(): boolean {
+    if (!repo) return false;
     const revision = documentMutations.recordMutation();
     documentDirty = documentMutations.dirty;
     documentRevision = revision.revision;
-    saveWorkingCopy(repoName, exportSrsj(repo));
+    return saveWorkingCopy(repoName, exportSrsj(repo));
   }
 
   function completeDocumentSave(snapshot: ReturnType<typeof documentMutations.captureSave>): boolean {

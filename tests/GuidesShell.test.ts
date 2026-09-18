@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { render, screen } from "@testing-library/svelte";
+import { render, screen, fireEvent } from "@testing-library/svelte";
 import { vi, describe, it, expect } from "vitest";
 import GuidesShell from "../src/lib/guides/GuidesShell.svelte";
 import type { SrsRepository } from "../src/lib/srs-client.js";
@@ -190,5 +190,119 @@ describe("GuidesShell — blueprint schema with non-fatal diagnostics", () => {
     expect(items).toHaveLength(1);
     expect(items[0].textContent).toContain("My Guide");
     expect(screen.queryByText("No guides yet")).toBeNull();
+  });
+
+  // ---------------------------------------------------------------------------
+  // srs-web#312 — document-mutation save-state gaps from PR #311 (bug 2)
+  // ---------------------------------------------------------------------------
+
+  const SECTION_TYPE_ID = "b1a4c9a2-8f3e-4a1a-9f2e-1a2b3c4d5e6f";
+
+  function sectionRecord(instanceId: string, displayLabel: string) {
+    return {
+      instanceId,
+      typeId: SECTION_TYPE_ID,
+      typeVersion: 1,
+      typeNamespace: "com.mudemocracy",
+      typeName: "section",
+      displayLabel,
+      fieldValues: {},
+    };
+  }
+
+  /** guidesRepo() plus enough to select a guide and render its sections. */
+  function guidesRepoWithSections(diagnostics: string[] = []): SrsRepository {
+    const base = guidesRepo(diagnostics);
+    return {
+      ...base,
+      list_containers: () => [
+        { containerId: "c-guide-1", title: "My Guide", memberInstanceIds: [], rootInstanceIds: ["guide-1"] },
+      ],
+      // biome-ignore lint/suspicious/noExplicitAny: raw WASM ContainerView shape
+      resolve_container_view: () =>
+        ({
+          containerId: "c-guide-1",
+          root: {
+            instanceId: "guide-1",
+            tier: 0,
+            displayLabel: "My Guide",
+            record: {
+              instanceId: "guide-1",
+              typeId: GUIDE_TYPE_ID,
+              typeVersion: 1,
+              typeNamespace: "com.mudemocracy",
+              typeName: "guide",
+              fieldValues: {},
+            },
+          },
+          members: [
+            { instanceId: "sec-1", tier: 1, displayLabel: "Section One", record: sectionRecord("sec-1", "Section One") },
+            { instanceId: "sec-2", tier: 1, displayLabel: "Section Two", record: sectionRecord("sec-2", "Section Two") },
+          ],
+          columns: [],
+          excludeLifecycleStates: [],
+          diagnostics: [],
+        }) as any,
+      // order_by_precedes takes JSON `{ instanceIds }` and returns `{ orderedIds }`
+      // (src/lib/srs-client.ts orderByPrecedes wrapper) — identity order here.
+      order_by_precedes: (raw: string) =>
+        ({ orderedIds: JSON.parse(raw).instanceIds }) as any,
+    };
+  }
+
+  async function selectFirstGuide(): Promise<void> {
+    const item = await screen.findByTestId("guides-guide-item");
+    fireEvent.click(item);
+  }
+
+  it("disables the '+ New guide' button while saving", async () => {
+    const repo = guidesRepoWithSections();
+    const { rerender } = render(GuidesShell, {
+      props: { repo, ...defaultProps, saving: false },
+    });
+    await screen.findByRole("button", { name: /Open another file/i });
+
+    const newGuideBtn = (await screen.findByTestId("guides-new-guide")) as HTMLButtonElement;
+    expect(newGuideBtn.disabled).toBe(false);
+
+    await rerender({ saving: true });
+    expect(newGuideBtn.disabled).toBe(true);
+
+    await rerender({ saving: false });
+    expect(newGuideBtn.disabled).toBe(false);
+  });
+
+  it("disables section move-up/move-down/remove controls while saving, and re-enables them once false", async () => {
+    const repo = guidesRepoWithSections();
+    const { rerender } = render(GuidesShell, {
+      props: { repo, ...defaultProps, saving: false },
+    });
+    await screen.findByRole("button", { name: /Open another file/i });
+    await selectFirstGuide();
+
+    const sectionItems = await screen.findAllByTestId("guides-section-item");
+    expect(sectionItems).toHaveLength(2);
+
+    const downBtns = (await screen.findAllByTestId("guides-section-down")) as HTMLButtonElement[];
+    const removeBtns = (await screen.findAllByTestId("guides-section-remove")) as HTMLButtonElement[];
+    // The first row's "up" button is disabled by index bounds regardless of saving —
+    // use the second row's "up" button, which is only bounds-guarded, not saving-guarded, at rest.
+    const upBtns = (await screen.findAllByTestId("guides-section-up")) as HTMLButtonElement[];
+
+    expect(upBtns[1].disabled).toBe(false);
+    expect(downBtns[0].disabled).toBe(false);
+    expect(removeBtns[0].disabled).toBe(false);
+
+    await rerender({ saving: true });
+    expect(upBtns[1].disabled).toBe(true);
+    expect(downBtns[0].disabled).toBe(true);
+    expect(removeBtns[0].disabled).toBe(true);
+    // Index-bounds guard still holds independently of saving.
+    expect(upBtns[0].disabled).toBe(true);
+
+    await rerender({ saving: false });
+    expect(upBtns[1].disabled).toBe(false);
+    expect(downBtns[0].disabled).toBe(false);
+    expect(removeBtns[0].disabled).toBe(false);
   });
 });
