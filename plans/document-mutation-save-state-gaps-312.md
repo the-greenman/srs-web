@@ -101,29 +101,29 @@ Governance UI instead of silently showing "Saved".
 
 #### Tasks
 
-- [ ] `src/App.svelte`: change `handleDocumentMutation()` to return `boolean` — `false` when `!repo`,
+- [x] `src/App.svelte`: change `handleDocumentMutation()` to return `boolean` — `false` when `!repo`,
       otherwise the return value of `saveWorkingCopy(repoName, exportSrsj(repo))`.
-- [ ] `src/lib/governance/GovernanceShell.svelte`: change the `onDocumentMutation` prop type to
+- [x] `src/lib/governance/GovernanceShell.svelte`: change the `onDocumentMutation` prop type to
       `() => boolean` (default `() => true`, so tests/callers that don't care can omit it safely).
-- [ ] `src/lib/governance/GovernanceShell.svelte`: extend `saveIndicator` from
+- [x] `src/lib/governance/GovernanceShell.svelte`: extend `saveIndicator` from
       `"idle" | "saved"` to `"idle" | "saved" | "local-save-failed"`. In `persistWorkingCopy()`, only
       set `"saved"` (and start the auto-clear timer) when `onDocumentMutation()` returns `true`;
       otherwise set `"local-save-failed"` and log a `console.warn`.
-- [ ] Render a visible, `data-testid="local-save-failed"` message (reusing the existing
+- [x] Render a visible, `data-testid="local-save-failed"` message (reusing the existing
       `.topbar__save-message` style, with an error-colored modifier) when
       `saveIndicator === "local-save-failed"`.
-- [ ] `src/lib/guides/GuidesShell.svelte`: no change needed — it has no local "Saved" indicator to
+- [x] `src/lib/guides/GuidesShell.svelte`: no change needed — it has no local "Saved" indicator to
       correct (it calls `onDocumentMutation()` directly); confirm this during implementation and note
       it explicitly rather than adding speculative UI.
 
 #### Acceptance Criteria
 
-- [ ] `onDocumentMutation` returning `false` in `GovernanceShell` never sets `saveIndicator` to `"saved"`.
-- [ ] A component test renders `GovernanceShell` with `onDocumentMutation: () => false`, triggers a
+- [x] `onDocumentMutation` returning `false` in `GovernanceShell` never sets `saveIndicator` to `"saved"`.
+- [x] A component test renders `GovernanceShell` with `onDocumentMutation: () => false`, triggers a
       mutation (record create, reusing the existing "New" → submit pattern already in
       `tests/GovernanceShell.test.ts`), and asserts the "Saved" indicator text is not shown and the
       failure message is.
-- [ ] `npm run typecheck` passes.
+- [x] `npm run typecheck` passes.
 
 #### Testing
 
@@ -153,7 +153,7 @@ both `GovernanceShell.svelte` and `GuidesShell.svelte`.
 
 #### Tasks
 
-- [ ] `src/lib/governance/GovernanceShell.svelte`: add `disabled={saving}` to:
+- [x] `src/lib/governance/GovernanceShell.svelte`: add `disabled={saving}` to:
   - the Edit button (`.inspector__btn`, `onclick={handleEditRecord}`)
   - the Delete button (`.inspector__btn--danger`, `onclick={handleDeleteRecord}`)
   - each lifecycle-transition button inside the `{#each allowedTransitions.transitions as transition}` loop
@@ -164,16 +164,16 @@ both `GovernanceShell.svelte` and `GuidesShell.svelte`.
     `onRemove={saving ? undefined : () => handleUpdateTags(...)}` (same unguarded-mutation bug class,
     found while implementing this phase; `TagChip` already renders no remove button when `onRemove`
     is falsy, so this needs no change to `TagChip.svelte` itself).
-- [ ] `src/lib/guides/GuidesShell.svelte`: add `disabled={saving}` to the section move-up button
+- [x] `src/lib/guides/GuidesShell.svelte`: add `disabled={saving}` to the section move-up button
       (combine with the existing `disabled={index === 0}`), move-down button (combine with the existing
       `disabled={index === orderedSections.length - 1}`), and the section-remove button.
 
 #### Acceptance Criteria
 
-- [ ] Component tests assert `disabled` is `true` on each of the above controls when the shell is
+- [x] Component tests assert `disabled` is `true` on each of the above controls when the shell is
       rendered with `saving: true` and a record/section is selected, and `false` when `saving: false`.
-- [ ] No behavioural change when `saving` is `false` (default UI behaviour unchanged).
-- [ ] `npm run typecheck` and `npm run lint` pass.
+- [x] No behavioural change when `saving` is `false` (default UI behaviour unchanged).
+- [x] `npm run typecheck` and `npm run lint` pass.
 
 #### Testing
 
@@ -202,23 +202,23 @@ across more than the single "New" button, restoring the intent of the test delet
 
 #### Tasks
 
-- [ ] `e2e/cloud-storage.spec.ts`: broaden `installFakeProviders()` to accept an optional content
+- [x] `e2e/cloud-storage.spec.ts`: broaden `installFakeProviders()` to accept an optional content
       override (default `SAMPLE_TEXT`), so other fixtures (`gallery.srsj`) can be served through the
       same pending-write-controllable Dropbox mock.
-- [ ] Broaden the existing test `"provider save pauses UI mutation admission until the write
+- [x] Broaden the existing test `"provider save pauses UI mutation admission until the write
       completes"`: after opening `dropbox-sample.srsj`, create one record via the already-guarded "New"
       flow (SAMPLE_TEXT's `Decision Log` type has no required fields) so it is selected, *then* trigger
       the pending save, and additionally assert the Edit and Delete buttons are disabled while pending
       and re-enabled once the write resolves.
-- [ ] Add a new test using the `gallery.srsj` fixture (already used by `decision-tags.spec.ts` /
+- [x] Add a new test using the `gallery.srsj` fixture (already used by `decision-tags.spec.ts` /
       `decision-link.spec.ts`) through the same pending-write Dropbox mock: select a decision, add a
       tag and create a relation to another decision (both allowed pre-save), then start a pending
       provider save and assert `add-relation-btn`, `delete-relation-btn`, `tag-input`, and
       `tag-add-btn` are all disabled while pending and re-enabled once resolved.
-- [ ] Component tests (`tests/GuidesShell.test.ts`) cover the Guides-side reorder/remove and
+- [x] Component tests (`tests/GuidesShell.test.ts`) cover the Guides-side reorder/remove and
       "+ New guide" guard's attribute wiring directly (cheaper and more deterministic than wiring a
       cloud-pending e2e fixture for guide sections — see Assumptions).
-- [ ] **(Added in response to plan review round 1 — Plan Reviewer should-fix.)** Add one e2e test using
+- [x] **(Added in response to plan review round 1 — Plan Reviewer should-fix.)** Add one e2e test using
       the same extended `installFakeProviders()` content override with `muSrs.srsj` (already used by
       `e2e/guides-ordering.spec.ts`, which has a guide with multiple sections) through the pending-write
       Dropbox mock: open the guide in Guides mode, start a pending provider save, and assert the section
@@ -228,11 +228,11 @@ across more than the single "New" button, restoring the intent of the test delet
 
 #### Acceptance Criteria
 
-- [ ] `npm run e2e` passes, including the broadened and new tests.
-- [ ] The broadened test demonstrates the race is blocked for at least Edit and Delete in addition to
+- [x] `npm run e2e` passes, including the broadened and new tests.
+- [x] The broadened test demonstrates the race is blocked for at least Edit and Delete in addition to
       New (Governance) and tag/relation controls (Decision Log), addressing #312's "restore/broaden ...
       across more than just that one button."
-- [ ] The Guides side also has e2e race coverage (section move/remove), not only Governance.
+- [x] The Guides side also has e2e race coverage (section move/remove), not only Governance.
 
 #### Testing
 
@@ -250,16 +250,16 @@ npm run e2e
 
 ## Final Acceptance
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm run build` succeeds
-- [ ] WASM loads and all WASM API calls succeed against `gallery.srsj`
-- [ ] A failed local recovery-copy write is visibly distinguished from a successful one in
+- [x] `npm run typecheck` passes
+- [x] `npm run lint` passes
+- [x] `npm run build` succeeds
+- [x] WASM loads and all WASM API calls succeed against `gallery.srsj`
+- [x] A failed local recovery-copy write is visibly distinguished from a successful one in
       `GovernanceShell`'s save indicator.
-- [ ] Edit, Delete, lifecycle transitions, add-tag, tag-remove, relation create/delete
+- [x] Edit, Delete, lifecycle transitions, add-tag, tag-remove, relation create/delete
       (`GovernanceShell`) and section reorder/removal (`GuidesShell`) are all disabled while
       `saving` is `true`.
-- [ ] e2e coverage for the pending-save race spans more than the single "New" button.
+- [x] e2e coverage for the pending-save race spans more than the single "New" button.
 
 ## Coordination Rules
 

@@ -218,35 +218,34 @@ describe("GuidesShell — blueprint schema with non-fatal diagnostics", () => {
       list_containers: () => [
         { containerId: "c-guide-1", title: "My Guide", memberInstanceIds: [], rootInstanceIds: ["guide-1"] },
       ],
-      // biome-ignore lint/suspicious/noExplicitAny: raw WASM ContainerView shape
-      resolve_container_view: () =>
-        ({
-          containerId: "c-guide-1",
-          root: {
+      // resolve_container_view/order_by_precedes are typed `any` on SrsRepository
+      // (raw WASM boundary — see src/lib/srs-client.ts) so no cast is needed here.
+      resolve_container_view: () => ({
+        containerId: "c-guide-1",
+        root: {
+          instanceId: "guide-1",
+          tier: 0,
+          displayLabel: "My Guide",
+          record: {
             instanceId: "guide-1",
-            tier: 0,
-            displayLabel: "My Guide",
-            record: {
-              instanceId: "guide-1",
-              typeId: GUIDE_TYPE_ID,
-              typeVersion: 1,
-              typeNamespace: "com.mudemocracy",
-              typeName: "guide",
-              fieldValues: {},
-            },
+            typeId: GUIDE_TYPE_ID,
+            typeVersion: 1,
+            typeNamespace: "com.mudemocracy",
+            typeName: "guide",
+            fieldValues: {},
           },
-          members: [
-            { instanceId: "sec-1", tier: 1, displayLabel: "Section One", record: sectionRecord("sec-1", "Section One") },
-            { instanceId: "sec-2", tier: 1, displayLabel: "Section Two", record: sectionRecord("sec-2", "Section Two") },
-          ],
-          columns: [],
-          excludeLifecycleStates: [],
-          diagnostics: [],
-        }) as any,
+        },
+        members: [
+          { instanceId: "sec-1", tier: 1, displayLabel: "Section One", record: sectionRecord("sec-1", "Section One") },
+          { instanceId: "sec-2", tier: 1, displayLabel: "Section Two", record: sectionRecord("sec-2", "Section Two") },
+        ],
+        columns: [],
+        excludeLifecycleStates: [],
+        diagnostics: [],
+      }),
       // order_by_precedes takes JSON `{ instanceIds }` and returns `{ orderedIds }`
       // (src/lib/srs-client.ts orderByPrecedes wrapper) — identity order here.
-      order_by_precedes: (raw: string) =>
-        ({ orderedIds: JSON.parse(raw).instanceIds }) as any,
+      order_by_precedes: (raw: string) => ({ orderedIds: JSON.parse(raw).instanceIds }),
     };
   }
 
