@@ -5,6 +5,13 @@ import { type Page, expect, test } from "@playwright/test";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SAMPLE_TEXT = fs.readFileSync(path.join(__dirname, "fixtures", "sample.srsj"), "utf8");
+// srs-web#312: richer fixtures reused through the same pending-write-controllable Dropbox
+// mock, to exercise the saving-guard race beyond SAMPLE_TEXT's empty containers — GALLERY_TEXT
+// has real decisions (tags, relations, DECISION_TYPE_ID) and MUSRS_TEXT has a guide with
+// multiple sections, both already used elsewhere (decision-tags.spec.ts / decision-link.spec.ts
+// and guides-ordering.spec.ts respectively).
+const GALLERY_TEXT = fs.readFileSync(path.join(__dirname, "fixtures", "gallery.srsj"), "utf8");
+const MUSRS_TEXT = fs.readFileSync(path.join(__dirname, "fixtures", "muSrs.srsj"), "utf8");
 
 /** Read every file under a directory into a { relativePath: base64 } map. */
 function readTreeFixture(dir: string): Record<string, string> {
@@ -27,7 +34,11 @@ const EXPLODED_TREE = readTreeFixture(path.join(__dirname, "fixtures", "exploded
 
 type FakeMode = "success" | "cancel" | "auth-error" | "malformed" | "conflict" | "pending";
 
-async function installFakeProviders(page: Page, mode: FakeMode = "success"): Promise<void> {
+async function installFakeProviders(
+  page: Page,
+  mode: FakeMode = "success",
+  content: string = SAMPLE_TEXT
+): Promise<void> {
   await page.addInitScript(
     ({ sampleText, fakeMode, explodedTreeB64 }) => {
       function decodeBytes(b64: string): Uint8Array {
@@ -250,7 +261,7 @@ async function installFakeProviders(page: Page, mode: FakeMode = "success"): Pro
         },
       };
     },
-    { sampleText: SAMPLE_TEXT, fakeMode: mode, explodedTreeB64: EXPLODED_TREE }
+    { sampleText: content, fakeMode: mode, explodedTreeB64: EXPLODED_TREE }
   );
 }
 
@@ -283,6 +294,18 @@ test.describe("Cloud storage sources", () => {
     await page.getByTestId("source-dropbox").click();
     await page.getByRole("button", { name: /dropbox-sample\.srsj/ }).click();
 
+    // srs-web#312: create and select a record *before* the pending save starts —
+    // SAMPLE_TEXT's section types have no required fields, so submitting the "New"
+    // form with nothing filled succeeds and auto-selects the new record, exposing
+    // the Edit/Delete controls that must also respect the saving guard.
+    await page.locator("button.topbar__new").click();
+    await page.locator("button[type=submit]", { hasText: "Save" }).click();
+    const editBtn = page.getByRole("button", { name: "Edit", exact: true });
+    const deleteBtn = page.getByRole("button", { name: "Delete", exact: true });
+    await expect(editBtn).toBeVisible();
+    await expect(editBtn).toBeEnabled();
+    await expect(deleteBtn).toBeEnabled();
+
     // The provider deliberately keeps its write pending. UI mutations are
     // paused during this window; the future MCP executor race is separately
     // covered by #308 because it is an independent writer.
@@ -293,6 +316,10 @@ test.describe("Cloud storage sources", () => {
     )).toBe(true);
 
     await expect(page.locator("button.topbar__new")).toBeDisabled();
+    // srs-web#312: restored/broadened beyond just the "New" button — Edit and Delete
+    // (both direct entry points into persistWorkingCopy()) must also be blocked.
+    await expect(editBtn).toBeDisabled();
+    await expect(deleteBtn).toBeDisabled();
 
     await page.evaluate(() => {
       // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
@@ -300,6 +327,116 @@ test.describe("Cloud storage sources", () => {
     });
     await expect(page.getByTestId("save-status")).toContainText("Saved.");
     await expect(page.locator("button.topbar__new")).toBeEnabled();
+    await expect(editBtn).toBeEnabled();
+    await expect(deleteBtn).toBeEnabled();
+  });
+
+  test("provider save pauses tag and relation admission for a selected decision until the write completes", async ({
+    page,
+  }) => {
+    // srs-web#312: restores the spirit of the test deleted in 630ca75 (a mutation
+    // during a pending provider save), broadened across the decision-specific
+    // controls — add-tag, tag-remove, relation create/delete — which are gated
+    // behind the real DECISION_TYPE_ID and so need gallery.srsj rather than
+    // SAMPLE_TEXT's bare fixture types.
+    await installFakeProviders(page, "pending", GALLERY_TEXT);
+    await page.goto("/");
+    await page.getByTestId("mode-governance").click();
+    await page.getByTestId("source-dropbox").click();
+    await page.getByRole("button", { name: /dropbox-sample\.srsj/ }).click();
+
+    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(page.getByTestId("decision-summary-card").first()).toBeVisible({ timeout: 5000 });
+    await page.getByTestId("decision-summary-card").first().click();
+
+    // Add a tag and create a relation — both allowed pre-save.
+    await expect(page.getByTestId("tag-input")).toBeVisible({ timeout: 3000 });
+    await page.getByTestId("tag-input").fill("pending-race-tag");
+    await page.getByTestId("tag-add-btn").click();
+    await expect(page.getByTestId("tag-chip").filter({ hasText: "pending-race-tag" })).toBeVisible();
+
+    await page.getByTestId("add-relation-btn").click();
+    await expect(page.getByRole("heading", { name: "Link to another decision" })).toBeVisible({
+      timeout: 3000,
+    });
+    await page.getByTestId("link-relation-type").selectOption("precedes");
+    await page.getByTestId("link-decision-item").first().click();
+    await page.getByTestId("link-confirm").click();
+    await expect(page.getByTestId("relation-item").first()).toBeVisible({ timeout: 3000 });
+
+    // Start a pending provider save, then assert every decision-mutation control
+    // is disabled for the duration.
+    await page.getByTestId("save-document").click();
+    await expect.poll(() => page.evaluate(
+      // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+      () => Boolean((window as any).__PENDING_WRITE_STARTED__)
+    )).toBe(true);
+
+    const ourTagChip = page.getByTestId("tag-chip").filter({ hasText: "pending-race-tag" });
+
+    await expect(page.getByTestId("tag-input")).toBeDisabled();
+    await expect(page.getByTestId("tag-add-btn")).toBeDisabled();
+    await expect(page.getByTestId("add-relation-btn")).toBeDisabled();
+    await expect(page.getByTestId("delete-relation-btn").first()).toBeDisabled();
+    // The tag-chip remove control is withdrawn entirely while saving (no onRemove) —
+    // scoped to the chip we just added, since the fixture decision may already have
+    // other pre-existing tags.
+    await expect(ourTagChip.getByTestId("tag-chip-remove")).toHaveCount(0);
+
+    await page.evaluate(() => {
+      // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+      (window as any).__RESOLVE_PENDING_WRITE__();
+    });
+    await expect(page.getByTestId("save-status")).toContainText("Saved.");
+    await expect(page.getByTestId("tag-input")).toBeEnabled();
+    await expect(page.getByTestId("tag-add-btn")).toBeEnabled();
+    await expect(page.getByTestId("add-relation-btn")).toBeEnabled();
+    await expect(page.getByTestId("delete-relation-btn").first()).toBeEnabled();
+    await expect(ourTagChip.getByTestId("tag-chip-remove")).toHaveCount(1);
+  });
+
+  test("provider save pauses guide-section admission (move/remove) until the write completes", async ({
+    page,
+  }) => {
+    // srs-web#312: the Guides-side equivalent of the two tests above — "+ New guide"
+    // was already guarded by 630ca75, but section move/remove were not, and had no
+    // e2e race coverage at all. muSrs.srsj already has a guide with multiple sections
+    // (reused from e2e/guides-ordering.spec.ts).
+    await installFakeProviders(page, "pending", MUSRS_TEXT);
+    await page.goto("/");
+    await page.getByTestId("mode-guides").click();
+    await page.getByTestId("source-dropbox").click();
+    await page.getByRole("button", { name: /dropbox-sample\.srsj/ }).click();
+
+    await expect(page.getByTestId("guides-shell")).toBeVisible();
+    await page.getByTestId("guides-guide-item").first().click();
+    await expect(page.getByTestId("guides-section-item").first()).toBeVisible({ timeout: 5000 });
+
+    const newGuideBtn = page.getByTestId("guides-new-guide");
+    const downBtn = page.getByTestId("guides-section-down").first();
+    const removeBtn = page.getByTestId("guides-section-remove").first();
+    await expect(newGuideBtn).toBeEnabled();
+    await expect(downBtn).toBeEnabled();
+    await expect(removeBtn).toBeEnabled();
+
+    await page.getByTestId("save-document").click();
+    await expect.poll(() => page.evaluate(
+      // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+      () => Boolean((window as any).__PENDING_WRITE_STARTED__)
+    )).toBe(true);
+
+    await expect(newGuideBtn).toBeDisabled();
+    await expect(downBtn).toBeDisabled();
+    await expect(removeBtn).toBeDisabled();
+
+    await page.evaluate(() => {
+      // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+      (window as any).__RESOLVE_PENDING_WRITE__();
+    });
+    await expect(page.getByTestId("save-status")).toContainText("Saved.");
+    await expect(newGuideBtn).toBeEnabled();
+    await expect(downBtn).toBeEnabled();
+    await expect(removeBtn).toBeEnabled();
   });
 
   test("provider cancellation leaves the chooser open without an error", async ({ page }) => {

@@ -81,7 +81,17 @@ a copy.
 
 The governance editor autosaves the working copy to `localStorage` after every successful write
 (create, update, delete, lifecycle transition, relation, tag update). A "Saved" flash appears
-briefly in the topbar after each autosave.
+briefly in the topbar after each autosave. If the local write itself fails (quota exceeded,
+private-browsing block), the topbar shows a distinct, non-dismissing "Local recovery copy could
+not be saved" message instead of a false "Saved" — this does not affect the WASM repository or a
+subsequent provider save, only the local recovery copy.
+
+While a provider save (cloud/git) is in flight, every control that would mutate the in-place
+repository — New, Edit, Delete, lifecycle transitions, add/remove tag, relation create/delete, and
+(in Guides mode) section reorder/removal and "+ New guide" — is disabled, so a mutation can never
+race a pending write. `DocumentMutationTracker` still independently guards against a stale save
+completing after a later mutation (e.g. from an external MCP writer) by comparing epoch/revision;
+a stale save reports "Newer changes remain unsaved" and the recovery copy is retained.
 
 On reload, if a cached session is found the app goes directly to the governance file-picker
 with a **Restore session** banner. Clicking **Restore session** reloads the in-memory repository

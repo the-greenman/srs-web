@@ -91,8 +91,12 @@
     documentDirty?: boolean;
     /** Changes after mount invalidate derived browser projections of the repository. */
     documentRevision?: number;
-    /** Report a successful in-place repository mutation to the App shell. */
-    onDocumentMutation?: () => void;
+    /**
+     * Report a successful in-place repository mutation to the App shell.
+     * Returns whether the local recovery-copy write succeeded (srs-web#312) —
+     * `persistWorkingCopy()` uses this to avoid showing "Saved" on a failed write.
+     */
+    onDocumentMutation?: () => boolean;
     onOpenAnother: () => void;
   }
   let {
@@ -106,7 +110,7 @@
     saveMessage = null,
     documentDirty = false,
     documentRevision = 0,
-    onDocumentMutation = () => {},
+    onDocumentMutation = () => true,
     onOpenAnother,
   }: Props = $props();
 
@@ -251,7 +255,7 @@
   let decisionExportError = $state<string | null>(null);
 
   /** Topbar autosave indicator state. */
-  let saveIndicator = $state<"idle" | "saved">("idle");
+  let saveIndicator = $state<"idle" | "saved" | "local-save-failed">("idle");
   let saveIndicatorTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 
   // ---------------------------------------------------------------------------
@@ -474,15 +478,26 @@
     containerSchemas = result;
   }
 
+  /**
+   * srs-web#312: `onDocumentMutation()` returns whether the local recovery-copy
+   * write succeeded. A failed write (quota exceeded, private-browsing block) must
+   * not show "Saved" — it shows a distinct failure indicator instead, so a lost
+   * local backup is visible rather than silently swallowed.
+   */
   function persistWorkingCopy(): void {
     try {
-      onDocumentMutation();
+      const savedLocally = onDocumentMutation();
       if (saveIndicatorTimer !== null) clearTimeout(saveIndicatorTimer);
-      saveIndicator = "saved";
-      saveIndicatorTimer = setTimeout(() => {
-        saveIndicator = "idle";
-        saveIndicatorTimer = null;
-      }, 2000);
+      if (savedLocally) {
+        saveIndicator = "saved";
+        saveIndicatorTimer = setTimeout(() => {
+          saveIndicator = "idle";
+          saveIndicatorTimer = null;
+        }, 2000);
+      } else {
+        saveIndicator = "local-save-failed";
+        console.warn("persistWorkingCopy: local recovery-copy write failed");
+      }
     } catch (e: unknown) {
       console.warn("persistWorkingCopy failed:", e);
     }
@@ -1022,6 +1037,13 @@
             role="status"
             aria-live="polite"
           >Saved</span>
+          {#if saveIndicator === "local-save-failed"}
+            <span
+              class="topbar__save-message topbar__save-message--error"
+              data-testid="local-save-failed"
+              role="alert"
+            >Local recovery copy could not be saved</span>
+          {/if}
           {#if onSave}
             <button
               class="topbar__export"
@@ -1162,8 +1184,8 @@
             </div>
           {/if}
           <div class="inspector__record-actions">
-            <button class="inspector__btn" onclick={handleEditRecord}>Edit</button>
-            <button class="inspector__btn inspector__btn--danger" onclick={handleDeleteRecord}>Delete</button>
+            <button class="inspector__btn" onclick={handleEditRecord} disabled={saving}>Edit</button>
+            <button class="inspector__btn inspector__btn--danger" onclick={handleDeleteRecord} disabled={saving}>Delete</button>
           </div>
           {#if allowedTransitions && allowedTransitions.transitions.length > 0}
             <div class="inspector__transitions">
@@ -1172,6 +1194,7 @@
                   class="inspector__btn inspector__btn--transition"
                   class:inspector__btn--confirm={pendingFinalTransition === transition.name}
                   onclick={() => handleTransitionClick(transition)}
+                  disabled={saving}
                 >
                   {pendingFinalTransition === transition.name
                     ? `Confirm → ${transition.name}?`
@@ -1212,6 +1235,7 @@
                     data-testid="delete-relation-btn"
                     aria-label="Delete relation"
                     onclick={() => handleDeleteRelation(rel.relationId)}
+                    disabled={saving}
                   >✕</button>
                 </li>
               {/each}
@@ -1221,6 +1245,7 @@
             class="inspector__btn"
             data-testid="add-relation-btn"
             onclick={() => { showLinkPicker = true; linkError = null; }}
+            disabled={saving}
           >Link to decision</button>
         </InspectorSection>
       {/if}
@@ -1229,7 +1254,10 @@
         <InspectorSection title="Tags" aside={selectedRecord.tags?.length ? String(selectedRecord.tags.length) : ""}>
           <div class="inspector__tags" data-testid="inspector-tags">
             {#each selectedRecord.tags ?? [] as tag (tag)}
-              <TagChip label={tag} onRemove={() => handleUpdateTags((selectedRecord?.tags ?? []).filter((t) => t !== tag))} />
+              <TagChip
+                label={tag}
+                onRemove={saving ? undefined : () => handleUpdateTags((selectedRecord?.tags ?? []).filter((t) => t !== tag))}
+              />
             {/each}
           </div>
           <div class="inspector__tag-add">
@@ -1239,13 +1267,15 @@
               data-testid="tag-input"
               placeholder="Add tag…"
               bind:value={tagInput}
-              onkeydown={(e) => { if (e.key === "Enter") handleAddTag(); }}
+              onkeydown={(e) => { if (e.key === "Enter" && !saving) handleAddTag(); }}
+              disabled={saving}
             />
             <button
               type="button"
               class="inspector__btn"
               data-testid="tag-add-btn"
               onclick={handleAddTag}
+              disabled={saving}
             >Add</button>
           </div>
         </InspectorSection>
@@ -1423,6 +1453,11 @@
     font-size: 0.7rem;
     opacity: 0.75;
     max-width: 22rem;
+  }
+
+  .topbar__save-message--error {
+    color: var(--error, #cc0000);
+    opacity: 1;
   }
 
   /* ---- Inspector KV ---- */

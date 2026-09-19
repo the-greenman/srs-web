@@ -783,14 +783,14 @@
                           class="guides-icon-btn"
                           data-testid="guides-section-up"
                           title="Move up"
-                          disabled={index === 0}
+                          disabled={saving || index === 0}
                           onclick={() => moveSection(index, -1)}
                         >↑</button>
                         <button
                           class="guides-icon-btn"
                           data-testid="guides-section-down"
                           title="Move down"
-                          disabled={index === orderedSections.length - 1}
+                          disabled={saving || index === orderedSections.length - 1}
                           onclick={() => moveSection(index, 1)}
                         >↓</button>
                         <button
@@ -798,6 +798,7 @@
                           data-testid="guides-section-remove"
                           title="Remove section"
                           onclick={() => removeSection(section)}
+                          disabled={saving}
                         >✕</button>
                       </div>
                     </li>

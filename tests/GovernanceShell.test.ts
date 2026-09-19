@@ -302,3 +302,186 @@ describe("GovernanceShell — Repository nav group", () => {
     expect(item).toBeDefined();
   });
 });
+
+// -----------------------------------------------------------------------------
+// srs-web#312 — document-mutation save-state gaps from PR #311
+// -----------------------------------------------------------------------------
+
+describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)", () => {
+  const createdRecord = {
+    instanceId: "rec-001",
+    typeId: "com.test/article",
+    typeVersion: 1,
+    typeNamespace: "com.test",
+    typeName: "Article",
+    fieldValues: {},
+  };
+
+  function repoWithCreatableRecord(overrides: Partial<SrsRepository> = {}): SrsRepository {
+    return makeBaseRepo({
+      create_record: vi.fn(() => createdRecord),
+      add_container_member: vi.fn(() => []),
+      ...overrides,
+    });
+  }
+
+  /** Create a record via the "New" flow — this also drives persistWorkingCopy(). */
+  async function createRecordViaNewFlow(): Promise<void> {
+    const newBtn = await screen.findByRole("button", { name: /New Article/i });
+    fireEvent.click(newBtn);
+    const formContainer = await screen.findByTestId("record-form");
+    const form = formContainer.querySelector("form");
+    expect(form).not.toBeNull();
+    fireEvent.submit(form!);
+  }
+
+  it("shows the local-save-failed message, not 'Saved', when onDocumentMutation returns false", async () => {
+    const onDocumentMutation = vi.fn(() => false);
+    const repo = repoWithCreatableRecord();
+    render(GovernanceShell, {
+      props: {
+        repo,
+        repoName: "test.srsj",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+        onDocumentMutation,
+      },
+    });
+    await createRecordViaNewFlow();
+
+    expect(onDocumentMutation).toHaveBeenCalled();
+    const failureMessage = await screen.findByTestId("local-save-failed");
+    expect(failureMessage.textContent).toContain("could not be saved");
+
+    const savedIndicator = screen.getByText("Saved");
+    expect(savedIndicator.classList.contains("topbar__save-indicator--visible")).toBe(false);
+  });
+
+  it("shows 'Saved' and no failure message when onDocumentMutation returns true", async () => {
+    const onDocumentMutation = vi.fn(() => true);
+    const repo = repoWithCreatableRecord();
+    render(GovernanceShell, {
+      props: {
+        repo,
+        repoName: "test.srsj",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+        onDocumentMutation,
+      },
+    });
+    await createRecordViaNewFlow();
+
+    expect(onDocumentMutation).toHaveBeenCalled();
+    const savedIndicator = await screen.findByText("Saved");
+    expect(savedIndicator.classList.contains("topbar__save-indicator--visible")).toBe(true);
+    expect(screen.queryByTestId("local-save-failed")).toBeNull();
+  });
+
+  it("defaults onDocumentMutation to a no-op success so callers that don't care can omit it", async () => {
+    const repo = repoWithCreatableRecord();
+    render(GovernanceShell, {
+      props: {
+        repo,
+        repoName: "test.srsj",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+        // onDocumentMutation intentionally omitted
+      },
+    });
+    await createRecordViaNewFlow();
+    const savedIndicator = await screen.findByText("Saved");
+    expect(savedIndicator.classList.contains("topbar__save-indicator--visible")).toBe(true);
+  });
+});
+
+describe("GovernanceShell — saving-state mutation guard (srs-web#312 bug 2)", () => {
+  const createdRecord = {
+    instanceId: "rec-001",
+    typeId: "com.test/article",
+    typeVersion: 1,
+    typeNamespace: "com.test",
+    typeName: "Article",
+    fieldValues: {},
+  };
+
+  function repoWithSelectedRecordSupport(overrides: Partial<SrsRepository> = {}): SrsRepository {
+    return makeBaseRepo({
+      create_record: vi.fn(() => createdRecord),
+      add_container_member: vi.fn(() => []),
+      // The fake create_record doesn't feed back into list_records/get_container, so
+      // return the created record as an existing member directly — loadContainerNav()
+      // re-reads both right after creation and selectedRecord needs to resolve for
+      // Edit/Delete/transition buttons to render. list_records returns the wrapped
+      // RecordSummary shape ({ instanceId, displayLabel, record }), matching the real
+      // WASM contract (srs-rust#293) rather than a bare Record.
+      list_records: () => [
+        { instanceId: createdRecord.instanceId, displayLabel: "Untitled", record: createdRecord },
+      ],
+      get_container: () => ({
+        containerId: "c-articles",
+        title: "Articles",
+        memberInstanceIds: ["rec-001"],
+        rootInstanceIds: [],
+      }),
+      resolve_container_view: () => ({
+        containerId: "c-articles",
+        members: [],
+        columns: [],
+        excludeLifecycleStates: [],
+        diagnostics: [],
+      }),
+      get_allowed_lifecycle_transitions: () => ({
+        currentState: "draft",
+        isImmutable: false,
+        transitions: [{ name: "propose", to: "proposed", toIsFinal: false }],
+      }),
+      ...overrides,
+    });
+  }
+
+  async function createAndSelectRecord(): Promise<void> {
+    const newBtn = await screen.findByRole("button", { name: /New Article/i });
+    fireEvent.click(newBtn);
+    const formContainer = await screen.findByTestId("record-form");
+    const form = formContainer.querySelector("form");
+    expect(form).not.toBeNull();
+    fireEvent.submit(form!);
+  }
+
+  it("disables Edit, Delete, and lifecycle-transition buttons while saving is true, and re-enables them once false", async () => {
+    const repo = repoWithSelectedRecordSupport();
+    const { rerender } = render(GovernanceShell, {
+      props: {
+        repo,
+        repoName: "test.srsj",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+        saving: false,
+      },
+    });
+    await createAndSelectRecord();
+
+    const editBtn = (await screen.findByRole("button", { name: "Edit" })) as HTMLButtonElement;
+    const deleteBtn = (await screen.findByRole("button", { name: "Delete" })) as HTMLButtonElement;
+    const transitionBtn = (await screen.findByRole("button", {
+      name: /→ propose/,
+    })) as HTMLButtonElement;
+    expect(editBtn.disabled).toBe(false);
+    expect(deleteBtn.disabled).toBe(false);
+    expect(transitionBtn.disabled).toBe(false);
+
+    await rerender({ saving: true });
+    expect(editBtn.disabled).toBe(true);
+    expect(deleteBtn.disabled).toBe(true);
+    expect(transitionBtn.disabled).toBe(true);
+
+    await rerender({ saving: false });
+    expect(editBtn.disabled).toBe(false);
+    expect(deleteBtn.disabled).toBe(false);
+    expect(transitionBtn.disabled).toBe(false);
+  });
+});
