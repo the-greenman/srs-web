@@ -78,6 +78,8 @@
     onExportSrsj?: () => void;
     /** Write back to the opened cloud/git document. Undefined for read-only handles. */
     onSave?: () => Promise<void>;
+    /** Why there is no Save, shown in its place so a missing button is never silent. */
+    readOnlyNote?: string;
     saving?: boolean;
     saveMessage?: string | null;
     /** App-owned dirty state, shared with non-UI repository writers. */
@@ -95,6 +97,7 @@
     onExport,
     onExportSrsj,
     onSave,
+    readOnlyNote,
     saving = false,
     saveMessage = null,
     documentDirty = false,
@@ -628,6 +631,8 @@
                 onclick={onSave}
                 disabled={saving}
               >{saving ? "Saving…" : "Save"}</Button>
+            {:else if readOnlyNote}
+              <span class="guides-save-message" data-testid="read-only-note">{readOnlyNote}</span>
             {/if}
             {#if documentDirty}
               <span class="guides-save-message" data-testid="document-dirty-status">Unsaved changes</span>

@@ -88,6 +88,8 @@ describe("LocalTreeHandle", () => {
     expect(handle.kind).toBe("tree");
     expect(handle.provider).toBe("local");
     expect(handle.capabilities).toEqual({ read: true, write: true });
+    // Writable, so there is nothing to explain.
+    expect(handle.readOnlyReason).toBeUndefined();
     await expect(handle.read()).rejects.toThrow(/readTree/);
     await expect(handle.write()).rejects.toThrow(/commitTree/);
   });
@@ -95,6 +97,8 @@ describe("LocalTreeHandle", () => {
   it("is read-only without a directory, and says how to get changes out", async () => {
     const handle = new LocalTreeHandle("id", "repo", { "manifest.json": bytes("{}") });
     expect(handle.capabilities.write).toBe(false);
+    // The missing Save button must be explained somewhere, not just absent.
+    expect(handle.readOnlyReason).toMatch(/Export/);
     await expect(handle.commitTree({})).rejects.toThrow(/Export/);
   });
 
@@ -203,6 +207,7 @@ describe("treeFromDirectoryInput", () => {
   it("is read-only — the fallback path has no write side", async () => {
     const handle = await treeFromDirectoryInput([fileAt("my-repo/manifest.json", "{}")]);
     expect(handle.capabilities.write).toBe(false);
+    expect(handle.readOnlyReason).toMatch(/can't save to a folder/);
   });
 
   it("refuses a folder that is not an SRS repository", async () => {

@@ -559,6 +559,9 @@
     onExport={handleExportArchive}
     onExportSrsj={handleExport}
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
+    readOnlyNote={activeDocument && !activeDocument.capabilities.write
+      ? activeDocument.readOnlyReason
+      : undefined}
     saving={saving}
     saveMessage={saveMessage}
     documentDirty={documentDirty}
@@ -588,6 +591,9 @@
     onExport={handleExportArchive}
     onExportSrsj={handleExport}
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
+    readOnlyNote={activeDocument && !activeDocument.capabilities.write
+      ? activeDocument.readOnlyReason
+      : undefined}
     saving={saving}
     saveMessage={saveMessage}
     documentDirty={documentDirty}

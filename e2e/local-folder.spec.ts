@@ -128,11 +128,19 @@ test.describe("Open a folder from this device", () => {
     await expect(page.locator('[data-testid="catalog-diagnostics"]')).toHaveCount(0);
   });
 
-  test("a folder opened read-only offers no Save", async ({ page }) => {
+  test("a folder opened read-only says why, where the Save button would be", async ({ page }) => {
     await page.getByTestId("source-local-folder-input").setInputFiles(EXPLODED_DIR);
     await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 15000 });
 
     await expect(page.getByRole("button", { name: /^Save$/ })).toHaveCount(0);
+    // srs-web#317: the button being absent is correct, but it must not be silent.
+    const note = page.getByTestId("read-only-note");
+    await expect(note).toBeVisible();
+    await expect(note).toContainText("Export");
+  });
+
+  test("the fallback control is labelled read-only before a folder is chosen", async ({ page }) => {
+    await expect(page.getByText("Folder from this device (read-only)")).toBeVisible();
   });
 
   test("rejects a folder that is not an SRS repository", async ({ page }) => {
@@ -155,6 +163,11 @@ test.describe("Save a folder back to disk (File System Access)", () => {
 
   test("offers the picker button when the File System Access API is present", async ({ page }) => {
     await expect(page.getByTestId("source-local-folder-input")).toHaveCount(0);
+  });
+
+  test("a writable folder shows Save and no read-only note", async ({ page }) => {
+    await expect(page.getByTestId("save-document")).toBeVisible();
+    await expect(page.getByTestId("read-only-note")).toHaveCount(0);
   });
 
   test("saving an unmodified tree writes nothing — load_tree/export_tree round-trips byte-identically", async ({

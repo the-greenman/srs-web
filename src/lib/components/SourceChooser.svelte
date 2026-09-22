@@ -283,8 +283,12 @@
       onclick={handleLocalFolder}
     >{busy === "local" ? "Opening…" : "Folder from this device"}</Button>
   {:else}
-    <label class="source-chooser__local" class:is-busy={busy === "local"}>
-      <span>{busy === "local" ? "Opening…" : "Folder from this device"}</span>
+    <label
+      class="source-chooser__local"
+      class:is-busy={busy === "local"}
+      title="This browser cannot write back to a folder. Chrome and Edge can save in place; here, use Export to get your changes out."
+    >
+      <span>{busy === "local" ? "Opening…" : "Folder from this device (read-only)"}</span>
       <input
         id="srs-folder"
         type="file"

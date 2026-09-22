@@ -8,6 +8,8 @@ export class LocalDocumentHandle implements DocumentHandle {
   readonly name: string;
   readonly revision = null;
   readonly capabilities = { read: true, write: false } as const;
+  readonly readOnlyReason =
+    "Read-only — files opened from this device can't be overwritten; use Export";
   readonly kind: "text" | "bytes";
 
   constructor(private readonly file: File) {
@@ -144,6 +146,7 @@ export class LocalTreeHandle implements DocumentHandle, RepoTreeAware {
   readonly kind = "tree" as const;
   readonly revision = null;
   readonly capabilities: DocumentCapabilities;
+  readonly readOnlyReason?: string;
 
   constructor(
     readonly id: string,
@@ -153,6 +156,12 @@ export class LocalTreeHandle implements DocumentHandle, RepoTreeAware {
     private readonly dir?: FileSystemDirectoryHandle
   ) {
     this.capabilities = { read: true, write: dir !== undefined };
+    // Without a directory handle there is no write-back channel at all — a file input
+    // yields File objects and nothing to write through. Say so rather than silently
+    // dropping the Save button.
+    this.readOnlyReason = dir
+      ? undefined
+      : "Read-only — this browser can't save to a folder; use Export";
   }
 
   readTree(): Promise<Record<string, Uint8Array>> {
