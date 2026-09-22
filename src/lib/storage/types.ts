@@ -25,6 +25,12 @@ export interface DocumentHandle {
    * are not meaningful on a "tree" handle.
    */
   readonly kind: "text" | "bytes" | "tree";
+  /**
+   * Why this document cannot be saved back to where it came from. Set only when
+   * `capabilities.write` is false, and short enough to render inline — the UI shows it
+   * where the Save button would otherwise be, so a missing Save is never silent.
+   */
+  readonly readOnlyReason?: string;
   read(): Promise<string>;
   write(content: string, expectedRevision?: string | null): Promise<WriteResult>;
   /** Read the document as raw bytes. Available on all cloud handles; used for .srs archives. */
