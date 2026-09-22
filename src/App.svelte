@@ -329,7 +329,14 @@
     saving = true;
     saveMessage = null;
     try {
-      if (handle.kind === "bytes" && handle.writeBytes) {
+      if (handle.kind === "tree") {
+        // A tree handle that is not GitBranchAware is an on-device folder
+        // (srs-web#248) — write it straight back to disk. This branch must come
+        // first: the provider fan-out below ends in GitHub, so a "local" handle
+        // falling through would try to create a file on GitHub.
+        await (handle as DocumentHandle & RepoTreeAware).commitTree(exportTree(repository));
+        saveMessage = completeDocumentSave(saveSnapshot) ? "Saved." : "Saved. Newer changes remain unsaved.";
+      } else if (handle.kind === "bytes" && handle.writeBytes) {
         await handle.writeBytes(exportArchive(repository), handle.revision);
         saveMessage = completeDocumentSave(saveSnapshot) ? "Saved." : "Saved. Newer changes remain unsaved.";
       } else {

@@ -54,9 +54,15 @@ export interface GitBranchAware {
  */
 export interface RepoTreeAware {
   readTree(): Promise<Record<string, Uint8Array>>;
+  /**
+   * `opts` is optional because a tree with no git host behind it (a local
+   * directory, srs-web#248) has no branch or commit message to be given. Every
+   * handle that *does* need them is also `GitBranchAware`, so it is reached
+   * through the git save dialog, which always supplies them.
+   */
   commitTree(
     files: Record<string, Uint8Array>,
-    opts: { branch: string; createFromCurrent?: boolean; message?: string }
+    opts?: { branch: string; createFromCurrent?: boolean; message?: string }
   ): Promise<WriteResult>;
 }
 
