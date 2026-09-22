@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { render, fireEvent } from "@testing-library/svelte";
-import { describe, it, expect } from "vitest";
+import { fireEvent, render } from "@testing-library/svelte";
+import { describe, expect, it } from "vitest";
 import Field from "../src/lib/components/Field.svelte";
 
 // srs-web#176 — the shared Field frame surfaces a field's description inline and
@@ -9,10 +9,14 @@ import Field from "../src/lib/components/Field.svelte";
 describe("Field help text and instructions toggle", () => {
   it("shows the description as inline help", () => {
     const { container } = render(Field, {
-      props: { label: "Rationale", description: "Why this option over the alternatives.", id: "f1" },
+      props: {
+        label: "Rationale",
+        description: "Why this option over the alternatives.",
+        id: "f1",
+      },
     });
     expect(container.querySelector(".field__help")?.textContent).toBe(
-      "Why this option over the alternatives.",
+      "Why this option over the alternatives."
     );
   });
 

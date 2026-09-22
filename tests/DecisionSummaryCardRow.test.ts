@@ -3,7 +3,7 @@
 // used in the Decision Log. Distinct from tests/DecisionSummaryCard.test.ts which tests
 // the src/rendering/DecisionSummaryCard.svelte full-card renderer.
 import { render } from "@testing-library/svelte";
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import DecisionSummaryCardRow from "../src/lib/components/DecisionSummaryCard.svelte";
 import type { SrsRecord } from "../src/lib/srs-client.js";
 

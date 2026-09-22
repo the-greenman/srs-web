@@ -6,14 +6,18 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { BlueprintSummary, DocumentViewSummary, ExactTypeRef } from "../src/lib/srs-client.js";
 import { documentViewsForBlueprint, findBlueprint } from "../src/lib/discovery.js";
+import type { BlueprintSummary, DocumentViewSummary, ExactTypeRef } from "../src/lib/srs-client.js";
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
 
-function bp(namespace: string, name: string, overrides: Partial<BlueprintSummary> = {}): BlueprintSummary {
+function bp(
+  namespace: string,
+  name: string,
+  overrides: Partial<BlueprintSummary> = {}
+): BlueprintSummary {
   return {
     id: `${namespace}/${name}`,
     namespace,

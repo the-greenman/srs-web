@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { render, fireEvent } from "@testing-library/svelte";
-import { describe, it, expect, vi } from "vitest";
+import { fireEvent, render } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
 import SectionForm from "../src/lib/guides/SectionForm.svelte";
 import type { CompositeFormDef } from "../src/lib/guides/blueprint-utils.js";
 import type { CreateRecordInput, SrsRecord } from "../src/lib/srs-client.js";
@@ -58,7 +58,9 @@ describe("SectionForm table grid editor (srs-web#266)", () => {
 
     await fireEvent.input(headers[0], { target: { value: "First" } });
 
-    const headersAfter = container.querySelectorAll<HTMLTextAreaElement>('[data-testid="te-header"]');
+    const headersAfter = container.querySelectorAll<HTMLTextAreaElement>(
+      '[data-testid="te-header"]'
+    );
     expect(headersAfter.length).toBe(2);
 
     const rows = container.querySelectorAll<HTMLElement>('[data-testid="te-row"]');
@@ -83,7 +85,9 @@ describe("SectionForm table grid editor (srs-web#266)", () => {
     const headers = container.querySelectorAll<HTMLTextAreaElement>('[data-testid="te-header"]');
     await fireEvent.input(headers[1], { target: { value: "Second" } });
 
-    const headersAfter = container.querySelectorAll<HTMLTextAreaElement>('[data-testid="te-header"]');
+    const headersAfter = container.querySelectorAll<HTMLTextAreaElement>(
+      '[data-testid="te-header"]'
+    );
     expect(headersAfter.length).toBe(2);
   });
 
@@ -94,7 +98,9 @@ describe("SectionForm table grid editor (srs-web#266)", () => {
     const { container } = render(SectionForm, {
       props: {
         label: "Table Section",
-        fields: [{ label: "Heading", valueType: "string" as const, required: true, name: "heading" }],
+        fields: [
+          { label: "Heading", valueType: "string" as const, required: true, name: "heading" },
+        ],
         composites: [tableComposite],
         record,
         onSave,

@@ -582,7 +582,10 @@ describe("GitHub storage adapter", () => {
   it("completeGitHubOAuthCallback forwards refresh_token to the opener", async () => {
     const postMessageMock = vi.fn();
     vi.stubGlobal("window", {
-      location: { href: "https://app.test/?code=code-abc&state=state-xyz", origin: "https://app.test" },
+      location: {
+        href: "https://app.test/?code=code-abc&state=state-xyz",
+        origin: "https://app.test",
+      },
       opener: { postMessage: postMessageMock },
       close: vi.fn(),
     });
@@ -661,9 +664,11 @@ describe("GitHub storage adapter", () => {
     it("falls back to popup when the refresh endpoint returns an error", async () => {
       vi.stubGlobal(
         "fetch",
-        vi.fn().mockResolvedValue(
-          new Response(JSON.stringify({ error: "bad_refresh_token" }), { status: 400 })
-        )
+        vi
+          .fn()
+          .mockResolvedValue(
+            new Response(JSON.stringify({ error: "bad_refresh_token" }), { status: 400 })
+          )
       );
       vi.stubGlobal("sessionStorage", {
         getItem: vi.fn().mockReturnValue(null),
@@ -713,10 +718,7 @@ describe("GitHub storage adapter", () => {
     });
 
     it("clears the refresh token and falls back to popup when the 200 response is not JSON", async () => {
-      vi.stubGlobal(
-        "fetch",
-        vi.fn().mockResolvedValue(new Response("not-json", { status: 200 }))
-      );
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("not-json", { status: 200 })));
       vi.stubGlobal("sessionStorage", {
         getItem: vi.fn().mockReturnValue(null),
         setItem: vi.fn(),

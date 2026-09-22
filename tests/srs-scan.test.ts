@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GitHubProvider } from "../src/lib/storage/github.js";
-import {
-  AUTO_MAX_LIST_REQUESTS,
-  AUTO_MAX_ROOT_ENTRIES,
-} from "../src/lib/storage/scan-config.js";
+import { AUTO_MAX_LIST_REQUESTS, AUTO_MAX_ROOT_ENTRIES } from "../src/lib/storage/scan-config.js";
 import { genericScanForSrs } from "../src/lib/storage/srs-scan.js";
 import type { StorageEntry } from "../src/lib/storage/types.js";
 
@@ -92,9 +89,7 @@ describe("genericScanForSrs", () => {
   });
 
   it("auto mode skips a too-large root without any list calls", async () => {
-    const bigRoot = Array.from({ length: AUTO_MAX_ROOT_ENTRIES + 1 }, (_, i) =>
-      folder(`/f${i}`)
-    );
+    const bigRoot = Array.from({ length: AUTO_MAX_ROOT_ENTRIES + 1 }, (_, i) => folder(`/f${i}`));
     const provider = fakeProvider({ "": bigRoot });
     const outcome = await genericScanForSrs(provider, "", "auto", bigRoot);
     expect(outcome).toMatchObject({ status: "skipped", reason: "too-large" });
@@ -179,7 +174,11 @@ describe("GitHubProvider.scanForSrs", () => {
     // Repository entries route through openTree via the standard path grammar,
     // and keep a clean base name for the handle.
     const sub = outcome.entries.find((entry) => entry.displayPath === "sub");
-    expect(sub).toMatchObject({ path: "octo/gov:main:sub", id: "octo/gov:main:sub#repo", name: "sub" });
+    expect(sub).toMatchObject({
+      path: "octo/gov:main:sub",
+      id: "octo/gov:main:sub#repo",
+      name: "sub",
+    });
     const nested = outcome.entries.find((entry) => entry.displayPath === "nested/repo2");
     expect(nested).toMatchObject({ name: "repo2" });
   });

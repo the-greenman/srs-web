@@ -263,11 +263,17 @@ async function readBlobsGraphQL(
       }
       const repository = payload.data?.repository;
       if (!repository) continue;
-      batch.forEach((sha, i) => {
+      for (const [i, sha] of batch.entries()) {
         const blob = repository[`b${i}`];
-        if (!blob || blob.isTruncated || typeof blob.text !== "string") return;
-        results.set(sha, encoder.encode(blob.text));
-      });
+        if (!blob || blob.isTruncated || typeof blob.text !== "string") continue;
+        const bytes = encoder.encode(blob.text);
+        // GitHub calls a blob binary only when it finds a NUL in the first 8000 bytes, so a
+        // latin-1 file with high bytes and no NUL comes back as text with U+FFFD in place of
+        // the bytes it could not decode — re-encoding those yields different bytes. Verify
+        // against the sha we already keyed the query by; a mismatch falls to the REST path.
+        if ((await gitBlobSha(bytes)) !== sha) continue;
+        results.set(sha, bytes);
+      }
     }
   }
   await Promise.all(Array.from({ length: Math.min(concurrency, batches.length) }, () => worker()));

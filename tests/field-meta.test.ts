@@ -8,10 +8,7 @@ import { describe, expect, it } from "vitest";
 import { buildFieldMetaMap } from "../src/lib/governance/field-meta.js";
 import type { TypeFormDef } from "../src/lib/governance/types.js";
 
-function makeSchema(
-  typeName: string,
-  fields: Array<{ name: string; label: string }>,
-): TypeFormDef {
+function makeSchema(typeName: string, fields: Array<{ name: string; label: string }>): TypeFormDef {
   return {
     typeId: `type-${typeName}`,
     typeVersion: 1,

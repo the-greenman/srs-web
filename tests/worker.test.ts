@@ -68,9 +68,7 @@ describe("POST /api/oauth/github/token refresh token passthrough", () => {
   it("omits refresh_token when upstream does not return it", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        upstreamJson({ access_token: "gha_access", expires_in: null })
-      )
+      vi.fn().mockResolvedValue(upstreamJson({ access_token: "gha_access", expires_in: null }))
     );
 
     const req = makeRequest("/api/oauth/github/token", {

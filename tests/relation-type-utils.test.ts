@@ -91,10 +91,7 @@ describe("parseRelationTypesFromSrsj", () => {
     const raw = {
       data: {
         "package/package.json": {
-          relationTypes: [
-            "relation-types/precedes.json",
-            "relation-types/missing.json",
-          ],
+          relationTypes: ["relation-types/precedes.json", "relation-types/missing.json"],
         },
         "package/relation-types/precedes.json": { key: "precedes", label: "Precedes" },
         // "package/relation-types/missing.json" is absent

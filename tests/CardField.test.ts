@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { render, fireEvent } from "@testing-library/svelte";
-import { describe, it, expect } from "vitest";
+import { fireEvent, render } from "@testing-library/svelte";
+import { describe, expect, it } from "vitest";
 import CardField from "../src/lib/components/CardField.svelte";
 
 // srs-web#211 — the read-only CardField frame mirrors #176: a field's description
@@ -20,7 +20,7 @@ describe("CardField field help", () => {
       props: { label: "Rationale", description: "Why this option over the alternatives." },
     });
     expect(container.querySelector(".card__field-description")?.textContent).toBe(
-      "Why this option over the alternatives.",
+      "Why this option over the alternatives."
     );
   });
 
@@ -68,6 +68,8 @@ describe("CardField field help", () => {
       props: { label: "Rationale", empty: true, description: "Why this option." },
     });
     expect(container.querySelector(".card__field-value--empty")?.textContent).toBe("Not recorded");
-    expect(container.querySelector(".card__field-description")?.textContent).toBe("Why this option.");
+    expect(container.querySelector(".card__field-description")?.textContent).toBe(
+      "Why this option."
+    );
   });
 });
