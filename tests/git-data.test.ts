@@ -184,6 +184,7 @@ describe("git-data: readBlob / readBlobs", () => {
   });
 
   it("reads many blobs with bounded concurrency and returns all of them", async () => {
+    // The GraphQL response carries no `data.repository`, so every sha falls through to REST.
     const fetchMock = vi.fn().mockImplementation(() =>
       Promise.resolve(
         jsonResponse({
@@ -196,7 +197,68 @@ describe("git-data: readBlob / readBlobs", () => {
     const shas = Array.from({ length: 10 }, (_, i) => `sha-${i}`);
     const result = await readBlobs(rootLocation, "token", shas, 3);
     expect(result.size).toBe(10);
-    expect(fetchMock).toHaveBeenCalledTimes(10);
+    expect(fetchMock).toHaveBeenCalledTimes(11); // 1 GraphQL batch attempt + 10 REST reads
+  });
+
+  // A 4,000-file repo was 4,000 REST calls: minutes of latency, and enough requests to
+  // exhaust the hourly core limit so the next load failed outright.
+  it("batches over GraphQL and makes no REST blob call when every blob comes back", async () => {
+    const shas = Array.from({ length: 400 }, (_, i) => `sha-${i}`);
+    const fetchMock = vi.fn().mockImplementation((url: string, init: RequestInit) => {
+      expect(url).toBe("https://api.github.com/graphql");
+      const query = JSON.parse(init.body as string).query as string;
+      const aliases = query.match(/b\d+:object/g) ?? [];
+      const repository: Record<string, { text: string; isTruncated: boolean }> = {};
+      aliases.forEach((_, i) => {
+        repository[`b${i}`] = { text: "x", isTruncated: false };
+      });
+      return Promise.resolve(jsonResponse({ data: { repository } }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await readBlobs(rootLocation, "token", shas);
+    expect(result.size).toBe(400);
+    expect(new TextDecoder().decode(result.get("sha-0"))).toBe("x");
+    expect(fetchMock).toHaveBeenCalledTimes(2); // 300 + 100, not 400
+  });
+
+  it("falls back to REST for blobs GraphQL cannot return as text (binary, truncated)", async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith("/graphql")) {
+        return Promise.resolve(
+          jsonResponse({
+            data: {
+              repository: {
+                b0: { text: "ok", isTruncated: false },
+                b1: { text: null, isTruncated: false }, // binary
+                b2: { text: "clipped", isTruncated: true }, // over GitHub's size cap
+              },
+            },
+          })
+        );
+      }
+      return Promise.resolve(jsonResponse({ content: btoa("rest"), encoding: "base64" }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await readBlobs(rootLocation, "token", ["sha-0", "sha-1", "sha-2"]);
+    expect(result.size).toBe(3);
+    expect(new TextDecoder().decode(result.get("sha-0"))).toBe("ok");
+    expect(new TextDecoder().decode(result.get("sha-1"))).toBe("rest");
+    expect(new TextDecoder().decode(result.get("sha-2"))).toBe("rest");
+    expect(fetchMock).toHaveBeenCalledTimes(3); // 1 GraphQL + 2 REST
+  });
+
+  it("skips GraphQL entirely on a host that has no GraphQL surface", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() =>
+        Promise.resolve(jsonResponse({ content: btoa("x"), encoding: "base64" }))
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    const forgejo: GitDataLocation = { ...rootLocation, apiBase: "https://codeberg.org/api/v1" };
+    const result = await readBlobs(forgejo, "token", ["sha-0", "sha-1"]);
+    expect(result.size).toBe(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls.every(([url]) => !String(url).includes("graphql"))).toBe(true);
   });
 });
 

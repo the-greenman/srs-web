@@ -808,6 +808,7 @@ describe("GitHub storage adapter", () => {
             ],
           })
         ) // recursive tree
+        .mockResolvedValueOnce(json({ data: { repository: {} } })) // GraphQL batch: no blobs -> REST
         .mockResolvedValueOnce(json({ content: manifestB64, encoding: "base64" })); // blob
       vi.stubGlobal("fetch", fetchMock);
 
@@ -841,6 +842,7 @@ describe("GitHub storage adapter", () => {
             ],
           })
         )
+        .mockResolvedValueOnce(json({ data: { repository: {} } })) // GraphQL batch: no blobs -> REST
         .mockResolvedValueOnce(json({ content: b64, encoding: "base64" }));
       vi.stubGlobal("fetch", fetchMock);
 
@@ -895,6 +897,7 @@ describe("GitHub storage adapter", () => {
             ],
           })
         )
+        .mockResolvedValueOnce(json({ data: { repository: {} } })) // GraphQL batch: no blobs -> REST
         .mockResolvedValueOnce(json({ content: b64, encoding: "base64" }))
         .mockResolvedValueOnce(json({ content: b64, encoding: "base64" }))
         .mockResolvedValueOnce(json({ content: emptyB64, encoding: "base64" }))
@@ -948,6 +951,7 @@ describe("GitHub storage adapter", () => {
             ],
           })
         )
+        .mockResolvedValueOnce(json({ data: { repository: {} } })) // GraphQL batch: no blobs -> REST
         .mockResolvedValueOnce(json({ content: b64, encoding: "base64" }))
         // commitFiles: subtree, root splice, commit, ref patch
         .mockResolvedValueOnce(json({ sha: "new-subtree" }))
