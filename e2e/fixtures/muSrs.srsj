@@ -734,7 +734,10 @@
         "allowedValues": [
           "default",
           "inverted",
-          "highlight"
+          "highlight",
+          "supporting-copy",
+          "header-solid",
+          "header-half"
         ],
         "datatype": "string",
         "valueDomain": "closed"
