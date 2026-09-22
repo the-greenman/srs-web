@@ -9,15 +9,19 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { SrsRecord } from "../src/lib/srs-client.js";
 import { buildDynamicSections } from "../src/lib/governance/sections.js";
 import type { SectionKey } from "../src/lib/governance/sections.js";
+import type { SrsRecord } from "../src/lib/srs-client.js";
 
 const ARTICLE_TYPE_ID = "a1142ac3-5385-5c0e-8630-1dd3432cdf7f";
 const DECISION_TYPE_ID = "1fcad6a2-9f78-5e41-94ba-d82e88b822f3";
 const ROLE_TYPE_ID = "e53dce11-6b83-5714-a8fe-f730edb500fa";
 
-function makeRecord(typeId: string, typeName?: string, overrides: Partial<SrsRecord> = {}): SrsRecord {
+function makeRecord(
+  typeId: string,
+  typeName?: string,
+  overrides: Partial<SrsRecord> = {}
+): SrsRecord {
   return {
     instanceId: `inst-${typeId.slice(0, 8)}`,
     typeId,
@@ -76,10 +80,7 @@ describe("buildDynamicSections", () => {
   });
 
   it("article and role type IDs are treated as unknown types (not in TYPE_REGISTRY)", () => {
-    const records = [
-      makeRecord(ARTICLE_TYPE_ID, "article"),
-      makeRecord(ROLE_TYPE_ID, "role"),
-    ];
+    const records = [makeRecord(ARTICLE_TYPE_ID, "article"), makeRecord(ROLE_TYPE_ID, "role")];
     const sections = buildDynamicSections(records);
     // 1 known (decision) + 2 unknown (article, role)
     expect(sections).toHaveLength(3);

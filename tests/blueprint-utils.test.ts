@@ -8,12 +8,12 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { SchemaDefinition, SchemaProperty } from "../src/lib/srs-client.js";
 import {
   definitionToComposites,
   definitionToFields,
   sectionTypes,
 } from "../src/lib/guides/blueprint-utils.js";
+import type { SchemaDefinition, SchemaProperty } from "../src/lib/srs-client.js";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -48,7 +48,10 @@ function compositeProp(
   } as SchemaProperty;
 }
 
-function simpleDef(props: Record<string, SchemaProperty>, required: string[] = []): SchemaDefinition {
+function simpleDef(
+  props: Record<string, SchemaProperty>,
+  required: string[] = []
+): SchemaDefinition {
   return {
     type: "object",
     properties: props,
@@ -137,7 +140,9 @@ describe("definitionToFields", () => {
   it("skips composite properties (arrays of objects)", () => {
     const def = simpleDef({
       scalar: scalarProp(),
-      tables: compositeProp({ rows: scalarProp({ title: "Rows" }) }, ["rows"], { "x-srs-order": 1 }),
+      tables: compositeProp({ rows: scalarProp({ title: "Rows" }) }, ["rows"], {
+        "x-srs-order": 1,
+      }),
     });
 
     const fields = definitionToFields(def);

@@ -8,8 +8,13 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import type { SrsRepository, SrsRecord } from "../src/lib/srs-client.js";
-import { computeSearchHitIds, computeTagHitIds, computeLifecycleVisibleIds, sortByCreatedAt } from "../src/lib/components/decision-log-utils.js";
+import {
+  computeLifecycleVisibleIds,
+  computeSearchHitIds,
+  computeTagHitIds,
+  sortByCreatedAt,
+} from "../src/lib/components/decision-log-utils.js";
+import type { SrsRecord, SrsRepository } from "../src/lib/srs-client.js";
 
 // ---------------------------------------------------------------------------
 // Mock helpers
@@ -17,33 +22,87 @@ import { computeSearchHitIds, computeTagHitIds, computeLifecycleVisibleIds, sort
 
 function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
   const base: SrsRepository = {
-    validate: () => { throw new Error("not mocked"); },
-    list_records: () => { throw new Error("not mocked"); },
-    get_record: () => { throw new Error("not mocked"); },
-    list_notes: () => { throw new Error("not mocked"); },
-    create_record: () => { throw new Error("not mocked"); },
-    update_record: () => { throw new Error("not mocked"); },
-    delete_record: () => { throw new Error("not mocked"); },
-    export_srsj: () => { throw new Error("not mocked"); },
-    list_relations: () => { throw new Error("not mocked"); },
-    create_relation: () => { throw new Error("not mocked"); },
-    delete_relation: () => { throw new Error("not mocked"); },
-    set_lifecycle_state: () => { throw new Error("not mocked"); },
-    transition_record: () => { throw new Error("not mocked"); },
-    blueprint_schema: () => { throw new Error("not mocked"); },
-    render_document_view: () => { throw new Error("not mocked"); },
-    list_containers: () => { throw new Error("not mocked"); },
-    get_container: () => { throw new Error("not mocked"); },
-    add_container_member: () => { throw new Error("not mocked"); },
-    remove_container_member: () => { throw new Error("not mocked"); },
-    containers_for_instance: () => { throw new Error("not mocked"); },
-    type_schema: () => { throw new Error("not mocked"); },
-    list_blueprints: () => { throw new Error("not mocked"); },
-    document_views_for_container: () => { throw new Error("not mocked"); },
-    list_document_views: () => { throw new Error("not mocked"); },
-    find: () => { throw new Error("not mocked"); },
-    list_terms: () => { throw new Error("not mocked"); },
-    create_record_successor: () => { throw new Error("not mocked"); },
+    validate: () => {
+      throw new Error("not mocked");
+    },
+    list_records: () => {
+      throw new Error("not mocked");
+    },
+    get_record: () => {
+      throw new Error("not mocked");
+    },
+    list_notes: () => {
+      throw new Error("not mocked");
+    },
+    create_record: () => {
+      throw new Error("not mocked");
+    },
+    update_record: () => {
+      throw new Error("not mocked");
+    },
+    delete_record: () => {
+      throw new Error("not mocked");
+    },
+    export_srsj: () => {
+      throw new Error("not mocked");
+    },
+    list_relations: () => {
+      throw new Error("not mocked");
+    },
+    create_relation: () => {
+      throw new Error("not mocked");
+    },
+    delete_relation: () => {
+      throw new Error("not mocked");
+    },
+    set_lifecycle_state: () => {
+      throw new Error("not mocked");
+    },
+    transition_record: () => {
+      throw new Error("not mocked");
+    },
+    blueprint_schema: () => {
+      throw new Error("not mocked");
+    },
+    render_document_view: () => {
+      throw new Error("not mocked");
+    },
+    list_containers: () => {
+      throw new Error("not mocked");
+    },
+    get_container: () => {
+      throw new Error("not mocked");
+    },
+    add_container_member: () => {
+      throw new Error("not mocked");
+    },
+    remove_container_member: () => {
+      throw new Error("not mocked");
+    },
+    containers_for_instance: () => {
+      throw new Error("not mocked");
+    },
+    type_schema: () => {
+      throw new Error("not mocked");
+    },
+    list_blueprints: () => {
+      throw new Error("not mocked");
+    },
+    document_views_for_container: () => {
+      throw new Error("not mocked");
+    },
+    list_document_views: () => {
+      throw new Error("not mocked");
+    },
+    find: () => {
+      throw new Error("not mocked");
+    },
+    list_terms: () => {
+      throw new Error("not mocked");
+    },
+    create_record_successor: () => {
+      throw new Error("not mocked");
+    },
   };
   return { ...base, ...overrides };
 }
@@ -73,8 +132,20 @@ describe("computeLifecycleVisibleIds", () => {
   it("calls find with excludeLifecycleStates and returns a Set of instanceIds", () => {
     const rawResult = {
       hits: [
-        { instanceId: "inst-001", label: "D1", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
-        { instanceId: "inst-002", label: "D2", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
+        {
+          instanceId: "inst-001",
+          label: "D1",
+          typeNamespace: "com.test",
+          typeName: "decision",
+          matchedFields: [],
+        },
+        {
+          instanceId: "inst-002",
+          label: "D2",
+          typeNamespace: "com.test",
+          typeName: "decision",
+          matchedFields: [],
+        },
       ],
       total: 2,
       diagnostics: [],
@@ -85,7 +156,9 @@ describe("computeLifecycleVisibleIds", () => {
     const result = computeLifecycleVisibleIds(repo, ["superseded", "abandoned"]);
 
     expect(spy).toHaveBeenCalledOnce();
-    expect(spy).toHaveBeenCalledWith(JSON.stringify({ excludeLifecycleStates: ["superseded", "abandoned"] }));
+    expect(spy).toHaveBeenCalledWith(
+      JSON.stringify({ excludeLifecycleStates: ["superseded", "abandoned"] })
+    );
     expect(result).toBeInstanceOf(Set);
     expect(result?.has("inst-001")).toBe(true);
     expect(result?.has("inst-002")).toBe(true);
@@ -96,7 +169,13 @@ describe("computeLifecycleVisibleIds", () => {
     // find returns only active records (lifecycle not excluded); superseded/abandoned not included
     const rawResult = {
       hits: [
-        { instanceId: "inst-active", label: "Active", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
+        {
+          instanceId: "inst-active",
+          label: "Active",
+          typeNamespace: "com.test",
+          typeName: "decision",
+          matchedFields: [],
+        },
       ],
       total: 1,
       diagnostics: [],
@@ -120,8 +199,20 @@ describe("computeTagHitIds", () => {
   it("calls find with tag array and returns a Set of matching instanceIds", () => {
     const rawResult = {
       hits: [
-        { instanceId: "inst-001", label: "D1", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
-        { instanceId: "inst-002", label: "D2", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
+        {
+          instanceId: "inst-001",
+          label: "D1",
+          typeNamespace: "com.test",
+          typeName: "decision",
+          matchedFields: [],
+        },
+        {
+          instanceId: "inst-002",
+          label: "D2",
+          typeNamespace: "com.test",
+          typeName: "decision",
+          matchedFields: [],
+        },
       ],
       total: 2,
       diagnostics: [],
@@ -172,8 +263,20 @@ describe("computeSearchHitIds", () => {
   it("calls find with contentMatch and returns a Set of matching instanceIds", () => {
     const rawResult = {
       hits: [
-        { instanceId: "inst-001", label: "D1", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
-        { instanceId: "inst-002", label: "D2", typeNamespace: "com.test", typeName: "decision", matchedFields: [] },
+        {
+          instanceId: "inst-001",
+          label: "D1",
+          typeNamespace: "com.test",
+          typeName: "decision",
+          matchedFields: [],
+        },
+        {
+          instanceId: "inst-002",
+          label: "D2",
+          typeNamespace: "com.test",
+          typeName: "decision",
+          matchedFields: [],
+        },
       ],
       total: 2,
       diagnostics: [],

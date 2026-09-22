@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { render, screen, fireEvent, cleanup } from "@testing-library/svelte";
-import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AttachmentsPanel from "../src/lib/components/AttachmentsPanel.svelte";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 
@@ -9,47 +9,127 @@ const FAKE_BYTES = new Uint8Array([0xff, 0xd8, 0xff]); // arbitrary bytes — ha
 
 function makeRepo(overrides: Partial<SrsRepository>): SrsRepository {
   const base: SrsRepository = {
-    validate: () => { throw new Error("not mocked"); },
-    list_records: () => { throw new Error("not mocked"); },
-    get_record: () => { throw new Error("not mocked"); },
-    list_notes: () => { throw new Error("not mocked"); },
-    create_record: () => { throw new Error("not mocked"); },
-    update_record: () => { throw new Error("not mocked"); },
-    delete_record: () => { throw new Error("not mocked"); },
-    export_srsj: () => { throw new Error("not mocked"); },
-    export_archive: () => { throw new Error("not mocked"); },
-    list_relations: () => { throw new Error("not mocked"); },
-    create_relation: () => { throw new Error("not mocked"); },
-    delete_relation: () => { throw new Error("not mocked"); },
-    set_lifecycle_state: () => { throw new Error("not mocked"); },
-    transition_record: () => { throw new Error("not mocked"); },
-    blueprint_schema: () => { throw new Error("not mocked"); },
-    render_document_view: () => { throw new Error("not mocked"); },
-    list_containers: () => { throw new Error("not mocked"); },
-    get_container: () => { throw new Error("not mocked"); },
-    add_container_member: () => { throw new Error("not mocked"); },
-    remove_container_member: () => { throw new Error("not mocked"); },
-    containers_for_instance: () => { throw new Error("not mocked"); },
-    type_schema: () => { throw new Error("not mocked"); },
-    list_blueprints: () => { throw new Error("not mocked"); },
-    document_views_for_container: () => { throw new Error("not mocked"); },
-    list_document_views: () => { throw new Error("not mocked"); },
-    find: () => { throw new Error("not mocked"); },
-    list_terms: () => { throw new Error("not mocked"); },
-    create_record_successor: () => { throw new Error("not mocked"); },
-    resolve_container_view: () => { throw new Error("not mocked"); },
-    repository_navigation: () => { throw new Error("not mocked"); },
-    scaffold_new_repository: () => { throw new Error("not mocked"); },
-    get_allowed_lifecycle_transitions: () => { throw new Error("not mocked"); },
+    validate: () => {
+      throw new Error("not mocked");
+    },
+    list_records: () => {
+      throw new Error("not mocked");
+    },
+    get_record: () => {
+      throw new Error("not mocked");
+    },
+    list_notes: () => {
+      throw new Error("not mocked");
+    },
+    create_record: () => {
+      throw new Error("not mocked");
+    },
+    update_record: () => {
+      throw new Error("not mocked");
+    },
+    delete_record: () => {
+      throw new Error("not mocked");
+    },
+    export_srsj: () => {
+      throw new Error("not mocked");
+    },
+    export_archive: () => {
+      throw new Error("not mocked");
+    },
+    list_relations: () => {
+      throw new Error("not mocked");
+    },
+    create_relation: () => {
+      throw new Error("not mocked");
+    },
+    delete_relation: () => {
+      throw new Error("not mocked");
+    },
+    set_lifecycle_state: () => {
+      throw new Error("not mocked");
+    },
+    transition_record: () => {
+      throw new Error("not mocked");
+    },
+    blueprint_schema: () => {
+      throw new Error("not mocked");
+    },
+    render_document_view: () => {
+      throw new Error("not mocked");
+    },
+    list_containers: () => {
+      throw new Error("not mocked");
+    },
+    get_container: () => {
+      throw new Error("not mocked");
+    },
+    add_container_member: () => {
+      throw new Error("not mocked");
+    },
+    remove_container_member: () => {
+      throw new Error("not mocked");
+    },
+    containers_for_instance: () => {
+      throw new Error("not mocked");
+    },
+    type_schema: () => {
+      throw new Error("not mocked");
+    },
+    list_blueprints: () => {
+      throw new Error("not mocked");
+    },
+    document_views_for_container: () => {
+      throw new Error("not mocked");
+    },
+    list_document_views: () => {
+      throw new Error("not mocked");
+    },
+    find: () => {
+      throw new Error("not mocked");
+    },
+    list_terms: () => {
+      throw new Error("not mocked");
+    },
+    create_record_successor: () => {
+      throw new Error("not mocked");
+    },
+    resolve_container_view: () => {
+      throw new Error("not mocked");
+    },
+    repository_navigation: () => {
+      throw new Error("not mocked");
+    },
+    scaffold_new_repository: () => {
+      throw new Error("not mocked");
+    },
+    get_allowed_lifecycle_transitions: () => {
+      throw new Error("not mocked");
+    },
     available_migrations: () => [],
-    apply_migration: () => { throw new Error("not mocked"); },
-    order_by_precedes: () => { throw new Error("not mocked"); },
-    get_field_value_by_name: () => { throw new Error("not mocked"); },
-    list_attachments: () => { throw new Error("not mocked"); },
-    add_attachment: () => { throw new Error("not mocked"); },
-    link_attachment: () => { throw new Error("not mocked"); },
-    get_attachment_bytes: () => { throw new Error("not mocked"); },
-    get_record_attachments: () => { throw new Error("not mocked"); },
+    apply_migration: () => {
+      throw new Error("not mocked");
+    },
+    order_by_precedes: () => {
+      throw new Error("not mocked");
+    },
+    get_field_value_by_name: () => {
+      throw new Error("not mocked");
+    },
+    list_attachments: () => {
+      throw new Error("not mocked");
+    },
+    add_attachment: () => {
+      throw new Error("not mocked");
+    },
+    link_attachment: () => {
+      throw new Error("not mocked");
+    },
+    get_attachment_bytes: () => {
+      throw new Error("not mocked");
+    },
+    get_record_attachments: () => {
+      throw new Error("not mocked");
+    },
   };
   return { ...base, ...overrides };
 }
@@ -119,7 +199,9 @@ describe("AttachmentsPanel — preview toggle", () => {
   });
 
   it("path 3: idle→error via WASM throw — shows error detail, no URL created", async () => {
-    const repo = makeAttachmentRepo(() => { throw new Error("bytes not in session"); });
+    const repo = makeAttachmentRepo(() => {
+      throw new Error("bytes not in session");
+    });
     render(AttachmentsPanel, { props: { repo, onMutate: vi.fn(), onCountChange: vi.fn() } });
 
     const btn = screen.getByTestId("attachment-preview-btn");
@@ -160,7 +242,7 @@ describe("AttachmentsPanel — preview toggle", () => {
     // so the second fires while state is still 'loading' (the no-op branch).
     fireEvent.click(btn); // sets state='loading', suspends at await tick()
     fireEvent.click(btn); // state='loading' → no-op guard fires
-    await flushAsync();   // let both async chains resolve
+    await flushAsync(); // let both async chains resolve
 
     // WASM should only be called once; state should be 'loaded'
     expect(getBytesImpl).toHaveBeenCalledTimes(1);
@@ -168,8 +250,11 @@ describe("AttachmentsPanel — preview toggle", () => {
   });
 
   it("error state retries — clicking Preview from error state re-fetches", async () => {
-    const getBytesImpl = vi.fn()
-      .mockImplementationOnce(() => { throw new Error("first fail"); })
+    const getBytesImpl = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error("first fail");
+      })
       .mockImplementationOnce(() => FAKE_BYTES);
     const repo = makeAttachmentRepo(getBytesImpl);
     render(AttachmentsPanel, { props: { repo, onMutate: vi.fn(), onCountChange: vi.fn() } });
@@ -205,10 +290,7 @@ describe("AttachmentsPanel — preview toggle", () => {
     const repo = makeRepo({
       list_attachments: () => ({
         sourceDocumentsPath: "",
-        entries: [
-          { path: "with-id.jpg", documentId: "doc-1" },
-          { path: "no-id.jpg" },
-        ],
+        entries: [{ path: "with-id.jpg", documentId: "doc-1" }, { path: "no-id.jpg" }],
       }),
     });
     render(AttachmentsPanel, { props: { repo, onMutate: vi.fn(), onCountChange: vi.fn() } });

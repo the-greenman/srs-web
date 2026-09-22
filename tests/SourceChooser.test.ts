@@ -1,12 +1,18 @@
 // @vitest-environment happy-dom
-import { render, fireEvent } from "@testing-library/svelte";
-import { vi, describe, it, expect } from "vitest";
+import { fireEvent, render } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
 import SourceChooser from "../src/lib/components/SourceChooser.svelte";
 
 function makeProviders() {
   return {
     dropbox: { configured: false, label: "Dropbox", authenticate: vi.fn(), open: vi.fn() },
-    googleDrive: { configured: false, label: "Google Drive", authenticate: vi.fn(), open: vi.fn(), select: vi.fn() },
+    googleDrive: {
+      configured: false,
+      label: "Google Drive",
+      authenticate: vi.fn(),
+      open: vi.fn(),
+      select: vi.fn(),
+    },
     github: { configured: false, label: "GitHub", authenticate: vi.fn(), open: vi.fn() },
   };
 }

@@ -197,23 +197,107 @@ export async function readBlob(
   return decodeBase64Bytes(data.content);
 }
 
-/** Read many blobs by SHA with a small bounded concurrency pool. */
+/** GraphQL endpoint for a REST apiBase; null when the host has no GitHub GraphQL surface. */
+function graphqlEndpoint(apiBase: string): string | null {
+  const base = apiBase.replace(/\/+$/, "");
+  if (base === "https://api.github.com") return "https://api.github.com/graphql";
+  // GitHub Enterprise Server: https://host/api/v3 -> https://host/api/graphql
+  if (base.endsWith("/api/v3")) return `${base.slice(0, -3)}graphql`;
+  return null; // Forgejo/Codeberg etc. — REST only
+}
+
+/**
+ * Read many blobs in batches over the GraphQL API — one request per BLOB_BATCH shas
+ * instead of one REST call per file.
+ *
+ * A 4,000-file repository is 4,000 REST `git/blobs` calls: minutes of latency, and enough
+ * requests to exhaust the 5,000/hour core limit (or trip the secondary limit mid-load) so
+ * the next load fails outright. Aliased GraphQL `object(oid:)` fetches 300 blobs in one
+ * request at one point of quota.
+ *
+ * Returns only the blobs it could read as text. Binary blobs come back with `text: null`
+ * and blobs over GitHub's size cap with `isTruncated: true`; both are left to the REST
+ * caller, as is the whole batch if the request fails. Text is re-encoded as UTF-8 bytes —
+ * lossless for exactly the blobs GraphQL returns text for.
+ */
+async function readBlobsGraphQL(
+  location: Pick<GitDataLocation, "apiBase" | "owner" | "repo">,
+  token: string,
+  shas: string[],
+  batchSize = 300,
+  concurrency = 3
+): Promise<Map<string, Uint8Array>> {
+  const results = new Map<string, Uint8Array>();
+  const endpoint = graphqlEndpoint(location.apiBase);
+  if (endpoint === null) return results;
+  const url = endpoint;
+
+  const batches: string[][] = [];
+  for (let i = 0; i < shas.length; i += batchSize) batches.push(shas.slice(i, i + batchSize));
+
+  const encoder = new TextEncoder();
+  let next = 0;
+  async function worker(): Promise<void> {
+    while (next < batches.length) {
+      const batch = batches[next++];
+      const query = `query{repository(owner:${JSON.stringify(location.owner)},name:${JSON.stringify(
+        location.repo
+      )}){${batch
+        .map((sha, i) => `b${i}:object(oid:${JSON.stringify(sha)}){...on Blob{text isTruncated}}`)
+        .join(" ")}}}`;
+      let payload: {
+        data?: {
+          repository?: Record<string, { text?: string | null; isTruncated?: boolean } | null>;
+        };
+      };
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { ...authHeaders(token), "Content-Type": "application/json" },
+          body: JSON.stringify({ query }),
+        });
+        if (!response.ok) continue; // whole batch falls through to REST
+        payload = await response.json();
+      } catch {
+        continue;
+      }
+      const repository = payload.data?.repository;
+      if (!repository) continue;
+      for (const [i, sha] of batch.entries()) {
+        const blob = repository[`b${i}`];
+        if (!blob || blob.isTruncated || typeof blob.text !== "string") continue;
+        const bytes = encoder.encode(blob.text);
+        // GitHub calls a blob binary only when it finds a NUL in the first 8000 bytes, so a
+        // latin-1 file with high bytes and no NUL comes back as text with U+FFFD in place of
+        // the bytes it could not decode — re-encoding those yields different bytes. Verify
+        // against the sha we already keyed the query by; a mismatch falls to the REST path.
+        if ((await gitBlobSha(bytes)) !== sha) continue;
+        results.set(sha, bytes);
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, batches.length) }, () => worker()));
+  return results;
+}
+
+/** Read many blobs by SHA: batched over GraphQL where available, REST for the remainder. */
 export async function readBlobs(
   location: Pick<GitDataLocation, "apiBase" | "owner" | "repo">,
   token: string,
   shas: string[],
   concurrency = 6
 ): Promise<Map<string, Uint8Array>> {
-  const results = new Map<string, Uint8Array>();
+  const results = await readBlobsGraphQL(location, token, shas);
+  const remaining = shas.filter((sha) => !results.has(sha));
   let next = 0;
   async function worker(): Promise<void> {
-    while (next < shas.length) {
+    while (next < remaining.length) {
       const index = next++;
-      const sha = shas[index];
+      const sha = remaining[index];
       results.set(sha, await readBlob(location, token, sha));
     }
   }
-  const workers = Array.from({ length: Math.min(concurrency, shas.length) }, () => worker());
+  const workers = Array.from({ length: Math.min(concurrency, remaining.length) }, () => worker());
   await Promise.all(workers);
   return results;
 }

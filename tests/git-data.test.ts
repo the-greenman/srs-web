@@ -184,6 +184,7 @@ describe("git-data: readBlob / readBlobs", () => {
   });
 
   it("reads many blobs with bounded concurrency and returns all of them", async () => {
+    // The GraphQL response carries no `data.repository`, so every sha falls through to REST.
     const fetchMock = vi.fn().mockImplementation(() =>
       Promise.resolve(
         jsonResponse({
@@ -196,7 +197,97 @@ describe("git-data: readBlob / readBlobs", () => {
     const shas = Array.from({ length: 10 }, (_, i) => `sha-${i}`);
     const result = await readBlobs(rootLocation, "token", shas, 3);
     expect(result.size).toBe(10);
-    expect(fetchMock).toHaveBeenCalledTimes(10);
+    expect(fetchMock).toHaveBeenCalledTimes(11); // 1 GraphQL batch attempt + 10 REST reads
+  });
+
+  // A 4,000-file repo was 4,000 REST calls: minutes of latency, and enough requests to
+  // exhaust the hourly core limit so the next load failed outright.
+  it("batches over GraphQL and makes no REST blob call when every blob comes back", async () => {
+    // Real git blob SHA of "x" — the GraphQL path verifies what it decodes against the sha.
+    const shaOfX = "c1b0730e0133447badcfd47fd144e254807b06e1";
+    const shas = Array.from({ length: 400 }, () => shaOfX);
+    const fetchMock = vi.fn().mockImplementation((url: string, init: RequestInit) => {
+      expect(url).toBe("https://api.github.com/graphql");
+      const query = JSON.parse(init.body as string).query as string;
+      const aliases = query.match(/b\d+:object/g) ?? [];
+      const repository: Record<string, { text: string; isTruncated: boolean }> = {};
+      aliases.forEach((_, i) => {
+        repository[`b${i}`] = { text: "x", isTruncated: false };
+      });
+      return Promise.resolve(jsonResponse({ data: { repository } }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await readBlobs(rootLocation, "token", shas);
+    expect(result.size).toBe(1); // 400 shas, all the same blob
+    expect(new TextDecoder().decode(result.get(shaOfX))).toBe("x");
+    expect(fetchMock).toHaveBeenCalledTimes(2); // 300 + 100, not 400
+  });
+
+  it("falls back to REST for blobs GraphQL cannot return as text (binary, truncated)", async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith("/graphql")) {
+        return Promise.resolve(
+          jsonResponse({
+            data: {
+              repository: {
+                b0: { text: "ok", isTruncated: false },
+                b1: { text: null, isTruncated: false }, // binary
+                b2: { text: "clipped", isTruncated: true }, // over GitHub's size cap
+              },
+            },
+          })
+        );
+      }
+      return Promise.resolve(jsonResponse({ content: btoa("rest"), encoding: "base64" }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const shaOfOk = "b5754e20373fdaa5331ef6e4623dbae636225e3b"; // git hash-object of "ok"
+    const result = await readBlobs(rootLocation, "token", [shaOfOk, "sha-1", "sha-2"]);
+    expect(result.size).toBe(3);
+    expect(new TextDecoder().decode(result.get(shaOfOk))).toBe("ok");
+    expect(new TextDecoder().decode(result.get("sha-1"))).toBe("rest");
+    expect(new TextDecoder().decode(result.get("sha-2"))).toBe("rest");
+    expect(fetchMock).toHaveBeenCalledTimes(3); // 1 GraphQL + 2 REST
+  });
+
+  // GitHub calls a blob binary only on a NUL in the first 8000 bytes, so a latin-1 file
+  // comes back as text with U+FFFD where bytes could not be decoded. Re-encoding that is a
+  // different blob, and export_tree would then see the file as modified on every save.
+  it("rejects a lossily-decoded blob and re-reads it over REST", async () => {
+    const latin1 = new Uint8Array([99, 97, 102, 0xe9, 10]); // "caf\xE9\n"
+    const sha = "6f83395d973c448cdb70a7b21f7fc8018797acf6"; // git hash-object of those bytes
+    let binary = "";
+    for (const byte of latin1) binary += String.fromCharCode(byte);
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith("/graphql")) {
+        // What GitHub actually returns for this blob: isBinary false, text with U+FFFD.
+        return Promise.resolve(
+          jsonResponse({
+            data: { repository: { b0: { text: "caf\uFFFD\n", isTruncated: false } } },
+          })
+        );
+      }
+      return Promise.resolve(jsonResponse({ content: btoa(binary), encoding: "base64" }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await readBlobs(rootLocation, "token", [sha]);
+    expect(Array.from(result.get(sha) ?? [])).toEqual(Array.from(latin1));
+    expect(await gitBlobSha(result.get(sha) as Uint8Array)).toBe(sha);
+    expect(fetchMock).toHaveBeenCalledTimes(2); // GraphQL rejected, REST used
+  });
+
+  it("skips GraphQL entirely on a host that has no GraphQL surface", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() =>
+        Promise.resolve(jsonResponse({ content: btoa("x"), encoding: "base64" }))
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    const forgejo: GitDataLocation = { ...rootLocation, apiBase: "https://codeberg.org/api/v1" };
+    const result = await readBlobs(forgejo, "token", ["sha-0", "sha-1"]);
+    expect(result.size).toBe(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls.every(([url]) => !String(url).includes("graphql"))).toBe(true);
   });
 });
 

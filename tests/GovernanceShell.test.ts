@@ -1,53 +1,135 @@
 // @vitest-environment happy-dom
-import { render, screen, fireEvent } from "@testing-library/svelte";
-import { vi, describe, it, expect } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
 import GovernanceShell from "../src/lib/governance/GovernanceShell.svelte";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 
 function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
   const base: SrsRepository = {
-    validate: () => { throw new Error("not mocked"); },
-    list_records: () => { throw new Error("not mocked"); },
-    get_record: () => { throw new Error("not mocked"); },
-    list_notes: () => { throw new Error("not mocked"); },
-    create_record: () => { throw new Error("not mocked"); },
-    update_record: () => { throw new Error("not mocked"); },
-    delete_record: () => { throw new Error("not mocked"); },
-    export_srsj: () => { throw new Error("not mocked"); },
-    export_archive: () => { throw new Error("not mocked"); },
-    list_relations: () => { throw new Error("not mocked"); },
-    create_relation: () => { throw new Error("not mocked"); },
-    delete_relation: () => { throw new Error("not mocked"); },
-    set_lifecycle_state: () => { throw new Error("not mocked"); },
-    transition_record: () => { throw new Error("not mocked"); },
-    blueprint_schema: () => { throw new Error("not mocked"); },
-    render_document_view: () => { throw new Error("not mocked"); },
-    list_containers: () => { throw new Error("not mocked"); },
-    get_container: () => { throw new Error("not mocked"); },
-    add_container_member: () => { throw new Error("not mocked"); },
-    remove_container_member: () => { throw new Error("not mocked"); },
-    containers_for_instance: () => { throw new Error("not mocked"); },
-    type_schema: () => { throw new Error("not mocked"); },
-    list_types: () => { throw new Error("not mocked"); },
-    list_blueprints: () => { throw new Error("not mocked"); },
-    document_views_for_container: () => { throw new Error("not mocked"); },
-    list_document_views: () => { throw new Error("not mocked"); },
-    find: () => { throw new Error("not mocked"); },
-    list_terms: () => { throw new Error("not mocked"); },
-    create_record_successor: () => { throw new Error("not mocked"); },
-    resolve_container_view: () => { throw new Error("not mocked"); },
-    repository_navigation: () => { throw new Error("not mocked"); },
-    scaffold_new_repository: () => { throw new Error("not mocked"); },
-    get_allowed_lifecycle_transitions: () => { throw new Error("not mocked"); },
+    validate: () => {
+      throw new Error("not mocked");
+    },
+    list_records: () => {
+      throw new Error("not mocked");
+    },
+    get_record: () => {
+      throw new Error("not mocked");
+    },
+    list_notes: () => {
+      throw new Error("not mocked");
+    },
+    create_record: () => {
+      throw new Error("not mocked");
+    },
+    update_record: () => {
+      throw new Error("not mocked");
+    },
+    delete_record: () => {
+      throw new Error("not mocked");
+    },
+    export_srsj: () => {
+      throw new Error("not mocked");
+    },
+    export_archive: () => {
+      throw new Error("not mocked");
+    },
+    list_relations: () => {
+      throw new Error("not mocked");
+    },
+    create_relation: () => {
+      throw new Error("not mocked");
+    },
+    delete_relation: () => {
+      throw new Error("not mocked");
+    },
+    set_lifecycle_state: () => {
+      throw new Error("not mocked");
+    },
+    transition_record: () => {
+      throw new Error("not mocked");
+    },
+    blueprint_schema: () => {
+      throw new Error("not mocked");
+    },
+    render_document_view: () => {
+      throw new Error("not mocked");
+    },
+    list_containers: () => {
+      throw new Error("not mocked");
+    },
+    get_container: () => {
+      throw new Error("not mocked");
+    },
+    add_container_member: () => {
+      throw new Error("not mocked");
+    },
+    remove_container_member: () => {
+      throw new Error("not mocked");
+    },
+    containers_for_instance: () => {
+      throw new Error("not mocked");
+    },
+    type_schema: () => {
+      throw new Error("not mocked");
+    },
+    list_types: () => {
+      throw new Error("not mocked");
+    },
+    list_blueprints: () => {
+      throw new Error("not mocked");
+    },
+    document_views_for_container: () => {
+      throw new Error("not mocked");
+    },
+    list_document_views: () => {
+      throw new Error("not mocked");
+    },
+    find: () => {
+      throw new Error("not mocked");
+    },
+    list_terms: () => {
+      throw new Error("not mocked");
+    },
+    create_record_successor: () => {
+      throw new Error("not mocked");
+    },
+    resolve_container_view: () => {
+      throw new Error("not mocked");
+    },
+    repository_navigation: () => {
+      throw new Error("not mocked");
+    },
+    scaffold_new_repository: () => {
+      throw new Error("not mocked");
+    },
+    get_allowed_lifecycle_transitions: () => {
+      throw new Error("not mocked");
+    },
     available_migrations: () => [],
-    apply_migration: () => { throw new Error("not mocked"); },
-    order_by_precedes: () => { throw new Error("not mocked"); },
-    get_field_value_by_name: () => { throw new Error("not mocked"); },
-    list_attachments: () => { throw new Error("not mocked"); },
-    add_attachment: () => { throw new Error("not mocked"); },
-    link_attachment: () => { throw new Error("not mocked"); },
-    get_attachment_bytes: () => { throw new Error("not mocked"); },
-    get_record_attachments: () => { throw new Error("not mocked"); },
+    apply_migration: () => {
+      throw new Error("not mocked");
+    },
+    order_by_precedes: () => {
+      throw new Error("not mocked");
+    },
+    get_field_value_by_name: () => {
+      throw new Error("not mocked");
+    },
+    list_attachments: () => {
+      throw new Error("not mocked");
+    },
+    add_attachment: () => {
+      throw new Error("not mocked");
+    },
+    link_attachment: () => {
+      throw new Error("not mocked");
+    },
+    get_attachment_bytes: () => {
+      throw new Error("not mocked");
+    },
+    get_record_attachments: () => {
+      throw new Error("not mocked");
+    },
   };
   return { ...base, ...overrides };
 }
@@ -112,7 +194,13 @@ describe("GovernanceShell — size warning banner", () => {
       }),
     });
     const { container } = render(GovernanceShell, {
-      props: { repo, repoName: "test", documentProvider: "local", onExport: vi.fn(), onOpenAnother: vi.fn() },
+      props: {
+        repo,
+        repoName: "test",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+      },
     });
     // Wait for mount to complete then check the banner by its specific class
     await screen.findByRole("button", { name: /Open another file/i });
@@ -132,7 +220,13 @@ describe("GovernanceShell — size warning banner", () => {
       }),
     });
     const { container } = render(GovernanceShell, {
-      props: { repo, repoName: "test", documentProvider: "local", onExport: vi.fn(), onOpenAnother: vi.fn() },
+      props: {
+        repo,
+        repoName: "test",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+      },
     });
     await screen.findByRole("button", { name: /Open another file/i });
     expect(container.querySelector(".size-warning-banner")).toBeNull();
@@ -149,7 +243,13 @@ describe("GovernanceShell — size warning banner", () => {
       }),
     });
     const { container } = render(GovernanceShell, {
-      props: { repo, repoName: "test", documentProvider: "local", onExport: vi.fn(), onOpenAnother: vi.fn() },
+      props: {
+        repo,
+        repoName: "test",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+      },
     });
     await screen.findByRole("button", { name: /Open another file/i });
     const banner = container.querySelector(".size-warning-banner");
@@ -172,11 +272,19 @@ describe("GovernanceShell — Repository inspector count", () => {
       }),
     });
     const { container } = render(GovernanceShell, {
-      props: { repo, repoName: "test", documentProvider: "local", onExport: vi.fn(), onOpenAnother: vi.fn() },
+      props: {
+        repo,
+        repoName: "test",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+      },
     });
     await screen.findByRole("button", { name: /Open another file/i });
     const sections = Array.from(container.querySelectorAll(".inspector__section"));
-    const repositorySection = sections.find((s) => s.querySelector(".inspector__title")?.textContent?.includes("Repository"));
+    const repositorySection = sections.find((s) =>
+      s.querySelector(".inspector__title")?.textContent?.includes("Repository")
+    );
     expect(repositorySection).toBeDefined();
     expect(repositorySection!.textContent).toContain("3");
     expect(repositorySection!.textContent).not.toContain("undefined");
@@ -276,7 +384,13 @@ describe("GovernanceShell — sections sharing one container", () => {
       list_records: () => [],
     });
     render(GovernanceShell, {
-      props: { repo, repoName: "test", documentProvider: "local", onExport: vi.fn(), onOpenAnother: vi.fn() },
+      props: {
+        repo,
+        repoName: "test",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+      },
     });
     await screen.findByRole("button", { name: /Open another file/i });
     // All three sections must be present — the shared containerId must not collapse them.

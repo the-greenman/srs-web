@@ -1,11 +1,11 @@
 // @vitest-environment happy-dom
-import { render, fireEvent } from "@testing-library/svelte";
-import { describe, it, expect } from "vitest";
-import DecisionView from "../src/rendering/DecisionView.svelte";
+import { fireEvent, render } from "@testing-library/svelte";
+import { describe, expect, it } from "vitest";
 import { FIELD_META_KEY } from "../src/lib/governance/field-meta.js";
 import { REPO_CONTEXT_KEY } from "../src/lib/governance/repo-context.js";
 import type { FieldFormDef } from "../src/lib/governance/types.js";
 import type { FieldValues, SrsRecord } from "../src/lib/srs-client.js";
+import DecisionView from "../src/rendering/DecisionView.svelte";
 
 // srs-web#213 — DecisionView threads FieldFormDef description/instructions
 // into CardField. Post-RFC-039 the fieldMeta map is keyed by field NAME.
@@ -34,7 +34,11 @@ const fieldMetaMap: Map<string, FieldFormDef> = new Map([
   ],
 ]);
 
-const fieldMetaContext = { get meta() { return fieldMetaMap; } };
+const fieldMetaContext = {
+  get meta() {
+    return fieldMetaMap;
+  },
+};
 
 function makeRecord(fieldValues: FieldValues): SrsRecord {
   return {
@@ -51,7 +55,11 @@ function makeCtxOptions(fieldValues: FieldValues) {
       return fieldValues[name] ?? null;
     },
   };
-  const repoContext = { get repo() { return repoMock; } };
+  const repoContext = {
+    get repo() {
+      return repoMock;
+    },
+  };
   return {
     context: new Map([
       [FIELD_META_KEY, fieldMetaContext],
@@ -64,15 +72,23 @@ describe("DecisionView field help threading (srs-web#213)", () => {
   it("shows the description caption for a field that has description set", () => {
     const fieldValues = { decision_statement: "We will meet monthly." };
     const record = makeRecord(fieldValues);
-    const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
+    const { container } = render(DecisionView, {
+      props: { record },
+      ...makeCtxOptions(fieldValues),
+    });
     // "What was decided." !== "Decision Statement" → caption must appear
-    expect(container.querySelector(".card__field-description")?.textContent).toBe("What was decided.");
+    expect(container.querySelector(".card__field-description")?.textContent).toBe(
+      "What was decided."
+    );
   });
 
   it("shows the ⓘ info toggle for a field that has instructions set", () => {
     const fieldValues = { decision_statement: "We will meet monthly." };
     const record = makeRecord(fieldValues);
-    const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
+    const { container } = render(DecisionView, {
+      props: { record },
+      ...makeCtxOptions(fieldValues),
+    });
     const btn = container.querySelector<HTMLButtonElement>(".card__field-info");
     expect(btn).not.toBeNull();
     expect(btn?.getAttribute("aria-label")).toBe("Show instructions for Decision Statement");
@@ -81,11 +97,14 @@ describe("DecisionView field help threading (srs-web#213)", () => {
   it("reveals instructions paragraph on toggle click", async () => {
     const fieldValues = { decision_statement: "We will meet monthly." };
     const record = makeRecord(fieldValues);
-    const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
+    const { container } = render(DecisionView, {
+      props: { record },
+      ...makeCtxOptions(fieldValues),
+    });
     const btn = container.querySelector<HTMLButtonElement>(".card__field-info")!;
     await fireEvent.click(btn);
     expect(container.querySelector(".card__field-instructions")?.textContent).toBe(
-      "Be concise. One to two sentences.",
+      "Be concise. One to two sentences."
     );
     expect(btn.getAttribute("aria-label")).toBe("Hide instructions for Decision Statement");
   });
@@ -94,7 +113,10 @@ describe("DecisionView field help threading (srs-web#213)", () => {
     // title field has no description or instructions
     const fieldValues = { title: "Meeting cadence" };
     const record = makeRecord(fieldValues);
-    const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
+    const { container } = render(DecisionView, {
+      props: { record },
+      ...makeCtxOptions(fieldValues),
+    });
     expect(container.querySelector(".card__field-description")).toBeNull();
     expect(container.querySelector(".card__field-info")).toBeNull();
   });
@@ -103,7 +125,10 @@ describe("DecisionView field help threading (srs-web#213)", () => {
     // field unknown to the decision profile — get_field_value_by_name returns null, field is skipped
     const fieldValues = { some_unknown_field: "some value" };
     const record = makeRecord(fieldValues);
-    const { container } = render(DecisionView, { props: { record }, ...makeCtxOptions(fieldValues) });
+    const { container } = render(DecisionView, {
+      props: { record },
+      ...makeCtxOptions(fieldValues),
+    });
     expect(container.querySelector(".card__field-description")).toBeNull();
     expect(container.querySelector(".card__field-info")).toBeNull();
   });
