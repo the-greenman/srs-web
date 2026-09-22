@@ -246,7 +246,9 @@ async function readBlobsGraphQL(
         .map((sha, i) => `b${i}:object(oid:${JSON.stringify(sha)}){...on Blob{text isTruncated}}`)
         .join(" ")}}}`;
       let payload: {
-        data?: { repository?: Record<string, { text?: string | null; isTruncated?: boolean } | null> };
+        data?: {
+          repository?: Record<string, { text?: string | null; isTruncated?: boolean } | null>;
+        };
       };
       try {
         const response = await fetch(url, {
