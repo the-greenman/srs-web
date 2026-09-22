@@ -313,7 +313,7 @@ test.describe("Guides editor (C8)", () => {
     const form = page.getByTestId("section-form");
     const dropdown = form.getByRole("combobox");
     await expect(dropdown).toBeVisible();
-    await expect(dropdown.locator("option")).toHaveCount(3);
+    await expect(dropdown.locator("option")).toHaveCount(6);
     await expect(dropdown.locator("option", { hasText: "inverted" })).toHaveCount(1);
     // initialFields() defaults a select to its first allowedValue.
     await expect(dropdown).toHaveValue("default");
