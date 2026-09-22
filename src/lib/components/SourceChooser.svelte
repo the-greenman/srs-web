@@ -11,6 +11,9 @@
     isSrsArchiveName,
     isSrsDocumentName,
     LocalDocumentHandle,
+    canPickLocalDirectory,
+    pickLocalDirectory,
+    treeFromDirectoryInput,
     type ScanMode,
     type ScanOutcome,
     StorageError,
@@ -158,6 +161,23 @@
     input.value = "";
   }
 
+  /** Chromium: File System Access directory picker — opens read + write (srs-web#248). */
+  function handleLocalFolder(): void {
+    void run("local", async () => {
+      const handle = await pickLocalDirectory();
+      if (handle) await onOpen(handle);
+    });
+  }
+
+  /** Everywhere else: a webkitdirectory input — read-only, Export is the way back out. */
+  function handleLocalFolderInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
+    if (!files || files.length === 0) return;
+    void run("local", async () => onOpen(await treeFromDirectoryInput(files)));
+    input.value = "";
+  }
+
   function openBrowser(id: BrowseId): void {
     void run(id, async () => {
       const provider = browseProvider(id);
@@ -253,6 +273,28 @@
       disabled={busy !== null}
     />
   </label>
+
+  {#if canPickLocalDirectory()}
+    <Button
+      variant="secondary"
+      data-testid="source-local-folder"
+      disabled={busy !== null}
+      title="Open an exploded SRS repository folder from this device"
+      onclick={handleLocalFolder}
+    >{busy === "local" ? "Opening…" : "Folder from this device"}</Button>
+  {:else}
+    <label class="source-chooser__local" class:is-busy={busy === "local"}>
+      <span>{busy === "local" ? "Opening…" : "Folder from this device"}</span>
+      <input
+        id="srs-folder"
+        type="file"
+        webkitdirectory
+        data-testid="source-local-folder-input"
+        onchange={handleLocalFolderInput}
+        disabled={busy !== null}
+      />
+    </label>
+  {/if}
 
   <Button
     variant="secondary"
