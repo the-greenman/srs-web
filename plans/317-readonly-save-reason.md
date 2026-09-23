@@ -65,9 +65,9 @@ No new ADR: this is a presentational addition to the existing `DocumentHandle`/`
 
 #### Tasks
 
-- [ ] Add `readOnlyReason?: string;` to `DocumentHandle` in `src/lib/storage/types.ts`, documented as set only when `capabilities.write` is `false`.
-- [ ] In `src/lib/storage/local.ts`, give `LocalTreeHandle` a `readonly readOnlyReason?: string`, set in the constructor when `dir === undefined`: `"This folder was opened read-only — your browser doesn't support saving back to a local folder. Use Export to save your changes."`
-- [ ] Give `LocalDocumentHandle` the same field, set unconditionally to `"Local files opened from this device are read-only. Use Export to save your changes."`
+- [x] Add `readOnlyReason?: string;` to `DocumentHandle` in `src/lib/storage/types.ts`, documented as set only when `capabilities.write` is `false`.
+- [x] In `src/lib/storage/local.ts`, give `LocalTreeHandle` a `readonly readOnlyReason?: string`, set in the constructor when `dir === undefined`: `"This folder was opened read-only — your browser doesn't support saving back to a local folder. Use Export to save your changes."`
+- [x] Give `LocalDocumentHandle` the same field, set unconditionally to `"Local files opened from this device are read-only. Use Export to save your changes."`
 
 #### Acceptance Criteria
 

@@ -9,6 +9,8 @@ export class LocalDocumentHandle implements DocumentHandle {
   readonly revision = null;
   readonly capabilities = { read: true, write: false } as const;
   readonly kind: "text" | "bytes";
+  readonly readOnlyReason =
+    "Local files opened from this device are read-only. Use Export to save your changes.";
 
   constructor(private readonly file: File) {
     this.id = `${file.name}:${file.size}:${file.lastModified}`;
@@ -144,6 +146,7 @@ export class LocalTreeHandle implements DocumentHandle, RepoTreeAware {
   readonly kind = "tree" as const;
   readonly revision = null;
   readonly capabilities: DocumentCapabilities;
+  readonly readOnlyReason?: string;
 
   constructor(
     readonly id: string,
@@ -153,6 +156,10 @@ export class LocalTreeHandle implements DocumentHandle, RepoTreeAware {
     private readonly dir?: FileSystemDirectoryHandle
   ) {
     this.capabilities = { read: true, write: dir !== undefined };
+    this.readOnlyReason =
+      dir === undefined
+        ? "This folder was opened read-only — your browser doesn't support saving back to a local folder. Use Export to save your changes."
+        : undefined;
   }
 
   readTree(): Promise<Record<string, Uint8Array>> {
