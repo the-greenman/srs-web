@@ -400,3 +400,37 @@ describe("GuidesShell — blueprint schema with non-fatal diagnostics", () => {
     expect(removeBtns[0].disabled).toBe(false);
   });
 });
+
+describe("GuidesShell — read-only reason (srs-web#317)", () => {
+  it("shows the reason instead of Save when onSave is undefined and a reason is given", async () => {
+    const repo = makeBaseRepo();
+    render(GuidesShell, {
+      props: {
+        repo,
+        ...defaultProps,
+        onSave: undefined,
+        readOnlyReason: "This folder was opened read-only. Use Export to save your changes.",
+      },
+    });
+    await screen.findByRole("button", { name: /Open another file/i });
+
+    expect(screen.getByTestId("readonly-reason").textContent).toMatch(/read-only/);
+    expect(screen.queryByTestId("save-document")).toBeNull();
+  });
+
+  it("shows Save, not the reason, when onSave is set", async () => {
+    const repo = makeBaseRepo();
+    render(GuidesShell, {
+      props: {
+        repo,
+        ...defaultProps,
+        onSave: vi.fn(),
+        readOnlyReason: "should not render",
+      },
+    });
+    await screen.findByRole("button", { name: /Open another file/i });
+
+    expect(screen.getByTestId("save-document")).toBeTruthy();
+    expect(screen.queryByTestId("readonly-reason")).toBeNull();
+  });
+});
