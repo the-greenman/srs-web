@@ -128,11 +128,23 @@ test.describe("Open a folder from this device", () => {
     await expect(page.locator('[data-testid="catalog-diagnostics"]')).toHaveCount(0);
   });
 
-  test("a folder opened read-only offers no Save", async ({ page }) => {
+  test("a folder opened read-only offers no Save, and explains why (srs-web#317)", async ({
+    page,
+  }) => {
     await page.getByTestId("source-local-folder-input").setInputFiles(EXPLODED_DIR);
     await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 15000 });
 
     await expect(page.getByRole("button", { name: /^Save$/ })).toHaveCount(0);
+    await expect(page.getByTestId("readonly-reason")).toContainText(/read-only/);
+  });
+
+  test("the fallback control is labelled read-only before it's opened (srs-web#317)", async ({
+    page,
+  }) => {
+    await expect(page.getByTestId("source-local-folder-input").locator("..")).toHaveAttribute(
+      "title",
+      /read-only/i
+    );
   });
 
   test("rejects a folder that is not an SRS repository", async ({ page }) => {
