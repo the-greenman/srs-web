@@ -232,8 +232,13 @@ async function readBlobsGraphQL(
   if (endpoint === null) return results;
   const url = endpoint;
 
+  // Dedupe before batching: the caller may pass the same sha for many paths
+  // (identical or empty files share one blob), and the result is a Map keyed
+  // by sha regardless — querying it once still populates every occurrence.
+  const uniqueShas = Array.from(new Set(shas));
   const batches: string[][] = [];
-  for (let i = 0; i < shas.length; i += batchSize) batches.push(shas.slice(i, i + batchSize));
+  for (let i = 0; i < uniqueShas.length; i += batchSize)
+    batches.push(uniqueShas.slice(i, i + batchSize));
 
   const encoder = new TextEncoder();
   let next = 0;
@@ -256,9 +261,18 @@ async function readBlobsGraphQL(
           headers: { ...authHeaders(token), "Content-Type": "application/json" },
           body: JSON.stringify({ query }),
         });
-        if (!response.ok) continue; // whole batch falls through to REST
+        if (!response.ok) {
+          console.warn(
+            `readBlobsGraphQL: batch request failed (${response.status} ${response.statusText}); falling back to REST for these ${batch.length} blobs`
+          );
+          continue; // whole batch falls through to REST
+        }
         payload = await response.json();
-      } catch {
+      } catch (e) {
+        console.warn(
+          `readBlobsGraphQL: batch request threw; falling back to REST for these ${batch.length} blobs`,
+          e
+        );
         continue;
       }
       const repository = payload.data?.repository;
@@ -287,7 +301,7 @@ export async function readBlobs(
   shas: string[],
   concurrency = 6
 ): Promise<Map<string, Uint8Array>> {
-  const results = await readBlobsGraphQL(location, token, shas);
+  const results = await readBlobsGraphQL(location, token, shas, undefined, concurrency);
   const remaining = shas.filter((sha) => !results.has(sha));
   let next = 0;
   async function worker(): Promise<void> {
