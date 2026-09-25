@@ -205,6 +205,8 @@ describe("git-data: readBlob / readBlobs", () => {
   it("batches over GraphQL and makes no REST blob call when every blob comes back", async () => {
     // Real git blob SHA of "x" — the GraphQL path verifies what it decodes against the sha.
     const shaOfX = "c1b0730e0133447badcfd47fd144e254807b06e1";
+    // 400 paths sharing one blob (e.g. identical or empty files) must dedupe to one
+    // query for the underlying sha, not one query slot per occurrence.
     const shas = Array.from({ length: 400 }, () => shaOfX);
     const fetchMock = vi.fn().mockImplementation((url: string, init: RequestInit) => {
       expect(url).toBe("https://api.github.com/graphql");
@@ -220,7 +222,77 @@ describe("git-data: readBlob / readBlobs", () => {
     const result = await readBlobs(rootLocation, "token", shas);
     expect(result.size).toBe(1); // 400 shas, all the same blob
     expect(new TextDecoder().decode(result.get(shaOfX))).toBe("x");
-    expect(fetchMock).toHaveBeenCalledTimes(2); // 300 + 100, not 400
+    expect(fetchMock).toHaveBeenCalledTimes(1); // deduped to the one unique sha
+  });
+
+  it("still splits genuinely distinct blobs across multiple GraphQL requests", async () => {
+    const contents = Array.from({ length: 350 }, (_, i) => `blob-${i}`);
+    const shas = await Promise.all(
+      contents.map((c) => gitBlobSha(new TextEncoder().encode(c)))
+    );
+    const shaToText = new Map(shas.map((sha, i) => [sha, contents[i]]));
+    const fetchMock = vi.fn().mockImplementation((url: string, init: RequestInit) => {
+      expect(url).toBe("https://api.github.com/graphql");
+      const query = JSON.parse(init.body as string).query as string;
+      const requestedShas = Array.from(query.matchAll(/object\(oid:"([0-9a-f]+)"\)/g)).map(
+        (m) => m[1]
+      );
+      const repository: Record<string, { text: string; isTruncated: boolean }> = {};
+      requestedShas.forEach((sha, i) => {
+        repository[`b${i}`] = { text: shaToText.get(sha) ?? "", isTruncated: false };
+      });
+      return Promise.resolve(jsonResponse({ data: { repository } }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await readBlobs(rootLocation, "token", shas);
+    expect(result.size).toBe(350);
+    expect(fetchMock).toHaveBeenCalledTimes(2); // 300 + 50, none dedupeable
+    for (const [sha, text] of shaToText) {
+      expect(new TextDecoder().decode(result.get(sha))).toBe(text);
+    }
+  });
+
+  it("threads readBlobs' concurrency parameter into the GraphQL batch worker pool", async () => {
+    const contents = Array.from({ length: 700 }, (_, i) => `c${i}`); // 3 batches: 300, 300, 100
+    const shas = await Promise.all(
+      contents.map((c) => gitBlobSha(new TextEncoder().encode(c)))
+    );
+    const shaToText = new Map(shas.map((sha, i) => [sha, contents[i]]));
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const fetchMock = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      const query = JSON.parse(init.body as string).query as string;
+      const requestedShas = Array.from(query.matchAll(/object\(oid:"([0-9a-f]+)"\)/g)).map(
+        (m) => m[1]
+      );
+      const repository: Record<string, { text: string; isTruncated: boolean }> = {};
+      requestedShas.forEach((sha, i) => {
+        repository[`b${i}`] = { text: shaToText.get(sha) ?? "", isTruncated: false };
+      });
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          inFlight--;
+          resolve(jsonResponse({ data: { repository } }));
+        }, 0);
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    // All 700 blobs resolve over GraphQL, so no REST fallback ever runs — the
+    // in-flight count below reflects only the GraphQL batch pool.
+    const serial = await readBlobs(rootLocation, "token", shas, 1);
+    expect(serial.size).toBe(700);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(maxInFlight).toBe(1); // concurrency=1 must serialize the 3 batches
+
+    fetchMock.mockClear();
+    inFlight = 0;
+    maxInFlight = 0;
+    const parallel = await readBlobs(rootLocation, "token", shas, 3);
+    expect(parallel.size).toBe(700);
+    expect(maxInFlight).toBeGreaterThan(1); // concurrency=3 must run batches in parallel
   });
 
   it("falls back to REST for blobs GraphQL cannot return as text (binary, truncated)", async () => {
