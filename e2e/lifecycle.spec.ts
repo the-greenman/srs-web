@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * lifecycle.spec.ts — end-to-end tests for B11 lifecycle transitions and
@@ -24,14 +25,12 @@ const GALLERY_PATH = path.join(__dirname, "fixtures", "gallery.srsj");
 test.describe("Lifecycle transitions (B11)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    // Wait for WASM boot, then choose governance mode
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(GALLERY_PATH);
+
+    await openPackageEditor(page, "governance");
 
     // Wait for loaded state — nav shows Articles link
     await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
@@ -259,13 +258,12 @@ test.describe("Lifecycle transitions (B11)", () => {
 test.describe("Final-state transition confirmation (#203)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
     await page
       .locator('input[type="file"]#srsj-file')
       .setInputFiles(path.join(__dirname, "fixtures", "gallery.srsj"));
+
+    await openPackageEditor(page, "governance");
     await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
     // Select a ratified (non-final) article
     await page.locator(".record-list__item").filter({ hasText: "What this is" }).click();

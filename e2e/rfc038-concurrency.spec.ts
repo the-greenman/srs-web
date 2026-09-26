@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * rfc038-concurrency.spec.ts — the srs#291 two-writer property, in E2E terms.
@@ -166,12 +167,13 @@ async function installTreeProvider(page: Page, treeB64: Record<string, string>):
 }
 
 async function openExplodedTree(page: Page): Promise<void> {
-  await page.getByTestId("mode-governance").click();
   await page.getByTestId("source-github").click();
   await page.getByRole("button", { name: /octo\/gov/ }).click();
   await page.getByRole("button", { name: /^Folder\s+main$/ }).click();
   await page.getByRole("button", { name: /^Folder\s+governance$/ }).click();
   await page.getByRole("button", { name: /Open as SRS repository/ }).click();
+  await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
+  await openPackageEditor(page, "governance");
   await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 15000 });
 }
 

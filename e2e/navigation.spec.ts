@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * navigation.spec.ts — nav section switching tests.
@@ -27,14 +28,11 @@ const FIXTURE_PATH = path.join(__dirname, "fixtures", "gallery.srsj");
 test.describe("Navigation", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    // Wait for WASM boot, then choose governance mode
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(FIXTURE_PATH);
+    await openPackageEditor(page, "governance");
 
     // Wait for loaded state — use the nav link as the signal
     await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });

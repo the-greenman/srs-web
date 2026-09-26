@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Download, type Page, expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * create-document.spec.ts — "Create new governance document" onboarding (#141).
@@ -13,14 +14,17 @@ import { type Download, type Page, expect, test } from "@playwright/test";
  * (c) cloud create via injected fake provider → provider.create() receives the
  *     slugged filename + valid srsj content, app transitions to loaded with a
  *     writable handle
+ *
+ * The "create a new document" panel now lives on the generic splash (srs-web#322):
+ * creating one lands in GenericSrsShell, and Governance is reached as an in-shell
+ * package editor rather than a picked mode.
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function openGovernancePicker(page: Page): Promise<void> {
   await page.goto("/");
-  await page.getByTestId("mode-governance").click({ timeout: 15000 });
-  await expect(page.getByTestId("governance-file-picker")).toBeVisible({ timeout: 5000 });
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 }
 
 async function downloadText(download: Download): Promise<string> {
@@ -54,7 +58,9 @@ test.describe("Create new governance document (#141)", () => {
     // New documents are now created as .srs archives (SRSzip).
     expect(download.suggestedFilename()).toBe("my-test-org.srs");
 
-    // App transitioned to the loaded editor
+    // App transitioned to the loaded (generic) editor; switch to the Governance package editor.
+    await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
+    await openPackageEditor(page, "governance");
     await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
     // No validation errors surfaced for the fresh document
     await expect(page.locator('[role="alert"]')).toHaveCount(0);
@@ -63,6 +69,8 @@ test.describe("Create new governance document (#141)", () => {
   test("create → first decision → export → re-import keeps the decision", async ({ page }) => {
     await openGovernancePicker(page);
     await createLocal(page, "Round Trip Org");
+    await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
+    await openPackageEditor(page, "governance");
     await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
 
     // Capture the first decision through the UI — the scaffold pre-creates none.
@@ -94,12 +102,14 @@ test.describe("Create new governance document (#141)", () => {
 
     // Re-import through the open flow
     await page.getByRole("button", { name: "Open another file" }).click();
-    await page.getByTestId("mode-governance").click({ timeout: 5000 });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 5000 });
     const tmpPath = path.join(__dirname, "fixtures", "_create_roundtrip_tmp.srsj");
     const fs = await import("node:fs/promises");
     await fs.writeFile(tmpPath, exportedText, "utf8");
     try {
       await page.locator('input[type="file"]#srsj-file').setInputFiles(tmpPath);
+      await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
+      await openPackageEditor(page, "governance");
       await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
       await expect(page.locator("text=First Decision").first()).toBeVisible({ timeout: 5000 });
     } finally {
@@ -158,7 +168,9 @@ test.describe("Create new governance document (#141)", () => {
     await page.getByTestId("create-name").fill("Cloud Org");
     await page.getByTestId("create-dropbox").click();
 
-    // App lands in the loaded editor backed by the created handle
+    // App lands in the loaded (generic) editor backed by the created handle
+    await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 10000 });
+    await openPackageEditor(page, "governance");
     await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 10000 });
 
     const calls = await page.evaluate(
