@@ -46,12 +46,16 @@
     repo: SrsRepository;
     repoName: string;
     onExport: () => void;
-    /** Persist an opaque engine export as the browser working copy after a mutation. */
-    onMutation?: () => void;
     /** Write the engine-owned current repository to the opened backend, when allowed. */
     onSave?: () => Promise<void>;
     saving?: boolean;
     saveMessage?: string | null;
+    /** App-owned dirty state, shared with non-UI repository writers. */
+    documentDirty?: boolean;
+    /** Changes after mount invalidate derived browser projections of the repository. */
+    documentRevision?: number;
+    /** Report a successful in-place repository mutation to the App shell. */
+    onDocumentMutation?: () => void;
     onOpenAnother: () => void;
     onOpenGovernance?: () => void;
     onOpenGuides?: () => void;
@@ -61,10 +65,12 @@
     repo,
     repoName,
     onExport,
-    onMutation,
     onSave,
     saving = false,
     saveMessage = null,
+    documentDirty = false,
+    documentRevision = 0,
+    onDocumentMutation = () => {},
     onOpenAnother,
     onOpenGovernance,
     onOpenGuides,
@@ -248,7 +254,7 @@
     editError = null;
     try {
       selectedRecord = updateRecord(repo, selectedRecord.instanceId, input);
-      onMutation?.();
+      onDocumentMutation();
       editing = false;
       refreshRecords();
     } catch (error: unknown) {
@@ -257,6 +263,15 @@
       editSaving = false;
     }
   }
+
+  // The loaded WASM repository is mutated in place, so external writers need
+  // this App-owned revision signal to refresh editor projections.
+  let observedDocumentRevision = $state<number | null>(null);
+  $effect(() => {
+    if (documentRevision === observedDocumentRevision) return;
+    observedDocumentRevision = documentRevision;
+    loadCatalog();
+  });
 
   const selectedRelations = $derived.by(() => {
     if (!selectedRecord) return [];
@@ -402,9 +417,9 @@
         <h2>Package editors</h2>
         {#each packageEditors as editor (editor.id)}
           {#if editor.id === "governance" && onOpenGovernance}
-            <button onclick={onOpenGovernance}>{editor.label}</button>
+            <button data-testid="package-editor-governance" onclick={onOpenGovernance}>{editor.label}</button>
           {:else if editor.id === "guides" && onOpenGuides}
-            <button onclick={onOpenGuides}>{editor.label}</button>
+            <button data-testid="package-editor-guides" onclick={onOpenGuides}>{editor.label}</button>
           {/if}
         {/each}
       </section>
@@ -414,6 +429,7 @@
       {#if onSave}<button disabled={saving} onclick={onSave}>{saving ? "Saving…" : "Save"}</button>{/if}
       <button onclick={onExport}>Export</button>
       <button onclick={onOpenAnother}>Open another</button>
+      {#if documentDirty}<p class="save-message" data-testid="document-dirty-status" role="status">Unsaved changes</p>{/if}
       {#if saveMessage}<p class="save-message" role="status">{saveMessage}</p>{/if}
     </div>
   </aside>
@@ -495,7 +511,7 @@
           <p>Record</p>
           <h2>{selectedRecord.displayLabel ?? selectedRecord.instanceId}</h2>
           <span>{selectedRecord.typeNamespace}/{selectedRecord.typeName}</span>
-          <button class="edit-button" onclick={beginEdit}>Edit fields</button>
+          <button class="edit-button" disabled={saving} onclick={beginEdit}>Edit fields</button>
           {#if editError}<p class="notice">{editError}</p>{/if}
         </header>
         {#each Object.entries(selectedRecord.fieldValues) as [name, value] (name)}
