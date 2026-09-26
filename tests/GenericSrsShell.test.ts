@@ -68,10 +68,10 @@ describe("GenericSrsShell", () => {
     await fireEvent.click(await screen.findByRole("button", { name: "Records" }));
     await fireEvent.click(screen.getByRole("button", { name: /First com\.example\/note/ }));
     await fireEvent.click(screen.getByRole("button", { name: "Edit fields" }));
-    expect(screen.getByTestId("record-form")).toBeTruthy();
+    expect(screen.getByTestId("section-form")).toBeTruthy();
 
     await fireEvent.click(screen.getByRole("button", { name: /Second com\.example\/note/ }));
-    expect(screen.queryByTestId("record-form")).toBeNull();
+    expect(screen.queryByTestId("section-form")).toBeNull();
     expect(screen.getByRole("heading", { name: "Second" })).toBeTruthy();
   });
 
