@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
 import { fireEvent, render } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import SectionForm from "../src/lib/guides/SectionForm.svelte";
-import type { CompositeFormDef } from "../src/lib/guides/blueprint-utils.js";
+import SectionForm from "../src/lib/editor/SectionForm.svelte";
+import type { CompositeFormDef } from "../src/lib/editor/blueprint-fields.js";
 import type { CreateRecordInput, SrsRecord } from "../src/lib/srs-client.js";
 
 // srs-web#266 — editing the top-left header cell of a table composite wipes
