@@ -233,6 +233,7 @@ describe("loadDocument", () => {
     const root = member("root-2", 0, ROOT_TYPE);
     const repo = fakeRepo({
       list_containers: () => [{ containerId: "c-other" }, { containerId: "c-match" }],
+      compositions_for_container: () => [],
       resolve_container_view: (containerId: string) => {
         if (containerId === "c-other") {
           return { containerId, root: member("x", 0, OTHER_ROOT_TYPE), members: [], columns: [], excludeLifecycleStates: [], diagnostics: [] };
@@ -257,8 +258,47 @@ describe("loadDocument", () => {
     expect(doc?.blocks).toEqual([]);
   });
 
+  it("resolves a summary's own container-subset container, not the first sibling sharing its root type", () => {
+    // Two homepage variants share a root type; the summary (from listDocumentViews)
+    // carries no sections, so the full composition must be recovered to pick B's container.
+    const rootA = member("root-a", 0, ROOT_TYPE);
+    const rootB = member("root-b", 0, ROOT_TYPE);
+    const variantB = {
+      id: "comp-b",
+      namespace: "com.example",
+      name: "variant-b",
+      version: 1,
+      description: "",
+      createdAt: "",
+      rootTypeRefs: [{ typeId: ROOT_TYPE, typeVersion: 1 }],
+      sections: [{ sectionId: "page", order: 0, source: { type: "container-subset", containerId: "c-b" } }],
+    };
+    const repo = fakeRepo({
+      list_containers: () => [{ containerId: "c-a" }, { containerId: "c-b" }],
+      compositions_for_container: (containerId: string) => (containerId === "c-b" ? [variantB] : []),
+      resolve_container_view: (containerId: string) => {
+        const root = containerId === "c-a" ? rootA : rootB;
+        return { containerId, root, members: [root], columns: [], excludeLifecycleStates: [], diagnostics: [] };
+      },
+      order_by_precedes: () => ({ orderedIds: [] }),
+    });
+    const summary: DocumentViewSummary = {
+      id: "comp-b",
+      namespace: "com.example",
+      name: "variant-b",
+      version: 1,
+      description: "",
+      rootTypeRefs: [{ typeId: ROOT_TYPE, typeVersion: 1 }],
+    };
+
+    const doc = loadDocument(repo, summary);
+
+    expect(doc?.containerId).toBe("c-b");
+    expect(doc?.root?.instanceId).toBe("root-b");
+  });
+
   it("returns null when neither a fixed containerId nor a matching root-type container resolves", () => {
-    const repo = fakeRepo({ list_containers: () => [] });
+    const repo = fakeRepo({ list_containers: () => [], compositions_for_container: () => [] });
     const composition: DocumentViewSummary = {
       id: "comp",
       namespace: "com.example",

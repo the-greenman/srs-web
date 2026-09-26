@@ -21,6 +21,7 @@ import {
   type ResolvedMember,
   type SrsRepository,
   blueprintSchema,
+  documentViewsForContainer,
   listBlueprints,
   listContainers,
   listTypes,
@@ -88,6 +89,23 @@ function fixedContainerId(composition: DocumentView | DocumentViewSummary): stri
   return null;
 }
 
+/**
+ * A `listDocumentViews` summary carries no `sections`, so its container-subset
+ * `containerId` is invisible. Recover the full Composition via the engine's
+ * `compositions_for_container` (the only binding returning full objects).
+ * Without this, sibling variants sharing a root type all resolve to the first
+ * matching container.
+ */
+function fullComposition(repo: SrsRepository, summary: DocumentViewSummary): DocumentView | null {
+  for (const container of listContainers(repo)) {
+    const match = documentViewsForContainer(repo, container.containerId).find(
+      (view) => view.id === summary.id
+    );
+    if (match) return match;
+  }
+  return null;
+}
+
 /** Resolve the singleton container whose root record's type matches one of the composition's `rootTypeRefs`. */
 function containerForRootType(
   repo: SrsRepository,
@@ -123,7 +141,8 @@ export function loadDocument(
   repo: SrsRepository,
   composition: DocumentView | DocumentViewSummary
 ): LoadedDocument | null {
-  const containerId = fixedContainerId(composition) ?? containerForRootType(repo, composition);
+  const full = "sections" in composition ? composition : fullComposition(repo, composition);
+  const containerId = (full && fixedContainerId(full)) ?? containerForRootType(repo, composition);
   if (!containerId) return null;
 
   const view = resolveContainerView(repo, containerId);
