@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * export-import.spec.ts — B10 export/import round-trip tests.
@@ -19,14 +20,12 @@ const GALLERY_PATH = path.join(__dirname, "fixtures", "gallery.srsj");
 test.describe("Export / Import round-trip (B10)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    // Wait for WASM boot, then choose governance mode
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(GALLERY_PATH);
+
+    await openPackageEditor(page, "governance");
 
     await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
   });
@@ -122,8 +121,7 @@ test.describe("Export / Import round-trip (B10)", () => {
 
     // Re-import: click "Open another file", choose governance again, re-upload
     await page.getByRole("button", { name: "Open another file" }).click();
-    await page.getByTestId("mode-governance").click({ timeout: 5000 });
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible();
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     // Write the exported content to a temp file and re-upload
     const tmpPath = path.join(__dirname, "fixtures", "_roundtrip_tmp.srsj");
@@ -132,6 +130,7 @@ test.describe("Export / Import round-trip (B10)", () => {
     try {
       const fileInput2 = page.locator('input[type="file"]#srsj-file');
       await fileInput2.setInputFiles(tmpPath);
+      await openPackageEditor(page, "governance");
       await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
 
       // The new record must still be present after re-import — navigate to Articles

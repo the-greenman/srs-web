@@ -105,6 +105,18 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     apply_migration: () => {
       throw new Error("not mocked");
     },
+    create_record_in_container: () => {
+      throw new Error("not mocked");
+    },
+    insert_into_precedes_chain: () => {
+      throw new Error("not mocked");
+    },
+    remove_from_precedes_chain: () => {
+      throw new Error("not mocked");
+    },
+    move_in_precedes_chain: () => {
+      throw new Error("not mocked");
+    },
   };
   return { ...base, ...overrides };
 }

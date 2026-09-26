@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * guides-ordering.spec.ts — C9: add / reorder / remove guide sections.
@@ -35,9 +36,11 @@ async function sectionHeadings(page: import("@playwright/test").Page): Promise<s
 test.describe("Guide section ordering (C9)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByTestId("mode-picker")).toBeVisible({ timeout: 15000 });
-    await page.getByTestId("mode-guides").click();
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+
     await page.locator('input[type="file"]#srsj-file').setInputFiles(MUSRS_PATH);
+
+    await openPackageEditor(page, "guides");
     await expect(page.getByTestId("guides-shell")).toBeVisible({ timeout: 5000 });
     await page.getByTestId("guides-guide-item").first().click();
     // The selected guide has several sections to order.

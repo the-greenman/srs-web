@@ -30,7 +30,7 @@ export interface SrsRepository {
   create_record(type_id: string, type_version: number, input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in updateRecord()
   update_record(instance_id: string, input_json: string): any;
-  delete_record(instance_id: string): void;
+  delete_record(instance_id: string, cascade: boolean): void;
   export_srsj(): string;
   export_archive(): Uint8Array;
   /** Export the session as an exploded file tree (ADR-038): a JS object of
@@ -74,6 +74,10 @@ export interface SrsRepository {
   type_schema(type_id: string, type_version?: number): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listTypes()
   list_types(filter_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getTypeExtends()
+  get_type(id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listPackages()
+  list_packages(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listBlueprints()
   list_blueprints(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in documentViewsForContainer()
@@ -109,6 +113,19 @@ export interface SrsRepository {
   get_attachment_bytes(document_id: string): Uint8Array;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getRecordAttachments()
   get_record_attachments(input_json: string): any;
+  create_record_in_container(
+    container_id: string,
+    type_id: string,
+    type_version: number,
+    input_json: string
+    // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in createRecordInContainer()
+  ): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in insertIntoPrecedesChain() (srs-rust#1125)
+  insert_into_precedes_chain(input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in removeFromPrecedesChain() (srs-rust#1125)
+  remove_from_precedes_chain(input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in moveInPrecedesChain() (srs-rust#1125)
+  move_in_precedes_chain(input_json: string): any;
 }
 
 export interface SrsRepositoryConstructor {
@@ -587,10 +604,15 @@ export function updateRecord(
 }
 
 /**
- * Delete a record by instance ID.
+ * Delete a record by instance ID. `cascade` mirrors the CLI's `--cascade` flag
+ * (srs-rust#1025): the binding now requires it explicitly — `false` refuses a
+ * record that is the target of inbound relations rather than silently
+ * dropping them. Callers that have already unlinked the record (e.g. a
+ * document editor removing a component after splicing it out of its
+ * `precedes` chain and container membership) pass `false`.
  */
-export function deleteRecord(repo: SrsRepository, instanceId: string): void {
-  repo.delete_record(instanceId);
+export function deleteRecord(repo: SrsRepository, instanceId: string, cascade = false): void {
+  repo.delete_record(instanceId, cascade);
 }
 
 /**
@@ -796,13 +818,21 @@ export interface SchemaDefinition {
   additionalProperties?: boolean;
 }
 
+/**
+ * A relation-group property (e.g. `contains`, `precedes`, or a custom relation type):
+ * a list of typed items, each `oneOf` a `$ref` to a definition (RFC-041 — the items
+ * `oneOf` expands to every subtype via `extendsTypeId`, not just the declared base).
+ */
+export interface BlueprintGroupProperty {
+  type?: string;
+  items?: { oneOf: Array<{ $ref: string }> };
+}
+
 export interface BlueprintSchema {
   properties: {
     root?: { $ref: string };
-    contains?: {
-      type?: string;
-      items?: { oneOf: Array<{ $ref: string }> };
-    };
+    /** Every group property beyond `root` (e.g. `contains`, `precedes`, custom relation types). */
+    [group: string]: { $ref: string } | BlueprintGroupProperty | undefined;
   };
   definitions: Record<string, SchemaDefinition>;
 }
@@ -1082,11 +1112,47 @@ export interface TypeSummary {
  * List type definitions from the compiled package. Used to resolve the current
  * version of a type UUID (e.g. blueprint `$ref`s carry no version).
  */
+/** The type a type extends (`extendsTypeId`, ext:type-inheritance), or null. */
+export function getTypeExtends(repo: SrsRepository, typeId: string): string | null {
+  const type = repo.get_type(typeId) as { extendsTypeId?: string | null } | null;
+  return type?.extendsTypeId ?? null;
+}
+
 export function listTypes(
   repo: SrsRepository,
   filter: Record<string, unknown> = {}
 ): TypeSummary[] {
   return repo.list_types(JSON.stringify(filter)) as TypeSummary[];
+}
+
+/** A package boundary installed in the loaded repository. */
+export interface PackageSummary {
+  id: string;
+  namespace: string;
+  name: string;
+  version: string;
+  /** Undefined for the primary package. */
+  boundaryPath?: string;
+  fieldCount: number;
+  typeCount: number;
+}
+
+/**
+ * List package boundaries from the engine. Package-specific UI uses this only
+ * to decide whether it is available; package semantics remain in the engine.
+ */
+export function listPackages(repo: SrsRepository): PackageSummary[] {
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary
+  const raw: any[] = repo.list_packages();
+  return raw.map((item) => ({
+    id: item.id,
+    namespace: item.namespace,
+    name: item.name,
+    version: item.version,
+    boundaryPath: item.boundaryPath ?? item.boundary_path ?? undefined,
+    fieldCount: item.fieldCount ?? item.field_count ?? 0,
+    typeCount: item.typeCount ?? item.type_count ?? 0,
+  }));
 }
 
 // --- listBlueprints --------------------------------------------------------
@@ -1592,4 +1658,87 @@ export function getRecordAttachments(
   const raw = repo.get_record_attachments(JSON.stringify(input));
   if (raw === null || raw === undefined) return null;
   return raw as GetRecordAttachmentsResult;
+}
+
+// ---------------------------------------------------------------------------
+// Blueprint-driven document editor bindings (srs-rust#1125, srs-web#322)
+// ---------------------------------------------------------------------------
+
+/** A relation created/removed by a precedes-chain splice binding. */
+export interface RelationSummary {
+  relationId: string;
+  relationType: string;
+  sourceId: string;
+  targetId: string;
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: raw WASM RelationSummary has unknown field case
+function normalizeRelationSummary(raw: any): RelationSummary {
+  return {
+    relationId: raw.relationId ?? raw.relation_id,
+    relationType: raw.relationType ?? raw.relation_type,
+    sourceId: raw.sourceId ?? raw.source_id,
+    targetId: raw.targetId ?? raw.target_id,
+  };
+}
+
+/** Result of a precedes-chain splice binding (insert / remove / move). */
+export interface ChainSpliceResult {
+  created: RelationSummary[];
+  removed: RelationSummary[];
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: raw WASM ChainSpliceResult has unknown field case
+function normalizeChainSpliceResult(raw: any): ChainSpliceResult {
+  return {
+    created: (raw.created ?? []).map(normalizeRelationSummary),
+    removed: (raw.removed ?? []).map(normalizeRelationSummary),
+  };
+}
+
+/**
+ * Create a Tier-2 record and add it to a container's membership in one call.
+ * ADR-001: pure WASM pass-through — membership + creation atomicity is the core's job.
+ */
+export function createRecordInContainer(
+  repo: SrsRepository,
+  containerId: string,
+  typeId: string,
+  typeVersion: number,
+  input: CreateRecordInput
+): SrsRecord {
+  const raw = repo.create_record_in_container(
+    containerId,
+    typeId,
+    typeVersion,
+    JSON.stringify(input)
+  );
+  return normalizeRecord(raw);
+}
+
+/** Splice a new (or existing, unlinked) instance into a `precedes` chain, immediately after/before an anchor. */
+export function insertIntoPrecedesChain(
+  repo: SrsRepository,
+  input: { instanceId: string; afterId?: string; beforeId?: string }
+): ChainSpliceResult {
+  const raw = repo.insert_into_precedes_chain(JSON.stringify(input));
+  return normalizeChainSpliceResult(raw);
+}
+
+/** Remove an instance from its `precedes` chain, reconnecting its former neighbours. */
+export function removeFromPrecedesChain(
+  repo: SrsRepository,
+  input: { instanceId: string }
+): ChainSpliceResult {
+  const raw = repo.remove_from_precedes_chain(JSON.stringify(input));
+  return normalizeChainSpliceResult(raw);
+}
+
+/** Move an already-chained instance to a new position, immediately after/before an anchor. */
+export function moveInPrecedesChain(
+  repo: SrsRepository,
+  input: { instanceId: string; afterId?: string; beforeId?: string }
+): ChainSpliceResult {
+  const raw = repo.move_in_precedes_chain(JSON.stringify(input));
+  return normalizeChainSpliceResult(raw);
 }

@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
 import { fireEvent, render } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import SectionForm from "../src/lib/guides/SectionForm.svelte";
-import type { CompositeFormDef } from "../src/lib/guides/blueprint-utils.js";
+import SectionForm from "../src/lib/editor/SectionForm.svelte";
+import type { CompositeFormDef } from "../src/lib/editor/blueprint-fields.js";
 import type { CreateRecordInput, SrsRecord } from "../src/lib/srs-client.js";
 
 // srs-web#266 — editing the top-left header cell of a table composite wipes
@@ -128,5 +128,17 @@ describe("SectionForm table grid editor (srs-web#266)", () => {
     expect(tables[0].columns).toEqual(["Type", ""]);
     // No groupValues in the RFC-039 input surface.
     expect("groupValues" in input).toBe(false);
+  });
+});
+
+describe("SectionForm late-arriving fields", () => {
+  it("renders a field added after mount without a bind:value={undefined} crash", async () => {
+    const heading = { label: "Heading", valueType: "string" as const, required: true, name: "heading" };
+    const body = { label: "Body", valueType: "text" as const, required: false, name: "body" };
+    const { container, rerender } = render(SectionForm, {
+      props: { label: "Block", fields: [heading], composites: [], record: undefined, onSave: () => {}, onCancel: () => {} },
+    });
+    await rerender({ label: "Block", fields: [heading, body], composites: [], record: undefined, onSave: () => {}, onCancel: () => {} });
+    expect(container.querySelector("#rf-body")).not.toBeNull();
   });
 });

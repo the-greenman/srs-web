@@ -2,14 +2,19 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SAMPLE_TEXT = fs.readFileSync(path.join(__dirname, "fixtures", "sample.srsj"), "utf8");
 // srs-web#312: richer fixtures reused through the same pending-write-controllable Dropbox
-// mock, to exercise the saving-guard race beyond SAMPLE_TEXT's empty containers — GALLERY_TEXT
-// has real decisions (tags, relations, DECISION_TYPE_ID) and MUSRS_TEXT has a guide with
-// multiple sections, both already used elsewhere (decision-tags.spec.ts / decision-link.spec.ts
-// and guides-ordering.spec.ts respectively).
+// mock, to exercise the saving-guard race — GALLERY_TEXT has real decisions (tags,
+// relations, DECISION_TYPE_ID) and MUSRS_TEXT has a guide with multiple sections, both
+// already used elsewhere (decision-tags.spec.ts / decision-link.spec.ts and
+// guides-ordering.spec.ts respectively).
+//
+// srs-web#322: GALLERY_TEXT (not a bare fixture) is also the default `content` below,
+// since the Governance package editor is now gated on the repo actually installing the
+// decision type, not a package namespace label — a bare fixture like sample.srsj no
+// longer qualifies.
 const GALLERY_TEXT = fs.readFileSync(path.join(__dirname, "fixtures", "gallery.srsj"), "utf8");
 const MUSRS_TEXT = fs.readFileSync(path.join(__dirname, "fixtures", "muSrs.srsj"), "utf8");
 
@@ -37,7 +42,12 @@ type FakeMode = "success" | "cancel" | "auth-error" | "malformed" | "conflict" |
 async function installFakeProviders(
   page: Page,
   mode: FakeMode = "success",
-  content: string = SAMPLE_TEXT
+  // srs-web#322: default to GALLERY_TEXT (installs the real decision type) since
+  // most callers below open the resulting doc straight into the Governance package
+  // editor, which is now gated on the repo actually installing that type rather than
+  // a package namespace label. Callers that need a different fixture (e.g. MUSRS_TEXT
+  // for Guides) pass `content` explicitly.
+  content: string = GALLERY_TEXT
 ): Promise<void> {
   await page.addInitScript(
     ({ sampleText, fakeMode, explodedTreeB64 }) => {
@@ -269,36 +279,41 @@ test.describe("Cloud storage sources", () => {
   test("opens a Dropbox repository in Governance mode", async ({ page }) => {
     await installFakeProviders(page);
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-dropbox").click();
     await page.getByRole("button", { name: /dropbox-sample\.srsj/ }).click();
+    await openPackageEditor(page, "governance");
 
     // Repo identity renders as the leading breadcrumb (span[title="Opened from …"]).
     await expect(page.getByTitle("Opened from dropbox")).toHaveText("dropbox-sample");
   });
 
   test("opens a Drive repository in Guides mode", async ({ page }) => {
-    await installFakeProviders(page);
+    await installFakeProviders(page, "success", MUSRS_TEXT);
     await page.goto("/");
-    await page.getByTestId("mode-guides").click();
     await page.getByTestId("source-google-drive").click();
+    await openPackageEditor(page, "guides");
 
     await expect(page.getByTestId("guides-shell")).toBeVisible();
     await expect(page.getByTitle("Opened from google-drive")).toHaveText("drive-sample");
   });
 
   test("provider save pauses UI mutation admission until the write completes", async ({ page }) => {
-    await installFakeProviders(page, "pending");
+    // srs-web#322: Governance is now gated on the repo installing a real governance
+    // type, which the bare SAMPLE_TEXT fixture doesn't — use GALLERY_TEXT instead.
+    await installFakeProviders(page, "pending", GALLERY_TEXT);
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-dropbox").click();
     await page.getByRole("button", { name: /dropbox-sample\.srsj/ }).click();
+    await openPackageEditor(page, "governance");
 
-    // srs-web#312: create and select a record *before* the pending save starts —
-    // SAMPLE_TEXT's section types have no required fields, so submitting the "New"
-    // form with nothing filled succeeds and auto-selects the new record, exposing
-    // the Edit/Delete controls that must also respect the saving guard.
+    // srs-web#312: create and select a record *before* the pending save starts,
+    // exposing the Edit/Delete controls that must also respect the saving guard.
+    // The default section is Articles; fill its required fields (Title, Article
+    // Text, Status) so the native-required submit actually succeeds.
     await page.locator("button.topbar__new").click();
+    await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Pending Save Article");
+    await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Body text");
+    await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
     await page.locator("button[type=submit]", { hasText: "Save" }).click();
     const editBtn = page.getByRole("button", { name: "Edit", exact: true });
     const deleteBtn = page.getByRole("button", { name: "Delete", exact: true });
@@ -341,9 +356,9 @@ test.describe("Cloud storage sources", () => {
     // SAMPLE_TEXT's bare fixture types.
     await installFakeProviders(page, "pending", GALLERY_TEXT);
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-dropbox").click();
     await page.getByRole("button", { name: /dropbox-sample\.srsj/ }).click();
+    await openPackageEditor(page, "governance");
 
     await page.getByRole("link", { name: /Decision Log/ }).click();
     await expect(page.getByTestId("decision-summary-card").first()).toBeVisible({ timeout: 5000 });
@@ -404,9 +419,9 @@ test.describe("Cloud storage sources", () => {
     // (reused from e2e/guides-ordering.spec.ts).
     await installFakeProviders(page, "pending", MUSRS_TEXT);
     await page.goto("/");
-    await page.getByTestId("mode-guides").click();
     await page.getByTestId("source-dropbox").click();
     await page.getByRole("button", { name: /dropbox-sample\.srsj/ }).click();
+    await openPackageEditor(page, "guides");
 
     await expect(page.getByTestId("guides-shell")).toBeVisible();
     await page.getByTestId("guides-guide-item").first().click();
@@ -442,7 +457,6 @@ test.describe("Cloud storage sources", () => {
   test("provider cancellation leaves the chooser open without an error", async ({ page }) => {
     await installFakeProviders(page, "cancel");
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-google-drive").click();
 
     await expect(page.getByTestId("source-chooser")).toBeVisible();
@@ -452,21 +466,19 @@ test.describe("Cloud storage sources", () => {
   test("provider authentication failures are shown inline", async ({ page }) => {
     await installFakeProviders(page, "auth-error");
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-dropbox").click();
 
     await expect(page.getByRole("alert")).toHaveText("Provider authorization failed");
-    await expect(page.getByTestId("governance-file-picker")).toBeVisible();
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible();
   });
 
   test("malformed cloud files do not leave the source chooser", async ({ page }) => {
     await installFakeProviders(page, "malformed");
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-google-drive").click();
 
     await expect(page.getByRole("alert")).toContainText("Failed to load repository");
-    await expect(page.getByTestId("governance-file-picker")).toBeVisible();
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible();
   });
 
   test("unconfigured providers are disabled while local files remain available", async ({
@@ -492,7 +504,7 @@ test.describe("Cloud storage sources", () => {
       };
     });
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     await expect(page.getByTestId("source-dropbox")).toBeDisabled();
     await expect(page.getByTestId("source-google-drive")).toBeDisabled();
@@ -503,7 +515,6 @@ test.describe("Cloud storage sources", () => {
   test("opens a GitHub repository by browsing repo → branch → file", async ({ page }) => {
     await installFakeProviders(page);
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-github").click();
     // "" → repos; pick repo → branches; pick branch → the .srsj.
     await page.getByRole("button", { name: /octo\/gov/ }).click();
@@ -511,6 +522,7 @@ test.describe("Cloud storage sources", () => {
     await expect(page.getByRole("button", { name: /^Folder\s+dev$/ })).toBeVisible();
     await page.getByRole("button", { name: /^Folder\s+main$/ }).click();
     await page.getByRole("button", { name: /repo\.srsj/ }).click();
+    await openPackageEditor(page, "governance");
 
     await expect(page.getByTitle("Opened from github")).toHaveText("repo");
   });
@@ -518,7 +530,6 @@ test.describe("Cloud storage sources", () => {
   test("filters the repository list by name", async ({ page }) => {
     await installFakeProviders(page);
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-github").click();
     await expect(page.getByRole("button", { name: /octo\/gov/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /octo\/notes/ })).toBeVisible();
@@ -529,11 +540,11 @@ test.describe("Cloud storage sources", () => {
   });
 
   async function openGitHubDoc(page: Page): Promise<void> {
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-github").click();
     await page.getByRole("button", { name: /octo\/gov/ }).click(); // repo
     await page.getByRole("button", { name: /^Folder\s+main$/ }).click(); // branch
     await page.getByRole("button", { name: /repo\.srsj/ }).click(); // file
+    await openPackageEditor(page, "governance");
   }
 
   test("Save opens a branch dialog and commits to the current branch", async ({ page }) => {
@@ -578,7 +589,6 @@ test.describe("Cloud storage sources", () => {
   // -------------------------------------------------------------------------
 
   async function browseToGovernanceDir(page: Page): Promise<void> {
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-github").click();
     await page.getByRole("button", { name: /octo\/gov/ }).click(); // repo
     await page.getByRole("button", { name: /^Folder\s+main$/ }).click(); // branch
@@ -606,6 +616,7 @@ test.describe("Cloud storage sources", () => {
     await page.goto("/");
     await browseToGovernanceDir(page);
     await page.getByRole("button", { name: /Open as SRS repository/ }).click();
+    await openPackageEditor(page, "governance");
 
     await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 10000 });
     await expect(page.getByText(/records in this repository\./)).toBeVisible();
@@ -619,6 +630,7 @@ test.describe("Cloud storage sources", () => {
     await page.goto("/");
     await browseToGovernanceDir(page);
     await page.getByRole("button", { name: /Open as SRS repository/ }).click();
+    await openPackageEditor(page, "governance");
     await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 10000 });
 
     // No edits — save immediately. This exercises load_tree() -> export_tree() end to
@@ -643,6 +655,7 @@ test.describe("Cloud storage sources", () => {
     await page.goto("/");
     await browseToGovernanceDir(page);
     await page.getByRole("button", { name: /Open as SRS repository/ }).click();
+    await openPackageEditor(page, "governance");
     await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 10000 });
 
     await page.getByTestId("save-document").click();
@@ -658,7 +671,6 @@ test.describe("Cloud storage sources", () => {
   test("auto-scan surfaces a nested Dropbox .srsj and it opens", async ({ page }) => {
     await installFakeProviders(page);
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-dropbox").click();
 
     // The nested file appears in the "Found in subfolders" section without navigating.
@@ -666,6 +678,7 @@ test.describe("Cloud storage sources", () => {
     const found = page.getByRole("button", { name: /dropbox-nested\.srsj/ });
     await expect(found).toBeVisible();
     await found.click();
+    await openPackageEditor(page, "governance");
     await expect(page.getByTitle("Opened from dropbox")).toHaveText("dropbox-nested");
   });
 
@@ -724,7 +737,6 @@ test.describe("Cloud storage sources", () => {
       };
     });
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-dropbox").click();
 
     // Auto-scan skipped → no discovered section, but the button is offered.
@@ -739,7 +751,6 @@ test.describe("Cloud storage sources", () => {
   test("'Show all files' toggles non-SRS files in the listing", async ({ page }) => {
     await installFakeProviders(page);
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-github").click();
     await page.getByRole("button", { name: /octo\/gov/ }).click(); // repo
     await page.getByRole("button", { name: /^Folder\s+main$/ }).click(); // branch
@@ -754,7 +765,6 @@ test.describe("Cloud storage sources", () => {
   test("a scan-discovered GitHub repository opens in tree mode", async ({ page }) => {
     await installFakeProviders(page);
     await page.goto("/");
-    await page.getByTestId("mode-governance").click();
     await page.getByTestId("source-github").click();
     await page.getByRole("button", { name: /octo\/gov/ }).click(); // repo
     await page.getByRole("button", { name: /^Folder\s+main$/ }).click(); // branch → auto-scan runs
@@ -764,6 +774,7 @@ test.describe("Cloud storage sources", () => {
     const found = page.getByRole("button", { name: /^Repo\s+governance$/ });
     await expect(found).toBeVisible();
     await found.click();
+    await openPackageEditor(page, "governance");
 
     // Routes through openTree → the exploded tree loads into the editor.
     await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 10000 });

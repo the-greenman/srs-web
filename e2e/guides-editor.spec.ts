@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * guides-editor.spec.ts — C8: blueprint-schema-driven guides renderer.
@@ -31,12 +32,11 @@ const SECTION_COMMENTARY_ID = "474e299c-5809-4f92-a40d-b3ae1be3ad17";
 test.describe("Guides editor (C8)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    // Wait for WASM to boot and mode picker to appear, then choose Guides.
-    await page.getByTestId("mode-guides").click({ timeout: 15000 });
-    await expect(page.getByTestId("guides-file-picker")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(MUSRS_PATH);
+    await openPackageEditor(page, "guides");
 
     // Guides shell should appear once WASM loads the repo.
     await expect(page.getByTestId("guides-shell")).toBeVisible({ timeout: 5000 });
@@ -67,8 +67,8 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-add-section").click();
     await page.getByTestId(`guides-section-type-${SECTION_TEXT_ID}`).click();
 
-    // Form should be visible (title "Text section" from blueprint label).
-    await expect(page.getByRole("heading", { name: "New Text section" })).toBeVisible();
+    // Form should be visible (title humanised from the listTypes() name).
+    await expect(page.getByRole("heading", { name: "New Section text" })).toBeVisible();
 
     // Heading field → plain text input (not textarea).
     const headingField = page.locator(".field").filter({ hasText: "Display heading for a section" });
@@ -95,7 +95,7 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-add-section").click();
     await page.getByTestId(`guides-section-type-${SECTION_LIST_ID}`).click();
 
-    await expect(page.getByRole("heading", { name: "New List section" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New Section list" })).toBeVisible();
 
     // list-items field is required → textarea (aria name "Items required").
     await expect(page.getByRole("textbox", { name: "Items required" })).toBeVisible();
@@ -115,7 +115,7 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-add-section").click();
     await page.getByTestId(`guides-section-type-${SECTION_TABLE_ID}`).click();
 
-    await expect(page.getByRole("heading", { name: "New Table section" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New Section table" })).toBeVisible();
 
     // Heading field → plain input.
     const headingField = page.locator(".field").filter({ hasText: "Display heading for a section" });
@@ -132,7 +132,7 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-add-section").click();
     await page.getByTestId(`guides-section-type-${SECTION_COMMENTARY_ID}`).click();
 
-    await expect(page.getByRole("heading", { name: "New Commentary section" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New Section commentary" })).toBeVisible();
 
     // Heading field → plain input.
     const headingField = page.locator(".field").filter({ hasText: "Display heading for a section" });
@@ -187,7 +187,7 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-add-section").click();
     await page.getByTestId(`guides-section-type-${SECTION_TEXT_ID}`).click();
 
-    await expect(page.getByRole("heading", { name: "New Text section" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New Section text" })).toBeVisible();
 
     const headingInput = page
       .locator(".field")
@@ -211,7 +211,7 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-section-item").filter({ hasText: "C8 Test Section" }).click();
 
     // Edit form opens — heading is pre-filled.
-    await expect(page.getByRole("heading", { name: "Edit Text section" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Edit Section text" })).toBeVisible();
 
     // Update the body.
     const editBodyTextarea = page
@@ -273,12 +273,9 @@ test.describe("Guides editor (C8)", () => {
     const exportedRepo = JSON.parse(exportedContent);
     expect(exportedRepo).toBeTruthy();
 
-    // Reload by navigating back to the mode picker and re-uploading the export.
+    // Reload by navigating back to the generic file picker and re-uploading the export.
     await page.getByRole("button", { name: "Open another file" }).click();
-    await expect(page.getByTestId("mode-picker")).toBeVisible({ timeout: 3000 });
-
-    await page.getByTestId("mode-guides").click();
-    await expect(page.getByTestId("guides-file-picker")).toBeVisible();
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 3000 });
 
     // Write exported content to a temp file and upload it.
     const tmpPath = path.join(__dirname, "fixtures", "_export-roundtrip-tmp.srsj");
@@ -287,6 +284,7 @@ test.describe("Guides editor (C8)", () => {
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(tmpPath);
+    await openPackageEditor(page, "guides");
     await expect(page.getByTestId("guides-shell")).toBeVisible({ timeout: 5000 });
 
     // Click the first guide — section list should contain the round-tripped section.
@@ -305,7 +303,7 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-add-section").click();
     await page.getByTestId(`guides-section-type-${SECTION_TEXT_ID}`).click();
 
-    await expect(page.getByRole("heading", { name: "New Text section" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New Section text" })).toBeVisible();
 
     // `theme` (com.mudemocracy/theme) is the only select field on section.text,
     // with allowedValues default/inverted/highlight. Before #46 it fell through

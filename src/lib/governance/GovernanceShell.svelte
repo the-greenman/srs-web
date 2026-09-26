@@ -68,7 +68,7 @@
 
   import { TYPE_REGISTRY, DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
-  import { definitionToFields } from "$lib/guides/blueprint-utils.js";
+  import { definitionToFields } from "$lib/editor/blueprint-fields.js";
   import { setFieldMetaContext, buildFieldMetaMap } from "$lib/governance/field-meta.js";
   import { setRepoContext } from "$lib/governance/repo-context.js";
   import { triggerDownload, markdownToText, wrapLogHtml } from "$lib/governance/decision-export-utils.js";
