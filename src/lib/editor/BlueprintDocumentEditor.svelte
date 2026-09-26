@@ -13,12 +13,13 @@
 <script lang="ts">
   import {
     blueprintForComposition,
+    childTypes,
     componentTypes,
     loadDocument,
     type ComponentTypeDescriptor,
     type LoadedDocument,
   } from "$lib/editor/document-model.js";
-  import { insertComponent, moveComponent, removeComponent } from "$lib/editor/document-ops.js";
+  import { insertChild, insertComponent, moveComponent, removeComponent } from "$lib/editor/document-ops.js";
   import { definitionToComposites, definitionToFields, type CompositeFormDef } from "$lib/editor/blueprint-fields.js";
   import SectionForm from "$lib/editor/SectionForm.svelte";
   import Button from "$lib/components/Button.svelte";
@@ -58,6 +59,8 @@
 
   let doc = $state<LoadedDocument | null>(null);
   let availableTypes = $state<ComponentTypeDescriptor[]>([]);
+  /** Per-type "+ Add <child>" options for a group block (srs-web#322 step 4), keyed by the group's own typeId. */
+  let childTypesByTypeId = $state<Record<string, ComponentTypeDescriptor[]>>({});
   let rootRecord = $state<SrsRecord | null>(null);
   let rootForm = $state<FormDef | null>(null);
   let blockRecords = $state<Record<string, SrsRecord>>({});
@@ -66,10 +69,17 @@
   let formDefCache = new Map<string, FormDef>();
   let error = $state<string | null>(null);
 
-  /** Position where the "+ Add component" picker is open: an index into the component list (insert before it). */
+  /** Position where the top-level "+ Add component" picker is open: an index into `doc.blocks` (insert before it). */
   let pickerAt = $state<number | null>(null);
+  /** The group block whose "+ Add <child>" picker is open (its instanceId), or null. */
+  let childPickerOpenFor = $state<string | null>(null);
   let opSaving = $state(false);
   let opError = $state<string | null>(null);
+
+  /** Every block in the tree, top-level and nested, depth-first. */
+  function flattenBlocks(blocks: DocumentBlock[]): DocumentBlock[] {
+    return blocks.flatMap((b) => [b, ...flattenBlocks(b.children)]);
+  }
 
   function message(e: unknown): string {
     return e instanceof Error ? e.message : String(e);
@@ -116,8 +126,8 @@
   function reload(): void {
     error = null;
     try {
-      const blueprint = blueprintForComposition(repo, composition);
-      if (!blueprint) {
+      const bp = blueprintForComposition(repo, composition);
+      if (!bp) {
         doc = null;
         return;
       }
@@ -127,18 +137,24 @@
         doc = null;
         return;
       }
-      const types = componentTypes(repo, blueprint);
+      const types = componentTypes(repo, bp);
       const root = loaded.root ? getRecord(repo, loaded.root.instanceId) : null;
       const rootDef = root ? formDefFor(root.typeId, root.typeVersion) : null;
+      const allBlocks = flattenBlocks(loaded.blocks);
       const records: Record<string, SrsRecord> = {};
       const previews: Record<string, string | null> = {};
-      for (const block of loaded.blocks) {
+      const childTypesCache: Record<string, ComponentTypeDescriptor[]> = {};
+      for (const block of allBlocks) {
         const record = getRecord(repo, block.instanceId);
         if (record) records[block.instanceId] = record;
         previews[block.instanceId] = renderBlockPreviewHtml(loaded, block.instanceId);
+        if (!(block.typeId in childTypesCache)) {
+          childTypesCache[block.typeId] = childTypes(repo, bp, block.typeId);
+        }
       }
       doc = loaded;
       availableTypes = types;
+      childTypesByTypeId = childTypesCache;
       rootRecord = root;
       rootForm = rootDef;
       blockRecords = records;
@@ -217,13 +233,14 @@
     }
   }
 
-  function removeBlock(instanceId: string): void {
+  /** `hasParent`: a nested child carries an inbound `contains` relation, which needs `cascade` to delete (see document-ops.ts). */
+  function removeBlock(instanceId: string, hasParent: boolean): void {
     if (!doc) return;
     if (!confirm("Remove this component? This cannot be undone.")) return;
     opSaving = true;
     opError = null;
     try {
-      removeComponent(repo, { instanceId, containerId: doc.containerId }, () => {
+      removeComponent(repo, { instanceId, containerId: doc.containerId, cascade: hasParent }, () => {
         onMutation();
         reload();
       });
@@ -236,6 +253,10 @@
 
   function openPicker(at: number): void {
     pickerAt = pickerAt === at ? null : at;
+  }
+
+  function toggleChildPicker(parentId: string): void {
+    childPickerOpenFor = childPickerOpenFor === parentId ? null : parentId;
   }
 
   /**
@@ -253,7 +274,7 @@
     return values;
   }
 
-  /** Insert a new component of `descriptor`'s type at the open picker's position. */
+  /** Insert a new top-level component of `descriptor`'s type at the open picker's position. */
   function pickType(descriptor: ComponentTypeDescriptor): void {
     if (!doc || pickerAt === null) return;
     const at = pickerAt;
@@ -261,7 +282,7 @@
     opSaving = true;
     opError = null;
     try {
-      const list = components;
+      const list = doc.blocks;
       const afterId = list[at - 1]?.instanceId;
       const beforeId = afterId === undefined ? list[at]?.instanceId : undefined;
       const created = insertComponent(
@@ -287,6 +308,43 @@
     }
   }
 
+  /** Insert a new child of `descriptor`'s type as `parent`'s last child (srs-web#322 step 5). */
+  function addChild(parent: DocumentBlock, descriptor: ComponentTypeDescriptor): void {
+    if (!doc) return;
+    childPickerOpenFor = null;
+    opSaving = true;
+    opError = null;
+    try {
+      const lastChild = parent.children[parent.children.length - 1];
+      const created = insertChild(
+        repo,
+        {
+          parentId: parent.instanceId,
+          typeId: descriptor.typeId,
+          typeVersion: descriptor.typeVersion,
+          containerId: doc.containerId,
+          afterId: lastChild?.instanceId,
+          fieldValues: placeholderFieldValues(descriptor.typeId, descriptor.typeVersion),
+        },
+        () => {
+          onMutation();
+          reload();
+        }
+      );
+      expanded = new Set([...expanded, created.instanceId]);
+    } catch (e: unknown) {
+      opError = message(e);
+    } finally {
+      opSaving = false;
+    }
+  }
+
+  /** "+ Add <label>" text for a group's child picker: the single offered type's label, or a generic fallback when several types are offered. */
+  function childPickerLabel(typeId: string): string {
+    const options = childTypesByTypeId[typeId] ?? [];
+    return options.length === 1 ? options[0].label : "component";
+  }
+
   /** Human label for a document block: prefer the resolved component type's label, fall back to the block's own display label. */
   function blockTypeLabel(block: DocumentBlock): string {
     const typeName = blockRecords[block.instanceId]?.typeName;
@@ -297,12 +355,6 @@
   }
 
   const disabled = $derived(saving || opSaving);
-
-  // Blueprint components are the page; other container members (feature cards,
-  // decision items — not declared by the blueprint) are listed after them.
-  const componentIds = $derived(new Set(availableTypes.map((t) => t.typeId)));
-  const components = $derived(doc?.blocks.filter((b) => componentIds.has(b.typeId)) ?? []);
-  const others = $derived(doc?.blocks.filter((b) => !componentIds.has(b.typeId)) ?? []);
 
   /** Blocks render collapsed to a one-line summary; ids here are open ("root" = the page form). */
   let expanded = $state(new Set<string>());
@@ -345,9 +397,10 @@
       {/if}
     {/snippet}
 
-    {#snippet block(item: DocumentBlock, index: number, list: DocumentBlock[])}
+    {#snippet block(item: DocumentBlock, index: number, list: DocumentBlock[], hasParent: boolean)}
       {@const record = blockRecords[item.instanceId]}
       {@const open = expanded.has(item.instanceId)}
+      {@const childOptions = childTypesByTypeId[item.typeId] ?? []}
       <section class="bp-editor__block" data-testid="bp-editor-block">
         <header class="bp-editor__block-header">
           <button
@@ -365,7 +418,7 @@
             <button type="button" class="bp-editor__icon-btn" data-testid="bp-block-down" title="Move down"
               disabled={disabled || index === list.length - 1} onclick={() => moveDown(list, index)}>↓</button>
             <button type="button" class="bp-editor__icon-btn bp-editor__icon-btn--danger" data-testid="bp-block-remove"
-              title="Remove" disabled={disabled} onclick={() => removeBlock(item.instanceId)}>✕</button>
+              title="Remove" disabled={disabled} onclick={() => removeBlock(item.instanceId, hasParent)}>✕</button>
           </span>
         </header>
         {#if open && record}
@@ -390,6 +443,31 @@
           >
             <PreviewPane html={blockPreviews[item.instanceId] ?? null} />
           </button>
+        {/if}
+
+        {#if item.children.length > 0 || childOptions.length > 0}
+          <div class="bp-editor__children" data-testid="bp-block-children">
+            {#each item.children as child, cindex (child.instanceId)}
+              {@render block(child, cindex, item.children, true)}
+            {/each}
+            {#if childOptions.length > 0}
+              <div class="bp-editor__add-row">
+                <Button
+                  variant="ghost"
+                  data-testid="bp-add-child-{item.instanceId}"
+                  onclick={() => toggleChildPicker(item.instanceId)}
+                  disabled={disabled}
+                >+ Add {childPickerLabel(item.typeId)}</Button>
+              </div>
+              {#if childPickerOpenFor === item.instanceId}
+                <ul class="bp-editor__picker" data-testid="bp-child-picker-{item.instanceId}" role="menu">
+                  {#each childOptions as t (t.typeId)}
+                    <li><button type="button" role="menuitem" title={t.description} onclick={() => addChild(item, t)}>{t.label}</button></li>
+                  {/each}
+                </ul>
+              {/if}
+            {/if}
+          </div>
         {/if}
       </section>
     {/snippet}
@@ -418,18 +496,10 @@
     {/if}
 
     {@render picker(0)}
-    {#each components as item, index (item.instanceId)}
-      {@render block(item, index, components)}
+    {#each doc.blocks as item, index (item.instanceId)}
+      {@render block(item, index, doc.blocks, false)}
       {@render picker(index + 1)}
     {/each}
-
-    {#if others.length > 0}
-      <h3 class="bp-editor__others-title" data-testid="bp-editor-others">Other members</h3>
-      <p class="bp-editor__others-note">In this page's container but not declared by its blueprint (e.g. cards inside a group).</p>
-      {#each others as item, index (item.instanceId)}
-        {@render block(item, index, others)}
-      {/each}
-    {/if}
   {:else}
     <p class="bp-editor__empty">No blueprint governs this composition — showing read-only preview only.</p>
   {/if}
@@ -490,16 +560,12 @@
   .bp-editor__inline-preview :global(iframe) {
     pointer-events: none;
   }
-  .bp-editor__others-title {
-    margin: 1rem 0 0;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-  .bp-editor__others-note {
-    margin: 0;
-    color: var(--color-muted, #888);
-    font-size: 0.8rem;
+  .bp-editor__children {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.5rem 0.5rem 0.5rem 1.25rem;
+    border-top: 1px solid var(--color-border, #e0e0e0);
   }
   .bp-editor__root {
     border-bottom: 2px solid var(--color-border, #ddd);

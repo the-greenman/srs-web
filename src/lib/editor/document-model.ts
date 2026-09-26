@@ -8,8 +8,17 @@
  * document made of", never reimplemented per client.
  *
  * ADR-001: zero SRS semantics in TypeScript. All traversal/matching delegates
- * to WASM-returned structures (blueprintSchema, resolveContainerView,
- * orderByPrecedes); this module only shapes the result for the editor UI.
+ * to WASM-returned structures (blueprintSchema, blueprintStructure,
+ * resolveContainerView, renderDocumentView's JSON projection); this module
+ * only shapes the result for the editor UI.
+ *
+ * srs-web#322 step 3 (srs-rust#1127): the document's block tree — order AND
+ * nesting — comes straight from the engine's JSON projection (`children` on
+ * each `ProjectedRecord`), the same structure the HTML/Markdown preview
+ * nests under a parent. The editor never re-derives nesting itself (no
+ * `contains` traversal, no precedes-chain merging in TS) — that is exactly
+ * the "editor order must equal preview order" guarantee: both surfaces read
+ * the same engine output.
  */
 
 import { documentViewsForBlueprint } from "$lib/discovery.js";
@@ -18,15 +27,17 @@ import {
   type BlueprintSummary,
   type DocumentView,
   type DocumentViewSummary,
+  type ProjectedRecord,
   type ResolvedMember,
   type SrsRepository,
   blueprintSchema,
+  blueprintStructure,
   documentViewsForContainer,
   getTypeExtends,
   listBlueprints,
   listContainers,
   listTypes,
-  orderByPrecedes,
+  renderDocumentView,
   resolveContainerView,
 } from "$lib/srs-client.js";
 
@@ -59,12 +70,24 @@ export function blueprintForComposition(
   return null;
 }
 
-/** A single editable component (a Tier-2 record) in a loaded document. */
+/** A single editable component (a Tier-2 record) in a loaded document, nested under its `contains` parent (if any). */
 export interface DocumentBlock {
   instanceId: string;
   typeId: string;
   typeVersion: number;
   label: string;
+  children: DocumentBlock[];
+}
+
+/** Map one projected record (and its `children`, recursively) into a `DocumentBlock`. */
+function toBlock(record: ProjectedRecord): DocumentBlock {
+  return {
+    instanceId: record.instanceId,
+    typeId: record.typeId,
+    typeVersion: record.typeVersion,
+    label: record.recordHeading || record.typeName || "Untitled",
+    children: (record.children ?? []).map(toBlock),
+  };
 }
 
 /** A document resolved from a composition: its identity/root record, container, and ordered components. */
@@ -127,16 +150,13 @@ function containerForRootType(
 
 /**
  * Resolve a composition into an editable document: the container it scopes,
- * its anchor/root record, and its non-root members in `precedes` display order.
+ * its anchor/root record, and its top-level blocks, nested and ordered
+ * exactly as the engine's own JSON projection returns them (srs-rust#1127).
  *
  * Container resolution tries, in order: a section's fixed container-subset
  * `containerId`, then a container whose root record matches the composition's
  * `rootTypeRefs` (the singleton-page case, e.g. a homepage composition).
  * Returns `null` when neither resolves.
- *
- * Members may form several disjoint `precedes` chains (a homepage's main chain
- * plus feature/item sub-chains and orphans) — `orderByPrecedes`'s own ordering
- * is kept as-is for display; this function does not merge or reorder chains.
  */
 export function loadDocument(
   repo: SrsRepository,
@@ -148,22 +168,13 @@ export function loadDocument(
 
   const view = resolveContainerView(repo, containerId);
   const rootId = view.root?.instanceId;
-  const nonRoot = view.members.filter((m) => m.tier > 0 && m.instanceId !== rootId);
-  const orderedIds = orderByPrecedes(
-    repo,
-    nonRoot.map((m) => m.instanceId)
+  const { projection } = renderDocumentView(repo, composition.id, "json", containerId);
+  // The projection's top-level section records include the container's own
+  // root/anchor record (it is a direct member like any other) — exclude it
+  // here since it is rendered separately as the page-root form, not a block.
+  const blocks: DocumentBlock[] = (projection?.sections ?? []).flatMap((section) =>
+    section.records.filter((r) => r.instanceId !== rootId).map(toBlock)
   );
-  const byId = new Map(nonRoot.map((m) => [m.instanceId, m]));
-
-  const blocks: DocumentBlock[] = orderedIds
-    .map((id) => byId.get(id))
-    .filter((m): m is ResolvedMember => m !== undefined)
-    .map((m) => ({
-      instanceId: m.instanceId,
-      typeId: m.record.typeId,
-      typeVersion: m.record.typeVersion,
-      label: m.displayLabel || m.record.typeName || "Untitled",
-    }));
 
   return { root: view.root ?? null, containerId, blocks };
 }
@@ -185,6 +196,38 @@ export function typeNameLabel(name: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/** `typeId` plus every type that (transitively) `extendsTypeId`s it — the RFC-032 inheritance chain, walked forward. */
+function typeAndSubtypes(
+  repo: SrsRepository,
+  types: { id: string }[],
+  typeId: string
+): Set<string> {
+  const result = new Set([typeId]);
+  let added = true;
+  while (added) {
+    added = false;
+    for (const t of types) {
+      if (result.has(t.id)) continue;
+      const parent = getTypeExtends(repo, t.id);
+      if (parent && result.has(parent)) {
+        result.add(t.id);
+        added = true;
+      }
+    }
+  }
+  return result;
+}
+
+/** True when `ancestorId` is `typeId` itself or one of its (transitive) `extendsTypeId` ancestors. */
+function isAncestorOrSelf(repo: SrsRepository, ancestorId: string, typeId: string): boolean {
+  let current: string | null = typeId;
+  for (let depth = 0; current && depth < 16; depth++) {
+    if (current === ancestorId) return true;
+    current = getTypeExtends(repo, current);
+  }
+  return false;
+}
+
 /**
  * Union of every type listed in any ordered relation-group property of the
  * blueprint's schema (`contains`, `precedes`, or any other declared relation
@@ -192,6 +235,12 @@ export function typeNameLabel(name: string): string {
  * so this is a flat union with no inheritance walking. Labelled from
  * `listTypes()` (humanised type name; the description rides along as a hint) rather than the schema,
  * which carries no human label for a bare `$ref`.
+ *
+ * Excludes types that are only ever a `contains`-child of a non-root parent
+ * (srs-web#322 step 4) — a feature card or decision item is offered by
+ * `childTypes()` on its own group block, not in the top-level picker. A type
+ * whose only declared parent IS the blueprint's root type (e.g. the guide
+ * blueprint's root→sections `contains`) stays in the top-level list.
  */
 export function componentTypes(
   repo: SrsRepository,
@@ -228,5 +277,47 @@ export function componentTypes(
       parent = getTypeExtends(repo, parent);
     }
   }
-  return [...seen.values()].filter((t) => !bases.has(t.typeId));
+
+  const rootId = rootTypeId(schema);
+  const nonRootChildIds = new Set<string>();
+  for (const spec of blueprintStructure(repo, blueprint.id)) {
+    if (spec.relationType !== "contains") continue;
+    if (spec.sourceTypeId === rootId) continue;
+    for (const t of typeAndSubtypes(repo, types, spec.targetTypeId)) nonRootChildIds.add(t);
+  }
+
+  return [...seen.values()].filter((t) => !bases.has(t.typeId) && !nonRootChildIds.has(t.typeId));
+}
+
+/**
+ * The types a group block of type `parentTypeId` can contain (srs-web#322
+ * step 4): every `contains` spec whose source is `parentTypeId` or one of
+ * its ancestors, target expanded to its own subtypes. Powers a block's own
+ * "+ Add <child>" picker, distinct from the page-level `componentTypes()`.
+ */
+export function childTypes(
+  repo: SrsRepository,
+  blueprint: BlueprintSummary,
+  parentTypeId: string
+): ComponentTypeDescriptor[] {
+  const types = listTypes(repo);
+  const versionByTypeId = new Map(types.map((t) => [t.id, t.version]));
+  const typeById = new Map(types.map((t) => [t.id, t]));
+
+  const seen = new Map<string, ComponentTypeDescriptor>();
+  for (const spec of blueprintStructure(repo, blueprint.id)) {
+    if (spec.relationType !== "contains") continue;
+    if (!isAncestorOrSelf(repo, spec.sourceTypeId, parentTypeId)) continue;
+    for (const typeId of typeAndSubtypes(repo, types, spec.targetTypeId)) {
+      if (seen.has(typeId)) continue;
+      const type = typeById.get(typeId);
+      seen.set(typeId, {
+        typeId,
+        typeVersion: versionByTypeId.get(typeId) ?? 1,
+        label: type ? typeNameLabel(type.name) : `Type (${typeId.slice(0, 8)})`,
+        description: type?.description,
+      });
+    }
+  }
+  return [...seen.values()];
 }

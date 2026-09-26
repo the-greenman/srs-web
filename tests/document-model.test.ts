@@ -1,13 +1,16 @@
 /**
  * Unit tests for document-model.ts (srs-web#322):
  * - blueprintForComposition: UUID-chain-join matching, reusing documentViewsForBlueprint
- * - componentTypes: union of every ordered relation-group property's oneOf items
- * - loadDocument: container resolution + precedes-ordered block list
+ * - componentTypes: union of every ordered relation-group property's oneOf items,
+ *   minus types that are only ever a `contains`-child of a non-root parent (step 4)
+ * - childTypes: per-parent `contains` targets, inheritance-expanded on both sides
+ * - loadDocument: container resolution + block tree taken from the JSON projection (step 3)
  */
 
 import { describe, expect, it } from "vitest";
 import {
   blueprintForComposition,
+  childTypes,
   componentTypes,
   loadDocument,
   typeNameLabel,
@@ -16,6 +19,8 @@ import type {
   BlueprintListResult,
   BlueprintSummary,
   DocumentViewSummary,
+  ProjectedRecord,
+  RelationSpec,
   SrsRepository,
 } from "../src/lib/srs-client.js";
 
@@ -24,6 +29,7 @@ const OTHER_ROOT_TYPE = "22222222-0000-4000-8000-000000000002";
 const HERO_TYPE = "33333333-0000-4000-8000-000000000003";
 const PROSE_TYPE = "44444444-0000-4000-8000-000000000004";
 const FEATURE_TYPE = "55555555-0000-4000-8000-000000000005";
+const FEATURE_GROUP_TYPE = "66666666-0000-4000-8000-000000000006";
 
 function blueprintSummary(id: string): BlueprintSummary {
   return { id, namespace: "com.example", name: "page", version: 1, description: "", rootTypeCount: 1 };
@@ -37,13 +43,27 @@ function fakeRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
   const base = {
     list_blueprints: notMocked("list_blueprints"),
     blueprint_schema: notMocked("blueprint_schema"),
+    list_blueprint_structure: () => [] as RelationSpec[],
     list_types: notMocked("list_types"),
     list_containers: notMocked("list_containers"),
     resolve_container_view: notMocked("resolve_container_view"),
-    order_by_precedes: notMocked("order_by_precedes"),
+    render_composition: notMocked("render_composition"),
     get_type: () => null,
   };
   return { ...base, ...overrides } as unknown as SrsRepository;
+}
+
+function projectedRecord(instanceId: string, typeId: string, children: ProjectedRecord[] = []): ProjectedRecord {
+  return {
+    instanceId,
+    typeId,
+    typeVersion: 1,
+    typeNamespace: "com.example",
+    typeName: "block",
+    fields: {},
+    orderedFieldKeys: [],
+    ...(children.length > 0 ? { children } : {}),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -120,12 +140,12 @@ describe("blueprintForComposition", () => {
 });
 
 // ---------------------------------------------------------------------------
-// componentTypes — inheritance schema (RFC-041 oneOf expansion)
+// componentTypes — inheritance schema (RFC-041 oneOf expansion) + step 4 exclusion
 // ---------------------------------------------------------------------------
 
 describe("componentTypes", () => {
-  it("unions every ordered relation-group property's oneOf items, deduplicated, labelled from listTypes", () => {
-    const repo = fakeRepo({
+  function schemaRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
+    return fakeRepo({
       blueprint_schema: () => ({
         schema: {
           properties: {
@@ -144,9 +164,12 @@ describe("componentTypes", () => {
         { id: PROSE_TYPE, namespace: "com.example", name: "prose", version: 1 },
         { id: FEATURE_TYPE, namespace: "com.example", name: "feature", version: 3, description: "Feature card" },
       ],
+      ...overrides,
     });
+  }
 
-    const types = componentTypes(repo, blueprintSummary("bp"));
+  it("unions every ordered relation-group property's oneOf items, deduplicated, labelled from listTypes", () => {
+    const types = componentTypes(schemaRepo(), blueprintSummary("bp"));
 
     expect(types.map((t) => t.typeId).sort()).toEqual([FEATURE_TYPE, HERO_TYPE, PROSE_TYPE].sort());
     expect(types.find((t) => t.typeId === PROSE_TYPE)).toBeDefined();
@@ -199,10 +222,85 @@ describe("componentTypes", () => {
 
     expect(componentTypes(repo, blueprintSummary("bp"))).toEqual([]);
   });
+
+  it("excludes a type that is only ever a contains-child of a non-root parent (srs-web#322 step 4)", () => {
+    // FEATURE_TYPE is offered by the `precedes` group's oneOf, but the blueprint's
+    // structure declares it a contains-child of FEATURE_GROUP_TYPE (not the root) —
+    // it must not appear in the top-level picker.
+    const repo = schemaRepo({
+      list_blueprint_structure: () => [
+        { relationType: "contains", sourceTypeId: FEATURE_GROUP_TYPE, targetTypeId: FEATURE_TYPE },
+      ],
+    });
+    const types = componentTypes(repo, blueprintSummary("bp"));
+    expect(types.map((t) => t.typeId)).not.toContain(FEATURE_TYPE);
+    expect(types.map((t) => t.typeId).sort()).toEqual([HERO_TYPE, PROSE_TYPE].sort());
+  });
+
+  it("keeps a type whose only declared contains-parent is the blueprint's own root type (guide root→sections)", () => {
+    const repo = schemaRepo({
+      list_blueprint_structure: () => [{ relationType: "contains", sourceTypeId: ROOT_TYPE, targetTypeId: HERO_TYPE }],
+    });
+    const types = componentTypes(repo, blueprintSummary("bp"));
+    expect(types.map((t) => t.typeId)).toContain(HERO_TYPE);
+  });
 });
 
 // ---------------------------------------------------------------------------
-// loadDocument — container resolution + precedes ordering
+// childTypes — per-parent contains targets (srs-web#322 step 4)
+// ---------------------------------------------------------------------------
+
+describe("childTypes", () => {
+  it("returns contains-targets whose source is the parent type, expanded to the target's own subtypes", () => {
+    const CARD_SUBTYPE = "77777777-0000-4000-8000-000000000007";
+    const repo = fakeRepo({
+      list_blueprint_structure: () => [
+        { relationType: "contains", sourceTypeId: FEATURE_GROUP_TYPE, targetTypeId: FEATURE_TYPE },
+      ],
+      list_types: () => [
+        { id: FEATURE_TYPE, namespace: "com.example", name: "feature", version: 1 },
+        { id: CARD_SUBTYPE, namespace: "com.example", name: "feature-highlight", version: 1 },
+      ],
+      get_type: (id: string) => (id === CARD_SUBTYPE ? { id, extendsTypeId: FEATURE_TYPE } : { id }),
+    });
+
+    const types = childTypes(repo, blueprintSummary("bp"), FEATURE_GROUP_TYPE);
+    expect(types.map((t) => t.typeId).sort()).toEqual([CARD_SUBTYPE, FEATURE_TYPE].sort());
+  });
+
+  it("matches a spec whose source is an ancestor of the parent type (inheritance on the source side)", () => {
+    const GROUP_SUBTYPE = "88888888-0000-4000-8000-000000000008";
+    const repo = fakeRepo({
+      list_blueprint_structure: () => [
+        { relationType: "contains", sourceTypeId: FEATURE_GROUP_TYPE, targetTypeId: FEATURE_TYPE },
+      ],
+      list_types: () => [{ id: FEATURE_TYPE, namespace: "com.example", name: "feature", version: 1 }],
+      get_type: (id: string) => (id === GROUP_SUBTYPE ? { id, extendsTypeId: FEATURE_GROUP_TYPE } : { id }),
+    });
+
+    // GROUP_SUBTYPE extends FEATURE_GROUP_TYPE, so it inherits the same contains spec.
+    const types = childTypes(repo, blueprintSummary("bp"), GROUP_SUBTYPE);
+    expect(types.map((t) => t.typeId)).toEqual([FEATURE_TYPE]);
+  });
+
+  it("returns an empty list for a leaf type with no declared contains spec", () => {
+    const repo = fakeRepo({ list_blueprint_structure: () => [], list_types: () => [] });
+    expect(childTypes(repo, blueprintSummary("bp"), HERO_TYPE)).toEqual([]);
+  });
+
+  it("ignores non-contains relation specs", () => {
+    const repo = fakeRepo({
+      list_blueprint_structure: () => [
+        { relationType: "precedes", sourceTypeId: FEATURE_GROUP_TYPE, targetTypeId: FEATURE_TYPE },
+      ],
+      list_types: () => [{ id: FEATURE_TYPE, namespace: "com.example", name: "feature", version: 1 }],
+    });
+    expect(childTypes(repo, blueprintSummary("bp"), FEATURE_GROUP_TYPE)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// loadDocument — container resolution + block tree from the JSON projection
 // ---------------------------------------------------------------------------
 
 describe("loadDocument", () => {
@@ -215,19 +313,36 @@ describe("loadDocument", () => {
     };
   }
 
-  it("resolves a fixed container-subset containerId from the composition's sections", () => {
+  it("resolves a fixed container-subset containerId and takes order + nesting from the JSON projection", () => {
     const root = member("root-1", 0);
-    const a = member("a", 1);
-    const b = member("b", 1);
     const repo = fakeRepo({
       resolve_container_view: (containerId: string) => {
         expect(containerId).toBe("container-fixed");
-        return { containerId, root, members: [root, a, b], columns: [], excludeLifecycleStates: [], diagnostics: [] };
+        return { containerId, root, members: [root], columns: [], excludeLifecycleStates: [], diagnostics: [] };
       },
-      order_by_precedes: (inputJson: string) => {
-        const { instanceIds } = JSON.parse(inputJson);
-        expect(new Set(instanceIds)).toEqual(new Set(["a", "b"]));
-        return { orderedIds: ["b", "a"] };
+      render_composition: (viewId: string, format: string, containerId?: string | null) => {
+        expect(viewId).toBe("comp");
+        expect(format).toBe("json");
+        expect(containerId).toBe("container-fixed");
+        return {
+          rendered: "{}",
+          diagnostics: [],
+          projection: {
+            $schema: "",
+            compositionId: "comp",
+            containerId: "container-fixed",
+            generatedAt: "",
+            containerTitle: "Page",
+            sections: [
+              {
+                sectionId: "s1",
+                order: 0,
+                // Group "b" nests card "b1" — the same shape the HTML preview nests under it.
+                records: [projectedRecord("b", FEATURE_GROUP_TYPE, [projectedRecord("b1", FEATURE_TYPE)]), projectedRecord("a", HERO_TYPE)],
+              },
+            ],
+          },
+        };
       },
     });
 
@@ -246,8 +361,52 @@ describe("loadDocument", () => {
     const doc = loadDocument(repo, composition);
 
     expect(doc?.containerId).toBe("container-fixed");
+    // Top-level order is exactly the projection's own order — "b" (the group) before "a".
     expect(doc?.blocks.map((b) => b.instanceId)).toEqual(["b", "a"]);
+    // The group's child is nested under it, not flattened to the top level.
+    expect(doc?.blocks[0].children.map((c) => c.instanceId)).toEqual(["b1"]);
+    expect(doc?.blocks[1].children).toEqual([]);
     expect(doc?.root?.instanceId).toBe("root-1");
+  });
+
+  it("excludes the container's own root/anchor record from the block tree (it renders separately as the page-root form)", () => {
+    const root = member("root-1", 0);
+    const repo = fakeRepo({
+      resolve_container_view: (containerId: string) => ({
+        containerId,
+        root,
+        members: [root],
+        columns: [],
+        excludeLifecycleStates: [],
+        diagnostics: [],
+      }),
+      render_composition: () => ({
+        rendered: "{}",
+        diagnostics: [],
+        projection: {
+          $schema: "",
+          compositionId: "comp",
+          containerId: "container-fixed",
+          generatedAt: "",
+          containerTitle: "Page",
+          // The engine's own projection includes the root record among the
+          // section's top-level records (it is a direct container member).
+          sections: [{ sectionId: "s1", order: 0, records: [projectedRecord("root-1", ROOT_TYPE), projectedRecord("a", HERO_TYPE)] }],
+        },
+      }),
+    });
+    const composition = {
+      id: "comp",
+      namespace: "com.example",
+      name: "page",
+      version: 1,
+      description: "",
+      createdAt: "",
+      sections: [{ sectionId: "s1", order: 0, source: { type: "container-subset", containerId: "container-fixed" } }],
+    };
+
+    const doc = loadDocument(repo, composition);
+    expect(doc?.blocks.map((b) => b.instanceId)).toEqual(["a"]);
   });
 
   it("falls back to resolving a container by matching rootTypeRefs when no fixed containerId is declared", () => {
@@ -261,7 +420,7 @@ describe("loadDocument", () => {
         }
         return { containerId, root, members: [root], columns: [], excludeLifecycleStates: [], diagnostics: [] };
       },
-      order_by_precedes: () => ({ orderedIds: [] }),
+      render_composition: () => ({ rendered: "{}", diagnostics: [], projection: null }),
     });
 
     const composition: DocumentViewSummary = {
@@ -301,7 +460,7 @@ describe("loadDocument", () => {
         const root = containerId === "c-a" ? rootA : rootB;
         return { containerId, root, members: [root], columns: [], excludeLifecycleStates: [], diagnostics: [] };
       },
-      order_by_precedes: () => ({ orderedIds: [] }),
+      render_composition: () => ({ rendered: "{}", diagnostics: [], projection: null }),
     });
     const summary: DocumentViewSummary = {
       id: "comp-b",

@@ -49,6 +49,8 @@ export interface SrsRepository {
   get_allowed_lifecycle_transitions(instance_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in blueprintSchema()
   blueprint_schema(blueprint_id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in blueprintStructure()
+  list_blueprint_structure(blueprint_id: string): any;
   // RFC-041/rfc-decision-92d2da05: DocumentView renamed to Composition on the
   // WASM surface (srs-rust#910). Presentation-layer rename only — the app's
   // own DocumentView/documentViewsForContainer naming is unaffected, only the
@@ -854,6 +856,27 @@ export function blueprintSchema(repo: SrsRepository, blueprintId: string): Bluep
   return repo.blueprint_schema(blueprintId) as BlueprintSchemaResult;
 }
 
+/**
+ * A `contains` (or other) relation the blueprint declares between two types
+ * (srs-rust#1127). `sourceTypeId`/`targetTypeId` are the exact declared
+ * types — a parent's *subtypes* are not walked here (callers combine this
+ * with `getTypeExtends` for inheritance).
+ */
+export interface RelationSpec {
+  relationType: string;
+  sourceTypeId: string;
+  sourceTypeName?: string;
+  targetTypeId: string;
+  targetTypeName?: string;
+  cardinality?: string;
+  required?: boolean;
+}
+
+/** The blueprint's declared type-to-type relation specs (srs-rust#1127), e.g. which types a `contains` edge is declared between. */
+export function blueprintStructure(repo: SrsRepository, blueprintId: string): RelationSpec[] {
+  return repo.list_blueprint_structure(blueprintId) as RelationSpec[];
+}
+
 // ---------------------------------------------------------------------------
 // Document view types + wrapper (C3 / C10)
 // ---------------------------------------------------------------------------
@@ -904,6 +927,15 @@ export interface ProjectedRecord {
   orderedFieldKeys: string[];
   relations?: ProjectedRelationRow[];
   properties?: ProjectedPropertyRow[];
+  /**
+   * This record's `contains`-children (srs-rust#1127), same shape,
+   * recursive. Omitted when empty, and only populated when the section has
+   * `titleFieldId` — the same condition `render_record_at_level` uses for the
+   * HTML/Markdown nesting, so a JSON-driven editor takes the identical
+   * structure the rendered preview shows (editor order == preview order).
+   * Contains-children are removed from the section's top-level `records`.
+   */
+  children?: ProjectedRecord[];
 }
 
 /**

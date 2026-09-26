@@ -17,6 +17,7 @@ import {
   type SrsRecord,
   type SrsRepository,
   createRecordInContainer,
+  createRelation,
   deleteRecord,
   insertIntoPrecedesChain,
   moveInPrecedesChain,
@@ -66,6 +67,50 @@ export function insertComponent(
   return created;
 }
 
+export interface InsertChildInput {
+  /** The group/parent block this child nests under — the `contains` relation's source. */
+  parentId: string;
+  typeId: string;
+  typeVersion: number;
+  containerId: string;
+  /** Insert immediately after this sibling (another child of the same parent). Omit for the parent's first child. */
+  afterId?: string;
+  fieldValues?: FieldValues;
+}
+
+/**
+ * Create a new child record inside `parentId`'s group: create the record (and
+ * container membership, in one WASM call), assert the `contains` relation
+ * parent → child, then splice it into the `precedes` chain after the last
+ * sibling. When there is no `afterId` (the parent's first child), the chain
+ * splice is skipped — there is no sibling to link to yet.
+ */
+export function insertChild(
+  repo: SrsRepository,
+  input: InsertChildInput,
+  onMutation: () => void = () => {}
+): SrsRecord {
+  const created = createRecordInContainer(
+    repo,
+    input.containerId,
+    input.typeId,
+    input.typeVersion,
+    {
+      fieldValues: input.fieldValues ?? {},
+    } satisfies CreateRecordInput
+  );
+  createRelation(repo, {
+    relationType: "contains",
+    sourceInstanceId: input.parentId,
+    targetInstanceId: created.instanceId,
+  });
+  if (input.afterId !== undefined) {
+    insertIntoPrecedesChain(repo, { instanceId: created.instanceId, afterId: input.afterId });
+  }
+  onMutation();
+  return created;
+}
+
 export interface MoveComponentInput {
   instanceId: string;
   afterId?: string;
@@ -85,6 +130,15 @@ export function moveComponent(
 export interface RemoveComponentInput {
   instanceId: string;
   containerId: string;
+  /**
+   * A nested child carries an inbound `contains` relation from its parent
+   * block — `delete_record`'s inbound-relations gate (srs-rust#1025) refuses
+   * to delete it unless `cascade` is set, in which case the incident
+   * `contains` edge is removed along with the record (no separate relation
+   * delete needed). Top-level blocks have no inbound relations, so this
+   * stays `false` for them.
+   */
+  cascade?: boolean;
 }
 
 /** Unlink a component from its chain, drop it from container membership, then delete the record. */
@@ -95,6 +149,6 @@ export function removeComponent(
 ): void {
   removeFromPrecedesChain(repo, { instanceId: input.instanceId });
   removeContainerMember(repo, input.containerId, input.instanceId);
-  deleteRecord(repo, input.instanceId);
+  deleteRecord(repo, input.instanceId, input.cascade ?? false);
   onMutation();
 }
