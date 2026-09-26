@@ -42,7 +42,13 @@ test.describe("BlueprintDocumentEditor (srs-web#322)", () => {
     // Block 0 is the hero (headline field); block 1 is the prose seeded by the fixture.
     const heroBlock = blocks.nth(0);
     await expect(heroBlock).toContainText("Hero");
-    // Blocks render collapsed to a summary line; open the hero's form.
+
+    // Collapsed blocks render an inline engine-rendered preview (srs-web#322 part 1),
+    // not a raw-field summary line — assert the frame is present before opening the form.
+    const heroPreviewFrame = heroBlock.getByTestId("bp-block-preview").locator("iframe");
+    await expect(heroPreviewFrame).toBeVisible();
+
+    // Blocks render collapsed to an inline preview; open the hero's form.
     await heroBlock.getByTestId("bp-block-toggle").click();
     const headlineInput = heroBlock.locator("#rf-headline");
     await headlineInput.fill("New headline");
@@ -65,10 +71,15 @@ test.describe("BlueprintDocumentEditor (srs-web#322)", () => {
     await expect(blocks.nth(1)).toContainText("Prose");
     await expect(blocks.nth(2)).toContainText("Prose");
 
+    // The full-page preview is hidden by default alongside the editor (srs-web#322 part 2)
+    // — the editor takes the full width until "Full preview" is toggled on.
+    await expect(page.getByTestId("document-full-preview")).toHaveCount(0);
+    await page.getByTestId("full-preview-toggle").click();
+
     // The rendered preview (re-rendered after the mutation) reflects the same content.
     // PreviewPane renders into a sandboxed <iframe srcdoc="...">, so assert on the
     // attribute rather than visible text (same pattern as guides-html-preview.spec.ts).
-    const frame = page.locator(".document-preview-panel iframe");
+    const frame = page.getByTestId("document-full-preview").locator("iframe");
     await expect(frame).toBeVisible();
     const srcdoc = await frame.getAttribute("srcdoc");
     expect(srcdoc).toContain("New headline");

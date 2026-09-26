@@ -22,8 +22,10 @@
   import { definitionToComposites, definitionToFields, type CompositeFormDef } from "$lib/editor/blueprint-fields.js";
   import SectionForm from "$lib/editor/SectionForm.svelte";
   import Button from "$lib/components/Button.svelte";
+  import PreviewPane from "$lib/components/PreviewPane.svelte";
   import {
     getRecord,
+    renderDocumentView,
     typeSchema,
     updateRecord,
     type CreateRecordInput,
@@ -59,6 +61,8 @@
   let rootRecord = $state<SrsRecord | null>(null);
   let rootForm = $state<FormDef | null>(null);
   let blockRecords = $state<Record<string, SrsRecord>>({});
+  /** Compact inline preview HTML per collapsed block — the engine's own render of just that instance (srs-web#322 part 1). */
+  let blockPreviews = $state<Record<string, string | null>>({});
   let formDefCache = new Map<string, FormDef>();
   let error = $state<string | null>(null);
 
@@ -69,6 +73,25 @@
 
   function message(e: unknown): string {
     return e instanceof Error ? e.message : String(e);
+  }
+
+  /**
+   * The engine's own single-instance render (same `instanceIdFilter` path used
+   * for single-decision export, srs-rust#373) — a compact HTML fragment for
+   * one block, so the collapsed list shows real rendered content instead of
+   * a raw-field one-liner.
+   */
+  function renderBlockPreviewHtml(loadedDoc: LoadedDocument, instanceId: string): string | null {
+    try {
+      return renderDocumentView(repo, composition.id, "html", loadedDoc.containerId, instanceId).rendered;
+    } catch {
+      return null;
+    }
+  }
+
+  function refreshBlockPreview(instanceId: string): void {
+    if (!doc) return;
+    blockPreviews = { ...blockPreviews, [instanceId]: renderBlockPreviewHtml(doc, instanceId) };
   }
 
   function formDefFor(typeId: string, typeVersion: number): FormDef {
@@ -108,15 +131,18 @@
       const root = loaded.root ? getRecord(repo, loaded.root.instanceId) : null;
       const rootDef = root ? formDefFor(root.typeId, root.typeVersion) : null;
       const records: Record<string, SrsRecord> = {};
+      const previews: Record<string, string | null> = {};
       for (const block of loaded.blocks) {
         const record = getRecord(repo, block.instanceId);
         if (record) records[block.instanceId] = record;
+        previews[block.instanceId] = renderBlockPreviewHtml(loaded, block.instanceId);
       }
       doc = loaded;
       availableTypes = types;
       rootRecord = root;
       rootForm = rootDef;
       blockRecords = records;
+      blockPreviews = previews;
     } catch (e: unknown) {
       error = message(e);
       doc = null;
@@ -150,6 +176,7 @@
     opError = null;
     try {
       blockRecords = { ...blockRecords, [instanceId]: updateRecord(repo, instanceId, input as UpdateRecordInput) };
+      refreshBlockPreview(instanceId);
       onMutation();
     } catch (e: unknown) {
       opError = message(e);
@@ -331,7 +358,6 @@
             onclick={() => toggle(item.instanceId)}
           >
             <span class="bp-editor__block-type">{blockTypeLabel(item)}</span>
-            <span class="bp-editor__block-summary">{summary(record) || item.label}</span>
           </button>
           <span class="bp-editor__block-controls">
             <button type="button" class="bp-editor__icon-btn" data-testid="bp-block-up" title="Move up"
@@ -354,6 +380,16 @@
             onCancel={() => toggle(item.instanceId)}
             saving={disabled}
           />
+        {:else}
+          <button
+            type="button"
+            class="bp-editor__inline-preview"
+            data-testid="bp-block-preview"
+            onclick={() => toggle(item.instanceId)}
+            aria-label={`Edit ${blockTypeLabel(item)}`}
+          >
+            <PreviewPane html={blockPreviews[item.instanceId] ?? null} />
+          </button>
         {/if}
       </section>
     {/snippet}
@@ -436,6 +472,23 @@
     white-space: nowrap;
     color: var(--color-muted, #666);
     font-size: 0.85rem;
+  }
+  .bp-editor__inline-preview {
+    display: block;
+    width: 100%;
+    max-height: 12rem;
+    overflow: hidden;
+    border: none;
+    background: #fff;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 0 0 6px 6px;
+  }
+  .bp-editor__inline-preview :global(.preview-pane) {
+    height: 12rem;
+  }
+  .bp-editor__inline-preview :global(iframe) {
+    pointer-events: none;
   }
   .bp-editor__others-title {
     margin: 1rem 0 0;

@@ -83,6 +83,8 @@
   type Surface = "document" | "structure" | "records" | "map";
 
   let surface = $state<Surface>("document");
+  /** "Full preview" toggle for the Documents surface when a blueprint editor is shown — component state only, not remembered across compositions. */
+  let showFullPreview = $state(false);
   let compositions = $state<DocumentViewSummary[]>([]);
   let containers = $state<ContainerSummary[]>([]);
   let navigation = $state<RepositoryNavigation | null>(null);
@@ -467,23 +469,37 @@
 
   <main class="generic-main">
     {#if surface === "document"}
-      <header><p>Document</p><h1>{activeComposition?.name ?? "Composition"}</h1></header>
+      <header>
+        <p>Document</p>
+        <h1>{activeComposition?.name ?? "Composition"}</h1>
+        {#if activeBlueprint && activeComposition}
+          <button
+            type="button"
+            class="full-preview-toggle"
+            data-testid="full-preview-toggle"
+            aria-pressed={showFullPreview}
+            onclick={() => (showFullPreview = !showFullPreview)}
+          >
+            {showFullPreview ? "Hide full preview" : "Full preview"}
+          </button>
+        {/if}
+      </header>
       {#if documentError}<p class="notice">{documentError}</p>{/if}
       {#if activeBlueprint && activeComposition}
-        <div class="document-editor-layout">
-          <div class="document-editor-panel" data-testid="document-editor-panel">
-            <BlueprintDocumentEditor
-              {repo}
-              composition={activeComposition}
-              saving={saving}
-              revision={documentRenderRevision}
-              onMutation={onDocumentEditorMutation}
-            />
-          </div>
-          <div class="document-preview-panel">
+        <div class="document-editor-panel document-editor-panel--full" data-testid="document-editor-panel">
+          <BlueprintDocumentEditor
+            {repo}
+            composition={activeComposition}
+            saving={saving}
+            revision={documentRenderRevision}
+            onMutation={onDocumentEditorMutation}
+          />
+        </div>
+        {#if showFullPreview}
+          <div class="document-preview-panel document-preview-panel--full" data-testid="document-full-preview">
             <PreviewPane html={renderedDocument} loading={loadingDocument} />
           </div>
-        </div>
+        {/if}
       {:else}
         <PreviewPane html={renderedDocument} loading={loadingDocument} />
       {/if}
@@ -608,10 +624,12 @@
   .save-message { flex-basis:100%; margin:.2rem .5rem 0; color:#c8e5d9; font-size:.75rem; }
   .generic-main { min-width:0; display:flex; flex-direction:column; padding:1.5rem; gap:1rem; }
   .generic-main h1, .generic-inspector h2 { margin:0; font-size:1.35rem; }
-  .document-editor-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:1rem; min-height:0; }
   .document-editor-panel { overflow:auto; }
-  .document-preview-panel { overflow:auto; border-left:1px solid #d5dbd8; padding-left:1rem; }
-  @media (max-width: 1100px) { .document-editor-layout { grid-template-columns:1fr; } .document-preview-panel { border-left:0; padding-left:0; border-top:1px solid #d5dbd8; padding-top:1rem; } }
+  .document-editor-panel--full { width:100%; }
+  .document-preview-panel { overflow:auto; }
+  .document-preview-panel--full { border-top:1px solid #d5dbd8; padding-top:1rem; margin-top:1rem; max-height:60vh; }
+  .full-preview-toggle { margin-left:auto; font-size:.8rem; padding:.3rem .7rem; border:1px solid #d5dbd8; border-radius:6px; background:#fff; cursor:pointer; }
+  .generic-main header { display:flex; align-items:baseline; gap:.75rem; }
   .record-controls { display:flex; gap:.5rem; flex-wrap:wrap; }
   .record-controls input, .record-controls select, .record-controls button { font:inherit; padding:.45rem .6rem; border:1px solid #b9c2be; border-radius:.25rem; background:#fff; }
   .record-controls input { min-width:15rem; flex:1; }
