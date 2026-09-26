@@ -181,7 +181,8 @@
     {#each fields as def (def.name)}
       {@const inputId = `rf-${def.name}`}
       <Field label={def.label} required={def.required} description={def.description} instructions={def.instructions} id={inputId}>
-        <FieldInput def={def} bind:value={fieldValues[def.name]} id={inputId} disabled={saving} required={def.required} />
+        <!-- Fallback: the re-init $effect runs after render, so a newly arrived field has no entry yet. -->
+        <FieldInput def={def} bind:value={() => fieldValues[def.name] ?? "", (v) => { fieldValues[def.name] = v; }} id={inputId} disabled={saving} required={def.required} />
       </Field>
     {/each}
 
