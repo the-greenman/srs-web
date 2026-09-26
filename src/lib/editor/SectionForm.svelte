@@ -14,7 +14,7 @@
 <script lang="ts">
   import type { SrsRecord, CreateRecordInput, UpdateRecordInput } from "$lib/srs-client.js";
   import type { FieldFormDef } from "$lib/governance/types.js";
-  import type { CompositeFormDef } from "$lib/guides/blueprint-utils.js";
+  import type { CompositeFormDef } from "$lib/editor/blueprint-fields.js";
   import Field from "$lib/components/Field.svelte";
   import FieldInput from "$lib/components/FieldInput.svelte";
   import SaveBar from "$lib/components/SaveBar.svelte";

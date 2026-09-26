@@ -1,103 +1,28 @@
 /**
- * blueprint-utils.ts — helpers for working with blueprint JSON Schema output.
+ * blueprint-utils.ts — guide-specific helpers for working with blueprint JSON Schema output.
  *
- * Converts `SchemaDefinition` objects (from `blueprintSchema()`) into
- * `FieldFormDef[]` that can be fed to `RecordForm` — the same generic form
- * component used by the governance editor.
+ * The generic field/composite conversion (definitionToFields/definitionToComposites) and
+ * rootTypeId moved to `src/lib/editor/blueprint-fields.ts` (srs-web#322) — shared by the
+ * guides editor and the generic blueprint document editor. This module keeps only the
+ * guide blueprint's own conventions: section-type discovery and root-record fields.
  *
- * ADR-001: zero SRS semantics in TypeScript. This module is purely structural
- * metadata conversion; all validation stays in WASM.
+ * ADR-001: zero SRS semantics in TypeScript. This module is purely structural metadata
+ * conversion; all validation stays in WASM.
  *
  * C8 blueprint-schema-driven guides renderer: srs-web#26
  */
 
+import {
+  type CompositeFormDef,
+  definitionToComposites,
+  definitionToFields,
+  refToTypeId,
+  rootTypeId as sharedRootTypeId,
+} from "$lib/editor/blueprint-fields.js";
 import type { FieldFormDef } from "$lib/governance/types.js";
-import type { BlueprintSchema, SchemaDefinition, SchemaProperty } from "$lib/srs-client.js";
+import type { BlueprintSchema } from "$lib/srs-client.js";
 
-/**
- * Extract the definition UUID from a JSON Schema `$ref` string.
- * e.g. `#/definitions/4408a98e-...` → `4408a98e-...`
- */
-export function refToTypeId(ref: string): string {
-  return ref.replace(/^#\/definitions\//, "");
-}
-
-/**
- * Convert a blueprint SchemaDefinition into a sorted FieldFormDef array
- * suitable for RecordForm. Properties are sorted by `x-srs-order`.
- *
- * A composite-range field (RFC-039) projects as an array of objects — detected
- * by `items.properties` — and is edited by the composite editor, not a flat input.
- */
-function isComposite(prop: SchemaProperty): boolean {
-  return prop.items?.properties != null;
-}
-
-/** Map a single scalar schema property to a FieldFormDef. */
-function propertyToField(name: string, prop: SchemaProperty, required: boolean): FieldFormDef {
-  let valueType: FieldFormDef["valueType"];
-  if (prop.enum) {
-    valueType = "select";
-  } else if (prop["x-srs-widget"] === "textarea") {
-    valueType = "text";
-  } else if (prop.format === "uri" || prop.items?.format === "uri") {
-    // A list-cardinality url field projects as an array of uri-format strings.
-    valueType = "url";
-  } else {
-    valueType = "string";
-  }
-  return {
-    fieldId: prop["x-srs-field-id"],
-    label: prop.title || name,
-    valueType,
-    required,
-    options: prop.enum,
-    name,
-    aiGuidance: prop["x-srs-ai-guidance"]?.purpose || undefined,
-    description: prop["x-srs-description"] || undefined,
-    instructions: prop["x-srs-instructions"] || undefined,
-  };
-}
-
-export function definitionToFields(def: SchemaDefinition): FieldFormDef[] {
-  return Object.entries(def.properties)
-    .filter(([, prop]) => !isComposite(prop))
-    .sort(([, a], [, b]) => (a["x-srs-order"] ?? 0) - (b["x-srs-order"] ?? 0))
-    .map(([name, prop]) => propertyToField(name, prop, def.required?.includes(name) ?? false));
-}
-
-/**
- * A composite-range list field (RFC-039) derived from a section definition:
- * `record.fieldValues[name]` is an array of sub-field-name-keyed objects.
- * Sub-field metadata comes from the projected schema's `items.properties`.
- */
-export interface CompositeFormDef {
-  /** Carrier key into `fieldValues` (e.g. "tables", "items"). */
-  name: string;
-  label: string;
-  order: number;
-  fields: FieldFormDef[];
-}
-
-/** Extract composite-range list fields (arrays of objects) from a definition. */
-export function definitionToComposites(def: SchemaDefinition): CompositeFormDef[] {
-  return Object.entries(def.properties)
-    .filter(([, prop]) => isComposite(prop))
-    .sort(([, a], [, b]) => (a["x-srs-order"] ?? 0) - (b["x-srs-order"] ?? 0))
-    .map(([name, prop]) => {
-      const itemProps = prop.items?.properties ?? {};
-      const itemRequired = prop.items?.required ?? [];
-      const fields = Object.entries(itemProps)
-        .sort(([, a], [, b]) => (a["x-srs-order"] ?? 0) - (b["x-srs-order"] ?? 0))
-        .map(([fname, fprop]) => propertyToField(fname, fprop, itemRequired.includes(fname)));
-      return {
-        name,
-        label: prop.title || name,
-        order: prop["x-srs-order"] ?? 0,
-        fields,
-      };
-    });
-}
+export { refToTypeId, definitionToFields, definitionToComposites, type CompositeFormDef };
 
 /**
  * A resolved section type descriptor derived from the blueprint schema.
@@ -117,21 +42,26 @@ export interface SectionTypeDescriptor {
  *
  * `versionByTypeId` resolves each type's current version (blueprint `$ref`s carry
  * no version) — build it from `listTypes()`; absent entries fall back to 1.
+ * `labelByTypeId` resolves each type's human label from `listTypes()`
+ * (srs-web#322 — replaces a hardcoded type-ID→label lookup table); absent
+ * entries fall back to a truncated UUID.
  *
  * Returned types are in the order they appear in the schema.
  */
 export function sectionTypes(
   schema: BlueprintSchema,
-  versionByTypeId?: Map<string, number>
+  versionByTypeId?: Map<string, number>,
+  labelByTypeId?: Map<string, string>
 ): SectionTypeDescriptor[] {
-  const oneOf = schema.properties.contains?.items?.oneOf ?? [];
-  return oneOf.map((ref) => {
+  const contains = schema.properties.contains;
+  const oneOf = (contains && "items" in contains ? contains.items?.oneOf : undefined) ?? [];
+  return oneOf.map((ref: { $ref: string }) => {
     const typeId = refToTypeId(ref.$ref);
     const def = schema.definitions[typeId];
     return {
       typeId,
       typeVersion: versionByTypeId?.get(typeId) ?? 1,
-      label: labelForTypeId(typeId),
+      label: labelByTypeId?.get(typeId) ?? `Section (${typeId.slice(0, 8)})`,
       fields: def ? definitionToFields(def) : [],
       composites: def ? definitionToComposites(def) : [],
     };
@@ -154,17 +84,17 @@ export function rootFields(schema: BlueprintSchema): FieldFormDef[] {
  * Return the root (guide) type ID from the blueprint schema.
  */
 export function rootTypeId(schema: BlueprintSchema): string | null {
-  const ref = schema.properties.root?.$ref;
-  return ref ? refToTypeId(ref) : null;
+  return sharedRootTypeId(schema);
 }
 
-/** Friendly label derived from a UUID — looks up known muDemocracy type IDs. */
-function labelForTypeId(typeId: string): string {
-  const KNOWN: Record<string, string> = {
-    "4408a98e-d23e-4bc6-aef5-d8678571e2f6": "Text section",
-    "76cdc3fb-8460-4efc-90f5-3c4a15b86cad": "List section",
-    "d8d09d3b-8253-4d8d-b187-42f35c8446a7": "Table section",
-    "474e299c-5809-4f92-a40d-b3ae1be3ad17": "Commentary section",
-  };
-  return KNOWN[typeId] ?? `Section (${typeId.slice(0, 8)})`;
+/**
+ * Build a type-ID→label map from `listTypes()` for use as `sectionTypes`'s
+ * `labelByTypeId`. Uses `name` — package `Type.description` is prose-length
+ * ("A guide section consisting of body text…"), unsuitable as a button/heading
+ * label, while `name` (e.g. "section.text") is short and stable.
+ */
+export function labelsByTypeId(
+  types: { id: string; namespace: string; name: string; description?: string }[]
+): Map<string, string> {
+  return new Map(types.map((t) => [t.id, t.name]));
 }
