@@ -1,0 +1,313 @@
+{
+  "srsj": "2",
+  "manifest": {
+    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+    "container": {
+      "containerId": "94c4f736-0b3b-447a-8ea5-f1f955b9abf1",
+      "identityInstanceId": "16ecd3f6-cea6-4385-a224-e7b73ece9883",
+      "memberInstanceIds": [
+        "16ecd3f6-cea6-4385-a224-e7b73ece9883"
+      ],
+      "title": "Page Test"
+    },
+    "createdAt": "2026-09-26T14:28:54.586483207+00:00",
+    "dataModelRevision": 7,
+    "description": "Minimal fixture: page blueprint with hero/prose components",
+    "namespace": "com.example.pagetest",
+    "repositoryId": "94c4f736-0b3b-447a-8ea5-f1f955b9abf1",
+    "srsVersion": "2.0-draft",
+    "title": "Page Test"
+  },
+  "data": {
+    "containers/homepage-container-75ee5fad.json": {
+      "anchorInstanceId": "744bbf9b-4997-43f2-8682-59c1eb9f1dbe",
+      "containerId": "75ee5fad-9439-4218-bb9d-3ab24cfedc83",
+      "memberInstanceIds": [
+        "744bbf9b-4997-43f2-8682-59c1eb9f1dbe",
+        "eaf2262a-b79f-4925-aab4-387f1fc711f6",
+        "5bd48c58-604c-4398-b9f0-4582e0b08586"
+      ],
+      "rootInstanceIds": [
+        "744bbf9b-4997-43f2-8682-59c1eb9f1dbe"
+      ],
+      "title": "Homepage container"
+    },
+    "package/blueprints/page-3e8674af.json": {
+      "createdAt": "2026-09-26T14:31:14.964855444+00:00",
+      "description": "A page: a root page record with hero/prose components.",
+      "id": "3e8674af-d7de-4b23-a63a-47148bbac85e",
+      "name": "page",
+      "namespace": "com.example.pagetest",
+      "requiredTypes": [],
+      "rootTypes": [
+        {
+          "typeId": "e2af4266-3c29-46cb-b3cf-f8b1986db813",
+          "typeVersion": 1
+        }
+      ],
+      "structure": [
+        {
+          "cardinality": "one-to-many",
+          "relationType": "contains",
+          "required": false,
+          "sourceType": {
+            "typeId": "e2af4266-3c29-46cb-b3cf-f8b1986db813",
+            "typeVersion": 1
+          },
+          "targetType": {
+            "typeId": "548a2c87-3229-4fb7-8fb0-3ce4632ecbb0",
+            "typeVersion": 1
+          }
+        },
+        {
+          "cardinality": "one-to-many",
+          "relationType": "contains",
+          "required": false,
+          "sourceType": {
+            "typeId": "e2af4266-3c29-46cb-b3cf-f8b1986db813",
+            "typeVersion": 1
+          },
+          "targetType": {
+            "typeId": "548597eb-468d-4989-b517-6a1588c0a299",
+            "typeVersion": 1
+          }
+        },
+        {
+          "cardinality": "one-to-many",
+          "relationType": "precedes",
+          "required": false,
+          "sourceType": {
+            "typeId": "548a2c87-3229-4fb7-8fb0-3ce4632ecbb0",
+            "typeVersion": 1
+          },
+          "targetType": {
+            "typeId": "548597eb-468d-4989-b517-6a1588c0a299",
+            "typeVersion": 1
+          }
+        },
+        {
+          "cardinality": "one-to-many",
+          "relationType": "precedes",
+          "required": false,
+          "sourceType": {
+            "typeId": "548597eb-468d-4989-b517-6a1588c0a299",
+            "typeVersion": 1
+          },
+          "targetType": {
+            "typeId": "548a2c87-3229-4fb7-8fb0-3ce4632ecbb0",
+            "typeVersion": 1
+          }
+        }
+      ],
+      "version": 1
+    },
+    "package/compositions/homepage-06e03ade.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/composition.json",
+      "createdAt": "2026-09-26T14:32:52.329336486+00:00",
+      "description": "Renders the homepage.",
+      "id": "06e03ade-b34b-4246-aec1-7b300d37bf79",
+      "name": "homepage",
+      "namespace": "com.example.pagetest",
+      "rootTypeRefs": [
+        {
+          "typeId": "e2af4266-3c29-46cb-b3cf-f8b1986db813",
+          "typeVersion": 1
+        }
+      ],
+      "sections": [
+        {
+          "emptyBehavior": "hide",
+          "order": 0,
+          "sectionId": "homepage-body",
+          "source": {
+            "containerId": "75ee5fad-9439-4218-bb9d-3ab24cfedc83",
+            "type": "container-subset"
+          }
+        }
+      ],
+      "version": 1
+    },
+    "package/fields/body-6075213e.json": {
+      "aiGuidance": {
+        "purpose": "Prose body"
+      },
+      "createdAt": "2026-09-26T14:29:23.869418532+00:00",
+      "description": "",
+      "fieldType": {
+        "datatype": "string"
+      },
+      "id": "6075213e-44fd-4726-b02a-1974f7020b0d",
+      "name": "body",
+      "namespace": "com.example.pagetest",
+      "version": 1
+    },
+    "package/fields/headline-244cac13.json": {
+      "aiGuidance": {
+        "purpose": "Hero headline"
+      },
+      "createdAt": "2026-09-26T14:29:11.888795419+00:00",
+      "description": "",
+      "fieldType": {
+        "datatype": "string"
+      },
+      "id": "244cac13-93f3-447e-984b-42095fd9f20d",
+      "name": "headline",
+      "namespace": "com.example.pagetest",
+      "version": 1
+    },
+    "package/fields/title-e1579b80.json": {
+      "aiGuidance": {
+        "purpose": "Page title"
+      },
+      "createdAt": "2026-09-26T14:29:11.824509684+00:00",
+      "description": "",
+      "fieldType": {
+        "datatype": "string"
+      },
+      "id": "e1579b80-271e-4d01-8c32-0e7e76c65d8c",
+      "name": "title",
+      "namespace": "com.example.pagetest",
+      "version": 1
+    },
+    "package/package.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
+      "blueprints": [
+        "blueprints/page-3e8674af.json"
+      ],
+      "compositions": [
+        "compositions/homepage-06e03ade.json"
+      ],
+      "createdAt": "2026-01-01T00:00:00Z",
+      "description": "",
+      "fields": [
+        "fields/title-e1579b80.json",
+        "fields/headline-244cac13.json",
+        "fields/body-6075213e.json"
+      ],
+      "id": "89c9ae2c-37cb-4ff3-998f-639c9f3c93d7",
+      "name": "primary",
+      "namespace": "com.example.pagetest",
+      "relationTypes": [],
+      "status": "active",
+      "title": "primary",
+      "types": [
+        "types/page-e2af4266.json",
+        "types/hero-548a2c87.json",
+        "types/prose-548597eb.json"
+      ],
+      "version": "1.0.0",
+      "views": []
+    },
+    "package/types/hero-548a2c87.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-09-26T14:29:51.254093204+00:00",
+      "description": "",
+      "fields": [
+        {
+          "fieldId": "244cac13-93f3-447e-984b-42095fd9f20d",
+          "order": 0,
+          "required": true
+        }
+      ],
+      "id": "548a2c87-3229-4fb7-8fb0-3ce4632ecbb0",
+      "identityFieldId": "244cac13-93f3-447e-984b-42095fd9f20d",
+      "name": "hero",
+      "namespace": "com.example.pagetest",
+      "version": 1
+    },
+    "package/types/page-e2af4266.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-09-26T14:29:51.191365261+00:00",
+      "description": "",
+      "fields": [
+        {
+          "fieldId": "e1579b80-271e-4d01-8c32-0e7e76c65d8c",
+          "order": 0,
+          "required": true
+        }
+      ],
+      "id": "e2af4266-3c29-46cb-b3cf-f8b1986db813",
+      "identityFieldId": "e1579b80-271e-4d01-8c32-0e7e76c65d8c",
+      "name": "page",
+      "namespace": "com.example.pagetest",
+      "version": 1
+    },
+    "package/types/prose-548597eb.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-09-26T14:29:51.313488254+00:00",
+      "description": "",
+      "fields": [
+        {
+          "fieldId": "6075213e-44fd-4726-b02a-1974f7020b0d",
+          "order": 0,
+          "required": true
+        }
+      ],
+      "id": "548597eb-468d-4989-b517-6a1588c0a299",
+      "identityFieldId": "6075213e-44fd-4726-b02a-1974f7020b0d",
+      "name": "prose",
+      "namespace": "com.example.pagetest",
+      "version": 1
+    },
+    "records/tier-2/hero-eaf2262a.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-09-26T14:32:20.439121594+00:00",
+      "fieldValues": {
+        "headline": "Original headline"
+      },
+      "instanceId": "eaf2262a-b79f-4925-aab4-387f1fc711f6",
+      "typeId": "548a2c87-3229-4fb7-8fb0-3ce4632ecbb0",
+      "typeName": "hero",
+      "typeNamespace": "com.example.pagetest",
+      "typeVersion": 1,
+      "updatedAt": "2026-09-26T14:32:20.439127285+00:00"
+    },
+    "records/tier-2/page-744bbf9b.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-09-26T14:32:20.365513539+00:00",
+      "fieldValues": {
+        "title": "Homepage"
+      },
+      "instanceId": "744bbf9b-4997-43f2-8682-59c1eb9f1dbe",
+      "typeId": "e2af4266-3c29-46cb-b3cf-f8b1986db813",
+      "typeName": "page",
+      "typeNamespace": "com.example.pagetest",
+      "typeVersion": 1,
+      "updatedAt": "2026-09-26T14:32:20.365526062+00:00"
+    },
+    "records/tier-2/prose-5bd48c58.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-09-26T14:32:20.504883062+00:00",
+      "fieldValues": {
+        "body": "Some prose."
+      },
+      "instanceId": "5bd48c58-604c-4398-b9f0-4582e0b08586",
+      "typeId": "548597eb-468d-4989-b517-6a1588c0a299",
+      "typeName": "prose",
+      "typeNamespace": "com.example.pagetest",
+      "typeVersion": 1,
+      "updatedAt": "2026-09-26T14:32:20.504890770+00:00"
+    },
+    "records/tier-2/purpose-16ecd3f6.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-09-26T14:28:54.586721313+00:00",
+      "fieldValues": {
+        "statement": "Minimal fixture: page blueprint with hero/prose components",
+        "title": "Page Test"
+      },
+      "instanceId": "16ecd3f6-cea6-4385-a224-e7b73ece9883",
+      "typeId": "3c000001-0000-4000-a000-000000000001",
+      "typeName": "purpose",
+      "typeNamespace": "com.semanticops.core",
+      "typeVersion": 1,
+      "updatedAt": "2026-09-26T14:28:54.586721313+00:00"
+    },
+    "relations/839e6864-97b8-4872-a15a-8ba1ade84686.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "relationId": "839e6864-97b8-4872-a15a-8ba1ade84686",
+      "relationType": "precedes",
+      "sourceInstanceId": "eaf2262a-b79f-4925-aab4-387f1fc711f6",
+      "targetInstanceId": "5bd48c58-604c-4398-b9f0-4582e0b08586"
+    }
+  }
+}
