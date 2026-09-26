@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * validate-on-save.spec.ts — B13: diagnostics refresh after every mutation.
@@ -21,14 +22,12 @@ const GALLERY_PATH = path.join(__dirname, "fixtures", "gallery.srsj");
 test.describe("Validate on save (B13)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    // Wait for WASM boot, then choose governance mode
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(GALLERY_PATH);
+
+    await openPackageEditor(page, "governance");
 
     // Wait for loaded state — nav shows Articles link
     await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });

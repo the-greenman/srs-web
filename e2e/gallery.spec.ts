@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * gallery.spec.ts — end-to-end tests using the governance gallery fixture.
@@ -23,14 +24,12 @@ const GALLERY_PATH = path.join(__dirname, "fixtures", "gallery.srsj");
 test.describe("Gallery fixture — real records render", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    // Wait for WASM boot, then choose governance mode
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(GALLERY_PATH);
+
+    await openPackageEditor(page, "governance");
 
     // Wait for loaded state
     await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
@@ -203,13 +202,12 @@ test.describe("Gallery fixture — real records render", () => {
 test.describe("Decision Log — sort and filter controls", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(GALLERY_PATH);
+
+    await openPackageEditor(page, "governance");
 
     await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
     await page.getByRole("link", { name: /Decision Log/ }).click();
@@ -306,13 +304,12 @@ test.describe("Decision Log — sort and filter controls", () => {
 test.describe("Decision Log — export buttons", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(GALLERY_PATH);
+
+    await openPackageEditor(page, "governance");
 
     await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
     await page.getByRole("link", { name: /Decision Log/ }).click();
@@ -369,13 +366,12 @@ test.describe("Decision Log — export buttons", () => {
 test.describe("url valueType — external links render as anchors (#256)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(GALLERY_PATH);
+
+    await openPackageEditor(page, "governance");
 
     await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
     await page.getByRole("link", { name: /Decision Log/ }).click();
@@ -416,13 +412,12 @@ test.describe("url valueType — external links render as anchors (#256)", () =>
 test.describe("Decision Log — hide superseded/abandoned toggle", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(GALLERY_PATH);
+
+    await openPackageEditor(page, "governance");
 
     await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
     await page.getByRole("link", { name: /Decision Log/ }).click();

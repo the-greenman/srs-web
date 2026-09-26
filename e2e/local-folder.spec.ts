@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * local-folder.spec.ts — opening an exploded SRS repository from the local
@@ -110,7 +111,7 @@ test.describe("Open a folder from this device", () => {
       delete (window as unknown as Record<string, unknown>).showDirectoryPicker;
     });
     await page.goto("/");
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   });
 
   test("falls back to a directory input when the File System Access API is absent", async ({
@@ -122,6 +123,8 @@ test.describe("Open a folder from this device", () => {
 
   test("loads the exploded fixture tree through the real WASM engine", async ({ page }) => {
     await page.getByTestId("source-local-folder-input").setInputFiles(EXPLODED_DIR);
+    await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
+    await openPackageEditor(page, "governance");
 
     await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 15000 });
     // No catalog-diagnostics banner: every object in the tree was catalogued.
@@ -130,6 +133,8 @@ test.describe("Open a folder from this device", () => {
 
   test("a folder opened read-only offers no Save", async ({ page }) => {
     await page.getByTestId("source-local-folder-input").setInputFiles(EXPLODED_DIR);
+    await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
+    await openPackageEditor(page, "governance");
     await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 15000 });
 
     await expect(page.getByRole("button", { name: /^Save$/ })).toHaveCount(0);
@@ -148,8 +153,10 @@ test.describe("Save a folder back to disk (File System Access)", () => {
   test.beforeEach(async ({ page }) => {
     await installFakeDirectoryPicker(page, EXPLODED_TREE);
     await page.goto("/");
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
     await page.getByTestId("source-local-folder").click();
+    await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
+    await openPackageEditor(page, "governance");
     await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 15000 });
   });
 

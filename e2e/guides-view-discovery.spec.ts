@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * guides-view-discovery.spec.ts — blueprint↔view discovery (srs-web#43 Phase C).
@@ -24,9 +25,11 @@ test.describe("Blueprint↔view discovery (srs-web#43)", () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1400, height: 900 });
     await page.goto("/");
-    await expect(page.getByTestId("mode-picker")).toBeVisible({ timeout: 15000 });
-    await page.getByTestId("mode-guides").click();
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+
     await page.locator('input[type="file"]#srsj-file').setInputFiles(MUSRS_FIXTURE);
+
+    await openPackageEditor(page, "guides");
     await expect(page.getByTestId("guides-shell")).toBeVisible({ timeout: 5000 });
   });
 

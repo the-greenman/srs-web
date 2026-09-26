@@ -83,13 +83,18 @@
     e.preventDefault();
     // Build the RFC-039 name-keyed fieldValues object — skip empty optional fields,
     // but pass through any original non-string values this form cannot edit.
-    const fvs: Record<string, unknown> = {};
+    // update_record replaces the complete fieldValues object. Begin with the
+    // existing opaque carrier so fields this form cannot render (for example a
+    // newly introduced field) survive an edit unchanged.
+    const fvs: Record<string, unknown> = record ? { ...record.fieldValues } : {};
     for (const def of schema.fields) {
       const strVal = fieldValues[def.name];
       if (strVal === "" && originalNonStringValues.has(def.name)) {
         fvs[def.name] = originalNonStringValues.get(def.name);
       } else if (def.required || strVal !== "") {
         fvs[def.name] = strVal;
+      } else {
+        delete fvs[def.name];
       }
     }
     onSave({ fieldValues: fvs });

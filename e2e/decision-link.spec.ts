@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * decision-link.spec.ts — e2e tests for the decision link picker (srs-web#106).
@@ -18,14 +19,12 @@ const GALLERY_PATH = path.join(__dirname, "fixtures", "gallery.srsj");
 test.describe("Decision link picker (srs-web#106)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    // Wait for WASM boot, then choose governance mode
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(GALLERY_PATH);
+
+    await openPackageEditor(page, "governance");
 
     // Wait for loaded state — nav shows Decision Log link
     await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
@@ -170,13 +169,12 @@ test.describe("Decision link picker (srs-web#106)", () => {
 test.describe("Decision link labels and navigation (#201, #202)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.getByTestId("mode-governance").click({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "SRS Governance Viewer" })).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
     await page
       .locator('input[type="file"]#srsj-file')
       .setInputFiles(path.join(__dirname, "fixtures", "gallery.srsj"));
+
+    await openPackageEditor(page, "governance");
     await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
     await page.getByRole("link", { name: /Decision Log/ }).click();
     await expect(page.getByTestId("decision-summary-card").first()).toBeVisible({ timeout: 5000 });

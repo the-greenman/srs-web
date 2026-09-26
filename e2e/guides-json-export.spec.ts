@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * guides-json-export.spec.ts — C10: export a guide as a JSON document-view projection.
@@ -30,9 +31,11 @@ async function readDownload(download: import("@playwright/test").Download): Prom
 test.describe("Guide JSON-view export (C10)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByTestId("mode-picker")).toBeVisible({ timeout: 15000 });
-    await page.getByTestId("mode-guides").click();
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+
     await page.locator('input[type="file"]#srsj-file').setInputFiles(MUSRS_FIXTURE);
+
+    await openPackageEditor(page, "guides");
     await expect(page.getByTestId("guides-shell")).toBeVisible({ timeout: 5000 });
     // Select the first guide.
     await page.getByTestId("guides-guide-item").first().click();
