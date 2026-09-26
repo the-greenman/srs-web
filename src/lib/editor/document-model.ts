@@ -153,6 +153,16 @@ export interface ComponentTypeDescriptor {
   typeId: string;
   typeVersion: number;
   label: string;
+  description?: string;
+}
+
+/** "homepage-hero" → "Homepage hero", "section.text" → "Section text". */
+export function typeNameLabel(name: string): string {
+  const words = name
+    .split(/[.\-_]+/)
+    .filter(Boolean)
+    .join(" ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 /**
@@ -160,7 +170,7 @@ export interface ComponentTypeDescriptor {
  * blueprint's schema (`contains`, `precedes`, or any other declared relation
  * type) — the RFC-041 `oneOf` expansion already lists every concrete subtype,
  * so this is a flat union with no inheritance walking. Labelled from
- * `listTypes()` (description, falling back to name) rather than the schema,
+ * `listTypes()` (humanised type name; the description rides along as a hint) rather than the schema,
  * which carries no human label for a bare `$ref`.
  */
 export function componentTypes(
@@ -170,7 +180,7 @@ export function componentTypes(
   const { schema } = blueprintSchema(repo, blueprint.id);
   const types = listTypes(repo);
   const versionByTypeId = new Map(types.map((t) => [t.id, t.version]));
-  const labelByTypeId = new Map(types.map((t) => [t.id, t.description || t.name]));
+  const typeById = new Map(types.map((t) => [t.id, t]));
 
   const seen = new Map<string, ComponentTypeDescriptor>();
   for (const [key, prop] of Object.entries(schema.properties)) {
@@ -179,10 +189,12 @@ export function componentTypes(
     for (const ref of oneOf) {
       const typeId = ref.$ref.replace(/^#\/definitions\//, "");
       if (seen.has(typeId)) continue;
+      const type = typeById.get(typeId);
       seen.set(typeId, {
         typeId,
         typeVersion: versionByTypeId.get(typeId) ?? 1,
-        label: labelByTypeId.get(typeId) ?? `Type (${typeId.slice(0, 8)})`,
+        label: type ? typeNameLabel(type.name) : `Type (${typeId.slice(0, 8)})`,
+        description: type?.description,
       });
     }
   }

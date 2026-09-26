@@ -10,6 +10,7 @@ import {
   blueprintForComposition,
   componentTypes,
   loadDocument,
+  typeNameLabel,
 } from "../src/lib/editor/document-model.js";
 import type {
   BlueprintListResult,
@@ -150,11 +151,17 @@ describe("componentTypes", () => {
     expect(types.find((t) => t.typeId === PROSE_TYPE)).toBeDefined();
     // deduplicated — prose appears in two groups but only once in the result
     expect(types.filter((t) => t.typeId === PROSE_TYPE)).toHaveLength(1);
-    // label prefers listTypes() description, falls back to name
-    expect(types.find((t) => t.typeId === HERO_TYPE)?.label).toBe("Hero banner");
-    expect(types.find((t) => t.typeId === PROSE_TYPE)?.label).toBe("prose");
+    // label is the humanised type name; description rides along as a hint
+    expect(types.find((t) => t.typeId === HERO_TYPE)?.label).toBe("Hero");
+    expect(types.find((t) => t.typeId === HERO_TYPE)?.description).toBe("Hero banner");
+    expect(types.find((t) => t.typeId === PROSE_TYPE)?.label).toBe("Prose");
     // typeVersion resolved from listTypes()
     expect(types.find((t) => t.typeId === FEATURE_TYPE)?.typeVersion).toBe(3);
+  });
+
+  it("humanises dotted and kebab type names", () => {
+    expect(typeNameLabel("homepage-hero")).toBe("Homepage hero");
+    expect(typeNameLabel("section.text")).toBe("Section text");
   });
 
   it("excludes the root property from the union", () => {

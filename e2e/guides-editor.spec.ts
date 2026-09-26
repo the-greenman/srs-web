@@ -67,8 +67,8 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-add-section").click();
     await page.getByTestId(`guides-section-type-${SECTION_TEXT_ID}`).click();
 
-    // Form should be visible (title "section.text" from listTypes() name).
-    await expect(page.getByRole("heading", { name: "New section.text" })).toBeVisible();
+    // Form should be visible (title humanised from the listTypes() name).
+    await expect(page.getByRole("heading", { name: "New Section text" })).toBeVisible();
 
     // Heading field → plain text input (not textarea).
     const headingField = page.locator(".field").filter({ hasText: "Display heading for a section" });
@@ -95,7 +95,7 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-add-section").click();
     await page.getByTestId(`guides-section-type-${SECTION_LIST_ID}`).click();
 
-    await expect(page.getByRole("heading", { name: "New section.list" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New Section list" })).toBeVisible();
 
     // list-items field is required → textarea (aria name "Items required").
     await expect(page.getByRole("textbox", { name: "Items required" })).toBeVisible();
@@ -115,7 +115,7 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-add-section").click();
     await page.getByTestId(`guides-section-type-${SECTION_TABLE_ID}`).click();
 
-    await expect(page.getByRole("heading", { name: "New section.table" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New Section table" })).toBeVisible();
 
     // Heading field → plain input.
     const headingField = page.locator(".field").filter({ hasText: "Display heading for a section" });
@@ -132,7 +132,7 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-add-section").click();
     await page.getByTestId(`guides-section-type-${SECTION_COMMENTARY_ID}`).click();
 
-    await expect(page.getByRole("heading", { name: "New section.commentary" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New Section commentary" })).toBeVisible();
 
     // Heading field → plain input.
     const headingField = page.locator(".field").filter({ hasText: "Display heading for a section" });
@@ -187,7 +187,7 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-add-section").click();
     await page.getByTestId(`guides-section-type-${SECTION_TEXT_ID}`).click();
 
-    await expect(page.getByRole("heading", { name: "New section.text" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New Section text" })).toBeVisible();
 
     const headingInput = page
       .locator(".field")
@@ -211,7 +211,7 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-section-item").filter({ hasText: "C8 Test Section" }).click();
 
     // Edit form opens — heading is pre-filled.
-    await expect(page.getByRole("heading", { name: "Edit section.text" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Edit Section text" })).toBeVisible();
 
     // Update the body.
     const editBodyTextarea = page
@@ -303,7 +303,7 @@ test.describe("Guides editor (C8)", () => {
     await page.getByTestId("guides-add-section").click();
     await page.getByTestId(`guides-section-type-${SECTION_TEXT_ID}`).click();
 
-    await expect(page.getByRole("heading", { name: "New section.text" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New Section text" })).toBeVisible();
 
     // `theme` (com.mudemocracy/theme) is the only select field on section.text,
     // with allowedValues default/inverted/highlight. Before #46 it fell through

@@ -19,6 +19,7 @@ import {
   refToTypeId,
   rootTypeId as sharedRootTypeId,
 } from "$lib/editor/blueprint-fields.js";
+import { typeNameLabel } from "$lib/editor/document-model.js";
 import type { FieldFormDef } from "$lib/governance/types.js";
 import type { BlueprintSchema } from "$lib/srs-client.js";
 
@@ -91,10 +92,11 @@ export function rootTypeId(schema: BlueprintSchema): string | null {
  * Build a type-ID→label map from `listTypes()` for use as `sectionTypes`'s
  * `labelByTypeId`. Uses `name` — package `Type.description` is prose-length
  * ("A guide section consisting of body text…"), unsuitable as a button/heading
- * label, while `name` (e.g. "section.text") is short and stable.
+ * label, while `name` (e.g. "section.text") is short and stable — humanised
+ * by the shared `typeNameLabel` ("Section text").
  */
 export function labelsByTypeId(
   types: { id: string; namespace: string; name: string; description?: string }[]
 ): Map<string, string> {
-  return new Map(types.map((t) => [t.id, t.name]));
+  return new Map(types.map((t) => [t.id, typeNameLabel(t.name)]));
 }

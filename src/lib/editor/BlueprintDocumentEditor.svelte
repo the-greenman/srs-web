@@ -295,7 +295,7 @@
     {#if pickerAt === 0}
       <ul class="bp-editor__picker" data-testid="bp-picker-0" role="menu">
         {#each availableTypes as t (t.typeId)}
-          <li><button type="button" role="menuitem" onclick={() => pickType(t)}>{t.label}</button></li>
+          <li><button type="button" role="menuitem" title={t.description} onclick={() => pickType(t)}>{t.label}</button></li>
         {/each}
       </ul>
     {/if}
@@ -353,7 +353,7 @@
       {#if pickerAt === index + 1}
         <ul class="bp-editor__picker" data-testid="bp-picker-{index + 1}" role="menu">
           {#each availableTypes as t (t.typeId)}
-            <li><button type="button" role="menuitem" onclick={() => pickType(t)}>{t.label}</button></li>
+            <li><button type="button" role="menuitem" title={t.description} onclick={() => pickType(t)}>{t.label}</button></li>
           {/each}
         </ul>
       {/if}
@@ -365,7 +365,7 @@
     {#if pickerAt === "end"}
       <ul class="bp-editor__picker" data-testid="bp-picker-end" role="menu">
         {#each availableTypes as t (t.typeId)}
-          <li><button type="button" role="menuitem" onclick={() => pickType(t)}>{t.label}</button></li>
+          <li><button type="button" role="menuitem" title={t.description} onclick={() => pickType(t)}>{t.label}</button></li>
         {/each}
       </ul>
     {/if}

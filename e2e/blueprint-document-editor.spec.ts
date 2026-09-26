@@ -41,7 +41,7 @@ test.describe("BlueprintDocumentEditor (srs-web#322)", () => {
 
     // Block 0 is the hero (headline field); block 1 is the prose seeded by the fixture.
     const heroBlock = blocks.nth(0);
-    await expect(heroBlock).toContainText("hero");
+    await expect(heroBlock).toContainText("Hero");
     const headlineInput = heroBlock.locator("#rf-headline");
     await headlineInput.fill("New headline");
     await heroBlock.getByRole("button", { name: "Save" }).click();
@@ -54,14 +54,14 @@ test.describe("BlueprintDocumentEditor (srs-web#322)", () => {
 
     // Insert a second prose component right after the hero block (position 1).
     await page.getByTestId("bp-add-component-1").click();
-    await page.getByTestId("bp-picker-1").getByRole("menuitem", { name: "prose" }).click();
+    await page.getByTestId("bp-picker-1").getByRole("menuitem", { name: "Prose" }).click();
 
     await expect(blocks).toHaveCount(3);
     // New order: hero, [new prose], [original prose] — the inserted block sits
     // immediately after the hero, before the block that was previously second.
-    await expect(blocks.nth(0)).toContainText("hero");
-    await expect(blocks.nth(1)).toContainText("prose");
-    await expect(blocks.nth(2)).toContainText("prose");
+    await expect(blocks.nth(0)).toContainText("Hero");
+    await expect(blocks.nth(1)).toContainText("Prose");
+    await expect(blocks.nth(2)).toContainText("Prose");
 
     // The rendered preview (re-rendered after the mutation) reflects the same content.
     // PreviewPane renders into a sandboxed <iframe srcdoc="...">, so assert on the
