@@ -26,11 +26,12 @@
     createGovernanceDocument,
   } from "$lib/srs-client.js";
   import type { SrsRepository } from "$lib/srs-client.js";
-  import { loadWorkingCopy, clearWorkingCopy } from "$lib/browser-cache.js";
+  import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
 
   import GuidesShell from "$lib/guides/GuidesShell.svelte";
   import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
+  import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import CreateGovernanceDocumentPanel from "$lib/components/CreateGovernanceDocumentPanel.svelte";
   import GitSaveModal from "$lib/components/GitSaveModal.svelte";
@@ -59,11 +60,11 @@
   // ---------------------------------------------------------------------------
 
   type AppState = "boot" | "idle" | "loaded" | "error";
-  type EditorMode = "governance" | "guides";
+  type EditorMode = "generic" | "governance" | "guides";
 
   let appState = $state<AppState>("boot");
   let errorMsg = $state<string | null>(null);
-  let editorMode = $state<EditorMode | null>(null);
+  let editorMode = $state<EditorMode>("generic");
 
   let repoName = $state<string>("Untitled repository");
   const storageProviders = createStorageProvidersFromEnv();
@@ -101,7 +102,7 @@
         const cached = loadWorkingCopy();
         if (cached !== null) {
           cachedSession = cached;
-          editorMode = "governance";
+          editorMode = "generic";
         }
         appState = "idle";
       })
@@ -244,6 +245,15 @@
   function handleExportArchive() {
     if (!repo) return;
     downloadArchive(exportArchive(repo), `${repoName}.srs`);
+  }
+
+  /**
+   * Keep an opaque, engine-exported recovery copy after a generic edit. The
+   * web layer neither interprets nor serializes repository contents.
+   */
+  function cacheGenericWorkingCopy(): void {
+    if (!repo) return;
+    saveWorkingCopy(repoName, exportSrsj(repo));
   }
 
   // ---------------------------------------------------------------------------
@@ -410,85 +420,38 @@
      Idle state — mode picker then file picker
      ========================================================================= -->
 {:else if appState === "idle"}
-  {#if editorMode === null}
-    <div class="splash" data-testid="mode-picker">
-      <h1 class="splash__title">SRS Editor</h1>
-      <p class="splash__sub">Choose an editor mode to get started.</p>
-      <div class="mode-picker">
-        <button
-          class="mode-picker__btn"
-          data-testid="mode-governance"
-          onclick={() => { editorMode = "governance"; }}
-        >
-          <strong>Governance Editor</strong>
-          <span>Articles, Decisions, Roles</span>
-        </button>
-        <button
-          class="mode-picker__btn"
-          data-testid="mode-guides"
-          onclick={() => { editorMode = "guides"; }}
-        >
-          <strong>Guides Editor</strong>
-          <span>muDemocracy guides</span>
-        </button>
-      </div>
-    </div>
-  {:else if editorMode === "governance"}
-    <div class="splash" data-testid="governance-file-picker">
-      <h1 class="splash__title">SRS Governance Viewer</h1>
-      {#if cachedSession !== null}
-        <div class="restore-banner" role="status">
-          <p class="restore-banner__msg">
-            Unsaved session: <strong>{cachedSession.name}</strong>
-          </p>
-          {#if restoreError}
-            <p class="restore-banner__error" role="alert">{restoreError}</p>
-          {/if}
-          <div class="restore-banner__actions">
-            <button
-              class="restore-banner__restore"
-              onclick={() => {
-                restoreError = null;
-                const entry = cachedSession;
-                if (!entry) return;
-                try {
-                  repo = loadRepo(entry.srsj);
-                  repoName = entry.name;
-                  activeDocument = null;
-                  appState = "loaded";
-                  editorMode = "governance";
-                  cachedSession = null;
-                } catch (e: unknown) {
-                  clearWorkingCopy();
-                  restoreError = `Could not restore session: ${e instanceof Error ? e.message : String(e)}`;
-                }
-              }}
-            >Restore session</button>
-            <button
-              class="restore-banner__dismiss"
-              onclick={() => {
-                clearWorkingCopy();
-                cachedSession = null;
-                restoreError = null;
-              }}
-            >Discard</button>
-          </div>
+  <div class="splash" data-testid="generic-file-picker">
+    <h1 class="splash__title">SRS Viewer</h1>
+    <p class="splash__sub">Open any <code>.srs</code> or <code>.srsj</code> repository to read its documents, structure, and records.</p>
+    {#if cachedSession !== null}
+      <div class="restore-banner" role="status">
+        <p class="restore-banner__msg">Unsaved session: <strong>{cachedSession.name}</strong></p>
+        {#if restoreError}<p class="restore-banner__error" role="alert">{restoreError}</p>{/if}
+        <div class="restore-banner__actions">
+          <button class="restore-banner__restore" onclick={() => {
+            restoreError = null;
+            const entry = cachedSession;
+            if (!entry) return;
+            try {
+              repo = loadRepo(entry.srsj);
+              repoName = entry.name;
+              activeDocument = null;
+              appState = "loaded";
+              editorMode = "generic";
+              cachedSession = null;
+            } catch (e: unknown) {
+              clearWorkingCopy();
+              restoreError = `Could not restore session: ${e instanceof Error ? e.message : String(e)}`;
+            }
+          }}>Restore session</button>
+          <button class="restore-banner__dismiss" onclick={() => { clearWorkingCopy(); cachedSession = null; restoreError = null; }}>Discard</button>
         </div>
-      {/if}
-      <p class="splash__sub">Open a <code>.srs</code> or <code>.srsj</code> repository file to explore its governance records.</p>
-      <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} />
-      <p class="splash__divider">or start from scratch</p>
-      <CreateGovernanceDocumentPanel providers={storageProviders} onCreate={createDocument} />
-      <button class="splash__back" onclick={() => { editorMode = null; }}>← Back</button>
-    </div>
-  {:else}
-    <div class="splash" data-testid="guides-file-picker">
-      <h1 class="splash__title">muDemocracy Guides Editor</h1>
-      <p class="splash__sub">Open a <code>.srs</code> or <code>.srsj</code> repository file to edit guides.</p>
-      <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} />
-      <button class="splash__back" onclick={() => { editorMode = null; }}>← Back</button>
-    </div>
-  {/if}
+      </div>
+    {/if}
+    <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} />
+    <p class="splash__divider">or start a governance repository</p>
+    <CreateGovernanceDocumentPanel providers={storageProviders} onCreate={createDocument} />
+  </div>
 
 <!-- =========================================================================
      Loaded state — guides shell
@@ -510,7 +473,32 @@
       saveMessage = null;
       repo = null;
       activeDocument = null;
-      editorMode = null;
+      editorMode = "generic";
+      appState = "idle";
+    }}
+  />
+
+<!-- =========================================================================
+     Loaded state — generic shell
+     ========================================================================= -->
+{:else if editorMode === "generic"}
+  {@render catalogBanner()}
+  <GenericSrsShell
+    repo={repo!}
+    repoName={repoName}
+    onExport={handleExportArchive}
+    onMutation={cacheGenericWorkingCopy}
+    onSave={activeDocument?.capabilities.write ? handleSave : undefined}
+    {saving}
+    {saveMessage}
+    onOpenGovernance={() => { editorMode = "governance"; }}
+    onOpenGuides={() => { editorMode = "guides"; }}
+    onOpenAnother={() => {
+      clearWorkingCopy();
+      cachedSession = null;
+      saveMessage = null;
+      repo = null;
+      activeDocument = null;
       appState = "idle";
     }}
   />
@@ -535,7 +523,7 @@
       saveMessage = null;
       repo = null;
       activeDocument = null;
-      editorMode = null;
+      editorMode = "generic";
       appState = "idle";
     }}
   />
@@ -603,51 +591,6 @@
   .splash__retry {
     margin-top: 0.5rem;
     cursor: pointer;
-  }
-
-  .splash__back {
-    margin-top: 1rem;
-    background: none;
-    border: none;
-    color: var(--color-muted, #888);
-    font-size: 0.8rem;
-    cursor: pointer;
-    padding: 0;
-  }
-  .splash__back:hover {
-    text-decoration: underline;
-  }
-
-  .mode-picker {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
-
-  .mode-picker__btn {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-    padding: 1rem 1.5rem;
-    min-width: 10rem;
-    border: 1px solid var(--color-border, #ddd);
-    border-radius: 6px;
-    background: var(--color-surface-1, #fafafa);
-    cursor: pointer;
-    text-align: left;
-    transition: border-color 0.15s, background 0.15s;
-  }
-  .mode-picker__btn:hover {
-    border-color: var(--color-accent, #4a90d9);
-    background: var(--color-surface-2, #f0f6ff);
-  }
-  .mode-picker__btn strong {
-    font-size: 0.95rem;
-  }
-  .mode-picker__btn span {
-    font-size: 0.75rem;
-    color: var(--color-muted, #888);
   }
 
   /* ---- Catalog diagnostics banner (RFC-038 [R24]) ---- */

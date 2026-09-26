@@ -37,6 +37,7 @@ import {
   listBlueprints,
   listContainers,
   listDocumentViews,
+  listPackages,
   listRecords,
   listRelations,
   listTerms,
@@ -118,6 +119,9 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
       throw new Error("not mocked");
     },
     list_types: () => {
+      throw new Error("not mocked");
+    },
+    list_packages: () => {
       throw new Error("not mocked");
     },
     list_blueprints: () => {
@@ -256,6 +260,39 @@ describe("typeSchema", () => {
       },
     });
     expect(() => typeSchema(repo, "nonexistent-type")).toThrow("type not found");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// listPackages
+// ---------------------------------------------------------------------------
+
+describe("listPackages", () => {
+  it("normalizes package-boundary metadata from the WASM payload", () => {
+    const spy = vi.fn().mockReturnValue([
+      {
+        id: "pkg-1",
+        namespace: "com.mudemocracy.governance",
+        name: "governance",
+        version: "1.0.0",
+        boundary_path: "packages/governance",
+        field_count: 12,
+        type_count: 4,
+      },
+    ]);
+
+    const result = listPackages(mockRepo({ list_packages: spy }));
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(result).toEqual([{
+      id: "pkg-1",
+      namespace: "com.mudemocracy.governance",
+      name: "governance",
+      version: "1.0.0",
+      boundaryPath: "packages/governance",
+      fieldCount: 12,
+      typeCount: 4,
+    }]);
   });
 });
 
