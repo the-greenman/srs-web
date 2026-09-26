@@ -119,7 +119,12 @@
     return error instanceof Error ? error.message : String(error);
   }
 
+  // A mutation (documentRevision) re-runs loadCatalog: keep the user where they are.
+  let catalogLoaded = false;
+
   function loadCatalog(): void {
+    const refresh = catalogLoaded;
+    catalogLoaded = true;
     try {
       compositions = listDocumentViews(repo);
       containers = listContainers(repo);
@@ -130,9 +135,17 @@
       } catch {
         navigation = null;
       }
-      selectedCompositionId = compositions[0]?.id ?? null;
-      selectedContainerId = navigation?.sections[0]?.sectionContainerId ?? containers[0]?.containerId ?? null;
+      if (!refresh || !compositions.some((c) => c.id === selectedCompositionId)) {
+        selectedCompositionId = compositions[0]?.id ?? null;
+      }
+      if (!refresh || !containers.some((c) => c.containerId === selectedContainerId)) {
+        selectedContainerId = navigation?.sections[0]?.sectionContainerId ?? containers[0]?.containerId ?? null;
+      }
       refreshRecords();
+      if (refresh) {
+        if (surface === "document" && selectedCompositionId) renderPreview(selectedCompositionId);
+        return;
+      }
       if (selectedCompositionId) renderComposition(selectedCompositionId);
       else surface = "records";
     } catch (error: unknown) {
@@ -145,6 +158,11 @@
     selectedCompositionId = compositionId;
     clearRecordSelection();
     surface = "document";
+    renderPreview(compositionId);
+  }
+
+  /** Render a composition's preview and resolve its blueprint, without touching selection. */
+  function renderPreview(compositionId: string): void {
     loadingDocument = true;
     documentError = null;
     try {
@@ -165,7 +183,7 @@
   function onDocumentEditorMutation(): void {
     onDocumentMutation();
     documentRenderRevision++;
-    if (selectedCompositionId) renderComposition(selectedCompositionId);
+    if (selectedCompositionId) renderPreview(selectedCompositionId);
   }
 
   function selectContainer(containerId: string): void {

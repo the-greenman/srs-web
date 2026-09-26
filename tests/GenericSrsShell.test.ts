@@ -86,3 +86,21 @@ describe("GenericSrsShell", () => {
     expect(screen.getByRole("button", { name: "A declared title" })).toBeTruthy();
   });
 });
+
+describe("GenericSrsShell document revision refresh", () => {
+  it("keeps the selected composition when a mutation bumps documentRevision", async () => {
+    mocks.listDocumentViews.mockReturnValue([
+      { id: "composition-1", namespace: "com.example", name: "first", version: 1, description: "" },
+      { id: "composition-2", namespace: "com.example", name: "second", version: 1, description: "" },
+    ]);
+    const props = { repo: {} as never, repoName: "Example", onExport: vi.fn(), onOpenAnother: vi.fn() };
+    const { rerender } = render(GenericSrsShell, { props: { ...props, documentRevision: 0 } });
+
+    await fireEvent.click(await screen.findByRole("button", { name: /second/ }));
+    await rerender({ ...props, documentRevision: 1 });
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("second");
+    expect(mocks.renderDocumentView).toHaveBeenLastCalledWith({}, "composition-2", "html");
+    mocks.listDocumentViews.mockReset();
+  });
+});
