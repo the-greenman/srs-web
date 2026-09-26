@@ -42,6 +42,8 @@ test.describe("BlueprintDocumentEditor (srs-web#322)", () => {
     // Block 0 is the hero (headline field); block 1 is the prose seeded by the fixture.
     const heroBlock = blocks.nth(0);
     await expect(heroBlock).toContainText("Hero");
+    // Blocks render collapsed to a summary line; open the hero's form.
+    await heroBlock.getByTestId("bp-block-toggle").click();
     const headlineInput = heroBlock.locator("#rf-headline");
     await headlineInput.fill("New headline");
     await heroBlock.getByRole("button", { name: "Save" }).click();

@@ -74,6 +74,8 @@ export interface SrsRepository {
   type_schema(type_id: string, type_version?: number): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listTypes()
   list_types(filter_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getTypeExtends()
+  get_type(id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listPackages()
   list_packages(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listBlueprints()
@@ -1110,6 +1112,12 @@ export interface TypeSummary {
  * List type definitions from the compiled package. Used to resolve the current
  * version of a type UUID (e.g. blueprint `$ref`s carry no version).
  */
+/** The type a type extends (`extendsTypeId`, ext:type-inheritance), or null. */
+export function getTypeExtends(repo: SrsRepository, typeId: string): string | null {
+  const type = repo.get_type(typeId) as { extendsTypeId?: string | null } | null;
+  return type?.extendsTypeId ?? null;
+}
+
 export function listTypes(
   repo: SrsRepository,
   filter: Record<string, unknown> = {}

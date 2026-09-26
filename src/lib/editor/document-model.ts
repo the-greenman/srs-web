@@ -22,6 +22,7 @@ import {
   type SrsRepository,
   blueprintSchema,
   documentViewsForContainer,
+  getTypeExtends,
   listBlueprints,
   listContainers,
   listTypes,
@@ -217,5 +218,15 @@ export function componentTypes(
       });
     }
   }
-  return [...seen.values()];
+  // A type another offered type extends is an abstract base (homepage-section):
+  // SRS has no abstract marker, so hide bases that have an offered subtype.
+  const bases = new Set<string>();
+  for (const typeId of seen.keys()) {
+    let parent = getTypeExtends(repo, typeId);
+    for (let depth = 0; parent && depth < 16; depth++) {
+      bases.add(parent);
+      parent = getTypeExtends(repo, parent);
+    }
+  }
+  return [...seen.values()].filter((t) => !bases.has(t.typeId));
 }

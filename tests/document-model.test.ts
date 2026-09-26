@@ -41,6 +41,7 @@ function fakeRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
     list_containers: notMocked("list_containers"),
     resolve_container_view: notMocked("resolve_container_view"),
     order_by_precedes: notMocked("order_by_precedes"),
+    get_type: () => null,
   };
   return { ...base, ...overrides } as unknown as SrsRepository;
 }
@@ -162,6 +163,26 @@ describe("componentTypes", () => {
   it("humanises dotted and kebab type names", () => {
     expect(typeNameLabel("homepage-hero")).toBe("Homepage hero");
     expect(typeNameLabel("section.text")).toBe("Section text");
+  });
+
+  it("hides an abstract base that an offered type extends", () => {
+    const repo = fakeRepo({
+      blueprint_schema: () => ({
+        schema: {
+          properties: {
+            precedes: { items: { oneOf: [{ $ref: `#/definitions/${ROOT_TYPE}` }, { $ref: `#/definitions/${HERO_TYPE}` }] } },
+          },
+          definitions: {},
+        },
+        diagnostics: [],
+      }),
+      list_types: () => [
+        { id: ROOT_TYPE, namespace: "com.example", name: "section", version: 1 },
+        { id: HERO_TYPE, namespace: "com.example", name: "hero", version: 1 },
+      ],
+      get_type: (id: string) => (id === HERO_TYPE ? { id, extendsTypeId: ROOT_TYPE } : { id }),
+    });
+    expect(componentTypes(repo, blueprintSummary("bp")).map((t) => t.typeId)).toEqual([HERO_TYPE]);
   });
 
   it("excludes the root property from the union", () => {
