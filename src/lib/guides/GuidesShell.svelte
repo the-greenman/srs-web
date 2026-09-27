@@ -74,6 +74,8 @@
     onExportSrsj?: () => void;
     /** Write back to the opened cloud/git document. Undefined for read-only handles. */
     onSave?: () => Promise<void>;
+    /** Why `onSave` is undefined, shown where the Save button would be. Null when writable or unknown. */
+    readOnlyReason?: string | null;
     saving?: boolean;
     saveMessage?: string | null;
     /** App-owned dirty state, shared with non-UI repository writers. */
@@ -91,6 +93,7 @@
     onExport,
     onExportSrsj,
     onSave,
+    readOnlyReason = null,
     saving = false,
     saveMessage = null,
     documentDirty = false,
@@ -600,6 +603,8 @@
                 onclick={onSave}
                 disabled={saving}
               >{saving ? "Saving…" : "Save"}</Button>
+            {:else if readOnlyReason}
+              <span class="guides-save-message" data-testid="readonly-reason">{readOnlyReason}</span>
             {/if}
             {#if documentDirty}
               <span class="guides-save-message" data-testid="document-dirty-status">Unsaved changes</span>

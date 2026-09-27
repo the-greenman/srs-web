@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from "vitest";
 import {
+  LocalDocumentHandle,
   LocalTreeHandle,
   pickLocalDirectory,
   treeFromDirectoryInput,
@@ -98,6 +99,15 @@ describe("LocalTreeHandle", () => {
     await expect(handle.commitTree({})).rejects.toThrow(/Export/);
   });
 
+  it("carries a readOnlyReason without a directory, and none with one", async () => {
+    const readOnly = new LocalTreeHandle("id", "repo", { "manifest.json": bytes("{}") });
+    expect(readOnly.readOnlyReason).toMatch(/read-only/);
+
+    const { dir } = stubDirectory(REPO);
+    const writable = await pickHandle(dir);
+    expect(writable.readOnlyReason).toBeUndefined();
+  });
+
   it("commitTree() writes nothing when the tree is unchanged", async () => {
     const { dir, written, removed } = stubDirectory(REPO);
     const handle = await pickHandle(dir);
@@ -145,6 +155,14 @@ describe("LocalTreeHandle", () => {
     await handle.commitTree(files);
 
     expect(written).toEqual(["records/a.json"]);
+  });
+});
+
+describe("LocalDocumentHandle", () => {
+  it("is always read-only, and says how to get changes out", () => {
+    const handle = new LocalDocumentHandle(new File(["{}"], "doc.srsj"));
+    expect(handle.capabilities.write).toBe(false);
+    expect(handle.readOnlyReason).toMatch(/Export/);
   });
 });
 
@@ -203,6 +221,7 @@ describe("treeFromDirectoryInput", () => {
   it("is read-only — the fallback path has no write side", async () => {
     const handle = await treeFromDirectoryInput([fileAt("my-repo/manifest.json", "{}")]);
     expect(handle.capabilities.write).toBe(false);
+    expect(handle.readOnlyReason).toMatch(/Export/);
   });
 
   it("refuses a folder that is not an SRS repository", async () => {
