@@ -52,6 +52,8 @@
     onExport: () => void;
     /** Write the engine-owned current repository to the opened backend, when allowed. */
     onSave?: () => Promise<void>;
+    /** Why there is no Save, shown in its place so a missing button is never silent (#317). */
+    readOnlyReason?: string | null;
     saving?: boolean;
     saveMessage?: string | null;
     /** App-owned dirty state, shared with non-UI repository writers. */
@@ -70,6 +72,7 @@
     repoName,
     onExport,
     onSave,
+    readOnlyReason = null,
     saving = false,
     saveMessage = null,
     documentDirty = false,
@@ -459,7 +462,8 @@
     {/if}
 
     <div class="generic-nav-actions">
-      {#if onSave}<button disabled={saving} onclick={onSave}>{saving ? "Saving…" : "Save"}</button>{/if}
+      {#if onSave}<button disabled={saving} onclick={onSave}>{saving ? "Saving…" : "Save"}</button>
+      {:else if readOnlyReason}<p class="save-message" data-testid="readonly-reason">{readOnlyReason}</p>{/if}
       <button onclick={onExport}>Export</button>
       <button onclick={onOpenAnother}>Open another</button>
       {#if documentDirty}<p class="save-message" data-testid="document-dirty-status" role="status">Unsaved changes</p>{/if}

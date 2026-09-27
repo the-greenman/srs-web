@@ -85,6 +85,24 @@ describe("GenericSrsShell", () => {
 
     expect(screen.getByRole("button", { name: "A declared title" })).toBeTruthy();
   });
+
+  it("explains a missing Save on a read-only document (srs-web#325)", () => {
+    render(GenericSrsShell, {
+      props: { repo: {} as never, repoName: "Example", onExport: vi.fn(), onOpenAnother: vi.fn(), readOnlyReason: "Read-only — use Export" },
+    });
+
+    expect(screen.queryByRole("button", { name: "Save" })).toBeNull();
+    expect(screen.getByTestId("readonly-reason").textContent).toBe("Read-only — use Export");
+  });
+
+  it("shows Save and no read-only note when the document is writable", () => {
+    render(GenericSrsShell, {
+      props: { repo: {} as never, repoName: "Example", onExport: vi.fn(), onOpenAnother: vi.fn(), onSave: vi.fn(async () => {}) },
+    });
+
+    expect(screen.getByRole("button", { name: "Save" })).toBeTruthy();
+    expect(screen.queryByTestId("readonly-reason")).toBeNull();
+  });
 });
 
 describe("GenericSrsShell document revision refresh", () => {
