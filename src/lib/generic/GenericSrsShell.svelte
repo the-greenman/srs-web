@@ -36,10 +36,14 @@
     UpdateRecordInput,
   } from "$lib/srs-client.js";
   import PreviewPane from "$lib/components/PreviewPane.svelte";
-  import RecordForm from "$lib/components/RecordForm.svelte";
   import FieldValueView from "../../rendering/FieldValueView.svelte";
-  import { definitionToFields } from "$lib/guides/blueprint-utils.js";
-  import type { TypeFormDef } from "$lib/governance/types.js";
+  import { definitionToComposites, definitionToFields } from "$lib/editor/blueprint-fields.js";
+  import SectionForm from "$lib/editor/SectionForm.svelte";
+  import BlueprintDocumentEditor from "$lib/editor/BlueprintDocumentEditor.svelte";
+  import { blueprintForComposition } from "$lib/editor/document-model.js";
+  import type { BlueprintSummary } from "$lib/srs-client.js";
+  import type { CompositeFormDef } from "$lib/editor/blueprint-fields.js";
+  import type { FieldFormDef } from "$lib/governance/types.js";
   import { availablePackageEditors } from "$lib/generic/package-editors.js";
 
   interface Props {
@@ -79,6 +83,8 @@
   type Surface = "document" | "structure" | "records" | "map";
 
   let surface = $state<Surface>("document");
+  /** "Full preview" toggle for the Documents surface when a blueprint editor is shown — component state only, not remembered across compositions. */
+  let showFullPreview = $state(false);
   let compositions = $state<DocumentViewSummary[]>([]);
   let containers = $state<ContainerSummary[]>([]);
   let navigation = $state<RepositoryNavigation | null>(null);
@@ -96,7 +102,9 @@
   let expandedMembers = $state<Record<string, ResolvedMember[]>>({});
   let records = $state<DiscoveryHit[]>([]);
   let recordDiagnostics = $state<string[]>([]);
-  let editSchema = $state<TypeFormDef | null>(null);
+  let editFormDef = $state<{ label: string; fields: FieldFormDef[]; composites: CompositeFormDef[] } | null>(null);
+  let activeBlueprint = $state<BlueprintSummary | null>(null);
+  let documentRenderRevision = $state(0);
   let editing = $state(false);
   let editSaving = $state(false);
   let editError = $state<string | null>(null);
@@ -113,7 +121,12 @@
     return error instanceof Error ? error.message : String(error);
   }
 
+  // A mutation (documentRevision) re-runs loadCatalog: keep the user where they are.
+  let catalogLoaded = false;
+
   function loadCatalog(): void {
+    const refresh = catalogLoaded;
+    catalogLoaded = true;
     try {
       compositions = listDocumentViews(repo);
       containers = listContainers(repo);
@@ -124,9 +137,17 @@
       } catch {
         navigation = null;
       }
-      selectedCompositionId = compositions[0]?.id ?? null;
-      selectedContainerId = navigation?.sections[0]?.sectionContainerId ?? containers[0]?.containerId ?? null;
+      if (!refresh || !compositions.some((c) => c.id === selectedCompositionId)) {
+        selectedCompositionId = compositions[0]?.id ?? null;
+      }
+      if (!refresh || !containers.some((c) => c.containerId === selectedContainerId)) {
+        selectedContainerId = navigation?.sections[0]?.sectionContainerId ?? containers[0]?.containerId ?? null;
+      }
       refreshRecords();
+      if (refresh) {
+        if (surface === "document" && selectedCompositionId) renderPreview(selectedCompositionId);
+        return;
+      }
       if (selectedCompositionId) renderComposition(selectedCompositionId);
       else surface = "records";
     } catch (error: unknown) {
@@ -139,6 +160,11 @@
     selectedCompositionId = compositionId;
     clearRecordSelection();
     surface = "document";
+    renderPreview(compositionId);
+  }
+
+  /** Render a composition's preview and resolve its blueprint, without touching selection. */
+  function renderPreview(compositionId: string): void {
     loadingDocument = true;
     documentError = null;
     try {
@@ -151,6 +177,15 @@
     } finally {
       loadingDocument = false;
     }
+    const composition = compositions.find((c) => c.id === compositionId) ?? null;
+    activeBlueprint = composition ? blueprintForComposition(repo, composition) : null;
+  }
+
+  /** Re-render the active composition's preview after an editor mutation (BlueprintDocumentEditor). */
+  function onDocumentEditorMutation(): void {
+    onDocumentMutation();
+    documentRenderRevision++;
+    if (selectedCompositionId) renderPreview(selectedCompositionId);
   }
 
   function selectContainer(containerId: string): void {
@@ -204,7 +239,7 @@
   function openRecord(instanceId: string): void {
     try {
       editing = false;
-      editSchema = null;
+      editFormDef = null;
       editError = null;
       selectedRecord = getRecord(repo, instanceId);
     } catch (error: unknown) {
@@ -215,10 +250,17 @@
   function clearRecordSelection(): void {
     selectedRecord = null;
     editing = false;
-    editSchema = null;
+    editFormDef = null;
     editError = null;
   }
 
+  /**
+   * Open the inspector's edit form for the selected record. Uses SectionForm
+   * (fields + composites) — the same form path as the blueprint document
+   * editor and the guides editor (srs-web#322) — so there is no separate
+   * "scalar string fields only" restriction: any type the engine can project
+   * a schema for is editable here.
+   */
   function beginEdit(): void {
     if (!selectedRecord) return;
     editError = null;
@@ -228,19 +270,10 @@
       if (!definition.properties || Object.keys(definition.properties).length === 0) {
         throw new Error("This record type does not expose an editable field schema.");
       }
-      const unsupported = Object.entries(definition.properties).find(([, property]) =>
-        property.type !== "string" || property.items?.properties != null,
-      );
-      if (unsupported) {
-        throw new Error(`Generic editing currently supports scalar string fields only; ${unsupported[0]} needs its typed package editor.`);
-      }
-      editSchema = {
-        typeId: selectedRecord.typeId,
-        typeVersion: selectedRecord.typeVersion,
-        typeNamespace: selectedRecord.typeNamespace ?? "",
-        typeName: selectedRecord.typeName ?? "record",
+      editFormDef = {
         label: selectedRecord.typeName ?? "record",
         fields: definitionToFields(definition),
+        composites: definitionToComposites(definition),
       };
       editing = true;
     } catch (error: unknown) {
@@ -436,9 +469,40 @@
 
   <main class="generic-main">
     {#if surface === "document"}
-      <header><p>Document</p><h1>{activeComposition?.name ?? "Composition"}</h1></header>
+      <header>
+        <p>Document</p>
+        <h1>{activeComposition?.name ?? "Composition"}</h1>
+        {#if activeBlueprint && activeComposition}
+          <button
+            type="button"
+            class="full-preview-toggle"
+            data-testid="full-preview-toggle"
+            aria-pressed={showFullPreview}
+            onclick={() => (showFullPreview = !showFullPreview)}
+          >
+            {showFullPreview ? "Hide full preview" : "Full preview"}
+          </button>
+        {/if}
+      </header>
       {#if documentError}<p class="notice">{documentError}</p>{/if}
-      <PreviewPane html={renderedDocument} loading={loadingDocument} />
+      {#if activeBlueprint && activeComposition}
+        <div class="document-editor-panel document-editor-panel--full" data-testid="document-editor-panel">
+          <BlueprintDocumentEditor
+            {repo}
+            composition={activeComposition}
+            saving={saving}
+            revision={documentRenderRevision}
+            onMutation={onDocumentEditorMutation}
+          />
+        </div>
+        {#if showFullPreview}
+          <div class="document-preview-panel document-preview-panel--full" data-testid="document-full-preview">
+            <PreviewPane html={renderedDocument} loading={loadingDocument} />
+          </div>
+        {/if}
+      {:else}
+        <PreviewPane html={renderedDocument} loading={loadingDocument} />
+      {/if}
     {:else if surface === "map"}
       <header>
         <p>Scoped map</p>
@@ -504,8 +568,18 @@
 
   <aside class="generic-inspector">
     {#if selectedRecord}
-      {#if editing && editSchema}
-        <RecordForm schema={editSchema} record={selectedRecord} wide onSave={saveEdit} onCancel={() => { editing = false; editError = null; }} saving={editSaving} saveError={editError} />
+      {#if editing && editFormDef}
+        <SectionForm
+          label={editFormDef.label}
+          fields={editFormDef.fields}
+          composites={editFormDef.composites}
+          record={selectedRecord}
+          wide
+          onSave={saveEdit}
+          onCancel={() => { editing = false; editError = null; }}
+          saving={editSaving}
+          saveError={editError}
+        />
       {:else}
         <header>
           <p>Record</p>
@@ -550,6 +624,12 @@
   .save-message { flex-basis:100%; margin:.2rem .5rem 0; color:#c8e5d9; font-size:.75rem; }
   .generic-main { min-width:0; display:flex; flex-direction:column; padding:1.5rem; gap:1rem; }
   .generic-main h1, .generic-inspector h2 { margin:0; font-size:1.35rem; }
+  .document-editor-panel { overflow:auto; }
+  .document-editor-panel--full { width:100%; }
+  .document-preview-panel { overflow:auto; }
+  .document-preview-panel--full { border-top:1px solid #d5dbd8; padding-top:1rem; margin-top:1rem; max-height:60vh; }
+  .full-preview-toggle { margin-left:auto; font-size:.8rem; padding:.3rem .7rem; border:1px solid #d5dbd8; border-radius:6px; background:#fff; cursor:pointer; }
+  .generic-main header { display:flex; align-items:baseline; gap:.75rem; }
   .record-controls { display:flex; gap:.5rem; flex-wrap:wrap; }
   .record-controls input, .record-controls select, .record-controls button { font:inherit; padding:.45rem .6rem; border:1px solid #b9c2be; border-radius:.25rem; background:#fff; }
   .record-controls input { min-width:15rem; flex:1; }

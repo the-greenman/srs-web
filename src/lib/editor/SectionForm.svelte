@@ -14,7 +14,7 @@
 <script lang="ts">
   import type { SrsRecord, CreateRecordInput, UpdateRecordInput } from "$lib/srs-client.js";
   import type { FieldFormDef } from "$lib/governance/types.js";
-  import type { CompositeFormDef } from "$lib/guides/blueprint-utils.js";
+  import type { CompositeFormDef } from "$lib/editor/blueprint-fields.js";
   import Field from "$lib/components/Field.svelte";
   import FieldInput from "$lib/components/FieldInput.svelte";
   import SaveBar from "$lib/components/SaveBar.svelte";
@@ -181,7 +181,8 @@
     {#each fields as def (def.name)}
       {@const inputId = `rf-${def.name}`}
       <Field label={def.label} required={def.required} description={def.description} instructions={def.instructions} id={inputId}>
-        <FieldInput def={def} bind:value={fieldValues[def.name]} id={inputId} disabled={saving} required={def.required} />
+        <!-- Fallback: the re-init $effect runs after render, so a newly arrived field has no entry yet. -->
+        <FieldInput def={def} bind:value={() => fieldValues[def.name] ?? "", (v) => { fieldValues[def.name] = v; }} id={inputId} disabled={saving} required={def.required} />
       </Field>
     {/each}
 

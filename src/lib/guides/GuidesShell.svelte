@@ -20,14 +20,8 @@
     listRecords,
     createRecord,
     updateRecord,
-    deleteRecord,
     listContainers,
     resolveContainerView,
-    addContainerMember,
-    removeContainerMember,
-    listRelations,
-    createRelation,
-    deleteRelation,
     orderByPrecedes,
     renderDocumentView,
   } from "$lib/srs-client.js";
@@ -39,10 +33,12 @@
     sectionTypes,
     rootFields,
     rootTypeId,
+    labelsByTypeId,
     type SectionTypeDescriptor,
   } from "$lib/guides/blueprint-utils.js";
+  import { insertComponent, moveComponent, removeComponent } from "$lib/editor/document-ops.js";
   import RecordForm from "$lib/components/RecordForm.svelte";
-  import SectionForm from "$lib/guides/SectionForm.svelte";
+  import SectionForm from "$lib/editor/SectionForm.svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import Breadcrumb from "$lib/components/Breadcrumb.svelte";
   import Nav from "$lib/components/Nav.svelte";
@@ -235,26 +231,6 @@
     orderedSections = orderedIds.map((id) => byId.get(id)).filter((r): r is SrsRecord => r !== undefined);
   }
 
-  /**
-   * Delete every `precedes` relation touching any id in `clearIds`, then recreate a
-   * single chain through `orderedIds`. Used by add / reorder / remove so the stored
-   * order always matches the displayed order.
-   */
-  function rebuildPrecedesChain(orderedIds: string[], clearIds: string[]) {
-    const clear = new Set(clearIds);
-    const rels = listRelations(repo, { relationType: "precedes" }).filter(
-      (r) => clear.has(r.sourceInstanceId) || clear.has(r.targetInstanceId)
-    );
-    for (const r of rels) deleteRelation(repo, r.relationId);
-    for (let i = 0; i < orderedIds.length - 1; i++) {
-      createRelation(repo, {
-        relationType: "precedes",
-        sourceInstanceId: orderedIds[i],
-        targetInstanceId: orderedIds[i + 1],
-      });
-    }
-  }
-
   /** Render the selected guide to HTML for the preview pane. */
   function refreshPreview() {
     if (!selectedGuideId || !selectedContainerId || !guideViewId) {
@@ -326,8 +302,9 @@
 
       // Blueprint $refs carry no type version — resolve current versions from the
       // package (post-RFC-039 migrations bump section types past @1).
-      const versionByTypeId = new Map(listTypes(repo).map((t) => [t.id, t.version]));
-      sectionTypeList = sectionTypes(schema, versionByTypeId);
+      const installedTypes = listTypes(repo);
+      const versionByTypeId = new Map(installedTypes.map((t) => [t.id, t.version]));
+      sectionTypeList = sectionTypes(schema, versionByTypeId, labelsByTypeId(installedTypes));
       guideTypeId = rootId;
       const fields = rootFields(schema);
       guideFormDef = {
@@ -424,28 +401,27 @@
     formError = null;
   }
 
-  /** Move a section one slot up (dir = -1) or down (dir = +1), rewriting precedes. */
+  /** Move a section one slot up (dir = -1) or down (dir = +1), chain-local (srs-web#322). */
   function moveSection(index: number, dir: -1 | 1) {
     const j = index + dir;
     if (j < 0 || j >= orderedSections.length) return;
-    const ids = orderedSections.map((s) => s.instanceId);
-    [ids[index], ids[j]] = [ids[j], ids[index]];
-    rebuildPrecedesChain(ids, ids);
-    reload();
-    onDocumentMutation();
+    const instanceId = orderedSections[index].instanceId;
+    const anchor = dir === -1
+      ? { beforeId: orderedSections[j].instanceId }
+      : { afterId: orderedSections[j].instanceId };
+    moveComponent(repo, { instanceId, ...anchor }, () => {
+      reload();
+      onDocumentMutation();
+    });
   }
 
-  /** Remove a section: drop it from the chain + container membership, then delete it. */
+  /** Remove a section: unlink it from the chain + container membership, then delete it (srs-web#322). */
   function removeSection(section: SrsRecord) {
-    const beforeIds = orderedSections.map((s) => s.instanceId);
-    const remaining = beforeIds.filter((id) => id !== section.instanceId);
-    rebuildPrecedesChain(remaining, beforeIds);
-    if (selectedContainerId) {
-      removeContainerMember(repo, selectedContainerId, section.instanceId);
-    }
-    deleteRecord(repo, section.instanceId);
-    reload();
-    onDocumentMutation();
+    if (!selectedContainerId) return;
+    removeComponent(repo, { instanceId: section.instanceId, containerId: selectedContainerId }, () => {
+      reload();
+      onDocumentMutation();
+    });
   }
 
   async function handleSave(input: CreateRecordInput | UpdateRecordInput) {
@@ -453,6 +429,10 @@
     formError = null;
     try {
       if (formMode === "create-guide" && guideTypeId) {
+        // TODO(srs-rust#1126): this creates only the root record — there is no
+        // WASM binding to create a container yet, so a freshly created guide has
+        // nowhere to add sections until srs-rust#1126 ships a create_container
+        // binding. Tracked as a known gap, not fixed here (srs-web#322).
         const created = createRecord(repo, guideTypeId, guideFormDef?.typeVersion ?? 1, input as CreateRecordInput);
         reload();
         selectedGuideId = created.instanceId;
@@ -463,25 +443,17 @@
         reload();
         cancelForm();
         onDocumentMutation();
-      } else if (formMode === "create-section" && createSectionTypeId) {
-        const created = createRecord(
-          repo,
-          createSectionTypeId,
-          createSectionTypeVersion,
-          input as CreateRecordInput
-        );
-        // Join the guide's container and append to the end of the precedes chain.
-        if (selectedContainerId) {
-          addContainerMember(repo, selectedContainerId, created.instanceId);
-          const lastId = orderedSections[orderedSections.length - 1]?.instanceId;
-          if (lastId) {
-            createRelation(repo, {
-              relationType: "precedes",
-              sourceInstanceId: lastId,
-              targetInstanceId: created.instanceId,
-            });
-          }
-        }
+      } else if (formMode === "create-section" && createSectionTypeId && selectedContainerId) {
+        // Create in the guide's container and append to the end of the precedes chain
+        // (srs-web#322 — chain-local splice binding replaces the manual relation rebuild).
+        const lastId = orderedSections[orderedSections.length - 1]?.instanceId;
+        insertComponent(repo, {
+          typeId: createSectionTypeId,
+          typeVersion: createSectionTypeVersion,
+          containerId: selectedContainerId,
+          afterId: lastId,
+          fieldValues: (input as CreateRecordInput).fieldValues,
+        });
         reload();
         cancelForm();
         onDocumentMutation();
