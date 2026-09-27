@@ -87,6 +87,40 @@ describe("GenericSrsShell", () => {
   });
 });
 
+describe("GenericSrsShell read-only note", () => {
+  it("shows the read-only reason, not Save, when onSave is undefined", async () => {
+    render(GenericSrsShell, {
+      props: {
+        repo: {} as never,
+        repoName: "Example repository",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+        onSave: undefined,
+        readOnlyReason: "This folder was opened read-only. Use Export to save your changes.",
+      },
+    });
+
+    expect((await screen.findByTestId("read-only-note")).textContent).toMatch(/read-only/);
+    expect(screen.queryByRole("button", { name: /Save/ })).toBeNull();
+  });
+
+  it("shows Save, not the reason, when onSave is set", async () => {
+    render(GenericSrsShell, {
+      props: {
+        repo: {} as never,
+        repoName: "Example repository",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+        onSave: vi.fn(),
+        readOnlyReason: "should not render",
+      },
+    });
+
+    expect(await screen.findByRole("button", { name: "Save" })).toBeTruthy();
+    expect(screen.queryByTestId("read-only-note")).toBeNull();
+  });
+});
+
 describe("GenericSrsShell document revision refresh", () => {
   it("keeps the selected composition when a mutation bumps documentRevision", async () => {
     mocks.listDocumentViews.mockReturnValue([
