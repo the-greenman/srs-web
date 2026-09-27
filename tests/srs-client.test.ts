@@ -37,6 +37,7 @@ import {
   listBlueprints,
   listContainers,
   listDocumentViews,
+  listPackages,
   listRecords,
   listRelations,
   listTerms,
@@ -120,6 +121,9 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     list_types: () => {
       throw new Error("not mocked");
     },
+    list_packages: () => {
+      throw new Error("not mocked");
+    },
     list_blueprints: () => {
       throw new Error("not mocked");
     },
@@ -181,6 +185,18 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
       throw new Error("not mocked");
     },
     get_record_attachments: () => {
+      throw new Error("not mocked");
+    },
+    create_record_in_container: () => {
+      throw new Error("not mocked");
+    },
+    insert_into_precedes_chain: () => {
+      throw new Error("not mocked");
+    },
+    remove_from_precedes_chain: () => {
+      throw new Error("not mocked");
+    },
+    move_in_precedes_chain: () => {
       throw new Error("not mocked");
     },
   };
@@ -256,6 +272,39 @@ describe("typeSchema", () => {
       },
     });
     expect(() => typeSchema(repo, "nonexistent-type")).toThrow("type not found");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// listPackages
+// ---------------------------------------------------------------------------
+
+describe("listPackages", () => {
+  it("normalizes package-boundary metadata from the WASM payload", () => {
+    const spy = vi.fn().mockReturnValue([
+      {
+        id: "pkg-1",
+        namespace: "com.mudemocracy.governance",
+        name: "governance",
+        version: "1.0.0",
+        boundary_path: "packages/governance",
+        field_count: 12,
+        type_count: 4,
+      },
+    ]);
+
+    const result = listPackages(mockRepo({ list_packages: spy }));
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(result).toEqual([{
+      id: "pkg-1",
+      namespace: "com.mudemocracy.governance",
+      name: "governance",
+      version: "1.0.0",
+      boundaryPath: "packages/governance",
+      fieldCount: 12,
+      typeCount: 4,
+    }]);
   });
 });
 

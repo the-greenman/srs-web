@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * guides-table-editor.spec.ts — D2: schema-driven field-group editing.
@@ -21,9 +22,11 @@ const SECTION_TABLE_ID = "d8d09d3b-8253-4d8d-b187-42f35c8446a7";
 
 async function openGuideWithTable(page: import("@playwright/test").Page) {
   await page.goto("/");
-  await expect(page.getByTestId("mode-picker")).toBeVisible({ timeout: 15000 });
-  await page.getByTestId("mode-guides").click();
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+
   await page.locator('input[type="file"]#srsj-file').setInputFiles(MUSRS_PATH);
+
+  await openPackageEditor(page, "guides");
   await expect(page.getByTestId("guides-shell")).toBeVisible({ timeout: 5000 });
   // The first guide (Decision Recording) has real table sections.
   await page.getByTestId("guides-guide-item").first().click();

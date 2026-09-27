@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * guides-editor-width.spec.ts — flexible-width editor forms in the guides shell.
@@ -18,9 +19,9 @@ const GALLERY_PATH = path.join(__dirname, "fixtures", "gallery.srsj");
 
 async function loadGuidesAndSelectFirst(page: Page) {
   await page.goto("/");
-  await expect(page.getByTestId("mode-picker")).toBeVisible({ timeout: 15000 });
-  await page.getByTestId("mode-guides").click();
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page.locator('input[type="file"]#srsj-file').setInputFiles(MUSRS_PATH);
+  await openPackageEditor(page, "guides");
   await expect(page.getByTestId("guides-shell")).toBeVisible({ timeout: 5000 });
   await page.getByTestId("guides-guide-item").first().click();
   await expect(page.getByTestId("guides-section-item").first()).toBeVisible({ timeout: 5000 });
@@ -79,11 +80,11 @@ test.describe("Guides editor flexible width", () => {
   test("governance RecordForm retains constrained max-width", async ({ page }) => {
     // Governance mode does not pass `wide`, so the form must keep its default max-width.
     await page.goto("/");
-    await expect(page.getByTestId("mode-governance")).toBeVisible({ timeout: 15000 });
-    await page.getByTestId("mode-governance").click();
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(GALLERY_PATH);
+    await openPackageEditor(page, "governance");
     await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
 
     await page.locator("button.topbar__new").click();
