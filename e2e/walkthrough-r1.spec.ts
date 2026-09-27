@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test, type Download, type Page } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * walkthrough-r1.spec.ts — Release verification: Decision Log R1 "safe to try"
@@ -86,8 +87,7 @@ test.describe("R1 release walkthrough (#54)", () => {
     // ------------------------------------------------------------------
     await test.step("create new decision log from the governance seed", async () => {
       await page.goto("/");
-      await page.getByTestId("mode-governance").click({ timeout: 15000 });
-      await expect(page.getByTestId("governance-file-picker")).toBeVisible({ timeout: 5000 });
+      await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
       await page.getByTestId("create-name").fill("R1 Walkthrough Org");
       const [download] = await Promise.all([
@@ -97,7 +97,9 @@ test.describe("R1 release walkthrough (#54)", () => {
       // New documents are .srs archives; verify download fires and editor loads.
       void download; // archive content verified via CLI round-trip below
 
-      // Editor is loaded and validation is clean
+      // Editor is loaded (generic shell); switch to the Governance package editor.
+      await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
+      await openPackageEditor(page, "governance");
       await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
       await expect(
         page.locator(".inspector__title").filter({ hasText: "Validation" }).locator(".inspector__title-aside"),
@@ -232,21 +234,15 @@ test.describe("R1 release walkthrough (#54)", () => {
     // ------------------------------------------------------------------
     await test.step("reload the browser and restore the unsaved session", async () => {
       await page.reload();
-      // The app remembers editor mode and may land straight on the governance
-      // picker; click the mode button only when the mode picker appears.
-      const modeBtn = page.getByTestId("mode-governance");
-      const onModePicker = await modeBtn
-        .waitFor({ state: "visible", timeout: 5000 })
-        .then(() => true)
-        .catch(() => false);
-      if (onModePicker) await modeBtn.click();
-      await expect(page.getByTestId("governance-file-picker")).toBeVisible({ timeout: 10000 });
+      await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 10000 });
 
       const banner = page.locator(".restore-banner");
       await expect(banner).toBeVisible({ timeout: 5000 });
       await expect(banner).toContainText("R1 Walkthrough Org");
       await banner.locator(".restore-banner__restore").click();
 
+      await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
+      await openPackageEditor(page, "governance");
       await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
       await page.getByRole("link", { name: /Decision/ }).click();
       await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);

@@ -74,6 +74,8 @@ export interface SrsRepository {
   type_schema(type_id: string, type_version?: number): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listTypes()
   list_types(filter_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listPackages()
+  list_packages(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listBlueprints()
   list_blueprints(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in documentViewsForContainer()
@@ -1087,6 +1089,36 @@ export function listTypes(
   filter: Record<string, unknown> = {}
 ): TypeSummary[] {
   return repo.list_types(JSON.stringify(filter)) as TypeSummary[];
+}
+
+/** A package boundary installed in the loaded repository. */
+export interface PackageSummary {
+  id: string;
+  namespace: string;
+  name: string;
+  version: string;
+  /** Undefined for the primary package. */
+  boundaryPath?: string;
+  fieldCount: number;
+  typeCount: number;
+}
+
+/**
+ * List package boundaries from the engine. Package-specific UI uses this only
+ * to decide whether it is available; package semantics remain in the engine.
+ */
+export function listPackages(repo: SrsRepository): PackageSummary[] {
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary
+  const raw: any[] = repo.list_packages();
+  return raw.map((item) => ({
+    id: item.id,
+    namespace: item.namespace,
+    name: item.name,
+    version: item.version,
+    boundaryPath: item.boundaryPath ?? item.boundary_path ?? undefined,
+    fieldCount: item.fieldCount ?? item.field_count ?? 0,
+    typeCount: item.typeCount ?? item.type_count ?? 0,
+  }));
 }
 
 // --- listBlueprints --------------------------------------------------------

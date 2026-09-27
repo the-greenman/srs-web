@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * guides-html-preview.spec.ts — Phase C: live HTML preview in the guides inspector.
@@ -21,9 +22,11 @@ test.describe("Guides HTML preview (Phase C)", () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1400, height: 900 });
     await page.goto("/");
-    await expect(page.getByTestId("mode-picker")).toBeVisible({ timeout: 15000 });
-    await page.getByTestId("mode-guides").click();
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+
     await page.locator('input[type="file"]#srsj-file').setInputFiles(MUSRS_PATH);
+
+    await openPackageEditor(page, "guides");
     await expect(page.getByTestId("guides-shell")).toBeVisible({ timeout: 5000 });
     // Select the first guide.
     await page.getByTestId("guides-guide-item").first().click();
