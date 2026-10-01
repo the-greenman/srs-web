@@ -65,3 +65,6 @@ export type {
   Diagnostic,
   LifecycleTransition,
 } from "../types";
+
+// MCP relay connection (srs-web#307)
+export { default as McpConnection } from "./McpConnection.svelte";

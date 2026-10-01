@@ -78,6 +78,15 @@
       <button class="btn btn--ghost">Ghost</button>
       <button class="btn btn--mono">Mono action</button>
     </div>
+
+    <h2>MCP connection</h2>
+    <p class="t-muted">Specimen for <span class="t-mono">McpConnection</span> (srs-web#307): online state with copyable caller URL, rotation, and takeover.</p>
+    <section class="mcp-conn" style="margin-top:var(--space-md)">
+      <div class="mcp-conn__head"><span class="mcp-conn__dot mcp-conn__dot--online"></span><span>Connected</span><span class="mcp-conn__repo">Example repository</span></div>
+      <div class="mcp-conn__url"><input class="mcp-conn__input" readonly value="https://relay.example/v1/channels/…/call/…"><button class="btn btn--mono">Copy</button></div>
+      <p class="mcp-conn__note">Anyone with this URL can read and write this document while this tab is connected. MCP changes are unsaved until you Save or Export.</p>
+      <div class="mcp-conn__actions"><button class="btn btn--secondary">Take over here</button><button class="btn btn--ghost">Rotate URL</button></div>
+    </section>
   </div>
 </body>
 </html>

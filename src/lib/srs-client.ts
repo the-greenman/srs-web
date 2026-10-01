@@ -19,7 +19,14 @@ import GOVERNANCE_SEED_SRSJ from "./srs_bindings/governance-seed.srsj?raw";
 // ---------------------------------------------------------------------------
 
 /** Opaque WASM handle — methods are defined in srs-bindings. */
+/** Browser MCP session over a clone of the open store (srs-rust#1137). */
+export interface McpSession {
+  handle(text: string): string | undefined;
+  is_initialized(): boolean;
+}
+
 export interface SrsRepository {
+  open_mcp_session(): McpSession;
   validate(): RepositoryValidationReport;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; unwrapped from RecordSummary[] ({ instanceId, displayLabel, record }) in listRecords() via normalizeRecordSummary()
   list_records(filter_json: string): any;
