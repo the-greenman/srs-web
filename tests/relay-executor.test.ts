@@ -1,14 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import { RelayExecutor, type SocketLike } from "../src/lib/mcp/relay-executor.js";
-import { RelayHost } from "../src/lib/mcp/relay-host.js";
+import { type HostState, RelayHost } from "../src/lib/mcp/relay-host.js";
 import { base64UrlDecode, base64UrlEncode } from "../src/lib/mcp/relay-wire.js";
+
+type Frame = { response: { status: number; body?: string } } & Record<string, unknown>;
 
 class FakeSocket implements SocketLike {
   onopen: SocketLike["onopen"] = null;
   onmessage: SocketLike["onmessage"] = null;
   onclose: SocketLike["onclose"] = null;
   onerror = null;
-  sent: any[] = [];
+  sent: Frame[] = [];
   closed = false;
   constructor(public url: string) {}
   send(d: string) {
@@ -39,7 +41,12 @@ class FakeSocket implements SocketLike {
 }
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
-const text = (f: any) => new TextDecoder().decode(base64UrlDecode(f.response.body));
+const text = (f: Frame) => new TextDecoder().decode(base64UrlDecode(f.response.body ?? ""));
+const track = (sockets: FakeSocket[]) => (u: string) => {
+  const s = new FakeSocket(u);
+  sockets.push(s);
+  return s;
+};
 
 function make(handle: (t: string) => string | undefined) {
   const sockets: FakeSocket[] = [];
@@ -138,7 +145,7 @@ describe("RelayExecutor", () => {
       session: { handle: () => "" },
       onStatus: (s) => status.push(s),
       onHandled() {},
-      createSocket: (u) => (sockets.push(new FakeSocket(u)), sockets.at(-1)!),
+      createSocket: track(sockets),
     }).start();
     sockets[0].onclose?.({ code: 1006 });
     expect(status.at(-1)).toBe("rejected");
@@ -156,7 +163,7 @@ describe("RelayExecutor", () => {
       session: { handle: () => "" },
       onStatus() {},
       onHandled() {},
-      createSocket: (u) => (sockets.push(new FakeSocket(u)), sockets.at(-1)!),
+      createSocket: track(sockets),
     }).start();
     expect(new URL(sockets[0].url).searchParams.get("takeover")).toBe("true");
   });
@@ -176,13 +183,13 @@ describe("RelayHost", () => {
         callerUrl: `https://relay.test/call${n}`,
       })
     ) as unknown as typeof fetch;
-    const states: any[] = [];
+    const states: HostState[] = [];
     const h = new RelayHost({
       relayUrl: "https://relay.test",
       onMutated,
       onChange: (s) => states.push(s),
       fetchImpl,
-      createSocket: (u) => (sockets.push(new FakeSocket(u)), sockets.at(-1)!),
+      createSocket: track(sockets),
       storage: { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => void store.set(k, v) },
     });
     return {
@@ -192,7 +199,10 @@ describe("RelayHost", () => {
       fetchImpl,
       states,
       sess: (write: boolean) => ({
-        handle: () => (write && epoch++, "{}"),
+        handle: () => {
+          if (write) epoch++;
+          return "{}";
+        },
         write_epoch: () => epoch,
       }),
     };
@@ -231,7 +241,7 @@ describe("RelayHost", () => {
   });
 
   it("surfaces relay origin refusal codes from bootstrap", async () => {
-    const states: any[] = [];
+    const states: HostState[] = [];
     const h = new RelayHost({
       relayUrl: "https://relay.test",
       onMutated() {},

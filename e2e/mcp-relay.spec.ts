@@ -10,6 +10,10 @@ import { expect, test } from "@playwright/test";
  * that the write marks the document unsaved, and that nothing was persisted.
  */
 const GALLERY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "gallery.srsj");
+type Rpc = {
+  error?: unknown;
+  result: { serverInfo?: unknown; tools?: { name: string }[]; isError?: boolean };
+};
 const b64 = (s: string) => Buffer.from(s).toString("base64url");
 
 test("MCP caller drives the browser session through the relay", async ({ page }) => {
@@ -42,7 +46,7 @@ test("MCP caller drives the browser session through the relay", async ({ page })
   });
 
   let n = 0;
-  async function call(body: unknown): Promise<{ status: number; json?: any }> {
+  async function call(body: unknown): Promise<{ status: number; json?: Rpc }> {
     const requestId = `req${++n}`;
     const generation = new URL(executorUrl).searchParams.get("generation") as string;
     const done = new Promise<{ status: number; body?: string }>((res) =>
@@ -90,11 +94,11 @@ test("MCP caller drives the browser session through the relay", async ({ page })
     },
   });
   expect(init.status).toBe(200);
-  expect(init.json.result.serverInfo).toBeTruthy();
+  expect(init.json?.result.serverInfo).toBeTruthy();
   expect((await call({ jsonrpc: "2.0", method: "notifications/initialized" })).status).toBe(202);
 
   const tools = await call({ jsonrpc: "2.0", id: 2, method: "tools/list" });
-  const names = tools.json.result.tools.map((t: { name: string }) => t.name);
+  const names = (tools.json?.result.tools ?? []).map((t) => t.name);
   expect(names).toEqual(expect.arrayContaining(["find", "note_create", "repo_validate"]));
 
   // Read: must not dirty the document.
@@ -104,7 +108,7 @@ test("MCP caller drives the browser session through the relay", async ({ page })
     method: "tools/call",
     params: { name: "find", arguments: {} },
   });
-  expect(find.json.result.isError).not.toBe(true);
+  expect(find.json?.result.isError).not.toBe(true);
   await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
 
   // Validated write: lands in the working copy and marks it unsaved.
@@ -117,8 +121,8 @@ test("MCP caller drives the browser session through the relay", async ({ page })
       arguments: { title: "Written over MCP", sections: [{ name: "body", content: "hello" }] },
     },
   });
-  expect(write.json.error, JSON.stringify(write.json)).toBeUndefined();
-  expect(write.json.result.isError, JSON.stringify(write.json)).not.toBe(true);
+  expect(write.json?.error, JSON.stringify(write.json)).toBeUndefined();
+  expect(write.json?.result.isError, JSON.stringify(write.json)).not.toBe(true);
   await expect(page.getByTestId("document-dirty-status")).toBeVisible();
 
   // Nothing was persisted anywhere: no provider or network write beyond the relay bootstrap.
