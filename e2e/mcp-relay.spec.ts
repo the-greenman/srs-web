@@ -15,12 +15,17 @@ const b64 = (s: string) => Buffer.from(s).toString("base64url");
 test("MCP caller drives the browser session through the relay", async ({ page }) => {
   const outbound: string[] = [];
   page.on("request", (r) => {
-    if (!r.url().startsWith("http://localhost") && !r.url().startsWith("data:")) outbound.push(`${r.method()} ${r.url()}`);
+    if (!r.url().startsWith("http://localhost") && !r.url().startsWith("data:"))
+      outbound.push(`${r.method()} ${r.url()}`);
   });
   await page.route("https://relay.test/v1/channels", (route) =>
     route.fulfill({
-      json: { channel: "c", callerUrl: "https://relay.test/v1/channels/c/call/CALLER", executorUrl: "wss://relay.test/v1/channels/c/executor/EXEC" },
-    }),
+      json: {
+        channel: "c",
+        callerUrl: "https://relay.test/v1/channels/c/call/CALLER",
+        executorUrl: "wss://relay.test/v1/channels/c/executor/EXEC",
+      },
+    })
   );
 
   type Frame = { requestId: string; executorGeneration: string };
@@ -40,20 +45,32 @@ test("MCP caller drives the browser session through the relay", async ({ page })
   async function call(body: unknown): Promise<{ status: number; json?: any }> {
     const requestId = `req${++n}`;
     const generation = new URL(executorUrl).searchParams.get("generation") as string;
-    const done = new Promise<{ status: number; body?: string }>((res) => replies.set(requestId, res));
+    const done = new Promise<{ status: number; body?: string }>((res) =>
+      replies.set(requestId, res)
+    );
     toExecutor({
       version: 1,
       type: "request",
       requestId,
       executorGeneration: generation,
       deadlineUnixMs: Date.now() + 30000,
-      request: { method: "POST", contentType: "application/json", headers: {}, body: b64(JSON.stringify(body)) },
+      request: {
+        method: "POST",
+        contentType: "application/json",
+        headers: {},
+        body: b64(JSON.stringify(body)),
+      },
     } satisfies Frame & Record<string, unknown>);
     const r = await done;
-    return { status: r.status, json: r.body ? JSON.parse(Buffer.from(r.body, "base64url").toString()) : undefined };
+    return {
+      status: r.status,
+      json: r.body ? JSON.parse(Buffer.from(r.body, "base64url").toString()) : undefined,
+    };
   }
 
-  await page.addInitScript(() => localStorage.setItem("srs-web.mcp-relay-url", "https://relay.test"));
+  await page.addInitScript(() =>
+    localStorage.setItem("srs-web.mcp-relay-url", "https://relay.test")
+  );
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page.locator('input[type="file"]#srsj-file').setInputFiles(GALLERY);
@@ -66,7 +83,11 @@ test("MCP caller drives the browser session through the relay", async ({ page })
     jsonrpc: "2.0",
     id: 1,
     method: "initialize",
-    params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "fake", version: "0" } },
+    params: {
+      protocolVersion: "2025-06-18",
+      capabilities: {},
+      clientInfo: { name: "fake", version: "0" },
+    },
   });
   expect(init.status).toBe(200);
   expect(init.json.result.serverInfo).toBeTruthy();
@@ -77,7 +98,12 @@ test("MCP caller drives the browser session through the relay", async ({ page })
   expect(names).toEqual(expect.arrayContaining(["find", "note_create", "repo_validate"]));
 
   // Read: must not dirty the document.
-  const find = await call({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "find", arguments: {} } });
+  const find = await call({
+    jsonrpc: "2.0",
+    id: 3,
+    method: "tools/call",
+    params: { name: "find", arguments: {} },
+  });
   expect(find.json.result.isError).not.toBe(true);
   await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
 
@@ -86,7 +112,10 @@ test("MCP caller drives the browser session through the relay", async ({ page })
     jsonrpc: "2.0",
     id: 4,
     method: "tools/call",
-    params: { name: "note_create", arguments: { title: "Written over MCP", sections: [{ name: "body", content: "hello" }] } },
+    params: {
+      name: "note_create",
+      arguments: { title: "Written over MCP", sections: [{ name: "body", content: "hello" }] },
+    },
   });
   expect(write.json.error, JSON.stringify(write.json)).toBeUndefined();
   expect(write.json.result.isError, JSON.stringify(write.json)).not.toBe(true);
@@ -98,12 +127,16 @@ test("MCP caller drives the browser session through the relay", async ({ page })
 
 test("relay origin refusal on bootstrap surfaces invalid_origin", async ({ page }) => {
   await page.route("https://relay.test/v1/channels", (route) =>
-    route.fulfill({ status: 400, json: { error: "invalid_origin" } }),
+    route.fulfill({ status: 400, json: { error: "invalid_origin" } })
   );
-  await page.addInitScript(() => localStorage.setItem("srs-web.mcp-relay-url", "https://relay.test"));
+  await page.addInitScript(() =>
+    localStorage.setItem("srs-web.mcp-relay-url", "https://relay.test")
+  );
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page.locator('input[type="file"]#srsj-file').setInputFiles(GALLERY);
   await expect(page.getByTestId("mcp-status")).toHaveText("Connection failed", { timeout: 15000 });
-  await expect(page.getByTestId("mcp-connection").getByRole("alert")).toContainText("invalid_origin");
+  await expect(page.getByTestId("mcp-connection").getByRole("alert")).toContainText(
+    "invalid_origin"
+  );
 });

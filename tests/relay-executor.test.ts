@@ -27,7 +27,12 @@ class FakeSocket implements SocketLike {
         requestId: id,
         executorGeneration: url.searchParams.get("generation"),
         deadlineUnixMs: 0,
-        request: { method: "POST", contentType: "application/json", headers: {}, body: base64UrlEncode(new TextEncoder().encode(body)) },
+        request: {
+          method: "POST",
+          contentType: "application/json",
+          headers: {},
+          body: base64UrlEncode(new TextEncoder().encode(body)),
+        },
       }),
     });
   }
@@ -94,7 +99,15 @@ describe("RelayExecutor", () => {
       throw new Error("boom");
     });
     sockets[0].request("x", "a");
-    sockets[0].onmessage?.({ data: JSON.stringify({ version: 1, type: "request", requestId: "z", executorGeneration: "other", request: { body: "" } }) });
+    sockets[0].onmessage?.({
+      data: JSON.stringify({
+        version: 1,
+        type: "request",
+        requestId: "z",
+        executorGeneration: "other",
+        request: { body: "" },
+      }),
+    });
     await flush();
     expect(sockets[0].sent).toHaveLength(1);
     expect(sockets[0].sent[0].response.status).toBe(500);
@@ -120,7 +133,13 @@ describe("RelayExecutor", () => {
 
     const sockets: FakeSocket[] = [];
     const status: string[] = [];
-    new RelayExecutor({ executorUrl: "wss://r/x", session: { handle: () => "" }, onStatus: (s) => status.push(s), onHandled() {}, createSocket: (u) => (sockets.push(new FakeSocket(u)), sockets.at(-1)!) }).start();
+    new RelayExecutor({
+      executorUrl: "wss://r/x",
+      session: { handle: () => "" },
+      onStatus: (s) => status.push(s),
+      onHandled() {},
+      createSocket: (u) => (sockets.push(new FakeSocket(u)), sockets.at(-1)!),
+    }).start();
     sockets[0].onclose?.({ code: 1006 });
     expect(status.at(-1)).toBe("rejected");
     const b = make(() => "{}");
@@ -131,7 +150,14 @@ describe("RelayExecutor", () => {
 
   it("takeover passes takeover=true on the executor URL", () => {
     const sockets: FakeSocket[] = [];
-    new RelayExecutor({ executorUrl: "wss://r/x", takeover: true, session: { handle: () => "" }, onStatus() {}, onHandled() {}, createSocket: (u) => (sockets.push(new FakeSocket(u)), sockets.at(-1)!) }).start();
+    new RelayExecutor({
+      executorUrl: "wss://r/x",
+      takeover: true,
+      session: { handle: () => "" },
+      onStatus() {},
+      onHandled() {},
+      createSocket: (u) => (sockets.push(new FakeSocket(u)), sockets.at(-1)!),
+    }).start();
     expect(new URL(sockets[0].url).searchParams.get("takeover")).toBe("true");
   });
 });
@@ -144,7 +170,11 @@ describe("RelayHost", () => {
     const onMutated = vi.fn();
     let n = 0;
     const fetchImpl = vi.fn(async () =>
-      Response.json({ channel: `c${++n}`, executorUrl: `wss://relay.test/e${n}`, callerUrl: `https://relay.test/call${n}` }),
+      Response.json({
+        channel: `c${++n}`,
+        executorUrl: `wss://relay.test/e${n}`,
+        callerUrl: `https://relay.test/call${n}`,
+      })
     ) as unknown as typeof fetch;
     const states: any[] = [];
     const h = new RelayHost({
@@ -155,7 +185,17 @@ describe("RelayHost", () => {
       createSocket: (u) => (sockets.push(new FakeSocket(u)), sockets.at(-1)!),
       storage: { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => void store.set(k, v) },
     });
-    return { h, sockets, onMutated, fetchImpl, states, sess: (write: boolean) => ({ handle: () => (write && epoch++, "{}"), write_epoch: () => epoch }) };
+    return {
+      h,
+      sockets,
+      onMutated,
+      fetchImpl,
+      states,
+      sess: (write: boolean) => ({
+        handle: () => (write && epoch++, "{}"),
+        write_epoch: () => epoch,
+      }),
+    };
   }
 
   it("marks a mutation only when the repository changed, and reuses stored credentials", async () => {
@@ -196,7 +236,8 @@ describe("RelayHost", () => {
       relayUrl: "https://relay.test",
       onMutated() {},
       onChange: (s) => states.push(s),
-      fetchImpl: (async () => Response.json({ error: "invalid_origin" }, { status: 400 })) as unknown as typeof fetch,
+      fetchImpl: (async () =>
+        Response.json({ error: "invalid_origin" }, { status: 400 })) as unknown as typeof fetch,
       storage: { getItem: () => null, setItem() {} },
     });
     await h.attach({ handle: () => "{}", write_epoch: () => 0 });
