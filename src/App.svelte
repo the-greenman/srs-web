@@ -36,6 +36,9 @@
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import CreateGovernanceDocumentPanel from "$lib/components/CreateGovernanceDocumentPanel.svelte";
   import GitSaveModal from "$lib/components/GitSaveModal.svelte";
+  import McpConnection from "$lib/components/McpConnection.svelte";
+  import { RelayHost, type HostState } from "$lib/mcp/relay-host.js";
+  import { untrack } from "svelte";
   import { slugifyFilename } from "$lib/slug.js";
   import {
     createStorageProvidersFromEnv,
@@ -131,6 +134,41 @@
     if (savedCurrentRevision) clearWorkingCopy();
     return savedCurrentRevision;
   }
+
+  // ---------------------------------------------------------------------------
+  // MCP relay (srs-web#307). Enabled only when a relay origin is configured.
+  // The Rust/WASM McpSession owns all MCP semantics; this only hosts it. MCP
+  // writes mark the document unsaved via handleDocumentMutation and never call
+  // a storage provider — persistence stays an explicit Save/Export.
+  // ---------------------------------------------------------------------------
+
+  // `localStorage["srs-web.mcp-relay-url"]` is a runtime override for dev/e2e.
+  const relayUrl =
+    import.meta.env.VITE_MCP_RELAY_URL ||
+    (() => {
+      try {
+        return localStorage.getItem("srs-web.mcp-relay-url") ?? "";
+      } catch {
+        return "";
+      }
+    })();
+  let mcpState = $state<HostState>({ status: "idle", callerUrl: null, error: null });
+  const mcpHost = relayUrl
+    ? new RelayHost({
+        relayUrl,
+        onMutated: () => void handleDocumentMutation(),
+        onChange: (s) => (mcpState = s),
+      })
+    : null;
+
+  $effect(() => {
+    const current = repo;
+    if (!mcpHost) return;
+    untrack(() => {
+      if (current) void mcpHost.attach(current.open_mcp_session());
+      else mcpHost.detach();
+    });
+  });
 
   // ---------------------------------------------------------------------------
   // WASM initialisation
@@ -587,6 +625,19 @@
       appState = "idle";
     }}
   />
+{/if}
+
+{#if mcpHost && repo}
+  <div class="mcp-dock" style="position:fixed;right:1rem;bottom:1rem;z-index:50">
+    <McpConnection
+      status={mcpState.status}
+      callerUrl={mcpState.callerUrl}
+      error={mcpState.error}
+      repositoryName={repoName}
+      onRotate={() => void mcpHost.rotate()}
+      onTakeover={() => void mcpHost.takeover()}
+    />
+  </div>
 {/if}
 
 {#if gitSaveOpen && isGitBranchAware(activeDocument)}

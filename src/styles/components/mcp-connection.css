@@ -1,0 +1,61 @@
+/* ============================================================================
+   component: mcp-connection (.mcp-conn) — browser-hosted MCP endpoint status
+   srs-web#307: https://github.com/the-greenman/srs-web/issues/307
+   Monochrome: state is encoded by dot fill, never colour.
+   ========================================================================== */
+.mcp-conn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border: 1px solid var(--ink);
+  background: var(--paper, #fff);
+  font-size: var(--size-xs);
+  max-width: 28rem;
+}
+.mcp-conn__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-mono);
+}
+.mcp-conn__repo {
+  margin-left: auto;
+  opacity: 0.6;
+}
+.mcp-conn__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--ink);
+}
+.mcp-conn__dot--online {
+  background: var(--ink);
+}
+.mcp-conn__dot--connecting,
+.mcp-conn__dot--offline {
+  background: repeating-linear-gradient(45deg, var(--ink) 0 2px, transparent 2px 4px);
+}
+.mcp-conn__url {
+  display: flex;
+  gap: var(--space-sm);
+}
+.mcp-conn__input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  padding: 4px;
+}
+.mcp-conn__actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+.mcp-conn__note {
+  margin: 0;
+  opacity: 0.7;
+}
+.mcp-conn__error {
+  margin: 0;
+  font-weight: 600;
+}
