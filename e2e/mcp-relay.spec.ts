@@ -95,3 +95,15 @@ test("MCP caller drives the browser session through the relay", async ({ page })
   // Nothing was persisted anywhere: no provider or network write beyond the relay bootstrap.
   expect(outbound.filter((u) => !u.includes("relay.test"))).toEqual([]);
 });
+
+test("relay origin refusal on bootstrap surfaces invalid_origin", async ({ page }) => {
+  await page.route("https://relay.test/v1/channels", (route) =>
+    route.fulfill({ status: 400, json: { error: "invalid_origin" } }),
+  );
+  await page.addInitScript(() => localStorage.setItem("srs-web.mcp-relay-url", "https://relay.test"));
+  await page.goto("/");
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+  await page.locator('input[type="file"]#srsj-file').setInputFiles(GALLERY);
+  await expect(page.getByTestId("mcp-status")).toHaveText("Connection failed", { timeout: 15000 });
+  await expect(page.getByTestId("mcp-connection").getByRole("alert")).toContainText("invalid_origin");
+});

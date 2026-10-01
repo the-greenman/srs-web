@@ -138,7 +138,7 @@ describe("RelayExecutor", () => {
 
 describe("RelayHost", () => {
   function host() {
-    let doc = "v0";
+    let epoch = 0;
     const sockets: FakeSocket[] = [];
     const store = new Map<string, string>();
     const onMutated = vi.fn();
@@ -149,37 +149,36 @@ describe("RelayHost", () => {
     const states: any[] = [];
     const h = new RelayHost({
       relayUrl: "https://relay.test",
-      snapshot: () => doc,
       onMutated,
       onChange: (s) => states.push(s),
       fetchImpl,
       createSocket: (u) => (sockets.push(new FakeSocket(u)), sockets.at(-1)!),
       storage: { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => void store.set(k, v) },
     });
-    return { h, sockets, onMutated, fetchImpl, states, setDoc: (d: string) => (doc = d) };
+    return { h, sockets, onMutated, fetchImpl, states, sess: (write: boolean) => ({ handle: () => (write && epoch++, "{}"), write_epoch: () => epoch }) };
   }
 
   it("marks a mutation only when the repository changed, and reuses stored credentials", async () => {
     const t = host();
-    const session = { handle: () => (t.setDoc("v1"), "{}") };
+    const session = t.sess(true);
     await t.h.attach(session);
     t.sockets[0].onopen?.();
     t.sockets[0].request("write", "1");
     t.sockets[0].request("write", "2");
     await flush();
-    expect(t.onMutated).toHaveBeenCalledTimes(1);
+    expect(t.onMutated).toHaveBeenCalledTimes(2); // one per mutating request
 
-    await t.h.attach({ handle: () => "{}" });
+    await t.h.attach(t.sess(false));
     expect(t.fetchImpl).toHaveBeenCalledTimes(1); // stored channel reused
     t.sockets[1].request("read", "3");
     await flush();
-    expect(t.onMutated).toHaveBeenCalledTimes(1);
+    expect(t.onMutated).toHaveBeenCalledTimes(2); // read: no change
     expect(t.states.at(-1).callerUrl).toBe("https://relay.test/call1");
   });
 
   it("rotate bootstraps a new channel; detach/attach isolates epochs", async () => {
     const t = host();
-    await t.h.attach({ handle: () => "{}" });
+    await t.h.attach(t.sess(false));
     await t.h.rotate();
     expect(t.fetchImpl).toHaveBeenCalledTimes(2);
     expect(t.sockets[0].closed).toBe(true);
@@ -189,5 +188,19 @@ describe("RelayHost", () => {
     await flush();
     expect(t.sockets[1].sent).toHaveLength(0);
     expect(t.states.at(-1).status).toBe("idle");
+  });
+
+  it("surfaces relay origin refusal codes from bootstrap", async () => {
+    const states: any[] = [];
+    const h = new RelayHost({
+      relayUrl: "https://relay.test",
+      onMutated() {},
+      onChange: (s) => states.push(s),
+      fetchImpl: (async () => Response.json({ error: "invalid_origin" }, { status: 400 })) as unknown as typeof fetch,
+      storage: { getItem: () => null, setItem() {} },
+    });
+    await h.attach({ handle: () => "{}", write_epoch: () => 0 });
+    expect(states.at(-1).status).toBe("error");
+    expect(states.at(-1).error).toContain("invalid_origin");
   });
 });

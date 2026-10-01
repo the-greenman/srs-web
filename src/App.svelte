@@ -156,7 +156,6 @@
   const mcpHost = relayUrl
     ? new RelayHost({
         relayUrl,
-        snapshot: () => (repo ? exportSrsj(repo) : ""),
         onMutated: () => void handleDocumentMutation(),
         onChange: (s) => (mcpState = s),
       })

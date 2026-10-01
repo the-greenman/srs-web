@@ -30,7 +30,9 @@
     online: 'Connected',
     offline: 'Reconnecting…',
     replaced: 'Taken over by another tab',
-    rejected: 'Another tab holds this connection',
+    // A browser WebSocket cannot read the HTTP status, so a 409 (held by another tab) and a
+    // 403 executor_origin_forbidden both arrive as a refused connect.
+    rejected: 'Connection refused: another tab holds it, or the relay rejected this page origin (executor_origin_forbidden)',
     error: 'Connection failed',
   };
 

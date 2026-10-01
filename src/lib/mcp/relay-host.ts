@@ -21,8 +21,6 @@ export interface HostState {
 
 export interface RelayHostOptions {
   relayUrl: string;
-  /** Cheap-enough fingerprint of the repository (e.g. export_srsj()). */
-  snapshot(): string;
   /** An MCP request changed the repository: record a mutation (marks unsaved). */
   onMutated(): void;
   onChange(state: HostState): void;
@@ -36,8 +34,8 @@ const KEY = "srs-web.mcp-relay";
 
 export class RelayHost {
   #exec: RelayExecutor | null = null;
-  #session: FrameHandler | null = null;
-  #last = "";
+  #session: (FrameHandler & { write_epoch(): number }) | null = null;
+  #last = 0;
   #seq = 0;
   #creds: ChannelBootstrap | null = null;
   #state: HostState = { status: "idle", callerUrl: null, error: null };
@@ -68,10 +66,10 @@ export class RelayHost {
   }
 
   /** Bind the executor to a newly loaded repository session (new epoch). */
-  async attach(session: FrameHandler): Promise<void> {
+  async attach(session: FrameHandler & { write_epoch(): number }): Promise<void> {
     this.detach();
     this.#session = session;
-    this.#last = this.o.snapshot();
+    this.#last = session.write_epoch();
     await this.#open(false, false);
   }
 
@@ -117,8 +115,7 @@ export class RelayHost {
       reconnectMs: this.o.reconnectMs,
       onStatus: (status) => this.#set({ status }),
       onHandled: () => {
-        // ponytail: whole-export compare; swap for a core-provided write epoch if export cost matters.
-        const now = this.o.snapshot();
+        const now = session.write_epoch(); // core mutation signal (srs-rust#1140)
         if (now !== this.#last) {
           this.#last = now;
           this.o.onMutated();

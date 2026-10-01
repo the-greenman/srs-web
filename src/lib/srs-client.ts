@@ -23,6 +23,8 @@ import GOVERNANCE_SEED_SRSJ from "./srs_bindings/governance-seed.srsj?raw";
 export interface McpSession {
   handle(text: string): string | undefined;
   is_initialized(): boolean;
+  /** Monotonic; changes iff a handled request mutated the store (srs-rust#1140). */
+  write_epoch(): number;
 }
 
 export interface SrsRepository {
