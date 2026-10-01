@@ -259,9 +259,12 @@ test.describe("RFC-038 two-writer concurrency (srs#291)", () => {
     for (const p of shared) {
       const av = JSON.parse(Buffer.from(a.filesB64[p], "base64").toString("utf8"));
       const bv = JSON.parse(Buffer.from(b.filesB64[p], "base64").toString("utf8"));
-      av.memberInstanceIds = [
-        ...new Set([...(av.memberInstanceIds ?? []), ...(bv.memberInstanceIds ?? [])]),
-      ];
+      // RFC-043: entries are `{instanceId, depth?}`; union by instanceId, keeping order.
+      const byId = new Map<string, { instanceId: string; depth?: number }>();
+      for (const e of [...(av.memberInstanceIds ?? []), ...(bv.memberInstanceIds ?? [])]) {
+        if (!byId.has(e.instanceId)) byId.set(e.instanceId, e);
+      }
+      av.memberInstanceIds = [...byId.values()];
       merged[p] = Buffer.from(JSON.stringify(av, null, 2)).toString("base64");
     }
     expect(Object.keys(merged).length).toBe(Object.keys(BASE_TREE).length + 2);

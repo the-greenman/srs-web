@@ -75,8 +75,24 @@ export interface SrsRepository {
   list_containers(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainer()
   get_container(container_id: string): any;
-  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in addContainerMember()
-  add_container_member(container_id: string, instance_id: string): any;
+  add_container_member(
+    container_id: string,
+    instance_id: string,
+    position?: number | null,
+    depth?: number | null
+    // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in the container-member helpers
+  ): any;
+  move_container_member(
+    container_id: string,
+    instance_id: string,
+    position?: number | null,
+    depth?: number | null
+    // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in the container-member helpers
+  ): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in repairContainerMembers()
+  repair_container_members(container_id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainerArrangement()
+  get_container_arrangement(container_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in removeContainerMember()
   remove_container_member(container_id: string, instance_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in containersForInstance()
@@ -1021,8 +1037,24 @@ export interface Container {
   containerId: string;
   title: string;
   containerType?: string;
-  rootInstanceIds?: string[];
-  memberInstanceIds?: string[];
+  /** RFC-043 [R4]: explicit typing anchor (replaces the removed `rootInstanceIds`). */
+  anchorInstanceId?: string;
+  identityInstanceId?: string;
+  /** RFC-043: ordered outline of members; `depth` omitted means 0. */
+  memberInstanceIds?: ContainerEntry[];
+}
+
+/** One entry of a container's ordered member outline (RFC-043). */
+export interface ContainerEntry {
+  instanceId: string;
+  depth?: number;
+}
+
+/** Result of the container member operations (add / remove / move / repair). */
+export interface ContainerMembersResult {
+  members: ContainerEntry[];
+  promoted?: unknown;
+  removed?: unknown;
 }
 
 export interface ContainerListFilter {
@@ -1049,11 +1081,13 @@ export interface NavigationNode {
   typeName: string;
   displayLabel: string;
   sectionContainerId?: string;
+  /** RFC-043 [R12]: outline depth from the root container's entry order (0 = top level). */
+  depth: number;
 }
 
 /**
  * Full repository navigation result from `repositoryNavigation()`.
- * `sections` are ordered by `precedes` relations — same order as `srs repo navigation`.
+ * `sections` follow the root container's entry order (RFC-043 [R12]) with `depth`.
  * `diagnostics` is non-empty when `manifest.container` is absent (pre-RFC-013 repo).
  * Mirrors `RepositoryNavigation` in srs-rust `repository_navigation_service.rs`.
  */
@@ -1077,22 +1111,61 @@ export function getContainer(repo: SrsRepository, containerId: string): Containe
   return repo.get_container(containerId) as Container;
 }
 
-/** Add an instance to a container's membership. Returns the updated member-id list. */
+/** Add an instance to a container's outline (append unless `position`/`depth` given). */
 export function addContainerMember(
   repo: SrsRepository,
   containerId: string,
-  instanceId: string
-): string[] {
-  return repo.add_container_member(containerId, instanceId) as string[];
+  instanceId: string,
+  position?: number,
+  depth?: number
+): ContainerMembersResult {
+  return repo.add_container_member(
+    containerId,
+    instanceId,
+    position,
+    depth
+  ) as ContainerMembersResult;
 }
 
-/** Remove an instance from a container's membership. Returns the updated member-id list. */
+/** Remove an instance from a container's outline; its descendants are promoted by the core. */
 export function removeContainerMember(
   repo: SrsRepository,
   containerId: string,
   instanceId: string
-): string[] {
-  return repo.remove_container_member(containerId, instanceId) as string[];
+): ContainerMembersResult {
+  return repo.remove_container_member(containerId, instanceId) as ContainerMembersResult;
+}
+
+/** Move an instance (and its run) to `position` and/or change its `depth` (RFC-043). */
+export function moveContainerMember(
+  repo: SrsRepository,
+  containerId: string,
+  instanceId: string,
+  position?: number,
+  depth?: number
+): ContainerMembersResult {
+  return repo.move_container_member(
+    containerId,
+    instanceId,
+    position,
+    depth
+  ) as ContainerMembersResult;
+}
+
+/** Repair a container's outline (depth rule / dangling entries) in the core. */
+export function repairContainerMembers(
+  repo: SrsRepository,
+  containerId: string
+): ContainerMembersResult {
+  return repo.repair_container_members(containerId) as ContainerMembersResult;
+}
+
+/** The container's arrangement: its ordered `[{instanceId, depth?}]` outline. */
+export function getContainerArrangement(
+  repo: SrsRepository,
+  containerId: string
+): ContainerEntry[] {
+  return repo.get_container_arrangement(containerId) as ContainerEntry[];
 }
 
 // ---------------------------------------------------------------------------
@@ -1518,6 +1591,7 @@ function normalizeNavigationNode(raw: any): NavigationNode {
     typeName: raw.typeName ?? raw.type_name,
     displayLabel: raw.displayLabel ?? raw.display_label ?? "",
     sectionContainerId: raw.sectionContainerId ?? raw.section_container_id,
+    depth: raw.depth ?? 0,
   };
 }
 
@@ -1782,4 +1856,23 @@ export function moveInPrecedesChain(
 ): ChainSpliceResult {
   const raw = repo.move_in_precedes_chain(JSON.stringify(input));
   return normalizeChainSpliceResult(raw);
+}
+
+// ---------------------------------------------------------------------------
+// RFC-043 revision gate (srs-web#334)
+// ---------------------------------------------------------------------------
+
+/** Registry id of the rev-7 -> rev-8 container migration (RFC-043 [R17]). */
+export const RFC043_MIGRATION_ID = "rfc043-container-entries";
+
+/**
+ * True when the engine reports the RFC-043 migration as `needed` — i.e. it refuses
+ * this (revision-7) repository until migrated. The engine decides; we only ask.
+ */
+export function rfc043MigrationNeeded(repo: SrsRepository): boolean {
+  try {
+    return availableMigrations(repo).some((m) => m.id === RFC043_MIGRATION_ID && m.status.needed);
+  } catch {
+    return false;
+  }
 }

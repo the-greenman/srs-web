@@ -549,14 +549,14 @@ describe("listContainers", () => {
 
 describe("addContainerMember", () => {
   it("calls add_container_member with containerId and instanceId and returns the member list", () => {
-    const memberIds = ["inst-abc", "inst-def"];
+    const memberIds = { members: [{ instanceId: "inst-abc" }, { instanceId: "inst-def", depth: 1 }] };
     const spy = vi.fn().mockReturnValue(memberIds);
     const repo = mockRepo({ add_container_member: spy });
 
     const result = addContainerMember(repo, "c-dl-001", "inst-abc");
 
     expect(spy).toHaveBeenCalledOnce();
-    expect(spy).toHaveBeenCalledWith("c-dl-001", "inst-abc");
+    expect(spy).toHaveBeenCalledWith("c-dl-001", "inst-abc", undefined, undefined);
     expect(result).toEqual(memberIds);
   });
 
@@ -572,9 +572,9 @@ describe("addContainerMember", () => {
   });
 
   it("returns an empty array when the container starts empty (idempotent first add)", () => {
-    const repo = mockRepo({ add_container_member: () => ["inst-abc"] });
+    const repo = mockRepo({ add_container_member: () => ({ members: [{ instanceId: "inst-abc" }] }) });
     const result = addContainerMember(repo, "c-dl-001", "inst-abc");
-    expect(result).toEqual(["inst-abc"]);
+    expect(result.members).toEqual([{ instanceId: "inst-abc" }]);
   });
 });
 

@@ -7,12 +7,14 @@
       "createdAt": "2026-06-04T00:00:00Z",
       "identityInstanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
       "memberInstanceIds": [
-        "a44be813-d2b4-4214-aaa9-4b8a11ce206f"
+        {
+          "instanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f"
+        }
       ],
       "title": "muDemocracy"
     },
     "createdAt": "2026-06-04T00:00:00Z",
-    "dataModelRevision": 7,
+    "dataModelRevision": 8,
     "declaredExtensions": [
       "ext:type-inheritance"
     ],
@@ -24,67 +26,101 @@
   },
   "data": {
     "containers/1c843817-c0f9-4ba6-b65f-c6d23af161a7.json": {
+      "anchorInstanceId": "1ff0ab83-c1c8-4e23-b611-2e629d919307",
       "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
       "containerType": "guide",
       "createdAt": "2026-06-04T00:00:00Z",
       "memberInstanceIds": [
-        "1ff0ab83-c1c8-4e23-b611-2e629d919307",
-        "2aeb491a-9664-45e6-87e6-6fa38a3324c4",
-        "3ad28075-33d6-457e-a824-9421d0e83e2b",
-        "6ddd3472-a70d-4382-bd57-6bb24708a764",
-        "8b33ce73-8e9f-45bb-90a3-c782c004db1e",
-        "e89f9184-6c54-4c99-936a-9ae3baf5595b"
-      ],
-      "rootInstanceIds": [
-        "1ff0ab83-c1c8-4e23-b611-2e629d919307"
+        {
+          "instanceId": "1ff0ab83-c1c8-4e23-b611-2e629d919307"
+        },
+        {
+          "instanceId": "2aeb491a-9664-45e6-87e6-6fa38a3324c4"
+        },
+        {
+          "instanceId": "8b33ce73-8e9f-45bb-90a3-c782c004db1e"
+        },
+        {
+          "instanceId": "3ad28075-33d6-457e-a824-9421d0e83e2b"
+        },
+        {
+          "instanceId": "e89f9184-6c54-4c99-936a-9ae3baf5595b"
+        },
+        {
+          "instanceId": "6ddd3472-a70d-4382-bd57-6bb24708a764"
+        }
       ],
       "title": "Decision Recording"
     },
     "containers/78749395-dcde-4b02-a59e-184095e0ae0b.json": {
+      "anchorInstanceId": "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b",
       "containerId": "78749395-dcde-4b02-a59e-184095e0ae0b",
       "containerType": "guide",
       "createdAt": "2026-06-04T00:00:00Z",
       "memberInstanceIds": [
-        "2b512f4c-522f-4081-bb07-a1cfe7ad94f0",
-        "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b",
-        "3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c",
-        "f82ca8a8-63f7-49b9-89df-94597277025b",
-        "f889bfae-3798-43ab-8e7c-b0a42d6f5291"
-      ],
-      "rootInstanceIds": [
-        "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b"
+        {
+          "instanceId": "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b"
+        },
+        {
+          "instanceId": "2b512f4c-522f-4081-bb07-a1cfe7ad94f0"
+        },
+        {
+          "instanceId": "f82ca8a8-63f7-49b9-89df-94597277025b"
+        },
+        {
+          "instanceId": "f889bfae-3798-43ab-8e7c-b0a42d6f5291"
+        },
+        {
+          "instanceId": "3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c"
+        }
       ],
       "title": "Deliberating a decision"
     },
     "containers/7989545d-8649-455d-96c8-5b4615447fb7.json": {
+      "anchorInstanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
       "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
       "containerType": "guide",
       "createdAt": "2026-06-04T00:00:00Z",
       "memberInstanceIds": [
-        "07b77123-7e01-4253-883e-766c99016016",
-        "1126bdf3-8171-4c04-89fd-13610018bb78",
-        "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
-        "a638cca2-6650-44bb-9ede-7d2fc40c57b2",
-        "b5a4b93a-16d5-400d-be4b-a11ee98bc9e6"
-      ],
-      "rootInstanceIds": [
-        "a44be813-d2b4-4214-aaa9-4b8a11ce206f"
+        {
+          "instanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f"
+        },
+        {
+          "instanceId": "a638cca2-6650-44bb-9ede-7d2fc40c57b2"
+        },
+        {
+          "instanceId": "1126bdf3-8171-4c04-89fd-13610018bb78"
+        },
+        {
+          "instanceId": "b5a4b93a-16d5-400d-be4b-a11ee98bc9e6"
+        },
+        {
+          "instanceId": "07b77123-7e01-4253-883e-766c99016016"
+        }
       ],
       "title": "Deciding which decisions to record"
     },
     "containers/d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d.json": {
+      "anchorInstanceId": "0dff90b5-4534-4a2b-9f1a-28f35130e943",
       "containerId": "d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d",
       "containerType": "guide",
       "createdAt": "2026-06-04T00:00:00Z",
       "memberInstanceIds": [
-        "0c7f33d9-58cb-489c-9fd8-26d8b807fe21",
-        "0dff90b5-4534-4a2b-9f1a-28f35130e943",
-        "0fd5e0f3-63d8-430d-9454-da8c9f20cf52",
-        "26f98f5b-f49a-4ac1-8bac-41aedccabc31",
-        "afa31093-d955-4ea1-841e-9443775e3f15"
-      ],
-      "rootInstanceIds": [
-        "0dff90b5-4534-4a2b-9f1a-28f35130e943"
+        {
+          "instanceId": "0dff90b5-4534-4a2b-9f1a-28f35130e943"
+        },
+        {
+          "instanceId": "0fd5e0f3-63d8-430d-9454-da8c9f20cf52"
+        },
+        {
+          "instanceId": "afa31093-d955-4ea1-841e-9443775e3f15"
+        },
+        {
+          "instanceId": "0c7f33d9-58cb-489c-9fd8-26d8b807fe21"
+        },
+        {
+          "instanceId": "26f98f5b-f49a-4ac1-8bac-41aedccabc31"
+        }
       ],
       "title": "Recognising decisions"
     },
@@ -180,21 +216,21 @@
         {
           "emptyBehavior": "hide",
           "order": 0,
+          "relationsPresentation": {
+            "include": [
+              {
+                "directions": "both",
+                "relationType": "precedes"
+              }
+            ]
+          },
           "renderViewId": "030637e8-0239-4b17-912a-e6bb3c374426",
           "sectionId": "guide-body",
           "source": {
             "containerId": "00000000-0000-0000-0000-000000000000",
             "type": "container-subset"
           },
-          "titleFieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a",
-          "relationsPresentation": {
-            "include": [
-              {
-                "relationType": "precedes",
-                "directions": "both"
-              }
-            ]
-          }
+          "titleFieldId": "9629c9b5-3b17-4766-b3d3-b2890902821a"
         }
       ],
       "themeRef": {
@@ -787,7 +823,7 @@
         "compositions/guide-body-view-2aba4d85.json"
       ],
       "createdAt": "2026-01-01T00:00:00Z",
-      "dataModelRevision": 2,
+      "dataModelRevision": 8,
       "description": "",
       "fields": [
         "fields/slug-2e3be0f8.json",
@@ -1361,8 +1397,8 @@
           "visible": true
         },
         {
-          "property": "createdAt",
           "order": 13,
+          "property": "createdAt",
           "visible": true
         }
       ],

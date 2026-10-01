@@ -325,11 +325,12 @@
         container: containers.find((container) => container.containerId === section.sectionContainerId),
         label: section.displayLabel,
         key: section.instanceId,
+        depth: section.depth,
       }))
-      .filter((entry): entry is { container: ContainerSummary; label: string; key: string } => Boolean(entry.container));
+      .filter((entry): entry is { container: ContainerSummary; label: string; key: string; depth: number } => Boolean(entry.container));
     return navigationContainers.length > 0
       ? navigationContainers
-      : containers.map((container) => ({ container, label: container.title, key: container.containerId }));
+      : containers.map((container) => ({ container, label: container.title, key: container.containerId, depth: 0 }));
   });
 
   const graph = $derived.by(() => {
@@ -418,7 +419,7 @@
       {/if}
       {#each structureContainers as entry (entry.key)}
         {@const container = entry.container}
-        <div class="tree-item">
+        <div class="tree-item" data-depth={entry.depth} style:margin-left="{entry.depth}rem">
           <button class:active={surface === "structure" && selectedContainerId === container.containerId} onclick={() => selectContainer(container.containerId)}>
             <span>{entry.label}</span>
             <small>{container.containerType ?? "container"}</small>
