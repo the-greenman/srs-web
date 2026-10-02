@@ -98,12 +98,15 @@
     untrack(reload);
   });
 
-  /** Run a mutation, reload, and keep keyboard focus where the writer was. */
+  /**
+   * Run a mutation and keep keyboard focus where the writer was. No reload here: the write
+   * bumps `documentRevision` (observeWrites, a microtask queued before `tick()` flushes), and
+   * the effect above is the one reload. Reloading here too doubled the cost of every commit.
+   */
   async function run(fn: () => string | void): Promise<void> {
     const key = (document.activeElement as HTMLElement | null)?.dataset?.focusKey;
     try {
       const focusKey = fn() ?? key;
-      reload();
       await tick();
       if (focusKey) document.querySelector<HTMLElement>(`[data-focus-key="${focusKey}"]`)?.focus();
     } catch (e) {
