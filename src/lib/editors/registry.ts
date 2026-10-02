@@ -2,7 +2,7 @@ import EssayShell from "$lib/essay/EssayShell.svelte";
 import { newEssay } from "$lib/essay/essay-document.js";
 import { ESSAY_TYPE_ID } from "$lib/essay/type-registry.js";
 import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
-import { DECISION_LOG_TYPE_ID } from "$lib/governance/type-registry.js";
+import { DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
 import GuidesShell from "$lib/guides/GuidesShell.svelte";
 import type { SrsRepository, TypeSummary } from "$lib/srs-client.js";
 /**
@@ -57,8 +57,8 @@ export const EDITORS: EditorDefinition[] = [
     id: "governance",
     label: "Governance",
     description: "Decision log editor for governance repositories.",
-    // The RFC-013 decision-log header identifies a governance repo (a bare decision does not).
-    entryTypeId: DECISION_LOG_TYPE_ID,
+    // The decision type is what the shell edits; fixtures and seeds may lack the optional decision_log header.
+    entryTypeId: DECISION_TYPE_ID,
     requires: [
       {
         packageId: "1cd9622e-3d05-4214-a683-4cb81d0c44d9",
