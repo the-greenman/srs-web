@@ -79,6 +79,30 @@
       <button class="btn btn--mono">Mono action</button>
     </div>
 
+    <h2>Essay editor</h2>
+    <p class="t-muted">Specimens for <span class="t-mono">Block</span>, <span class="t-mono">BlockStack</span>, <span class="t-mono">LayersPanel</span>, <span class="t-mono">EyeToggle</span> and <span class="t-mono">DraftTray</span> (srs-web#328). The small gutter title is the drag handle; nesting is layout (indent), not meaning.</p>
+    <style>.spec-essay { display: grid; grid-template-columns: minmax(0,1fr) 16rem; gap: var(--space-md); margin-top: var(--space-md); } @media (max-width: 720px) { .spec-essay { grid-template-columns: 1fr; } }</style>
+    <div class="spec-essay">
+      <ol class="block-stack" aria-label="Essay paragraphs">
+        <li class="block-stack__item" style="--depth:0"><article class="block"><div class="block__gutter"><button class="block__handle" type="button">Opening</button><button class="eye" type="button" aria-pressed="false" aria-label="Hide Opening">&#9673;</button></div><div class="block__body" contenteditable="plaintext-only" role="textbox" aria-multiline="true" tabindex="0">Small democracies work because the people deciding are the people affected.</div></article></li>
+        <li class="block-stack__item" style="--depth:1"><article class="block"><div class="block__gutter"><button class="block__handle" type="button">Claim</button><button class="eye" type="button" aria-pressed="false" aria-label="Hide Claim">&#9673;</button></div><div class="block__body" contenteditable="plaintext-only" role="textbox" aria-multiline="true" tabindex="0">A nested paragraph is indented, and moves with its parent.</div></article></li>
+        <li class="block-stack__item is-drop-after" style="--depth:0"><article class="block is-off"><div class="block__gutter"><button class="block__handle" type="button">Aside</button><button class="eye is-off" type="button" aria-pressed="true" aria-label="Show Aside">&#8856;</button></div><p class="block__closed">Hidden paragraph</p></article></li>
+        <li class="block-stack__item" style="--depth:0"><article class="block"><div class="block__gutter"><button class="block__handle is-untitled" type="button">&#8942;&#8942;</button></div><div class="block__body" contenteditable="plaintext-only" role="textbox" aria-multiline="true" tabindex="0" data-placeholder="Write&hellip;"></div></article></li>
+      </ol>
+      <aside>
+        <section class="layers" aria-label="Layers"><h2 class="layers__title">Layers</h2>
+          <ol class="block-stack">
+            <li class="block-stack__item" style="--depth:0"><div class="layers__row"><button class="layers__fold" type="button">&#9662;</button><button class="eye" type="button" aria-pressed="false" aria-label="Hide Opening">&#9673;</button><button class="layers__label" type="button">Opening</button></div></li>
+            <li class="block-stack__item is-drop-into" style="--depth:1"><div class="layers__row"><span class="layers__fold"></span><button class="eye" type="button" aria-pressed="false" aria-label="Hide Claim">&#9673;</button><button class="layers__label" type="button">Claim</button></div></li>
+            <li class="block-stack__item" style="--depth:0"><div class="layers__row is-off"><span class="layers__fold"></span><button class="eye is-off" type="button" aria-pressed="true" aria-label="Show Aside">&#8856;</button><button class="layers__label" type="button">Aside</button></div></li>
+          </ol>
+        </section>
+        <section class="draft-tray" aria-label="Draft tray"><h2 class="draft-tray__title">Draft</h2>
+          <ol class="block-stack"><li class="block-stack__item"><div class="draft-tray__row"><span class="draft-tray__label">Spare</span><button class="draft-tray__put" type="button">Put back</button></div></li></ol>
+        </section>
+      </aside>
+    </div>
+
     <h2>MCP connection</h2>
     <p class="t-muted">Specimen for <span class="t-mono">McpConnection</span> (srs-web#307): online state with copyable caller URL, rotation, and takeover.</p>
     <section class="mcp-conn" style="margin-top:var(--space-md)">

@@ -1,0 +1,79 @@
+/* ============================================================================
+   component: layers (.layers) + eye (.eye)
+   ----------------------------------------------------------------------------
+   Outline tree of an essay (Photoshop-layers model). Rows indent by --depth
+   (set by BlockStack). Hidden layers are struck-through and dimmed; the eye is
+   an aria-pressed toggle (pressed = hidden) drawn with a slash, not colour.
+   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
+   ========================================================================== */
+.layers__title,
+.draft-tray__title {
+  margin: 0 0 var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 400;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.layers__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--color-line-soft);
+}
+.layers__row.is-off .layers__label {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+.layers__fold {
+  width: 1.2em;
+  flex: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-muted);
+}
+.layers__label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: var(--size-sm);
+  background: none;
+  border: 0;
+  padding: 4px;
+  cursor: grab;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.layers__label:focus-visible,
+.eye:focus-visible,
+.block__handle:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: 1px;
+}
+
+.eye {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--color-muted);
+}
+.eye:hover {
+  color: var(--ink);
+}
+.eye.is-off {
+  color: var(--ink);
+}

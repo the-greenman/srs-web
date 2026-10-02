@@ -45,6 +45,10 @@
 @import url("./components/diagnostics.css") layer(components);
 @import url("./components/lifecycle.css") layer(components);
 @import url("./components/mcp-connection.css") layer(components);
+@import url("./components/block.css") layer(components);
+@import url("./components/layers.css") layer(components);
+@import url("./components/draft-tray.css") layer(components);
+@import url("./components/essay-shell.css") layer(components);
 
 /* Utilities — last word in the cascade */
 @import url("./utilities.css") layer(utilities);

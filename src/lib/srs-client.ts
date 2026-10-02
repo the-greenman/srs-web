@@ -1876,3 +1876,31 @@ export function rfc043MigrationNeeded(repo: SrsRepository): boolean {
     return false;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Container creation (srs-rust#1133) — NOT YET RELEASED
+// ---------------------------------------------------------------------------
+
+/** Input of `create_container` (same shape as `srs container create`). */
+export interface CreateContainerInput {
+  title: string;
+  anchorInstanceId?: string;
+  identityInstanceId?: string;
+  memberInstanceIds?: ContainerEntry[];
+}
+
+/**
+ * Create a container. STUB until the `create_container` binding ships (srs-rust#1133):
+ * the single facade point for "new essay" / "create draft area"; throws a clear error
+ * while the pinned bindings lack it. Replace the guard with the typed call once released.
+ */
+export function createContainer(repo: SrsRepository, input: CreateContainerInput): Container {
+  const create = (repo as unknown as { create_container?: (json: string) => unknown })
+    .create_container;
+  if (typeof create !== "function") {
+    throw new Error(
+      "Creating containers needs a newer engine build (srs-rust#1133). Open an existing essay for now."
+    );
+  }
+  return create.call(repo, JSON.stringify(input)) as Container;
+}

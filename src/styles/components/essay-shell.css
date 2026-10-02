@@ -1,0 +1,73 @@
+/* ============================================================================
+   component: essay-shell (.essay-shell) — page frame of the essay editor
+   Writing column + a side rail (layers, draft). Stacks on narrow screens.
+   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
+   ========================================================================== */
+.essay-shell {
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.essay-shell__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  padding: var(--space-xs) var(--space-sm);
+  border-bottom: var(--rule);
+}
+.essay-shell__heading,
+.essay-shell__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+.essay-shell__bar .btn {
+  padding: 8px 16px;
+}
+.essay-shell__status {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+}
+.essay-shell__error {
+  margin: var(--space-xs) var(--space-sm);
+  padding: 8px 12px;
+  border: 1px solid var(--black);
+  font-size: var(--size-sm);
+}
+.essay-shell__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18rem;
+  gap: var(--space-md);
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-sm);
+}
+.essay-shell__title {
+  font-size: var(--size-lg);
+  font-weight: 500;
+  margin: 0 0 var(--space-sm);
+}
+.essay-shell__hint,
+.essay-shell__empty {
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+}
+.essay-shell__empty {
+  padding: var(--space-md);
+}
+.essay-shell__side {
+  position: sticky;
+  top: var(--space-sm);
+  align-self: start;
+}
+@media (max-width: 960px) {
+  .essay-shell__grid {
+    grid-template-columns: 1fr;
+  }
+  .essay-shell__side {
+    position: static;
+  }
+}
