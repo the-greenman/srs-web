@@ -56,7 +56,6 @@
     documentDirty?: boolean;
     /** Changes after mount invalidate derived browser projections of the repository. */
     documentRevision?: number;
-    /** Report a successful in-place repository mutation to the App shell. */
     onOpenAnother: () => void;
     onOpenEditor?: (id: string) => void;
   }

@@ -112,3 +112,43 @@ describe.skipIf(!haveBindings)("essay gestures on the real engine (core relative
     expect(getContainerOutline(repo, m.containerId).body.length).toBe(4);
   });
 });
+
+describe.skipIf(!haveBindings)("write observation on the real engine (srs-web#345)", () => {
+  it("a deferred write (the essay's 400 ms typing commit) marks the document dirty with no further gesture", async () => {
+    const doc = await import("../src/lib/essay/essay-document.js");
+    const { observeWrites, listRecords } = await import("../src/lib/srs-client.js");
+    const { DocumentMutationTracker } = await import("../src/lib/document-mutations.js");
+    const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
+    mkdirSync(dir, { recursive: true });
+    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
+    const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+    mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
+    const raw = mod.SrsRepository.load(
+      readFileSync(path.join(__dirname, "../e2e/fixtures/essay-empty.srsj"), "utf8")
+    );
+    const p = doc.addParagraph(raw, doc.loadEssay(raw, doc.newEssay(raw, "E")));
+
+    // App's wiring: the tracker observes the engine epoch whenever the handle reports a write.
+    const tracker = new DocumentMutationTracker();
+    tracker.beginDocument(raw.write_epoch());
+    let notified = 0;
+    const repo = observeWrites(raw, () => {
+      notified++;
+      tracker.sync(raw.write_epoch());
+    });
+
+    listRecords(repo, {}); // reads never notify
+    await Promise.resolve();
+    expect(notified).toBe(0);
+
+    await new Promise<void>((resolve) =>
+      setTimeout(() => {
+        doc.setBody(repo, p, "typed");
+        resolve();
+      }, 400)
+    );
+    await Promise.resolve(); // the notification is a microtask, not a later gesture
+    expect(notified).toBe(1);
+    expect(tracker.dirty).toBe(true);
+  });
+});

@@ -22,6 +22,7 @@
     loadRepoFromTree,
     exportSrsj,
     exportArchive,
+    observeWrites,
     exportTree,
     createGovernanceDocument,
     rfc043MigrationNeeded,
@@ -153,34 +154,32 @@
   }
 
   function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
+    // Every load path passes through here: from now on each engine write reports itself.
+    if (repo) repo = observeWrites(repo, syncDocument);
+    workingCopySaved = true;
     const revision = documentMutations.beginDocument(repo?.write_epoch() ?? 0, { dirty });
     documentDirty = documentMutations.dirty;
     documentRevision = revision.revision;
   }
 
-  /**
-   * The one "did the repository change?" check, for EVERY writer (UI and MCP alike):
-   * compares the engine's own `write_epoch()` (srs-rust#1140/#1160) with the last
-   * observed value. Idempotent and cheap, so it is safe to call after any action;
-   * a no-op action leaves the epoch unchanged and the document clean (srs-web#345).
-   *
-   * Returns whether the local recovery-copy is current (false only when its
-   * `localStorage` write failed, srs-web#312) so GovernanceShell's save indicator
-   * can reflect it instead of silently claiming "saved".
-   */
-  function syncDocument(): boolean {
-    if (!repo || !documentMutations.sync(repo.write_epoch())) return true;
-    documentDirty = documentMutations.dirty;
-    documentRevision = documentMutations.current.revision;
-    return saveWorkingCopy(repoName, exportSrsj(repo));
-  }
+  /** Whether the last recovery-copy write succeeded (srs-web#312). */
+  let workingCopySaved = true;
 
   /**
-   * UI writers no longer report themselves: after any user gesture settles, observe the epoch.
-   * Save also syncs first (below), so a missed async write can never be saved as "clean".
+   * The one "did the repository change?" check. Called by the write-observing repo handle
+   * (`observeWrites`, every UI writer), by the relay host after each MCP request, and before
+   * every save snapshot. Compares the engine's `write_epoch()` with the last observed value,
+   * so it is idempotent: a no-op action leaves the document clean (srs-web#345).
+   *
+   * Returns whether the local recovery copy is current (false when its `localStorage`
+   * write failed, srs-web#312) so GovernanceShell's save indicator can reflect it.
    */
-  function onUserGesture(): void {
-    setTimeout(syncDocument, 0);
+  function syncDocument(): boolean {
+    if (!repo || !documentMutations.sync(repo.write_epoch())) return workingCopySaved;
+    documentDirty = documentMutations.dirty;
+    documentRevision = documentMutations.current.revision;
+    workingCopySaved = saveWorkingCopy(repoName, exportSrsj(repo));
+    return workingCopySaved;
   }
 
   function completeDocumentSave(snapshot: ReturnType<typeof documentMutations.captureSave>): boolean {
@@ -522,8 +521,6 @@
     }
   }
 </script>
-
-<svelte:window onclick={onUserGesture} onchange={onUserGesture} onkeyup={onUserGesture} ondrop={onUserGesture} />
 
 <!-- =========================================================================
      Boot state

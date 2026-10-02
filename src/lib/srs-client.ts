@@ -505,6 +505,41 @@ export function loadRepo(srsj: string): SrsRepository {
 }
 
 /**
+ * The single write choke point (srs-web#345): wrap a repository handle so `onWrite` runs
+ * after any call that advanced the engine's `write_epoch()`, whether the call came from a
+ * click handler, a debounced commit or anything else. Coalesced to one notification per
+ * microtask, so a multi-call action reports once. MCP writes go through `McpSession`, not
+ * this handle; the relay host reports those via its own `onHandled`.
+ */
+export function observeWrites(repo: SrsRepository, onWrite: () => void): SrsRepository {
+  let seen = repo.write_epoch();
+  let pending = false;
+  return new Proxy(repo, {
+    get(target, prop) {
+      const value = Reflect.get(target, prop, target);
+      if (typeof value !== "function" || prop === "write_epoch" || prop === "free") return value;
+      return (...args: unknown[]) => {
+        try {
+          return value.apply(target, args);
+        } finally {
+          const now = target.write_epoch();
+          if (now !== seen) {
+            seen = now;
+            if (!pending) {
+              pending = true;
+              queueMicrotask(() => {
+                pending = false;
+                onWrite();
+              });
+            }
+          }
+        }
+      };
+    },
+  });
+}
+
+/**
  * Load a repository from a `.srs` binary archive (ZIP bytes).
  * Throws if the WASM module has not been initialised or if the bytes are invalid.
  */
