@@ -13,6 +13,8 @@
     callerUrl = null,
     error = null,
     repositoryName = null,
+    agentName = null,
+    onDisconnect,
     onRotate,
     onTakeover,
   }: {
@@ -20,6 +22,8 @@
     callerUrl?: string | null;
     error?: string | null;
     repositoryName?: string | null;
+    agentName?: string | null;
+    onDisconnect?: () => void;
     onRotate?: () => void;
     onTakeover?: () => void;
   } = $props();
@@ -53,6 +57,7 @@
   <div class="mcp-conn__head">
     <span class="mcp-conn__dot mcp-conn__dot--{status}" aria-hidden="true"></span>
     <span class="mcp-conn__status" data-testid="mcp-status">{label[status]}</span>
+    {#if agentName}<strong data-testid="mcp-agent-name">{agentName}</strong>{/if}
     {#if repositoryName}<span class="mcp-conn__repo">{repositoryName}</span>{/if}
   </div>
   {#if error}<p class="mcp-conn__error" role="alert">{error}</p>{/if}
@@ -67,11 +72,11 @@
     {#if status === 'rejected' || status === 'replaced'}
       <button type="button" class="btn btn--secondary" onclick={onTakeover} data-testid="mcp-takeover">Take over here</button>
     {/if}
+    {#if onDisconnect}
+      <button type="button" class="btn btn--ghost" onclick={onDisconnect} data-testid="mcp-disconnect">Disconnect</button>
+    {/if}
     {#if onRotate}
-      <button type="button" class="btn btn--ghost" onclick={onRotate} data-testid="mcp-rotate">Rotate URL</button>
+      <button type="button" class="btn btn--ghost" onclick={onRotate} data-testid="mcp-rotate" title="Moves this agent to a new URL. The old URL goes offline once this tab disconnects, but is not revoked.">Rotate URL</button>
     {/if}
   </div>
-  {#if onRotate}
-    <p class="mcp-conn__note">Rotating moves this tab to a new URL. The old URL goes offline once this tab disconnects, but is not revoked.</p>
-  {/if}
 </section>

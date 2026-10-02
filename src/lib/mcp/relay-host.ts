@@ -29,6 +29,8 @@ export interface RelayHostOptions {
   fetchImpl?: typeof fetch;
   storage?: Pick<Storage, "getItem" | "setItem">;
   reconnectMs?: number;
+  /** Credential storage key; one per agent connection (srs-web#358). */
+  storageKey?: string;
 }
 
 const KEY = "srs-web.mcp-relay";
@@ -49,7 +51,9 @@ export class RelayHost {
 
   #stored(): ChannelBootstrap | null {
     try {
-      const v = JSON.parse((this.o.storage ?? localStorage).getItem(KEY) ?? "null");
+      const v = JSON.parse(
+        (this.o.storage ?? localStorage).getItem(this.o.storageKey ?? KEY) ?? "null"
+      );
       return v?.relayUrl === this.o.relayUrl ? v.creds : null;
     } catch {
       return null;
@@ -59,7 +63,7 @@ export class RelayHost {
   #store(creds: ChannelBootstrap): void {
     try {
       (this.o.storage ?? localStorage).setItem(
-        KEY,
+        this.o.storageKey ?? KEY,
         JSON.stringify({ relayUrl: this.o.relayUrl, creds })
       );
     } catch {}
