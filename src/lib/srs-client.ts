@@ -38,6 +38,8 @@ export interface McpSession {
   /** RFC-046: host-supplied actor stamped as `createdBy`; invalid JSON / a corpus below revision 9 refuse creates. */
   set_actor(json: string): void;
   clear_actor(): void;
+  /** wasm-bindgen: release the session's WASM memory. */
+  free(): void;
 }
 
 export interface SrsRepository {

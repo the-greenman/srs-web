@@ -139,3 +139,130 @@ test("two agents: distinct authors and ids, guard on both, disconnect leaves the
   );
   expect(left).toBe(1);
 });
+
+test("reload keeps ids and URLs; a typed label is the author; repo change keeps both agents", async ({
+  page,
+}) => {
+  let minted = 0;
+  await page.route("https://relay.test/v1/channels", (route) => {
+    const k = ++minted;
+    return route.fulfill({
+      json: {
+        channel: `c${k}`,
+        callerUrl: `https://relay.test/v1/channels/c${k}/call/CALLER${k}`,
+        executorUrl: `wss://relay.test/v1/channels/c${k}/executor/EXEC${k}`,
+      },
+    });
+  });
+  const sockets = new Map<number, { send: (f: unknown) => void; url: string }>();
+  const replies = new Map<string, (r: { status: number; body?: string }) => void>();
+  await page.routeWebSocket(/relay\.test.*executor/, (ws) => {
+    const k = Number(/EXEC(\d)/.exec(ws.url())?.[1]);
+    sockets.set(k, { send: (f) => ws.send(JSON.stringify(f)), url: ws.url() });
+    ws.onMessage((m) => {
+      const f = JSON.parse(String(m));
+      replies.get(f.requestId)?.(f.response);
+    });
+  });
+  let n = 0;
+  async function rpc(agent: number, method: string, params?: unknown) {
+    const requestId = `req${++n}`;
+    const sock = sockets.get(agent) as { send: (f: unknown) => void; url: string };
+    const done = new Promise<{ status: number; body?: string }>((res) =>
+      replies.set(requestId, res)
+    );
+    sock.send({
+      version: 1,
+      type: "request",
+      requestId,
+      executorGeneration: new URL(sock.url).searchParams.get("generation"),
+      deadlineUnixMs: Date.now() + 30000,
+      request: {
+        method: "POST",
+        contentType: "application/json",
+        headers: {},
+        body: Buffer.from(JSON.stringify({ jsonrpc: "2.0", id: n, method, params })).toString(
+          "base64url"
+        ),
+      },
+    });
+    const r = await done;
+    return JSON.parse(Buffer.from(r.body ?? "", "base64url").toString());
+  }
+  const open = async () => {
+    await page.goto("/");
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+    await page.locator('input[type="file"]#srsj-file').setInputFiles(ESSAY);
+    await page.getByTestId("package-editor-essay").click();
+    await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
+  };
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("srs-web.mcp-relay-url"))
+      localStorage.setItem("srs-web.mcp-relay-url", "https://relay.test");
+  });
+  await open();
+  await expect(page.getByTestId("mcp-status")).toHaveText("Connected", { timeout: 15000 });
+  await page.getByTestId("mcp-connect-open").click();
+  await page.getByTestId("mcp-agent-label").fill("Labelled");
+  await page.getByTestId("mcp-connect-agent").click();
+  await expect(page.getByTestId("mcp-status")).toHaveText(["Connected", "Connected"]);
+  const snapshot = async () => ({
+    ids: await page.evaluate(() => localStorage.getItem("srs-web.agent-connections")),
+    urls: await page
+      .getByTestId("mcp-caller-url")
+      .evaluateAll((e) => e.map((i) => (i as HTMLInputElement).value)),
+  });
+  const before = await snapshot();
+
+  // reload: same ids and caller URLs (no new channels minted)
+  const mintedBefore = minted;
+  await open();
+  await expect(page.getByTestId("mcp-status")).toHaveText(["Connected", "Connected"], {
+    timeout: 15000,
+  });
+  expect(await snapshot()).toEqual(before);
+  expect(minted).toBe(mintedBefore);
+
+  // typed label is the stamped author (agent 2), while agent 1 uses its clientInfo.name
+  const init = (a: number, name: string) =>
+    rpc(a, "initialize", {
+      protocolVersion: "2025-06-18",
+      capabilities: {},
+      clientInfo: { name, version: "0" },
+    });
+  const k = (a: number) => [...sockets.keys()].sort()[a - 1];
+  await init(k(1), "alpha");
+  await init(k(2), "ignored-handle");
+  const paragraph = (await page
+    .locator(".essay-shell__page .block-stack__item")
+    .nth(1)
+    .locator("[data-block-id]")
+    .getAttribute("data-block-id")) as string;
+  const comment = async (a: number, t: string) => {
+    const rec = await rpc(k(a), "tools/call", {
+      name: "record_create",
+      arguments: { type: "com.mudemocracy.essay/comment", fieldValues: { comment_text: t } },
+    });
+    const id = /[0-9a-f]{8}-[0-9a-f-]{27}/.exec(JSON.stringify(rec.result))?.[0] as string;
+    const rel = await rpc(k(a), "tools/call", {
+      name: "relation_create",
+      arguments: {
+        relationType: "com.mudemocracy.essay/comments-on",
+        sourceInstanceId: id,
+        targetInstanceId: paragraph,
+      },
+    });
+    expect(rel.result?.isError, JSON.stringify(rel)).not.toBe(true);
+  };
+  await comment(1, "one");
+  await comment(2, "two");
+  await expect(
+    page.locator(".essay-shell__page .block-stack__item").nth(1).getByTestId("comment-author")
+  ).toHaveText(["alpha", "Labelled"]);
+
+  // repo change: reopen the document; both agents come back and both can still write
+  await open();
+  await expect(page.getByTestId("mcp-status")).toHaveText(["Connected", "Connected"], {
+    timeout: 15000,
+  });
+});

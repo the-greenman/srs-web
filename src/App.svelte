@@ -30,7 +30,7 @@
     applyMigration,
   } from "$lib/srs-client.js";
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
-  import { addConnection, credsKey, loadConnections, removeConnection, type AgentConnection } from "$lib/agent-connections.js";
+  import { connections, credsKey, type AgentConnection } from "$lib/agent-connections.js";
   import type { AgentWriteGuard, McpSession, SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
@@ -267,6 +267,7 @@
   type Agent = { conn: AgentConnection; state: HostState };
   let agents = $state<Agent[]>([]);
   let newAgentLabel = $state("");
+  let seeded = false;
   const hosts = new Map<string, { host: RelayHost; session: McpSession | null }>();
   const setAgentState = (id: string, state: HostState) =>
     (agents = agents.map((a) => (a.conn.id === id ? { ...a, state } : a)));
@@ -301,6 +302,7 @@
       return true;
     } catch (e) {
       console.error("MCP write guard could not be applied", e);
+      // fail closed; recovery is the next repo change (openAgentSession re-applies the guard)
       h?.host.detach();
       setAgentState(id, { status: "error", callerUrl: null, error: `Write guard failed: ${e instanceof Error ? e.message : String(e)}` });
       return false;
@@ -328,6 +330,8 @@
   function openAgentSession(conn: AgentConnection, current: SrsRepository | null): void {
     const h = hostFor(conn);
     const entry = hosts.get(conn.id) as { host: RelayHost; session: McpSession | null };
+    h.detach();
+    entry.session?.free(); // release the previous repo's WASM session
     entry.session = current ? current.open_mcp_session() : null;
     if (entry.session) {
       if (applyGuard(conn.id)) {
@@ -338,15 +342,17 @@
   }
 
   function connectAgent(label?: string) {
-    const list = addConnection(label);
+    const list = connections.add(label);
     const conn = list[list.length - 1];
     agents = [...agents, { conn, state: { status: "idle", callerUrl: null, error: null } }];
     openAgentSession(conn, repo);
   }
   function disconnectAgent(id: string) {
-    hosts.get(id)?.host.detach();
+    const h = hosts.get(id);
+    h?.host.detach();
+    h?.session?.free();
     hosts.delete(id);
-    removeConnection(id);
+    connections.remove(id);
     agents = agents.filter((a) => a.conn.id !== id);
   }
 
@@ -354,8 +360,9 @@
     const current = repo;
     if (!relayUrl) return;
     untrack(() => {
-      if (!hosts.size && !agents.length) {
-        agents = loadConnections().map((conn) => ({ conn, state: { status: "idle", callerUrl: null, error: null } }));
+      if (!seeded) {
+        seeded = true;
+        agents = connections.list().map((conn) => ({ conn, state: { status: "idle", callerUrl: null, error: null } }));
       }
       for (const { conn } of agents) openAgentSession(conn, current);
     });
