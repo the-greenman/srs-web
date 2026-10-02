@@ -164,7 +164,7 @@
   }
 
   /** Whether the last recovery-copy write succeeded (srs-web#312). */
-  let workingCopySaved = true;
+  let workingCopySaved = $state(true);
 
   /**
    * The recovery copy exports the whole repository, so it is written at most once per
@@ -693,6 +693,7 @@
     documentDirty={documentDirty}
     documentRevision={documentRevision}
     onDocumentMutation={syncDocument}
+    workingCopySaved={workingCopySaved}
     onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAnother={() => {
       clearWorkingCopy();
