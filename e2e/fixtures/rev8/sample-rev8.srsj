@@ -1,0 +1,194 @@
+{
+  "srsj": "2",
+  "manifest": {
+    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+    "container": {
+      "anchorInstanceId": "11000000-0000-4000-8000-000000000001",
+      "containerId": "00000000-0000-4000-8000-000000000000",
+      "memberInstanceIds": [
+        {
+          "instanceId": "11000000-0000-4000-8000-000000000001"
+        },
+        {
+          "instanceId": "11000000-0000-4000-8000-000000000002"
+        },
+        {
+          "instanceId": "11000000-0000-4000-8000-000000000003"
+        },
+        {
+          "instanceId": "11000000-0000-4000-8000-000000000004"
+        },
+        {
+          "instanceId": "11000000-0000-4000-8000-000000000005"
+        }
+      ],
+      "title": "Test Governance"
+    },
+    "createdAt": "2026-01-01T00:00:00Z",
+    "dataModelRevision": 8,
+    "namespace": "test",
+    "repositoryId": "00000000-0000-0000-0000-000000000001",
+    "srsVersion": "2.0-draft",
+    "title": "Test Governance"
+  },
+  "data": {
+    "containers/aa000001-0000-4000-8000-000000000001.json": {
+      "anchorInstanceId": "11000000-0000-4000-8000-000000000002",
+      "containerId": "aa000001-0000-4000-8000-000000000001",
+      "memberInstanceIds": [
+        {
+          "instanceId": "11000000-0000-4000-8000-000000000002"
+        }
+      ],
+      "title": "Articles"
+    },
+    "containers/cc000001-0000-4000-8000-000000000001.json": {
+      "anchorInstanceId": "11000000-0000-4000-8000-000000000004",
+      "containerId": "cc000001-0000-4000-8000-000000000001",
+      "memberInstanceIds": [
+        {
+          "instanceId": "11000000-0000-4000-8000-000000000004"
+        }
+      ],
+      "title": "Roles"
+    },
+    "containers/dd000001-0000-4000-8000-000000000001.json": {
+      "anchorInstanceId": "11000000-0000-4000-8000-000000000003",
+      "containerId": "dd000001-0000-4000-8000-000000000001",
+      "memberInstanceIds": [
+        {
+          "instanceId": "11000000-0000-4000-8000-000000000003"
+        }
+      ],
+      "title": "Decision Log"
+    },
+    "containers/ee000001-0000-4000-8000-000000000001.json": {
+      "anchorInstanceId": "11000000-0000-4000-8000-000000000005",
+      "containerId": "ee000001-0000-4000-8000-000000000001",
+      "memberInstanceIds": [
+        {
+          "instanceId": "11000000-0000-4000-8000-000000000005"
+        }
+      ],
+      "title": "Exercise Book"
+    },
+    "package/package.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
+      "compositions": [],
+      "createdAt": "2026-01-01T00:00:00Z",
+      "dataModelRevision": 8,
+      "description": "",
+      "fields": [],
+      "id": "00000000-0000-4000-8000-0000000000aa",
+      "name": "test-package",
+      "namespace": "com.test",
+      "relationTypes": [],
+      "status": "active",
+      "title": "test-package",
+      "types": [
+        "types/governance-repo.json",
+        "types/articles.json",
+        "types/decision-log.json",
+        "types/roles.json",
+        "types/exercise-book.json"
+      ],
+      "version": "1.0.0",
+      "views": []
+    },
+    "package/types/articles.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "description": "Articles section type (test fixture).",
+      "fields": [],
+      "id": "00000000-0000-4000-8000-000000000102",
+      "name": "Articles",
+      "namespace": "com.test",
+      "version": 1
+    },
+    "package/types/decision-log.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "description": "Decision Log section type (test fixture).",
+      "fields": [],
+      "id": "00000000-0000-4000-8000-000000000103",
+      "name": "Decision Log",
+      "namespace": "com.test",
+      "version": 1
+    },
+    "package/types/exercise-book.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "description": "Exercise Book section type (test fixture).",
+      "fields": [],
+      "id": "00000000-0000-4000-8000-000000000105",
+      "name": "Exercise Book",
+      "namespace": "com.test",
+      "version": 1
+    },
+    "package/types/governance-repo.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "description": "governance-repo section type (test fixture).",
+      "fields": [],
+      "id": "00000000-0000-4000-8000-000000000101",
+      "name": "governance-repo",
+      "namespace": "com.test",
+      "version": 1
+    },
+    "package/types/roles.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "description": "Roles section type (test fixture).",
+      "fields": [],
+      "id": "00000000-0000-4000-8000-000000000104",
+      "name": "Roles",
+      "namespace": "com.test",
+      "version": 1
+    },
+    "records/tier-2/11000000-0000-4000-8000-000000000001.json": {
+      "createdAt": "2026-01-01T00:00:00Z",
+      "fieldValues": {},
+      "instanceId": "11000000-0000-4000-8000-000000000001",
+      "typeId": "00000000-0000-4000-8000-000000000101",
+      "typeName": "governance-repo",
+      "typeNamespace": "com.test",
+      "typeVersion": 1
+    },
+    "records/tier-2/11000000-0000-4000-8000-000000000002.json": {
+      "createdAt": "2026-01-02T00:00:00Z",
+      "fieldValues": {},
+      "instanceId": "11000000-0000-4000-8000-000000000002",
+      "typeId": "00000000-0000-4000-8000-000000000102",
+      "typeName": "Articles",
+      "typeNamespace": "com.test",
+      "typeVersion": 1
+    },
+    "records/tier-2/11000000-0000-4000-8000-000000000003.json": {
+      "createdAt": "2026-01-03T00:00:00Z",
+      "fieldValues": {},
+      "instanceId": "11000000-0000-4000-8000-000000000003",
+      "typeId": "00000000-0000-4000-8000-000000000103",
+      "typeName": "Decision Log",
+      "typeNamespace": "com.test",
+      "typeVersion": 1
+    },
+    "records/tier-2/11000000-0000-4000-8000-000000000004.json": {
+      "createdAt": "2026-01-04T00:00:00Z",
+      "fieldValues": {},
+      "instanceId": "11000000-0000-4000-8000-000000000004",
+      "typeId": "00000000-0000-4000-8000-000000000104",
+      "typeName": "Roles",
+      "typeNamespace": "com.test",
+      "typeVersion": 1
+    },
+    "records/tier-2/11000000-0000-4000-8000-000000000005.json": {
+      "createdAt": "2026-01-05T00:00:00Z",
+      "fieldValues": {},
+      "instanceId": "11000000-0000-4000-8000-000000000005",
+      "typeId": "00000000-0000-4000-8000-000000000105",
+      "typeName": "Exercise Book",
+      "typeNamespace": "com.test",
+      "typeVersion": 1
+    }
+  }
+}

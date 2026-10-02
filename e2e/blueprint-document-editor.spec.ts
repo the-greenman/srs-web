@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { acceptMigration } from "./helpers.js";
 
 /**
  * blueprint-document-editor.spec.ts — generic, blueprint-driven document
@@ -33,13 +34,19 @@ test.describe("BlueprintDocumentEditor (srs-web#322)", () => {
     await page.goto("/");
     await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
     await page.locator('input[type="file"]#srsj-file').setInputFiles(FIXTURE);
+    await acceptMigration(page);
     await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
   });
 
-  test("nests a group's children, edits a field, inserts/adds components, and reorders the document", async ({ page }) => {
+  test("nests a group's children, edits a field, inserts/adds components, and reorders the document", async ({
+    page,
+  }) => {
     // Select the homepage composition — the blueprint resolves, so the editor (not
     // just the read-only preview) renders alongside the preview pane.
-    await page.getByRole("button", { name: /homepage/i }).first().click();
+    await page
+      .getByRole("button", { name: /homepage/i })
+      .first()
+      .click();
     await expect(page.getByTestId("blueprint-document-editor")).toBeVisible();
 
     // Top-level blocks are the page's own components: hero, prose, feature-group.
@@ -95,9 +102,14 @@ test.describe("BlueprintDocumentEditor (srs-web#322)", () => {
     // "+ Add feature" picker, not the top-level one.
     const groupBlockAfterInsert = topBlocks.nth(3);
     await groupBlockAfterInsert.getByRole("button", { name: /\+ Add feature/i }).click();
-    await groupBlockAfterInsert.locator('[data-testid^="bp-child-picker-"]').getByRole("menuitem", { name: "Feature" }).click();
+    await groupBlockAfterInsert
+      .locator('[data-testid^="bp-child-picker-"]')
+      .getByRole("menuitem", { name: "Feature" })
+      .click();
 
-    const groupChildrenAfterAdd = groupBlockAfterInsert.locator(":scope > .bp-editor__children > .bp-editor__block");
+    const groupChildrenAfterAdd = groupBlockAfterInsert.locator(
+      ":scope > .bp-editor__children > .bp-editor__block"
+    );
     await expect(groupChildrenAfterAdd).toHaveCount(3);
 
     // The full-page preview is hidden by default alongside the editor (srs-web#322 part 2)

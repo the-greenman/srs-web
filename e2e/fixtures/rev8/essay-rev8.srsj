@@ -3,48 +3,48 @@
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
     "container": {
-      "containerId": "4cd37b83-6625-40ed-abad-31dea5a77800",
-      "identityInstanceId": "0889e3d4-b259-4735-a439-d7216cee1956",
+      "containerId": "b010d917-d104-4c12-99ae-62f27658cf35",
+      "identityInstanceId": "14d87d9e-6159-4c70-b082-eefcdd624e96",
       "memberInstanceIds": [
         {
-          "instanceId": "0889e3d4-b259-4735-a439-d7216cee1956"
+          "instanceId": "14d87d9e-6159-4c70-b082-eefcdd624e96"
         }
       ],
       "title": "Essay fixture"
     },
-    "createdAt": "2026-10-02T22:01:12.625704949+00:00",
-    "dataModelRevision": 9,
+    "createdAt": "2026-10-02T22:20:32.841730315+00:00",
+    "dataModelRevision": 8,
     "namespace": "com.mudemocracy.essay",
-    "repositoryId": "4cd37b83-6625-40ed-abad-31dea5a77800",
+    "repositoryId": "b010d917-d104-4c12-99ae-62f27658cf35",
     "srsVersion": "2.0-draft",
     "title": "Essay fixture"
   },
   "data": {
-    "containers/essay-draft-de837958.json": {
-      "containerId": "de837958-0af1-4b67-8245-df7a46706b76",
+    "containers/essay-draft-b6044648.json": {
+      "containerId": "b6044648-2eee-4df9-85ec-087330d49726",
       "memberInstanceIds": [
         {
-          "instanceId": "2027b81d-15a7-43f6-977b-26603412fbf4"
+          "instanceId": "39523687-4047-4054-bd8b-428b23254bf1"
         }
       ],
       "title": "Essay draft"
     },
-    "containers/on-small-democracy-c4b0c11c.json": {
-      "anchorInstanceId": "ae3d5221-b2ac-4ae8-a180-d90f84f49435",
-      "containerId": "c4b0c11c-3ada-428a-8f6e-78a82e653e9b",
-      "identityInstanceId": "ae3d5221-b2ac-4ae8-a180-d90f84f49435",
+    "containers/on-small-democracy-abbed8c0.json": {
+      "anchorInstanceId": "7744a57a-fa15-4070-bb23-5d78c0cd000f",
+      "containerId": "abbed8c0-1da5-45d5-b2cb-6954f3e6ce61",
+      "identityInstanceId": "7744a57a-fa15-4070-bb23-5d78c0cd000f",
       "memberInstanceIds": [
         {
-          "instanceId": "ae3d5221-b2ac-4ae8-a180-d90f84f49435"
+          "instanceId": "7744a57a-fa15-4070-bb23-5d78c0cd000f"
         },
         {
-          "instanceId": "d37f5c95-9f51-412c-935a-4288ca19700c"
+          "instanceId": "c2413f9f-547b-444b-a94a-de5bbd332484"
         },
         {
-          "instanceId": "3cce92a6-aa40-4412-9a05-f15e6c263c38"
+          "instanceId": "9a82971f-c972-4c47-a788-be76c071a016"
         },
         {
-          "instanceId": "bf0ac95e-c6fa-4036-8f79-8b2039cb4051"
+          "instanceId": "8ee05a96-74ff-4f51-88a2-88395abad7d0"
         }
       ],
       "title": "On small democracy"
@@ -571,103 +571,103 @@
       "namespace": "com.mudemocracy.essay",
       "version": 1
     },
-    "records/tier-2/document-state-c24a9e31.json": {
+    "records/tier-2/document-state-6f9ea26c.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-02T22:01:12.424193043+00:00",
+      "createdAt": "2026-10-02T22:20:32.651413166+00:00",
       "fieldValues": {
-        "essay": "ae3d5221-b2ac-4ae8-a180-d90f84f49435",
+        "essay": "7744a57a-fa15-4070-bb23-5d78c0cd000f",
         "hidden_instance_ids": [],
-        "draft_container_id": "de837958-0af1-4b67-8245-df7a46706b76"
+        "draft_container_id": "b6044648-2eee-4df9-85ec-087330d49726"
       },
-      "instanceId": "c24a9e31-219a-4c16-910b-e3de97666679",
+      "instanceId": "6f9ea26c-85d4-42cd-8114-46864f230f8d",
       "typeId": "9785968f-bdd4-4c91-81ef-0e62075f3503",
       "typeName": "document-state",
       "typeNamespace": "com.mudemocracy.essay",
       "typeVersion": 1,
-      "updatedAt": "2026-10-02T22:01:12.424200172+00:00"
+      "updatedAt": "2026-10-02T22:20:32.651422428+00:00"
     },
-    "records/tier-2/essay-ae3d5221.json": {
+    "records/tier-2/essay-7744a57a.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-02T22:01:11.957874818+00:00",
+      "createdAt": "2026-10-02T22:20:32.192936860+00:00",
       "fieldValues": {
         "title": "On small democracy",
         "summary": "A fixture essay."
       },
-      "instanceId": "ae3d5221-b2ac-4ae8-a180-d90f84f49435",
+      "instanceId": "7744a57a-fa15-4070-bb23-5d78c0cd000f",
       "typeId": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
       "typeName": "essay",
       "typeNamespace": "com.mudemocracy.essay",
       "typeVersion": 1,
-      "updatedAt": "2026-10-02T22:01:11.957882437+00:00"
+      "updatedAt": "2026-10-02T22:20:32.192944906+00:00"
     },
-    "records/tier-2/paragraph-2027b81d.json": {
+    "records/tier-2/paragraph-39523687.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-02T22:01:12.222543885+00:00",
+      "createdAt": "2026-10-02T22:20:32.456299285+00:00",
       "fieldValues": {
         "paragraph_title": "Spare",
         "body": "Drafted paragraph."
       },
-      "instanceId": "2027b81d-15a7-43f6-977b-26603412fbf4",
+      "instanceId": "39523687-4047-4054-bd8b-428b23254bf1",
       "typeId": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
       "typeName": "paragraph",
       "typeNamespace": "com.mudemocracy.essay",
       "typeVersion": 1,
-      "updatedAt": "2026-10-02T22:01:12.222551562+00:00"
+      "updatedAt": "2026-10-02T22:20:32.456306762+00:00"
     },
-    "records/tier-2/paragraph-3cce92a6.json": {
+    "records/tier-2/paragraph-8ee05a96.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-02T22:01:12.091947145+00:00",
+      "createdAt": "2026-10-02T22:20:32.392523287+00:00",
+      "fieldValues": {
+        "body": "Third paragraph."
+      },
+      "instanceId": "8ee05a96-74ff-4f51-88a2-88395abad7d0",
+      "typeId": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
+      "typeName": "paragraph",
+      "typeNamespace": "com.mudemocracy.essay",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-02T22:20:32.392529805+00:00"
+    },
+    "records/tier-2/paragraph-9a82971f.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-02T22:20:32.329362129+00:00",
       "fieldValues": {
         "paragraph_title": "Claim",
         "body": "Second paragraph."
       },
-      "instanceId": "3cce92a6-aa40-4412-9a05-f15e6c263c38",
+      "instanceId": "9a82971f-c972-4c47-a788-be76c071a016",
       "typeId": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
       "typeName": "paragraph",
       "typeNamespace": "com.mudemocracy.essay",
       "typeVersion": 1,
-      "updatedAt": "2026-10-02T22:01:12.091957364+00:00"
+      "updatedAt": "2026-10-02T22:20:32.329368421+00:00"
     },
-    "records/tier-2/paragraph-bf0ac95e.json": {
+    "records/tier-2/paragraph-c2413f9f.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-02T22:01:12.158873172+00:00",
-      "fieldValues": {
-        "body": "Third paragraph."
-      },
-      "instanceId": "bf0ac95e-c6fa-4036-8f79-8b2039cb4051",
-      "typeId": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
-      "typeName": "paragraph",
-      "typeNamespace": "com.mudemocracy.essay",
-      "typeVersion": 1,
-      "updatedAt": "2026-10-02T22:01:12.158880930+00:00"
-    },
-    "records/tier-2/paragraph-d37f5c95.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-02T22:01:12.024667676+00:00",
+      "createdAt": "2026-10-02T22:20:32.261361470+00:00",
       "fieldValues": {
         "paragraph_title": "Opening",
         "body": "First paragraph."
       },
-      "instanceId": "d37f5c95-9f51-412c-935a-4288ca19700c",
+      "instanceId": "c2413f9f-547b-444b-a94a-de5bbd332484",
       "typeId": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
       "typeName": "paragraph",
       "typeNamespace": "com.mudemocracy.essay",
       "typeVersion": 1,
-      "updatedAt": "2026-10-02T22:01:12.024674134+00:00"
+      "updatedAt": "2026-10-02T22:20:32.261370321+00:00"
     },
-    "records/tier-2/purpose-0889e3d4.json": {
+    "records/tier-2/purpose-14d87d9e.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-02T22:01:11.887494754+00:00",
+      "createdAt": "2026-10-02T22:20:32.128808011+00:00",
       "fieldValues": {
         "statement": "",
         "title": "Essay fixture"
       },
-      "instanceId": "0889e3d4-b259-4735-a439-d7216cee1956",
+      "instanceId": "14d87d9e-6159-4c70-b082-eefcdd624e96",
       "typeId": "3c000001-0000-4000-a000-000000000001",
       "typeName": "purpose",
       "typeNamespace": "com.semanticops.core",
       "typeVersion": 1,
-      "updatedAt": "2026-10-02T22:01:11.887494754+00:00"
+      "updatedAt": "2026-10-02T22:20:32.128808011+00:00"
     }
   }
 }

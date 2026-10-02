@@ -14,6 +14,7 @@ const model: EssayModel = {
   hidden: [],
   draftContainerId: null,
   draftEntries: [],
+  comments: {},
 };
 const doc = vi.hoisted(() => ({
   listEssays: vi.fn(() => [{ id: "e", title: "Essay" }]),
@@ -22,6 +23,7 @@ const doc = vi.hoisted(() => ({
 }));
 vi.mock("../src/lib/essay/essay-document.js", () => ({
   ...doc,
+  addComment: vi.fn(),
   addParagraph: vi.fn(),
   essayWriteGuard: vi.fn(),
   moveEntry: vi.fn(),

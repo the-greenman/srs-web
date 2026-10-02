@@ -11,30 +11,47 @@ import {
   addContainerMemberRelative,
   createContainer,
   createRecord,
+  createRelation,
   getContainerOutline,
   getRecord,
   listContainers,
   listRecords,
+  listRelations,
   listTypes,
   moveContainerMemberRelative,
   removeContainerMember,
   updateRecord,
 } from "$lib/srs-client.js";
 import type {
+  Actor,
   AgentWriteGuard,
   OutlineEntry,
   OutlineShift,
   SrsRecord,
   SrsRepository,
+  TypeSummary,
 } from "$lib/srs-client.js";
 import type { Zone } from "./essay-model.js";
 import { toggled } from "./essay-model.js";
-import { DOCUMENT_STATE_TYPE_ID, ESSAY_TYPE_ID, PARAGRAPH_TYPE_ID } from "./type-registry.js";
+import {
+  COMMENTS_ON,
+  COMMENT_TYPE_ID,
+  DOCUMENT_STATE_TYPE_ID,
+  ESSAY_TYPE_ID,
+  PARAGRAPH_TYPE_ID,
+} from "./type-registry.js";
 
 export interface Paragraph {
   id: string;
   title: string;
   body: string;
+}
+/** A comment on a paragraph; `author` is the engine-stamped `createdBy` (absent = unknown author). */
+export interface Comment {
+  id: string;
+  text: string;
+  createdAt: string;
+  author?: Actor;
 }
 export interface EssaySummary {
   id: string;
@@ -51,6 +68,8 @@ export interface EssayModel {
   hidden: string[];
   draftContainerId: string | null;
   draftEntries: OutlineEntry[];
+  /** Comments by paragraph id, oldest first. */
+  comments: Record<string, Comment[]>;
 }
 
 /**
@@ -73,8 +92,8 @@ export interface Target {
 
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
 
-function recordsOfType(repo: SrsRepository, typeId: string): SrsRecord[] {
-  const t = listTypes(repo).find((x) => x.id === typeId);
+function recordsOfType(repo: SrsRepository, types: TypeSummary[], typeId: string): SrsRecord[] {
+  const t = types.find((x) => x.id === typeId);
   if (!t) return [];
   return listRecords(repo, { typeNamespace: t.namespace, typeName: t.name }).filter(
     (r) => r.typeId === typeId
@@ -88,7 +107,7 @@ function typeVersion(repo: SrsRepository, typeId: string): number {
 }
 
 export function listEssays(repo: SrsRepository): EssaySummary[] {
-  return recordsOfType(repo, ESSAY_TYPE_ID).map((r) => ({
+  return recordsOfType(repo, listTypes(repo), ESSAY_TYPE_ID).map((r) => ({
     id: r.instanceId,
     title: str(r.fieldValues.title) || "Untitled essay",
   }));
@@ -100,15 +119,49 @@ const toParagraph = (r: SrsRecord): Paragraph => ({
   body: str(r.fieldValues.body),
 });
 
+/** Last comment read per repository handle, keyed on the comments-on relation ids (srs-web#359). */
+const commentCache = new WeakMap<object, { key: string; comments: Record<string, Comment[]> }>();
+
+/**
+ * Comments by paragraph, oldest first by the engine's createdAt. One relation read per reload;
+ * the comment records (immutable here) are re-read only when the set of comments-on relations
+ * changed, which keeps a commit's reload cheap (~6 ms vs ~15 ms on a muSrs-sized repo, 50 comments).
+ */
+function loadComments(repo: SrsRepository, types: TypeSummary[]): Record<string, Comment[]> {
+  const rels = listRelations(repo, { relationType: COMMENTS_ON });
+  const key = rels.map((r) => r.relationId).join(",");
+  const hit = commentCache.get(repo);
+  if (hit?.key === key) return hit.comments;
+  const byId = new Map(recordsOfType(repo, types, COMMENT_TYPE_ID).map((r) => [r.instanceId, r]));
+  const out: Record<string, Comment[]> = {};
+  for (const rel of rels) {
+    const r = byId.get(rel.sourceInstanceId);
+    if (!r) continue;
+    out[rel.targetInstanceId] ??= [];
+    out[rel.targetInstanceId].push({
+      id: r.instanceId,
+      text: str(r.fieldValues.comment_text),
+      createdAt: r.createdAt ?? "",
+      author: r.createdBy,
+    });
+  }
+  for (const list of Object.values(out))
+    list.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  commentCache.set(repo, { key, comments: out });
+  return out;
+}
+
 export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
-  const essay = recordsOfType(repo, ESSAY_TYPE_ID).find((r) => r.instanceId === essayId);
+  const types = listTypes(repo); // resolved once per reload
+  const essay = recordsOfType(repo, types, ESSAY_TYPE_ID).find((r) => r.instanceId === essayId);
   if (!essay) throw new Error("Essay not found");
   const summary = listContainers(repo, { anchorInstanceId: essayId })[0];
   if (!summary) throw new Error("This essay has no container");
   const containerId = summary.containerId;
   const state =
-    recordsOfType(repo, DOCUMENT_STATE_TYPE_ID).find((r) => r.fieldValues.essay === essayId) ??
-    null;
+    recordsOfType(repo, types, DOCUMENT_STATE_TYPE_ID).find(
+      (r) => r.fieldValues.essay === essayId
+    ) ?? null;
   const draftContainerId = str(state?.fieldValues.draft_container_id) || null;
   const draftEntries = draftContainerId ? getContainerOutline(repo, draftContainerId).body : [];
   const entries = getContainerOutline(repo, containerId).body;
@@ -132,6 +185,7 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
     hidden: Array.isArray(hiddenRaw) ? hiddenRaw.map(String) : [],
     draftContainerId,
     draftEntries,
+    comments: loadComments(repo, types),
   };
 }
 
@@ -148,6 +202,18 @@ export function addParagraph(repo: SrsRepository, m: EssayModel, t?: Target): st
   });
   place(repo, m.containerId, rec.instanceId, t);
   return rec.instanceId;
+}
+
+/** Reply on a paragraph: a comment record + `comments-on` (comment -> paragraph); never a container member. */
+export function addComment(repo: SrsRepository, paragraphId: string, text: string): void {
+  const rec = createRecord(repo, COMMENT_TYPE_ID, typeVersion(repo, COMMENT_TYPE_ID), {
+    fieldValues: { comment_text: text },
+  });
+  createRelation(repo, {
+    relationType: COMMENTS_ON,
+    sourceInstanceId: rec.instanceId,
+    targetInstanceId: paragraphId,
+  });
 }
 
 function patchRecord(repo: SrsRepository, id: string, patch: Record<string, unknown>): void {

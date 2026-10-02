@@ -5,7 +5,7 @@ import type { Page } from "@playwright/test";
 
 /**
  * essay-editor.spec.ts — srs-web#328: the essay writing surface on a fixture repo built with
- * the srs CLI (build.417) from the essay package of muDemocracy.org#229 (see
+ * the srs CLI (build.428) from the essay package of muDemocracy.org#229 (see
  * fixtures/build-essay-fixture.sh). Fixture: essay "On small democracy" with paragraphs
  * Opening / Claim / (untitled "Third paragraph.") and a draft area holding "Spare".
  */

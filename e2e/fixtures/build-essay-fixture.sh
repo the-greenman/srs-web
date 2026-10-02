@@ -1,8 +1,9 @@
-# Builds e2e/fixtures/essay.srsj with srs CLI build.417. The package is a verbatim copy of
+# Builds e2e/fixtures/essay.srsj with srs CLI build.428. The package is a verbatim copy of
 # muDemocracy.org PR #241 (muSrs/packages/essay, issue #229): same ids and field names.
 # EMPTY=1 builds the package only (no essay, for the New essay e2e: essay-empty.srsj).
 # Usage: PKG=<path to muSrs/packages/essay> bash build-essay-fixture.sh <out.srsj>
 set -e
+rm -f "${1:?out.srsj}"
 OUT=${1:?out.srsj}; W=$(mktemp -d)/essay
 srs repo create --repo $W --namespace com.mudemocracy.essay --title "Essay fixture" >/dev/null
 rm -rf $W/package && cp -r "$PKG" $W/package

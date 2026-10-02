@@ -3,8 +3,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { expect, test, type Download, type Page } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { type Download, type Page, expect, test } from "@playwright/test";
+import { acceptMigration, openPackageEditor } from "./helpers.js";
 
 /**
  * walkthrough-r1.spec.ts — Release verification: Decision Log R1 "safe to try"
@@ -52,7 +52,10 @@ function resolveSrsCli(): string | null {
 }
 
 async function fillField(page: Page, label: string, value: string): Promise<void> {
-  const field = page.locator('[data-testid="record-form"] .field').filter({ hasText: label }).first();
+  const field = page
+    .locator('[data-testid="record-form"] .field')
+    .filter({ hasText: label })
+    .first();
   const input = field.locator("input, textarea").first();
   await input.fill(value);
 }
@@ -70,7 +73,9 @@ async function createDecision(page: Page, title: string, statement: string): Pro
   // srs-web#213: DecisionView now threads FieldFormDef description into CardField.
   // title and decision_statement both have descriptions in the governance schema, so
   // at least one .card__field-description caption must appear in the reading view.
-  await expect(page.getByTestId("record-reading").locator(".card__field-description").first()).toBeVisible();
+  await expect(
+    page.getByTestId("record-reading").locator(".card__field-description").first()
+  ).toBeVisible();
   await page.getByTestId("record-reading-back").click();
   await expect(page.getByTestId("decision-log-view")).toBeVisible({ timeout: 3000 });
 }
@@ -102,7 +107,10 @@ test.describe("R1 release walkthrough (#54)", () => {
       await openPackageEditor(page, "governance");
       await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
       await expect(
-        page.locator(".inspector__title").filter({ hasText: "Validation" }).locator(".inspector__title-aside"),
+        page
+          .locator(".inspector__title")
+          .filter({ hasText: "Validation" })
+          .locator(".inspector__title-aside")
       ).toContainText("clean");
     });
 
@@ -126,12 +134,12 @@ test.describe("R1 release walkthrough (#54)", () => {
       await createDecision(
         page,
         "Meeting cadence",
-        "The group meets on the first Tuesday of each month; the walkthrough clerk owns the agenda.",
+        "The group meets on the first Tuesday of each month; the walkthrough clerk owns the agenda."
       );
       await createDecision(
         page,
         "Budget review",
-        "Quarterly budget review starts in October; overruns above 10% go back to the group.",
+        "Quarterly budget review starts in October; overruns above 10% go back to the group."
       );
       await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
 
@@ -143,7 +151,10 @@ test.describe("R1 release walkthrough (#54)", () => {
     // 3. Tag it (#47), link it to the second decision (#48), find both (#46).
     // ------------------------------------------------------------------
     await test.step("tag a decision", async () => {
-      await page.getByTestId("decision-summary-card").filter({ hasText: "Meeting cadence" }).click();
+      await page
+        .getByTestId("decision-summary-card")
+        .filter({ hasText: "Meeting cadence" })
+        .click();
       await expect(page.getByTestId("inspector-tags")).toBeVisible({ timeout: 3000 });
       await page.getByTestId("tag-input").fill("walkthrough");
       await page.getByTestId("tag-add-btn").click();
@@ -158,9 +169,11 @@ test.describe("R1 release walkthrough (#54)", () => {
       await page.getByTestId("link-search").fill("Budget");
       await page.getByTestId("link-decision-item").filter({ hasText: "Budget review" }).click();
       await page.getByTestId("link-confirm").click();
-      await expect(page.getByRole("heading", { name: "Link to another decision" })).not.toBeVisible({
-        timeout: 3000,
-      });
+      await expect(page.getByRole("heading", { name: "Link to another decision" })).not.toBeVisible(
+        {
+          timeout: 3000,
+        }
+      );
     });
 
     await test.step("find decisions via search, tag filter and sort", async () => {
@@ -187,7 +200,10 @@ test.describe("R1 release walkthrough (#54)", () => {
     // 4. Export a single decision (#43) — MD + HTML; whole log (#44).
     // ------------------------------------------------------------------
     await test.step("export a single decision (Markdown + HTML + plain text)", async () => {
-      await page.getByTestId("decision-summary-card").filter({ hasText: "Meeting cadence" }).click();
+      await page
+        .getByTestId("decision-summary-card")
+        .filter({ hasText: "Meeting cadence" })
+        .click();
       await expect(page.getByTestId("decision-export-group")).toBeVisible({ timeout: 3000 });
 
       const [md] = await Promise.all([
@@ -240,6 +256,7 @@ test.describe("R1 release walkthrough (#54)", () => {
       await expect(banner).toBeVisible({ timeout: 5000 });
       await expect(banner).toContainText("R1 Walkthrough Org");
       await banner.locator(".restore-banner__restore").click();
+      await acceptMigration(page);
 
       await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
       await openPackageEditor(page, "governance");
@@ -263,18 +280,20 @@ test.describe("R1 release walkthrough (#54)", () => {
 
       const cli = resolveSrsCli();
       if (!cli) {
-        gaps.push("srs CLI not available in this environment — round-trip validated in local runs only");
+        gaps.push(
+          "srs CLI not available in this environment — round-trip validated in local runs only"
+        );
         return;
       }
       const tmp = path.join(os.tmpdir(), `walkthrough-r1-${Date.now()}.srsj`);
       fs.writeFileSync(tmp, exported);
       try {
         const out = JSON.parse(
-          execFileSync(cli, ["repo", "validate", "--repo", tmp], { encoding: "utf8" }),
+          execFileSync(cli, ["repo", "validate", "--repo", tmp], { encoding: "utf8" })
         );
         expect(out.ok).toBe(true);
         const errors = (out.payload?.diagnostics ?? []).filter(
-          (d: { severity?: string }) => d.severity === "error",
+          (d: { severity?: string }) => d.severity === "error"
         );
         expect(errors).toEqual([]);
       } finally {

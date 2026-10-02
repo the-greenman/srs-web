@@ -25,10 +25,11 @@
     observeWrites,
     exportTree,
     createGovernanceDocument,
-    rfc043MigrationNeeded,
+    neededMigrationIds,
+    RFC046_MIGRATION_ID,
     applyMigration,
-    RFC043_MIGRATION_ID,
   } from "$lib/srs-client.js";
+  import { applyActor, onActorChange, refreshSignedInActor, relayAgentId } from "$lib/actor.js";
   import type { AgentWriteGuard, McpSession, SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
@@ -118,12 +119,23 @@
    * the migrated working copy is unsaved until Save) or immediately when no
    * migration is needed.
    */
-  let pendingMigration = $state<{ repo: SrsRepository; name: string; finish: (dirty: boolean) => void } | null>(null);
+  let pendingMigration = $state<{ repo: SrsRepository; name: string; ids: string[]; finish: (dirty: boolean) => void } | null>(null);
   let migrationError = $state<string | null>(null);
 
   function gateOnMigration(loaded: SrsRepository, name: string, finish: (dirty: boolean) => void): void {
-    if (rfc043MigrationNeeded(loaded)) {
-      pendingMigration = { repo: loaded, name, finish };
+    // rfc043 (7 -> 8) and rfc046 (8 -> 9): attribution (RFC-046) needs revision 9.
+    let ids: string[];
+    try {
+      ids = neededMigrationIds(loaded);
+    } catch (e) {
+      // Unknown revision state: do not open (no actor, no writes) and say why.
+      repo = null;
+      errorMsg = `Could not determine whether this repository needs migration: ${e instanceof Error ? e.message : String(e)}`;
+      appState = "error";
+      return;
+    }
+    if (ids.length) {
+      pendingMigration = { repo: loaded, name, ids, finish };
       repo = null; // not opened (no MCP session etc.) until migrated
       migrationError = null;
       appState = "migrate";
@@ -136,7 +148,10 @@
     const pending = pendingMigration;
     if (!pending) return;
     try {
-      applyMigration(pending.repo, RFC043_MIGRATION_ID);
+      // Each id is re-checked after the previous one (rfc046 requires rfc043 first).
+      for (const id of pending.ids) {
+        if (neededMigrationIds(pending.repo).includes(id)) applyMigration(pending.repo, id);
+      }
     } catch (e: unknown) {
       // All-or-nothing in the engine: nothing was written. Keep the prompt up.
       migrationError = `Migration failed: ${e instanceof Error ? e.message : String(e)}`;
@@ -153,9 +168,25 @@
     appState = "idle";
   }
 
+  /** GitHub login -> `github:<login>` actor (RFC-046); no sign-in leaves the local/none fallback. */
+  async function resolveSignedInActor(): Promise<void> {
+    const github = storageProviders.github;
+    if (!github?.profile) return;
+    await refreshSignedInActor("github", () => github.profile?.() ?? Promise.resolve(null));
+  }
+
+  // Any actor change (login resolved / cleared, name saved) is re-applied to the open repository.
+  onActorChange(() => {
+    if (repo) applyActor(repo);
+  });
+
   function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
     // Every load path passes through here: from now on each engine write reports itself.
-    if (repo) repo = observeWrites(repo, syncDocument);
+    if (repo) {
+      repo = observeWrites(repo, syncDocument);
+      applyActor(repo);
+      void resolveSignedInActor();
+    }
     workingCopy.cancel();
     workingCopySaved = true;
     const revision = documentMutations.beginDocument(repo?.write_epoch() ?? 0, { dirty });
@@ -259,13 +290,31 @@
     }
   }
 
+  /**
+   * Agent actor (RFC-046): the host assigns the id, no name (the engine fills it from the
+   * client's initialize clientInfo). Only on a revision-9 corpus: below it an actor would refuse
+   * writes, so a repo whose migration was declined keeps its agent writes unattributed.
+   */
+  function applyAgentActor(session: McpSession, forRepo: SrsRepository): void {
+    try {
+      if (neededMigrationIds(forRepo).includes(RFC046_MIGRATION_ID)) return;
+    } catch (e) {
+      console.error("Agent actor not set: migration state unknown", e);
+      return;
+    }
+    session.set_actor(JSON.stringify({ kind: "ai", id: relayAgentId() }));
+  }
+
   $effect(() => {
     const current = repo;
     if (!mcpHost) return;
     untrack(() => {
       mcpSession = current ? current.open_mcp_session() : null;
       if (mcpSession) {
-        if (applyGuard()) void mcpHost.attach(mcpSession);
+        if (applyGuard()) {
+          applyAgentActor(mcpSession, current as SrsRepository);
+          void mcpHost.attach(mcpSession);
+        }
       } else mcpHost.detach();
     });
   });
@@ -620,9 +669,8 @@
   <div class="splash" data-testid="migration-prompt">
     <h1 class="splash__title">Update needed</h1>
     <p class="splash__sub">
-      <strong>{pendingMigration.name}</strong> uses an older SRS data model (revision 7) and cannot be
-      opened as-is. Migrating rewrites container membership in the working copy
-      (<code>{RFC043_MIGRATION_ID}</code>). Nothing is saved until you press Save.
+      <strong>{pendingMigration.name}</strong> uses an older SRS data model and cannot be
+      opened as-is. Migrating updates the working copy (<code>{pendingMigration.ids.join(", ")}</code>). Nothing is saved until you press Save.
     </p>
     {#if migrationError}<p class="splash__error" role="alert" data-testid="migration-error">{migrationError}</p>{/if}
     <div class="restore-banner__actions">

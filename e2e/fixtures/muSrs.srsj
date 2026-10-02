@@ -13,8 +13,8 @@
       ],
       "title": "muDemocracy"
     },
-    "createdAt": "2026-06-04T00:00:00Z",
-    "dataModelRevision": 8,
+    "createdAt": "2026-10-02T22:18:37.783080561+00:00",
+    "dataModelRevision": 9,
     "declaredExtensions": [
       "ext:type-inheritance"
     ],
@@ -25,7 +25,31 @@
     "title": "muDemocracy"
   },
   "data": {
-    "containers/1c843817-c0f9-4ba6-b65f-c6d23af161a7.json": {
+    "containers/deciding-which-decisions-to-record-7989545d.json": {
+      "anchorInstanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
+      "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
+      "containerType": "guide",
+      "createdAt": "2026-06-04T00:00:00Z",
+      "memberInstanceIds": [
+        {
+          "instanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f"
+        },
+        {
+          "instanceId": "a638cca2-6650-44bb-9ede-7d2fc40c57b2"
+        },
+        {
+          "instanceId": "1126bdf3-8171-4c04-89fd-13610018bb78"
+        },
+        {
+          "instanceId": "b5a4b93a-16d5-400d-be4b-a11ee98bc9e6"
+        },
+        {
+          "instanceId": "07b77123-7e01-4253-883e-766c99016016"
+        }
+      ],
+      "title": "Deciding which decisions to record"
+    },
+    "containers/decision-recording-1c843817.json": {
       "anchorInstanceId": "1ff0ab83-c1c8-4e23-b611-2e629d919307",
       "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
       "containerType": "guide",
@@ -52,7 +76,7 @@
       ],
       "title": "Decision Recording"
     },
-    "containers/78749395-dcde-4b02-a59e-184095e0ae0b.json": {
+    "containers/deliberating-a-decision-78749395.json": {
       "anchorInstanceId": "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b",
       "containerId": "78749395-dcde-4b02-a59e-184095e0ae0b",
       "containerType": "guide",
@@ -76,31 +100,7 @@
       ],
       "title": "Deliberating a decision"
     },
-    "containers/7989545d-8649-455d-96c8-5b4615447fb7.json": {
-      "anchorInstanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
-      "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
-      "containerType": "guide",
-      "createdAt": "2026-06-04T00:00:00Z",
-      "memberInstanceIds": [
-        {
-          "instanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f"
-        },
-        {
-          "instanceId": "a638cca2-6650-44bb-9ede-7d2fc40c57b2"
-        },
-        {
-          "instanceId": "1126bdf3-8171-4c04-89fd-13610018bb78"
-        },
-        {
-          "instanceId": "b5a4b93a-16d5-400d-be4b-a11ee98bc9e6"
-        },
-        {
-          "instanceId": "07b77123-7e01-4253-883e-766c99016016"
-        }
-      ],
-      "title": "Deciding which decisions to record"
-    },
-    "containers/d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d.json": {
+    "containers/recognising-decisions-d0c8cba0.json": {
       "anchorInstanceId": "0dff90b5-4534-4a2b-9f1a-28f35130e943",
       "containerId": "d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d",
       "containerType": "guide",
@@ -692,6 +692,23 @@
       "namespace": "com.mudemocracy",
       "version": 1
     },
+    "package/fields/statement-3b000001.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Concisely state what this repository exists to do or achieve. This is the primary machine-readable identity text for the repository. Write one or two sentences in plain language; avoid jargon. The value must be non-empty."
+      },
+      "createdAt": "2026-07-08T00:00:00Z",
+      "description": "The purpose or mission statement of this repository. Must be non-empty.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "3b000001-0000-4000-a000-000000000001",
+      "name": "statement",
+      "namespace": "com.semanticops.core",
+      "version": 1
+    },
     "package/fields/subheading-4523e0e0.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
       "aiGuidance": {
@@ -783,6 +800,22 @@
       "namespace": "com.mudemocracy",
       "version": 1
     },
+    "package/fields/title-3b000002.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "An optional short label for the purpose record, for use in constrained UI contexts such as sidebars. Prefer the repository manifest title for primary display; use this only when the identity record itself needs a narrow-context label."
+      },
+      "createdAt": "2026-07-08T00:00:00Z",
+      "description": "Short human-readable label for the identity record. Optional. Distinct from the repository manifest title.",
+      "editorHint": "singleline",
+      "fieldType": {
+        "datatype": "string"
+      },
+      "id": "3b000002-0000-4000-a000-000000000002",
+      "name": "title",
+      "namespace": "com.semanticops.core",
+      "version": 1
+    },
     "package/fields/title-e5b359b0.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
       "aiGuidance": {
@@ -859,14 +892,23 @@
         "fields/cells-0ba00b45.json",
         "fields/tables-3f7c53f0.json",
         "fields/items-d720e9f3.json",
-        "fields/items-1a96b71f.json"
+        "fields/items-1a96b71f.json",
+        "fields/statement-3b000001.json",
+        "fields/title-3b000002.json"
       ],
       "id": "1881df16-af1e-4dd3-a2e1-db19ff7c8fd6",
+      "lifecycles": [],
       "name": "primary",
       "namespace": "com.mudemocracy",
+      "protocols": [],
       "relationTypes": [
+        "relation-types/contains-72b25b57.json",
+        "relation-types/depends-on-7f8e9d0c.json",
+        "relation-types/derived-from-b1c2d3e4.json",
+        "relation-types/evidences-d4e5f6a7.json",
         "relation-types/precedes-8d18debb.json",
-        "relation-types/contains-72b25b57.json"
+        "relation-types/refines-e5f6a7b8.json",
+        "relation-types/supersedes-c2d3e4f5.json"
       ],
       "status": "active",
       "themes": [
@@ -882,15 +924,17 @@
         "types/sectioncommentary-474e299c.json",
         "types/persona-ff66ad38.json",
         "types/section-a6bf3a1d.json",
-        "types/section.table_tables.json",
-        "types/section.table_items.json",
-        "types/section.commentary_items.json",
-        "types/table_rows-b9ee89ae.json"
+        "types/sectiontabletables-0ebabd02.json",
+        "types/sectiontableitems-b280dddf.json",
+        "types/sectioncommentaryitems-5da0b977.json",
+        "types/tablerows-b9ee89ae.json",
+        "types/purpose-3c000001.json"
       ],
       "version": "1.0.0",
       "views": [
         "views/guide-prose-view-030637e8.json"
-      ]
+      ],
+      "vocabularies": []
     },
     "package/relation-types/contains-72b25b57.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
@@ -906,6 +950,46 @@
       "namespace": "com.mudemocracy",
       "version": 1
     },
+    "package/relation-types/depends-on-7f8e9d0c.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source depends on target",
+      "category": "dependency",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance requires target instance to be complete, valid, or usable. Target is a prerequisite.",
+      "id": "7f8e9d0c-1b2a-4f3e-9d8c-7b6a5f4e3d2c",
+      "irreflexive": true,
+      "key": "depends-on",
+      "label": "Depends on",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/derived-from-b1c2d3e4.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the derived work; target is the source material",
+      "category": "derivation",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance was produced from or substantially informed by target instance. Provenance and derivation chain.",
+      "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",
+      "inverseType": "source-of",
+      "irreflexive": true,
+      "key": "derived-from",
+      "label": "Derived from",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/evidences-d4e5f6a7.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the evidence; target is the claim or content being supported",
+      "category": "evidence",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance is evidence for, supports, or substantiates the claim or content of target instance.",
+      "id": "d4e5f6a7-b8c9-4d0e-9f1a-2b3c4d5e6f7a",
+      "irreflexive": true,
+      "key": "evidences",
+      "label": "Evidences",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
     "package/relation-types/precedes-8d18debb.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
       "canonicalDirection": "source comes before target",
@@ -918,6 +1002,33 @@
       "key": "precedes",
       "label": "Precedes",
       "namespace": "com.mudemocracy",
+      "version": 1
+    },
+    "package/relation-types/refines-e5f6a7b8.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the more specific instance; target is the general instance",
+      "category": "refinement",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance is a more specific, detailed, or precise version of target instance. Does not replace or invalidate target.",
+      "id": "e5f6a7b8-c9d0-4e1f-8a2b-3c4d5e6f7a8b",
+      "irreflexive": true,
+      "key": "refines",
+      "label": "Refines",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/supersedes-c2d3e4f5.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the newer instance; target is the older instance being superseded",
+      "category": "governance",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance replaces or invalidates target instance. Source is newer; target is the older instance being superseded.",
+      "id": "c2d3e4f5-a6b7-4c8d-9e0f-1a2b3c4d5e6f",
+      "inverseType": "superseded-by",
+      "irreflexive": true,
+      "key": "supersedes",
+      "label": "Supersedes",
+      "namespace": "com.semanticops.srs",
       "version": 1
     },
     "package/themes/guide-prose-4f8a2c1e.json": {
@@ -1037,6 +1148,32 @@
       "namespace": "com.mudemocracy",
       "version": 1
     },
+    "package/types/purpose-3c000001.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Use to express what a repository exists to do or achieve. The statement field is the primary, required field. The title field is optional and intended for constrained UI contexts."
+      },
+      "createdAt": "2026-07-08T00:00:00Z",
+      "description": "A Tier-2 typed record capturing the purpose or mission of a repository. Always available in every conforming SRS repository via the implicit core base package (RFC-018). identityInstanceId on the root container MUST reference a record of this type.",
+      "fields": [
+        {
+          "displayLabel": "Statement",
+          "fieldId": "3b000001-0000-4000-a000-000000000001",
+          "order": 0,
+          "required": true
+        },
+        {
+          "displayLabel": "Title",
+          "fieldId": "3b000002-0000-4000-a000-000000000002",
+          "order": 1,
+          "required": false
+        }
+      ],
+      "id": "3c000001-0000-4000-a000-000000000001",
+      "name": "purpose",
+      "namespace": "com.semanticops.core",
+      "version": 1
+    },
     "package/types/section-a6bf3a1d.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
       "createdAt": "2026-06-05T00:00:00Z",
@@ -1074,84 +1211,6 @@
       "namespace": "com.mudemocracy",
       "version": 1
     },
-    "package/types/section.commentary_items.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
-      "createdAt": "2026-06-08T00:00:00Z",
-      "description": "Items",
-      "fields": [
-        {
-          "fieldId": "98be1bba-e609-4754-933e-853e884807b8",
-          "order": 0,
-          "required": true
-        },
-        {
-          "fieldId": "82df4f78-1180-4cc8-8c01-f1b96bd8d0fe",
-          "order": 1,
-          "required": true
-        }
-      ],
-      "id": "5da0b977-c5b1-42f4-a729-9d5f7768e449",
-      "name": "section.commentary_items",
-      "namespace": "com.mudemocracy",
-      "version": 1
-    },
-    "package/types/section.table_items.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Items",
-      "fields": [
-        {
-          "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
-          "order": 0,
-          "required": false
-        },
-        {
-          "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
-          "order": 1,
-          "required": true
-        }
-      ],
-      "id": "b280dddf-db1b-45d6-b404-25b8ce54ff47",
-      "name": "section.table_items",
-      "namespace": "com.mudemocracy",
-      "version": 1
-    },
-    "package/types/section.table_tables.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
-      "createdAt": "2026-06-04T00:00:00Z",
-      "description": "Tables",
-      "fields": [
-        {
-          "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
-          "order": 0,
-          "required": false
-        },
-        {
-          "fieldId": "920fd0a2-5fb2-40c4-9362-7c6c86ab8ccd",
-          "order": 1,
-          "required": false
-        },
-        {
-          "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
-          "order": 2,
-          "required": false
-        },
-        {
-          "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
-          "order": 3,
-          "required": true
-        },
-        {
-          "fieldId": "8d98614d-f420-4597-90fd-c141e8584b06",
-          "order": 4,
-          "required": false
-        }
-      ],
-      "id": "0ebabd02-e237-4ff3-886b-909f7d5b768e",
-      "name": "section.table_tables",
-      "namespace": "com.mudemocracy",
-      "version": 1
-    },
     "package/types/sectioncommentary-474e299c.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
       "createdAt": "2026-06-08T00:00:00Z",
@@ -1178,6 +1237,27 @@
       "name": "section.commentary",
       "namespace": "com.mudemocracy",
       "version": 2
+    },
+    "package/types/sectioncommentaryitems-5da0b977.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-06-08T00:00:00Z",
+      "description": "Items",
+      "fields": [
+        {
+          "fieldId": "98be1bba-e609-4754-933e-853e884807b8",
+          "order": 0,
+          "required": true
+        },
+        {
+          "fieldId": "82df4f78-1180-4cc8-8c01-f1b96bd8d0fe",
+          "order": 1,
+          "required": true
+        }
+      ],
+      "id": "5da0b977-c5b1-42f4-a729-9d5f7768e449",
+      "name": "section.commentary_items",
+      "namespace": "com.mudemocracy",
+      "version": 1
     },
     "package/types/sectionlist-76cdc3fb.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
@@ -1271,6 +1351,63 @@
       "namespace": "com.mudemocracy",
       "version": 2
     },
+    "package/types/sectiontableitems-b280dddf.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Items",
+      "fields": [
+        {
+          "fieldId": "a02b147b-4319-4cdd-b263-781640c93fcb",
+          "order": 0,
+          "required": false
+        },
+        {
+          "fieldId": "6fafae71-f6f1-4e83-b091-19765517ff80",
+          "order": 1,
+          "required": true
+        }
+      ],
+      "id": "b280dddf-db1b-45d6-b404-25b8ce54ff47",
+      "name": "section.table_items",
+      "namespace": "com.mudemocracy",
+      "version": 1
+    },
+    "package/types/sectiontabletables-0ebabd02.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Tables",
+      "fields": [
+        {
+          "fieldId": "4523e0e0-f7b6-4c72-9f30-b526ca74799e",
+          "order": 0,
+          "required": false
+        },
+        {
+          "fieldId": "920fd0a2-5fb2-40c4-9362-7c6c86ab8ccd",
+          "order": 1,
+          "required": false
+        },
+        {
+          "fieldId": "15d81030-07db-40a7-9885-d23b1d6b39f7",
+          "order": 2,
+          "required": false
+        },
+        {
+          "fieldId": "876daf6a-aefa-421c-80b5-2e3c3a4c6397",
+          "order": 3,
+          "required": true
+        },
+        {
+          "fieldId": "8d98614d-f420-4597-90fd-c141e8584b06",
+          "order": 4,
+          "required": false
+        }
+      ],
+      "id": "0ebabd02-e237-4ff3-886b-909f7d5b768e",
+      "name": "section.table_tables",
+      "namespace": "com.mudemocracy",
+      "version": 1
+    },
     "package/types/sectiontext-4408a98e.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
       "createdAt": "2026-06-04T00:00:00Z",
@@ -1304,7 +1441,7 @@
       "namespace": "com.mudemocracy",
       "version": 1
     },
-    "package/types/table_rows-b9ee89ae.json": {
+    "package/types/tablerows-b9ee89ae.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
       "createdAt": "2026-08-09T22:45:00Z",
       "description": "A table row: an ordered list of cell values (project-local per RFC-036 OQ3).",
@@ -1407,7 +1544,7 @@
       "namespace": "com.mudemocracy",
       "version": 1
     },
-    "records/notes/09b3fbbc-d7af-4924-b0a9-4c09133e2550.json": {
+    "records/notes/mudemocracy-09b3fbbc.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/note.json",
       "instanceId": "09b3fbbc-d7af-4924-b0a9-4c09133e2550",
       "sections": [
@@ -1421,7 +1558,87 @@
       ],
       "title": "muDemocracy"
     },
-    "records/tier-2/07b77123-7e01-4253-883e-766c99016016.json": {
+    "records/tier-2/guide-0dff90b5.json": {
+      "createdAt": "2026-06-04T13:19:26.822539212+00:00",
+      "fieldValues": {
+        "slug": "recognising-decisions",
+        "title": "Recognising decisions",
+        "subtitle": "A guide for recognising when a decision exists",
+        "body": "When a group of people meet to discuss a subject the conversation can feel like it lacks direction. Even when the group wants to take action, it is difficult to identify moments where a decision could be made. Often the language we use hides the fact that we are making a decision by default — not deciding is also a decision.\n\nThis guide helps you to recognise unhelpful language and patterns and shows you how to ask the right questions to bring clarity to your discussions.",
+        "blocks": "about-mudemocracy"
+      },
+      "instanceId": "0dff90b5-4534-4a2b-9f1a-28f35130e943",
+      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
+      "typeName": "guide",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-05T17:39:57.688235313+00:00"
+    },
+    "records/tier-2/guide-1ff0ab83.json": {
+      "createdAt": "2026-06-04T13:19:24.056851634+00:00",
+      "fieldValues": {
+        "slug": "decision-recording",
+        "title": "Decision Recording",
+        "subtitle": "A guide for recording decisions made by a group.",
+        "body": "When a group finally makes a decision, it can be easy to assume everyone remembers it the same way. But memories fade, and people often leave a meeting with different ideas about what was actually agreed. Without a clear record, groups often end up having the exact same conversation weeks later, wasting time and energy.\n\nThis guide helps you capture agreements clearly and simply using a four-question format. It shows you how to create a reliable decision log so your group can move forward with confidence and clarity.",
+        "blocks": "about-mudemocracy"
+      },
+      "instanceId": "1ff0ab83-c1c8-4e23-b611-2e629d919307",
+      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
+      "typeName": "guide",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-05T17:39:57.663093051+00:00"
+    },
+    "records/tier-2/guide-30b82df3.json": {
+      "createdAt": "2026-06-04T13:19:19.097472264+00:00",
+      "fieldValues": {
+        "slug": "deliberating-a-decision",
+        "title": "Deliberating a decision",
+        "subtitle": "A guide for discussing making a decision.",
+        "body": "This guide contains a set of questions that will reliably move you through a decision defining and recording process. This avoids constantly reviewing questions that have been settled.",
+        "blocks": "about-mudemocracy"
+      },
+      "instanceId": "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b",
+      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
+      "typeName": "guide",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-09T13:23:25.628603598+00:00"
+    },
+    "records/tier-2/guide-a44be813.json": {
+      "createdAt": "2026-06-04T13:19:16.473193163+00:00",
+      "fieldValues": {
+        "slug": "deciding-which-decisions-to-record",
+        "title": "Deciding which decisions to record",
+        "subtitle": "A guide for deciding which decisions to record.",
+        "blocks": "about-mudemocracy"
+      },
+      "instanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
+      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
+      "typeName": "guide",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-04T13:19:16.473201434+00:00"
+    },
+    "records/tier-2/section-list-2aeb491a.json": {
+      "createdAt": "2026-06-04T13:19:24.162247816+00:00",
+      "fieldValues": {
+        "heading": "Process",
+        "slug": "process",
+        "body": "To begin, start with a relatively easy decision. When you feel more confident, move on to more complex or emotionally charged decisions.\n\nThere are 4 questions to answer to be able to record a decision clearly so that it is useful now and in the future.",
+        "list-items": "What was decided?\nWhy?\nWhat were the options?\nWhen to revisit?",
+        "outro": "Confirm the decision before moving onto the next item. The recording of all decisions must be agreed and recorded before the end of the meeting.",
+        "theme": "default"
+      },
+      "instanceId": "2aeb491a-9664-45e6-87e6-6fa38a3324c4",
+      "typeId": "76cdc3fb-8460-4efc-90f5-3c4a15b86cad",
+      "typeName": "section.list",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-09T15:52:54.045+00:00"
+    },
+    "records/tier-2/section-table-07b77123.json": {
       "createdAt": "2026-06-04T13:19:18.372688803+00:00",
       "fieldValues": {
         "slug": "quick-checklist",
@@ -1434,7 +1651,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-05T17:39:57.634892380+00:00"
     },
-    "records/tier-2/0c7f33d9-58cb-489c-9fd8-26d8b807fe21.json": {
+    "records/tier-2/section-table-0c7f33d9.json": {
       "createdAt": "2026-06-04T13:19:28.119252416+00:00",
       "fieldValues": {
         "slug": "questions-for-clarity",
@@ -1504,38 +1721,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-05T17:39:57.709403244+00:00"
     },
-    "records/tier-2/0dff90b5-4534-4a2b-9f1a-28f35130e943.json": {
-      "createdAt": "2026-06-04T13:19:26.822539212+00:00",
-      "fieldValues": {
-        "slug": "recognising-decisions",
-        "title": "Recognising decisions",
-        "subtitle": "A guide for recognising when a decision exists",
-        "body": "When a group of people meet to discuss a subject the conversation can feel like it lacks direction. Even when the group wants to take action, it is difficult to identify moments where a decision could be made. Often the language we use hides the fact that we are making a decision by default — not deciding is also a decision.\n\nThis guide helps you to recognise unhelpful language and patterns and shows you how to ask the right questions to bring clarity to your discussions.",
-        "blocks": "about-mudemocracy"
-      },
-      "instanceId": "0dff90b5-4534-4a2b-9f1a-28f35130e943",
-      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
-      "typeName": "guide",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-05T17:39:57.688235313+00:00"
-    },
-    "records/tier-2/0fd5e0f3-63d8-430d-9454-da8c9f20cf52.json": {
-      "createdAt": "2026-06-04T13:19:26.955112434+00:00",
-      "fieldValues": {
-        "slug": "process",
-        "heading": "Process",
-        "body": "The first step is recognising a decision exists. This can be difficult because the language we use mixes decisions with analysis and discussion. A useful definition is:\n\nIf you are choosing a path that makes it harder or impossible to go back to or do something else later — you are making a decision.",
-        "callout": "A decision exists when making a commitment will reduce future options."
-      },
-      "instanceId": "0fd5e0f3-63d8-430d-9454-da8c9f20cf52",
-      "typeId": "4408a98e-d23e-4bc6-aef5-d8678571e2f6",
-      "typeName": "section.text",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-05T17:39:57.693849932+00:00"
-    },
-    "records/tier-2/1126bdf3-8171-4c04-89fd-13610018bb78.json": {
+    "records/tier-2/section-table-1126bdf3.json": {
       "createdAt": "2026-06-04T13:19:17.387992682+00:00",
       "fieldValues": {
         "slug": "strategy-vs-tasks",
@@ -1587,23 +1773,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-05T17:39:57.627465072+00:00"
     },
-    "records/tier-2/1ff0ab83-c1c8-4e23-b611-2e629d919307.json": {
-      "createdAt": "2026-06-04T13:19:24.056851634+00:00",
-      "fieldValues": {
-        "slug": "decision-recording",
-        "title": "Decision Recording",
-        "subtitle": "A guide for recording decisions made by a group.",
-        "body": "When a group finally makes a decision, it can be easy to assume everyone remembers it the same way. But memories fade, and people often leave a meeting with different ideas about what was actually agreed. Without a clear record, groups often end up having the exact same conversation weeks later, wasting time and energy.\n\nThis guide helps you capture agreements clearly and simply using a four-question format. It shows you how to create a reliable decision log so your group can move forward with confidence and clarity.",
-        "blocks": "about-mudemocracy"
-      },
-      "instanceId": "1ff0ab83-c1c8-4e23-b611-2e629d919307",
-      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
-      "typeName": "guide",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-05T17:39:57.663093051+00:00"
-    },
-    "records/tier-2/26f98f5b-f49a-4ac1-8bac-41aedccabc31.json": {
+    "records/tier-2/section-table-26f98f5b.json": {
       "createdAt": "2026-06-04T13:19:28.687634744+00:00",
       "fieldValues": {
         "slug": "translating-language",
@@ -1662,24 +1832,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-05T17:39:57.719892684+00:00"
     },
-    "records/tier-2/2aeb491a-9664-45e6-87e6-6fa38a3324c4.json": {
-      "createdAt": "2026-06-04T13:19:24.162247816+00:00",
-      "fieldValues": {
-        "heading": "Process",
-        "slug": "process",
-        "body": "To begin, start with a relatively easy decision. When you feel more confident, move on to more complex or emotionally charged decisions.\n\nThere are 4 questions to answer to be able to record a decision clearly so that it is useful now and in the future.",
-        "list-items": "What was decided?\nWhy?\nWhat were the options?\nWhen to revisit?",
-        "outro": "Confirm the decision before moving onto the next item. The recording of all decisions must be agreed and recorded before the end of the meeting.",
-        "theme": "default"
-      },
-      "instanceId": "2aeb491a-9664-45e6-87e6-6fa38a3324c4",
-      "typeId": "76cdc3fb-8460-4efc-90f5-3c4a15b86cad",
-      "typeName": "section.list",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-09T15:52:54.045+00:00"
-    },
-    "records/tier-2/2b512f4c-522f-4081-bb07-a1cfe7ad94f0.json": {
+    "records/tier-2/section-table-2b512f4c.json": {
       "createdAt": "2026-06-04T13:19:19.207369888+00:00",
       "fieldValues": {
         "slug": "process",
@@ -1758,23 +1911,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-09T13:23:55.378341380+00:00"
     },
-    "records/tier-2/30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b.json": {
-      "createdAt": "2026-06-04T13:19:19.097472264+00:00",
-      "fieldValues": {
-        "slug": "deliberating-a-decision",
-        "title": "Deliberating a decision",
-        "subtitle": "A guide for discussing making a decision.",
-        "body": "This guide contains a set of questions that will reliably move you through a decision defining and recording process. This avoids constantly reviewing questions that have been settled.",
-        "blocks": "about-mudemocracy"
-      },
-      "instanceId": "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b",
-      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
-      "typeName": "guide",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-09T13:23:25.628603598+00:00"
-    },
-    "records/tier-2/3ad28075-33d6-457e-a824-9421d0e83e2b.json": {
+    "records/tier-2/section-table-3ad28075.json": {
       "createdAt": "2026-06-04T13:19:25.327585299+00:00",
       "fieldValues": {
         "slug": "example",
@@ -1823,7 +1960,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-09T12:21:49.413923240+00:00"
     },
-    "records/tier-2/3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c.json": {
+    "records/tier-2/section-table-3d2c4b12.json": {
       "createdAt": "2026-06-04T13:19:23.533596629+00:00",
       "fieldValues": {
         "slug": "tips",
@@ -1859,7 +1996,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-09T13:25:06.656354203+00:00"
     },
-    "records/tier-2/6ddd3472-a70d-4382-bd57-6bb24708a764.json": {
+    "records/tier-2/section-table-6ddd3472.json": {
       "createdAt": "2026-06-04T13:19:26.278837863+00:00",
       "fieldValues": {
         "slug": "things-to-watch-out-for",
@@ -1891,7 +2028,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-09T12:22:23.513436863+00:00"
     },
-    "records/tier-2/8b33ce73-8e9f-45bb-90a3-c782c004db1e.json": {
+    "records/tier-2/section-table-8b33ce73.json": {
       "createdAt": "2026-06-04T13:19:24.728404321+00:00",
       "fieldValues": {
         "slug": "what-to-record",
@@ -1954,22 +2091,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-09T12:21:34.180223786+00:00"
     },
-    "records/tier-2/a44be813-d2b4-4214-aaa9-4b8a11ce206f.json": {
-      "createdAt": "2026-06-04T13:19:16.473193163+00:00",
-      "fieldValues": {
-        "slug": "deciding-which-decisions-to-record",
-        "title": "Deciding which decisions to record",
-        "subtitle": "A guide for deciding which decisions to record.",
-        "blocks": "about-mudemocracy"
-      },
-      "instanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
-      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
-      "typeName": "guide",
-      "typeNamespace": "com.mudemocracy",
-      "typeVersion": 1,
-      "updatedAt": "2026-06-04T13:19:16.473201434+00:00"
-    },
-    "records/tier-2/a638cca2-6650-44bb-9ede-7d2fc40c57b2.json": {
+    "records/tier-2/section-table-a638cca2.json": {
       "createdAt": "2026-06-04T13:19:16.577587806+00:00",
       "fieldValues": {
         "slug": "process",
@@ -2049,7 +2171,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-05T17:39:57.618594708+00:00"
     },
-    "records/tier-2/afa31093-d955-4ea1-841e-9443775e3f15.json": {
+    "records/tier-2/section-table-afa31093.json": {
       "createdAt": "2026-06-04T13:19:27.208333536+00:00",
       "fieldValues": {
         "slug": "hidden-decisions",
@@ -2120,7 +2242,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-05T17:39:57.701530545+00:00"
     },
-    "records/tier-2/b5a4b93a-16d5-400d-be4b-a11ee98bc9e6.json": {
+    "records/tier-2/section-table-b5a4b93a.json": {
       "createdAt": "2026-06-04T13:19:17.990311350+00:00",
       "fieldValues": {
         "slug": "decision-log-review",
@@ -2147,7 +2269,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-05T17:39:57.631791491+00:00"
     },
-    "records/tier-2/e89f9184-6c54-4c99-936a-9ae3baf5595b.json": {
+    "records/tier-2/section-table-e89f9184.json": {
       "createdAt": "2026-06-04T13:19:25.895686218+00:00",
       "fieldValues": {
         "slug": "commentary",
@@ -2179,7 +2301,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-09T15:56:16.244+00:00"
     },
-    "records/tier-2/f82ca8a8-63f7-49b9-89df-94597277025b.json": {
+    "records/tier-2/section-table-f82ca8a8.json": {
       "createdAt": "2026-06-04T13:19:19.659626811+00:00",
       "fieldValues": {
         "slug": "detail-1",
@@ -2275,7 +2397,7 @@
       "typeVersion": 2,
       "updatedAt": "2026-06-09T13:24:22.897026532+00:00"
     },
-    "records/tier-2/f889bfae-3798-43ab-8e7c-b0a42d6f5291.json": {
+    "records/tier-2/section-table-f889bfae.json": {
       "createdAt": "2026-06-04T13:19:21.344337895+00:00",
       "fieldValues": {
         "slug": "detail-2",
@@ -2390,6 +2512,21 @@
       "typeNamespace": "com.mudemocracy",
       "typeVersion": 2,
       "updatedAt": "2026-06-09T13:24:48.414835854+00:00"
+    },
+    "records/tier-2/section-text-0fd5e0f3.json": {
+      "createdAt": "2026-06-04T13:19:26.955112434+00:00",
+      "fieldValues": {
+        "slug": "process",
+        "heading": "Process",
+        "body": "The first step is recognising a decision exists. This can be difficult because the language we use mixes decisions with analysis and discussion. A useful definition is:\n\nIf you are choosing a path that makes it harder or impossible to go back to or do something else later — you are making a decision.",
+        "callout": "A decision exists when making a commitment will reduce future options."
+      },
+      "instanceId": "0fd5e0f3-63d8-430d-9454-da8c9f20cf52",
+      "typeId": "4408a98e-d23e-4bc6-aef5-d8678571e2f6",
+      "typeName": "section.text",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-06-05T17:39:57.693849932+00:00"
     },
     "relations/090910a3-76e2-4df6-98ff-de72c2e1c66b.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",

@@ -24,15 +24,15 @@
       ],
       "title": "Test Governance"
     },
-    "createdAt": "2026-01-01T00:00:00Z",
-    "dataModelRevision": 8,
+    "createdAt": "2026-10-02T22:18:45.296230013+00:00",
+    "dataModelRevision": 9,
     "namespace": "test",
     "repositoryId": "00000000-0000-0000-0000-000000000001",
     "srsVersion": "2.0-draft",
     "title": "Test Governance"
   },
   "data": {
-    "containers/aa000001-0000-4000-8000-000000000001.json": {
+    "containers/articles-aa000001.json": {
       "anchorInstanceId": "11000000-0000-4000-8000-000000000002",
       "containerId": "aa000001-0000-4000-8000-000000000001",
       "memberInstanceIds": [
@@ -42,17 +42,7 @@
       ],
       "title": "Articles"
     },
-    "containers/cc000001-0000-4000-8000-000000000001.json": {
-      "anchorInstanceId": "11000000-0000-4000-8000-000000000004",
-      "containerId": "cc000001-0000-4000-8000-000000000001",
-      "memberInstanceIds": [
-        {
-          "instanceId": "11000000-0000-4000-8000-000000000004"
-        }
-      ],
-      "title": "Roles"
-    },
-    "containers/dd000001-0000-4000-8000-000000000001.json": {
+    "containers/decision-log-dd000001.json": {
       "anchorInstanceId": "11000000-0000-4000-8000-000000000003",
       "containerId": "dd000001-0000-4000-8000-000000000001",
       "memberInstanceIds": [
@@ -62,7 +52,7 @@
       ],
       "title": "Decision Log"
     },
-    "containers/ee000001-0000-4000-8000-000000000001.json": {
+    "containers/exercise-book-ee000001.json": {
       "anchorInstanceId": "11000000-0000-4000-8000-000000000005",
       "containerId": "ee000001-0000-4000-8000-000000000001",
       "memberInstanceIds": [
@@ -72,30 +62,185 @@
       ],
       "title": "Exercise Book"
     },
+    "containers/roles-cc000001.json": {
+      "anchorInstanceId": "11000000-0000-4000-8000-000000000004",
+      "containerId": "cc000001-0000-4000-8000-000000000001",
+      "memberInstanceIds": [
+        {
+          "instanceId": "11000000-0000-4000-8000-000000000004"
+        }
+      ],
+      "title": "Roles"
+    },
+    "package/fields/statement-3b000001.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Concisely state what this repository exists to do or achieve. This is the primary machine-readable identity text for the repository. Write one or two sentences in plain language; avoid jargon. The value must be non-empty."
+      },
+      "createdAt": "2026-07-08T00:00:00Z",
+      "description": "The purpose or mission statement of this repository. Must be non-empty.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "3b000001-0000-4000-a000-000000000001",
+      "name": "statement",
+      "namespace": "com.semanticops.core",
+      "version": 1
+    },
+    "package/fields/title-3b000002.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "An optional short label for the purpose record, for use in constrained UI contexts such as sidebars. Prefer the repository manifest title for primary display; use this only when the identity record itself needs a narrow-context label."
+      },
+      "createdAt": "2026-07-08T00:00:00Z",
+      "description": "Short human-readable label for the identity record. Optional. Distinct from the repository manifest title.",
+      "editorHint": "singleline",
+      "fieldType": {
+        "datatype": "string"
+      },
+      "id": "3b000002-0000-4000-a000-000000000002",
+      "name": "title",
+      "namespace": "com.semanticops.core",
+      "version": 1
+    },
     "package/package.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
+      "blueprints": [],
       "compositions": [],
       "createdAt": "2026-01-01T00:00:00Z",
       "dataModelRevision": 8,
       "description": "",
-      "fields": [],
+      "fields": [
+        "fields/statement-3b000001.json",
+        "fields/title-3b000002.json"
+      ],
       "id": "00000000-0000-4000-8000-0000000000aa",
+      "lifecycles": [],
       "name": "test-package",
       "namespace": "com.test",
-      "relationTypes": [],
+      "protocols": [],
+      "relationTypes": [
+        "relation-types/contains-3a1b2c4d.json",
+        "relation-types/depends-on-7f8e9d0c.json",
+        "relation-types/derived-from-b1c2d3e4.json",
+        "relation-types/evidences-d4e5f6a7.json",
+        "relation-types/precedes-f7a8b9c0.json",
+        "relation-types/refines-e5f6a7b8.json",
+        "relation-types/supersedes-c2d3e4f5.json"
+      ],
       "status": "active",
+      "themes": [],
       "title": "test-package",
       "types": [
-        "types/governance-repo.json",
-        "types/articles.json",
-        "types/decision-log.json",
-        "types/roles.json",
-        "types/exercise-book.json"
+        "types/governance-repo-00000000.json",
+        "types/articles-00000000.json",
+        "types/decision-log-00000000.json",
+        "types/roles-00000000.json",
+        "types/exercise-book-00000000.json",
+        "types/purpose-3c000001.json"
       ],
       "version": "1.0.0",
-      "views": []
+      "views": [],
+      "vocabularies": []
     },
-    "package/types/articles.json": {
+    "package/relation-types/contains-3a1b2c4d.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the container; target is the contained member",
+      "category": "composition",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance contains or is composed of target instance. Defines structural membership or composition boundaries.",
+      "id": "3a1b2c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+      "inverseType": "part-of",
+      "irreflexive": true,
+      "key": "contains",
+      "label": "Contains",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/depends-on-7f8e9d0c.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source depends on target",
+      "category": "dependency",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance requires target instance to be complete, valid, or usable. Target is a prerequisite.",
+      "id": "7f8e9d0c-1b2a-4f3e-9d8c-7b6a5f4e3d2c",
+      "irreflexive": true,
+      "key": "depends-on",
+      "label": "Depends on",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/derived-from-b1c2d3e4.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the derived work; target is the source material",
+      "category": "derivation",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance was produced from or substantially informed by target instance. Provenance and derivation chain.",
+      "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",
+      "inverseType": "source-of",
+      "irreflexive": true,
+      "key": "derived-from",
+      "label": "Derived from",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/evidences-d4e5f6a7.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the evidence; target is the claim or content being supported",
+      "category": "evidence",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance is evidence for, supports, or substantiates the claim or content of target instance.",
+      "id": "d4e5f6a7-b8c9-4d0e-9f1a-2b3c4d5e6f7a",
+      "irreflexive": true,
+      "key": "evidences",
+      "label": "Evidences",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/precedes-f7a8b9c0.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source comes before target",
+      "category": "sequence",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance comes before target instance in a defined sequence or ordering.",
+      "id": "f7a8b9c0-d1e2-4f3a-8b4c-5d6e7f8a9b0c",
+      "inverseType": "follows",
+      "irreflexive": true,
+      "key": "precedes",
+      "label": "Precedes",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/refines-e5f6a7b8.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the more specific instance; target is the general instance",
+      "category": "refinement",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance is a more specific, detailed, or precise version of target instance. Does not replace or invalidate target.",
+      "id": "e5f6a7b8-c9d0-4e1f-8a2b-3c4d5e6f7a8b",
+      "irreflexive": true,
+      "key": "refines",
+      "label": "Refines",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/supersedes-c2d3e4f5.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the newer instance; target is the older instance being superseded",
+      "category": "governance",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance replaces or invalidates target instance. Source is newer; target is the older instance being superseded.",
+      "id": "c2d3e4f5-a6b7-4c8d-9e0f-1a2b3c4d5e6f",
+      "inverseType": "superseded-by",
+      "irreflexive": true,
+      "key": "supersedes",
+      "label": "Supersedes",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/types/articles-00000000.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
       "createdAt": "2026-01-01T00:00:00Z",
       "description": "Articles section type (test fixture).",
@@ -105,7 +250,7 @@
       "namespace": "com.test",
       "version": 1
     },
-    "package/types/decision-log.json": {
+    "package/types/decision-log-00000000.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
       "createdAt": "2026-01-01T00:00:00Z",
       "description": "Decision Log section type (test fixture).",
@@ -115,7 +260,7 @@
       "namespace": "com.test",
       "version": 1
     },
-    "package/types/exercise-book.json": {
+    "package/types/exercise-book-00000000.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
       "createdAt": "2026-01-01T00:00:00Z",
       "description": "Exercise Book section type (test fixture).",
@@ -125,7 +270,7 @@
       "namespace": "com.test",
       "version": 1
     },
-    "package/types/governance-repo.json": {
+    "package/types/governance-repo-00000000.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
       "createdAt": "2026-01-01T00:00:00Z",
       "description": "governance-repo section type (test fixture).",
@@ -135,7 +280,33 @@
       "namespace": "com.test",
       "version": 1
     },
-    "package/types/roles.json": {
+    "package/types/purpose-3c000001.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Use to express what a repository exists to do or achieve. The statement field is the primary, required field. The title field is optional and intended for constrained UI contexts."
+      },
+      "createdAt": "2026-07-08T00:00:00Z",
+      "description": "A Tier-2 typed record capturing the purpose or mission of a repository. Always available in every conforming SRS repository via the implicit core base package (RFC-018). identityInstanceId on the root container MUST reference a record of this type.",
+      "fields": [
+        {
+          "displayLabel": "Statement",
+          "fieldId": "3b000001-0000-4000-a000-000000000001",
+          "order": 0,
+          "required": true
+        },
+        {
+          "displayLabel": "Title",
+          "fieldId": "3b000002-0000-4000-a000-000000000002",
+          "order": 1,
+          "required": false
+        }
+      ],
+      "id": "3c000001-0000-4000-a000-000000000001",
+      "name": "purpose",
+      "namespace": "com.semanticops.core",
+      "version": 1
+    },
+    "package/types/roles-00000000.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
       "createdAt": "2026-01-01T00:00:00Z",
       "description": "Roles section type (test fixture).",
@@ -145,16 +316,7 @@
       "namespace": "com.test",
       "version": 1
     },
-    "records/tier-2/11000000-0000-4000-8000-000000000001.json": {
-      "createdAt": "2026-01-01T00:00:00Z",
-      "fieldValues": {},
-      "instanceId": "11000000-0000-4000-8000-000000000001",
-      "typeId": "00000000-0000-4000-8000-000000000101",
-      "typeName": "governance-repo",
-      "typeNamespace": "com.test",
-      "typeVersion": 1
-    },
-    "records/tier-2/11000000-0000-4000-8000-000000000002.json": {
+    "records/tier-2/articles-11000000.json": {
       "createdAt": "2026-01-02T00:00:00Z",
       "fieldValues": {},
       "instanceId": "11000000-0000-4000-8000-000000000002",
@@ -163,7 +325,7 @@
       "typeNamespace": "com.test",
       "typeVersion": 1
     },
-    "records/tier-2/11000000-0000-4000-8000-000000000003.json": {
+    "records/tier-2/decision-log-11000000.json": {
       "createdAt": "2026-01-03T00:00:00Z",
       "fieldValues": {},
       "instanceId": "11000000-0000-4000-8000-000000000003",
@@ -172,21 +334,30 @@
       "typeNamespace": "com.test",
       "typeVersion": 1
     },
-    "records/tier-2/11000000-0000-4000-8000-000000000004.json": {
-      "createdAt": "2026-01-04T00:00:00Z",
-      "fieldValues": {},
-      "instanceId": "11000000-0000-4000-8000-000000000004",
-      "typeId": "00000000-0000-4000-8000-000000000104",
-      "typeName": "Roles",
-      "typeNamespace": "com.test",
-      "typeVersion": 1
-    },
-    "records/tier-2/11000000-0000-4000-8000-000000000005.json": {
+    "records/tier-2/exercise-book-11000000.json": {
       "createdAt": "2026-01-05T00:00:00Z",
       "fieldValues": {},
       "instanceId": "11000000-0000-4000-8000-000000000005",
       "typeId": "00000000-0000-4000-8000-000000000105",
       "typeName": "Exercise Book",
+      "typeNamespace": "com.test",
+      "typeVersion": 1
+    },
+    "records/tier-2/governance-repo-11000000.json": {
+      "createdAt": "2026-01-01T00:00:00Z",
+      "fieldValues": {},
+      "instanceId": "11000000-0000-4000-8000-000000000001",
+      "typeId": "00000000-0000-4000-8000-000000000101",
+      "typeName": "governance-repo",
+      "typeNamespace": "com.test",
+      "typeVersion": 1
+    },
+    "records/tier-2/roles-11000000.json": {
+      "createdAt": "2026-01-04T00:00:00Z",
+      "fieldValues": {},
+      "instanceId": "11000000-0000-4000-8000-000000000004",
+      "typeId": "00000000-0000-4000-8000-000000000104",
+      "typeName": "Roles",
       "typeNamespace": "com.test",
       "typeVersion": 1
     }

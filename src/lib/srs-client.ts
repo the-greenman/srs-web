@@ -35,12 +35,18 @@ export interface McpSession {
   /** Engine-enforced write guard for agent (MCP) writes (srs-rust#1165); throws on bad JSON. */
   set_write_guard(json: string): void;
   clear_write_guard(): void;
+  /** RFC-046: host-supplied actor stamped as `createdBy`; invalid JSON / a corpus below revision 9 refuse creates. */
+  set_actor(json: string): void;
+  clear_actor(): void;
 }
 
 export interface SrsRepository {
   open_mcp_session(): McpSession;
   /** Engine write counter (srs-rust#1160): the one "repository changed" signal for UI and MCP writers. */
   write_epoch(): number;
+  /** RFC-046 session actor for this handle's writes (engine stamps `createdBy`; never put in a payload). */
+  set_actor(json: string): void;
+  clear_actor(): void;
   validate(): RepositoryValidationReport;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; unwrapped from RecordSummary[] ({ instanceId, displayLabel, record }) in listRecords() via normalizeRecordSummary()
   list_records(filter_json: string): any;
@@ -229,8 +235,16 @@ export interface FieldMetaEntry {
 export type FieldMeta = Record<string, FieldMetaEntry>;
 
 /** Minimal record shape (Tier 2). Full type definitions derive from payload schemas. */
+/** RFC-046 actor: stamped by the engine from the session, never sent by a client. */
+export interface Actor {
+  kind: "human" | "ai";
+  id: string;
+  name?: string;
+}
+
 export interface SrsRecord {
   instanceId: string;
+  createdBy?: Actor;
   typeId: string;
   typeVersion: number;
   typeNamespace?: string;
@@ -607,6 +621,7 @@ function normalizeRecord(raw: any): SrsRecord {
     lifecycle: raw.lifecycleState ?? raw.lifecycle_state ?? raw.lifecycle,
     createdAt: raw.createdAt ?? raw.created_at,
     updatedAt: raw.updatedAt ?? raw.updated_at,
+    ...(raw.createdBy != null && { createdBy: raw.createdBy }),
     ...(Array.isArray(raw.tags) && { tags: raw.tags }),
   };
 }
@@ -1991,23 +2006,21 @@ export function moveInPrecedesChain(
   return normalizeChainSpliceResult(raw);
 }
 
-// ---------------------------------------------------------------------------
-// RFC-043 revision gate (srs-web#334)
-// ---------------------------------------------------------------------------
-
-/** Registry id of the rev-7 -> rev-8 container migration (RFC-043 [R17]). */
+/** Registry ids of the revision migrations the load gate offers (RFC-043 7 -> 8, RFC-046 8 -> 9). */
 export const RFC043_MIGRATION_ID = "rfc043-container-entries";
+export const RFC046_MIGRATION_ID = "rfc046-actor-provenance";
 
 /**
- * True when the engine reports the RFC-043 migration as `needed` — i.e. it refuses
- * this (revision-7) repository until migrated. The engine decides; we only ask.
+ * Revision migrations the load gate offers, in order, when the engine reports them needed.
+ * `[]` means none are needed; if the engine cannot say, this throws (unknown is not "none").
  */
-export function rfc043MigrationNeeded(repo: SrsRepository): boolean {
-  try {
-    return availableMigrations(repo).some((m) => m.id === RFC043_MIGRATION_ID && m.status.needed);
-  } catch {
-    return false;
-  }
+export function neededMigrationIds(repo: SrsRepository): string[] {
+  const needed = new Set(
+    availableMigrations(repo)
+      .filter((m) => m.status.needed)
+      .map((m) => m.id)
+  );
+  return [RFC043_MIGRATION_ID, RFC046_MIGRATION_ID].filter((id) => needed.has(id));
 }
 
 // ---------------------------------------------------------------------------

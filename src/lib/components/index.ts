@@ -74,4 +74,5 @@ export { default as Block } from "./Block.svelte";
 export { default as BlockStack } from "./BlockStack.svelte";
 export { default as LayersPanel } from "./LayersPanel.svelte";
 export { default as DraftTray } from "./DraftTray.svelte";
+export { default as CommentThread } from "./CommentThread.svelte";
 export { default as EyeToggle } from "./EyeToggle.svelte";
