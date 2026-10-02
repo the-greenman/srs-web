@@ -17,8 +17,8 @@ import { openPackageEditor } from "./helpers.js";
  * ADR-014: Migrations surface via "Repository" NavGroup in GovernanceShell.
  *
  * QUARANTINED (srs-web#322): the Governance package editor is now gated on
- * the repo actually installing a type the shell depends on (DECISION_TYPE_ID /
- * DECISION_LOG_TYPE_ID — see package-editors.ts), not on a package namespace
+ * the repo actually installing the type the shell depends on (DECISION_TYPE_ID
+ * — see editors/registry.ts), not on a package namespace
  * label. sample.srsj installs neither, by design a bare fixture with no real
  * governance types, so it no longer qualifies for the Governance editor and
  * this whole suite can't reach GovernanceShell to open the Migrations panel.

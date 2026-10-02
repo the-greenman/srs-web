@@ -2,12 +2,12 @@
   App.svelte — Application shell.
 
   Owns: WASM initialisation, repo loading, top-level app state, editor mode selection.
-  Delegates: governance editor to GovernanceShell; guides editor to GuidesShell.
+  Delegates: the active editor to its registered shell ($lib/editors/registry).
 
   States: boot → idle → loaded | error
     boot:   WASM initialising
     idle:   WASM ready, no repo loaded — show mode picker then file picker
-    loaded: repo loaded — show GovernanceShell or GuidesShell
+    loaded: repo loaded — show the generic shell or a registered editor shell
     error:  unrecoverable error
 
   B4 read-only governance viewer: https://github.com/the-greenman/srs-web/issues/3
@@ -33,9 +33,7 @@
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
-  import EssayShell from "$lib/essay/EssayShell.svelte";
-  import GuidesShell from "$lib/guides/GuidesShell.svelte";
-  import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
+  import { EDITORS, getEditor } from "$lib/editors/registry.js";
   import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import CreateGovernanceDocumentPanel from "$lib/components/CreateGovernanceDocumentPanel.svelte";
@@ -68,7 +66,8 @@
   // ---------------------------------------------------------------------------
 
   type AppState = "boot" | "idle" | "migrate" | "loaded" | "error";
-  type EditorMode = "generic" | "governance" | "guides" | "essay";
+  /** "generic" or an EditorDefinition id from $lib/editors/registry. */
+  type EditorMode = string;
 
   let appState = $state<AppState>("boot");
   let errorMsg = $state<string | null>(null);
@@ -617,64 +616,6 @@
   </div>
 
 <!-- =========================================================================
-     Loaded state — guides shell
-     ========================================================================= -->
-{:else if editorMode === "guides"}
-  {@render catalogBanner()}
-  <GuidesShell
-    repo={repo!}
-    repoName={repoName}
-    documentProvider={activeDocument?.provider ?? "local"}
-    onExport={handleExportArchive}
-    onExportSrsj={handleExport}
-    onSave={activeDocument?.capabilities.write ? handleSave : undefined}
-    readOnlyReason={activeDocument?.readOnlyReason ?? null}
-    saving={saving}
-    saveMessage={saveMessage}
-    documentDirty={documentDirty}
-    documentRevision={documentRevision}
-    onDocumentMutation={handleDocumentMutation}
-    onOpenAnother={() => {
-      clearWorkingCopy();
-      cachedSession = null;
-      saveMessage = null;
-      repo = null;
-      beginDocument();
-      activeDocument = null;
-      editorMode = "generic";
-      appState = "idle";
-    }}
-  />
-
-<!-- =========================================================================
-     Loaded state — essay shell (srs-web#328)
-     ========================================================================= -->
-{:else if editorMode === "essay"}
-  {@render catalogBanner()}
-  <EssayShell
-    repo={repo!}
-    repoName={repoName}
-    onExport={handleExportArchive}
-    onSave={activeDocument?.capabilities.write ? handleSave : undefined}
-    {saving}
-    {saveMessage}
-    documentDirty={documentDirty}
-    documentRevision={documentRevision}
-    onDocumentMutation={handleDocumentMutation}
-    onOpenExplorer={() => { editorMode = "generic"; }}
-    onOpenAnother={() => {
-      clearWorkingCopy();
-      cachedSession = null;
-      saveMessage = null;
-      repo = null;
-      beginDocument();
-      activeDocument = null;
-      editorMode = "generic";
-      appState = "idle";
-    }}
-  />
-
-<!-- =========================================================================
      Loaded state — generic shell
      ========================================================================= -->
 {:else if editorMode === "generic"}
@@ -689,9 +630,7 @@
     documentDirty={documentDirty}
     documentRevision={documentRevision}
     onDocumentMutation={handleDocumentMutation}
-    onOpenGovernance={() => { editorMode = "governance"; }}
-    onOpenGuides={() => { editorMode = "guides"; }}
-    onOpenEssay={() => { editorMode = "essay"; }}
+    onOpenEditor={(id) => { editorMode = id; }}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;
@@ -703,11 +642,12 @@
   />
 
 <!-- =========================================================================
-     Loaded state — governance shell
+     Loaded state — registered editor shell (src/lib/editors/registry.ts)
      ========================================================================= -->
 {:else}
   {@render catalogBanner()}
-  <GovernanceShell
+  {@const Shell = (getEditor(editorMode) ?? EDITORS[0]).component}
+  <Shell
     repo={repo!}
     repoName={repoName}
     documentProvider={activeDocument?.provider ?? "local"}
@@ -720,6 +660,7 @@
     documentDirty={documentDirty}
     documentRevision={documentRevision}
     onDocumentMutation={handleDocumentMutation}
+    onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;

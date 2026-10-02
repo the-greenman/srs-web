@@ -36,7 +36,7 @@ describe("GenericSrsShell", () => {
         repoName: "Example repository",
         onExport: vi.fn(),
         onOpenAnother: vi.fn(),
-        onOpenGovernance: vi.fn(),
+        onOpenEditor: vi.fn(),
       },
     });
 

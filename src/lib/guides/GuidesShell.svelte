@@ -85,6 +85,8 @@
     /** Report a successful in-place repository mutation to the App shell. */
     onDocumentMutation?: () => void;
     onOpenAnother: () => void;
+    /** Part of the common EditorShellProps; unused by this shell. */
+    onOpenExplorer?: () => void;
   }
   let {
     repo,
