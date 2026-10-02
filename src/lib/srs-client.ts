@@ -1884,13 +1884,18 @@ export function rfc043MigrationNeeded(repo: SrsRepository): boolean {
 /** Input of `create_container` (same shape as `srs container create`). */
 export interface CreateContainerInput {
   title: string;
+  containerId?: string;
+  description?: string;
+  containerType?: string;
+  tags?: string[];
   anchorInstanceId?: string;
   identityInstanceId?: string;
   memberInstanceIds?: ContainerEntry[];
 }
 
 /**
- * Create a container. STUB until the `create_container` binding ships (srs-rust#1133):
+ * Create a container (rev-8 Container JSON; srs-rust PR #1149 `create_container(input_json)`, which throws the
+ * validation message). The anchor should name an entry (I-145). STUB until that binding is released:
  * the single facade point for "new essay" / "create draft area"; throws a clear error
  * while the pinned bindings lack it. Replace the guard with the typed call once released.
  */
