@@ -1,15 +1,16 @@
 /**
  * Document-level mutation and persistence coordination.
  *
- * The repository is mutated in place by both UI actions and future external
- * executors. A provider save therefore cannot assume that the repository still
+ * The repository is mutated in place by both UI actions and external
+ * executors (MCP). The engine's `write_epoch()` is the ONE mutation signal for
+ * every writer (srs-web#345): "dirty" means the epoch moved since the last save. A provider save therefore cannot assume that the repository still
  * represents the bytes it exported when its asynchronous write finishes.
  */
 
 export interface DocumentRevision {
   /** Identifies one loaded repository lifetime. */
   epoch: number;
-  /** Monotonically increases for each mutation within that lifetime. */
+  /** The engine `write_epoch()` last observed for that lifetime. */
   revision: number;
 }
 
@@ -22,13 +23,16 @@ export class DocumentMutationTracker {
   #persistedRevision = 0;
 
   /**
-   * Start tracking a newly loaded repository. Restored working copies are
-   * already dirty even before another mutation is made.
+   * Start tracking a newly loaded repository at its current engine epoch.
+   * Restored working copies are already dirty even before another mutation.
    */
-  beginDocument({ dirty = false }: { dirty?: boolean } = {}): DocumentRevision {
+  beginDocument(
+    engineEpoch: number,
+    { dirty = false }: { dirty?: boolean } = {}
+  ): DocumentRevision {
     this.#epoch += 1;
-    this.#revision = 0;
-    this.#persistedRevision = dirty ? -1 : 0;
+    this.#revision = engineEpoch;
+    this.#persistedRevision = dirty ? -1 : engineEpoch;
     return this.current;
   }
 
@@ -40,10 +44,11 @@ export class DocumentMutationTracker {
     return this.#revision !== this.#persistedRevision;
   }
 
-  /** Record one successful in-place repository mutation. */
-  recordMutation(): DocumentRevision {
-    this.#revision += 1;
-    return this.current;
+  /** Observe the engine epoch; returns true when the repository changed since the last observation. */
+  sync(engineEpoch: number): boolean {
+    if (engineEpoch === this.#revision) return false;
+    this.#revision = engineEpoch;
+    return true;
   }
 
   /** Capture the exact repository revision represented by an exported save payload. */

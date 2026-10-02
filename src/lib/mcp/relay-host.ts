@@ -1,7 +1,7 @@
 /**
  * Owns the relay channel for the currently loaded repository: credential
- * persistence, rotation, takeover, and mapping executor activity onto the
- * shared document-mutation model. Never saves or touches a storage provider.
+ * persistence, rotation, takeover, and reporting handled executor requests to the
+ * owner. Never saves or touches a storage provider.
  */
 import {
   type ExecutorStatus,
@@ -9,7 +9,8 @@ import {
   RelayExecutor,
   type SocketLike,
 } from "./relay-executor";
-import { type ChannelBootstrap, bootstrapChannel } from "./relay-wire";
+import type { ChannelBootstrap } from "./relay-protocol";
+import { bootstrapChannel } from "./relay-wire";
 
 export type HostStatus = ExecutorStatus | "idle" | "error";
 
@@ -21,8 +22,8 @@ export interface HostState {
 
 export interface RelayHostOptions {
   relayUrl: string;
-  /** An MCP request changed the repository: record a mutation (marks unsaved). */
-  onMutated(): void;
+  /** An MCP request was handled; the owner re-checks the engine write epoch (one signal, srs-web#345). */
+  onHandled(): void;
   onChange(state: HostState): void;
   createSocket?: (url: string) => SocketLike;
   fetchImpl?: typeof fetch;
@@ -34,8 +35,7 @@ const KEY = "srs-web.mcp-relay";
 
 export class RelayHost {
   #exec: RelayExecutor | null = null;
-  #session: (FrameHandler & { write_epoch(): number }) | null = null;
-  #last = 0;
+  #session: FrameHandler | null = null;
   #seq = 0;
   #creds: ChannelBootstrap | null = null;
   #state: HostState = { status: "idle", callerUrl: null, error: null };
@@ -66,10 +66,9 @@ export class RelayHost {
   }
 
   /** Bind the executor to a newly loaded repository session (new epoch). */
-  async attach(session: FrameHandler & { write_epoch(): number }): Promise<void> {
+  async attach(session: FrameHandler): Promise<void> {
     this.detach();
     this.#session = session;
-    this.#last = session.write_epoch();
     await this.#open(false, false);
   }
 
@@ -114,13 +113,7 @@ export class RelayHost {
       createSocket: this.o.createSocket,
       reconnectMs: this.o.reconnectMs,
       onStatus: (status) => this.#set({ status }),
-      onHandled: () => {
-        const now = session.write_epoch(); // core mutation signal (srs-rust#1140)
-        if (now !== this.#last) {
-          this.#last = now;
-          this.o.onMutated();
-        }
-      },
+      onHandled: () => this.o.onHandled(),
     });
     this.#exec.start();
   }

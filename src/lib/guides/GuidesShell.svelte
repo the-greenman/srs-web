@@ -82,8 +82,6 @@
     documentDirty?: boolean;
     /** Changes after mount invalidate derived browser projections of the repository. */
     documentRevision?: number;
-    /** Report a successful in-place repository mutation to the App shell. */
-    onDocumentMutation?: () => void;
     onOpenAnother: () => void;
     /** Part of the common EditorShellProps; unused by this shell. */
     onOpenExplorer?: () => void;
@@ -100,7 +98,6 @@
     saveMessage = null,
     documentDirty = false,
     documentRevision = 0,
-    onDocumentMutation = () => {},
     onOpenAnother,
   }: Props = $props();
 
@@ -217,7 +214,7 @@
     selectedContainerId = null;
     orderedSections = [];
     if (!selectedGuideId) return;
-    const containers = listContainers(repo, { rootInstanceId: selectedGuideId });
+    const containers = listContainers(repo, { anchorInstanceId: selectedGuideId });
     if (containers.length === 0) return;
     selectedContainerId = containers[0].containerId;
     const view: ContainerView = resolveContainerView(repo, selectedContainerId);
@@ -416,7 +413,6 @@
       : { afterId: orderedSections[j].instanceId };
     moveComponent(repo, { instanceId, ...anchor }, () => {
       reload();
-      onDocumentMutation();
     });
   }
 
@@ -425,7 +421,6 @@
     if (!selectedContainerId) return;
     removeComponent(repo, { instanceId: section.instanceId, containerId: selectedContainerId }, () => {
       reload();
-      onDocumentMutation();
     });
   }
 
@@ -442,12 +437,10 @@
         reload();
         selectedGuideId = created.instanceId;
         cancelForm();
-        onDocumentMutation();
       } else if (formMode === "edit-guide" && editingRecord) {
         updateRecord(repo, editingRecord.instanceId, input as UpdateRecordInput);
         reload();
         cancelForm();
-        onDocumentMutation();
       } else if (formMode === "create-section" && createSectionTypeId && selectedContainerId) {
         // Create in the guide's container and append to the end of the precedes chain
         // (srs-web#322 — chain-local splice binding replaces the manual relation rebuild).
@@ -461,12 +454,10 @@
         });
         reload();
         cancelForm();
-        onDocumentMutation();
       } else if (formMode === "edit-section" && editingRecord) {
         updateRecord(repo, editingRecord.instanceId, input as UpdateRecordInput);
         reload();
         cancelForm();
-        onDocumentMutation();
       }
     } catch (e) {
       formError = e instanceof Error ? e.message : String(e);
@@ -484,7 +475,7 @@
     exportError = null;
     if (!selectedGuideId) return;
     try {
-      const containers = listContainers(repo, { rootInstanceId: selectedGuideId });
+      const containers = listContainers(repo, { anchorInstanceId: selectedGuideId });
       if (containers.length === 0) {
         exportError = "No container found for this guide — cannot resolve its sections to render.";
         return;

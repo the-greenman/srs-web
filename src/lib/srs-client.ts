@@ -29,6 +29,8 @@ export interface McpSession {
 
 export interface SrsRepository {
   open_mcp_session(): McpSession;
+  /** Engine write counter (srs-rust#1160): the one "repository changed" signal for UI and MCP writers. */
+  write_epoch(): number;
   validate(): RepositoryValidationReport;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; unwrapped from RecordSummary[] ({ instanceId, displayLabel, record }) in listRecords() via normalizeRecordSummary()
   list_records(filter_json: string): any;
@@ -500,6 +502,41 @@ function requireWasm(): SrsRepositoryConstructor {
  */
 export function loadRepo(srsj: string): SrsRepository {
   return requireWasm().load(srsj);
+}
+
+/**
+ * The single write choke point (srs-web#345): wrap a repository handle so `onWrite` runs
+ * after any call that advanced the engine's `write_epoch()`, whether the call came from a
+ * click handler, a debounced commit or anything else. Coalesced to one notification per
+ * microtask, so a multi-call action reports once. MCP writes go through `McpSession`, not
+ * this handle; the relay host reports those via its own `onHandled`.
+ */
+export function observeWrites(repo: SrsRepository, onWrite: () => void): SrsRepository {
+  let seen = repo.write_epoch();
+  let pending = false;
+  return new Proxy(repo, {
+    get(target, prop) {
+      const value = Reflect.get(target, prop, target);
+      if (typeof value !== "function" || prop === "write_epoch" || prop === "free") return value;
+      return (...args: unknown[]) => {
+        try {
+          return value.apply(target, args);
+        } finally {
+          const now = target.write_epoch();
+          if (now !== seen) {
+            seen = now;
+            if (!pending) {
+              pending = true;
+              queueMicrotask(() => {
+                pending = false;
+                onWrite();
+              });
+            }
+          }
+        }
+      };
+    },
+  });
 }
 
 /**
@@ -1079,7 +1116,7 @@ export interface ContainerMembersResult {
 export interface ContainerListFilter {
   containerType?: string;
   memberInstanceId?: string;
-  rootInstanceId?: string;
+  anchorInstanceId?: string;
 }
 
 // ---------------------------------------------------------------------------

@@ -27,6 +27,20 @@ const depthOf = (page: Page, text: string) =>
     .first()
     .evaluate((el) => (el as HTMLElement).style.getPropertyValue("--depth"));
 
+test("typing alone marks the document unsaved after the commit debounce (srs-web#345)", async ({
+  page,
+}) => {
+  await open(page);
+  await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
+  await bodies(page).first().click();
+  await expect(page.getByTestId("document-dirty-status")).toHaveCount(0); // a click is not a write
+  await page.keyboard.press("End");
+  await page.keyboard.type(" More.");
+  // no blur, no further click or key: the 400 ms typing commit alone must surface the indicator
+  await expect(page.getByTestId("document-dirty-status")).toBeVisible();
+  await expect(bodies(page).first()).toBeFocused();
+});
+
 test("write, reorder, nest, hide, draft out and back", async ({ page }) => {
   await open(page);
   await expect(bodies(page)).toHaveText([

@@ -85,7 +85,7 @@ const toParagraph = (r: SrsRecord): Paragraph => ({
 export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
   const essay = recordsOfType(repo, ESSAY_TYPE_ID).find((r) => r.instanceId === essayId);
   if (!essay) throw new Error("Essay not found");
-  const summary = listContainers(repo, { rootInstanceId: essayId })[0];
+  const summary = listContainers(repo, { anchorInstanceId: essayId })[0];
   if (!summary) throw new Error("This essay has no container");
   const containerId = summary.containerId;
   const state =
