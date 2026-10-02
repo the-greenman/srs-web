@@ -474,6 +474,21 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
     expect(savedIndicator.classList.contains("topbar__save-indicator--visible")).toBe(false);
   });
 
+  it("shows local-save-failed when a deferred recovery-copy write fails (srs-web#353)", async () => {
+    const props = {
+      repo: repoWithCreatableRecord(),
+      repoName: "test.srsj",
+      documentProvider: "local",
+      onExport: vi.fn(),
+      onOpenAnother: vi.fn(),
+      workingCopySaved: true,
+    };
+    const { rerender } = render(GovernanceShell, { props });
+    expect(screen.queryByTestId("local-save-failed")).toBeNull();
+    await rerender({ ...props, workingCopySaved: false }); // the timer's write failed, no further edit
+    expect(await screen.findByTestId("local-save-failed")).toBeTruthy();
+  });
+
   it("shows 'Saved' and no failure message when onDocumentMutation returns true", async () => {
     const onDocumentMutation = vi.fn(() => true);
     const repo = repoWithCreatableRecord();

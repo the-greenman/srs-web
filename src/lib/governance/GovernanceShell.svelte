@@ -99,6 +99,11 @@
      * `persistWorkingCopy()` uses this to avoid showing "Saved" on a failed write.
      */
     onDocumentMutation?: () => boolean;
+    /**
+     * Whether the last recovery-copy write succeeded. The copy is written up to 2 s after a
+     * mutation (srs-web#353), so a failure arrives here rather than through onDocumentMutation.
+     */
+    workingCopySaved?: boolean;
     onOpenAnother: () => void;
     /** Part of the common EditorShellProps; unused by this shell. */
     onOpenExplorer?: () => void;
@@ -116,6 +121,7 @@
     documentDirty = false,
     documentRevision = 0,
     onDocumentMutation = () => true,
+    workingCopySaved = true,
     onOpenAnother,
   }: Props = $props();
 
@@ -262,6 +268,9 @@
   /** Topbar autosave indicator state. */
   let saveIndicator = $state<"idle" | "saved" | "local-save-failed">("idle");
   let saveIndicatorTimer = $state<ReturnType<typeof setTimeout> | null>(null);
+  $effect(() => {
+    if (!workingCopySaved) saveIndicator = "local-save-failed";
+  });
 
   // ---------------------------------------------------------------------------
   // Derived

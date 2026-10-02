@@ -35,6 +35,8 @@ export interface EditorShellProps {
   documentDirty?: boolean;
   documentRevision?: number;
   onDocumentMutation?: () => boolean;
+  /** Whether the last (deferred, srs-web#353) recovery-copy write succeeded. */
+  workingCopySaved?: boolean;
   onOpenAnother: () => void;
   onOpenExplorer?: () => void;
   documentProvider: string;
