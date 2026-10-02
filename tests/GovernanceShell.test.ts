@@ -177,7 +177,6 @@ function makeBaseRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
       containerId: "c-articles",
       title: "Articles",
       memberInstanceIds: [],
-      rootInstanceIds: [],
     }),
     type_schema: () => ({
       schema: {
@@ -391,7 +390,6 @@ describe("GovernanceShell — sections sharing one container", () => {
         containerId: id,
         title: id,
         memberInstanceIds: [],
-        rootInstanceIds: [],
       }),
       list_records: () => [],
     });
@@ -549,8 +547,7 @@ describe("GovernanceShell — saving-state mutation guard (srs-web#312 bug 2)", 
       get_container: () => ({
         containerId: "c-articles",
         title: "Articles",
-        memberInstanceIds: ["rec-001"],
-        rootInstanceIds: [],
+        memberInstanceIds: [{ instanceId: "rec-001" }],
       }),
       resolve_container_view: () => ({
         containerId: "c-articles",

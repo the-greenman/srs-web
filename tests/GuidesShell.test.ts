@@ -310,7 +310,7 @@ describe("GuidesShell — blueprint schema with non-fatal diagnostics", () => {
           containerId: "c-guide-1",
           title: "My Guide",
           memberInstanceIds: [],
-          rootInstanceIds: ["guide-1"],
+          anchorInstanceId: "guide-1",
         },
       ],
       // resolve_container_view/order_by_precedes are typed `any` on SrsRepository

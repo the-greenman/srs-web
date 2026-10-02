@@ -149,7 +149,7 @@
   /** Container nav entries from repositoryNavigation() (RFC-013) or listContainers() fallback (ADR-009). */
   let containers = $state<ContainerNavEntry[]>([]);
 
-  /** Records per container, keyed by containerId (populated from getContainer.memberInstanceIds). */
+  /** Records per container, keyed by containerId (populated from getContainer.memberInstanceIds entries). */
   let containerRecords = $state<Record<string, SrsRecord[]>>({});
 
   /** Active sidebar container — null until first data load. */
@@ -360,8 +360,11 @@
         }
         const containerId = section.sectionContainerId;
         const full = getContainer(repo, containerId);
+        // RFC-043: the anchor/identity is a member entry too (it was a separate
+        // "root" before); it is the section header, not a record row.
         const members = (full.memberInstanceIds ?? [])
-          .map((id) => recordMap.get(id))
+          .filter((entry) => entry.instanceId !== full.anchorInstanceId && entry.instanceId !== full.identityInstanceId)
+          .map((entry) => recordMap.get(entry.instanceId))
           .filter((r): r is SrsRecord => r !== undefined);
         recordsByContainer[containerId] = members;
 
@@ -407,11 +410,12 @@
     for (const summary of allContainers) {
       const full = getContainer(repo, summary.containerId);
       const members = (full.memberInstanceIds ?? [])
-        .map((id) => recordMap.get(id))
+        .filter((entry) => entry.instanceId !== full.anchorInstanceId && entry.instanceId !== full.identityInstanceId)
+          .map((entry) => recordMap.get(entry.instanceId))
         .filter((r): r is SrsRecord => r !== undefined);
       recordsByContainer[summary.containerId] = members;
 
-      const rootId = full.rootInstanceIds?.[0];
+      const rootId = full.anchorInstanceId;
       const rootRecord = rootId ? recordMap.get(rootId) : undefined;
       const rootTypeId = rootRecord?.typeId;
       const rootTypeVersion = rootRecord?.typeVersion;

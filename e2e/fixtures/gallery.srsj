@@ -3,22 +3,30 @@
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
     "container": {
+      "anchorInstanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809",
       "containerId": "4e4c9501-2709-4220-bb47-486f6f78a937",
       "identityInstanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809",
       "memberInstanceIds": [
-        "ad159754-2edd-4bf8-a70f-a29a617e5809",
-        "5ec00001-0000-4000-8000-000000000001",
-        "5ec00002-0000-4000-8000-000000000002",
-        "5ec00003-0000-4000-8000-000000000003",
-        "5ec00004-0000-4000-8000-000000000004"
-      ],
-      "rootInstanceIds": [
-        "ad159754-2edd-4bf8-a70f-a29a617e5809"
+        {
+          "instanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809"
+        },
+        {
+          "instanceId": "5ec00001-0000-4000-8000-000000000001"
+        },
+        {
+          "instanceId": "5ec00002-0000-4000-8000-000000000002"
+        },
+        {
+          "instanceId": "5ec00003-0000-4000-8000-000000000003"
+        },
+        {
+          "instanceId": "5ec00004-0000-4000-8000-000000000004"
+        }
       ],
       "title": "Limoma"
     },
     "createdAt": "2026-07-09T00:00:00Z",
-    "dataModelRevision": 7,
+    "dataModelRevision": 8,
     "namespace": "com.limoma",
     "repositoryId": "8ae058dc-b52d-4e52-8e7e-969018532a04",
     "srsVersion": "2.0-draft",
@@ -26,66 +34,110 @@
   },
   "data": {
     "containers/138e2fac-6a8a-4a06-9511-5aefd99ceae9.json": {
+      "anchorInstanceId": "5ec00003-0000-4000-8000-000000000003",
       "containerId": "138e2fac-6a8a-4a06-9511-5aefd99ceae9",
       "containerType": "document",
       "createdAt": "2026-05-31T00:00:00Z",
       "memberInstanceIds": [
-        "3be7b057-9167-42a4-b0db-2a8b30666cef",
-        "4a989562-4a9d-4c86-a365-91bf14d55f06",
-        "9054911c-5285-4c3e-8198-4b9650169001",
-        "9af57e54-03fb-4625-9a4c-8d2a254ff2b7",
-        "a9ca11cf-fd34-4901-b5f6-51e20737cb56",
-        "dd715d4a-8640-4641-b79d-e44f728c547b",
-        "eb4024a0-486f-4d64-a4e4-5d80297129d2",
-        "00000000-0000-4000-8000-000000005801",
-        "00000000-0000-4000-8000-000000005802"
-      ],
-      "rootInstanceIds": [
-        "5ec00003-0000-4000-8000-000000000003"
+        {
+          "instanceId": "00000000-0000-4000-8000-000000005802"
+        },
+        {
+          "instanceId": "00000000-0000-4000-8000-000000005801"
+        },
+        {
+          "instanceId": "9054911c-5285-4c3e-8198-4b9650169001"
+        },
+        {
+          "instanceId": "eb4024a0-486f-4d64-a4e4-5d80297129d2"
+        },
+        {
+          "instanceId": "3be7b057-9167-42a4-b0db-2a8b30666cef"
+        },
+        {
+          "instanceId": "9af57e54-03fb-4625-9a4c-8d2a254ff2b7"
+        },
+        {
+          "instanceId": "4a989562-4a9d-4c86-a365-91bf14d55f06"
+        },
+        {
+          "instanceId": "dd715d4a-8640-4641-b79d-e44f728c547b"
+        },
+        {
+          "instanceId": "a9ca11cf-fd34-4901-b5f6-51e20737cb56"
+        },
+        {
+          "instanceId": "5ec00003-0000-4000-8000-000000000003"
+        }
       ],
       "title": "Decision Log"
     },
     "containers/b30db206-e9a7-4588-a9aa-53451aacd243.json": {
+      "anchorInstanceId": "5ec00002-0000-4000-8000-000000000002",
       "containerId": "b30db206-e9a7-4588-a9aa-53451aacd243",
       "containerType": "document",
       "createdAt": "2026-05-31T00:00:00Z",
       "memberInstanceIds": [
-        "448d64d4-ae82-4971-b027-3b78b9c7a90a",
-        "5bbf9209-1dc9-44b2-b0a3-f2192db5a879",
-        "8ed62308-f7b4-47e1-b1a2-5490908efd86"
-      ],
-      "rootInstanceIds": [
-        "5ec00002-0000-4000-8000-000000000002"
+        {
+          "instanceId": "5bbf9209-1dc9-44b2-b0a3-f2192db5a879"
+        },
+        {
+          "instanceId": "8ed62308-f7b4-47e1-b1a2-5490908efd86"
+        },
+        {
+          "instanceId": "448d64d4-ae82-4971-b027-3b78b9c7a90a"
+        },
+        {
+          "instanceId": "5ec00002-0000-4000-8000-000000000002"
+        }
       ],
       "title": "Roles"
     },
     "containers/ece00010-0000-4000-8000-000000000010.json": {
+      "anchorInstanceId": "5ec00004-0000-4000-8000-000000000004",
       "containerId": "ece00010-0000-4000-8000-000000000010",
       "containerType": "document",
       "createdAt": "2026-06-27T00:00:00Z",
       "memberInstanceIds": [
-        "ee000001-0000-4000-8000-000000000001",
-        "ee000002-0000-4000-8000-000000000002"
-      ],
-      "rootInstanceIds": [
-        "5ec00004-0000-4000-8000-000000000004"
+        {
+          "instanceId": "ee000001-0000-4000-8000-000000000001"
+        },
+        {
+          "instanceId": "ee000002-0000-4000-8000-000000000002"
+        },
+        {
+          "instanceId": "5ec00004-0000-4000-8000-000000000004"
+        }
       ],
       "title": "Exercises"
     },
     "containers/f7562aa3-98c7-44be-b4c5-5474df6441f2.json": {
+      "anchorInstanceId": "5ec00001-0000-4000-8000-000000000001",
       "containerId": "f7562aa3-98c7-44be-b4c5-5474df6441f2",
       "containerType": "document",
       "createdAt": "2026-05-31T00:00:00Z",
       "memberInstanceIds": [
-        "0482c489-37b4-4342-adaa-36e69dc6f780",
-        "31291422-cd8b-4840-b884-d55023d938cb",
-        "7560efe9-27e3-4186-8b9d-6ab48283f1df",
-        "ad159754-2edd-4bf8-a70f-a29a617e5809",
-        "c503fae5-c3ab-452e-a0b4-5682ca204288",
-        "cc58c0dd-8e3a-4dc5-9b58-f3273911a9a9"
-      ],
-      "rootInstanceIds": [
-        "5ec00001-0000-4000-8000-000000000001"
+        {
+          "instanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809"
+        },
+        {
+          "instanceId": "31291422-cd8b-4840-b884-d55023d938cb"
+        },
+        {
+          "instanceId": "7560efe9-27e3-4186-8b9d-6ab48283f1df"
+        },
+        {
+          "instanceId": "0482c489-37b4-4342-adaa-36e69dc6f780"
+        },
+        {
+          "instanceId": "c503fae5-c3ab-452e-a0b4-5682ca204288"
+        },
+        {
+          "instanceId": "cc58c0dd-8e3a-4dc5-9b58-f3273911a9a9"
+        },
+        {
+          "instanceId": "5ec00001-0000-4000-8000-000000000001"
+        }
       ],
       "title": "Articles"
     },
@@ -776,7 +828,7 @@
         "compositions/decision-log-b5c8d124.json"
       ],
       "createdAt": "2026-01-01T00:00:00Z",
-      "dataModelRevision": 2,
+      "dataModelRevision": 8,
       "description": "",
       "fields": [
         "fields/title-d7e82557.json",

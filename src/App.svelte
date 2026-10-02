@@ -24,6 +24,9 @@
     exportArchive,
     exportTree,
     createGovernanceDocument,
+    rfc043MigrationNeeded,
+    applyMigration,
+    RFC043_MIGRATION_ID,
   } from "$lib/srs-client.js";
   import type { SrsRepository } from "$lib/srs-client.js";
   import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy } from "$lib/browser-cache.js";
@@ -63,7 +66,7 @@
   // State
   // ---------------------------------------------------------------------------
 
-  type AppState = "boot" | "idle" | "loaded" | "error";
+  type AppState = "boot" | "idle" | "migrate" | "loaded" | "error";
   type EditorMode = "generic" | "governance" | "guides";
 
   let appState = $state<AppState>("boot");
@@ -105,6 +108,49 @@
   /** Cached working copy loaded from localStorage on WASM init. */
   let cachedSession = $state<WorkingCopyEntry | null>(null);
   let restoreError = $state<string | null>(null);
+
+  /**
+   * RFC-043 revision gate (srs-web#334). A rev-7 repository loads but the rev-8
+   * engine refuses every read until `rfc043-container-entries` is applied, so the
+   * load is held here and the user is asked — never opened empty. `finish(dirty)`
+   * is the load path's own completion step; it runs after migrate (dirty=true,
+   * the migrated working copy is unsaved until Save) or immediately when no
+   * migration is needed.
+   */
+  let pendingMigration = $state<{ repo: SrsRepository; name: string; finish: (dirty: boolean) => void } | null>(null);
+  let migrationError = $state<string | null>(null);
+
+  function gateOnMigration(loaded: SrsRepository, name: string, finish: (dirty: boolean) => void): void {
+    if (rfc043MigrationNeeded(loaded)) {
+      pendingMigration = { repo: loaded, name, finish };
+      repo = null; // not opened (no MCP session etc.) until migrated
+      migrationError = null;
+      appState = "migrate";
+    } else {
+      finish(false);
+    }
+  }
+
+  function runPendingMigration(): void {
+    const pending = pendingMigration;
+    if (!pending) return;
+    try {
+      applyMigration(pending.repo, RFC043_MIGRATION_ID);
+    } catch (e: unknown) {
+      // All-or-nothing in the engine: nothing was written. Keep the prompt up.
+      migrationError = `Migration failed: ${e instanceof Error ? e.message : String(e)}`;
+      return;
+    }
+    pendingMigration = null;
+    pending.finish(true);
+  }
+
+  function cancelPendingMigration(): void {
+    pendingMigration = null;
+    repo = null;
+    activeDocument = null;
+    appState = "idle";
+  }
 
   function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
     const revision = documentMutations.beginDocument({ dirty });
@@ -214,14 +260,19 @@
           repo = loadRepo(text);
         }
       }
-      activeDocument = handle;
-      beginDocument();
-      repoName = stripSrsExtension(handle.name);
-      cachedSession = null;
-      saveMessage = null;
-      catalogDiagnostics = collectCatalogDiagnostics(repo);
-      catalogDiagnosticsOpen = true;
-      appState = "loaded";
+      const loaded = repo;
+      gateOnMigration(loaded, handle.name, (dirty) => {
+        repo = loaded;
+        activeDocument = handle;
+        beginDocument({ dirty });
+        repoName = stripSrsExtension(handle.name);
+        cachedSession = null;
+        saveMessage = dirty ? "Migrated to the current data model. Unsaved - Save to keep it." : null;
+        if (dirty) saveWorkingCopy(repoName, exportSrsj(loaded));
+        catalogDiagnostics = collectCatalogDiagnostics(loaded);
+        catalogDiagnosticsOpen = true;
+        appState = "loaded";
+      });
     } catch (e: unknown) {
       repo = null;
       activeDocument = null;
@@ -297,13 +348,18 @@
   async function loadArchiveDocument(bytes: Uint8Array, name: string): Promise<void> {
     errorMsg = null;
     try {
-      repo = loadRepoFromArchive(bytes);
-      beginDocument();
-      activeDocument = null;
-      repoName = stripSrsExtension(name);
-      cachedSession = null;
-      saveMessage = null;
-      appState = "loaded";
+      const loaded = loadRepoFromArchive(bytes);
+      repo = loaded;
+      gateOnMigration(loaded, name, (dirty) => {
+        repo = loaded;
+        beginDocument({ dirty });
+        activeDocument = null;
+        repoName = stripSrsExtension(name);
+        cachedSession = null;
+        saveMessage = dirty ? "Migrated to the current data model. Unsaved - export to keep it." : null;
+        if (dirty) saveWorkingCopy(repoName, exportSrsj(loaded));
+        appState = "loaded";
+      });
     } catch (e: unknown) {
       repo = null;
       throw new Error(
@@ -504,6 +560,21 @@
 <!-- =========================================================================
      Idle state — mode picker then file picker
      ========================================================================= -->
+{:else if appState === "migrate" && pendingMigration}
+  <div class="splash" data-testid="migration-prompt">
+    <h1 class="splash__title">Update needed</h1>
+    <p class="splash__sub">
+      <strong>{pendingMigration.name}</strong> uses an older SRS data model (revision 7) and cannot be
+      opened as-is. Migrating rewrites container membership in the working copy
+      (<code>{RFC043_MIGRATION_ID}</code>). Nothing is saved until you press Save.
+    </p>
+    {#if migrationError}<p class="splash__error" role="alert" data-testid="migration-error">{migrationError}</p>{/if}
+    <div class="restore-banner__actions">
+      <button class="restore-banner__restore" data-testid="migration-apply" onclick={runPendingMigration}>Migrate and open</button>
+      <button class="restore-banner__dismiss" data-testid="migration-cancel" onclick={cancelPendingMigration}>Cancel</button>
+    </div>
+  </div>
+
 {:else if appState === "idle"}
   <div class="splash" data-testid="generic-file-picker">
     <h1 class="splash__title">SRS Viewer</h1>
@@ -518,13 +589,18 @@
             const entry = cachedSession;
             if (!entry) return;
             try {
-              repo = loadRepo(entry.srsj);
-              beginDocument({ dirty: true });
-              repoName = entry.name;
-              activeDocument = null;
-              appState = "loaded";
-              editorMode = "generic";
-              cachedSession = null;
+              const restored = loadRepo(entry.srsj);
+              repo = restored;
+              gateOnMigration(restored, entry.name, () => {
+                repo = restored;
+                beginDocument({ dirty: true });
+                repoName = entry.name;
+                activeDocument = null;
+                appState = "loaded";
+                editorMode = "generic";
+                cachedSession = null;
+                saveWorkingCopy(repoName, exportSrsj(restored));
+              });
             } catch (e: unknown) {
               clearWorkingCopy();
               restoreError = `Could not restore session: ${e instanceof Error ? e.message : String(e)}`;
