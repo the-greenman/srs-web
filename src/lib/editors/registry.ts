@@ -23,7 +23,7 @@ export interface PackageRequirement {
   version: string;
 }
 
-/** The union of props App passes to every editor shell. */
+/** The props App passes to every editor shell; each component is type-checked against this. */
 export interface EditorShellProps {
   repo: SrsRepository;
   repoName: string;
@@ -37,7 +37,7 @@ export interface EditorShellProps {
   onDocumentMutation?: () => boolean;
   onOpenAnother: () => void;
   onOpenExplorer?: () => void;
-  documentProvider?: string;
+  documentProvider: string;
   readOnlyReason?: string | null;
 }
 
@@ -67,7 +67,7 @@ export const EDITORS: EditorDefinition[] = [
         version: "1.0.0",
       },
     ],
-    component: GovernanceShell as unknown as Component<EditorShellProps>,
+    component: GovernanceShell,
   },
   {
     id: "guides",
@@ -76,7 +76,7 @@ export const EDITORS: EditorDefinition[] = [
     entryTypeId: "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
     // No standalone guides package yet — see the-greenman/muDemocracy.org#244.
     requires: [],
-    component: GuidesShell as unknown as Component<EditorShellProps>,
+    component: GuidesShell,
   },
   {
     id: "essay",
@@ -94,7 +94,7 @@ export const EDITORS: EditorDefinition[] = [
     create: (repo) => {
       newEssay(repo, "Untitled essay");
     },
-    component: EssayShell as unknown as Component<EditorShellProps>,
+    component: EssayShell,
   },
 ];
 
