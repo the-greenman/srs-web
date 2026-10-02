@@ -51,6 +51,30 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/check-pin-freshness.mjs
 
+  unit:
+    name: Unit tests (Vitest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Some tests (e.g. essay-new.wasm.test.ts) run against the real engine, so they need
+      # the released WASM bindings; in CI they fail rather than skip when absent.
+      - name: Fetch WASM bindings
+        run: npm run fetch-bindings
+
+      - name: Run unit tests
+        run: npm test
+
   e2e:
     name: E2E (Playwright)
     runs-on: ubuntu-latest
