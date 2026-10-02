@@ -207,3 +207,40 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
   await expect(bodies(page).nth(1)).toHaveText("Rewritten by an agent.");
   await expect(page.getByTestId("document-dirty-status")).toBeVisible();
 });
+
+test("New essay creates the record, container, draft area and state", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+  await page
+    .locator('input[type="file"]#srsj-file')
+    .setInputFiles(path.join(path.dirname(ESSAY), "essay-empty.srsj"));
+  await page.getByTestId("package-editor-essay").click();
+  await expect(page.getByText("No essay in this repository yet.")).toBeVisible();
+  await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "New essay" }).click();
+  await expect(page.getByRole("heading", { name: "Untitled essay" })).toBeVisible();
+  await expect(page.getByTestId("essay-error")).toHaveCount(0);
+  // draft area exists (document-state references a created draft container)
+  await expect(page.locator(".draft-tray")).toContainText("Drag paragraphs here");
+  await expect(page.getByRole("button", { name: "Create draft area" })).toHaveCount(0);
+  await expect(page.getByTestId("document-dirty-status")).toBeVisible();
+
+  await page.getByTestId("first-paragraph").click();
+  await expect(bodies(page)).toHaveCount(1);
+  await bodies(page).first().click();
+  await page.keyboard.type("Opening line.");
+  await page.keyboard.press("Control+Enter");
+  await expect(bodies(page)).toHaveCount(2);
+  await page.keyboard.type("Second line.");
+  await bodies(page).first().click();
+  await expect(bodies(page)).toHaveText(["Opening line.", "Second line."]);
+
+  // pull a paragraph into the new draft area: proves the draft container is real
+  await page
+    .getByRole("button", { name: /Move .* to draft/ })
+    .first()
+    .click();
+  await expect(bodies(page)).toHaveCount(1);
+  await expect(page.locator(".draft-tray__row")).toHaveCount(1);
+});

@@ -75,6 +75,8 @@ export interface SrsRepository {
   list_containers(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainer()
   get_container(container_id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in createContainer()
+  create_container(input_json: string): any;
   add_container_member(
     container_id: string,
     instance_id: string,
@@ -1878,7 +1880,7 @@ export function rfc043MigrationNeeded(repo: SrsRepository): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Container creation (srs-rust#1133) — NOT YET RELEASED
+// Container creation (srs-rust#1133 / #1149)
 // ---------------------------------------------------------------------------
 
 /** Input of `create_container` (same shape as `srs container create`). */
@@ -1894,18 +1896,9 @@ export interface CreateContainerInput {
 }
 
 /**
- * Create a container (rev-8 Container JSON; srs-rust PR #1149 `create_container(input_json)`, which throws the
- * validation message). The anchor should name an entry (I-145). STUB until that binding is released:
- * the single facade point for "new essay" / "create draft area"; throws a clear error
- * while the pinned bindings lack it. Replace the guard with the typed call once released.
+ * Create a container (rev-8 Container JSON, srs-rust#1149); throws the engine's validation
+ * message. The anchor should name an entry (I-145).
  */
 export function createContainer(repo: SrsRepository, input: CreateContainerInput): Container {
-  const create = (repo as unknown as { create_container?: (json: string) => unknown })
-    .create_container;
-  if (typeof create !== "function") {
-    throw new Error(
-      "Creating containers needs a newer engine build (srs-rust#1133). Open an existing essay for now."
-    );
-  }
-  return create.call(repo, JSON.stringify(input)) as Container;
+  return repo.create_container(JSON.stringify(input)) as Container;
 }

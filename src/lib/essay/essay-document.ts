@@ -178,7 +178,7 @@ export function transfer(
   addContainerMember(repo, to, id, q.position, q.depth);
 }
 
-/** New essay: record + container (+ draft container + state). Needs `create_container` (srs-rust#1133). */
+/** New essay: record + container (+ draft container + state).. */
 export function newEssay(repo: SrsRepository, title: string): string {
   const essay = createRecord(repo, ESSAY_TYPE_ID, typeVersion(repo, ESSAY_TYPE_ID), {
     fieldValues: { title },

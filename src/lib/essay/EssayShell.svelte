@@ -281,7 +281,7 @@
         <DraftTray
           items={draftItems}
           available={!!model.draftContainerId}
-          unavailableReason="This essay has no draft area (creating one needs srs-rust#1133)."
+          unavailableReason="This essay has no draft area."
           ondrop={(p, t) => onDrop("draft", p, t)}
           onputback={putBack}
         />
