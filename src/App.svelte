@@ -29,7 +29,8 @@
     RFC046_MIGRATION_ID,
     applyMigration,
   } from "$lib/srs-client.js";
-  import { applyActor, onActorChange, refreshSignedInActor, relayAgentId } from "$lib/actor.js";
+  import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
+  import { addConnection, credsKey, loadConnections, removeConnection, type AgentConnection } from "$lib/agent-connections.js";
   import type { AgentWriteGuard, McpSession, SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
@@ -261,61 +262,102 @@
         return "";
       }
     })();
-  let mcpState = $state<HostState>({ status: "idle", callerUrl: null, error: null });
-  const mcpHost = relayUrl
-    ? new RelayHost({
-        relayUrl,
-        onHandled: () => void syncDocument(),
-        onChange: (s) => (mcpState = s),
-      })
-    : null;
+  // One relay channel + MCP session per agent connection (srs-web#358), each with its own
+  // host-minted actor id. `agents` is the reactive view; hosts/sessions are managed here only.
+  type Agent = { conn: AgentConnection; state: HostState };
+  let agents = $state<Agent[]>([]);
+  let newAgentLabel = $state("");
+  const hosts = new Map<string, { host: RelayHost; session: McpSession | null }>();
+  const setAgentState = (id: string, state: HostState) =>
+    (agents = agents.map((a) => (a.conn.id === id ? { ...a, state } : a)));
+  function hostFor(conn: AgentConnection): RelayHost {
+    let h = hosts.get(conn.id);
+    if (!h) {
+      h = {
+        host: new RelayHost({
+          relayUrl,
+          storageKey: credsKey(conn.id),
+          onHandled: () => void syncDocument(),
+          onChange: (s) => setAgentState(conn.id, s),
+        }),
+        session: null,
+      };
+      hosts.set(conn.id, h);
+    }
+    return h.host;
+  }
 
   // The active shell declares the agent write guard (policy); the engine enforces it. Kept here
   // so it is also applied to a session attached after the guard was set.
   let agentGuard: AgentWriteGuard | null = null;
-  let mcpSession: McpSession | null = null;
   // Tied to the repository it was declared for, so one repo's ids are never applied to another's session.
   let agentGuardRepo: SrsRepository | null = null;
   /** Fail closed: if the guard cannot be applied, detach the agent and surface the error. */
-  function applyGuard(): boolean {
+  function applyGuard(id: string): boolean {
+    const h = hosts.get(id);
     try {
-      if (agentGuard && agentGuardRepo === repo) mcpSession?.set_write_guard(JSON.stringify(agentGuard));
-      else mcpSession?.clear_write_guard();
+      if (agentGuard && agentGuardRepo === repo) h?.session?.set_write_guard(JSON.stringify(agentGuard));
+      else h?.session?.clear_write_guard();
       return true;
     } catch (e) {
       console.error("MCP write guard could not be applied", e);
-      mcpHost?.detach();
-      mcpState = { status: "error", callerUrl: null, error: `Write guard failed: ${e instanceof Error ? e.message : String(e)}` };
+      h?.host.detach();
+      setAgentState(id, { status: "error", callerUrl: null, error: `Write guard failed: ${e instanceof Error ? e.message : String(e)}` });
       return false;
     }
   }
+  const applyGuards = () => hosts.forEach((_, id) => applyGuard(id));
 
   /**
-   * Agent actor (RFC-046): the host assigns the id, no name (the engine fills it from the
-   * client's initialize clientInfo). Only on a revision-9 corpus: below it an actor would refuse
-   * writes, so a repo whose migration was declined keeps its agent writes unattributed.
+   * Agent actor (RFC-046): the host assigns the id; the name is the user's label if set, else
+   * the engine fills it from the client's initialize clientInfo. Only on a revision-9 corpus:
+   * below it an actor would refuse writes, so a repo whose migration was declined keeps its
+   * agent writes unattributed.
    */
-  function applyAgentActor(session: McpSession, forRepo: SrsRepository): void {
+  function applyAgentActor(session: McpSession, forRepo: SrsRepository, conn: AgentConnection): void {
     try {
       if (neededMigrationIds(forRepo).includes(RFC046_MIGRATION_ID)) return;
     } catch (e) {
       console.error("Agent actor not set: migration state unknown", e);
       return;
     }
-    session.set_actor(JSON.stringify({ kind: "ai", id: relayAgentId() }));
+    session.set_actor(JSON.stringify({ kind: "ai", id: conn.id, ...(conn.label ? { name: conn.label } : {}) }));
+  }
+
+  /** The one place a connection's session is opened and configured (guard, actor) before attach. */
+  function openAgentSession(conn: AgentConnection, current: SrsRepository | null): void {
+    const h = hostFor(conn);
+    const entry = hosts.get(conn.id) as { host: RelayHost; session: McpSession | null };
+    entry.session = current ? current.open_mcp_session() : null;
+    if (entry.session) {
+      if (applyGuard(conn.id)) {
+        applyAgentActor(entry.session, current as SrsRepository, conn);
+        void h.attach(entry.session);
+      }
+    } else h.detach();
+  }
+
+  function connectAgent(label?: string) {
+    const list = addConnection(label);
+    const conn = list[list.length - 1];
+    agents = [...agents, { conn, state: { status: "idle", callerUrl: null, error: null } }];
+    openAgentSession(conn, repo);
+  }
+  function disconnectAgent(id: string) {
+    hosts.get(id)?.host.detach();
+    hosts.delete(id);
+    removeConnection(id);
+    agents = agents.filter((a) => a.conn.id !== id);
   }
 
   $effect(() => {
     const current = repo;
-    if (!mcpHost) return;
+    if (!relayUrl) return;
     untrack(() => {
-      mcpSession = current ? current.open_mcp_session() : null;
-      if (mcpSession) {
-        if (applyGuard()) {
-          applyAgentActor(mcpSession, current as SrsRepository);
-          void mcpHost.attach(mcpSession);
-        }
-      } else mcpHost.detach();
+      if (!hosts.size && !agents.length) {
+        agents = loadConnections().map((conn) => ({ conn, state: { status: "idle", callerUrl: null, error: null } }));
+      }
+      for (const { conn } of agents) openAgentSession(conn, current);
     });
   });
 
@@ -767,7 +809,7 @@
       if (g === null && replacing && agentGuard !== replacing) return; // a newer guard owns it
       agentGuard = g;
       agentGuardRepo = repo;
-      applyGuard();
+      applyGuards();
     }}
     workingCopySaved={workingCopySaved}
     onOpenExplorer={() => { editorMode = "generic"; }}
@@ -784,16 +826,27 @@
   />
 {/if}
 
-{#if mcpHost && repo}
-  <div class="mcp-dock" style="position:fixed;right:1rem;bottom:1rem;z-index:50">
-    <McpConnection
-      status={mcpState.status}
-      callerUrl={mcpState.callerUrl}
-      error={mcpState.error}
-      repositoryName={repoName}
-      onRotate={() => void mcpHost.rotate()}
-      onTakeover={() => void mcpHost.takeover()}
-    />
+{#if relayUrl && repo}
+  <div class="mcp-dock" style="position:fixed;right:1rem;bottom:1rem;z-index:50;display:grid;gap:.5rem;max-height:60vh;overflow:auto">
+    {#each agents as a (a.conn.id)}
+      <McpConnection
+        status={a.state.status}
+        callerUrl={a.state.callerUrl}
+        error={a.state.error}
+        repositoryName={repoName}
+        agentName={a.conn.label ?? `Agent ${a.conn.id.slice(6, 12)}`}
+        onRotate={() => void hosts.get(a.conn.id)?.host.rotate()}
+        onTakeover={() => void hosts.get(a.conn.id)?.host.takeover()}
+        onDisconnect={() => disconnectAgent(a.conn.id)}
+      />
+    {/each}
+    <details>
+    <summary data-testid="mcp-connect-open">Connect an agent</summary>
+    <form onsubmit={(e) => { e.preventDefault(); connectAgent(newAgentLabel); newAgentLabel = ""; }}>
+      <input class="mcp-conn__input" bind:value={newAgentLabel} placeholder="Agent label (optional)" aria-label="Agent label" data-testid="mcp-agent-label" />
+      <button type="submit" class="btn btn--secondary" data-testid="mcp-connect-agent">Connect</button>
+    </form>
+    </details>
   </div>
 {/if}
 

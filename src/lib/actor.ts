@@ -75,24 +75,3 @@ export function applyActor(repo: SrsRepository): void {
   if (a) repo.set_actor(JSON.stringify(a));
   else repo.clear_actor();
 }
-
-const RELAY_AGENT_KEY = "srs-web.relay-agent-id";
-let relayAgent: string | null = null;
-
-/**
- * Host-minted id of the agent on this relay connection (RFC-046: the host assigns the id; the
- * client handle is display name only). Stable per browser, in-memory when storage fails.
- * srs-web#358 (per-agent channels) extends this to one id per agent.
- */
-export function relayAgentId(): string {
-  try {
-    const saved = localStorage.getItem(RELAY_AGENT_KEY);
-    if (saved) return saved;
-    const id = `agent:${crypto.randomUUID()}`;
-    localStorage.setItem(RELAY_AGENT_KEY, id);
-    return id;
-  } catch {
-    relayAgent ??= `agent:${crypto.randomUUID()}`;
-    return relayAgent;
-  }
-}
