@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clearWorkingCopy, loadWorkingCopy, saveWorkingCopy } from "../src/lib/browser-cache.js";
+import {
+  clearWorkingCopy,
+  loadWorkingCopy,
+  saveWorkingCopy,
+  workingCopyScheduler,
+} from "../src/lib/browser-cache.js";
 
 // ---------------------------------------------------------------------------
 // localStorage mock — vi.stubGlobal provides a simple Map-backed implementation.
@@ -88,5 +93,45 @@ describe("browser-cache", () => {
   it("saveWorkingCopy returns true on success", () => {
     setup();
     expect(saveWorkingCopy("repo", "{}")).toBe(true);
+  });
+});
+
+describe("workingCopyScheduler (srs-web#353)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("coalesces a burst into one write at the end of the window", () => {
+    vi.useFakeTimers();
+    const write = vi.fn();
+    const s = workingCopyScheduler(write, 2000);
+    for (let i = 0; i < 5; i++) s.schedule();
+    expect(write).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(2000);
+    expect(write).toHaveBeenCalledOnce();
+  });
+
+  it("is not starved by a steady write stream (a background agent)", () => {
+    vi.useFakeTimers();
+    const write = vi.fn();
+    const s = workingCopyScheduler(write, 2000);
+    for (let t = 0; t < 6000; t += 100) {
+      s.schedule();
+      vi.advanceTimersByTime(100);
+    }
+    expect(write).toHaveBeenCalledTimes(3);
+  });
+
+  it("flush writes a pending copy now; cancel drops it", () => {
+    vi.useFakeTimers();
+    const write = vi.fn();
+    const s = workingCopyScheduler(write, 2000);
+    s.flush();
+    expect(write).not.toHaveBeenCalled(); // nothing pending
+    s.schedule();
+    s.flush();
+    expect(write).toHaveBeenCalledOnce();
+    s.schedule();
+    s.cancel();
+    vi.advanceTimersByTime(5000);
+    expect(write).toHaveBeenCalledOnce();
   });
 });

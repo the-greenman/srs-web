@@ -73,3 +73,30 @@ export function loadWorkingCopy(): WorkingCopyEntry | null {
 export function clearWorkingCopy(): void {
   localStorage.removeItem(WORKING_COPY_KEY);
 }
+
+/**
+ * Coalesce recovery-copy writes (srs-web#353). The first `schedule()` arms one timer and
+ * later calls ride along, so the copy is at most `delayMs` stale and costs at most one full
+ * export per window, however fast the human or any background agent writes. A restarting
+ * debounce would never fire under a steady agent write stream; this fixed window does.
+ * `flush()` writes now if a write is pending (page hide); `cancel()` drops it (save, new document).
+ */
+export function workingCopyScheduler(write: () => void, delayMs: number) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const flush = () => {
+    if (timer === undefined) return;
+    clearTimeout(timer);
+    timer = undefined;
+    write();
+  };
+  return {
+    schedule: () => {
+      timer ??= setTimeout(flush, delayMs);
+    },
+    flush,
+    cancel: () => {
+      clearTimeout(timer);
+      timer = undefined;
+    },
+  };
+}

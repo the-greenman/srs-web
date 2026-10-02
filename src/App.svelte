@@ -30,7 +30,7 @@
     RFC043_MIGRATION_ID,
   } from "$lib/srs-client.js";
   import type { SrsRepository } from "$lib/srs-client.js";
-  import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy } from "$lib/browser-cache.js";
+  import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
@@ -156,6 +156,7 @@
   function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
     // Every load path passes through here: from now on each engine write reports itself.
     if (repo) repo = observeWrites(repo, syncDocument);
+    workingCopy.cancel();
     workingCopySaved = true;
     const revision = documentMutations.beginDocument(repo?.write_epoch() ?? 0, { dirty });
     documentDirty = documentMutations.dirty;
@@ -166,26 +167,49 @@
   let workingCopySaved = true;
 
   /**
+   * The recovery copy exports the whole repository, so it is written at most once per
+   * window rather than on every commit (srs-web#353: ~45 ms per commit on muSrs). Skipped
+   * when the document was closed or saved in the meantime.
+   */
+  const workingCopy = workingCopyScheduler(() => {
+    if (repo && documentMutations.dirty) workingCopySaved = saveWorkingCopy(repoName, exportSrsj(repo));
+  }, 2000);
+  $effect(() => {
+    const flush = () => workingCopy.flush();
+    const onHidden = () => document.visibilityState === "hidden" && flush();
+    addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onHidden);
+    return () => {
+      removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onHidden);
+    };
+  });
+
+  /**
    * The one "did the repository change?" check. Called by the write-observing repo handle
    * (`observeWrites`, every UI writer), by the relay host after each MCP request, and before
    * every save snapshot. Compares the engine's `write_epoch()` with the last observed value,
    * so it is idempotent: a no-op action leaves the document clean (srs-web#345).
    *
-   * Returns whether the local recovery copy is current (false when its `localStorage`
-   * write failed, srs-web#312) so GovernanceShell's save indicator can reflect it.
+   * Returns whether the last local recovery-copy write succeeded (false when its
+   * `localStorage` write failed, srs-web#312) so GovernanceShell's save indicator can
+   * reflect it. The copy itself is written by `workingCopy`, at most 2 s later.
    */
   function syncDocument(): boolean {
     if (!repo || !documentMutations.sync(repo.write_epoch())) return workingCopySaved;
     documentDirty = documentMutations.dirty;
     documentRevision = documentMutations.current.revision;
-    workingCopySaved = saveWorkingCopy(repoName, exportSrsj(repo));
+    workingCopy.schedule();
     return workingCopySaved;
   }
 
   function completeDocumentSave(snapshot: ReturnType<typeof documentMutations.captureSave>): boolean {
     const savedCurrentRevision = documentMutations.completeSave(snapshot);
     documentDirty = documentMutations.dirty;
-    if (savedCurrentRevision) clearWorkingCopy();
+    if (savedCurrentRevision) {
+      workingCopy.cancel();
+      clearWorkingCopy();
+    }
     return savedCurrentRevision;
   }
 
