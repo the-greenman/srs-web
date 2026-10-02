@@ -35,11 +35,16 @@ describe.skipIf(!haveBindings)("newEssay on the real engine", () => {
       readFileSync(path.join(__dirname, "../e2e/fixtures/essay-empty.srsj"), "utf8")
     );
 
+    const e0 = repo.write_epoch();
     const essayId = newEssay(repo, "My essay");
+    const e1 = repo.write_epoch();
+    expect(e1).toBeGreaterThan(e0); // a write moves the engine epoch (srs-web#345)
+    listRecords(repo, {});
+    expect(repo.write_epoch()).toBe(e1); // reads do not: a no-op action is never "dirty"
 
     const essay = listRecords(repo, {}).find((r) => r.typeId === ESSAY_TYPE_ID);
     expect(essay?.instanceId).toBe(essayId);
-    const [summary] = listContainers(repo, { rootInstanceId: essayId });
+    const [summary] = listContainers(repo, { anchorInstanceId: essayId });
     const container = getContainer(repo, summary.containerId);
     expect(container.anchorInstanceId).toBe(essayId);
     expect(container.identityInstanceId).toBe(essayId);

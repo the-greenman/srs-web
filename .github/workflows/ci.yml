@@ -28,6 +28,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Check vendored relay protocol
+        run: node scripts/check-relay-protocol.mjs
+
       # Advisory only — never fails the run. The srs-rust pin in scripts/ensure-bindings.mjs is
       # correct by design but goes stale silently, and a stale pin renders a migrated corpus as
       # empty instead of failing. Pins lag deliberately during a cutover, so this is a visible

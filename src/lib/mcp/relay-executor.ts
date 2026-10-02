@@ -15,8 +15,8 @@ import {
   base64UrlDecode,
   base64UrlEncode,
   executorSocketUrl,
-  newGeneration,
-} from "./relay-wire";
+  newExecutorGeneration,
+} from "./relay-protocol";
 
 export interface FrameHandler {
   handle(text: string): string | undefined;
@@ -51,7 +51,7 @@ export class RelayExecutor {
   #socket: SocketLike | null = null;
   #stopped = false;
   #tail: Promise<void> = Promise.resolve();
-  #generation = newGeneration();
+  #generation = newExecutorGeneration();
   #timer: ReturnType<typeof setTimeout> | undefined;
   #opened = false;
 
@@ -114,7 +114,9 @@ export class RelayExecutor {
     if (frame.executorGeneration !== this.#generation) return;
     let response: RelayResponseFrame["response"];
     try {
-      const out = this.o.session.handle(dec.decode(base64UrlDecode(frame.request.body)));
+      const body = base64UrlDecode(frame.request.body);
+      if (!body) throw new Error("malformed base64url body"); // -> 500 executor_error
+      const out = this.o.session.handle(dec.decode(body));
       response =
         out === undefined
           ? { status: 202, headers: {} }

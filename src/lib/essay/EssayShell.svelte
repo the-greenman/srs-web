@@ -40,7 +40,6 @@
     saveMessage = null,
     documentDirty = false,
     documentRevision = 0,
-    onDocumentMutation = () => {},
     onOpenAnother,
     onOpenExplorer,
   }: {
@@ -57,7 +56,6 @@
     documentDirty?: boolean;
     /** Bumped by App on every in-place mutation, including MCP/agent writes. */
     documentRevision?: number;
-    onDocumentMutation?: () => void;
     onOpenAnother: () => void;
     onOpenExplorer?: () => void;
   } = $props();
@@ -100,12 +98,11 @@
     untrack(reload);
   });
 
-  /** Run a mutation, tell App, reload, and keep keyboard focus where the writer was. */
+  /** Run a mutation, reload, and keep keyboard focus where the writer was. */
   async function run(fn: () => string | void): Promise<void> {
     const key = (document.activeElement as HTMLElement | null)?.dataset?.focusKey;
     try {
       const focusKey = fn() ?? key;
-      onDocumentMutation();
       reload();
       await tick();
       if (focusKey) document.querySelector<HTMLElement>(`[data-focus-key="${focusKey}"]`)?.focus();

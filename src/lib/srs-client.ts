@@ -29,6 +29,8 @@ export interface McpSession {
 
 export interface SrsRepository {
   open_mcp_session(): McpSession;
+  /** Engine write counter (srs-rust#1160): the one "repository changed" signal for UI and MCP writers. */
+  write_epoch(): number;
   validate(): RepositoryValidationReport;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; unwrapped from RecordSummary[] ({ instanceId, displayLabel, record }) in listRecords() via normalizeRecordSummary()
   list_records(filter_json: string): any;
@@ -1079,7 +1081,7 @@ export interface ContainerMembersResult {
 export interface ContainerListFilter {
   containerType?: string;
   memberInstanceId?: string;
-  rootInstanceId?: string;
+  anchorInstanceId?: string;
 }
 
 // ---------------------------------------------------------------------------

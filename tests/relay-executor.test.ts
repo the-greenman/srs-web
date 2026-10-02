@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { RelayExecutor, type SocketLike } from "../src/lib/mcp/relay-executor.js";
 import { type HostState, RelayHost } from "../src/lib/mcp/relay-host.js";
-import { base64UrlDecode, base64UrlEncode } from "../src/lib/mcp/relay-wire.js";
+import { base64UrlDecode, base64UrlEncode } from "../src/lib/mcp/relay-protocol.js";
 
 type Frame = { response: { status: number; body?: string } } & Record<string, unknown>;
 
@@ -41,7 +41,8 @@ class FakeSocket implements SocketLike {
 }
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
-const text = (f: Frame) => new TextDecoder().decode(base64UrlDecode(f.response.body ?? ""));
+const text = (f: Frame) =>
+  new TextDecoder().decode(base64UrlDecode(f.response.body ?? "") ?? undefined);
 const track = (sockets: FakeSocket[]) => (u: string) => {
   const s = new FakeSocket(u);
   sockets.push(s);
@@ -171,10 +172,9 @@ describe("RelayExecutor", () => {
 
 describe("RelayHost", () => {
   function host() {
-    let epoch = 0;
     const sockets: FakeSocket[] = [];
     const store = new Map<string, string>();
-    const onMutated = vi.fn();
+    const onHandled = vi.fn();
     let n = 0;
     const fetchImpl = vi.fn(async () =>
       Response.json({
@@ -186,7 +186,7 @@ describe("RelayHost", () => {
     const states: HostState[] = [];
     const h = new RelayHost({
       relayUrl: "https://relay.test",
-      onMutated,
+      onHandled,
       onChange: (s) => states.push(s),
       fetchImpl,
       createSocket: track(sockets),
@@ -195,20 +195,14 @@ describe("RelayHost", () => {
     return {
       h,
       sockets,
-      onMutated,
+      onHandled,
       fetchImpl,
       states,
-      sess: (write: boolean) => ({
-        handle: () => {
-          if (write) epoch++;
-          return "{}";
-        },
-        write_epoch: () => epoch,
-      }),
+      sess: (_write: boolean) => ({ handle: () => "{}" }),
     };
   }
 
-  it("marks a mutation only when the repository changed, and reuses stored credentials", async () => {
+  it("reports every handled request (dirty state is the owner's epoch check), and reuses stored credentials", async () => {
     const t = host();
     const session = t.sess(true);
     await t.h.attach(session);
@@ -216,13 +210,13 @@ describe("RelayHost", () => {
     t.sockets[0].request("write", "1");
     t.sockets[0].request("write", "2");
     await flush();
-    expect(t.onMutated).toHaveBeenCalledTimes(2); // one per mutating request
+    expect(t.onHandled).toHaveBeenCalledTimes(2); // one per handled request
 
     await t.h.attach(t.sess(false));
     expect(t.fetchImpl).toHaveBeenCalledTimes(1); // stored channel reused
     t.sockets[1].request("read", "3");
     await flush();
-    expect(t.onMutated).toHaveBeenCalledTimes(2); // read: no change
+    expect(t.onHandled).toHaveBeenCalledTimes(3);
     expect(t.states.at(-1).callerUrl).toBe("https://relay.test/call1");
   });
 
@@ -244,13 +238,13 @@ describe("RelayHost", () => {
     const states: HostState[] = [];
     const h = new RelayHost({
       relayUrl: "https://relay.test",
-      onMutated() {},
+      onHandled() {},
       onChange: (s) => states.push(s),
       fetchImpl: (async () =>
         Response.json({ error: "invalid_origin" }, { status: 400 })) as unknown as typeof fetch,
       storage: { getItem: () => null, setItem() {} },
     });
-    await h.attach({ handle: () => "{}", write_epoch: () => 0 });
+    await h.attach({ handle: () => "{}" });
     expect(states.at(-1).status).toBe("error");
     expect(states.at(-1).error).toContain("invalid_origin");
   });

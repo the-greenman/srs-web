@@ -57,7 +57,6 @@
     /** Changes after mount invalidate derived browser projections of the repository. */
     documentRevision?: number;
     /** Report a successful in-place repository mutation to the App shell. */
-    onDocumentMutation?: () => void;
     onOpenAnother: () => void;
     onOpenEditor?: (id: string) => void;
   }
@@ -71,7 +70,6 @@
     saveMessage = null,
     documentDirty = false,
     documentRevision = 0,
-    onDocumentMutation = () => {},
     onOpenAnother,
     onOpenEditor,
   }: Props = $props();
@@ -177,7 +175,6 @@
 
   /** Re-render the active composition's preview after an editor mutation (BlueprintDocumentEditor). */
   function onDocumentEditorMutation(): void {
-    onDocumentMutation();
     documentRenderRevision++;
     if (selectedCompositionId) renderPreview(selectedCompositionId);
   }
@@ -281,7 +278,6 @@
     editError = null;
     try {
       selectedRecord = updateRecord(repo, selectedRecord.instanceId, input);
-      onDocumentMutation();
       editing = false;
       refreshRecords();
     } catch (error: unknown) {

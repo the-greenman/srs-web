@@ -153,25 +153,34 @@
   }
 
   function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
-    const revision = documentMutations.beginDocument({ dirty });
+    const revision = documentMutations.beginDocument(repo?.write_epoch() ?? 0, { dirty });
     documentDirty = documentMutations.dirty;
     documentRevision = revision.revision;
   }
 
   /**
-   * Shared mutation entry point for every writer of the active WASM repository.
-   * MCP hosting will call the same function after a successful external write.
+   * The one "did the repository change?" check, for EVERY writer (UI and MCP alike):
+   * compares the engine's own `write_epoch()` (srs-rust#1140/#1160) with the last
+   * observed value. Idempotent and cheap, so it is safe to call after any action;
+   * a no-op action leaves the epoch unchanged and the document clean (srs-web#345).
    *
-   * Returns whether the local recovery-copy write succeeded, so callers (e.g.
-   * GovernanceShell's save indicator) can reflect a failed `localStorage` write
-   * instead of silently claiming "saved" (srs-web#312).
+   * Returns whether the local recovery-copy is current (false only when its
+   * `localStorage` write failed, srs-web#312) so GovernanceShell's save indicator
+   * can reflect it instead of silently claiming "saved".
    */
-  function handleDocumentMutation(): boolean {
-    if (!repo) return false;
-    const revision = documentMutations.recordMutation();
+  function syncDocument(): boolean {
+    if (!repo || !documentMutations.sync(repo.write_epoch())) return true;
     documentDirty = documentMutations.dirty;
-    documentRevision = revision.revision;
+    documentRevision = documentMutations.current.revision;
     return saveWorkingCopy(repoName, exportSrsj(repo));
+  }
+
+  /**
+   * UI writers no longer report themselves: after any user gesture settles, observe the epoch.
+   * Save also syncs first (below), so a missed async write can never be saved as "clean".
+   */
+  function onUserGesture(): void {
+    setTimeout(syncDocument, 0);
   }
 
   function completeDocumentSave(snapshot: ReturnType<typeof documentMutations.captureSave>): boolean {
@@ -184,7 +193,7 @@
   // ---------------------------------------------------------------------------
   // MCP relay (srs-web#307). Enabled only when a relay origin is configured.
   // The Rust/WASM McpSession owns all MCP semantics; this only hosts it. MCP
-  // writes mark the document unsaved via handleDocumentMutation and never call
+  // writes mark the document unsaved via syncDocument and never call
   // a storage provider — persistence stays an explicit Save/Export.
   // ---------------------------------------------------------------------------
 
@@ -202,7 +211,7 @@
   const mcpHost = relayUrl
     ? new RelayHost({
         relayUrl,
-        onMutated: () => void handleDocumentMutation(),
+        onHandled: () => void syncDocument(),
         onChange: (s) => (mcpState = s),
       })
     : null;
@@ -420,6 +429,7 @@
     if (!repo || !activeDocument?.capabilities.write) return;
     const repository = repo;
     const handle = activeDocument;
+    syncDocument();
     const saveSnapshot = documentMutations.captureSave();
     saving = true;
     saveMessage = null;
@@ -470,6 +480,7 @@
     if (!repo || !isGitBranchAware(activeDocument)) return;
     const repository = repo;
     const handle = activeDocument;
+    syncDocument();
     const saveSnapshot = documentMutations.captureSave();
     saving = true;
     gitSaveError = null;
@@ -511,6 +522,8 @@
     }
   }
 </script>
+
+<svelte:window onclick={onUserGesture} onchange={onUserGesture} onkeyup={onUserGesture} ondrop={onUserGesture} />
 
 <!-- =========================================================================
      Boot state
@@ -629,7 +642,6 @@
     {saveMessage}
     documentDirty={documentDirty}
     documentRevision={documentRevision}
-    onDocumentMutation={handleDocumentMutation}
     onOpenEditor={(id) => { editorMode = id; }}
     onOpenAnother={() => {
       clearWorkingCopy();
@@ -659,7 +671,7 @@
     saveMessage={saveMessage}
     documentDirty={documentDirty}
     documentRevision={documentRevision}
-    onDocumentMutation={handleDocumentMutation}
+    onDocumentMutation={syncDocument}
     onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAnother={() => {
       clearWorkingCopy();

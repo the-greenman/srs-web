@@ -22,6 +22,12 @@
     }
   },
   "files": {
-    "ignore": ["node_modules", "dist", "**/*.svelte", "src/lib/srs_bindings/**"]
+    "ignore": [
+      "node_modules",
+      "dist",
+      "**/*.svelte",
+      "src/lib/srs_bindings/**",
+      "src/lib/mcp/relay-protocol.ts"
+    ]
   }
 }
