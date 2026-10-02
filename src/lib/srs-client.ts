@@ -25,6 +25,9 @@ export interface McpSession {
   is_initialized(): boolean;
   /** Monotonic; changes iff a handled request mutated the store (srs-rust#1140). */
   write_epoch(): number;
+  /** Engine-enforced write guard for agent (MCP) writes (srs-rust#1165); throws on bad JSON. */
+  set_write_guard(json: string): void;
+  clear_write_guard(): void;
 }
 
 export interface SrsRepository {

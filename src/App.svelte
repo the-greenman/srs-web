@@ -29,7 +29,8 @@
     applyMigration,
     RFC043_MIGRATION_ID,
   } from "$lib/srs-client.js";
-  import type { SrsRepository } from "$lib/srs-client.js";
+  import type { McpSession, SrsRepository } from "$lib/srs-client.js";
+  import type { AgentWriteGuard } from "$lib/essay/essay-document.js";
   import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
@@ -239,12 +240,24 @@
       })
     : null;
 
+  // The active shell declares the agent write guard (policy); the engine enforces it. Kept here
+  // so it is also applied to a session attached after the guard was set.
+  let agentGuard: AgentWriteGuard | null = null;
+  let mcpSession: McpSession | null = null;
+  function applyGuard() {
+    if (agentGuard) mcpSession?.set_write_guard(JSON.stringify(agentGuard));
+    else mcpSession?.clear_write_guard();
+  }
+
   $effect(() => {
     const current = repo;
     if (!mcpHost) return;
     untrack(() => {
-      if (current) void mcpHost.attach(current.open_mcp_session());
-      else mcpHost.detach();
+      mcpSession = current ? current.open_mcp_session() : null;
+      if (mcpSession) {
+        applyGuard();
+        void mcpHost.attach(mcpSession);
+      } else mcpHost.detach();
     });
   });
 
@@ -693,6 +706,7 @@
     documentDirty={documentDirty}
     documentRevision={documentRevision}
     onDocumentMutation={syncDocument}
+    onAgentWriteGuard={(g) => { agentGuard = g; applyGuard(); }}
     workingCopySaved={workingCopySaved}
     onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAnother={() => {

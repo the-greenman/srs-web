@@ -47,6 +47,25 @@ export interface EssayModel {
   draftEntries: OutlineEntry[];
 }
 
+/** The engine write guard (srs-rust#1165) as a plain value; the engine enforces it. */
+export interface AgentWriteGuard {
+  containerIds: string[];
+  instanceIds: string[];
+  fillOnlyFields: string[];
+}
+
+/**
+ * Owner ruling (muDemocracy.org#226): agents never write the essay text — they comment via
+ * new records and relations. Labels are metadata: fillable only while empty.
+ */
+export function essayWriteGuard(m: EssayModel): AgentWriteGuard {
+  return {
+    containerIds: [m.containerId, ...(m.draftContainerId ? [m.draftContainerId] : [])],
+    instanceIds: [m.essayId, ...(m.stateId ? [m.stateId] : [])],
+    fillOnlyFields: ["paragraph_title"],
+  };
+}
+
 /** A drop / insert position: before / after / into `id` (null = the end, depth 0). */
 export interface Target {
   id: string | null;

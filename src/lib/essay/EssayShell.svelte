@@ -7,7 +7,7 @@
   paragraphs live in the document-state record.
 -->
 <script lang="ts">
-  import { tick, untrack } from "svelte";
+  import { onDestroy, tick, untrack } from "svelte";
   import type { SrsRepository } from "$lib/srs-client.js";
   import Block from "$lib/components/Block.svelte";
   import BlockStack from "$lib/components/BlockStack.svelte";
@@ -28,7 +28,8 @@
     setTitle,
     transfer,
   } from "./essay-document.js";
-  import type { EssayModel, EssaySummary } from "./essay-document.js";
+  import { essayWriteGuard } from "./essay-document.js";
+  import type { AgentWriteGuard, EssayModel, EssaySummary } from "./essay-document.js";
   import { hiddenByAncestor, outsideRun, visibleEntries } from "./essay-model.js";
 
   let {
@@ -42,6 +43,7 @@
     documentRevision = 0,
     onOpenAnother,
     onOpenExplorer,
+    onAgentWriteGuard,
   }: {
     // Common EditorShellProps this shell does not use (kept so every shell takes one prop set).
     documentProvider?: string;
@@ -58,6 +60,7 @@
     documentRevision?: number;
     onOpenAnother: () => void;
     onOpenExplorer?: () => void;
+    onAgentWriteGuard?: (guard: AgentWriteGuard | null) => void;
   } = $props();
 
   let essays = $state<EssaySummary[]>([]);
@@ -90,7 +93,10 @@
     } catch (e) {
       error = msg(e);
     }
+    onAgentWriteGuard?.(model ? essayWriteGuard(model) : null);
   }
+
+  onDestroy(() => onAgentWriteGuard?.(null));
 
   // Re-render whenever the repository is mutated in place (own edits and MCP writes alike).
   $effect(() => {

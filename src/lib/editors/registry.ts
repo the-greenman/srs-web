@@ -1,5 +1,5 @@
 import EssayShell from "$lib/essay/EssayShell.svelte";
-import { newEssay } from "$lib/essay/essay-document.js";
+import { type AgentWriteGuard, newEssay } from "$lib/essay/essay-document.js";
 import { ESSAY_TYPE_ID } from "$lib/essay/type-registry.js";
 import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
 import { DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
@@ -41,6 +41,8 @@ export interface EditorShellProps {
   onOpenExplorer?: () => void;
   documentProvider: string;
   readOnlyReason?: string | null;
+  /** A shell declares (or, with null, withdraws) the write guard App applies to agent MCP writes. */
+  onAgentWriteGuard?: (guard: AgentWriteGuard | null) => void;
 }
 
 export interface EditorDefinition {
