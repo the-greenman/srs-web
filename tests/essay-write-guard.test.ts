@@ -21,4 +21,9 @@ describe("essayWriteGuard", () => {
     expect(g.containerIds).toEqual(["c", "d"]);
     expect(g.instanceIds).toEqual(["e", "s"]);
   });
+  it("follows the active essay: switching essays yields the new essay's ids", () => {
+    const other = essayWriteGuard({ ...base, essayId: "e2", containerId: "c2" });
+    expect(other.instanceIds).toEqual(["e2"]);
+    expect(other.containerIds).toEqual(["c2"]);
+  });
 });

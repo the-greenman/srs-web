@@ -19,6 +19,13 @@ import GOVERNANCE_SEED_SRSJ from "./srs_bindings/governance-seed.srsj?raw";
 // ---------------------------------------------------------------------------
 
 /** Opaque WASM handle — methods are defined in srs-bindings. */
+/** The engine write guard (srs-rust#1165) as a plain value; the engine enforces it. */
+export interface AgentWriteGuard {
+  containerIds: string[];
+  instanceIds: string[];
+  fillOnlyFields: string[];
+}
+
 /** Browser MCP session over a clone of the open store (srs-rust#1137). */
 export interface McpSession {
   handle(text: string): string | undefined;

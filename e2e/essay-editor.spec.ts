@@ -231,7 +231,7 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
   });
   expect(upd.result.isError, JSON.stringify(upd)).not.toBe(true);
 
-  await expect(page.locator(".essay-shell__page [data-block-id]").nth(2)).toContainText("Closing");
+  await expect(page.locator(".essay-shell__page .block__handle").nth(2)).toHaveText("Closing");
   await expect(page.getByTestId("document-dirty-status")).toBeVisible();
 });
 

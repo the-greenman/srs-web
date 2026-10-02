@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { onDestroy, tick, untrack } from "svelte";
-  import type { SrsRepository } from "$lib/srs-client.js";
+  import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import Block from "$lib/components/Block.svelte";
   import BlockStack from "$lib/components/BlockStack.svelte";
   import type { DropTarget } from "$lib/components/BlockStack.svelte";
@@ -29,7 +29,7 @@
     transfer,
   } from "./essay-document.js";
   import { essayWriteGuard } from "./essay-document.js";
-  import type { AgentWriteGuard, EssayModel, EssaySummary } from "./essay-document.js";
+  import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { hiddenByAncestor, outsideRun, visibleEntries } from "./essay-model.js";
 
   let {
@@ -60,7 +60,7 @@
     documentRevision?: number;
     onOpenAnother: () => void;
     onOpenExplorer?: () => void;
-    onAgentWriteGuard?: (guard: AgentWriteGuard | null) => void;
+    onAgentWriteGuard?: (guard: AgentWriteGuard | null, replacing?: AgentWriteGuard) => void;
   } = $props();
 
   let essays = $state<EssaySummary[]>([]);
@@ -81,6 +81,8 @@
     }
   }
 
+  let lastGuard: AgentWriteGuard | undefined;
+
   function reload(): void {
     try {
       essays = listEssays(repo);
@@ -93,10 +95,12 @@
     } catch (e) {
       error = msg(e);
     }
-    onAgentWriteGuard?.(model ? essayWriteGuard(model) : null);
+    const prev = lastGuard;
+    lastGuard = model ? essayWriteGuard(model) : undefined;
+    onAgentWriteGuard?.(lastGuard ?? null, lastGuard ? undefined : prev);
   }
 
-  onDestroy(() => onAgentWriteGuard?.(null));
+  onDestroy(() => onAgentWriteGuard?.(null, lastGuard));
 
   // Re-render whenever the repository is mutated in place (own edits and MCP writes alike).
   $effect(() => {

@@ -29,9 +29,8 @@
     applyMigration,
     RFC043_MIGRATION_ID,
   } from "$lib/srs-client.js";
-  import type { McpSession, SrsRepository } from "$lib/srs-client.js";
-  import type { AgentWriteGuard } from "$lib/essay/essay-document.js";
-  import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
+  import type { AgentWriteGuard, McpSession, SrsRepository } from "$lib/srs-client.js";
+    import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
@@ -244,9 +243,20 @@
   // so it is also applied to a session attached after the guard was set.
   let agentGuard: AgentWriteGuard | null = null;
   let mcpSession: McpSession | null = null;
-  function applyGuard() {
-    if (agentGuard) mcpSession?.set_write_guard(JSON.stringify(agentGuard));
-    else mcpSession?.clear_write_guard();
+  // Tied to the repository it was declared for, so one repo's ids are never applied to another's session.
+  let agentGuardRepo: SrsRepository | null = null;
+  /** Fail closed: if the guard cannot be applied, detach the agent and surface the error. */
+  function applyGuard(): boolean {
+    try {
+      if (agentGuard && agentGuardRepo === repo) mcpSession?.set_write_guard(JSON.stringify(agentGuard));
+      else mcpSession?.clear_write_guard();
+      return true;
+    } catch (e) {
+      console.error("MCP write guard could not be applied", e);
+      mcpHost?.detach();
+      mcpState = { status: "error", callerUrl: null, error: `Write guard failed: ${e instanceof Error ? e.message : String(e)}` };
+      return false;
+    }
   }
 
   $effect(() => {
@@ -255,8 +265,7 @@
     untrack(() => {
       mcpSession = current ? current.open_mcp_session() : null;
       if (mcpSession) {
-        applyGuard();
-        void mcpHost.attach(mcpSession);
+        if (applyGuard()) void mcpHost.attach(mcpSession);
       } else mcpHost.detach();
     });
   });
@@ -706,7 +715,12 @@
     documentDirty={documentDirty}
     documentRevision={documentRevision}
     onDocumentMutation={syncDocument}
-    onAgentWriteGuard={(g) => { agentGuard = g; applyGuard(); }}
+    onAgentWriteGuard={(g, replacing) => {
+      if (g === null && replacing && agentGuard !== replacing) return; // a newer guard owns it
+      agentGuard = g;
+      agentGuardRepo = repo;
+      applyGuard();
+    }}
     workingCopySaved={workingCopySaved}
     onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAnother={() => {

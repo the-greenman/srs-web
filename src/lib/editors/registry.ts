@@ -1,10 +1,10 @@
 import EssayShell from "$lib/essay/EssayShell.svelte";
-import { type AgentWriteGuard, newEssay } from "$lib/essay/essay-document.js";
+import { newEssay } from "$lib/essay/essay-document.js";
 import { ESSAY_TYPE_ID } from "$lib/essay/type-registry.js";
 import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
 import { DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
 import GuidesShell from "$lib/guides/GuidesShell.svelte";
-import type { SrsRepository, TypeSummary } from "$lib/srs-client.js";
+import type { AgentWriteGuard, SrsRepository, TypeSummary } from "$lib/srs-client.js";
 /**
  * The one editor registry (srs-web#338).
  *
@@ -42,7 +42,8 @@ export interface EditorShellProps {
   documentProvider: string;
   readOnlyReason?: string | null;
   /** A shell declares (or, with null, withdraws) the write guard App applies to agent MCP writes. */
-  onAgentWriteGuard?: (guard: AgentWriteGuard | null) => void;
+  /** `replacing` = the guard being withdrawn; App ignores a null from a shell whose guard is no longer current. */
+  onAgentWriteGuard?: (guard: AgentWriteGuard | null, replacing?: AgentWriteGuard) => void;
 }
 
 export interface EditorDefinition {
