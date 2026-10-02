@@ -23,6 +23,7 @@ const doc = vi.hoisted(() => ({
 vi.mock("../src/lib/essay/essay-document.js", () => ({
   ...doc,
   addParagraph: vi.fn(),
+  essayWriteGuard: vi.fn(),
   moveEntry: vi.fn(),
   newEssay: vi.fn(),
   shiftEntry: vi.fn(),

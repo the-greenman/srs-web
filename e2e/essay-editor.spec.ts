@@ -212,7 +212,7 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
     jsonrpc: "2.0",
     id: 2,
     method: "tools/call",
-    params: { name: "find", arguments: { contentMatch: "Second paragraph" } },
+    params: { name: "find", arguments: { contentMatch: "Third paragraph" } },
   });
   const text = JSON.stringify(found);
   const id = text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)?.[0];
@@ -225,13 +225,13 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
       name: "record_update",
       arguments: {
         instanceId: id,
-        fieldValues: { paragraph_title: "Claim", body: "Rewritten by an agent." },
+        fieldValues: { paragraph_title: "Closing", body: "Third paragraph." }, // body is guarded (srs-web#356); the empty label is fillable
       },
     },
   });
   expect(upd.result.isError, JSON.stringify(upd)).not.toBe(true);
 
-  await expect(bodies(page).nth(1)).toHaveText("Rewritten by an agent.");
+  await expect(page.locator(".essay-shell__page .block__handle").nth(2)).toHaveText("Closing");
   await expect(page.getByTestId("document-dirty-status")).toBeVisible();
 });
 

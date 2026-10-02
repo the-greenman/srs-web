@@ -20,7 +20,13 @@ import {
   removeContainerMember,
   updateRecord,
 } from "$lib/srs-client.js";
-import type { OutlineEntry, OutlineShift, SrsRecord, SrsRepository } from "$lib/srs-client.js";
+import type {
+  AgentWriteGuard,
+  OutlineEntry,
+  OutlineShift,
+  SrsRecord,
+  SrsRepository,
+} from "$lib/srs-client.js";
 import type { Zone } from "./essay-model.js";
 import { toggled } from "./essay-model.js";
 import { DOCUMENT_STATE_TYPE_ID, ESSAY_TYPE_ID, PARAGRAPH_TYPE_ID } from "./type-registry.js";
@@ -45,6 +51,18 @@ export interface EssayModel {
   hidden: string[];
   draftContainerId: string | null;
   draftEntries: OutlineEntry[];
+}
+
+/**
+ * Owner ruling (muDemocracy.org#226): agents never write the essay text — they comment via
+ * new records and relations. Labels are metadata: fillable only while empty.
+ */
+export function essayWriteGuard(m: EssayModel): AgentWriteGuard {
+  return {
+    containerIds: [m.containerId, ...(m.draftContainerId ? [m.draftContainerId] : [])],
+    instanceIds: [m.essayId, ...(m.stateId ? [m.stateId] : [])],
+    fillOnlyFields: ["paragraph_title"],
+  };
 }
 
 /** A drop / insert position: before / after / into `id` (null = the end, depth 0). */

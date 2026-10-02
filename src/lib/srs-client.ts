@@ -19,12 +19,22 @@ import GOVERNANCE_SEED_SRSJ from "./srs_bindings/governance-seed.srsj?raw";
 // ---------------------------------------------------------------------------
 
 /** Opaque WASM handle — methods are defined in srs-bindings. */
+/** The engine write guard (srs-rust#1165) as a plain value; the engine enforces it. */
+export interface AgentWriteGuard {
+  containerIds: string[];
+  instanceIds: string[];
+  fillOnlyFields: string[];
+}
+
 /** Browser MCP session over a clone of the open store (srs-rust#1137). */
 export interface McpSession {
   handle(text: string): string | undefined;
   is_initialized(): boolean;
   /** Monotonic; changes iff a handled request mutated the store (srs-rust#1140). */
   write_epoch(): number;
+  /** Engine-enforced write guard for agent (MCP) writes (srs-rust#1165); throws on bad JSON. */
+  set_write_guard(json: string): void;
+  clear_write_guard(): void;
 }
 
 export interface SrsRepository {

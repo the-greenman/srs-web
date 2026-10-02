@@ -29,8 +29,8 @@
     applyMigration,
     RFC043_MIGRATION_ID,
   } from "$lib/srs-client.js";
-  import type { SrsRepository } from "$lib/srs-client.js";
-  import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
+  import type { AgentWriteGuard, McpSession, SrsRepository } from "$lib/srs-client.js";
+    import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
@@ -239,12 +239,34 @@
       })
     : null;
 
+  // The active shell declares the agent write guard (policy); the engine enforces it. Kept here
+  // so it is also applied to a session attached after the guard was set.
+  let agentGuard: AgentWriteGuard | null = null;
+  let mcpSession: McpSession | null = null;
+  // Tied to the repository it was declared for, so one repo's ids are never applied to another's session.
+  let agentGuardRepo: SrsRepository | null = null;
+  /** Fail closed: if the guard cannot be applied, detach the agent and surface the error. */
+  function applyGuard(): boolean {
+    try {
+      if (agentGuard && agentGuardRepo === repo) mcpSession?.set_write_guard(JSON.stringify(agentGuard));
+      else mcpSession?.clear_write_guard();
+      return true;
+    } catch (e) {
+      console.error("MCP write guard could not be applied", e);
+      mcpHost?.detach();
+      mcpState = { status: "error", callerUrl: null, error: `Write guard failed: ${e instanceof Error ? e.message : String(e)}` };
+      return false;
+    }
+  }
+
   $effect(() => {
     const current = repo;
     if (!mcpHost) return;
     untrack(() => {
-      if (current) void mcpHost.attach(current.open_mcp_session());
-      else mcpHost.detach();
+      mcpSession = current ? current.open_mcp_session() : null;
+      if (mcpSession) {
+        if (applyGuard()) void mcpHost.attach(mcpSession);
+      } else mcpHost.detach();
     });
   });
 
@@ -693,6 +715,12 @@
     documentDirty={documentDirty}
     documentRevision={documentRevision}
     onDocumentMutation={syncDocument}
+    onAgentWriteGuard={(g, replacing) => {
+      if (g === null && replacing && agentGuard !== replacing) return; // a newer guard owns it
+      agentGuard = g;
+      agentGuardRepo = repo;
+      applyGuard();
+    }}
     workingCopySaved={workingCopySaved}
     onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAnother={() => {
