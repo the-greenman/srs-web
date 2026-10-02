@@ -29,7 +29,7 @@
     transfer,
   } from "./essay-document.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
-  import { hiddenByAncestor, visibleEntries } from "./essay-model.js";
+  import { hiddenByAncestor, outsideRun, visibleEntries } from "./essay-model.js";
 
   let {
     repo,
@@ -116,12 +116,14 @@
 
   const hidden = $derived(new Set(model?.hidden ?? []));
   const inherited = $derived(hiddenByAncestor(model?.entries ?? [], hidden));
-  const items = $derived((model?.entries ?? []).map((e) => ({ id: e.instanceId, depth: e.depth ?? 0 })));
+  const items = $derived((model?.entries ?? []).map((e) => ({ id: e.instanceId, depth: e.depth })));
+  const essayDrop = (drag: string, target: string) => outsideRun(model?.entries ?? [], drag, target);
+  const draftDrop = (drag: string, target: string) => outsideRun(model?.draftEntries ?? [], drag, target);
   const label = (id: string) => model?.paragraphs[id]?.title || model?.paragraphs[id]?.body.slice(0, 40) || "untitled";
   const layers = $derived(
     visibleEntries(model?.entries ?? [], folded).map((e) => ({
       id: e.instanceId,
-      depth: e.depth ?? 0,
+      depth: e.depth,
       label: label(e.instanceId),
       hidden: hidden.has(e.instanceId),
       inherited: inherited.has(e.instanceId),
@@ -146,7 +148,7 @@
     if (!m) return;
     const toId = to === "essay" ? m.containerId : m.draftContainerId;
     const fromId = p.from === "essay" ? m.containerId : m.draftContainerId;
-    if (!toId || !fromId || p.id === t.id) return;
+    if (!toId || !fromId) return;
     void run(() => {
       if (p.from === to) moveEntry(repo, toId, p.id, t);
       else transfer(repo, fromId, toId, p.id, t);
@@ -219,7 +221,7 @@
           <p class="essay-shell__hint">No paragraphs yet.</p>
           <Button variant="mono" data-testid="first-paragraph" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add first paragraph</Button>
         {/if}
-        <BlockStack {items} source="essay" label="Essay paragraphs" ondrop={(p, t) => onDrop("essay", p, t)}>
+        <BlockStack {items} source="essay" label="Essay paragraphs" candrop={essayDrop} ondrop={(p, t) => onDrop("essay", p, t)}>
           {#snippet row(item, handle)}
             {@const p = model!.paragraphs[item.id]}
             {#if p}
@@ -247,6 +249,7 @@
       <aside class="essay-shell__side">
         <LayersPanel
           {layers}
+          candrop={essayDrop}
           ondrop={(p, t) => onDrop("essay", p, t)}
           onhide={(id, h) => run(() => setHidden(repo, model!, id, h))}
           onfold={toggleFold}
@@ -257,6 +260,7 @@
           items={draftItems}
           available={!!model.draftContainerId}
           unavailableReason="This essay has no draft area."
+          candrop={draftDrop}
           ondrop={(p, t) => onDrop("draft", p, t)}
           onputback={putBack}
         />

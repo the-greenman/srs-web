@@ -4,12 +4,20 @@
  * The container's outline (`get_container_outline`, RFC-043) is the SRS truth and the core
  * resolves every gesture (drop, Alt+Arrow, Tab) against it; nothing here plans a move.
  */
+import type { OutlineEntry } from "$lib/srs-client.js";
+
 export interface Entry {
   instanceId: string;
   depth?: number;
   parentInstanceId?: string | null;
 }
 export type Zone = "before" | "after" | "into";
+
+/** False when `targetId` lies in `dragId`'s run (itself or a descendant), read from the core's `runEnd`. */
+export function outsideRun(entries: OutlineEntry[], dragId: string, targetId: string): boolean {
+  const i = entries.findIndex((e) => e.instanceId === dragId);
+  return i < 0 || !entries.slice(i, entries[i].runEnd).some((e) => e.instanceId === targetId);
+}
 
 /** Drop rows hidden under a folded ancestor (layers panel fold state). */
 export function visibleEntries<T extends Entry>(entries: T[], folded: Set<string>): T[] {

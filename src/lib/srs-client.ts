@@ -1211,18 +1211,18 @@ export interface ContainerOutline {
   body: OutlineEntry[];
 }
 
-/** The WASM layer rejects with bare strings; surface every rejection as an `Error`. */
-function rethrow(e: unknown): never {
-  throw e instanceof Error ? e : new Error(String(e));
+/** The WASM layer rejects with bare strings; run `f`, surfacing every rejection as an `Error`. */
+function wasm<T>(f: () => unknown): T {
+  try {
+    return f() as T;
+  } catch (e) {
+    throw e instanceof Error ? e : new Error(String(e));
+  }
 }
 
 /** The container's derived outline (parent / hasChildren / run bounds / body entries). */
 export function getContainerOutline(repo: SrsRepository, containerId: string): ContainerOutline {
-  try {
-    return repo.get_container_outline(containerId) as ContainerOutline;
-  } catch (e) {
-    return rethrow(e);
-  }
+  return wasm(() => repo.get_container_outline(containerId));
 }
 
 /**
@@ -1235,18 +1235,10 @@ export function moveContainerMemberRelative(
   instanceId: string,
   to: { relativeTo: string; placement: OutlinePlacement } | { shift: OutlineShift }
 ): ContainerMembersResult {
-  try {
-    const t = to as { relativeTo?: string; placement?: OutlinePlacement; shift?: OutlineShift };
-    return repo.move_container_member_relative(
-      containerId,
-      instanceId,
-      t.relativeTo,
-      t.placement,
-      t.shift
-    ) as ContainerMembersResult;
-  } catch (e) {
-    return rethrow(e);
-  }
+  const t = to as { relativeTo?: string; placement?: OutlinePlacement; shift?: OutlineShift };
+  return wasm(() =>
+    repo.move_container_member_relative(containerId, instanceId, t.relativeTo, t.placement, t.shift)
+  );
 }
 
 /** Add an instance `before` / `after` / `into` `relativeTo` in one write. */
@@ -1257,16 +1249,9 @@ export function addContainerMemberRelative(
   relativeTo: string,
   placement: OutlinePlacement
 ): ContainerMembersResult {
-  try {
-    return repo.add_container_member_relative(
-      containerId,
-      instanceId,
-      relativeTo,
-      placement
-    ) as ContainerMembersResult;
-  } catch (e) {
-    return rethrow(e);
-  }
+  return wasm(() =>
+    repo.add_container_member_relative(containerId, instanceId, relativeTo, placement)
+  );
 }
 
 // ---------------------------------------------------------------------------

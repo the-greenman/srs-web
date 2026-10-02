@@ -8,7 +8,6 @@ import {
 const m = vi.hoisted(() => ({
   addContainerMember: vi.fn(),
   removeContainerMember: vi.fn(),
-  moveContainerMember: vi.fn(),
   moveContainerMemberRelative: vi.fn(),
   addContainerMemberRelative: vi.fn(),
   createRecord: vi.fn(() => ({ instanceId: "new" })),
@@ -112,8 +111,23 @@ describe("essay-document", () => {
     expect(m.moveContainerMemberRelative).toHaveBeenLastCalledWith({}, "C", "p1", {
       shift: "indent",
     });
+    // no target = after the last top-level run, read from the core's outline
+    m.getContainerOutline.mockReturnValueOnce({
+      entries: [
+        { instanceId: "p9", depth: 0 },
+        { instanceId: "p8", depth: 0 },
+        { instanceId: "p7", depth: 1 },
+      ],
+    });
     moveEntry({} as never, "D", "p9", { id: null, zone: "after" });
-    expect(m.moveContainerMember).toHaveBeenCalledWith({}, "D", "p9", 1, 0);
+    expect(m.moveContainerMemberRelative).toHaveBeenLastCalledWith({}, "D", "p9", {
+      relativeTo: "p8",
+      placement: "after",
+    });
+    m.moveContainerMemberRelative.mockClear();
+    m.getContainerOutline.mockReturnValueOnce({ entries: [{ instanceId: "p9", depth: 0 }] });
+    moveEntry({} as never, "D", "p9", { id: null, zone: "after" }); // already last: no-op
+    expect(m.moveContainerMemberRelative).not.toHaveBeenCalled();
   });
 
   it("pull-out / put-back are remove + add through the engine", () => {

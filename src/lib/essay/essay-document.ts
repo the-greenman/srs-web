@@ -16,7 +16,6 @@ import {
   listContainers,
   listRecords,
   listTypes,
-  moveContainerMember,
   moveContainerMemberRelative,
   removeContainerMember,
   updateRecord,
@@ -154,16 +153,17 @@ export function setHidden(repo: SrsRepository, m: EssayModel, id: string, hidden
 
 /** Move a run within a container (`container` is the essay's or the draft's) to `t`. */
 export function moveEntry(repo: SrsRepository, container: string, id: string, t: Target): void {
-  if (t.id)
-    moveContainerMemberRelative(repo, container, id, { relativeTo: t.id, placement: t.zone });
-  else
-    moveContainerMember(
-      repo,
-      container,
-      id,
-      getContainerOutline(repo, container).entries.length,
-      0
-    );
+  // No target = the end: after the last top-level run (a no-op when that run is `id`'s own).
+  const target =
+    t.id ??
+    getContainerOutline(repo, container)
+      .entries.filter((e) => e.depth === 0)
+      .pop()?.instanceId;
+  if (!target || target === id) return;
+  moveContainerMemberRelative(repo, container, id, {
+    relativeTo: target,
+    placement: t.id ? t.zone : "after",
+  });
 }
 /** Alt+Arrow / Tab: indent, outdent or swap with the neighbouring sibling (clamped by the core). */
 export const shiftEntry = (
