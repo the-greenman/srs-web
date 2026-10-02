@@ -492,6 +492,7 @@ export class GitHubProvider implements StorageProvider {
           return;
         }
         this.accessToken = event.data.accessToken;
+        this.profileCache = null; // a new token may be a different account
         // No expiry reported → treat as long-lived so we don't re-prompt each call.
         this.expiresAt = event.data.expiresAt ?? Number.POSITIVE_INFINITY;
         // Capture refresh credentials when the GitHub App has token expiry enabled (ADR-017).
@@ -557,6 +558,7 @@ export class GitHubProvider implements StorageProvider {
     }
 
     this.accessToken = token.access_token;
+    this.profileCache = null;
     this.expiresAt = token.expires_in
       ? Date.now() + token.expires_in * 1000
       : Number.POSITIVE_INFINITY;

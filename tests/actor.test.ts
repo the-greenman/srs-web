@@ -3,7 +3,9 @@ import {
   applyActor,
   currentActor,
   localActor,
+  onActorChange,
   providerActor,
+  refreshSignedInActor,
   saveLocalName,
   setSignedInActor,
 } from "../src/lib/actor";
@@ -62,5 +64,31 @@ describe("human actor", () => {
       id: "github:ada",
       name: "Ada",
     });
+  });
+});
+
+describe("signed-in actor lifecycle", () => {
+  it("a null profile (sign-out) clears the previous actor", async () => {
+    await refreshSignedInActor("github", async () => ({ login: "ada", name: "Ada" }));
+    expect(currentActor()?.id).toBe("github:ada");
+    await refreshSignedInActor("github", async () => null);
+    expect(currentActor()).toBeNull();
+  });
+
+  it("an account switch replaces the actor", async () => {
+    await refreshSignedInActor("github", async () => ({ login: "ada" }));
+    await refreshSignedInActor("github", async () => ({ login: "bob" }));
+    expect(currentActor()?.id).toBe("github:bob");
+  });
+
+  it("notifies subscribers on login, sign-out and a saved name (so the name prompt follows the actor)", async () => {
+    const seen: (string | undefined)[] = [];
+    const off = onActorChange(() => seen.push(currentActor()?.id));
+    await refreshSignedInActor("github", async () => ({ login: "ada" }));
+    await refreshSignedInActor("github", async () => null);
+    saveLocalName("Lou");
+    off();
+    saveLocalName("Louise");
+    expect(seen).toEqual(["github:ada", undefined, expect.stringMatching(/^local:/)]);
   });
 });

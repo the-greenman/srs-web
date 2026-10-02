@@ -22,6 +22,8 @@ test.describe("Rev-7 repository migration", () => {
   test("offers the migration, applies it, then renders the repository", async ({ page }) => {
     await expect(page.getByTestId("migration-prompt")).toBeVisible({ timeout: 10000 });
     await expect(page.getByTestId("migration-prompt")).toContainText("rfc043-container-entries");
+    // 7 -> 9 chains: the same prompt carries the RFC-046 step.
+    await expect(page.getByTestId("migration-prompt")).toContainText("rfc046-actor-provenance");
 
     await page.getByTestId("migration-apply").click();
 

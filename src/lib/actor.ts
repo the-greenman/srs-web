@@ -15,9 +15,29 @@ export function providerActor(provider: string, id: string, name?: string): Acto
   return { kind: "human", id: `${provider}:${id}`, name: name || id };
 }
 
-/** Called when a provider login resolves (null on sign-out). */
+const listeners = new Set<() => void>();
+/** Subscribe to actor changes (login resolved / cleared, local name saved); returns unsubscribe. */
+export function onActorChange(fn: () => void): () => void {
+  listeners.add(fn);
+  return () => void listeners.delete(fn);
+}
+const notify = () => {
+  for (const fn of listeners) fn();
+};
+
+/** Called when a provider login resolves (null on sign-out or account switch). */
 export function setSignedInActor(actor: Actor | null): void {
   signedIn = actor;
+  notify();
+}
+
+/** Re-resolve the signed-in user: a null profile clears the previous actor (no stale attribution). */
+export async function refreshSignedInActor(
+  provider: string,
+  profile: () => Promise<{ login: string; name?: string } | null>
+): Promise<void> {
+  const me = await profile();
+  setSignedInActor(me ? providerActor(provider, me.login, me.name) : null);
 }
 
 export function localActor(): Actor | null {
@@ -43,6 +63,7 @@ export function saveLocalName(name: string): Actor | null {
   } catch {
     return null;
   }
+  notify();
   return actor;
 }
 

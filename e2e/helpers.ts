@@ -1,3 +1,4 @@
+import { expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
 /**
@@ -17,13 +18,14 @@ export async function openPackageEditor(
   await page.getByTestId(`package-editor-${editor}`).click();
 }
 
-/** Accept the revision migration prompt (rfc043/rfc046) when the loaded repo is below revision 9. */
-export async function acceptMigrationIfOffered(page: Page): Promise<void> {
+/**
+ * The revision migration prompt must appear (the document is below revision 9); accept it.
+ * Use only where a migration is expected — a missing prompt fails the test.
+ */
+export async function acceptMigration(page: Page, ...ids: string[]): Promise<void> {
   const prompt = page.getByTestId("migration-prompt");
-  try {
-    await prompt.waitFor({ state: "visible", timeout: 3000 });
-  } catch {
-    return;
-  }
+  await expect(prompt).toBeVisible({ timeout: 10000 });
+  for (const id of ids) await expect(prompt).toContainText(id);
   await page.getByTestId("migration-apply").click();
+  await expect(prompt).not.toBeVisible();
 }

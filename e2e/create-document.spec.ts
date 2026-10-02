@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Download, type Page, expect, test } from "@playwright/test";
-import { acceptMigrationIfOffered, openPackageEditor } from "./helpers.js";
+import { acceptMigration, openPackageEditor } from "./helpers.js";
 
 /**
  * create-document.spec.ts — "Create new governance document" onboarding (#141).
@@ -108,7 +108,7 @@ test.describe("Create new governance document (#141)", () => {
     await fs.writeFile(tmpPath, exportedText, "utf8");
     try {
       await page.locator('input[type="file"]#srsj-file').setInputFiles(tmpPath);
-      await acceptMigrationIfOffered(page);
+      await acceptMigration(page);
       await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
       await openPackageEditor(page, "governance");
       await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });

@@ -108,6 +108,8 @@ test("an MCP-created comment shows the agent author, live", async ({ page }) => 
     capabilities: {},
     clientInfo: { name: "agent-test", version: "0" },
   });
+  await reply(page, 1, "human first", "Ada");
+  await expect(items(page).nth(1).getByTestId("comment")).toHaveCount(1);
   const paragraph = (await items(page)
     .nth(1)
     .locator("[data-block-id]")
@@ -126,8 +128,12 @@ test("an MCP-created comment shows the agent author, live", async ({ page }) => 
   });
   expect(rel.result?.isError, JSON.stringify(rel)).not.toBe(true);
 
-  const c = items(page).nth(1).getByTestId("comment");
-  await expect(c).toHaveCount(1);
+  const both = items(page).nth(1).getByTestId("comment");
+  await expect(both).toHaveCount(2);
+  // the human reply keeps its author after the agent wrote (independent actors, srs-rust#1174)
+  await expect(both.nth(0).getByTestId("comment-author")).toHaveText("Ada");
+  await expect(both.nth(0).getByTestId("comment-kind")).toHaveText("human");
+  const c = both.nth(1);
   // name = the client's clientInfo.name (engine-filled); id = the host-minted relay id
   await expect(c.getByTestId("comment-author")).toHaveText("agent-test");
   const hostId = await page.evaluate(() => localStorage.getItem("srs-web.relay-agent-id"));

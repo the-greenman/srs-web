@@ -29,7 +29,7 @@
     RFC046_MIGRATION_ID,
     applyMigration,
   } from "$lib/srs-client.js";
-  import { applyActor, relayAgentId, providerActor, setSignedInActor } from "$lib/actor.js";
+  import { applyActor, onActorChange, refreshSignedInActor, relayAgentId } from "$lib/actor.js";
   import type { AgentWriteGuard, McpSession, SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
@@ -124,7 +124,16 @@
 
   function gateOnMigration(loaded: SrsRepository, name: string, finish: (dirty: boolean) => void): void {
     // rfc043 (7 -> 8) and rfc046 (8 -> 9): attribution (RFC-046) needs revision 9.
-    const ids = neededMigrationIds(loaded);
+    let ids: string[];
+    try {
+      ids = neededMigrationIds(loaded);
+    } catch (e) {
+      // Unknown revision state: do not open (no actor, no writes) and say why.
+      repo = null;
+      errorMsg = `Could not determine whether this repository needs migration: ${e instanceof Error ? e.message : String(e)}`;
+      appState = "error";
+      return;
+    }
     if (ids.length) {
       pendingMigration = { repo: loaded, name, ids, finish };
       repo = null; // not opened (no MCP session etc.) until migrated
@@ -160,19 +169,23 @@
   }
 
   /** GitHub login -> `github:<login>` actor (RFC-046); no sign-in leaves the local/none fallback. */
-  async function resolveSignedInActor(forRepo: SrsRepository): Promise<void> {
-    const me = await storageProviders.github?.profile?.();
-    if (!me) return;
-    setSignedInActor(providerActor("github", me.login, me.name));
-    if (repo === forRepo) applyActor(forRepo);
+  async function resolveSignedInActor(): Promise<void> {
+    const github = storageProviders.github;
+    if (!github?.profile) return;
+    await refreshSignedInActor("github", () => github.profile?.() ?? Promise.resolve(null));
   }
+
+  // Any actor change (login resolved / cleared, name saved) is re-applied to the open repository.
+  onActorChange(() => {
+    if (repo) applyActor(repo);
+  });
 
   function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
     // Every load path passes through here: from now on each engine write reports itself.
     if (repo) {
       repo = observeWrites(repo, syncDocument);
       applyActor(repo);
-      void resolveSignedInActor(repo);
+      void resolveSignedInActor();
     }
     workingCopy.cancel();
     workingCopySaved = true;
@@ -283,7 +296,12 @@
    * writes, so a repo whose migration was declined keeps its agent writes unattributed.
    */
   function applyAgentActor(session: McpSession, forRepo: SrsRepository): void {
-    if (neededMigrationIds(forRepo).includes(RFC046_MIGRATION_ID)) return;
+    try {
+      if (neededMigrationIds(forRepo).includes(RFC046_MIGRATION_ID)) return;
+    } catch (e) {
+      console.error("Agent actor not set: migration state unknown", e);
+      return;
+    }
     session.set_actor(JSON.stringify({ kind: "ai", id: relayAgentId() }));
   }
 

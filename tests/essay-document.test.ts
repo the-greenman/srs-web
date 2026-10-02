@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  COMMENT_TYPE_ID,
   DOCUMENT_STATE_TYPE_ID,
   ESSAY_TYPE_ID,
   PARAGRAPH_TYPE_ID,
@@ -96,6 +97,36 @@ describe("essay-document", () => {
     expect(model.hidden).toEqual(["p2"]);
     expect(model.draftContainerId).toBe("D");
     expect(model.draftEntries.map((e) => e.instanceId)).toEqual(["p9"]);
+  });
+
+  it("reads comment records once per change of the comments-on set, oldest first", () => {
+    m.listTypes.mockReturnValue([
+      ...m.listTypes(),
+      { id: COMMENT_TYPE_ID, namespace: "n", name: "comment", version: 1 },
+    ]);
+    const c = (id: string, at: string) => ({
+      ...rec(id, COMMENT_TYPE_ID, { comment_text: id }),
+      createdAt: at,
+    });
+    const rel = (relationId: string, sourceInstanceId: string) => ({
+      relationId,
+      sourceInstanceId,
+      targetInstanceId: "p1",
+    });
+    const base = m.listRecords.getMockImplementation() as (r: unknown, f: unknown) => unknown;
+    m.listRecords.mockImplementation((r: unknown, f: { typeName?: string }) =>
+      f.typeName === "comment" ? [c("b", "2"), c("a", "1")] : base(r, f)
+    );
+    m.listRelations.mockReturnValue([rel("r1", "b"), rel("r2", "a")]);
+    const repo = {};
+    const commentReads = () =>
+      m.listRecords.mock.calls.filter(([, f]) => f.typeName === "comment").length;
+    expect(loadEssay(repo as never, "E").comments.p1.map((x) => x.id)).toEqual(["a", "b"]);
+    loadEssay(repo as never, "E");
+    expect(commentReads()).toBe(1);
+    m.listRelations.mockReturnValue([rel("r1", "b"), rel("r2", "a"), rel("r3", "a")]);
+    loadEssay(repo as never, "E");
+    expect(commentReads()).toBe(2);
   });
 
   it("passes gestures to the core's relative ops unchanged (no client arithmetic)", () => {

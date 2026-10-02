@@ -17,7 +17,7 @@
   import LayersPanel from "$lib/components/LayersPanel.svelte";
   import type { DragPayload, KeyMove } from "$lib/components/dnd.js";
   import Button from "$lib/components/Button.svelte";
-  import { applyActor, currentActor, saveLocalName } from "$lib/actor.js";
+  import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
     addComment,
     addParagraph,
@@ -70,8 +70,9 @@
   let essayId = $state<string | null>(null);
   let model = $state<EssayModel | null>(null);
   let error = $state<string | null>(null);
-  /** Whether UI writes are attributed (login or saved name); refreshed on every reload. */
-  let hasActor = $state(false);
+  /** Whether UI writes are attributed (login or saved name); follows actor changes. */
+  let hasActor = $state(currentActor() !== null);
+  onDestroy(onActorChange(() => (hasActor = currentActor() !== null)));
 
   const foldKey = (id: string) => `srs-web.essay-fold.${id}`;
   let folded = $state<Set<string>>(new Set());
@@ -96,7 +97,6 @@
         if (essayId) loadFolded(essayId);
       }
       model = essayId ? loadEssay(repo, essayId) : null;
-      hasActor = currentActor() !== null;
       error = null;
     } catch (e) {
       error = msg(e);
@@ -154,8 +154,6 @@
   function comment(paragraphId: string, text: string, name?: string) {
     if (name) {
       if (!saveLocalName(name)) return void (error = "Could not remember your name in this browser.");
-      applyActor(repo);
-      hasActor = true;
     }
     void run(() => addComment(repo, paragraphId, text));
   }

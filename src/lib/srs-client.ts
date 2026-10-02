@@ -2010,18 +2010,17 @@ export function moveInPrecedesChain(
 export const RFC043_MIGRATION_ID = "rfc043-container-entries";
 export const RFC046_MIGRATION_ID = "rfc046-actor-provenance";
 
-/** Revision migrations the load gate offers, in order, when the engine reports them needed. */
+/**
+ * Revision migrations the load gate offers, in order, when the engine reports them needed.
+ * `[]` means none are needed; if the engine cannot say, this throws (unknown is not "none").
+ */
 export function neededMigrationIds(repo: SrsRepository): string[] {
-  try {
-    const needed = new Set(
-      availableMigrations(repo)
-        .filter((m) => m.status.needed)
-        .map((m) => m.id)
-    );
-    return [RFC043_MIGRATION_ID, RFC046_MIGRATION_ID].filter((id) => needed.has(id));
-  } catch {
-    return [];
-  }
+  const needed = new Set(
+    availableMigrations(repo)
+      .filter((m) => m.status.needed)
+      .map((m) => m.id)
+  );
+  return [RFC043_MIGRATION_ID, RFC046_MIGRATION_ID].filter((id) => needed.has(id));
 }
 
 // ---------------------------------------------------------------------------
