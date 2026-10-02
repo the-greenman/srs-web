@@ -68,3 +68,10 @@ export type {
 
 // MCP relay connection (srs-web#307)
 export { default as McpConnection } from "./McpConnection.svelte";
+
+// Essay editor writing surface (srs-web#328)
+export { default as Block } from "./Block.svelte";
+export { default as BlockStack } from "./BlockStack.svelte";
+export { default as LayersPanel } from "./LayersPanel.svelte";
+export { default as DraftTray } from "./DraftTray.svelte";
+export { default as EyeToggle } from "./EyeToggle.svelte";

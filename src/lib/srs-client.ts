@@ -75,6 +75,8 @@ export interface SrsRepository {
   list_containers(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainer()
   get_container(container_id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in createContainer()
+  create_container(input_json: string): any;
   add_container_member(
     container_id: string,
     instance_id: string,
@@ -1875,4 +1877,28 @@ export function rfc043MigrationNeeded(repo: SrsRepository): boolean {
   } catch {
     return false;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Container creation (srs-rust#1133 / #1149)
+// ---------------------------------------------------------------------------
+
+/** Input of `create_container` (same shape as `srs container create`). */
+export interface CreateContainerInput {
+  title: string;
+  containerId?: string;
+  description?: string;
+  containerType?: string;
+  tags?: string[];
+  anchorInstanceId?: string;
+  identityInstanceId?: string;
+  memberInstanceIds?: ContainerEntry[];
+}
+
+/**
+ * Create a container (rev-8 Container JSON, srs-rust#1149); throws the engine's validation
+ * message. The anchor should name an entry (I-145).
+ */
+export function createContainer(repo: SrsRepository, input: CreateContainerInput): Container {
+  return repo.create_container(JSON.stringify(input)) as Container;
 }

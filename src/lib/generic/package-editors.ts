@@ -1,3 +1,4 @@
+import { ESSAY_TYPE_ID } from "$lib/essay/type-registry.js";
 /**
  * Optional editor registrations.
  *
@@ -8,7 +9,7 @@
 import { DECISION_LOG_TYPE_ID, DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
 import type { PackageSummary, TypeSummary } from "$lib/srs-client.js";
 
-export type PackageEditorId = "governance" | "guides";
+export type PackageEditorId = "governance" | "guides" | "essay";
 
 export interface PackageEditor {
   id: PackageEditorId;
@@ -36,6 +37,11 @@ const EDITORS: Array<
     available: (packages, types) =>
       packages.some((pkg) => pkg.namespace === "com.mudemocracy") &&
       types.some((type) => type.namespace === "com.mudemocracy" && type.name === "guide"),
+  },
+  {
+    id: "essay",
+    label: "Essay",
+    available: (_packages, types) => types.some((type) => type.id === ESSAY_TYPE_ID),
   },
 ];
 

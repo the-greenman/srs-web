@@ -1,0 +1,126 @@
+/* ============================================================================
+   component: block (.block) + block-stack (.block-stack)
+   ----------------------------------------------------------------------------
+   One paragraph of an essay: a quiet gutter (small mono title = drag handle,
+   eye, actions) beside a plain-text body that reads like a normal document.
+   Entries are separated by a hairline. Nesting is layout only: --depth indents.
+   Monochrome; drop position is a ruled line / dashed outline, never a colour.
+   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
+   ========================================================================== */
+.block-stack {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.block-stack__item {
+  position: relative;
+  margin-left: calc(var(--depth, 0) * var(--space-md));
+}
+.block-stack__item.is-drop-before::before,
+.block-stack__item.is-drop-after::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--black);
+}
+.block-stack__item.is-drop-before::before {
+  top: -1px;
+}
+.block-stack__item.is-drop-after::after {
+  bottom: -1px;
+}
+.block-stack__item.is-drop-into {
+  outline: 1px dashed var(--black);
+  outline-offset: -1px;
+}
+
+.block {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--color-line-soft);
+}
+.block__gutter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
+}
+.block__handle,
+.block__action {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+  background: none;
+  border: 0;
+  padding: 2px 0;
+  cursor: grab;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.block__action {
+  cursor: pointer;
+}
+.block__handle:hover,
+.block__handle:focus-visible,
+.block__action:hover {
+  color: var(--ink);
+}
+.block__handle.is-untitled {
+  opacity: 0.5;
+}
+.block__title-input {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--black);
+  background: transparent;
+  color: var(--ink);
+}
+.block__body {
+  min-height: 1.6em;
+  font-size: var(--size-base);
+  line-height: var(--leading-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  outline: none;
+}
+.block__body:empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-muted);
+}
+.block__body:focus-visible {
+  box-shadow: -2px 0 0 var(--black);
+}
+.block__closed {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--color-muted);
+  border: 1px dashed var(--color-line);
+  padding: 2px 8px;
+  align-self: center;
+}
+.block.is-off {
+  opacity: 0.7;
+}
+@media (max-width: 720px) {
+  .block {
+    grid-template-columns: 1fr;
+  }
+  .block__gutter {
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+  }
+}

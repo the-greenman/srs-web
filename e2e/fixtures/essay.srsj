@@ -1,0 +1,621 @@
+{
+  "srsj": "2",
+  "manifest": {
+    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+    "container": {
+      "containerId": "aaebaf5c-8e1e-4325-8556-06681b3bdb1d",
+      "identityInstanceId": "3df7e355-b49b-474c-ae41-87d5f3f4c646",
+      "memberInstanceIds": [
+        {
+          "instanceId": "3df7e355-b49b-474c-ae41-87d5f3f4c646"
+        }
+      ],
+      "title": "Essay fixture"
+    },
+    "createdAt": "2026-10-02T08:16:45.727188179+00:00",
+    "dataModelRevision": 8,
+    "namespace": "com.mudemocracy.essay",
+    "repositoryId": "aaebaf5c-8e1e-4325-8556-06681b3bdb1d",
+    "srsVersion": "2.0-draft",
+    "title": "Essay fixture"
+  },
+  "data": {
+    "containers/essay-draft-a2936021.json": {
+      "containerId": "a2936021-6a45-46bb-9929-24e192c58eed",
+      "memberInstanceIds": [
+        {
+          "instanceId": "2bfe8b33-59d9-4e9a-a411-7f47d09388d9"
+        }
+      ],
+      "title": "Essay draft"
+    },
+    "containers/on-small-democracy-7015de9f.json": {
+      "anchorInstanceId": "fa2b1ae1-7acb-4c82-bc87-ccc13d4815fe",
+      "containerId": "7015de9f-38dd-45dc-bb56-b99b87245497",
+      "identityInstanceId": "fa2b1ae1-7acb-4c82-bc87-ccc13d4815fe",
+      "memberInstanceIds": [
+        {
+          "instanceId": "fa2b1ae1-7acb-4c82-bc87-ccc13d4815fe"
+        },
+        {
+          "instanceId": "c990da05-3abc-44c5-ae63-75660871c903"
+        },
+        {
+          "instanceId": "249ccf3a-065e-40c2-9689-75be3c3ee488"
+        },
+        {
+          "instanceId": "7ff43ee4-6edf-4628-834f-c0a0256f8be3"
+        }
+      ],
+      "title": "On small democracy"
+    },
+    "package/compositions/essay-79b8c032.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/composition.json",
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "An essay rendered from its container: the container's own entry order, with nesting depth as heading level, paragraphs as body text.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "id": "79b8c032-46af-467e-8e27-2a339b89d822",
+      "name": "essay",
+      "namespace": "com.mudemocracy.essay",
+      "rootTypeRefs": [
+        {
+          "typeId": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
+          "typeVersion": 1
+        }
+      ],
+      "sections": [
+        {
+          "emptyBehavior": "hide",
+          "order": 0,
+          "ordering": {
+            "source": "arranged"
+          },
+          "renderViewId": "16210dc2-a904-465a-85f9-bdbfd17860a0",
+          "sectionId": "essay",
+          "source": {
+            "type": "container-subset"
+          }
+        }
+      ],
+      "version": 1
+    },
+    "package/fields/body-8a16f0d3.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Plain markdown prose of one paragraph: sentences only. Do NOT use structural markup such as headings, lists, tables or horizontal rules; structure comes from paragraph types and the document arrangement (nesting), never from markup in the body. Inline emphasis and links are acceptable. Never write or rewrite the writer's prose unless explicitly asked."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "The paragraph's prose.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "8a16f0d3-0dc8-425a-9616-77dc12c26437",
+      "name": "body",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    "package/fields/draftcontainerid-3cd8975b.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Editor state only: the containerId of the container that holds this essay's draft paragraphs (paragraphs created but not yet placed in the arrangement). Optional; absent until the editor creates a draft area."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "Container holding this essay's draft paragraphs.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "uuid"
+      },
+      "id": "3cd8975b-7e51-457c-88f9-2173d0df5d87",
+      "name": "draft_container_id",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    "package/fields/essay-0a74cd82.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Reference to the essay record (type essay) whose editor state this is. Required; exactly one document-state record exists per essay."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "The essay this editor state belongs to.",
+      "fieldType": {
+        "datatype": "ref",
+        "mode": "reference",
+        "rangeType": {
+          "typeId": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
+          "typeVersion": 1
+        }
+      },
+      "id": "0a74cd82-0ca0-4268-8a94-dca6927171d3",
+      "name": "essay",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    "package/fields/hiddeninstanceids-7cbb105e.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Editor state only: the instance ids (UUIDs) of paragraphs or other members the writer has hidden or folded in this essay's editor view. Hiding is an editor mechanic, not document meaning: spec renderers ignore it. One uuid string per list entry."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "Instance ids the editor has hidden in this essay.",
+      "fieldType": {
+        "cardinality": "list",
+        "datatype": "string",
+        "format": "uuid"
+      },
+      "id": "7cbb105e-7215-4772-a039-4f77671c214b",
+      "name": "hidden_instance_ids",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    "package/fields/paragraphtitle-59b7f51b.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "A short label (a few words) naming what this paragraph does, shown small in the editor gutter and de-emphasised when rendered. Optional. Agents may propose titles for untitled paragraphs; the title labels the paragraph and is never a heading in the prose."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "Optional short title of one paragraph, shown small in the gutter.",
+      "fieldType": {
+        "datatype": "string"
+      },
+      "id": "59b7f51b-3e80-409c-8ee2-b995e1157952",
+      "name": "paragraph_title",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    "package/fields/statement-3b000001.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Concisely state what this repository exists to do or achieve. This is the primary machine-readable identity text for the repository. Write one or two sentences in plain language; avoid jargon. The value must be non-empty."
+      },
+      "createdAt": "2026-07-08T00:00:00Z",
+      "description": "The purpose or mission statement of this repository. Must be non-empty.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "3b000001-0000-4000-a000-000000000001",
+      "name": "statement",
+      "namespace": "com.semanticops.core",
+      "version": 1
+    },
+    "package/fields/summary-89424121.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "A one to three sentence summary of what the essay says, for lists and orientation. Optional. Agents may draft or refresh it only when asked; it is a description of the essay, never part of its body text."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "A short summary of the essay.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "89424121-5cb4-4bfa-8a6f-33911bda8900",
+      "name": "summary",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    "package/fields/title-3b000002.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "An optional short label for the purpose record, for use in constrained UI contexts such as sidebars. Prefer the repository manifest title for primary display; use this only when the identity record itself needs a narrow-context label."
+      },
+      "createdAt": "2026-07-08T00:00:00Z",
+      "description": "Short human-readable label for the identity record. Optional. Distinct from the repository manifest title.",
+      "editorHint": "singleline",
+      "fieldType": {
+        "datatype": "string"
+      },
+      "id": "3b000002-0000-4000-a000-000000000002",
+      "name": "title",
+      "namespace": "com.semanticops.core",
+      "version": 1
+    },
+    "package/fields/title-40e65e3b.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "The essay's title: a short noun phrase naming what the essay argues or is about. Shown as the document heading and in lists of essays. Human-authored; an agent may suggest one but must not overwrite a title the writer set."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "The essay's title.",
+      "fieldType": {
+        "datatype": "string"
+      },
+      "id": "40e65e3b-a271-4116-a435-2d01c3127029",
+      "name": "title",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    "package/package.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
+      "blueprints": [],
+      "compositions": [
+        "compositions/essay-79b8c032.json"
+      ],
+      "createdAt": "2026-10-02T08:14:37.736027124+00:00",
+      "description": "",
+      "fields": [
+        "fields/title-40e65e3b.json",
+        "fields/summary-89424121.json",
+        "fields/paragraphtitle-59b7f51b.json",
+        "fields/body-8a16f0d3.json",
+        "fields/hiddeninstanceids-7cbb105e.json",
+        "fields/draftcontainerid-3cd8975b.json",
+        "fields/essay-0a74cd82.json",
+        "fields/statement-3b000001.json",
+        "fields/title-3b000002.json"
+      ],
+      "id": "5b14a4d4-ec08-4e5b-be75-c183aec90c40",
+      "lifecycles": [],
+      "name": "essay",
+      "namespace": "com.mudemocracy.essay",
+      "protocols": [],
+      "relationTypes": [
+        "relation-types/contains-3a1b2c4d.json",
+        "relation-types/depends-on-7f8e9d0c.json",
+        "relation-types/supersedes-c2d3e4f5.json",
+        "relation-types/refines-e5f6a7b8.json",
+        "relation-types/derived-from-b1c2d3e4.json",
+        "relation-types/evidences-d4e5f6a7.json",
+        "relation-types/precedes-f7a8b9c0.json"
+      ],
+      "status": "active",
+      "themes": [],
+      "title": "essay",
+      "types": [
+        "types/essay-0021ef06.json",
+        "types/paragraph-ec61d93d.json",
+        "types/document-state-9785968f.json",
+        "types/purpose-3c000001.json"
+      ],
+      "version": "1.0.0",
+      "views": [
+        "views/paragraph-view-16210dc2.json"
+      ],
+      "vocabularies": []
+    },
+    "package/relation-types/contains-3a1b2c4d.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the container; target is the contained member",
+      "category": "composition",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance contains or is composed of target instance. Defines structural membership or composition boundaries.",
+      "id": "3a1b2c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+      "inverseType": "part-of",
+      "irreflexive": true,
+      "key": "contains",
+      "label": "Contains",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/depends-on-7f8e9d0c.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source depends on target",
+      "category": "dependency",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance requires target instance to be complete, valid, or usable. Target is a prerequisite.",
+      "id": "7f8e9d0c-1b2a-4f3e-9d8c-7b6a5f4e3d2c",
+      "irreflexive": true,
+      "key": "depends-on",
+      "label": "Depends on",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/derived-from-b1c2d3e4.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the derived work; target is the source material",
+      "category": "derivation",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance was produced from or substantially informed by target instance. Provenance and derivation chain.",
+      "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",
+      "inverseType": "source-of",
+      "irreflexive": true,
+      "key": "derived-from",
+      "label": "Derived from",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/evidences-d4e5f6a7.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the evidence; target is the claim or content being supported",
+      "category": "evidence",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance is evidence for, supports, or substantiates the claim or content of target instance.",
+      "id": "d4e5f6a7-b8c9-4d0e-9f1a-2b3c4d5e6f7a",
+      "irreflexive": true,
+      "key": "evidences",
+      "label": "Evidences",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/precedes-f7a8b9c0.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source comes before target",
+      "category": "sequence",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance comes before target instance in a defined sequence or ordering.",
+      "id": "f7a8b9c0-d1e2-4f3a-8b4c-5d6e7f8a9b0c",
+      "inverseType": "follows",
+      "irreflexive": true,
+      "key": "precedes",
+      "label": "Precedes",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/refines-e5f6a7b8.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the more specific instance; target is the general instance",
+      "category": "refinement",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance is a more specific, detailed, or precise version of target instance. Does not replace or invalidate target.",
+      "id": "e5f6a7b8-c9d0-4e1f-8a2b-3c4d5e6f7a8b",
+      "irreflexive": true,
+      "key": "refines",
+      "label": "Refines",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/supersedes-c2d3e4f5.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the newer instance; target is the older instance being superseded",
+      "category": "governance",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance replaces or invalidates target instance. Source is newer; target is the older instance being superseded.",
+      "id": "c2d3e4f5-a6b7-4c8d-9e0f-1a2b3c4d5e6f",
+      "inverseType": "superseded-by",
+      "irreflexive": true,
+      "key": "supersedes",
+      "label": "Supersedes",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/types/document-state-9785968f.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Editor state, one record per essay: which members the editor hides or folds and which container holds the draft paragraphs. Hide/fold are editor mechanics, not document meaning, so spec renderers and compositions ignore this type. Do not use it to carry content."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "Application-private editor state for one essay: hidden members and the draft container.",
+      "fields": [
+        {
+          "displayLabel": "Essay",
+          "fieldId": "0a74cd82-0ca0-4268-8a94-dca6927171d3",
+          "order": 0,
+          "required": true
+        },
+        {
+          "displayLabel": "Hidden instance ids",
+          "fieldId": "7cbb105e-7215-4772-a039-4f77671c214b",
+          "order": 1,
+          "required": false
+        },
+        {
+          "displayLabel": "Draft container id",
+          "fieldId": "3cd8975b-7e51-457c-88f9-2173d0df5d87",
+          "order": 2,
+          "required": false
+        }
+      ],
+      "id": "9785968f-bdd4-4c91-81ef-0e62075f3503",
+      "identityFieldId": "0a74cd82-0ca0-4268-8a94-dca6927171d3",
+      "name": "document-state",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    "package/types/essay-0021ef06.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "The identity record of one essay: its title and optional summary. The essay's container is anchored on this record; the prose lives in paragraph records arranged in that container, never in this record."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "The document anchor and identity record of one essay in the agent-supported essay editor.",
+      "fields": [
+        {
+          "displayLabel": "Title",
+          "fieldId": "40e65e3b-a271-4116-a435-2d01c3127029",
+          "order": 0,
+          "required": true
+        },
+        {
+          "displayLabel": "Summary",
+          "fieldId": "89424121-5cb4-4bfa-8a6f-33911bda8900",
+          "order": 1,
+          "required": false
+        }
+      ],
+      "id": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
+      "identityFieldId": "40e65e3b-a271-4116-a435-2d01c3127029",
+      "name": "essay",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    "package/types/paragraph-ec61d93d.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "One paragraph of an essay. Prose only: no headings or other structural markup in the body; structure comes from paragraph types and the arrangement (entry order and depth in the essay container), not markup. Agents read, title and annotate paragraphs but do not write the writer's prose."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "One paragraph of an essay: optional gutter title and plain markdown prose.",
+      "fields": [
+        {
+          "displayLabel": "Title",
+          "fieldId": "59b7f51b-3e80-409c-8ee2-b995e1157952",
+          "order": 0,
+          "required": false
+        },
+        {
+          "displayLabel": "Body",
+          "fieldId": "8a16f0d3-0dc8-425a-9616-77dc12c26437",
+          "order": 1,
+          "required": true
+        }
+      ],
+      "id": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
+      "name": "paragraph",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    "package/types/purpose-3c000001.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Use to express what a repository exists to do or achieve. The statement field is the primary, required field. The title field is optional and intended for constrained UI contexts."
+      },
+      "createdAt": "2026-07-08T00:00:00Z",
+      "description": "A Tier-2 typed record capturing the purpose or mission of a repository. Always available in every conforming SRS repository via the implicit core base package (RFC-018). identityInstanceId on the root container MUST reference a record of this type.",
+      "fields": [
+        {
+          "displayLabel": "Statement",
+          "fieldId": "3b000001-0000-4000-a000-000000000001",
+          "order": 0,
+          "required": true
+        },
+        {
+          "displayLabel": "Title",
+          "fieldId": "3b000002-0000-4000-a000-000000000002",
+          "order": 1,
+          "required": false
+        }
+      ],
+      "id": "3c000001-0000-4000-a000-000000000001",
+      "name": "purpose",
+      "namespace": "com.semanticops.core",
+      "version": 1
+    },
+    "package/views/paragraph-view-16210dc2.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Prose-first paragraph rendering: body text is the content, the title is a small gutter-style label, never a heading."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.essay/paragraph"
+      ],
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "Renders a paragraph as body prose with its optional title as a small de-emphasised lead-in; no field labels.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "displayHint": "de-emphasised",
+          "fieldId": "59b7f51b-3e80-409c-8ee2-b995e1157952",
+          "labelMode": "none",
+          "order": 0,
+          "required": false,
+          "visible": true
+        },
+        {
+          "fieldId": "8a16f0d3-0dc8-425a-9616-77dc12c26437",
+          "labelMode": "none",
+          "order": 1,
+          "required": true,
+          "visible": true
+        }
+      ],
+      "id": "16210dc2-a904-465a-85f9-bdbfd17860a0",
+      "name": "paragraph-view",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    "records/tier-2/document-state-99bdd036.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-02T08:16:45.413614756+00:00",
+      "fieldValues": {
+        "essay": "fa2b1ae1-7acb-4c82-bc87-ccc13d4815fe",
+        "hidden_instance_ids": [],
+        "draft_container_id": "a2936021-6a45-46bb-9929-24e192c58eed"
+      },
+      "instanceId": "99bdd036-2ee9-4bd9-8c7d-3e9770a43613",
+      "typeId": "9785968f-bdd4-4c91-81ef-0e62075f3503",
+      "typeName": "document-state",
+      "typeNamespace": "com.mudemocracy.essay",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-02T08:16:45.413622992+00:00"
+    },
+    "records/tier-2/essay-fa2b1ae1.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-02T08:16:44.527959653+00:00",
+      "fieldValues": {
+        "title": "On small democracy",
+        "summary": "A fixture essay."
+      },
+      "instanceId": "fa2b1ae1-7acb-4c82-bc87-ccc13d4815fe",
+      "typeId": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
+      "typeName": "essay",
+      "typeNamespace": "com.mudemocracy.essay",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-02T08:16:44.527963804+00:00"
+    },
+    "records/tier-2/paragraph-249ccf3a.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-02T08:16:44.760226222+00:00",
+      "fieldValues": {
+        "paragraph_title": "Claim",
+        "body": "Second paragraph."
+      },
+      "instanceId": "249ccf3a-065e-40c2-9689-75be3c3ee488",
+      "typeId": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
+      "typeName": "paragraph",
+      "typeNamespace": "com.mudemocracy.essay",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-02T08:16:44.760230666+00:00"
+    },
+    "records/tier-2/paragraph-2bfe8b33.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-02T08:16:45.009975400+00:00",
+      "fieldValues": {
+        "paragraph_title": "Spare",
+        "body": "Drafted paragraph."
+      },
+      "instanceId": "2bfe8b33-59d9-4e9a-a411-7f47d09388d9",
+      "typeId": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
+      "typeName": "paragraph",
+      "typeNamespace": "com.mudemocracy.essay",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-02T08:16:45.009982312+00:00"
+    },
+    "records/tier-2/paragraph-7ff43ee4.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-02T08:16:44.888744021+00:00",
+      "fieldValues": {
+        "body": "Third paragraph."
+      },
+      "instanceId": "7ff43ee4-6edf-4628-834f-c0a0256f8be3",
+      "typeId": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
+      "typeName": "paragraph",
+      "typeNamespace": "com.mudemocracy.essay",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-02T08:16:44.888748657+00:00"
+    },
+    "records/tier-2/paragraph-c990da05.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-02T08:16:44.629626+00:00",
+      "fieldValues": {
+        "paragraph_title": "Opening",
+        "body": "First paragraph."
+      },
+      "instanceId": "c990da05-3abc-44c5-ae63-75660871c903",
+      "typeId": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
+      "typeName": "paragraph",
+      "typeNamespace": "com.mudemocracy.essay",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-02T08:16:44.629633030+00:00"
+    },
+    "records/tier-2/purpose-3df7e355.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-02T08:16:44.417583085+00:00",
+      "fieldValues": {
+        "statement": "",
+        "title": "Essay fixture"
+      },
+      "instanceId": "3df7e355-b49b-474c-ae41-87d5f3f4c646",
+      "typeId": "3c000001-0000-4000-a000-000000000001",
+      "typeName": "purpose",
+      "typeNamespace": "com.semanticops.core",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-02T08:16:44.417583085+00:00"
+    }
+  }
+}

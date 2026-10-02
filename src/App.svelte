@@ -33,6 +33,7 @@
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
+  import EssayShell from "$lib/essay/EssayShell.svelte";
   import GuidesShell from "$lib/guides/GuidesShell.svelte";
   import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
   import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
@@ -67,7 +68,7 @@
   // ---------------------------------------------------------------------------
 
   type AppState = "boot" | "idle" | "migrate" | "loaded" | "error";
-  type EditorMode = "generic" | "governance" | "guides";
+  type EditorMode = "generic" | "governance" | "guides" | "essay";
 
   let appState = $state<AppState>("boot");
   let errorMsg = $state<string | null>(null);
@@ -646,6 +647,34 @@
   />
 
 <!-- =========================================================================
+     Loaded state — essay shell (srs-web#328)
+     ========================================================================= -->
+{:else if editorMode === "essay"}
+  {@render catalogBanner()}
+  <EssayShell
+    repo={repo!}
+    repoName={repoName}
+    onExport={handleExportArchive}
+    onSave={activeDocument?.capabilities.write ? handleSave : undefined}
+    {saving}
+    {saveMessage}
+    documentDirty={documentDirty}
+    documentRevision={documentRevision}
+    onDocumentMutation={handleDocumentMutation}
+    onOpenExplorer={() => { editorMode = "generic"; }}
+    onOpenAnother={() => {
+      clearWorkingCopy();
+      cachedSession = null;
+      saveMessage = null;
+      repo = null;
+      beginDocument();
+      activeDocument = null;
+      editorMode = "generic";
+      appState = "idle";
+    }}
+  />
+
+<!-- =========================================================================
      Loaded state — generic shell
      ========================================================================= -->
 {:else if editorMode === "generic"}
@@ -662,6 +691,7 @@
     onDocumentMutation={handleDocumentMutation}
     onOpenGovernance={() => { editorMode = "governance"; }}
     onOpenGuides={() => { editorMode = "guides"; }}
+    onOpenEssay={() => { editorMode = "essay"; }}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;

@@ -63,6 +63,7 @@
     onOpenAnother: () => void;
     onOpenGovernance?: () => void;
     onOpenGuides?: () => void;
+    onOpenEssay?: () => void;
   }
 
   let {
@@ -78,6 +79,7 @@
     onOpenAnother,
     onOpenGovernance,
     onOpenGuides,
+    onOpenEssay,
   }: Props = $props();
 
   type Surface = "document" | "structure" | "records" | "map";
@@ -454,6 +456,8 @@
             <button data-testid="package-editor-governance" onclick={onOpenGovernance}>{editor.label}</button>
           {:else if editor.id === "guides" && onOpenGuides}
             <button data-testid="package-editor-guides" onclick={onOpenGuides}>{editor.label}</button>
+          {:else if editor.id === "essay" && onOpenEssay}
+            <button data-testid="package-editor-essay" onclick={onOpenEssay}>{editor.label}</button>
           {/if}
         {/each}
       </section>

@@ -1,0 +1,45 @@
+/* ============================================================================
+   component: draft-tray (.draft-tray)
+   ----------------------------------------------------------------------------
+   Set-aside paragraphs. A dashed outline marks it as a holding area (the same
+   "not yet" language as draft tags). The list keeps a minimum height so an
+   empty tray is still a drop target.
+   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
+   ========================================================================== */
+.draft-tray {
+  margin-top: var(--space-md);
+  padding: var(--space-xs);
+  border: 1px dashed var(--color-line);
+}
+.draft-tray .block-stack {
+  min-height: 3rem;
+}
+.draft-tray__empty {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+}
+.draft-tray__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--color-line-soft);
+}
+.draft-tray__label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--size-sm);
+  cursor: grab;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.draft-tray__put {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  background: none;
+  border: 1px solid var(--color-line);
+  padding: 2px 6px;
+  cursor: pointer;
+}
