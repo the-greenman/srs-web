@@ -14,7 +14,7 @@
       "title": "muDemocracy"
     },
     "createdAt": "2026-06-04T00:00:00Z",
-    "dataModelRevision": 8,
+    "dataModelRevision": 9,
     "declaredExtensions": [
       "ext:type-inheritance"
     ],

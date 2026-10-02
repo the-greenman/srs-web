@@ -25,7 +25,7 @@
       "title": "Test Governance"
     },
     "createdAt": "2026-01-01T00:00:00Z",
-    "dataModelRevision": 8,
+    "dataModelRevision": 9,
     "namespace": "test",
     "repositoryId": "00000000-0000-0000-0000-000000000001",
     "srsVersion": "2.0-draft",

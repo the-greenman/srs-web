@@ -29,7 +29,7 @@
     RFC046_MIGRATION_ID,
     applyMigration,
   } from "$lib/srs-client.js";
-  import { agentActorFromRequest, applyActor, currentActor, providerActor, setSignedInActor } from "$lib/actor.js";
+  import { applyActor, relayAgentId, providerActor, setSignedInActor } from "$lib/actor.js";
   import type { AgentWriteGuard, McpSession, SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
@@ -123,8 +123,8 @@
   let migrationError = $state<string | null>(null);
 
   function gateOnMigration(loaded: SrsRepository, name: string, finish: (dirty: boolean) => void): void {
-    // rfc043 (7 -> 8) is required; rfc046 (8 -> 9) only when a session actor will write (RFC-046 [R11]).
-    const ids = neededMigrationIds(loaded, currentActor() !== null);
+    // rfc043 (7 -> 8) and rfc046 (8 -> 9): attribution (RFC-046) needs revision 9.
+    const ids = neededMigrationIds(loaded);
     if (ids.length) {
       pendingMigration = { repo: loaded, name, ids, finish };
       repo = null; // not opened (no MCP session etc.) until migrated
@@ -141,7 +141,7 @@
     try {
       // Each id is re-checked after the previous one (rfc046 requires rfc043 first).
       for (const id of pending.ids) {
-        if (neededMigrationIds(pending.repo, true).includes(id)) applyMigration(pending.repo, id);
+        if (neededMigrationIds(pending.repo).includes(id)) applyMigration(pending.repo, id);
       }
     } catch (e: unknown) {
       // All-or-nothing in the engine: nothing was written. Keep the prompt up.
@@ -277,15 +277,14 @@
     }
   }
 
-  /** Stamp the agent from its `initialize` clientInfo (host-supplied, RFC-046); skipped below revision 9, where an actor would refuse writes. */
-  function withAgentActor(session: McpSession, forRepo: SrsRepository) {
-    return {
-      handle(text: string) {
-        const actor = agentActorFromRequest(text);
-        if (actor && !neededMigrationIds(forRepo, true).includes(RFC046_MIGRATION_ID)) session.set_actor(JSON.stringify(actor));
-        return session.handle(text);
-      },
-    };
+  /**
+   * Agent actor (RFC-046): the host assigns the id, no name (the engine fills it from the
+   * client's initialize clientInfo). Only on a revision-9 corpus: below it an actor would refuse
+   * writes, so a repo whose migration was declined keeps its agent writes unattributed.
+   */
+  function applyAgentActor(session: McpSession, forRepo: SrsRepository): void {
+    if (neededMigrationIds(forRepo).includes(RFC046_MIGRATION_ID)) return;
+    session.set_actor(JSON.stringify({ kind: "ai", id: relayAgentId() }));
   }
 
   $effect(() => {
@@ -294,7 +293,10 @@
     untrack(() => {
       mcpSession = current ? current.open_mcp_session() : null;
       if (mcpSession) {
-        if (applyGuard()) void mcpHost.attach(withAgentActor(mcpSession, current as SrsRepository));
+        if (applyGuard()) {
+          applyAgentActor(mcpSession, current as SrsRepository);
+          void mcpHost.attach(mcpSession);
+        }
       } else mcpHost.detach();
     });
   });

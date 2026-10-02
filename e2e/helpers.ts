@@ -10,6 +10,20 @@ import type { Page } from "@playwright/test";
  * than chosen up front. Use this after a repository is loaded to switch into
  * one of those editors.
  */
-export async function openPackageEditor(page: Page, editor: "governance" | "guides"): Promise<void> {
+export async function openPackageEditor(
+  page: Page,
+  editor: "governance" | "guides"
+): Promise<void> {
   await page.getByTestId(`package-editor-${editor}`).click();
+}
+
+/** Accept the revision migration prompt (rfc043/rfc046) when the loaded repo is below revision 9. */
+export async function acceptMigrationIfOffered(page: Page): Promise<void> {
+  const prompt = page.getByTestId("migration-prompt");
+  try {
+    await prompt.waitFor({ state: "visible", timeout: 3000 });
+  } catch {
+    return;
+  }
+  await page.getByTestId("migration-apply").click();
 }

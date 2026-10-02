@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  agentActorFromRequest,
   applyActor,
   currentActor,
   localActor,
@@ -63,24 +62,5 @@ describe("human actor", () => {
       id: "github:ada",
       name: "Ada",
     });
-  });
-});
-
-describe("agent actor", () => {
-  const init = (clientInfo?: unknown) =>
-    JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: { clientInfo } });
-  it("comes from initialize clientInfo only", () => {
-    expect(agentActorFromRequest(init({ name: "claude-code" }))).toEqual({
-      kind: "ai",
-      id: "agent:claude-code",
-      name: "claude-code",
-    });
-    expect(agentActorFromRequest(init())).toBeNull();
-    expect(
-      agentActorFromRequest(
-        JSON.stringify({ method: "tools/call", params: { clientInfo: { name: "x" } } })
-      )
-    ).toBeNull();
-    expect(agentActorFromRequest("not json")).toBeNull();
   });
 });

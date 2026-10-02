@@ -55,19 +55,23 @@ export function applyActor(repo: SrsRepository): void {
   else repo.clear_actor();
 }
 
+const RELAY_AGENT_KEY = "srs-web.relay-agent-id";
+let relayAgent: string | null = null;
+
 /**
- * Agent (MCP) actor: the host derives it from the client's `initialize` request and sets it on
- * the session; it is never read from tool arguments (RFC-046). `agent:<clientInfo.name>`;
- * null when the request is not an initialize or names no client.
+ * Host-minted id of the agent on this relay connection (RFC-046: the host assigns the id; the
+ * client handle is display name only). Stable per browser, in-memory when storage fails.
+ * srs-web#358 (per-agent channels) extends this to one id per agent.
  */
-export function agentActorFromRequest(text: string): Actor | null {
+export function relayAgentId(): string {
   try {
-    const m = JSON.parse(text);
-    const name = m?.method === "initialize" ? m.params?.clientInfo?.name : null;
-    return typeof name === "string" && name.trim()
-      ? { kind: "ai", id: `agent:${name.trim()}`, name: name.trim() }
-      : null;
+    const saved = localStorage.getItem(RELAY_AGENT_KEY);
+    if (saved) return saved;
+    const id = `agent:${crypto.randomUUID()}`;
+    localStorage.setItem(RELAY_AGENT_KEY, id);
+    return id;
   } catch {
-    return null;
+    relayAgent ??= `agent:${crypto.randomUUID()}`;
+    return relayAgent;
   }
 }

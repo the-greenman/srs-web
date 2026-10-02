@@ -2010,21 +2010,15 @@ export function moveInPrecedesChain(
 export const RFC043_MIGRATION_ID = "rfc043-container-entries";
 export const RFC046_MIGRATION_ID = "rfc046-actor-provenance";
 
-/**
- * Migrations to offer before opening, in order. rfc043 is required (the engine refuses a
- * rev-7 corpus); rfc046 is offered only when a session actor will write, because an actor
- * refuses writes below revision 9 (RFC-046 [R11]). The engine reports status; we only ask.
- */
-export function neededMigrationIds(repo: SrsRepository, withActor: boolean): string[] {
+/** Revision migrations the load gate offers, in order, when the engine reports them needed. */
+export function neededMigrationIds(repo: SrsRepository): string[] {
   try {
     const needed = new Set(
       availableMigrations(repo)
         .filter((m) => m.status.needed)
         .map((m) => m.id)
     );
-    return [RFC043_MIGRATION_ID, ...(withActor ? [RFC046_MIGRATION_ID] : [])].filter((id) =>
-      needed.has(id)
-    );
+    return [RFC043_MIGRATION_ID, RFC046_MIGRATION_ID].filter((id) => needed.has(id));
   } catch {
     return [];
   }

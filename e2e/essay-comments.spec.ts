@@ -128,7 +128,11 @@ test("an MCP-created comment shows the agent author, live", async ({ page }) => 
 
   const c = items(page).nth(1).getByTestId("comment");
   await expect(c).toHaveCount(1);
+  // name = the client's clientInfo.name (engine-filled); id = the host-minted relay id
   await expect(c.getByTestId("comment-author")).toHaveText("agent-test");
+  const hostId = await page.evaluate(() => localStorage.getItem("srs-web.relay-agent-id"));
+  expect(hostId).toMatch(/^agent:[0-9a-f-]{36}$/);
+  expect(JSON.stringify(rec)).toContain(hostId as string);
   await expect(c.getByTestId("comment-kind")).toHaveText("ai");
   await expect(c).toContainText("Consider rephrasing.");
 });

@@ -3,19 +3,19 @@
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
     "container": {
-      "containerId": "3bd85d84-d85d-48fb-bbb3-69a67f9c3f79",
-      "identityInstanceId": "c16424f5-a3f9-410f-93db-0576868ef10d",
+      "containerId": "1a325932-2e05-4638-a846-3c676af90e0c",
+      "identityInstanceId": "71e70294-ee3f-452d-9332-46a4d2d7001b",
       "memberInstanceIds": [
         {
-          "instanceId": "c16424f5-a3f9-410f-93db-0576868ef10d"
+          "instanceId": "71e70294-ee3f-452d-9332-46a4d2d7001b"
         }
       ],
       "title": "Essay fixture"
     },
-    "createdAt": "2026-10-02T21:54:14.547559617+00:00",
+    "createdAt": "2026-10-02T22:01:12.761374019+00:00",
     "dataModelRevision": 9,
     "namespace": "com.mudemocracy.essay",
-    "repositoryId": "3bd85d84-d85d-48fb-bbb3-69a67f9c3f79",
+    "repositoryId": "1a325932-2e05-4638-a846-3c676af90e0c",
     "srsVersion": "2.0-draft",
     "title": "Essay fixture"
   },
@@ -542,19 +542,19 @@
       "namespace": "com.mudemocracy.essay",
       "version": 1
     },
-    "records/tier-2/purpose-c16424f5.json": {
+    "records/tier-2/purpose-71e70294.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-02T21:54:14.429184748+00:00",
+      "createdAt": "2026-10-02T22:01:12.634329976+00:00",
       "fieldValues": {
         "statement": "",
         "title": "Essay fixture"
       },
-      "instanceId": "c16424f5-a3f9-410f-93db-0576868ef10d",
+      "instanceId": "71e70294-ee3f-452d-9332-46a4d2d7001b",
       "typeId": "3c000001-0000-4000-a000-000000000001",
       "typeName": "purpose",
       "typeNamespace": "com.semanticops.core",
       "typeVersion": 1,
-      "updatedAt": "2026-10-02T21:54:14.429184748+00:00"
+      "updatedAt": "2026-10-02T22:01:12.634329976+00:00"
     }
   }
 }
