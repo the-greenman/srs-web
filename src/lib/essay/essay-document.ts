@@ -8,19 +8,21 @@
  */
 import {
   addContainerMember,
+  addContainerMemberRelative,
   createContainer,
   createRecord,
-  getContainerArrangement,
+  getContainerOutline,
   getRecord,
   listContainers,
   listRecords,
   listTypes,
   moveContainerMember,
+  moveContainerMemberRelative,
   removeContainerMember,
   updateRecord,
 } from "$lib/srs-client.js";
-import type { SrsRecord, SrsRepository } from "$lib/srs-client.js";
-import type { Entry, Plan } from "./essay-model.js";
+import type { OutlineEntry, OutlineShift, SrsRecord, SrsRepository } from "$lib/srs-client.js";
+import type { Zone } from "./essay-model.js";
 import { toggled } from "./essay-model.js";
 import { DOCUMENT_STATE_TYPE_ID, ESSAY_TYPE_ID, PARAGRAPH_TYPE_ID } from "./type-registry.js";
 
@@ -37,15 +39,19 @@ export interface EssayModel {
   essayId: string;
   title: string;
   containerId: string;
-  /** Ordered outline of the essay container, identity entry excluded (see `fullPlan`). */
-  entries: Entry[];
-  /** Index of the identity (essay) entry in the container's own outline, or -1. */
-  identityIndex: number;
+  /** Ordered outline of the essay container (`outline.body`: identity / anchor excluded). */
+  entries: OutlineEntry[];
   paragraphs: Record<string, Paragraph>;
   stateId: string | null;
   hidden: string[];
   draftContainerId: string | null;
-  draftEntries: Entry[];
+  draftEntries: OutlineEntry[];
+}
+
+/** A drop / insert position: before / after / into `id` (null = the end, depth 0). */
+export interface Target {
+  id: string | null;
+  zone: Zone;
 }
 
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
@@ -87,9 +93,8 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
     recordsOfType(repo, DOCUMENT_STATE_TYPE_ID).find((r) => r.fieldValues.essay === essayId) ??
     null;
   const draftContainerId = str(state?.fieldValues.draft_container_id) || null;
-  const draftEntries = draftContainerId ? getContainerArrangement(repo, draftContainerId) : [];
-  const full = getContainerArrangement(repo, containerId);
-  const entries = full.filter((e) => e.instanceId !== essayId);
+  const draftEntries = draftContainerId ? getContainerOutline(repo, draftContainerId).body : [];
+  const entries = getContainerOutline(repo, containerId).body;
   const paragraphs: Record<string, Paragraph> = {};
   for (const r of listRecords(repo, { containerId })) {
     if (r.typeId === PARAGRAPH_TYPE_ID) paragraphs[r.instanceId] = toParagraph(r);
@@ -105,7 +110,6 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
     title: str(essay.fieldValues.title) || "Untitled essay",
     containerId,
     entries,
-    identityIndex: full.findIndex((e) => e.instanceId === essayId),
     paragraphs,
     stateId: state?.instanceId ?? null,
     hidden: Array.isArray(hiddenRaw) ? hiddenRaw.map(String) : [],
@@ -114,19 +118,18 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
   };
 }
 
-/** `plan.position` is against `entries` (no identity); the engine wants the container's full outline. */
-const fullPlan = (m: EssayModel, p: Plan): Plan => ({
-  ...p,
-  position: p.position + (m.identityIndex >= 0 && m.identityIndex <= p.position ? 1 : 0),
-});
+/** Add `id` to `container` at `t` (core resolves the position); no target = append. */
+function place(repo: SrsRepository, container: string, id: string, t?: Target): void {
+  if (t?.id) addContainerMemberRelative(repo, container, id, t.id, t.zone);
+  else addContainerMember(repo, container, id);
+}
 
-/** Create a paragraph and add it at `plan` (default: append). Returns its id. */
-export function addParagraph(repo: SrsRepository, m: EssayModel, plan?: Plan): string {
+/** Create a paragraph and add it at `t` (default: append). Returns its id. */
+export function addParagraph(repo: SrsRepository, m: EssayModel, t?: Target): string {
   const rec = createRecord(repo, PARAGRAPH_TYPE_ID, typeVersion(repo, PARAGRAPH_TYPE_ID), {
     fieldValues: { body: "" },
   });
-  const p = plan && fullPlan(m, plan);
-  addContainerMember(repo, m.containerId, rec.instanceId, p?.position, p?.depth);
+  place(repo, m.containerId, rec.instanceId, t);
   return rec.instanceId;
 }
 
@@ -149,33 +152,39 @@ export function setHidden(repo: SrsRepository, m: EssayModel, id: string, hidden
   patchRecord(repo, m.stateId, { hidden_instance_ids: toggled(m.hidden, id, hidden) });
 }
 
-/** Move within a container (`container` is the essay's or the draft's). */
-export function moveEntry(
+/** Move a run within a container (`container` is the essay's or the draft's) to `t`. */
+export function moveEntry(repo: SrsRepository, container: string, id: string, t: Target): void {
+  if (t.id)
+    moveContainerMemberRelative(repo, container, id, { relativeTo: t.id, placement: t.zone });
+  else
+    moveContainerMember(
+      repo,
+      container,
+      id,
+      getContainerOutline(repo, container).entries.length,
+      0
+    );
+}
+/** Alt+Arrow / Tab: indent, outdent or swap with the neighbouring sibling (clamped by the core). */
+export const shiftEntry = (
   repo: SrsRepository,
-  m: EssayModel,
   container: string,
   id: string,
-  p: Plan
-): void {
-  const q = container === m.containerId ? fullPlan(m, p) : p;
-  moveContainerMember(repo, container, id, q.position, q.depth);
-}
-export const setDepth = (repo: SrsRepository, container: string, id: string, d: number): void => {
-  moveContainerMember(repo, container, id, undefined, d);
+  shift: OutlineShift
+): void => {
+  moveContainerMemberRelative(repo, container, id, { shift });
 };
 
 /** Move a paragraph between the essay and its draft container (remove + add). */
 export function transfer(
   repo: SrsRepository,
-  m: EssayModel,
   from: string,
   to: string,
   id: string,
-  plan: Plan
+  t?: Target
 ): void {
-  const q = to === m.containerId ? fullPlan(m, plan) : plan;
   removeContainerMember(repo, from, id);
-  addContainerMember(repo, to, id, q.position, q.depth);
+  place(repo, to, id, t);
 }
 
 /** New essay: record + container (+ draft container + state).. */

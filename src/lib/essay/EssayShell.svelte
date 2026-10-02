@@ -23,21 +23,13 @@
     moveEntry,
     newEssay,
     setBody,
-    setDepth,
+    shiftEntry,
     setHidden,
     setTitle,
     transfer,
   } from "./essay-document.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
-  import {
-    hiddenByAncestor,
-    indentDepth,
-    insertPlan,
-    movePlan,
-    parentIds,
-    stepPlan,
-    visibleEntries,
-  } from "./essay-model.js";
+  import { hiddenByAncestor, visibleEntries } from "./essay-model.js";
 
   let {
     repo,
@@ -125,7 +117,6 @@
   const hidden = $derived(new Set(model?.hidden ?? []));
   const inherited = $derived(hiddenByAncestor(model?.entries ?? [], hidden));
   const items = $derived((model?.entries ?? []).map((e) => ({ id: e.instanceId, depth: e.depth ?? 0 })));
-  const parents = $derived(parentIds(model?.entries ?? []));
   const label = (id: string) => model?.paragraphs[id]?.title || model?.paragraphs[id]?.body.slice(0, 40) || "untitled";
   const layers = $derived(
     visibleEntries(model?.entries ?? [], folded).map((e) => ({
@@ -134,7 +125,7 @@
       label: label(e.instanceId),
       hidden: hidden.has(e.instanceId),
       inherited: inherited.has(e.instanceId),
-      hasChildren: parents.has(e.instanceId),
+      hasChildren: e.hasChildren,
       folded: folded.has(e.instanceId),
     })),
   );
@@ -142,23 +133,12 @@
     (model?.draftEntries ?? []).map((e) => ({ id: e.instanceId, label: label(e.instanceId) })),
   );
 
-  function newParagraphAfter(id: string): string {
-    // "after current at the same depth": past the current block's run
-    const plan = insertPlan(model!.entries, id, "after");
-    return `body:${addParagraph(repo, model!, plan ?? undefined)}`;
-  }
+  const newParagraphAfter = (id: string): string =>
+    `body:${addParagraph(repo, model!, { id, zone: "after" })}`;
 
+  const SHIFT = { up: "up", down: "down", in: "indent", out: "outdent" } as const;
   function onKey(id: string, m: KeyMove) {
-    const entries = model?.entries ?? [];
-    void run(() => {
-      if (m === "up" || m === "down") {
-        const p = stepPlan(entries, id, m);
-        if (p) moveEntry(repo, model!, model!.containerId, id, p);
-      } else {
-        const d = indentDepth(entries, id, m === "in" ? 1 : -1);
-        if (d !== null) setDepth(repo, model!.containerId, id, d);
-      }
-    });
+    void run(() => shiftEntry(repo, model!.containerId, id, SHIFT[m]));
   }
 
   function onDrop(to: "essay" | "draft", p: DragPayload, t: DropTarget) {
@@ -166,26 +146,17 @@
     if (!m) return;
     const toId = to === "essay" ? m.containerId : m.draftContainerId;
     const fromId = p.from === "essay" ? m.containerId : m.draftContainerId;
-    if (!toId || !fromId) return;
-    const dest = to === "essay" ? m.entries : m.draftEntries;
-    const nest = to === "essay";
+    if (!toId || !fromId || p.id === t.id) return;
     void run(() => {
-      if (p.from === to) {
-        const plan = movePlan(dest, p.id, t.id, t.zone);
-        if (plan) moveEntry(repo, m, toId, p.id, nest ? plan : { ...plan, depth: 0 });
-      } else {
-        const plan = insertPlan(dest, t.id, t.zone);
-        if (plan) transfer(repo, m, fromId, toId, p.id, nest ? plan : { ...plan, depth: 0 });
-      }
+      if (p.from === to) moveEntry(repo, toId, p.id, t);
+      else transfer(repo, fromId, toId, p.id, t);
     });
   }
 
   function putBack(id: string) {
     const m = model;
     if (!m?.draftContainerId) return;
-    void run(() => {
-      transfer(repo, m, m.draftContainerId as string, m.containerId, id, { position: m.entries.length, depth: 0 });
-    });
+    void run(() => transfer(repo, m.draftContainerId as string, m.containerId, id));
   }
 
   function toggleFold(id: string, on: boolean) {

@@ -93,6 +93,23 @@ export interface SrsRepository {
   ): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in repairContainerMembers()
   repair_container_members(container_id: string): any;
+  move_container_member_relative(
+    container_id: string,
+    instance_id: string,
+    relative_to?: string | null,
+    placement?: string | null,
+    shift?: string | null
+    // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in moveContainerMemberRelative()
+  ): any;
+  add_container_member_relative(
+    container_id: string,
+    instance_id: string,
+    relative_to: string,
+    placement: string
+    // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in addContainerMemberRelative()
+  ): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainerOutline()
+  get_container_outline(container_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainerArrangement()
   get_container_arrangement(container_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in removeContainerMember()
@@ -1168,6 +1185,88 @@ export function getContainerArrangement(
   containerId: string
 ): ContainerEntry[] {
   return repo.get_container_arrangement(containerId) as ContainerEntry[];
+}
+
+/** Where an entry lands relative to another one (RFC-043 outline ops; resolved by the core). */
+export type OutlinePlacement = "before" | "after" | "into";
+/** A gesture with no target: indent / outdent / swap with the neighbouring sibling. */
+export type OutlineShift = "indent" | "outdent" | "up" | "down";
+
+/** One derived outline entry (core `get_container_outline`). */
+export interface OutlineEntry {
+  instanceId: string;
+  depth: number;
+  parentInstanceId?: string | null;
+  hasChildren: boolean;
+  runSize: number;
+  runEnd: number;
+}
+
+/** The container's derived outline; `body` excludes the anchor and identity entries. */
+export interface ContainerOutline {
+  containerId: string;
+  anchorInstanceId?: string | null;
+  identityInstanceId?: string | null;
+  entries: OutlineEntry[];
+  body: OutlineEntry[];
+}
+
+/** The WASM layer rejects with bare strings; surface every rejection as an `Error`. */
+function rethrow(e: unknown): never {
+  throw e instanceof Error ? e : new Error(String(e));
+}
+
+/** The container's derived outline (parent / hasChildren / run bounds / body entries). */
+export function getContainerOutline(repo: SrsRepository, containerId: string): ContainerOutline {
+  try {
+    return repo.get_container_outline(containerId) as ContainerOutline;
+  } catch (e) {
+    return rethrow(e);
+  }
+}
+
+/**
+ * Move an entry's run `before` / `after` / `into` `relativeTo`, or give a `shift`. Clamped
+ * gestures return the unchanged list; illegal targets throw (arrangement-target / -identity).
+ */
+export function moveContainerMemberRelative(
+  repo: SrsRepository,
+  containerId: string,
+  instanceId: string,
+  to: { relativeTo: string; placement: OutlinePlacement } | { shift: OutlineShift }
+): ContainerMembersResult {
+  try {
+    const t = to as { relativeTo?: string; placement?: OutlinePlacement; shift?: OutlineShift };
+    return repo.move_container_member_relative(
+      containerId,
+      instanceId,
+      t.relativeTo,
+      t.placement,
+      t.shift
+    ) as ContainerMembersResult;
+  } catch (e) {
+    return rethrow(e);
+  }
+}
+
+/** Add an instance `before` / `after` / `into` `relativeTo` in one write. */
+export function addContainerMemberRelative(
+  repo: SrsRepository,
+  containerId: string,
+  instanceId: string,
+  relativeTo: string,
+  placement: OutlinePlacement
+): ContainerMembersResult {
+  try {
+    return repo.add_container_member_relative(
+      containerId,
+      instanceId,
+      relativeTo,
+      placement
+    ) as ContainerMembersResult;
+  } catch (e) {
+    return rethrow(e);
+  }
 }
 
 // ---------------------------------------------------------------------------

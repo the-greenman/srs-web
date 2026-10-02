@@ -173,11 +173,7 @@ function makeBaseRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
       diagnostics: [],
     }),
     list_records: () => [],
-    get_container: () => ({
-      containerId: "c-articles",
-      title: "Articles",
-      memberInstanceIds: [],
-    }),
+    get_container_outline: () => ({ containerId: "c-articles", entries: [], body: [] }),
     type_schema: () => ({
       schema: {
         type: "object",
@@ -386,11 +382,7 @@ describe("GovernanceShell — sections sharing one container", () => {
         ],
         diagnostics: [],
       }),
-      get_container: (id: string) => ({
-        containerId: id,
-        title: id,
-        memberInstanceIds: [],
-      }),
+      get_container_outline: (id: string) => ({ containerId: id, entries: [], body: [] }),
       list_records: () => [],
     });
     render(GovernanceShell, {
@@ -544,11 +536,10 @@ describe("GovernanceShell — saving-state mutation guard (srs-web#312 bug 2)", 
       list_records: () => [
         { instanceId: createdRecord.instanceId, displayLabel: "Untitled", record: createdRecord },
       ],
-      get_container: () => ({
-        containerId: "c-articles",
-        title: "Articles",
-        memberInstanceIds: [{ instanceId: "rec-001" }],
-      }),
+      get_container_outline: () => {
+        const e = { instanceId: "rec-001", depth: 0, hasChildren: false, runSize: 1, runEnd: 1 };
+        return { containerId: "c-articles", entries: [e], body: [e] };
+      },
       resolve_container_view: () => ({
         containerId: "c-articles",
         members: [],

@@ -9,11 +9,13 @@ const m = vi.hoisted(() => ({
   addContainerMember: vi.fn(),
   removeContainerMember: vi.fn(),
   moveContainerMember: vi.fn(),
+  moveContainerMemberRelative: vi.fn(),
+  addContainerMemberRelative: vi.fn(),
   createRecord: vi.fn(() => ({ instanceId: "new" })),
   createContainer: vi.fn(),
   updateRecord: vi.fn(),
   getRecord: vi.fn(),
-  getContainerArrangement: vi.fn(),
+  getContainerOutline: vi.fn(),
   listContainers: vi.fn(() => [{ containerId: "C", title: "t" }]),
   listTypes: vi.fn(() => [
     { id: "0021ef06-4d6b-42fb-af5a-2d53d287138c", namespace: "n", name: "essay", version: 1 },
@@ -34,6 +36,7 @@ import {
   loadEssay,
   moveEntry,
   setHidden,
+  shiftEntry,
   transfer,
 } from "../src/lib/essay/essay-document.js";
 
@@ -63,10 +66,17 @@ beforeEach(() => {
       return [];
     }
   );
-  m.getContainerArrangement.mockImplementation((_r: unknown, id: string) =>
+  const oe = (instanceId: string, depth = 0) => ({
+    instanceId,
+    depth,
+    hasChildren: false,
+    runSize: 1,
+    runEnd: 0,
+  });
+  m.getContainerOutline.mockImplementation((_r: unknown, id: string) =>
     id === "C"
-      ? [{ instanceId: "E" }, { instanceId: "p1" }, { instanceId: "p2", depth: 1 }]
-      : [{ instanceId: "p9" }]
+      ? { entries: [oe("E"), oe("p1"), oe("p2", 1)], body: [oe("p1"), oe("p2", 1)] }
+      : { entries: [oe("p9")], body: [oe("p9")] }
   );
   m.getRecord.mockReturnValue(
     rec("S", DOCUMENT_STATE_TYPE_ID, {
@@ -78,33 +88,40 @@ beforeEach(() => {
 });
 
 describe("essay-document", () => {
-  it("loads the outline without the identity entry, plus hidden ids and the draft container", () => {
+  it("loads the core's outline body (identity excluded), plus hidden ids and the draft container", () => {
     const model = loadEssay({} as never, "E");
     expect(model.entries.map((e) => e.instanceId)).toEqual(["p1", "p2"]);
-    expect(model.identityIndex).toBe(0);
     expect(model.paragraphs.p1).toEqual({ id: "p1", title: "One", body: "x" });
     expect(model.hidden).toEqual(["p2"]);
     expect(model.draftContainerId).toBe("D");
-    expect(model.draftEntries).toEqual([{ instanceId: "p9" }]);
+    expect(model.draftEntries.map((e) => e.instanceId)).toEqual(["p9"]);
   });
 
-  it("translates positions to the full outline (identity entry shifts them)", () => {
+  it("passes gestures to the core's relative ops unchanged (no client arithmetic)", () => {
     const model = loadEssay({} as never, "E");
-    addParagraph({} as never, model, { position: 0, depth: 0 });
-    expect(m.addContainerMember).toHaveBeenCalledWith({}, "C", "new", 1, 0);
-    moveEntry({} as never, model, "C", "p1", { position: 1, depth: 1 });
-    expect(m.moveContainerMember).toHaveBeenCalledWith({}, "C", "p1", 2, 1);
-    moveEntry({} as never, model, "D", "p9", { position: 0, depth: 0 });
-    expect(m.moveContainerMember).toHaveBeenLastCalledWith({}, "D", "p9", 0, 0);
+    addParagraph({} as never, model, { id: "p1", zone: "after" });
+    expect(m.addContainerMemberRelative).toHaveBeenCalledWith({}, "C", "new", "p1", "after");
+    addParagraph({} as never, model);
+    expect(m.addContainerMember).toHaveBeenCalledWith({}, "C", "new");
+    moveEntry({} as never, "C", "p1", { id: "p2", zone: "into" });
+    expect(m.moveContainerMemberRelative).toHaveBeenCalledWith({}, "C", "p1", {
+      relativeTo: "p2",
+      placement: "into",
+    });
+    shiftEntry({} as never, "C", "p1", "indent");
+    expect(m.moveContainerMemberRelative).toHaveBeenLastCalledWith({}, "C", "p1", {
+      shift: "indent",
+    });
+    moveEntry({} as never, "D", "p9", { id: null, zone: "after" });
+    expect(m.moveContainerMember).toHaveBeenCalledWith({}, "D", "p9", 1, 0);
   });
 
   it("pull-out / put-back are remove + add through the engine", () => {
-    const model = loadEssay({} as never, "E");
-    transfer({} as never, model, "C", "D", "p1", { position: 1, depth: 0 });
+    transfer({} as never, "C", "D", "p1", { id: "p9", zone: "before" });
     expect(m.removeContainerMember).toHaveBeenCalledWith({}, "C", "p1");
-    expect(m.addContainerMember).toHaveBeenCalledWith({}, "D", "p1", 1, 0);
-    transfer({} as never, model, "D", "C", "p9", { position: 2, depth: 0 });
-    expect(m.addContainerMember).toHaveBeenLastCalledWith({}, "C", "p9", 3, 0);
+    expect(m.addContainerMemberRelative).toHaveBeenCalledWith({}, "D", "p1", "p9", "before");
+    transfer({} as never, "D", "C", "p9");
+    expect(m.addContainerMember).toHaveBeenLastCalledWith({}, "C", "p9");
   });
 
   it("the eye writes hidden ids into the document-state record, not the paragraph", () => {
