@@ -9,7 +9,7 @@ import { openPackageEditor } from "./helpers.js";
  * The mode picker (choose Governance/Guides before opening a file) was replaced by a
  * single generic file picker: any repository opens into GenericSrsShell, and
  * Governance/Guides are optional package editors reached from inside the loaded shell,
- * gated on the repo actually installing a type each shell depends on (package-editors.ts)
+ * gated on the repo actually installing a type each shell depends on (editors/registry.ts)
  * rather than a package namespace label.
  *
  * sample.srsj is a bare fixture with no governance or guide types, so it's used only

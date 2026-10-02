@@ -12,7 +12,6 @@
     getRecord,
     listContainers,
     listDocumentViews,
-    listPackages,
     listRelations,
     listTypes,
     renderDocumentView,
@@ -25,7 +24,6 @@
     ContainerSummary,
     DiscoveryHit,
     DocumentViewSummary,
-    PackageSummary,
     RepositoryNavigation,
     SrsRecord,
     SrsRelation,
@@ -44,7 +42,7 @@
   import type { BlueprintSummary } from "$lib/srs-client.js";
   import type { CompositeFormDef } from "$lib/editor/blueprint-fields.js";
   import type { FieldFormDef } from "$lib/governance/types.js";
-  import { availablePackageEditors } from "$lib/generic/package-editors.js";
+  import { availableEditors } from "$lib/editors/registry.js";
 
   interface Props {
     repo: SrsRepository;
@@ -61,9 +59,7 @@
     /** Report a successful in-place repository mutation to the App shell. */
     onDocumentMutation?: () => void;
     onOpenAnother: () => void;
-    onOpenGovernance?: () => void;
-    onOpenGuides?: () => void;
-    onOpenEssay?: () => void;
+    onOpenEditor?: (id: string) => void;
   }
 
   let {
@@ -77,9 +73,7 @@
     documentRevision = 0,
     onDocumentMutation = () => {},
     onOpenAnother,
-    onOpenGovernance,
-    onOpenGuides,
-    onOpenEssay,
+    onOpenEditor,
   }: Props = $props();
 
   type Surface = "document" | "structure" | "records" | "map";
@@ -91,7 +85,6 @@
   let containers = $state<ContainerSummary[]>([]);
   let navigation = $state<RepositoryNavigation | null>(null);
   let types = $state<TypeSummary[]>([]);
-  let packages = $state<PackageSummary[]>([]);
   let selectedCompositionId = $state<string | null>(null);
   let selectedContainerId = $state<string | null>(null);
   let selectedRecord = $state<SrsRecord | null>(null);
@@ -117,7 +110,7 @@
   const activeContainer = $derived(
     containers.find((container) => container.containerId === selectedContainerId) ?? null,
   );
-  const packageEditors = $derived(availablePackageEditors(packages, types));
+  const packageEditors = $derived(availableEditors(types));
 
   function message(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
@@ -133,7 +126,6 @@
       compositions = listDocumentViews(repo);
       containers = listContainers(repo);
       types = listTypes(repo);
-      packages = listPackages(repo);
       try {
         navigation = repositoryNavigation(repo);
       } catch {
@@ -452,12 +444,8 @@
       <section>
         <h2>Package editors</h2>
         {#each packageEditors as editor (editor.id)}
-          {#if editor.id === "governance" && onOpenGovernance}
-            <button data-testid="package-editor-governance" onclick={onOpenGovernance}>{editor.label}</button>
-          {:else if editor.id === "guides" && onOpenGuides}
-            <button data-testid="package-editor-guides" onclick={onOpenGuides}>{editor.label}</button>
-          {:else if editor.id === "essay" && onOpenEssay}
-            <button data-testid="package-editor-essay" onclick={onOpenEssay}>{editor.label}</button>
+          {#if onOpenEditor}
+            <button data-testid="package-editor-{editor.id}" title={editor.description} onclick={() => onOpenEditor(editor.id)}>{editor.label}</button>
           {/if}
         {/each}
       </section>

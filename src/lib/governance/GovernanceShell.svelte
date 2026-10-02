@@ -100,6 +100,8 @@
      */
     onDocumentMutation?: () => boolean;
     onOpenAnother: () => void;
+    /** Part of the common EditorShellProps; unused by this shell. */
+    onOpenExplorer?: () => void;
   }
   let {
     repo,
