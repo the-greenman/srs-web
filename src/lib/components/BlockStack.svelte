@@ -32,6 +32,7 @@
     ondrop,
     row,
     nest = false,
+    candrop = () => true,
     label = 'Paragraphs',
     class: klass = '',
   }: {
@@ -42,6 +43,8 @@
     row: Snippet<[StackItem, HandleAttrs]>;
     /** Allow dropping onto the middle of a row to nest under it (layers). */
     nest?: boolean;
+    /** False when dropping `dragId` on `targetId` is illegal (e.g. into its own run): no drop offered. */
+    candrop?: (dragId: string, targetId: string) => boolean;
     label?: string;
     class?: string;
   } = $props();
@@ -94,8 +97,13 @@
       data-id={item.id}
       ondragover={(e) => {
         if (!accepts(e)) return;
+        e.stopPropagation(); // also keeps the list from offering "append" over a refused row
+        const p = dragging();
+        if (p && !candrop(p.id, item.id)) {
+          over = null;
+          return;
+        }
         e.preventDefault();
-        e.stopPropagation();
         over = { id: item.id, zone: zoneOf(e, e.currentTarget, nest) };
       }}
       ondrop={(e) => finish(e, item.id, zoneOf(e, e.currentTarget, nest))}

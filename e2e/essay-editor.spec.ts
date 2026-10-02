@@ -79,6 +79,19 @@ test("write, reorder, nest, hide, draft out and back", async ({ page }) => {
   await page.keyboard.press("Tab");
   await expect.poll(() => depthOf(page, "Third paragraph.")).toBe("1");
 
+  // a group can't be dropped into its own run: the drag layer offers no target, so no write
+  await layerLabels(page)
+    .filter({ hasText: "Opening" })
+    .dragTo(layerLabels(page).filter({ hasText: "Third paragraph." }));
+  await expect(page.getByTestId("essay-error")).toHaveCount(0);
+  await expect(bodies(page)).toHaveText([
+    "Fourth paragraph.",
+    "Second paragraph.",
+    "First paragraph.",
+    "Third paragraph.",
+  ]);
+  await expect.poll(() => depthOf(page, "Third paragraph.")).toBe("1");
+
   // hide follows Photoshop: hiding a parent hides its nested run; children show as hidden-by-parent
   const thirdEye = page.locator(".essay-shell__page .block-stack__item").nth(3).locator(".eye");
   await page.getByRole("button", { name: "Hide Opening", exact: true }).first().click();

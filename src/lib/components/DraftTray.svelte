@@ -19,6 +19,7 @@
     available = true,
     unavailableReason = 'No draft area for this essay.',
     ondrop,
+    candrop,
     onputback,
     oncreate,
   }: {
@@ -27,6 +28,7 @@
     available?: boolean;
     unavailableReason?: string;
     ondrop: (payload: DragPayload, target: DropTarget) => void;
+    candrop?: (dragId: string, targetId: string) => boolean;
     onputback: (id: string) => void;
     oncreate?: () => void;
   } = $props();
@@ -41,7 +43,7 @@
     {#if oncreate}<button type="button" class="btn btn--mono" onclick={oncreate}>Create draft area</button>{/if}
   {:else}
     {#if items.length === 0}<p class="draft-tray__empty">Drag paragraphs here to set them aside.</p>{/if}
-    <BlockStack items={items.map((i) => ({ id: i.id, depth: 0 }))} source="draft" label="Draft paragraphs" {ondrop}>
+    <BlockStack items={items.map((i) => ({ id: i.id, depth: 0 }))} source="draft" label="Draft paragraphs" {ondrop} {candrop}>
       {#snippet row(item, handle)}
         {@const d = byId.get(item.id)}
         {#if d}

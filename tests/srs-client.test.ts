@@ -21,6 +21,7 @@ import {
   type MigrationSummary,
   addAttachment,
   addContainerMember,
+  addContainerMemberRelative,
   applyMigration,
   availableMigrations,
   containersForInstance,
@@ -31,6 +32,7 @@ import {
   find,
   getAllowedLifecycleTransitions,
   getAttachmentBytes,
+  getContainerOutline,
   getRecordAttachments,
   linkAttachment,
   listAttachments,
@@ -41,6 +43,7 @@ import {
   listRecords,
   listRelations,
   listTerms,
+  moveContainerMemberRelative,
   repositoryNavigation,
   resolveContainerView,
   scaffoldGovernanceDocument,
@@ -296,15 +299,17 @@ describe("listPackages", () => {
     const result = listPackages(mockRepo({ list_packages: spy }));
 
     expect(spy).toHaveBeenCalledOnce();
-    expect(result).toEqual([{
-      id: "pkg-1",
-      namespace: "com.mudemocracy.governance",
-      name: "governance",
-      version: "1.0.0",
-      boundaryPath: "packages/governance",
-      fieldCount: 12,
-      typeCount: 4,
-    }]);
+    expect(result).toEqual([
+      {
+        id: "pkg-1",
+        namespace: "com.mudemocracy.governance",
+        name: "governance",
+        version: "1.0.0",
+        boundaryPath: "packages/governance",
+        fieldCount: 12,
+        typeCount: 4,
+      },
+    ]);
   });
 });
 
@@ -549,7 +554,9 @@ describe("listContainers", () => {
 
 describe("addContainerMember", () => {
   it("calls add_container_member with containerId and instanceId and returns the member list", () => {
-    const memberIds = { members: [{ instanceId: "inst-abc" }, { instanceId: "inst-def", depth: 1 }] };
+    const memberIds = {
+      members: [{ instanceId: "inst-abc" }, { instanceId: "inst-def", depth: 1 }],
+    };
     const spy = vi.fn().mockReturnValue(memberIds);
     const repo = mockRepo({ add_container_member: spy });
 
@@ -572,7 +579,9 @@ describe("addContainerMember", () => {
   });
 
   it("returns an empty array when the container starts empty (idempotent first add)", () => {
-    const repo = mockRepo({ add_container_member: () => ({ members: [{ instanceId: "inst-abc" }] }) });
+    const repo = mockRepo({
+      add_container_member: () => ({ members: [{ instanceId: "inst-abc" }] }),
+    });
     const result = addContainerMember(repo, "c-dl-001", "inst-abc");
     expect(result.members).toEqual([{ instanceId: "inst-abc" }]);
   });
@@ -1681,5 +1690,48 @@ describe("attachment wrappers", () => {
     const result = getRecordAttachments(repo, input);
 
     expect(result).toBeNull();
+  });
+});
+
+describe("core relative outline ops (srs-rust#1156)", () => {
+  it("pass relativeTo / placement / shift straight to the snake_case exports", () => {
+    const move = vi.fn(() => ({ members: [] }));
+    const add = vi.fn(() => ({ members: [] }));
+    const repo = mockRepo({
+      move_container_member_relative: move,
+      add_container_member_relative: add,
+    });
+    moveContainerMemberRelative(repo, "c", "a", { relativeTo: "b", placement: "into" });
+    expect(move).toHaveBeenLastCalledWith("c", "a", "b", "into", undefined);
+    moveContainerMemberRelative(repo, "c", "a", { shift: "outdent" });
+    expect(move).toHaveBeenLastCalledWith("c", "a", undefined, undefined, "outdent");
+    addContainerMemberRelative(repo, "c", "n", "a", "after");
+    expect(add).toHaveBeenCalledWith("c", "n", "a", "after");
+  });
+
+  it("getContainerOutline returns the core's outline", () => {
+    const outline = { containerId: "c", entries: [], body: [] };
+    expect(getContainerOutline(mockRepo({ get_container_outline: () => outline }), "c")).toBe(
+      outline
+    );
+  });
+
+  it("maps the WASM layer's bare-string rejections to Error, keeping the core's message", () => {
+    const reject = () => {
+      throw "arrangement-target: cannot move into own run";
+    };
+    const repo = mockRepo({
+      move_container_member_relative: reject,
+      add_container_member_relative: reject,
+      get_container_outline: reject,
+    });
+    for (const call of [
+      () => moveContainerMemberRelative(repo, "c", "a", { relativeTo: "a1", placement: "into" }),
+      () => addContainerMemberRelative(repo, "c", "n", "a", "after"),
+      () => getContainerOutline(repo, "c"),
+    ]) {
+      expect(call).toThrow(Error);
+      expect(call).toThrow("arrangement-target");
+    }
   });
 });

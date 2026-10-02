@@ -26,6 +26,7 @@
   let {
     layers,
     ondrop,
+    candrop,
     onhide,
     onfold,
     onselect,
@@ -33,6 +34,7 @@
   }: {
     layers: Layer[];
     ondrop: (payload: DragPayload, target: DropTarget) => void;
+    candrop?: (dragId: string, targetId: string) => boolean;
     onhide: (id: string, hidden: boolean) => void;
     onfold: (id: string, folded: boolean) => void;
     onselect: (id: string) => void;
@@ -44,7 +46,7 @@
 
 <section class="layers" aria-label="Layers">
   <h2 class="layers__title">Layers</h2>
-  <BlockStack items={layers} source="essay" nest label="Layers" {ondrop}>
+  <BlockStack items={layers} source="essay" nest label="Layers" {ondrop} {candrop}>
     {#snippet row(item, handle)}
       {@const l = byId.get(item.id)}
       {#if l}
