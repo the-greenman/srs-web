@@ -69,3 +69,16 @@ describe("essay-model", () => {
     expect(toggled(["x", "y"], "y", false)).toEqual(["x"]);
   });
 });
+
+import { hiddenByAncestor } from "../src/lib/essay/essay-model.js";
+describe("hiddenByAncestor", () => {
+  const l = e(["a"], ["b"], ["b1", 1], ["b2", 2], ["b3", 1], ["c"]);
+  it("hides the whole nested run beneath a hidden parent, not siblings", () => {
+    expect([...hiddenByAncestor(l, new Set(["b"]))]).toEqual(["b1", "b2", "b3"]);
+    expect([...hiddenByAncestor(l, new Set(["b1"]))]).toEqual(["b2"]);
+  });
+  it("a directly hidden child stays directly hidden; nothing inherited without a hidden parent", () => {
+    expect(hiddenByAncestor(l, new Set())).toEqual(new Set());
+    expect(hiddenByAncestor(l, new Set(["b", "b1"])).has("b1")).toBe(true);
+  });
+});

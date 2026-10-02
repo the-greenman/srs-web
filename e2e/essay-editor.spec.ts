@@ -79,11 +79,26 @@ test("write, reorder, nest, hide, draft out and back", async ({ page }) => {
   await page.keyboard.press("Tab");
   await expect.poll(() => depthOf(page, "Third paragraph.")).toBe("1");
 
-  // hide in place (eye): body collapses, paragraph stays
+  // hide follows Photoshop: hiding a parent hides its nested run; children show as hidden-by-parent
+  const thirdEye = page.locator(".essay-shell__page .block-stack__item").nth(3).locator(".eye");
   await page.getByRole("button", { name: "Hide Opening", exact: true }).first().click();
-  await expect(page.getByText("Hidden paragraph")).toBeVisible();
-  await expect(page.locator(".layers .eye.is-off")).toHaveCount(1);
+  await expect(page.getByText("Hidden paragraph")).toHaveCount(1);
+  await expect(page.getByText("Hidden by parent")).toHaveCount(1);
+  await expect(thirdEye).toBeDisabled();
+  await expect(page.locator(".layers .eye--inherited")).toHaveCount(1);
+  await expect(page.locator(".layers .eye.is-off")).toHaveCount(2);
+  // unhiding the parent restores the child to its own state
   await page.getByRole("button", { name: "Show Opening", exact: true }).first().click();
+  await expect(page.getByText("Hidden by parent")).toHaveCount(0);
+  await expect(page.getByText("Hidden paragraph")).toHaveCount(0);
+  // a directly hidden child stays hidden after the parent toggles
+  await thirdEye.click();
+  await expect(page.getByText("Hidden paragraph")).toHaveCount(1);
+  await page.getByRole("button", { name: "Hide Opening", exact: true }).first().click();
+  await page.getByRole("button", { name: "Show Opening", exact: true }).first().click();
+  await expect(page.getByText("Hidden paragraph")).toHaveCount(1);
+  await expect(page.getByText("Hidden by parent")).toHaveCount(0);
+  await thirdEye.click();
   await expect(page.getByText("Hidden paragraph")).toHaveCount(0);
 
   // draft: pull out via the block action, then put back via the tray

@@ -104,3 +104,17 @@ export function visibleEntries(entries: Entry[], folded: Set<string>): Entry[] {
 
 export const toggled = (ids: string[], id: string, on: boolean): string[] =>
   on ? (ids.includes(id) ? ids : [...ids, id]) : ids.filter((x) => x !== id);
+
+/** ids hidden only because an ancestor is hidden (Photoshop model); derived from depth, never stored. */
+export function hiddenByAncestor(entries: Entry[], hidden: Set<string>): Set<string> {
+  const out = new Set<string>();
+  const stack: { depth: number; off: boolean }[] = []; // ancestors: hidden or inheriting
+  for (const e of entries) {
+    const d = depthOf(e);
+    while (stack.length && stack[stack.length - 1].depth >= d) stack.pop();
+    const inherited = stack.length > 0;
+    if (inherited) out.add(e.instanceId);
+    if (inherited || hidden.has(e.instanceId)) stack.push({ depth: d, off: true });
+  }
+  return out;
+}

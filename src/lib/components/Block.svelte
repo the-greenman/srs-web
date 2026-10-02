@@ -17,6 +17,7 @@
     title = '',
     body = '',
     hidden = false,
+    inherited = false,
     handle = {},
     onbody,
     ontitle,
@@ -30,6 +31,8 @@
     title?: string;
     body?: string;
     hidden?: boolean;
+    /** Hidden because an ancestor is hidden. */
+    inherited?: boolean;
     /** Drag attributes from BlockStack, spread on the handle. */
     handle?: Record<string, unknown>;
     onbody: (value: string) => void;
@@ -113,7 +116,7 @@
   const shortLabel = $derived(title || 'untitled paragraph');
 </script>
 
-<article class="block" class:is-off={hidden} data-block-id={id}>
+<article class="block" class:is-off={hidden || inherited} data-block-id={id}>
   <div class="block__gutter">
     {#if editingTitle}
       <!-- svelte-ignore a11y_autofocus -->
@@ -141,13 +144,13 @@
         {...handle}
       >{title || '⋮⋮'}</button>
     {/if}
-    <EyeToggle {hidden} label={shortLabel} onclick={() => onhide(!hidden)} />
+    <EyeToggle {hidden} {inherited} label={shortLabel} onclick={() => onhide(!hidden)} />
     {#if onpull}
       <button type="button" class="block__action" aria-label={`Move ${shortLabel} to draft`} title="Move to draft" onclick={onpull}>↧</button>
     {/if}
   </div>
-  {#if hidden}
-    <p class="block__closed">Hidden paragraph</p>
+  {#if hidden || inherited}
+    <p class="block__closed">{inherited && !hidden ? 'Hidden by parent' : 'Hidden paragraph'}</p>
   {:else}
     <div
       bind:this={el}

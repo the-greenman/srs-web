@@ -17,6 +17,8 @@
     depth: number;
     label: string;
     hidden: boolean;
+    /** Hidden only by an ancestor (greyed eye). */
+    inherited: boolean;
     hasChildren: boolean;
     folded: boolean;
   }
@@ -46,7 +48,7 @@
     {#snippet row(item, handle)}
       {@const l = byId.get(item.id)}
       {#if l}
-        <div class="layers__row" class:is-off={l.hidden}>
+        <div class="layers__row" class:is-off={l.hidden || l.inherited}>
           {#if l.hasChildren}
             <button
               type="button"
@@ -56,7 +58,7 @@
               onclick={() => onfold(l.id, !l.folded)}
             >{l.folded ? '▸' : '▾'}</button>
           {:else}<span class="layers__fold" aria-hidden="true"></span>{/if}
-          <EyeToggle hidden={l.hidden} label={l.label} onclick={() => onhide(l.id, !l.hidden)} />
+          <EyeToggle hidden={l.hidden} inherited={l.inherited} label={l.label} onclick={() => onhide(l.id, !l.hidden)} />
           <button
             type="button"
             class="layers__label"

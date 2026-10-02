@@ -74,6 +74,10 @@
 .eye:hover {
   color: var(--ink);
 }
+.eye--inherited {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .eye.is-off {
   color: var(--ink);
 }

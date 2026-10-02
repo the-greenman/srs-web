@@ -30,6 +30,7 @@
   } from "./essay-document.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import {
+    hiddenByAncestor,
     indentDepth,
     insertPlan,
     movePlan,
@@ -118,6 +119,7 @@
   }
 
   const hidden = $derived(new Set(model?.hidden ?? []));
+  const inherited = $derived(hiddenByAncestor(model?.entries ?? [], hidden));
   const items = $derived((model?.entries ?? []).map((e) => ({ id: e.instanceId, depth: e.depth ?? 0 })));
   const parents = $derived(parentIds(model?.entries ?? []));
   const label = (id: string) => model?.paragraphs[id]?.title || model?.paragraphs[id]?.body.slice(0, 40) || "untitled";
@@ -127,6 +129,7 @@
       depth: e.depth ?? 0,
       label: label(e.instanceId),
       hidden: hidden.has(e.instanceId),
+      inherited: inherited.has(e.instanceId),
       hasChildren: parents.has(e.instanceId),
       folded: folded.has(e.instanceId),
     })),
@@ -250,6 +253,7 @@
                 title={p.title}
                 body={p.body}
                 hidden={hidden.has(p.id)}
+                inherited={inherited.has(p.id)}
                 {handle}
                 onbody={(v) => run(() => setBody(repo, p.id, v))}
                 ontitle={(v) => run(() => setTitle(repo, p.id, v))}
