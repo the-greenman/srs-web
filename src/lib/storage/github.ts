@@ -865,6 +865,21 @@ export class GitHubProvider implements StorageProvider {
     return entries;
   }
 
+  private profileCache: { login: string; name?: string } | null = null;
+
+  /** The signed-in user (`GET /user`), cached; null when not signed in or the call fails. Never prompts. */
+  async profile(): Promise<{ login: string; name?: string } | null> {
+    if (!this.accessToken) return null;
+    if (this.profileCache) return this.profileCache;
+    try {
+      const u = await this.api<{ login: string; name?: string | null }>("/user");
+      this.profileCache = { login: u.login, ...(u.name ? { name: u.name } : {}) };
+      return this.profileCache;
+    } catch {
+      return null;
+    }
+  }
+
   private requireToken(): string {
     if (!this.accessToken) throw new StorageAuthenticationError("GitHub is not signed in.");
     return this.accessToken;

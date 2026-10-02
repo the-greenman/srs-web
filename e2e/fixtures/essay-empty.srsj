@@ -3,19 +3,19 @@
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
     "container": {
-      "containerId": "b7515c30-549a-4058-aff6-ef88f96b338a",
-      "identityInstanceId": "5d14c892-42b8-46bd-808c-7520689c8bbf",
+      "containerId": "3bd85d84-d85d-48fb-bbb3-69a67f9c3f79",
+      "identityInstanceId": "c16424f5-a3f9-410f-93db-0576868ef10d",
       "memberInstanceIds": [
         {
-          "instanceId": "5d14c892-42b8-46bd-808c-7520689c8bbf"
+          "instanceId": "c16424f5-a3f9-410f-93db-0576868ef10d"
         }
       ],
       "title": "Essay fixture"
     },
-    "createdAt": "2026-10-02T08:47:54.709197651+00:00",
-    "dataModelRevision": 8,
+    "createdAt": "2026-10-02T21:54:14.547559617+00:00",
+    "dataModelRevision": 9,
     "namespace": "com.mudemocracy.essay",
-    "repositoryId": "b7515c30-549a-4058-aff6-ef88f96b338a",
+    "repositoryId": "3bd85d84-d85d-48fb-bbb3-69a67f9c3f79",
     "srsVersion": "2.0-draft",
     "title": "Essay fixture"
   },
@@ -65,6 +65,22 @@
       },
       "id": "8a16f0d3-0dc8-425a-9616-77dc12c26437",
       "name": "body",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    "package/fields/commenttext-581e484f.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Plain markdown text of one comment. Agents and humans may write comments. A comment is feedback on exactly one paragraph (linked by comments-on) and never edits it. Authorship is the engine-stamped createdBy (RFC-046); never write an author here."
+      },
+      "createdAt": "2026-10-02T21:40:51.924525593+00:00",
+      "description": "The text of a comment on one paragraph.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "581e484f-5bc7-4651-a408-0ab53d2711d5",
+      "name": "comment_text",
       "namespace": "com.mudemocracy.essay",
       "version": 1
     },
@@ -216,6 +232,7 @@
         "fields/hiddeninstanceids-7cbb105e.json",
         "fields/draftcontainerid-3cd8975b.json",
         "fields/essay-0a74cd82.json",
+        "fields/commenttext-581e484f.json",
         "fields/statement-3b000001.json",
         "fields/title-3b000002.json"
       ],
@@ -225,6 +242,7 @@
       "namespace": "com.mudemocracy.essay",
       "protocols": [],
       "relationTypes": [
+        "relation-types/commudemocracyessaycomments-on-607009b0.json",
         "relation-types/contains-3a1b2c4d.json",
         "relation-types/depends-on-7f8e9d0c.json",
         "relation-types/supersedes-c2d3e4f5.json",
@@ -240,13 +258,27 @@
         "types/essay-0021ef06.json",
         "types/paragraph-ec61d93d.json",
         "types/document-state-9785968f.json",
+        "types/comment-7482e41b.json",
         "types/purpose-3c000001.json"
       ],
-      "version": "1.0.0",
+      "version": "1.1.0",
       "views": [
         "views/paragraph-view-16210dc2.json"
       ],
       "vocabularies": []
+    },
+    "package/relation-types/commudemocracyessaycomments-on-607009b0.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "Comment comments on Paragraph",
+      "category": "association",
+      "createdAt": "2026-10-02T21:39:43.187934005+00:00",
+      "description": "Comment comments on Paragraph (comment → paragraph). Essay-local for now; expected to become a core \"agent commentary on human content\" mechanism when a second consumer appears (owner, 2026-10-02).",
+      "id": "607009b0-310c-4eda-aad2-d079884ff85c",
+      "irreflexive": true,
+      "key": "com.mudemocracy.essay/comments-on",
+      "label": "comments on",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
     },
     "package/relation-types/contains-3a1b2c4d.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
@@ -341,6 +373,26 @@
       "key": "supersedes",
       "label": "Supersedes",
       "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/types/comment-7482e41b.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "A comment is feedback on exactly one paragraph, linked to it by a com.mudemocracy.essay/comments-on relation (comment to paragraph). It never edits the paragraph. Authorship is the engine-stamped createdBy (RFC-046), never a field; the thread order is createdAt."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "Feedback on exactly one paragraph of an essay.",
+      "fields": [
+        {
+          "displayLabel": "Body",
+          "fieldId": "581e484f-5bc7-4651-a408-0ab53d2711d5",
+          "order": 0,
+          "required": true
+        }
+      ],
+      "id": "7482e41b-7d3d-4069-b165-ee509dacce22",
+      "name": "comment",
+      "namespace": "com.mudemocracy.essay",
       "version": 1
     },
     "package/types/document-state-9785968f.json": {
@@ -490,19 +542,19 @@
       "namespace": "com.mudemocracy.essay",
       "version": 1
     },
-    "records/tier-2/purpose-5d14c892.json": {
+    "records/tier-2/purpose-c16424f5.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-02T08:47:54.590434349+00:00",
+      "createdAt": "2026-10-02T21:54:14.429184748+00:00",
       "fieldValues": {
         "statement": "",
         "title": "Essay fixture"
       },
-      "instanceId": "5d14c892-42b8-46bd-808c-7520689c8bbf",
+      "instanceId": "c16424f5-a3f9-410f-93db-0576868ef10d",
       "typeId": "3c000001-0000-4000-a000-000000000001",
       "typeName": "purpose",
       "typeNamespace": "com.semanticops.core",
       "typeVersion": 1,
-      "updatedAt": "2026-10-02T08:47:54.590434349+00:00"
+      "updatedAt": "2026-10-02T21:54:14.429184748+00:00"
     }
   }
 }

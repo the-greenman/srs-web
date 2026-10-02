@@ -1,0 +1,53 @@
+/* ============================================================================
+   component: comments (.comments) — per-paragraph comment thread + reply box
+   Flat sequence, oldest first. Author name + kind badge (human / ai) in mono.
+   Story: https://github.com/the-greenman/muDemocracy.org/issues/227
+   ========================================================================== */
+.comments {
+  margin: 0 0 var(--space-sm) var(--space-md);
+  padding-left: var(--space-xs);
+  border-left: 1px solid var(--color-line);
+}
+.comments__item {
+  padding: 4px 0;
+}
+.comments__meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+}
+.comments__author {
+  font-weight: 600;
+}
+.comments__kind {
+  padding: 0 4px;
+  border: 1px solid var(--color-line);
+  text-transform: uppercase;
+}
+.comments__text {
+  margin: 2px 0 0;
+  font-size: var(--size-sm);
+  white-space: pre-wrap;
+}
+.comments__reply {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  align-items: flex-end;
+  padding-top: 4px;
+}
+.comments__input,
+.comments__name {
+  font: inherit;
+  font-size: var(--size-sm);
+  padding: 4px 8px;
+  border: 1px solid var(--color-line);
+  background: transparent;
+  color: inherit;
+}
+.comments__input {
+  flex: 1;
+  min-width: 12rem;
+}

@@ -12,11 +12,14 @@
   import Block from "$lib/components/Block.svelte";
   import BlockStack from "$lib/components/BlockStack.svelte";
   import type { DropTarget } from "$lib/components/BlockStack.svelte";
+  import CommentThread from "$lib/components/CommentThread.svelte";
   import DraftTray from "$lib/components/DraftTray.svelte";
   import LayersPanel from "$lib/components/LayersPanel.svelte";
   import type { DragPayload, KeyMove } from "$lib/components/dnd.js";
   import Button from "$lib/components/Button.svelte";
+  import { applyActor, currentActor, saveLocalName } from "$lib/actor.js";
   import {
+    addComment,
     addParagraph,
     listEssays,
     loadEssay,
@@ -67,6 +70,8 @@
   let essayId = $state<string | null>(null);
   let model = $state<EssayModel | null>(null);
   let error = $state<string | null>(null);
+  /** Whether UI writes are attributed (login or saved name); refreshed on every reload. */
+  let hasActor = $state(false);
 
   const foldKey = (id: string) => `srs-web.essay-fold.${id}`;
   let folded = $state<Set<string>>(new Set());
@@ -91,6 +96,7 @@
         if (essayId) loadFolded(essayId);
       }
       model = essayId ? loadEssay(repo, essayId) : null;
+      hasActor = currentActor() !== null;
       error = null;
     } catch (e) {
       error = msg(e);
@@ -144,6 +150,15 @@
   const draftItems = $derived(
     (model?.draftEntries ?? []).map((e) => ({ id: e.instanceId, label: label(e.instanceId) })),
   );
+
+  function comment(paragraphId: string, text: string, name?: string) {
+    if (name) {
+      if (!saveLocalName(name)) return void (error = "Could not remember your name in this browser.");
+      applyActor(repo);
+      hasActor = true;
+    }
+    void run(() => addComment(repo, paragraphId, text));
+  }
 
   const newParagraphAfter = (id: string): string =>
     `body:${addParagraph(repo, model!, { id, zone: "after" })}`;
@@ -252,6 +267,7 @@
                   ? () => onDrop("draft", { id: p.id, from: "essay" }, { id: null, zone: "after" })
                   : undefined}
               />
+              <CommentThread comments={model!.comments[p.id] ?? []} needsName={!hasActor} onadd={(t, n) => comment(p.id, t, n)} />
             {/if}
           {/snippet}
         </BlockStack>

@@ -90,6 +90,8 @@ export interface StorageProvider {
   readonly label: string;
   readonly configured: boolean;
   authenticate(): Promise<void>;
+  /** Signed-in user, when the provider knows one (never prompts). */
+  profile?(): Promise<{ login: string; name?: string } | null>;
   select?(): Promise<DocumentHandle>;
   list?(path?: string): Promise<StorageEntry[]>;
   open(entry: StorageEntry): Promise<DocumentHandle>;

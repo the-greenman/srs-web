@@ -25,10 +25,11 @@
     observeWrites,
     exportTree,
     createGovernanceDocument,
-    rfc043MigrationNeeded,
+    neededMigrationIds,
+    RFC046_MIGRATION_ID,
     applyMigration,
-    RFC043_MIGRATION_ID,
   } from "$lib/srs-client.js";
+  import { agentActorFromRequest, applyActor, currentActor, providerActor, setSignedInActor } from "$lib/actor.js";
   import type { AgentWriteGuard, McpSession, SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
@@ -118,12 +119,14 @@
    * the migrated working copy is unsaved until Save) or immediately when no
    * migration is needed.
    */
-  let pendingMigration = $state<{ repo: SrsRepository; name: string; finish: (dirty: boolean) => void } | null>(null);
+  let pendingMigration = $state<{ repo: SrsRepository; name: string; ids: string[]; finish: (dirty: boolean) => void } | null>(null);
   let migrationError = $state<string | null>(null);
 
   function gateOnMigration(loaded: SrsRepository, name: string, finish: (dirty: boolean) => void): void {
-    if (rfc043MigrationNeeded(loaded)) {
-      pendingMigration = { repo: loaded, name, finish };
+    // rfc043 (7 -> 8) is required; rfc046 (8 -> 9) only when a session actor will write (RFC-046 [R11]).
+    const ids = neededMigrationIds(loaded, currentActor() !== null);
+    if (ids.length) {
+      pendingMigration = { repo: loaded, name, ids, finish };
       repo = null; // not opened (no MCP session etc.) until migrated
       migrationError = null;
       appState = "migrate";
@@ -136,7 +139,10 @@
     const pending = pendingMigration;
     if (!pending) return;
     try {
-      applyMigration(pending.repo, RFC043_MIGRATION_ID);
+      // Each id is re-checked after the previous one (rfc046 requires rfc043 first).
+      for (const id of pending.ids) {
+        if (neededMigrationIds(pending.repo, true).includes(id)) applyMigration(pending.repo, id);
+      }
     } catch (e: unknown) {
       // All-or-nothing in the engine: nothing was written. Keep the prompt up.
       migrationError = `Migration failed: ${e instanceof Error ? e.message : String(e)}`;
@@ -153,9 +159,21 @@
     appState = "idle";
   }
 
+  /** GitHub login -> `github:<login>` actor (RFC-046); no sign-in leaves the local/none fallback. */
+  async function resolveSignedInActor(forRepo: SrsRepository): Promise<void> {
+    const me = await storageProviders.github?.profile?.();
+    if (!me) return;
+    setSignedInActor(providerActor("github", me.login, me.name));
+    if (repo === forRepo) applyActor(forRepo);
+  }
+
   function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
     // Every load path passes through here: from now on each engine write reports itself.
-    if (repo) repo = observeWrites(repo, syncDocument);
+    if (repo) {
+      repo = observeWrites(repo, syncDocument);
+      applyActor(repo);
+      void resolveSignedInActor(repo);
+    }
     workingCopy.cancel();
     workingCopySaved = true;
     const revision = documentMutations.beginDocument(repo?.write_epoch() ?? 0, { dirty });
@@ -259,13 +277,24 @@
     }
   }
 
+  /** Stamp the agent from its `initialize` clientInfo (host-supplied, RFC-046); skipped below revision 9, where an actor would refuse writes. */
+  function withAgentActor(session: McpSession, forRepo: SrsRepository) {
+    return {
+      handle(text: string) {
+        const actor = agentActorFromRequest(text);
+        if (actor && !neededMigrationIds(forRepo, true).includes(RFC046_MIGRATION_ID)) session.set_actor(JSON.stringify(actor));
+        return session.handle(text);
+      },
+    };
+  }
+
   $effect(() => {
     const current = repo;
     if (!mcpHost) return;
     untrack(() => {
       mcpSession = current ? current.open_mcp_session() : null;
       if (mcpSession) {
-        if (applyGuard()) void mcpHost.attach(mcpSession);
+        if (applyGuard()) void mcpHost.attach(withAgentActor(mcpSession, current as SrsRepository));
       } else mcpHost.detach();
     });
   });
@@ -620,9 +649,8 @@
   <div class="splash" data-testid="migration-prompt">
     <h1 class="splash__title">Update needed</h1>
     <p class="splash__sub">
-      <strong>{pendingMigration.name}</strong> uses an older SRS data model (revision 7) and cannot be
-      opened as-is. Migrating rewrites container membership in the working copy
-      (<code>{RFC043_MIGRATION_ID}</code>). Nothing is saved until you press Save.
+      <strong>{pendingMigration.name}</strong> uses an older SRS data model and cannot be
+      opened as-is. Migrating updates the working copy (<code>{pendingMigration.ids.join(", ")}</code>). Nothing is saved until you press Save.
     </p>
     {#if migrationError}<p class="splash__error" role="alert" data-testid="migration-error">{migrationError}</p>{/if}
     <div class="restore-banner__actions">
