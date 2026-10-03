@@ -28,6 +28,7 @@
      Reference these in components, not the raw scale, where intent matters. */
   --color-bg: var(--paper);
   --color-surface: var(--paper);
+  --color-page: #fff; /* the white page of the essay editor (srs-web#363); muDemocracy tokens need the same */
   --color-text: var(--ink);
   --color-muted: var(--grey-3);
   --color-line: var(--grey-2);

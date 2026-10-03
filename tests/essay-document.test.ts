@@ -38,6 +38,7 @@ import {
   addParagraph,
   loadEssay,
   moveEntry,
+  setEssayTitle,
   setHidden,
   shiftEntry,
   transfer,
@@ -180,5 +181,13 @@ describe("essay-document", () => {
     });
     setHidden({} as never, model, "p2", false);
     expect(m.updateRecord.mock.calls[1][2].fieldValues.hidden_instance_ids).toEqual([]);
+  });
+
+  it("setEssayTitle patches only the essay's title field", () => {
+    m.getRecord.mockReturnValue(rec("E", ESSAY_TYPE_ID, { title: "Old", other: "kept" }));
+    setEssayTitle({} as never, "E", "New");
+    expect(m.updateRecord).toHaveBeenCalledWith({}, "E", {
+      fieldValues: { title: "New", other: "kept" },
+    });
   });
 });

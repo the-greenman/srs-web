@@ -21,6 +21,7 @@
   import LayersPanel from "$lib/components/LayersPanel.svelte";
   import type { DragPayload, KeyMove } from "$lib/components/dnd.js";
   import Button from "$lib/components/Button.svelte";
+  import InlineText from "$lib/components/InlineText.svelte";
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
     addComment,
@@ -30,6 +31,7 @@
     moveEntry,
     newEssay,
     setBody,
+    setEssayTitle,
     shiftEntry,
     setHidden,
     setTitle,
@@ -257,7 +259,12 @@
   {:else}
     <div class="essay-shell__grid">
       <main class="essay-shell__page" aria-label={model.title}>
-        <h1 class="essay-shell__title">{model.title}</h1>
+        <InlineText
+          as="h1"
+          value={model.title}
+          label="Essay title"
+          oncommit={(v) => v.trim() && run(() => setEssayTitle(repo, model!.essayId, v.trim()))}
+        />
         {#if items.length === 0}
           <p class="essay-shell__hint">No paragraphs yet.</p>
           <Button variant="mono" data-testid="first-paragraph" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add first paragraph</Button>

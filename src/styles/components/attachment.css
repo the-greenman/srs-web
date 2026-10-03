@@ -76,7 +76,7 @@
   cursor: pointer;
 }
 .block__glyphs {
-  grid-column: 2;
+  margin-left: auto; /* trails the title row */
   display: flex;
   flex-wrap: wrap;
   gap: 4px;

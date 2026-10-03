@@ -19,6 +19,7 @@ async function open(page: Page) {
   await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
 }
 
+const titleOf = (page: Page, n: number) => page.locator(".essay-shell__page .block__title").nth(n);
 const bodies = (page: Page) => page.locator(".essay-shell__page .block__body");
 const layerLabels = (page: Page) => page.locator(".layers .layers__label");
 const depthOf = (page: Page, text: string) =>
@@ -231,7 +232,7 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
   });
   expect(upd.result.isError, JSON.stringify(upd)).not.toBe(true);
 
-  await expect(page.locator(".essay-shell__page .block__handle").nth(2)).toHaveText("Closing");
+  await expect(page.locator(".essay-shell__page .block__title").nth(2)).toHaveText("Closing");
   await expect(page.getByTestId("document-dirty-status")).toBeVisible();
 
   // An agent attaches a note: a glyph appears without reload; hover previews, click pins it (srs-web#329).
@@ -299,4 +300,36 @@ test("New essay creates the record, container, draft area and state", async ({ p
     .click();
   await expect(bodies(page)).toHaveCount(1);
   await expect(page.locator(".draft-tray__row")).toHaveCount(1);
+});
+
+test("the page is one white scroll surface; essay and paragraph titles edit inline (srs-web#363)", async ({ page }) => {
+  await open(page);
+  await page.setViewportSize({ width: 1200, height: 360 });
+  // Only the window scrolls: the page grows past the viewport and no block scrolls inside itself.
+  expect(await page.evaluate(() => document.documentElement.scrollHeight > innerHeight)).toBe(true);
+  expect(
+    await page.locator(".block__body").evaluateAll((els) => els.every((e) => e.scrollHeight <= e.clientHeight + 1)),
+  ).toBe(true);
+  await expect(page.locator(".essay-shell__page")).toHaveCSS("background-color", "rgb(255, 255, 255)");
+
+  // essay title: click, type, Enter
+  await page.locator("h1 .inline-text__view").click();
+  await page.keyboard.press("Control+A");
+  await page.keyboard.type("Renamed essay");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "Renamed essay" })).toBeVisible();
+  await expect(page.getByTestId("document-dirty-status")).toBeVisible();
+
+  // paragraph title: F2 on the handle renames; Esc cancels
+  await page.getByRole("button", { name: /^Move Claim\./ }).focus();
+  await page.keyboard.press("F2");
+  await page.keyboard.press("Control+A");
+  await page.keyboard.type("Thesis");
+  await page.keyboard.press("Enter");
+  await expect(titleOf(page, 1)).toHaveText("Thesis");
+  await page.getByRole("button", { name: /^Move Thesis\./ }).focus();
+  await page.keyboard.press("F2");
+  await page.keyboard.type("zzz");
+  await page.keyboard.press("Escape");
+  await expect(titleOf(page, 1)).toHaveText("Thesis");
 });

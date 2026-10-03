@@ -1,0 +1,41 @@
+/* ============================================================================
+   component: inline-text (.inline-text) — click-to-edit text (InlineText)
+   Looks like plain text until hovered or focused; the field inherits the
+   surrounding type so the swap does not reflow. Monochrome.
+   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
+   ========================================================================== */
+.inline-text {
+  display: block;
+  margin: 0;
+  font: inherit;
+}
+.inline-text__view,
+.inline-text__input {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+}
+.inline-text__view {
+  cursor: text;
+}
+.inline-text__view:hover,
+.inline-text__view:focus-visible {
+  border-bottom-color: var(--color-line);
+  outline: none;
+}
+.inline-text__input {
+  border-bottom-color: var(--black);
+  outline: none;
+}
+.inline-text.is-empty .inline-text__view {
+  color: var(--color-muted);
+}

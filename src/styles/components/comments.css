@@ -48,6 +48,7 @@
   color: inherit;
 }
 .comments__input {
+  field-sizing: content; /* grows with the text; rows is the fallback */
   flex: 1;
   min-width: 12rem;
 }

@@ -50,6 +50,7 @@
 @import url("./components/layers.css") layer(components);
 @import url("./components/draft-tray.css") layer(components);
 @import url("./components/essay-shell.css") layer(components);
+@import url("./components/inline-text.css") layer(components);
 @import url("./components/comments.css") layer(components);
 @import url("./components/attachment.css") layer(components);
 

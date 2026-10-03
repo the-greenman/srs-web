@@ -21,6 +21,7 @@ const doc = vi.hoisted(() => ({
   listEssays: vi.fn(() => [{ id: "e", title: "Essay" }]),
   loadEssay: vi.fn(),
   setBody: vi.fn(),
+  setEssayTitle: vi.fn(),
 }));
 vi.mock("../src/lib/essay/essay-document.js", () => ({
   ...doc,
@@ -54,4 +55,22 @@ it("a typing commit reloads the essay once, via documentRevision (essay typing f
   // Every reload reads the whole essay from the engine; a large repository makes each one
   // costly, so a commit must not reload twice.
   expect(doc.loadEssay).toHaveBeenCalledOnce();
+});
+
+it("the essay title edits inline: commit writes through setEssayTitle, a new revision re-renders", async () => {
+  doc.loadEssay.mockReturnValue(model);
+  const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
+  const props = { repo: {} as never, repoName: "r", onExport: () => {}, documentRevision: 1 };
+  const { container, rerender } = render(EssayShell, props);
+  await tick();
+  await fireEvent.click(container.querySelector<HTMLElement>("h1 .inline-text__view")!);
+  const input = container.querySelector<HTMLInputElement>("h1 input")!;
+  input.value = "Renamed";
+  await fireEvent.keyDown(input, { key: "Enter" });
+  expect(doc.setEssayTitle).toHaveBeenCalledWith(props.repo, "e", "Renamed");
+
+  doc.loadEssay.mockReturnValue({ ...model, title: "Renamed" });
+  await rerender({ ...props, documentRevision: 2 });
+  await tick();
+  expect(container.querySelector("h1")?.textContent).toBe("Renamed");
 });

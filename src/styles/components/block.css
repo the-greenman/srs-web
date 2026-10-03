@@ -1,9 +1,9 @@
 /* ============================================================================
    component: block (.block) + block-stack (.block-stack)
    ----------------------------------------------------------------------------
-   One paragraph of an essay: a quiet gutter (small mono title = drag handle,
-   eye, actions) beside a plain-text body that reads like a normal document.
-   Entries are separated by a hairline. Nesting is layout only: --depth indents.
+   One paragraph of an essay: a narrow gutter (⋮⋮ drag handle, eye, actions on
+   hover/focus) beside a small mono title and a plain-text body that reads like a normal document.
+   Nesting is layout only: --depth indents.
    Monochrome; drop position is a ruled line / dashed outline, never a colour.
    Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
    ========================================================================== */
@@ -38,33 +38,32 @@
 
 .block {
   display: grid;
-  grid-template-columns: 9rem 1fr;
-  gap: var(--space-sm);
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: var(--space-xs);
   padding: var(--space-xs) 0;
-  border-bottom: 1px solid var(--color-line-soft);
+  border-radius: 2px;
+}
+/* One flow of text: no rule between paragraphs, only a faint outline under the pointer / focus. */
+.block:hover,
+.block:focus-within {
+  outline: 1px solid var(--color-line-soft);
+  outline-offset: 2px;
 }
 .block__gutter {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 4px;
-  text-align: right;
 }
 .block__handle,
 .block__action {
   font-family: var(--font-mono);
   font-size: var(--size-xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--color-muted);
   background: none;
   border: 0;
   padding: 2px 0;
   cursor: grab;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .block__action {
   cursor: pointer;
@@ -74,18 +73,58 @@
 .block__action:hover {
   color: var(--ink);
 }
-.block__handle.is-untitled {
-  opacity: 0.5;
+/* Opacity, not display: the tools stay in the tab order and appear on keyboard focus. */
+.block__tools {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
 }
-.block__title-input {
-  font: inherit;
+.block:hover .block__tools,
+.block:focus-within .block__tools {
+  opacity: 1;
+}
+@media (hover: none) {
+  .block__tools {
+    opacity: 1;
+  }
+}
+.block__main {
+  min-width: 0;
+}
+.block__head {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
   font-family: var(--font-mono);
   font-size: var(--size-xs);
-  width: 100%;
-  border: 0;
-  border-bottom: 1px solid var(--black);
-  background: transparent;
-  color: var(--ink);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.block__title {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+/* Untitled: no row, so paragraphs read as one flow; "Add title" floats in on hover / focus. */
+.block__head.is-collapsed {
+  height: 0;
+}
+.block__head.is-collapsed .block__title {
+  position: absolute;
+  top: -1.2em;
+  opacity: 0;
+}
+.block:hover .block__head.is-collapsed .block__title,
+.block:focus-within .block__head.is-collapsed .block__title {
+  opacity: 1;
+}
+.block__title .inline-text__view {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .block__body {
   min-height: 1.6em;
@@ -116,11 +155,6 @@
 }
 @media (max-width: 720px) {
   .block {
-    grid-template-columns: 1fr;
-  }
-  .block__gutter {
-    flex-direction: row;
-    align-items: center;
-    text-align: left;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
   }
 }
