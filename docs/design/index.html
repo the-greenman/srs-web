@@ -163,6 +163,15 @@
       </div>
     </div>
 
+    <h2>ActorChip and agent activity</h2>
+    <p class="t-muted">Specimens for <span class="t-mono">ActorChip</span> (srs-web#330) and <span class="t-mono">AgentFeed</span> (srs-web#372): name plus kind on a hue derived from the actor id; the agent row (McpConnection with its chip and last activity) and the write feed in the Agents panel. Status is the dot fill; kind is text, so nothing relies on colour.</p>
+    <p><span class="actor-chip" style="--actor-hue:140"><span class="actor-chip__name">alpha</span><span class="actor-chip__kind">ai</span></span> <span class="actor-chip" style="--actor-hue:230"><span class="actor-chip__name">Ada</span><span class="actor-chip__kind">human</span></span></p>
+    <div class="panel-rail" style="position:static;width:18rem"><details class="panel" open><summary class="panel__head"><span class="panel__title">Agents</span><span class="panel__aside">1/2</span></summary><div class="panel__body">
+      <section class="mcp-conn"><div class="mcp-conn__head"><span class="mcp-conn__dot mcp-conn__dot--online"></span><span>Connected</span><span class="actor-chip" style="--actor-hue:140"><span class="actor-chip__name">alpha</span><span class="actor-chip__kind">ai</span></span></div><p class="mcp-conn__note">titled ¶ Opening · 2 min ago</p></section>
+      <h3 class="agent-activity__head">Activity</h3>
+      <ul class="agent-activity"><li class="agent-activity__entry"><span class="actor-chip" style="--actor-hue:140"><span class="actor-chip__name">alpha</span><span class="actor-chip__kind">ai</span></span><button type="button" class="agent-activity__what">titled ¶ Opening · 2 min ago</button></li></ul>
+    </div></details></div>
+
     <h2>MCP connection</h2>
     <p class="t-muted">Specimen for <span class="t-mono">McpConnection</span> (srs-web#307): online state with copyable caller URL, rotation, and takeover.</p>
     <section class="mcp-conn" style="margin-top:var(--space-md)">

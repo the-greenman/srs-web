@@ -34,8 +34,8 @@ test("a human comment shows the human author", async ({ page }) => {
   await reply(page, 0, "Nice opening.", "Ada");
   const c = items(page).nth(0).getByTestId("comment");
   await expect(c).toHaveCount(1);
-  await expect(c.getByTestId("comment-author")).toHaveText("Ada");
-  await expect(c.getByTestId("comment-kind")).toHaveText("human");
+  await expect(c.getByTestId("actor-name")).toHaveText("Ada");
+  await expect(c.getByTestId("actor-kind")).toHaveText("human");
   await expect(c).toContainText("Nice opening.");
   // the name is remembered: the next reply no longer asks for it
   await expect(items(page).nth(0).getByLabel("Your name")).toHaveCount(0);
@@ -137,17 +137,17 @@ test("an MCP-created comment shows the agent author, live", async ({ page }) => 
   const both = items(page).nth(1).getByTestId("comment");
   await expect(both).toHaveCount(2);
   // the human reply keeps its author after the agent wrote (independent actors, srs-rust#1174)
-  await expect(both.nth(0).getByTestId("comment-author")).toHaveText("Ada");
-  await expect(both.nth(0).getByTestId("comment-kind")).toHaveText("human");
+  await expect(both.nth(0).getByTestId("actor-name")).toHaveText("Ada");
+  await expect(both.nth(0).getByTestId("actor-kind")).toHaveText("human");
   const c = both.nth(1);
   // name = the client's clientInfo.name (engine-filled); id = the host-minted relay id
-  await expect(c.getByTestId("comment-author")).toHaveText("agent-test");
+  await expect(c.getByTestId("actor-name")).toHaveText("agent-test");
   const hostId = await page.evaluate(
     () => JSON.parse(localStorage.getItem("srs-web.agent-connections") ?? "[]")[0]?.id
   );
   expect(hostId).toMatch(/^agent:[0-9a-f-]{36}$/);
   expect(JSON.stringify(rec)).toContain(hostId as string);
-  await expect(c.getByTestId("comment-kind")).toHaveText("ai");
+  await expect(c.getByTestId("actor-kind")).toHaveText("ai");
   await expect(c).toContainText("Consider rephrasing.");
 });
 

@@ -10,6 +10,9 @@
   import { onDestroy, tick, untrack } from "svelte";
   import type { Snippet } from "svelte";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
+  import AgentFeed from "$lib/components/AgentFeed.svelte";
+  import { ago, verb } from "$lib/agent-activity.js";
+  import type { AgentPanelCtx, AgentStatus } from "$lib/agent-activity.js";
   import PinnedPane from "$lib/components/PinnedPane.svelte";
   import ParagraphMargin from "$lib/components/ParagraphMargin.svelte";
   import Block from "$lib/components/Block.svelte";
@@ -57,6 +60,7 @@
     onOpenExplorer,
     onAgentWriteGuard,
     agentPanel,
+    agentStatus,
   }: {
     // Common EditorShellProps this shell does not use (kept so every shell takes one prop set).
     documentProvider?: string;
@@ -74,7 +78,9 @@
     onOpenAnother: () => void;
     onOpenExplorer?: () => void;
     onAgentWriteGuard?: (guard: AgentWriteGuard | null, replacing?: AgentWriteGuard) => void;
-    agentPanel?: Snippet;
+    agentPanel?: Snippet<[AgentPanelCtx?]>;
+    /** Connected count, per-agent status and the agent write feed (App; registry.ts). */
+    agentStatus?: AgentStatus;
   } = $props();
 
   let essays = $state<EssaySummary[]>([]);
@@ -210,6 +216,54 @@
     void run(() => addComment(repo, paragraphId, text));
   }
 
+  /** Focus a paragraph from the agent feed; leave zoom first when it is hidden by it. */
+  async function focusParagraph(id: string): Promise<void> {
+    if (zoomId && !items.some((i) => i.id === id)) zoomId = null;
+    await tick();
+    const el = document.querySelector<HTMLElement>(`[data-focus-key="body:${id}"]`);
+    el?.focus();
+    el?.scrollIntoView?.({ block: "center" });
+  }
+
+  /** One clock for every relative time in the Agents panel. */
+  let now = $state(Date.now());
+  const clock = setInterval(() => (now = Date.now()), 15000);
+  onDestroy(() => clearInterval(clock));
+  const paragraphLabel = (id: string) => (model?.paragraphs[id] ? label(id) : undefined);
+  const panelCtx: AgentPanelCtx = {
+    lastActivity(agentId) {
+      const w = agentStatus?.writes.find((x) => x.agentId === agentId);
+      if (!w) return "No activity yet";
+      const l = w.instanceId ? paragraphLabel(w.instanceId) : undefined;
+      return `${l === undefined ? verb(w) : `${verb(w)} ¶ ${l}`} · ${ago(w.at, now)}`;
+    },
+  };
+
+  // Live highlight (CSS only, agent-activity.css): paragraphs an agent just wrote flash once.
+  // Only writes newer than the last one handled, so a re-render or a mount never replays old ones.
+  let liveSeen = Date.now();
+  const liveTimers = new Set<ReturnType<typeof setTimeout>>();
+  onDestroy(() => liveTimers.forEach(clearTimeout));
+  $effect(() => {
+    const fresh = (agentStatus?.writes ?? []).filter((w) => w.at > liveSeen && w.instanceId);
+    if (!fresh.length) return;
+    liveSeen = Math.max(...fresh.map((w) => w.at));
+    // The paragraph re-renders on the revision bump that follows the write; flash after it.
+    const t = setTimeout(() => {
+      liveTimers.delete(t);
+      for (const w of fresh) {
+        const el = document.querySelector<HTMLElement>(`.block[data-block-id="${w.instanceId}"]`);
+        if (!el) continue;
+        el.classList.remove("is-live");
+        void el.offsetWidth; // restart the animation on a repeat write
+        el.classList.add("is-live");
+        const off = setTimeout(() => (liveTimers.delete(off), el.classList.remove("is-live")), 2600);
+        liveTimers.add(off);
+      }
+    }, 60);
+    liveTimers.add(t);
+  });
+
   const newParagraphAfter = (id: string): string =>
     `body:${addParagraph(repo, model!, { id, zone: "after" })}`;
 
@@ -298,7 +352,7 @@
     <div class="essay-shell__empty">
       <p>No essay in this repository yet.</p>
       <Button variant="primary" onclick={createEssay}>New essay</Button>
-      {#if agentPanel}<Panel title="Agents" persistKey="essay.agents">{@render agentPanel()}</Panel>{/if}
+      {#if agentPanel}{@render agents()}{/if}
     </div>
   {:else}
     <div class="essay-shell__grid">
@@ -377,10 +431,22 @@
           />
         </Panel>
         <PinnedPane items={pinned} onunpin={togglePin} />
-        {#if agentPanel}
-          <Panel title="Agents" persistKey="essay.agents">{@render agentPanel()}</Panel>
-        {/if}
+        {#if agentPanel}{@render agents()}{/if}
       </aside>
     </div>
   {/if}
 </div>
+
+{#snippet agents()}
+  <Panel title="Agents" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey="essay.agents">
+    {#if agentStatus}
+      <AgentFeed
+        {now}
+        status={agentStatus}
+        {paragraphLabel}
+        onselect={focusParagraph}
+      />
+    {/if}
+    {@render agentPanel?.(panelCtx)}
+  </Panel>
+{/snippet}

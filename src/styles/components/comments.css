@@ -88,3 +88,25 @@
 .essay-shell__zoombar {
   margin: 0 0 var(--space-sm);
 }
+
+/* ActorChip: name + kind on a hue derived from the actor id (--actor-hue). */
+.actor-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 0 6px;
+  border: 1px solid hsl(var(--actor-hue, 0) 45% 40%);
+  border-radius: 999px;
+  background: hsl(var(--actor-hue, 0) 60% 94%);
+  color: hsl(var(--actor-hue, 0) 45% 25%);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+}
+.actor-chip__name {
+  font-weight: 600;
+}
+.actor-chip__kind {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}

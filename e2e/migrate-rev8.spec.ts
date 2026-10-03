@@ -28,7 +28,7 @@ test("a rev-8 essay offers 8 -> 9, then takes an attributed human reply", async 
   await first.getByLabel("Reply").fill("After migration.");
   await first.getByRole("button", { name: "Comment", exact: true }).click();
   const c = first.getByTestId("comment");
-  await expect(c.getByTestId("comment-author")).toHaveText("Ada");
-  await expect(c.getByTestId("comment-kind")).toHaveText("human");
+  await expect(c.getByTestId("actor-name")).toHaveText("Ada");
+  await expect(c.getByTestId("actor-kind")).toHaveText("human");
   await expect(page.getByTestId("essay-error")).toHaveCount(0);
 });
