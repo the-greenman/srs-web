@@ -128,8 +128,12 @@
     padding: var(--space-xs) 0;
     gap: var(--space-xs);
   }
+  /* The page runs edge to edge; the stacked panels below it keep a side gutter. */
+  .essay-shell__grid > .panel-rail {
+    padding: 0 var(--space-sm);
+  }
   .essay-shell__page {
-    padding: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
     border-left: 0;
     border-right: 0;
   }
