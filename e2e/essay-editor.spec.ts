@@ -428,3 +428,16 @@ test("copy a document: paragraphs are shared and badged; make local copy forks o
   await expect(page.getByRole("heading", { name: "Untitled essay" })).toBeVisible();
   await expect(badges).toHaveCount(0);
 });
+
+test("generic view renders the essay Composition with the supplied container (srs-web#384)", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+  await page.locator('input[type="file"]#srsj-file').setInputFiles(ESSAY);
+  const shell = page.getByTestId("generic-srs-shell");
+  await expect(shell.frameLocator("iframe").getByText("First paragraph.")).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(shell.getByText("section:essay")).toHaveCount(0);
+});

@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   listContainers: vi.fn(() => [{ containerId: "container-1", title: "Foundation" }]),
   listDocumentViews: vi.fn(() => [{ id: "composition-1", namespace: "com.example", name: "reader", version: 1, description: "" }]),
   listPackages: vi.fn(() => [{ id: "gov", namespace: "com.mudemocracy.governance", name: "governance", version: "1", fieldCount: 0, typeCount: 0 }]),
+  documentViewsForContainer: vi.fn(() => []),
   listRelations: vi.fn(() => []),
   listTypes: vi.fn(() => [
     { id: "1fcad6a2-9f78-5e41-94ba-d82e88b822f3", namespace: "com.mudemocracy.governance", name: "decision", version: 1 },
@@ -29,6 +30,18 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../src/lib/srs-client.js", () => mocks);
 
 describe("GenericSrsShell", () => {
+  it("supplies the container whose root type matches the composition (srs-web#384)", async () => {
+    mocks.listDocumentViews.mockReturnValueOnce([
+      { id: "composition-1", namespace: "com.example", name: "reader", version: 1, description: "", rootTypeRefs: [{ typeId: "root-type", typeVersion: 1 }] },
+    ]);
+    mocks.resolveContainerView.mockReturnValueOnce({ containerId: "container-1", root: { instanceId: "r", record: { typeId: "root-type" } }, members: [], columns: [], excludeLifecycleStates: [], diagnostics: [] });
+    render(GenericSrsShell, {
+      props: { repo: {} as never, repoName: "Example repository", onExport: vi.fn(), onOpenAnother: vi.fn(), onOpenEditor: vi.fn() },
+    });
+    await screen.findByRole("button", { name: /reader/ });
+    expect(mocks.renderDocumentView).toHaveBeenCalledWith({}, "composition-1", "html", "container-1");
+  });
+
   it("opens the first composition as the repository's document entry point", async () => {
     render(GenericSrsShell, {
       props: {
@@ -41,7 +54,7 @@ describe("GenericSrsShell", () => {
     });
 
     expect(await screen.findByRole("button", { name: /reader/ })).toBeTruthy();
-    expect(mocks.renderDocumentView).toHaveBeenCalledWith({}, "composition-1", "html");
+    expect(mocks.renderDocumentView).toHaveBeenCalledWith({}, "composition-1", "html", null);
     expect(screen.getAllByRole("button", { name: "Governance" })).toHaveLength(2); // nav + phone bar (srs-web#381)
   });
 
@@ -134,7 +147,7 @@ describe("GenericSrsShell document revision refresh", () => {
     await rerender({ ...props, documentRevision: 1 });
 
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("second");
-    expect(mocks.renderDocumentView).toHaveBeenLastCalledWith({}, "composition-2", "html");
+    expect(mocks.renderDocumentView).toHaveBeenLastCalledWith({}, "composition-2", "html", null);
     mocks.listDocumentViews.mockReset();
   });
 });
