@@ -1,3 +1,4 @@
+import type { AgentPanelCtx, AgentStatus } from "$lib/agent-activity.js";
 import EssayShell from "$lib/essay/EssayShell.svelte";
 import { newEssay } from "$lib/essay/essay-document.js";
 import { ESSAY_TYPE_ID } from "$lib/essay/type-registry.js";
@@ -48,7 +49,13 @@ export interface EditorShellProps {
    * The agent (MCP) connections UI, built once by App. A shell that renders it (the essay rail's
    * Agents panel) owns its placement; App shows the floating dock only for shells that do not.
    */
-  agentPanel?: Snippet;
+  agentPanel?: Snippet<[AgentPanelCtx?]>;
+  /**
+   * Connected/total agents, per-agent status and the newest-first agent writes, computed once in
+   * App (agent-activity.ts). A shell that renders `agentPanel` shows this beside it (Panel `aside`,
+   * AgentFeed); `agentPanel` is rendered with an `AgentPanelCtx` (per-agent last activity); the write source is each agent's own MCP session, never inferred.
+   */
+  agentStatus?: AgentStatus;
 }
 
 export interface EditorDefinition {

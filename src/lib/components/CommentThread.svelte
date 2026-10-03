@@ -8,6 +8,7 @@
 -->
 <script lang="ts">
   import type { Actor } from '$lib/srs-client';
+  import ActorChip from './ActorChip.svelte';
 
   export interface ThreadComment {
     id: string;
@@ -42,8 +43,11 @@
   {#each comments as c (c.id)}
     <article class="comments__item" data-testid="comment">
       <header class="comments__meta">
-        <span class="comments__author" data-testid="comment-author">{c.author ? c.author.name || c.author.id : 'Unknown author'}</span>
-        {#if c.author}<span class="comments__kind" data-testid="comment-kind">{c.author.kind}</span>{/if}
+        {#if c.author}
+          <ActorChip actor={c.author} />
+        {:else}
+          <span class="comments__author" data-testid="comment-author">Unknown author</span>
+        {/if}
       </header>
       <p class="comments__text">{c.text}</p>
     </article>

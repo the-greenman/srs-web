@@ -1,0 +1,66 @@
+/* ============================================================================
+   component: agent activity (.agent-activity) — per-agent status rows + write feed in the
+   Agents panel, and the live highlight on paragraphs an agent just touched.
+   Monochrome-friendly: status is the dot fill; colour only comes from ActorChip.
+   Story: srs-web#372
+   ========================================================================== */
+.agent-activity {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-xs);
+  padding: 0;
+  list-style: none;
+  font-size: var(--size-xs);
+}
+.agent-activity__row,
+.agent-activity__entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+.agent-activity__what {
+  flex: 1 1 8rem;
+  min-width: 0;
+  color: var(--color-muted);
+}
+button.agent-activity__what {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+button.agent-activity__what:hover,
+button.agent-activity__what:focus-visible {
+  color: var(--ink);
+  text-decoration: underline;
+}
+.agent-activity__head {
+  margin: 0;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-muted);
+}
+
+/* Live highlight: the shell adds .is-live to a paragraph an agent touched a moment ago. */
+@keyframes agent-flash {
+  from {
+    background: var(--color-line-soft);
+  }
+  to {
+    background: transparent;
+  }
+}
+.block.is-live {
+  animation: agent-flash 2.5s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .block.is-live {
+    animation: none;
+    background: var(--color-line-soft);
+  }
+}

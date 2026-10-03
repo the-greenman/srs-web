@@ -6,6 +6,8 @@
   srs-web#307: https://github.com/the-greenman/srs-web/issues/307
 -->
 <script lang="ts">
+  import type { Actor } from '$lib/srs-client';
+  import ActorChip from './ActorChip.svelte';
   export type McpConnectionStatus = 'idle' | 'connecting' | 'online' | 'offline' | 'replaced' | 'rejected' | 'error';
 
   let {
@@ -14,6 +16,8 @@
     error = null,
     repositoryName = null,
     agentName = null,
+    actor = null,
+    lastActivity = null,
     onDisconnect,
     onRotate,
     onTakeover,
@@ -23,6 +27,10 @@
     error?: string | null;
     repositoryName?: string | null;
     agentName?: string | null;
+    /** The agent as an actor: shown as an ActorChip instead of the plain name. */
+    actor?: Actor | null;
+    /** The agent's latest write, e.g. "titled ¶ Opening · 2 min ago". */
+    lastActivity?: string | null;
     onDisconnect?: () => void;
     onRotate?: () => void;
     onTakeover?: () => void;
@@ -57,9 +65,10 @@
   <div class="mcp-conn__head">
     <span class="mcp-conn__dot mcp-conn__dot--{status}" aria-hidden="true"></span>
     <span class="mcp-conn__status" data-testid="mcp-status">{label[status]}</span>
-    {#if agentName}<strong data-testid="mcp-agent-name">{agentName}</strong>{/if}
+    {#if actor}<ActorChip {actor} />{:else if agentName}<strong data-testid="mcp-agent-name">{agentName}</strong>{/if}
     {#if repositoryName}<span class="mcp-conn__repo">{repositoryName}</span>{/if}
   </div>
+  {#if lastActivity}<p class="mcp-conn__note" data-testid="agent-last">{lastActivity}</p>{/if}
   {#if error}<p class="mcp-conn__error" role="alert">{error}</p>{/if}
   {#if callerUrl}
     <div class="mcp-conn__url">

@@ -31,6 +31,7 @@
   } from "$lib/srs-client.js";
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
   import { connections, credsKey, type AgentConnection } from "$lib/agent-connections.js";
+  import { observeSession, pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
   import type { AgentWriteGuard, McpSession, SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
@@ -268,6 +269,17 @@
   type Agent = { conn: AgentConnection; state: HostState };
   let agents = $state<Agent[]>([]);
   let newAgentLabel = $state("");
+  /** Agent writes observed at each session boundary (agent-activity.ts), newest first. */
+  let agentWrites = $state<AgentWrite[]>([]);
+  /** Client-reported names (MCP initialize clientInfo); the engine's actor name is label, else this. */
+  let clientNames = $state<Record<string, string>>({});
+  const agentName = (conn: AgentConnection) => conn.label ?? clientNames[conn.id] ?? `Agent ${conn.id.slice(6, 12)}`;
+  const agentStatus = $derived<AgentStatus>({
+    connected: agents.filter((a) => a.state.status === "online").length,
+    total: agents.length,
+    agents: agents.map((a) => ({ id: a.conn.id, name: agentName(a.conn), status: a.state.status })),
+    writes: agentWrites,
+  });
   let seeded = false;
   const hosts = new Map<string, { host: RelayHost; session: McpSession | null }>();
   const setAgentState = (id: string, state: HostState) =>
@@ -337,7 +349,7 @@
     if (entry.session) {
       if (applyGuard(conn.id)) {
         applyAgentActor(entry.session, current as SrsRepository, conn);
-        void h.attach(entry.session);
+        void h.attach(observeSession(entry.session, conn.id, (w) => (agentWrites = pushWrite(agentWrites, w)), (n) => (clientNames = { ...clientNames, [conn.id]: n })));
       }
     } else h.detach();
   }
@@ -361,6 +373,7 @@
     const current = repo;
     if (!relayUrl) return;
     untrack(() => {
+      agentWrites = []; // a new repository: earlier writes name instances that are gone
       if (!seeded) {
         seeded = true;
         agents = connections.list().map((conn) => ({ conn, state: { status: "idle", callerUrl: null, error: null } }));
@@ -822,6 +835,7 @@
     }}
     workingCopySaved={workingCopySaved}
     agentPanel={relayUrl ? agentDock : undefined}
+    agentStatus={relayUrl ? agentStatus : undefined}
     onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAnother={() => {
       clearWorkingCopy();
@@ -836,7 +850,7 @@
   />
 {/if}
 
-{#snippet agentDock()}
+{#snippet agentDock(ctx?: AgentPanelCtx)}
 <div class="mcp-agents">
   {#each agents as a (a.conn.id)}
     <McpConnection
@@ -844,7 +858,9 @@
       callerUrl={a.state.callerUrl}
       error={a.state.error}
       repositoryName={repoName}
-      agentName={a.conn.label ?? `Agent ${a.conn.id.slice(6, 12)}`}
+      agentName={agentName(a.conn)}
+      actor={{ kind: "ai", id: a.conn.id, name: agentName(a.conn) }}
+      lastActivity={ctx?.lastActivity(a.conn.id)}
       onRotate={() => void hosts.get(a.conn.id)?.host.rotate()}
       onTakeover={() => void hosts.get(a.conn.id)?.host.takeover()}
       onDisconnect={() => disconnectAgent(a.conn.id)}

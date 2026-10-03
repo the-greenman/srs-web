@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { fireEvent, render } from "@testing-library/svelte";
-import { tick } from "svelte";
+import { createRawSnippet, tick } from "svelte";
 import { expect, it, vi } from "vitest";
 import type { EssayModel } from "../src/lib/essay/essay-document.js";
 
@@ -152,4 +152,41 @@ it("a relation indicator focuses the other paragraph; the variant toggle is reme
   expect(container.querySelector(".margin--expanded")).toBeNull();
   await fireEvent.click(getByTestId("margin-variant"));
   expect(container.querySelector(".margin--expanded")).not.toBeNull();
+});
+
+it("the Agents panel shows connected/total, and a feed click leaves zoom and focuses that paragraph (srs-web#372)", async () => {
+  const two = {
+    ...model,
+    entries: [
+      { instanceId: "p", depth: 0, hasChildren: false },
+      { instanceId: "q", depth: 0, hasChildren: false },
+    ] as EssayModel["entries"],
+    paragraphs: { p: { id: "p", title: "One", body: "a" }, q: { id: "q", title: "Two", body: "b" } },
+  };
+  doc.loadEssay.mockReturnValue(two);
+  const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
+  const agentStatus = {
+    connected: 1,
+    total: 2,
+    agents: [{ id: "agent:a", name: "alpha", status: "online" }],
+    writes: [{ seq: 1, agentId: "agent:a", tool: "record_update", instanceId: "q", fields: ["body"], at: 1 }],
+  };
+  const { container, getByTestId, getByText } = render(EssayShell, {
+    repo: {} as never,
+    repoName: "r",
+    onExport: () => {},
+    agentPanel: createRawSnippet((ctx: () => { lastActivity(id: string): string } | undefined) => ({
+      render: () => `<span>controls ${ctx()?.lastActivity("agent:a")}</span>`,
+    })),
+    agentStatus,
+  });
+  await tick();
+  expect(getByText("1/2")).toBeTruthy();
+  // zoom to p; q is hidden by the zoom
+  await fireEvent.click(container.querySelector<HTMLElement>('[aria-label="Zoom to One"]') as HTMLElement);
+  expect(container.querySelector('[data-focus-key="body:q"]')).toBeNull();
+  await fireEvent.click(getByTestId("agent-feed-focus"));
+  await tick();
+  expect(getByText(/controls edited ¶ Two · /)).toBeTruthy();
+  expect(container.querySelector('[data-focus-key="body:q"]')).not.toBeNull();
 });
