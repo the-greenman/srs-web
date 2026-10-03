@@ -1,6 +1,6 @@
 /* ============================================================================
    component: essay-shell (.essay-shell) — page frame of the essay editor
-   Writing column + a side rail (layers, draft, agents) as a .panel-rail. Stacks on narrow screens.
+   Writing column (a white page) + a side rail (layers, draft, agents) as a .panel-rail. Stacks on narrow screens.
    Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
    ========================================================================== */
 .essay-shell {
@@ -45,7 +45,17 @@
   margin: 0 auto;
   padding: var(--space-md) var(--space-sm);
 }
-.essay-shell__title {
+.essay-shell__page {
+  min-width: 0;
+  max-width: 46rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-md) var(--space-lg);
+  background: var(--color-page);
+  border: var(--rule-soft);
+  box-shadow: 0 1px 6px rgba(26, 26, 26, 0.08);
+}
+.essay-shell__page > .inline-text {
   font-size: var(--size-lg);
   font-weight: 500;
   margin: 0 0 var(--space-sm);
@@ -61,5 +71,10 @@
 @media (max-width: 960px) {
   .essay-shell__grid {
     grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 720px) {
+  .essay-shell__page {
+    padding: var(--space-sm);
   }
 }

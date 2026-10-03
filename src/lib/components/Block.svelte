@@ -1,15 +1,17 @@
 <!--
-  Block — one paragraph: small title in the gutter (the drag handle) + a plain-text body
+  Block — one paragraph: a narrow gutter (⋮⋮ drag handle; eye + move-to-draft on hover/focus),
+  a small mono title above the body (InlineText) and a plain-text body
   (`contenteditable="plaintext-only"`, no rich-text dependency). Hidden = collapsed in place.
   Presentation + events only; the shell commits through the engine.
     Ctrl/Cmd+Enter  new block after this one     Alt+Arrows  move / change level
-    Tab at start    indent (Shift+Tab outdent)   F2 / double-click title  rename
+    Tab at start    indent (Shift+Tab outdent)   F2 on the handle / click title  rename
   Wraps .block (src/styles/components/block.css).
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
 -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import EyeToggle from './EyeToggle.svelte';
+  import InlineText from './InlineText.svelte';
   import { keyMove } from './dnd';
   import type { KeyMove } from './dnd';
 
@@ -50,7 +52,6 @@
 
   let el = $state<HTMLElement>();
   let editingTitle = $state(false);
-  let titleDraft = $state('');
   let timer: ReturnType<typeof setTimeout> | undefined;
   let committed = '';
 
@@ -105,74 +106,57 @@
     if (m) {
       e.preventDefault();
       applyMove(m);
-    } else if (e.key === 'F2') startTitle();
+    } else if (e.key === 'F2') editingTitle = true;
   }
 
-  function startTitle() {
-    titleDraft = title;
-    editingTitle = true;
-  }
-  function endTitle(save: boolean) {
-    if (!editingTitle) return;
-    editingTitle = false;
-    if (save && titleDraft !== title) ontitle(titleDraft);
-  }
   const shortLabel = $derived(title || 'untitled paragraph');
 </script>
 
 <article class="block" class:is-off={hidden || inherited} data-block-id={id}>
   <div class="block__gutter">
-    {#if editingTitle}
-      <!-- svelte-ignore a11y_autofocus -->
-      <input
-        class="block__title-input"
-        aria-label="Paragraph title"
-        autofocus
-        bind:value={titleDraft}
-        onblur={() => endTitle(true)}
-        onkeydown={(e) => {
-          if (e.key === 'Enter') endTitle(true);
-          if (e.key === 'Escape') endTitle(false);
-        }}
-      />
+    <button
+      type="button"
+      class="block__handle"
+      aria-roledescription="drag handle"
+      aria-label={`Move ${shortLabel}. Alt plus arrow keys reorder and change level; F2 renames.`}
+      data-focus-key={`handle:${id}`}
+      onkeydown={handleKeydown}
+      {...handle}
+    >⋮⋮</button>
+    <div class="block__tools">
+      <EyeToggle {hidden} {inherited} label={shortLabel} onclick={() => onhide(!hidden)} />
+      {#if onpull}
+        <button type="button" class="block__action" aria-label={`Move ${shortLabel} to draft`} title="Move to draft" onclick={onpull}>↧</button>
+      {/if}
+    </div>
+  </div>
+  <div class="block__main">
+    <div class="block__head" class:is-collapsed={!title && !glyphs && !editingTitle}>
+      <span class="block__title">
+        <InlineText value={title} placeholder="Add title" label="Paragraph title" oncommit={ontitle} bind:editing={editingTitle} />
+      </span>
+      {#if glyphs}<span class="block__glyphs">{@render glyphs()}</span>{/if}
+    </div>
+    {#if hidden || inherited}
+      <p class="block__closed">{inherited && !hidden ? 'Hidden by parent' : 'Hidden paragraph'}</p>
     {:else}
-      <button
-        type="button"
-        class="block__handle"
-        class:is-untitled={!title}
-        aria-roledescription="drag handle"
-        aria-label={`Move ${shortLabel}. Alt plus arrow keys reorder and change level; F2 renames.`}
-        data-focus-key={`handle:${id}`}
-        ondblclick={startTitle}
-        onkeydown={handleKeydown}
-        {...handle}
-      >{title || '⋮⋮'}</button>
-    {/if}
-    <EyeToggle {hidden} {inherited} label={shortLabel} onclick={() => onhide(!hidden)} />
-    {#if onpull}
-      <button type="button" class="block__action" aria-label={`Move ${shortLabel} to draft`} title="Move to draft" onclick={onpull}>↧</button>
+      <div
+        bind:this={el}
+        class="block__body"
+        contenteditable="plaintext-only"
+        role="textbox"
+        tabindex="0"
+        aria-multiline="true"
+        aria-label={`Paragraph text: ${shortLabel}`}
+        data-placeholder="Write…"
+        data-focus-key={`body:${id}`}
+        oninput={() => {
+          clearTimeout(timer);
+          timer = setTimeout(flush, 400);
+        }}
+        onblur={flush}
+        onkeydown={bodyKeydown}
+      ></div>
     {/if}
   </div>
-  {#if hidden || inherited}
-    <p class="block__closed">{inherited && !hidden ? 'Hidden by parent' : 'Hidden paragraph'}</p>
-  {:else}
-    <div
-      bind:this={el}
-      class="block__body"
-      contenteditable="plaintext-only"
-      role="textbox"
-      tabindex="0"
-      aria-multiline="true"
-      aria-label={`Paragraph text: ${shortLabel}`}
-      data-placeholder="Write…"
-      data-focus-key={`body:${id}`}
-      oninput={() => {
-        clearTimeout(timer);
-        timer = setTimeout(flush, 400);
-      }}
-      onblur={flush}
-      onkeydown={bodyKeydown}
-    ></div>
-  {/if}
-  {#if glyphs}<div class="block__glyphs">{@render glyphs()}</div>{/if}
 </article>

@@ -295,6 +295,8 @@ function patchRecord(repo: SrsRepository, id: string, patch: Record<string, unkn
 
 export const setBody = (repo: SrsRepository, id: string, body: string): void =>
   patchRecord(repo, id, { body });
+export const setEssayTitle = (repo: SrsRepository, essayId: string, title: string): void =>
+  patchRecord(repo, essayId, { title });
 export const setTitle = (repo: SrsRepository, id: string, title: string): void =>
   patchRecord(repo, id, { paragraph_title: title });
 
