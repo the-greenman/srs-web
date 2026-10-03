@@ -451,7 +451,7 @@
           as="h1"
           value={model.title}
           label="Essay title"
-          oncommit={(v) => v.trim() && run(() => setEssayTitle(repo, model!.essayId, v.trim()))}
+          oncommit={(v) => v.trim() && run(() => setEssayTitle(repo, model!, v.trim()))}
         />
         {#if zoomId}
           <div class="essay-shell__zoombar">

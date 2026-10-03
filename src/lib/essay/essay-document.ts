@@ -25,6 +25,7 @@ import {
   listTypes,
   moveContainerMemberRelative,
   removeContainerMember,
+  updateContainer,
   updateRecord,
 } from "$lib/srs-client.js";
 import type {
@@ -388,8 +389,19 @@ function patchRecord(repo: SrsRepository, id: string, patch: Record<string, unkn
 
 export const setBody = (repo: SrsRepository, id: string, body: string): void =>
   patchRecord(repo, id, { body });
-export const setEssayTitle = (repo: SrsRepository, essayId: string, title: string): void =>
-  patchRecord(repo, essayId, { title });
+/** The draft container's title, from its essay's (one convention for new, copy and rename). */
+const draftTitle = (title: string): string => `${title} (draft)`;
+
+/** Rename the essay record and its containers (the document's and its draft's). */
+export function setEssayTitle(
+  repo: SrsRepository,
+  m: Pick<EssayModel, "essayId" | "containerId" | "draftContainerId">,
+  title: string
+): void {
+  patchRecord(repo, m.essayId, { title });
+  updateContainer(repo, m.containerId, { title });
+  if (m.draftContainerId) updateContainer(repo, m.draftContainerId, { title: draftTitle(title) });
+}
 export const setTitle = (repo: SrsRepository, id: string, title: string): void =>
   patchRecord(repo, id, { paragraph_title: title });
 
@@ -437,7 +449,7 @@ export function transfer(
 
 /** The editor's own state for an essay: a draft container + the document-state record. */
 function addEditorState(repo: SrsRepository, essayId: string, title: string): void {
-  const draft = createContainer(repo, { title: `${title} (draft)` });
+  const draft = createContainer(repo, { title: draftTitle(title) });
   createRecord(repo, DOCUMENT_STATE_TYPE_ID, typeVersion(repo, DOCUMENT_STATE_TYPE_ID), {
     fieldValues: { essay: essayId, hidden_instance_ids: [], draft_container_id: draft.containerId },
   });
@@ -468,7 +480,7 @@ export function copyEssay(repo: SrsRepository, m: EssayModel): string {
   const copy = copyContainer(repo, m.containerId, { title });
   const essayId = copy.container.anchorInstanceId;
   if (!essayId) throw new Error("The copied document has no essay record");
-  setEssayTitle(repo, essayId, title);
+  patchRecord(repo, essayId, { title }); // copyContainer already titled the container
   addEditorState(repo, essayId, title);
   return essayId;
 }

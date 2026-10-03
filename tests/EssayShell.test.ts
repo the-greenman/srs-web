@@ -75,7 +75,7 @@ it("the essay title edits inline: commit writes through setEssayTitle, a new rev
   const input = container.querySelector<HTMLInputElement>("h1 input")!;
   input.value = "Renamed";
   await fireEvent.keyDown(input, { key: "Enter" });
-  expect(doc.setEssayTitle).toHaveBeenCalledWith(props.repo, "e", "Renamed");
+  expect(doc.setEssayTitle).toHaveBeenCalledWith(props.repo, model, "Renamed");
 
   doc.loadEssay.mockReturnValue({ ...model, title: "Renamed" });
   await rerender({ ...props, documentRevision: 2 });
@@ -193,7 +193,7 @@ it("the Agents panel shows connected/total, and a feed click leaves zoom and foc
     connected: 1,
     total: 2,
     agents: [{ id: "agent:a", name: "alpha", status: "online" }],
-    writes: [{ seq: 1, agentId: "agent:a", tool: "record_update", instanceId: "q", fields: ["body"], at: 1 }],
+    writes: [{ seq: 1, agentId: "agent:a", tool: "record_update", instanceId: "q", changed: [{ target: "instance", id: "q", kind: "updated" }], at: 1 }],
   };
   const { container, getByTestId, getByText } = render(EssayShell, {
     repo: {} as never,
@@ -211,7 +211,7 @@ it("the Agents panel shows connected/total, and a feed click leaves zoom and foc
   expect(container.querySelector('[data-focus-key="body:q"]')).toBeNull();
   await fireEvent.click(getByTestId("agent-feed-focus"));
   await tick();
-  expect(getByText(/controls edited ¶ Two · /)).toBeTruthy();
+  expect(getByText(/controls updated ¶ Two · /)).toBeTruthy();
   expect(container.querySelector('[data-focus-key="body:q"]')).not.toBeNull();
 });
 

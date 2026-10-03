@@ -32,6 +32,8 @@ export interface McpSession {
   is_initialized(): boolean;
   /** Monotonic; changes iff a handled request mutated the store (srs-rust#1140). */
   write_epoch(): number;
+  /** What the last `handle` wrote, once (srs-rust#1202): JSON `{tool, changed:[{target, id, kind}]}`, or undefined. */
+  take_write_summary(): string | undefined;
   /** Engine-enforced write guard for agent (MCP) writes (srs-rust#1165); throws on bad JSON. */
   set_write_guard(json: string): void;
   clear_write_guard(): void;
@@ -130,6 +132,8 @@ export interface SrsRepository {
   ): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in copyContainer()
   copy_container(source_id: string, input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in updateContainer()
+  update_container(container_id: string, patch_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in forkRecord()
   fork_record(container_id: string, instance_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainerOutline()
@@ -2085,6 +2089,17 @@ export function copyContainer(
   input: { title?: string } = {}
 ): ForkResult & { container: Container } {
   return wasm(() => repo.copy_container(sourceId, JSON.stringify(input)));
+}
+
+/** Patch a container's metadata (srs-rust#1203, build.439); omitted keys are untouched, unknown keys refused. */
+export function updateContainer(
+  repo: SrsRepository,
+  containerId: string,
+  patch: { title?: string; description?: string; tags?: string[] }
+): Container {
+  return wasm<{ container: Container }>(() =>
+    repo.update_container(containerId, JSON.stringify(patch))
+  ).container;
 }
 
 /** Fork `instanceId` and its nested children inside `containerId` only ("make local copy"). */
