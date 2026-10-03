@@ -84,3 +84,47 @@ export function createConnectionStore(getStorage: () => Store = () => localStora
 }
 
 export const connections = createConnectionStore();
+
+/**
+ * One tab per channel (srs-web#391): a Web Lock per connection id, held while this tab has it open.
+ * Without `navigator.locks` everything degrades to "free": the relay's 409 stays the backstop.
+ */
+const lockName = (id: string) => `srs-web.channel.${id}`;
+const releasers = new Map<string, () => void>();
+
+/** Take the channel's lock for this tab. False when another tab holds it. */
+export function acquireChannelLock(id: string): Promise<boolean> {
+  const locks = globalThis.navigator?.locks;
+  if (!locks || releasers.has(id)) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    locks
+      .request(lockName(id), { ifAvailable: true }, (lock) => {
+        if (!lock) return void resolve(false);
+        return new Promise<void>((release) => {
+          releasers.set(id, release);
+          resolve(true);
+        });
+      })
+      .catch(() => resolve(true));
+  });
+}
+
+export function releaseChannelLock(id: string): void {
+  releasers.get(id)?.();
+  releasers.delete(id);
+}
+
+/** Ids of channels held by another tab (our own locks are excluded). */
+export async function channelsInUseElsewhere(): Promise<Set<string>> {
+  const out = new Set<string>();
+  try {
+    const { held = [] } = (await globalThis.navigator?.locks?.query()) ?? {};
+    for (const l of held) {
+      const id = l.name?.startsWith("srs-web.channel.")
+        ? l.name.slice("srs-web.channel.".length)
+        : "";
+      if (id && !releasers.has(id)) out.add(id);
+    }
+  } catch {}
+  return out;
+}

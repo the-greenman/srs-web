@@ -30,7 +30,7 @@
     applyMigration,
   } from "$lib/srs-client.js";
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
-  import { connections, credsKey, type AgentConnection } from "$lib/agent-connections.js";
+  import { acquireChannelLock, releaseChannelLock, channelsInUseElsewhere, connections, credsKey, type AgentConnection } from "$lib/agent-connections.js";
   import { observeSession, pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
   import { listRelations, type AgentWriteGuard, type McpSession, type SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
@@ -280,7 +280,10 @@
     agents: agents.map((a) => ({ id: a.conn.id, name: agentName(a.conn), status: a.state.status })),
     writes: agentWrites,
   });
-  let seeded = false;
+  /** Saved channels (the library) and those held by another tab (Web Locks). */
+  let library = $state<AgentConnection[]>(connections.list());
+  let inUse = $state<Set<string>>(new Set());
+  const refreshInUse = () => void channelsInUseElsewhere().then((s) => (inUse = s));
   const hosts = new Map<string, { host: RelayHost; session: McpSession | null }>();
   const setAgentState = (id: string, state: HostState) =>
     (agents = agents.map((a) => (a.conn.id === id ? { ...a, state } : a)));
@@ -354,19 +357,30 @@
     } else h.detach();
   }
 
-  function connectAgent(label?: string) {
-    const list = connections.add(label);
-    const conn = list[list.length - 1];
+  /** Open a saved channel in this tab, only if no other tab holds it. */
+  async function openChannel(conn: AgentConnection) {
+    if (agents.some((a) => a.conn.id === conn.id)) return;
+    if (!(await acquireChannelLock(conn.id))) return refreshInUse();
     agents = [...agents, { conn, state: { status: "idle", callerUrl: null, error: null } }];
     openAgentSession(conn, repo);
   }
+  function connectAgent(label?: string) {
+    library = [...connections.add(label)];
+    void openChannel(library[library.length - 1]);
+  }
+  /** Detach in this tab; the channel and its credentials stay in the library. */
   function disconnectAgent(id: string) {
     const h = hosts.get(id);
     h?.host.detach();
     h?.session?.free();
     hosts.delete(id);
-    connections.remove(id);
+    releaseChannelLock(id);
     agents = agents.filter((a) => a.conn.id !== id);
+    refreshInUse();
+  }
+  function forgetAgent(id: string) {
+    disconnectAgent(id);
+    library = [...connections.remove(id)];
   }
 
   $effect(() => {
@@ -374,12 +388,19 @@
     if (!relayUrl) return;
     untrack(() => {
       agentWrites = []; // a new repository: earlier writes name instances that are gone
-      if (!seeded) {
-        seeded = true;
-        agents = connections.list().map((conn) => ({ conn, state: { status: "idle", callerUrl: null, error: null } }));
-      }
       for (const { conn } of agents) openAgentSession(conn, current);
     });
+  });
+
+  $effect(() => {
+    if (!relayUrl) return;
+    refreshInUse();
+    window.addEventListener("focus", refreshInUse);
+    document.addEventListener("visibilitychange", refreshInUse);
+    return () => {
+      window.removeEventListener("focus", refreshInUse);
+      document.removeEventListener("visibilitychange", refreshInUse);
+    };
   });
 
   // ---------------------------------------------------------------------------
@@ -865,6 +886,14 @@
       onTakeover={() => void hosts.get(a.conn.id)?.host.takeover()}
       onDisconnect={() => disconnectAgent(a.conn.id)}
     />
+  {/each}
+  {#each library.filter((c) => !agents.some((a) => a.conn.id === c.id)) as c (c.id)}
+    <div class="mcp-conn__actions" data-testid="mcp-library-item">
+      <strong>{agentName(c)}</strong>
+      {#if inUse.has(c.id)}<span class="mcp-conn__note" data-testid="mcp-in-use">in use in another tab</span>{/if}
+      <button type="button" class="btn btn--secondary" disabled={inUse.has(c.id)} onclick={() => void openChannel(c)} data-testid="mcp-library-connect">Connect</button>
+      <button type="button" class="btn btn--ghost" onclick={() => forgetAgent(c.id)} data-testid="mcp-library-forget">Forget</button>
+    </div>
   {/each}
   <details>
   <summary data-testid="mcp-connect-open">Connect an agent</summary>

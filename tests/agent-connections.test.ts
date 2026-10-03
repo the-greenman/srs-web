@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { createConnectionStore, credsKey } from "../src/lib/agent-connections";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { acquireChannelLock, channelsInUseElsewhere, createConnectionStore, credsKey, releaseChannelLock } from "../src/lib/agent-connections";
 
 const mem = () => {
   const m = new Map<string, string>();
@@ -73,5 +73,54 @@ describe("agent connections", () => {
     const [a] = c.list();
     expect(c.add()).toHaveLength(2);
     expect(c.list()[0].id).toBe(a.id);
+  });
+});
+
+describe("library: keep vs forget", () => {
+  it("list() keeps an entry and its credentials until remove() forgets it", () => {
+    const c = store();
+    const [a] = c.list();
+    s.setItem(credsKey(a.id), "creds");
+    expect(store().list()).toEqual([a]); // a "disconnect" never touches the store
+    expect(s.getItem(credsKey(a.id))).toBe("creds");
+    c.remove(a.id); // forget
+    expect(s.getItem(credsKey(a.id))).toBeNull();
+  });
+});
+
+describe("one tab per channel (Web Locks)", () => {
+  // Minimal navigator.locks: exclusive, ifAvailable, shared across "tabs" in this process.
+  const held = new Set<string>();
+  const fake = {
+    request: async (name: string, _o: unknown, cb: (l: unknown) => Promise<void> | void) => {
+      if (held.has(name)) return cb(null);
+      held.add(name);
+      try {
+        await cb({ name });
+      } finally {
+        held.delete(name);
+      }
+    },
+    query: async () => ({ held: [...held].map((name) => ({ name })) }),
+  };
+  beforeEach(() => vi.stubGlobal("navigator", { locks: fake }));
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    held.clear();
+  });
+
+  it("acquires, blocks a second holder, and frees on release", async () => {
+    expect(await acquireChannelLock("agent:1")).toBe(true);
+    held.add("srs-web.channel.agent:2"); // another tab
+    expect(await acquireChannelLock("agent:2")).toBe(false);
+    expect([...(await channelsInUseElsewhere())]).toEqual(["agent:2"]); // not our own agent:1
+    releaseChannelLock("agent:1");
+    await new Promise((r) => setTimeout(r, 0));
+    expect(held.has("srs-web.channel.agent:1")).toBe(false);
+  });
+  it("degrades to free without navigator.locks", async () => {
+    vi.stubGlobal("navigator", {});
+    expect(await acquireChannelLock("agent:3")).toBe(true);
+    expect((await channelsInUseElsewhere()).size).toBe(0);
   });
 });
