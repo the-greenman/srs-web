@@ -112,6 +112,8 @@ export interface EssayModel {
   binEntries: OutlineEntry[];
   /** Whether the installed document-state type (v2+, essay package 1.3.0) can record a Bin. */
   canBin: boolean;
+  /** Whether the comment type and `comments-on` are installed (essay package 1.1.0+); false = no comment UI. */
+  canComment: boolean;
   /** Comments by paragraph id, oldest first. */
   comments: Record<string, Comment[]>;
   /** Attachments by paragraph id (see Attachment). */
@@ -357,6 +359,9 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
     draftEntries,
     binContainerId,
     binEntries,
+    canComment:
+      types.some((t) => t.id === COMMENT_TYPE_ID) &&
+      listRelationTypes(repo).some((t) => t.key === COMMENTS_ON),
     canBin: (types.find((t) => t.id === DOCUMENT_STATE_TYPE_ID)?.version ?? 0) >= 2,
     comments: loadComments(repo, types),
     attachments: context.attachments,

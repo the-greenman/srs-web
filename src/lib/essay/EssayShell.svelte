@@ -184,7 +184,7 @@
   let openThreads = $state<Set<string>>(new Set());
   let commentMode = $state(false);
   let zoomId = $state<string | null>(null);
-  const showThread = (id: string) => commentMode || zoomId === id || openThreads.has(id);
+  const showThread = (id: string) => !!model?.canComment && (commentMode || zoomId === id || openThreads.has(id));
   const openThread = (id: string, on: boolean) => {
     const next = new Set(openThreads);
     if (on) next.add(id);
@@ -483,7 +483,7 @@
             {#if p}
               {#snippet margin()}
                 <ParagraphMargin
-                  annotations={annotationsFor(model!, p.id)}
+                  annotations={annotationsFor(model!, p.id).filter((a) => model!.canComment || a.kind !== "comments")}
                   {variant}
                   active={[...pinnedIds, ...(showThread(p.id) ? [`comments:${p.id}`] : [])]}
                   onopen={(a) => openAnnotation(a, p.id)}
