@@ -128,6 +128,21 @@
   top: -1.2em;
   opacity: 0;
 }
+/* No hover (touch) or a phone: floating "Add title" would sit outside the block frame, so it joins
+   the head row instead, and only while the paragraph has focus (srs-web#383). */
+@media (hover: none), (max-width: 480px) {
+  .block__head.is-collapsed {
+    height: auto;
+  }
+  .block__head.is-collapsed .block__title {
+    position: static;
+    display: none;
+    opacity: 1;
+  }
+  .block:focus-within .block__head.is-collapsed .block__title {
+    display: block;
+  }
+}
 .block:hover .block__head.is-collapsed .block__title,
 .block:focus-within .block__head.is-collapsed .block__title {
   opacity: 1;
@@ -262,4 +277,40 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
+}
+
+/* Phone (srs-web#383): the gutter and the margin annotations sit inline in the title row above a
+   full-width body, instead of two side columns. CSS grid areas only; markup is unchanged. */
+@media (max-width: 480px) {
+  .essay-shell .block,
+  .essay-shell .block:has(.margin--expanded) {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: "head margin gutter" "body body body";
+    align-items: center;
+  }
+  .block__main {
+    display: contents;
+  }
+  .block__head {
+    grid-area: head;
+  }
+  .block__body,
+  .block__render,
+  .block__closed {
+    grid-area: body;
+  }
+  .block__margin {
+    grid-area: margin;
+    flex-direction: row;
+    align-items: center;
+  }
+  .block__gutter {
+    grid-area: gutter;
+    flex-direction: row;
+  }
+  /* The gutter is now at the right edge, so the ⋯ list opens leftward. */
+  .block__menu .action-menu__list {
+    left: auto;
+    right: 0;
+  }
 }

@@ -14,6 +14,7 @@
     open = $bindable(true),
     persistKey,
     collapsible = true,
+    collapseWhen,
     grow = false,
     actions,
     class: className = '',
@@ -26,6 +27,8 @@
     /** localStorage suffix (`srs-web.panel.<persistKey>`) remembering the open state. */
     persistKey?: string;
     collapsible?: boolean;
+    /** Media query: start collapsed while it matches and the viewer has no remembered state. */
+    collapseWhen?: string;
     /** Stretch to fill remaining rail height (static panels). */
     grow?: boolean;
     /** Header buttons; clicking them does not toggle the panel. */
@@ -42,6 +45,7 @@
     try {
       const stored = localStorage.getItem(key);
       if (stored !== null) open = stored === '1';
+      else if (collapseWhen && matchMedia(collapseWhen).matches) open = false;
     } catch {}
   })();
 

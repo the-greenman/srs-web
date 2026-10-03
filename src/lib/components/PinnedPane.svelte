@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
   import Panel from './Panel.svelte';
+  import { NARROW } from './narrow.js';
 
   let {
     items,
@@ -12,7 +13,7 @@
   }: { items: { id: string; kind: string; title: string; text: string }[]; onunpin: (id: string) => void } = $props();
 </script>
 
-<Panel title="Pinned" aside={items.length} persistKey="essay.pinned">
+<Panel title="Pinned" aside={items.length} persistKey="essay.pinned" collapseWhen={NARROW}>
   {#if items.length === 0}
     <p class="t-muted">Pin an attachment glyph to read it here.</p>
   {:else}

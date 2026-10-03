@@ -1,23 +1,26 @@
 <!--
-  ActionMenu — a ⋯ button opening a small menu of ParagraphAction rows (essay/paragraph-actions.ts).
+  ActionMenu — a ⋯ button opening a small menu of MenuAction rows (menu-action.ts; paragraph and header lists).
   Rows are >=44px; Arrow keys move, Escape / outside click close, focus returns to the ⋯ button
   (selecting a row focuses it first, so the shell's focus restore lands on it). No dependency.
   Wraps .action-menu (src/styles/components/action-menu.css). Story: srs-web#382 (epic #224).
 -->
 <script lang="ts">
-  import type { ParagraphAction } from '../essay/paragraph-actions.js';
+  import type { MenuAction } from './menu-action.js';
 
   let {
     actions,
     label,
     testid = 'paragraph-menu',
+    title = 'Actions',
     focusKey,
     class: klass = '',
   }: {
-    actions: ParagraphAction[];
+    actions: MenuAction[];
     /** Names the target, e.g. the paragraph title. */
     label: string;
     testid?: string;
+    /** Trigger label; the accessible name is `${title} for ${label}`. */
+    title?: string;
     focusKey?: string;
     class?: string;
   } = $props();
@@ -37,7 +40,7 @@
     if (open) queueMicrotask(() => rows()[0]?.focus());
   }
 
-  function pick(a: ParagraphAction) {
+  function pick(a: MenuAction) {
     close();
     a.run();
   }
@@ -65,14 +68,14 @@
     bind:this={trigger}
     aria-haspopup="menu"
     aria-expanded={open}
-    aria-label={`Actions for ${label}`}
-    title="Actions"
+    aria-label={`${title} for ${label}`}
+    {title}
     data-testid={testid}
     data-focus-key={focusKey}
     onclick={toggle}
   >⋯</button>
   {#if open}
-    <div class="action-menu__list" role="menu" aria-label={`Actions for ${label}`}>
+    <div class="action-menu__list" role="menu" aria-label={`${title} for ${label}`}>
       {#each actions as a (a.id)}
         <button
           type="button"
@@ -81,7 +84,7 @@
           data-testid={`${testid}-${a.id}`}
           disabled={!a.enabled}
           onclick={() => pick(a)}
-        ><span class="action-menu__icon" aria-hidden="true">{a.icon}</span>{a.label}</button>
+        >{#if a.icon}<span class="action-menu__icon" aria-hidden="true">{a.icon}</span>{/if}{a.label}</button>
       {/each}
     </div>
   {/if}

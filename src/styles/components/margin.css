@@ -79,3 +79,19 @@
     min-height: 44px;
   }
 }
+
+/* Phone (srs-web#383): marks flow in a row inside the title row; chips collapse to marks only. */
+@media (max-width: 480px) {
+  .margin {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .margin__item > .margin__text {
+    display: none;
+  }
+  .margin__list {
+    right: 0;
+    max-width: 12rem;
+  }
+}
