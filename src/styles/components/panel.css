@@ -59,6 +59,25 @@ summary.panel__head:focus-visible {
 .panel__title + .panel__actions {
   margin-left: auto;
 }
+/* A panel that grows to fill the remaining rail height */
+.panel--grow {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* cancel the top margin so the grow section butts up cleanly */
+  margin-top: 0 !important;
+}
+.panel--grow > .panel__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.panel--grow > .panel__body > * {
+  flex: 1;
+  min-height: 0;
+}
 @media (max-width: 960px) {
   .panel-rail {
     position: static;

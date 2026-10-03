@@ -1,6 +1,6 @@
 <!--
   Panel — a titled, collapsible block for side rails (Layers, Draft, Agents, inspector
-  sections). Native <details>/<summary>, so collapse needs no JS; `collapsible={false}` renders
+  sections; `grow` fills remaining rail height). Native <details>/<summary>, so collapse needs no JS; `collapsible={false}` renders
   a static header. `persistKey` remembers open/closed in localStorage (convenience only: every
   access is guarded). Wraps .panel (src/styles/components/panel.css).
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224 (srs-web#362)
@@ -14,6 +14,7 @@
     open = $bindable(true),
     persistKey,
     collapsible = true,
+    grow = false,
     actions,
     class: className = '',
     children,
@@ -25,6 +26,8 @@
     /** localStorage suffix (`srs-web.panel.<persistKey>`) remembering the open state. */
     persistKey?: string;
     collapsible?: boolean;
+    /** Stretch to fill remaining rail height (static panels). */
+    grow?: boolean;
     /** Header buttons; clicking them does not toggle the panel. */
     actions?: Snippet;
     /** Extra classes on the root (e.g. a host block's own styling hook). */
@@ -50,6 +53,7 @@
     } catch {}
   }
 
+  const cls = $derived(`panel ${grow ? 'panel--grow ' : ''}${className}`);
   const hasAside = $derived(aside !== undefined && aside !== '');
 </script>
 
@@ -63,12 +67,12 @@
 {/snippet}
 
 {#if collapsible}
-  <details class="panel {className}" bind:open ontoggle={remember}>
+  <details class={cls} bind:open ontoggle={remember}>
     <summary class="panel__head">{@render head()}</summary>
     <div class="panel__body">{@render children?.()}</div>
   </details>
 {:else}
-  <section class="panel {className}">
+  <section class={cls}>
     <div class="panel__head">{@render head()}</div>
     <div class="panel__body">{@render children?.()}</div>
   </section>

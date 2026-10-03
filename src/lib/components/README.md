@@ -23,7 +23,7 @@ giving the app ergonomic, reusable building blocks.
 ```svelte
 <script lang="ts">
   import { AppShell, Nav, NavGroup, NavItem, Main, Topbar, Workspace,
-           Card, CardField, Inspector, InspectorSection, Diagnostics,
+           Card, CardField, Inspector, Diagnostics,
            Lifecycle, Tag, Button } from '$lib/components';
   import type { Diagnostic } from '$lib/components';
 </script>
@@ -46,7 +46,7 @@ rail + record headers their printed-ink texture) — see `docs/design/*.html`.
 | `AppShell` | `nav` `main` `inspector?` | `.app` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
 | `Main` / `Topbar` / `Workspace` | snippets, `wide?` | `.app__main` `.topbar` `.workspace` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
 | `Nav` / `NavGroup` / `NavItem` | `repo` `label` `count?` `active?` | `.nav*` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
-| `Inspector` / `InspectorSection` / `Meta` | `title` `aside?` `rows` | `.inspector*` `.meta` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
+| `Inspector` / `Meta` | `title` `aside?` `rows` | `.inspector*` `.meta` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
 | `Card` / `CardField` | `id` `title` `status?` `grid?` `empty?` | `.card*` | B5 [#4](https://github.com/the-greenman/srs-web/issues/4) |
 | `LogTable` | `columns` + row children | `.log-table` | B5 [#4](https://github.com/the-greenman/srs-web/issues/4), B12 [#8](https://github.com/the-greenman/srs-web/issues/8) |
 | `Field` | `label` `required?` `typeHint?` `error?` | `.field` | B9 [#5](https://github.com/the-greenman/srs-web/issues/5), B13 [#9](https://github.com/the-greenman/srs-web/issues/9) |

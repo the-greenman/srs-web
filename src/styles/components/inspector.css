@@ -48,26 +48,6 @@
   margin-top: var(--space-md);
 }
 
-/* A section that grows to fill the remaining rail height */
-.inspector__section--grow {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  /* cancel the top margin so the grow section butts up cleanly */
-  margin-top: 0 !important;
-}
-.inspector__section--grow > .panel__body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-.inspector__section--grow > .panel__body > * {
-  flex: 1;
-  min-height: 0;
-}
-
 /* Force-show on narrow screens (toggle via JS) */
 @media (max-width: 1100px) {
   .inspector--open {
@@ -82,7 +62,7 @@
   }
 }
 
-/* Section header: InspectorSection is a static Panel with the inspector's heavier rule. */
+/* Section header: Inspector sections are static Panels (class inspector__section) with the inspector's heavier rule. */
 .inspector__section > .panel__head {
   margin-bottom: var(--space-sm);
   padding-bottom: 8px;

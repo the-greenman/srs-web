@@ -58,4 +58,9 @@ describe("Panel", () => {
     expect(container.querySelector("details, summary")).toBeNull();
     expect(container.querySelector(".panel__head .panel__title")?.textContent).toBe("Static");
   });
+
+  it("grow adds the panel--grow modifier", () => {
+    const { container } = render(Panel, { title: "G", collapsible: false, grow: true });
+    expect(container.querySelector(".panel.panel--grow")).not.toBeNull();
+  });
 });

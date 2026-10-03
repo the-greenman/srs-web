@@ -1,5 +1,5 @@
 <!--
-  Inspector — the right rail container holding stacked InspectorSections.
+  Inspector — the right rail container holding stacked Panels (class inspector__section).
   Includes a drag handle at the left edge to resize the inspector width, and
   supports an `open` prop to override the responsive hide rule (used by
   GuidesShell's narrow-screen toggle).

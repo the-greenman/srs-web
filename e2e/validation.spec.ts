@@ -8,7 +8,7 @@ import { openPackageEditor } from "./helpers.js";
  *
  * After loading the fixture, verifies the Validation inspector section is
  * visible and reports the expected state (no errors). The Validation/Repository
- * inspector panels are GovernanceShell UI (InspectorSection), so this needs a
+ * inspector panels are GovernanceShell UI (Panel), so this needs a
  * fixture that qualifies for the Governance package editor — gallery.srsj installs
  * the decision type; sample.srsj does not (srs-web#322).
  */
@@ -30,7 +30,7 @@ test.describe("Validation inspector", () => {
   });
 
   test("shows Validation inspector section after loading", async ({ page }) => {
-    // InspectorSection renders title in .panel__head
+    // Panel renders title in .panel__head
     await expect(page.locator(".panel__head").filter({ hasText: "Validation" })).toBeVisible();
   });
 

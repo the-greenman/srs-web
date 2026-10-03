@@ -47,8 +47,8 @@
   import Main from "$lib/components/Main.svelte";
   import Topbar from "$lib/components/Topbar.svelte";
   import Workspace from "$lib/components/Workspace.svelte";
+  import Panel from "$lib/components/Panel.svelte";
   import Inspector from "$lib/components/Inspector.svelte";
-  import InspectorSection from "$lib/components/InspectorSection.svelte";
   import Button from "$lib/components/Button.svelte";
   import PreviewPane from "$lib/components/PreviewPane.svelte";
   import { PREVIEW_THEMES, THEME_DEFAULT } from "$lib/guides/preview-themes.js";
@@ -789,15 +789,15 @@
     {#snippet inspector()}
       <Inspector label="Guide" open={previewOpen}>
         {#if availableViews.length > 1}
-          <InspectorSection title="View">
+          <Panel title="View" collapsible={false} class="inspector__section">
             <ViewPicker
               views={availableViews}
               selectedViewId={guideViewId}
               onSelect={(id) => { guideViewId = id; refreshPreview(); }}
             />
-          </InspectorSection>
+          </Panel>
         {/if}
-        <InspectorSection title="Export">
+        <Panel title="Export" collapsible={false} class="inspector__section">
           <Button
             variant="ghost"
             data-testid="guides-export-markdown"
@@ -810,8 +810,8 @@
             onclick={handlePrint}
             disabled={!previewHtml}
           >Print / Save as PDF</Button>
-        </InspectorSection>
-        <InspectorSection title="Theme">
+        </Panel>
+        <Panel title="Theme" collapsible={false} class="inspector__section">
           <select
             data-testid="guides-theme-picker"
             class="guides-theme-select"
@@ -822,10 +822,10 @@
               <option value={theme.id}>{theme.label}</option>
             {/each}
           </select>
-        </InspectorSection>
-        <InspectorSection title="Preview" grow>
+        </Panel>
+        <Panel title="Preview" collapsible={false} grow class="inspector__section">
           <PreviewPane html={previewHtml} loading={previewLoading} themeCss={selectedThemeCss} />
-        </InspectorSection>
+        </Panel>
       </Inspector>
     {/snippet}
   </AppShell>
