@@ -357,7 +357,6 @@
   onkeydown={(e) => {
     if (e.key === "Escape" && zoomId && !(e.target as HTMLElement | null)?.closest?.("input, textarea, [contenteditable]")) setZoom(null);
   }}
-  onhashchange={applyAddress}
   onpopstate={applyAddress}
 />
 
