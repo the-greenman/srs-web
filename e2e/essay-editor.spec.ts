@@ -20,7 +20,7 @@ async function open(page: Page) {
 }
 
 const titleOf = (page: Page, n: number) => page.locator(".essay-shell__page .block__title").nth(n);
-const bodies = (page: Page) => page.locator(".essay-shell__page .block__body");
+const bodies = (page: Page) => page.locator(".essay-shell__page :is(.block__render, .block__body)");
 const layerLabels = (page: Page) => page.locator(".layers .layers__label");
 const depthOf = (page: Page, text: string) =>
   page
@@ -40,6 +40,22 @@ test("typing alone marks the document unsaved after the commit debounce (srs-web
   // no blur, no further click or key: the 400 ms typing commit alone must surface the indicator
   await expect(page.getByTestId("document-dirty-status")).toBeVisible();
   await expect(bodies(page).first()).toBeFocused();
+});
+
+test("paragraphs render markdown until focused; click shows the source (srs-web#365)", async ({
+  page,
+}) => {
+  await open(page);
+  await bodies(page).first().click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.type("**Bold** words\n\n- one\n- two");
+  await bodies(page).last().click(); // blur: flush and render
+  const first = page.locator(".essay-shell__page .block__render").first();
+  await expect(first.locator("strong")).toHaveText("Bold");
+  await expect(first.locator("li")).toHaveText(["one", "two"]);
+  await first.click(); // back to source
+  await expect(page.locator(".essay-shell__page .block__body").first()).toContainText("**Bold** words");
+  await expect(page.locator(".essay-shell__page .block__body").first()).toBeFocused();
 });
 
 test("write, reorder, nest, hide, draft out and back", async ({ page }) => {

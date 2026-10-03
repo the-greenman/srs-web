@@ -494,6 +494,8 @@ export interface GetRecordAttachmentsResult {
 // ---------------------------------------------------------------------------
 
 let wasmModule: SrsRepositoryConstructor | null = null;
+// biome-ignore lint/suspicious/noExplicitAny: generated WASM artifact, no typedefs in CI
+let wasmFree: any = null;
 
 /**
  * Load the srs-bindings WASM module. Call once at app startup.
@@ -511,6 +513,16 @@ export async function initWasm(): Promise<void> {
   const mod = (await import(/* @vite-ignore */ "./srs_bindings/srs_bindings.js")) as any;
   await mod.default();
   wasmModule = mod.SrsRepository as SrsRepositoryConstructor;
+  wasmFree = mod;
+}
+
+/**
+ * Markdown to sanitized HTML (srs-rust#1192): the core escapes raw HTML and restricts link/image
+ * URLs, so the result is safe for `{@html}`. Repository-independent free function.
+ */
+export function renderMarkdown(md: string): string {
+  requireWasm();
+  return wasm(() => wasmFree.renderMarkdown(md));
 }
 
 function requireWasm(): SrsRepositoryConstructor {

@@ -23,6 +23,7 @@
   import type { DragPayload, KeyMove } from "$lib/components/dnd.js";
   import Button from "$lib/components/Button.svelte";
   import InlineText from "$lib/components/InlineText.svelte";
+  import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
     addComment,
@@ -270,6 +271,7 @@
     <div class="essay-shell__actions">
       {#if documentDirty}<span class="essay-shell__status" data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
       {#if saveMessage}<span class="essay-shell__status" role="status">{saveMessage}</span>{/if}
+      <MarkdownHelp />
       <Button variant="ghost" active={commentMode} aria-pressed={commentMode} data-testid="comment-mode" onclick={() => (commentMode = !commentMode)}>Comments</Button>
       {#if onSave}<Button variant="mono" disabled={saving} onclick={onSave}>{saving ? "Saving…" : "Save"}</Button>{/if}
       <Button variant="mono" onclick={onExport}>Export</Button>
