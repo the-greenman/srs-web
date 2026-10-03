@@ -651,6 +651,6 @@
   .graph-frame g.focused .node-label { font-weight:700; fill:#23443d; }
   @media (max-width: 900px) { .generic-shell { grid-template-columns:13rem minmax(0,1fr); } .generic-inspector { grid-column:1 / -1; border-left:0; border-top:1px solid #d5dbd8; } }
   .editors-mobile { display:none; }
-  .editors-mobile button { font:inherit; padding:.5rem .8rem; border:1px solid #52756c; border-radius:.25rem; background:#fff; color:#23443d; cursor:pointer; }
+  .editors-mobile button { font:inherit; min-height:44px; padding:.5rem .8rem; border:1px solid #52756c; border-radius:.25rem; background:#fff; color:#23443d; cursor:pointer; }
   @media (max-width: 600px) { .editors-mobile { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; } .generic-shell { display:block; } .generic-nav { min-height:auto; } .generic-nav section { display:none; } .generic-nav section:first-of-type { display:flex; } }
 </style>
