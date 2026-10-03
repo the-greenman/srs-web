@@ -170,3 +170,28 @@ test("zoom shows one paragraph with its thread; Esc returns", async ({ page }) =
   await page.keyboard.press("Escape");
   await expect(items(page)).toHaveCount(total);
 });
+
+test("addresses: deep link zooms, Back leaves zoom, copy link carries the paragraph id (srs-web#373)", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await open(page);
+  const total = await items(page).count();
+  const id = (await items(page).nth(1).locator(".block").getAttribute("data-block-id"))!;
+  await items(page).nth(1).getByRole("button", { name: /^Copy link to/ }).click({ force: true });
+  await expect(page.getByTestId("address-notice")).toHaveText(/Link copied/);
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(`p=${id}`);
+
+  await items(page).nth(1).getByRole("button", { name: /^Zoom to/ }).click({ force: true });
+  await expect(items(page)).toHaveCount(1);
+  const zoomed = page.url();
+  expect(zoomed).toContain(`z=${id}`);
+  await page.goBack();
+  await expect(items(page)).toHaveCount(total);
+
+  // A fresh load of a zoomed URL comes back zoomed.
+  await page.goto("about:blank");
+  await page.goto(zoomed);
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+  await page.locator('input[type="file"]#srsj-file').setInputFiles(ESSAY);
+  await page.getByTestId("package-editor-essay").click();
+  await expect(items(page)).toHaveCount(1);
+});
