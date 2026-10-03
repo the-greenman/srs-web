@@ -232,6 +232,20 @@
     el?.scrollIntoView?.({ block: "center" });
   }
 
+  /** Arrow past the first/last line: the nearest paragraph with a body editor (not hidden), in zoomed order. */
+  function navigate(id: string, dir: "prev" | "next") {
+    const at = items.findIndex((i) => i.id === id);
+    const rest = dir === "next" ? items.slice(at + 1) : items.slice(0, at).reverse();
+    const to = rest.find((i) => !hidden.has(i.id) && !inherited.has(i.id));
+    if (!to) return;
+    void focusParagraph(to.id).then(tick).then(() => {
+      const body = document.querySelector<HTMLElement>(`[data-focus-key="body:${to.id}"]`);
+      if (!body) return;
+      // Block's edit effect leaves the caret at the end; going down wants the start.
+      if (dir === "next") getSelection()?.collapse(body.firstChild ?? body, 0);
+    });
+  }
+
   /**
    * Addresses (address.ts): zoom and essay switches push the hash; applying an address from the
    * URL never pushes (the hash already equals the state, so `push` is a no-op).
@@ -491,6 +505,7 @@
                 onnew={() => run(() => newParagraphAfter(p.id))}
                 onindent={(d) => onKey(p.id, d === 1 ? "in" : "out")}
                 onmove={(dir) => onKey(p.id, dir)}
+                onnavigate={(dir) => navigate(p.id, dir)}
                 onpull={model!.draftContainerId
                   ? () => onDrop("draft", { id: p.id, from: "essay" }, { id: null, zone: "after" })
                   : undefined}
