@@ -36,11 +36,14 @@ const m = vi.hoisted(() => ({
   forkRecord: vi.fn(),
   listRelationTypes: vi.fn(() => []),
   createRelation: vi.fn(),
+  deleteRecord: vi.fn(),
 }));
 vi.mock("../src/lib/srs-client.js", () => m);
 
 import {
   addParagraph,
+  binParagraph,
+  deleteForever,
   loadEssay,
   moveEntry,
   setEssayTitle,
@@ -171,11 +174,69 @@ describe("essay-document", () => {
   });
 
   it("pull-out / put-back are remove + add through the engine", () => {
+    m.getContainerOutline.mockReturnValue({ body: [{ instanceId: "p1", depth: 0 }] });
     transfer({} as never, "C", "D", "p1", { id: "p9", zone: "before" });
     expect(m.removeContainerMember).toHaveBeenCalledWith({}, "C", "p1");
     expect(m.addContainerMemberRelative).toHaveBeenCalledWith({}, "D", "p1", "p9", "before");
     transfer({} as never, "D", "C", "p9");
     expect(m.addContainerMember).toHaveBeenLastCalledWith({}, "C", "p9");
+  });
+
+  it("transfer moves the whole subtree, keeping its shape", () => {
+    m.getContainerOutline.mockReturnValue({
+      body: [
+        { instanceId: "a", depth: 1 },
+        { instanceId: "b", depth: 2 },
+        { instanceId: "c", depth: 2 },
+        { instanceId: "d", depth: 1 },
+      ],
+    });
+    transfer({} as never, "C", "B", "a");
+    expect(m.removeContainerMember.mock.calls.map((c) => c[2])).toEqual(["c", "b", "a"]);
+    expect(m.addContainerMember).toHaveBeenCalledWith({}, "B", "a");
+    expect(m.addContainerMemberRelative.mock.calls.map((c) => c.slice(2))).toEqual([
+      ["b", "a", "into"],
+      ["c", "b", "after"],
+    ]);
+  });
+
+  it("delete creates the Bin once and upgrades the state record to the installed type version", () => {
+    m.getRecord.mockReturnValue(rec("S", DOCUMENT_STATE_TYPE_ID, { essay: "E" }));
+    m.createContainer.mockReturnValue({ containerId: "B" });
+    m.listTypes.mockReturnValueOnce([
+      { id: DOCUMENT_STATE_TYPE_ID, namespace: "n", name: "document-state", version: 2 },
+    ]);
+    m.getContainerOutline.mockReturnValue({ body: [{ instanceId: "p1", depth: 0 }] });
+    const model = { stateId: "S", title: "T", containerId: "C", binContainerId: null };
+    binParagraph({} as never, model as never, "p1");
+    expect(m.updateRecord).toHaveBeenCalledWith({}, "S", {
+      fieldValues: { essay: "E", bin_container_id: "B" },
+      typeVersion: 2,
+    });
+    expect(m.createContainer).toHaveBeenCalledWith({}, { title: "T (bin)" });
+    expect(m.addContainerMember).toHaveBeenCalledWith({}, "B", "p1");
+    binParagraph({} as never, { ...model, binContainerId: "B" } as never, "p1");
+    expect(m.createContainer).toHaveBeenCalledOnce();
+  });
+
+  it("permanent delete removes the paragraph and its comments; a shared paragraph only leaves the Bin", () => {
+    m.getContainerOutline.mockReturnValue({
+      body: [
+        { instanceId: "p1", depth: 0 },
+        { instanceId: "p2", depth: 0 },
+      ],
+    });
+    m.listRelations.mockReturnValue([{ sourceInstanceId: "c1" }]);
+    const model = { binContainerId: "B", sharedIn: {} };
+    deleteForever({} as never, model as never, "p1");
+    expect(m.deleteRecord.mock.calls.map((c) => [c[1], c[2]])).toEqual([
+      ["c1", true],
+      ["p1", true],
+    ]);
+    m.deleteRecord.mockClear();
+    deleteForever({} as never, { ...model, sharedIn: { p2: [{}] } } as never, "p2");
+    expect(m.removeContainerMember).toHaveBeenLastCalledWith({}, "B", "p2");
+    expect(m.deleteRecord).not.toHaveBeenCalled();
   });
 
   it("the eye writes hidden ids into the document-state record, not the paragraph", () => {
@@ -191,15 +252,24 @@ describe("essay-document", () => {
   it("setEssayTitle without a draft container renames only the essay and its container", () => {
     m.getRecord.mockReturnValue(rec("E", ESSAY_TYPE_ID, { title: "Old" }));
     m.updateContainer.mockClear();
-    setEssayTitle({} as never, { essayId: "E", containerId: "C", draftContainerId: null }, "New");
+    setEssayTitle(
+      {} as never,
+      { essayId: "E", containerId: "C", draftContainerId: null, binContainerId: null },
+      "New"
+    );
     expect(m.updateContainer.mock.calls).toEqual([[{}, "C", { title: "New" }]]);
   });
 
   it("setEssayTitle patches the essay's title field and renames its container and draft", () => {
     m.getRecord.mockReturnValue(rec("E", ESSAY_TYPE_ID, { title: "Old", other: "kept" }));
-    setEssayTitle({} as never, { essayId: "E", containerId: "C", draftContainerId: "D" }, "New");
+    setEssayTitle(
+      {} as never,
+      { essayId: "E", containerId: "C", draftContainerId: "D", binContainerId: "B" },
+      "New"
+    );
     expect(m.updateContainer).toHaveBeenCalledWith({}, "C", { title: "New" });
     expect(m.updateContainer).toHaveBeenCalledWith({}, "D", { title: "New (draft)" });
+    expect(m.updateContainer).toHaveBeenCalledWith({}, "B", { title: "New (bin)" });
     expect(m.updateRecord).toHaveBeenCalledWith({}, "E", {
       fieldValues: { title: "New", other: "kept" },
     });

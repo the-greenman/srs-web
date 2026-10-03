@@ -3,8 +3,8 @@
  * validation, ordering and depth rules are the engine's). The shell calls these and reloads.
  *
  * Shape: essay record = anchor/identity of the essay container; paragraphs = members;
- * one document-state record holds `hidden_instance_ids` + `draft_container_id`; the draft
- * area is a second container.
+ * one document-state record holds `hidden_instance_ids` + `draft_container_id` + `bin_container_id`;
+ * the draft area and the Bin (deleted paragraphs) are further containers.
  */
 import {
   addContainerMember,
@@ -15,6 +15,7 @@ import {
   createContainer,
   createRecord,
   createRelation,
+  deleteRecord,
   forkRecord,
   getContainerOutline,
   getRecord,
@@ -106,6 +107,11 @@ export interface EssayModel {
   hidden: string[];
   draftContainerId: string | null;
   draftEntries: OutlineEntry[];
+  /** The Bin: created on the first delete (null until then). */
+  binContainerId: string | null;
+  binEntries: OutlineEntry[];
+  /** Whether the installed document-state type (v2+, essay package 1.3.0) can record a Bin. */
+  canBin: boolean;
   /** Comments by paragraph id, oldest first. */
   comments: Record<string, Comment[]>;
   /** Attachments by paragraph id (see Attachment). */
@@ -122,7 +128,11 @@ export interface EssayModel {
  */
 export function essayWriteGuard(m: EssayModel): AgentWriteGuard {
   return {
-    containerIds: [m.containerId, ...(m.draftContainerId ? [m.draftContainerId] : [])],
+    containerIds: [
+      m.containerId,
+      ...(m.draftContainerId ? [m.draftContainerId] : []),
+      ...(m.binContainerId ? [m.binContainerId] : []),
+    ],
     instanceIds: [m.essayId, ...(m.stateId ? [m.stateId] : [])],
     fillOnlyFields: ["paragraph_title"],
   };
@@ -323,13 +333,13 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
     ) ?? null;
   const draftContainerId = str(state?.fieldValues.draft_container_id) || null;
   const draftEntries = draftContainerId ? getContainerOutline(repo, draftContainerId).body : [];
+  const binContainerId = str(state?.fieldValues.bin_container_id) || null;
+  const binEntries = binContainerId ? getContainerOutline(repo, binContainerId).body : [];
   const entries = getContainerOutline(repo, containerId).body;
   const paragraphs: Record<string, Paragraph> = {};
-  for (const r of listRecords(repo, { containerId })) {
-    if (r.typeId === PARAGRAPH_TYPE_ID) paragraphs[r.instanceId] = toParagraph(r);
-  }
-  if (draftContainerId) {
-    for (const r of listRecords(repo, { containerId: draftContainerId })) {
+  for (const c of [containerId, draftContainerId, binContainerId]) {
+    if (!c) continue;
+    for (const r of listRecords(repo, { containerId: c })) {
       if (r.typeId === PARAGRAPH_TYPE_ID) paragraphs[r.instanceId] = toParagraph(r);
     }
   }
@@ -345,10 +355,17 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
     hidden: Array.isArray(hiddenRaw) ? hiddenRaw.map(String) : [],
     draftContainerId,
     draftEntries,
+    binContainerId,
+    binEntries,
+    canBin: (types.find((t) => t.id === DOCUMENT_STATE_TYPE_ID)?.version ?? 0) >= 2,
     comments: loadComments(repo, types),
     attachments: context.attachments,
     related: context.related,
-    sharedIn: loadSharedIn(repo, types, Object.keys(paragraphs), [containerId, draftContainerId]),
+    sharedIn: loadSharedIn(repo, types, Object.keys(paragraphs), [
+      containerId,
+      draftContainerId,
+      binContainerId,
+    ]),
   };
 }
 
@@ -379,28 +396,38 @@ export function addComment(repo: SrsRepository, paragraphId: string, text: strin
   });
 }
 
-function patchRecord(repo: SrsRepository, id: string, patch: Record<string, unknown>): void {
+function patchRecord(
+  repo: SrsRepository,
+  id: string,
+  patch: Record<string, unknown>,
+  typeVersion?: number
+): void {
   const cur = getRecord(repo, id);
   if (!cur) throw new Error("Record not found");
   const fieldValues: Record<string, unknown> = { ...cur.fieldValues, ...patch };
   if (fieldValues.paragraph_title === "") fieldValues.paragraph_title = undefined; // optional: clear
-  updateRecord(repo, id, { fieldValues: JSON.parse(JSON.stringify(fieldValues)) });
+  updateRecord(repo, id, {
+    fieldValues: JSON.parse(JSON.stringify(fieldValues)),
+    ...(typeVersion && { typeVersion }),
+  });
 }
 
 export const setBody = (repo: SrsRepository, id: string, body: string): void =>
   patchRecord(repo, id, { body });
-/** The draft container's title, from its essay's (one convention for new, copy and rename). */
-const draftTitle = (title: string): string => `${title} (draft)`;
+/** A side area's container title (draft / bin), from its essay's (one convention for new, copy and rename). */
+const areaTitle = (title: string, area: "draft" | "bin"): string => `${title} (${area})`;
 
-/** Rename the essay record and its containers (the document's and its draft's). */
+/** Rename the essay record and its containers (the document's, its draft's and its bin's). */
 export function setEssayTitle(
   repo: SrsRepository,
-  m: Pick<EssayModel, "essayId" | "containerId" | "draftContainerId">,
+  m: Pick<EssayModel, "essayId" | "containerId" | "draftContainerId" | "binContainerId">,
   title: string
 ): void {
   patchRecord(repo, m.essayId, { title });
   updateContainer(repo, m.containerId, { title });
-  if (m.draftContainerId) updateContainer(repo, m.draftContainerId, { title: draftTitle(title) });
+  if (m.draftContainerId)
+    updateContainer(repo, m.draftContainerId, { title: areaTitle(title, "draft") });
+  if (m.binContainerId) updateContainer(repo, m.binContainerId, { title: areaTitle(title, "bin") });
 }
 export const setTitle = (repo: SrsRepository, id: string, title: string): void =>
   patchRecord(repo, id, { paragraph_title: title });
@@ -435,7 +462,20 @@ export const shiftEntry = (
   moveContainerMemberRelative(repo, container, id, { shift });
 };
 
-/** Move a paragraph between the essay and its draft container (remove + add). */
+/** `id` and its descendants in `container`, in outline order with depth relative to `id`. */
+function runOf(repo: SrsRepository, container: string, id: string): OutlineEntry[] {
+  const body = getContainerOutline(repo, container).body;
+  const at = body.findIndex((e) => e.instanceId === id);
+  if (at < 0) return [];
+  const rest = body.slice(at + 1);
+  const end = rest.findIndex((e) => e.depth <= body[at].depth);
+  return [body[at], ...(end < 0 ? rest : rest.slice(0, end))].map((e) => ({
+    ...e,
+    depth: e.depth - body[at].depth,
+  }));
+}
+
+/** Move a paragraph and its subtree between the essay, its draft and its bin (remove + add). */
 export function transfer(
   repo: SrsRepository,
   from: string,
@@ -443,13 +483,60 @@ export function transfer(
   id: string,
   t?: Target
 ): void {
-  removeContainerMember(repo, from, id);
+  const run = runOf(repo, from, id);
+  for (const e of [...run].reverse()) removeContainerMember(repo, from, e.instanceId);
   place(repo, to, id, t);
+  const last: string[] = [id]; // last added entry per relative depth
+  for (const e of run.slice(1)) {
+    const sib = last[e.depth];
+    addContainerMemberRelative(
+      repo,
+      to,
+      e.instanceId,
+      sib ?? last[e.depth - 1],
+      sib ? "after" : "into"
+    );
+    last.length = e.depth;
+    last[e.depth] = e.instanceId;
+  }
+}
+
+/** Delete = move into the Bin, creating it (and upgrading a v1 state record) on first use. */
+export function binParagraph(repo: SrsRepository, m: EssayModel, id: string): void {
+  if (!m.stateId) throw new Error("This essay has no document-state record");
+  let bin = m.binContainerId;
+  if (!bin) {
+    bin = createContainer(repo, { title: areaTitle(m.title, "bin") }).containerId;
+    // v1 state records upgrade to the installed (v2) type in the same write that records the Bin.
+    patchRecord(
+      repo,
+      m.stateId,
+      { bin_container_id: bin },
+      typeVersion(repo, DOCUMENT_STATE_TYPE_ID)
+    );
+  }
+  transfer(repo, m.containerId, bin, id);
+}
+
+/**
+ * Permanent delete, only from the Bin: the paragraph's run, with each paragraph's comment
+ * records. A paragraph another document holds is only taken out of the Bin, never deleted.
+ */
+export function deleteForever(repo: SrsRepository, m: EssayModel, id: string): void {
+  const bin = m.binContainerId;
+  if (!bin) throw new Error("This essay has no Bin");
+  for (const e of [...runOf(repo, bin, id)].reverse()) {
+    removeContainerMember(repo, bin, e.instanceId);
+    if (m.sharedIn[e.instanceId]) continue;
+    for (const r of listRelations(repo, { relationType: COMMENTS_ON, target: e.instanceId }))
+      deleteRecord(repo, r.sourceInstanceId, true);
+    deleteRecord(repo, e.instanceId, true);
+  }
 }
 
 /** The editor's own state for an essay: a draft container + the document-state record. */
 function addEditorState(repo: SrsRepository, essayId: string, title: string): void {
-  const draft = createContainer(repo, { title: draftTitle(title) });
+  const draft = createContainer(repo, { title: areaTitle(title, "draft") });
   createRecord(repo, DOCUMENT_STATE_TYPE_ID, typeVersion(repo, DOCUMENT_STATE_TYPE_ID), {
     fieldValues: { essay: essayId, hidden_instance_ids: [], draft_container_id: draft.containerId },
   });

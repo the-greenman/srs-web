@@ -1,24 +1,4 @@
 {
-  "srsj": "2",
-  "manifest": {
-    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
-      "containerId": "4cd37b83-6625-40ed-abad-31dea5a77800",
-      "identityInstanceId": "0889e3d4-b259-4735-a439-d7216cee1956",
-      "memberInstanceIds": [
-        {
-          "instanceId": "0889e3d4-b259-4735-a439-d7216cee1956"
-        }
-      ],
-      "title": "Essay fixture"
-    },
-    "createdAt": "2026-10-02T22:01:12.625704949+00:00",
-    "dataModelRevision": 9,
-    "namespace": "com.mudemocracy.essay",
-    "repositoryId": "4cd37b83-6625-40ed-abad-31dea5a77800",
-    "srsVersion": "2.0-draft",
-    "title": "Essay fixture"
-  },
   "data": {
     "containers/essay-draft-de837958.json": {
       "containerId": "de837958-0af1-4b67-8245-df7a46706b76",
@@ -81,6 +61,22 @@
       ],
       "version": 1
     },
+    "package/fields/bincontainerid-95a4f7ad.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Editor state only: the containerId of the container that holds paragraphs deleted from this essay (the Bin). Deleting a paragraph moves it here, like Drafts; deleting from the Bin is permanent. Optional; absent until the editor first deletes a paragraph. Ignored by compositions and renderers."
+      },
+      "createdAt": "2026-10-03T00:00:00Z",
+      "description": "Container holding paragraphs deleted from this essay (the Bin).",
+      "fieldType": {
+        "datatype": "string",
+        "format": "uuid"
+      },
+      "id": "95a4f7ad-757b-41bb-a301-e97da1a32148",
+      "name": "bin_container_id",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
     "package/fields/body-8a16f0d3.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
       "aiGuidance": {
@@ -98,7 +94,6 @@
       "version": 1
     },
     "package/fields/commenttext-581e484f.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
       "aiGuidance": {
         "purpose": "Plain markdown text of one comment. Agents and humans may write comments. A comment is feedback on exactly one paragraph (linked by comments-on) and never edits it. Authorship is the engine-stamped createdBy (RFC-046); never write an author here."
       },
@@ -262,6 +257,7 @@
         "fields/draftcontainerid-3cd8975b.json",
         "fields/essay-0a74cd82.json",
         "fields/commenttext-581e484f.json",
+        "fields/bincontainerid-95a4f7ad.json",
         "fields/statement-3b000001.json",
         "fields/title-3b000002.json"
       ],
@@ -272,6 +268,8 @@
       "protocols": [],
       "relationTypes": [
         "relation-types/commudemocracyessaycomments-on-607009b0.json",
+        "relation-types/commudemocracyessaybears-on-fc8b2665.json",
+        "relation-types/commudemocracyessaycounters-9eed1245.json",
         "relation-types/contains-3a1b2c4d.json",
         "relation-types/depends-on-7f8e9d0c.json",
         "relation-types/supersedes-c2d3e4f5.json",
@@ -287,14 +285,28 @@
         "types/essay-0021ef06.json",
         "types/paragraph-ec61d93d.json",
         "types/document-state-9785968f.json",
+        "types/document-state-9785968f-v1.json",
         "types/comment-7482e41b.json",
         "types/purpose-3c000001.json"
       ],
-      "version": "1.1.0",
+      "version": "1.3.0",
       "views": [
         "views/paragraph-view-16210dc2.json"
       ],
       "vocabularies": []
+    },
+    "package/relation-types/commudemocracyessaybears-on-fc8b2665.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "Paragraph bears on Problem",
+      "category": "association",
+      "createdAt": "2026-10-03T08:58:42.356397812+00:00",
+      "description": "Paragraph bears on Problem (paragraph → problem): the paragraph addresses or is about this problem statement. Essay-local. Guidance: source = essay paragraph, target = argument problem record; use only when the paragraph substantively addresses the problem; check existing relations first, relation_create does not reject duplicates.",
+      "id": "fc8b2665-a9e9-4d8f-a4cb-5556982d7121",
+      "irreflexive": true,
+      "key": "com.mudemocracy.essay/bears-on",
+      "label": "bears on",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
     },
     "package/relation-types/commudemocracyessaycomments-on-607009b0.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
@@ -306,6 +318,19 @@
       "irreflexive": true,
       "key": "com.mudemocracy.essay/comments-on",
       "label": "comments on",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    "package/relation-types/commudemocracyessaycounters-9eed1245.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "Source or Claim counters Paragraph",
+      "category": "association",
+      "createdAt": "2026-10-03T08:58:42.358600456+00:00",
+      "description": "Source or claim counters Paragraph (source|claim → paragraph): it argues against what the paragraph says. Essay-local; supporting citations use core evidences instead. Guidance: source = argument source or claim record, target = essay paragraph; use only for genuine opposition to the paragraph's assertion, not mere difference of topic; check existing relations first, relation_create does not reject duplicates.",
+      "id": "9eed1245-e4b5-4446-bbb0-c96994cf405a",
+      "irreflexive": true,
+      "key": "com.mudemocracy.essay/counters",
+      "label": "counters",
       "namespace": "com.mudemocracy.essay",
       "version": 1
     },
@@ -424,7 +449,7 @@
       "namespace": "com.mudemocracy.essay",
       "version": 1
     },
-    "package/types/document-state-9785968f.json": {
+    "package/types/document-state-9785968f-v1.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
       "aiGuidance": {
         "purpose": "Editor state, one record per essay: which members the editor hides or folds and which container holds the draft paragraphs. Hide/fold are editor mechanics, not document meaning, so spec renderers and compositions ignore this type. Do not use it to carry content."
@@ -456,6 +481,45 @@
       "name": "document-state",
       "namespace": "com.mudemocracy.essay",
       "version": 1
+    },
+    "package/types/document-state-9785968f.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Editor state, one record per essay: which members the editor hides or folds, which container holds the draft paragraphs, and which container is the Bin (paragraphs deleted from the essay; deleting from the Bin is permanent). Hide/fold, drafts and the bin are editor mechanics, not document meaning, so spec renderers and compositions ignore this type. Do not use it to carry content."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "Application-private editor state for one essay: hidden members, the draft container and the bin container.",
+      "fields": [
+        {
+          "displayLabel": "Essay",
+          "fieldId": "0a74cd82-0ca0-4268-8a94-dca6927171d3",
+          "order": 0,
+          "required": true
+        },
+        {
+          "displayLabel": "Hidden instance ids",
+          "fieldId": "7cbb105e-7215-4772-a039-4f77671c214b",
+          "order": 1,
+          "required": false
+        },
+        {
+          "displayLabel": "Draft container id",
+          "fieldId": "3cd8975b-7e51-457c-88f9-2173d0df5d87",
+          "order": 2,
+          "required": false
+        },
+        {
+          "displayLabel": "Bin container id",
+          "fieldId": "95a4f7ad-757b-41bb-a301-e97da1a32148",
+          "order": 3,
+          "required": false
+        }
+      ],
+      "id": "9785968f-bdd4-4c91-81ef-0e62075f3503",
+      "identityFieldId": "0a74cd82-0ca0-4268-8a94-dca6927171d3",
+      "name": "document-state",
+      "namespace": "com.mudemocracy.essay",
+      "version": 2
     },
     "package/types/essay-0021ef06.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
@@ -575,9 +639,9 @@
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
       "createdAt": "2026-10-02T22:01:12.424193043+00:00",
       "fieldValues": {
+        "draft_container_id": "de837958-0af1-4b67-8245-df7a46706b76",
         "essay": "ae3d5221-b2ac-4ae8-a180-d90f84f49435",
-        "hidden_instance_ids": [],
-        "draft_container_id": "de837958-0af1-4b67-8245-df7a46706b76"
+        "hidden_instance_ids": []
       },
       "instanceId": "c24a9e31-219a-4c16-910b-e3de97666679",
       "typeId": "9785968f-bdd4-4c91-81ef-0e62075f3503",
@@ -590,8 +654,8 @@
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
       "createdAt": "2026-10-02T22:01:11.957874818+00:00",
       "fieldValues": {
-        "title": "On small democracy",
-        "summary": "A fixture essay."
+        "summary": "A fixture essay.",
+        "title": "On small democracy"
       },
       "instanceId": "ae3d5221-b2ac-4ae8-a180-d90f84f49435",
       "typeId": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
@@ -604,8 +668,8 @@
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
       "createdAt": "2026-10-02T22:01:12.222543885+00:00",
       "fieldValues": {
-        "paragraph_title": "Spare",
-        "body": "Drafted paragraph."
+        "body": "Drafted paragraph.",
+        "paragraph_title": "Spare"
       },
       "instanceId": "2027b81d-15a7-43f6-977b-26603412fbf4",
       "typeId": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
@@ -618,8 +682,8 @@
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
       "createdAt": "2026-10-02T22:01:12.091947145+00:00",
       "fieldValues": {
-        "paragraph_title": "Claim",
-        "body": "Second paragraph."
+        "body": "Second paragraph.",
+        "paragraph_title": "Claim"
       },
       "instanceId": "3cce92a6-aa40-4412-9a05-f15e6c263c38",
       "typeId": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
@@ -645,8 +709,8 @@
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
       "createdAt": "2026-10-02T22:01:12.024667676+00:00",
       "fieldValues": {
-        "paragraph_title": "Opening",
-        "body": "First paragraph."
+        "body": "First paragraph.",
+        "paragraph_title": "Opening"
       },
       "instanceId": "d37f5c95-9f51-412c-935a-4288ca19700c",
       "typeId": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
@@ -669,5 +733,25 @@
       "typeVersion": 1,
       "updatedAt": "2026-10-02T22:01:11.887494754+00:00"
     }
-  }
+  },
+  "manifest": {
+    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+    "container": {
+      "containerId": "4cd37b83-6625-40ed-abad-31dea5a77800",
+      "identityInstanceId": "0889e3d4-b259-4735-a439-d7216cee1956",
+      "memberInstanceIds": [
+        {
+          "instanceId": "0889e3d4-b259-4735-a439-d7216cee1956"
+        }
+      ],
+      "title": "Essay fixture"
+    },
+    "createdAt": "2026-10-02T22:01:12.625704949+00:00",
+    "dataModelRevision": 9,
+    "namespace": "com.mudemocracy.essay",
+    "repositoryId": "4cd37b83-6625-40ed-abad-31dea5a77800",
+    "srsVersion": "2.0-draft",
+    "title": "Essay fixture"
+  },
+  "srsj": "2"
 }
