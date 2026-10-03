@@ -861,7 +861,7 @@
 {/snippet}
 
 <!-- Shells that render `agentPanel` (the essay rail) own its placement; the rest get the floating dock. -->
-{#if relayUrl && repo && editorMode !== "essay"}
+{#if relayUrl && repo && !getEditor(editorMode)?.hostsAgentPanel}
   <div class="mcp-dock">
     <Panel title="Agents" persistKey="dock.agents">{@render agentDock()}</Panel>
   </div>

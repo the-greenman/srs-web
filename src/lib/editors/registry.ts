@@ -60,6 +60,8 @@ export interface EditorDefinition {
   requires: PackageRequirement[];
   create?: (repo: SrsRepository) => void | Promise<void>;
   component: Component<EditorShellProps>;
+  /** The shell renders `agentPanel` in its own layout, so App hides the floating agent dock. */
+  hostsAgentPanel?: boolean;
 }
 
 export const EDITORS: EditorDefinition[] = [
@@ -91,6 +93,7 @@ export const EDITORS: EditorDefinition[] = [
   {
     id: "essay",
     label: "Essay",
+    hostsAgentPanel: true,
     description: "Structured essay editor.",
     entryTypeId: ESSAY_TYPE_ID,
     requires: [
