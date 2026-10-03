@@ -384,6 +384,14 @@
   onMount(loadCatalog);
 </script>
 
+{#snippet editorButtons(testPrefix: string)}
+  {#each packageEditors as editor (editor.id)}
+    {#if onOpenEditor}
+      <button data-testid="{testPrefix}-{editor.id}" title={editor.description} onclick={() => onOpenEditor(editor.id)}>{editor.label}</button>
+    {/if}
+  {/each}
+{/snippet}
+
 <div class="generic-shell" data-testid="generic-srs-shell">
   <aside class="generic-nav" aria-label="Repository navigation">
     <div class="generic-brand">
@@ -441,11 +449,7 @@
     {#if packageEditors.length > 0}
       <section>
         <h2>Package editors</h2>
-        {#each packageEditors as editor (editor.id)}
-          {#if onOpenEditor}
-            <button data-testid="package-editor-{editor.id}" title={editor.description} onclick={() => onOpenEditor(editor.id)}>{editor.label}</button>
-          {/if}
-        {/each}
+        {@render editorButtons("package-editor")}
       </section>
     {/if}
 
@@ -459,6 +463,10 @@
   </aside>
 
   <main class="generic-main">
+    {#if packageEditors.length > 0 && onOpenEditor}
+      <!-- phones: the nav sections are hidden (<=600px), so the picker is repeated here via the same snippet -->
+      <div class="editors-mobile" aria-label="Open in editor"><span>Open in:</span>{@render editorButtons("package-editor-mobile")}</div>
+    {/if}
     {#if surface === "document"}
       <header>
         <p>Document</p>
@@ -642,5 +650,7 @@
   .graph-frame g:hover circle, .graph-frame g.focused circle { fill:#52756c; stroke:#23443d; }
   .graph-frame g.focused .node-label { font-weight:700; fill:#23443d; }
   @media (max-width: 900px) { .generic-shell { grid-template-columns:13rem minmax(0,1fr); } .generic-inspector { grid-column:1 / -1; border-left:0; border-top:1px solid #d5dbd8; } }
-  @media (max-width: 600px) { .generic-shell { display:block; } .generic-nav { min-height:auto; } .generic-nav section { display:none; } .generic-nav section:first-of-type { display:flex; } }
+  .editors-mobile { display:none; }
+  .editors-mobile button { font:inherit; min-height:44px; padding:.5rem .8rem; border:1px solid #52756c; border-radius:.25rem; background:#fff; color:#23443d; cursor:pointer; }
+  @media (max-width: 600px) { .editors-mobile { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; } .generic-shell { display:block; } .generic-nav { min-height:auto; } .generic-nav section { display:none; } .generic-nav section:first-of-type { display:flex; } }
 </style>

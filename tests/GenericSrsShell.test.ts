@@ -42,7 +42,7 @@ describe("GenericSrsShell", () => {
 
     expect(await screen.findByRole("button", { name: /reader/ })).toBeTruthy();
     expect(mocks.renderDocumentView).toHaveBeenCalledWith({}, "composition-1", "html");
-    expect(screen.getByRole("button", { name: "Governance" })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Governance" })).toHaveLength(2); // nav + phone bar (srs-web#381)
   });
 
   it("renders a relation map scoped by the engine to the active container", async () => {
