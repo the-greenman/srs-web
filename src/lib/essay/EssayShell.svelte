@@ -241,7 +241,12 @@
   }
 </script>
 
-<svelte:window onkeydown={(e) => e.key === "Escape" && zoomId && (zoomId = null)} />
+<!-- Esc leaves zoom, except while typing (Esc there cancels the field's own edit). -->
+<svelte:window
+  onkeydown={(e) => {
+    if (e.key === "Escape" && zoomId && !(e.target as HTMLElement | null)?.closest?.("input, textarea, [contenteditable]")) zoomId = null;
+  }}
+/>
 
 <div class="essay-shell">
   <header class="essay-shell__bar">
