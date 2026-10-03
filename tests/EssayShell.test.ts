@@ -190,3 +190,48 @@ it("the Agents panel shows connected/total, and a feed click leaves zoom and foc
   expect(getByText(/controls edited ¶ Two · /)).toBeTruthy();
   expect(container.querySelector('[data-focus-key="body:q"]')).not.toBeNull();
 });
+
+const two = () => ({
+  ...model,
+  entries: [...model.entries, { instanceId: "q", depth: 0, hasChildren: false } as never],
+  paragraphs: { ...model.paragraphs, q: { id: "q", title: "", body: "Other" } },
+});
+async function mountAt(hash: string) {
+  history.replaceState(null, "", "/" + hash);
+  doc.loadEssay.mockReturnValue(two());
+  const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
+  const r = render(EssayShell, { repo: {} as never, repoName: "r", onExport: () => {}, documentRevision: 1 });
+  await tick();
+  return r;
+}
+
+it("addresses: z in the hash zooms, p focuses without editing, unknown ids fall back with a notice", async () => {
+  let r = await mountAt("#e=e&z=q");
+  expect(r.container.querySelectorAll(".block")).toHaveLength(1);
+  expect(r.container.querySelector(".block")?.getAttribute("data-block-id")).toBe("q");
+  r.unmount();
+  r = await mountAt("#e=e&p=q");
+  expect(r.container.querySelectorAll(".block")).toHaveLength(2);
+  await tick();
+  expect(document.activeElement?.getAttribute("data-focus-key")).toBe("handle:q");
+  expect(r.container.querySelector(".block__body")).toBeNull(); // still rendered, not editing
+  r.unmount();
+  r = await mountAt("#e=e&z=gone");
+  expect(r.container.querySelectorAll(".block")).toHaveLength(2);
+  expect(r.getByTestId("address-notice").textContent).toContain("no longer here");
+  await fireEvent.click(r.getByLabelText("Dismiss"));
+  expect(r.queryByTestId("address-notice")).toBeNull();
+});
+
+it("zooming pushes the hash once and popstate leaves zoom", async () => {
+  const r = await mountAt("");
+  const before = history.length;
+  await fireEvent.click(r.container.querySelector<HTMLElement>("[aria-label^='Zoom to']")!);
+  expect(location.hash).toBe("#e=e&z=p");
+  expect(history.length).toBe(before + 1);
+  history.replaceState(null, "", "/");
+  window.dispatchEvent(new PopStateEvent("popstate"));
+  await tick();
+  expect(r.container.querySelectorAll(".block")).toHaveLength(2);
+  expect(history.length).toBe(before + 1); // applying the URL pushed nothing
+});

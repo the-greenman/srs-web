@@ -7,7 +7,7 @@
   paragraphs live in the document-state record.
 -->
 <script lang="ts">
-  import { onDestroy, tick, untrack } from "svelte";
+  import { onDestroy, onMount, tick, untrack } from "svelte";
   import type { Snippet } from "svelte";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import AgentFeed from "$lib/components/AgentFeed.svelte";
@@ -43,6 +43,7 @@
   } from "./essay-document.js";
   import { essayWriteGuard } from "./essay-document.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
+  import { formatAddress, parseAddress } from "./address.js";
   import { annotationsFor, loadVariant, saveVariant } from "./annotations.js";
   import type { Annotation } from "./annotations.js";
   import { hiddenByAncestor, outsideRun, visibleEntries } from "./essay-model.js";
@@ -216,13 +217,56 @@
     void run(() => addComment(repo, paragraphId, text));
   }
 
-  /** Focus a paragraph from the agent feed; leave zoom first when it is hidden by it. */
-  async function focusParagraph(id: string): Promise<void> {
-    if (zoomId && !items.some((i) => i.id === id)) zoomId = null;
+  /** Focus a paragraph (agent feed, deep link); leave zoom first when it is hidden by it. */
+  async function focusParagraph(id: string, key = "body"): Promise<void> {
+    if (zoomId && !items.some((i) => i.id === id)) setZoom(null);
     await tick();
-    const el = document.querySelector<HTMLElement>(`[data-focus-key="body:${id}"]`);
+    const el = document.querySelector<HTMLElement>(`[data-focus-key="${key}:${id}"]`);
     el?.focus();
     el?.scrollIntoView?.({ block: "center" });
+  }
+
+  /**
+   * Addresses (address.ts): zoom and essay switches push the hash; applying an address from the
+   * URL never pushes (the hash already equals the state, so `push` is a no-op).
+   */
+  let notice = $state<string | null>(null);
+  let linkFallback = $state<string | null>(null);
+  const push = () => {
+    const h = formatAddress({ essayId: essayId ?? undefined, zoomId: zoomId ?? undefined });
+    if (h !== (location.hash === "#" ? "" : location.hash)) history.pushState(null, "", h || location.pathname + location.search);
+  };
+  function setZoom(id: string | null) {
+    zoomId = id;
+    push();
+  }
+  function applyAddress() {
+    const a = parseAddress(location.hash);
+    notice = null;
+    if (a.essayId && a.essayId !== essayId) {
+      if (essays.some((e) => e.id === a.essayId)) {
+        essayId = a.essayId;
+        loadFolded(essayId);
+        reload();
+      } else notice = "That link points to an essay that is not here; showing the current one.";
+    }
+    const want = a.zoomId ?? a.paragraphId;
+    if (want && !allItems.some((i) => i.id === want)) notice ??= "That paragraph is no longer here; showing the whole document.";
+    zoomId = a.zoomId && allItems.some((i) => i.id === a.zoomId) ? a.zoomId : null;
+    if (a.paragraphId && !zoomId && allItems.some((i) => i.id === a.paragraphId)) void focusParagraph(a.paragraphId, "handle");
+  }
+  onMount(() => applyAddress());
+
+  async function copyLink(id: string, zoom = false) {
+    const url = location.origin + location.pathname + location.search +
+      formatAddress({ essayId: essayId ?? undefined, [zoom ? "zoomId" : "paragraphId"]: id });
+    try {
+      await navigator.clipboard.writeText(url);
+      linkFallback = null;
+      notice = "Link copied";
+    } catch {
+      linkFallback = url;
+    }
   }
 
   /** One clock for every relative time in the Agents panel. */
@@ -304,14 +348,16 @@
     void run(() => {
       essayId = newEssay(repo, "Untitled essay");
     });
+    push();
   }
 </script>
 
 <!-- Esc leaves zoom, except while typing (Esc there cancels the field's own edit). -->
 <svelte:window
   onkeydown={(e) => {
-    if (e.key === "Escape" && zoomId && !(e.target as HTMLElement | null)?.closest?.("input, textarea, [contenteditable]")) zoomId = null;
+    if (e.key === "Escape" && zoomId && !(e.target as HTMLElement | null)?.closest?.("input, textarea, [contenteditable]")) setZoom(null);
   }}
+  onpopstate={applyAddress}
 />
 
 <div class="essay-shell">
@@ -327,6 +373,7 @@
             zoomId = null;
             loadFolded(essayId);
             reload();
+            push();
           }}
         >
           {#each essays as essay (essay.id)}<option value={essay.id}>{essay.title}</option>{/each}
@@ -346,6 +393,16 @@
     </div>
   </header>
 
+  {#if notice}
+    <p class="essay-shell__status" role="status" data-testid="address-notice">
+      {notice} <button type="button" class="block__action" aria-label="Dismiss" onclick={() => (notice = null)}>×</button>
+    </p>
+  {/if}
+  {#if linkFallback}
+    <p class="essay-shell__status" role="status">
+      Copy this link: <input readonly aria-label="Link" data-testid="link-fallback" value={linkFallback} onfocus={(e) => e.currentTarget.select()} />
+    </p>
+  {/if}
   {#if error}<p class="essay-shell__error" role="alert" data-testid="essay-error">{error}</p>{/if}
 
   {#if !model}
@@ -364,7 +421,10 @@
           oncommit={(v) => v.trim() && run(() => setEssayTitle(repo, model!.essayId, v.trim()))}
         />
         {#if zoomId}
-          <div class="essay-shell__zoombar"><Button variant="ghost" data-testid="zoom-exit" onclick={() => (zoomId = null)}>← Whole document</Button></div>
+          <div class="essay-shell__zoombar">
+            <Button variant="ghost" data-testid="zoom-exit" onclick={() => setZoom(null)}>← Whole document</Button>
+            <Button variant="ghost" data-testid="zoom-copy-link" onclick={() => copyLink(zoomId!, true)}>Copy link</Button>
+          </div>
         {/if}
         {#if items.length === 0}
           <p class="essay-shell__hint">No paragraphs yet.</p>
@@ -390,7 +450,8 @@
                 inherited={inherited.has(p.id)}
                 {handle}
                 {margin}
-                onzoom={() => (zoomId = p.id)}
+                onzoom={() => setZoom(p.id)}
+                oncopylink={() => copyLink(p.id)}
                 onbody={(v) => run(() => setBody(repo, p.id, v))}
                 ontitle={(v) => run(() => setTitle(repo, p.id, v))}
                 onhide={(h) => run(() => setHidden(repo, model!, p.id, h))}

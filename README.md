@@ -328,3 +328,7 @@ Local browser files remain download-only (`Open` + `Download`).
 The SRS web editor is released under the [Apache License 2.0](LICENSE).
 
 Contributions to this repository are made under the terms of the [Developer Certificate of Origin](CONTRIBUTING.md#developer-certificate-of-origin). By submitting a pull request, you certify that you have the right to submit that work under the Apache License 2.0 by signing off your commits with `git commit -s`.
+
+## Paragraph addresses
+
+The essay editor keeps its state in the URL hash: `#e=<essayId>&p=<paragraphId>` opens an essay and scrolls to and focuses a paragraph (rendered, not editing); `&z=<paragraphId>` zooms into it instead. Ids are instance UUIDs, so `#e=…&p=…` is the stable paragraph address (agents can cite it). Parsing lives in `src/lib/essay/address.ts`.

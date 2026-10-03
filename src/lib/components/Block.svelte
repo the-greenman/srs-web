@@ -1,5 +1,5 @@
 <!--
-  Block — one paragraph: a narrow gutter (⋮⋮ drag handle; eye + move-to-draft + zoom on hover/focus), a right margin slot (`margin`),
+  Block — one paragraph: a narrow gutter (⋮⋮ drag handle; eye + move-to-draft + zoom + copy-link on hover/focus), a right margin slot (`margin`),
   a small mono title above the body (InlineText) and the body in two states: rendered markdown
   (core renderMarkdown, already sanitized) until focused, then a plain-text source editor
   (`contenteditable="plaintext-only"`, no rich-text dependency). Hidden = collapsed in place.
@@ -33,6 +33,7 @@
     onmove,
     onpull,
     onzoom,
+    oncopylink,
     margin,
   }: {
     id: string;
@@ -51,6 +52,7 @@
     onmove: (dir: 'up' | 'down') => void;
     onpull?: () => void;
     onzoom?: () => void;
+    oncopylink?: () => void;
     /** The one right-margin slot: comment badge, attachment glyphs. */
     margin?: Snippet;
   } = $props();
@@ -170,6 +172,9 @@
       {/if}
       {#if onzoom}
         <button type="button" class="block__action" aria-label={`Zoom to ${shortLabel}`} title="Zoom to this paragraph" onclick={onzoom}>⤢</button>
+      {/if}
+      {#if oncopylink}
+        <button type="button" class="block__action" aria-label={`Copy link to ${shortLabel}`} title="Copy link to this paragraph" onclick={oncopylink}>🔗</button>
       {/if}
     </div>
   </div>
