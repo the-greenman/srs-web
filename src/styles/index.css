@@ -54,6 +54,7 @@
 @import url("./components/md-help.css") layer(components);
 @import url("./components/comments.css") layer(components);
 @import url("./components/attachment.css") layer(components);
+@import url("./components/margin.css") layer(components);
 
 /* Utilities — last word in the cascade */
 @import url("./utilities.css") layer(utilities);

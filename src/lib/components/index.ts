@@ -80,5 +80,6 @@ export { default as InlineText } from "./InlineText.svelte";
 // Attachments (srs-web#329)
 export { default as AttachmentGlyph } from "./AttachmentGlyph.svelte";
 export { default as CommentBadge } from "./CommentBadge.svelte";
+export { default as ParagraphMargin } from "./ParagraphMargin.svelte";
 export { default as HoverCard } from "./HoverCard.svelte";
 export { default as PinnedPane } from "./PinnedPane.svelte";

@@ -17,6 +17,7 @@ import {
   getRecord,
   listContainers,
   listRecords,
+  listRelationTypes,
   listRelations,
   listTypes,
   moveContainerMemberRelative,
@@ -72,6 +73,20 @@ export interface Attachment {
   /** Readable text of the neighbour (note sections / string field values), blank-line joined. */
   text: string;
 }
+/**
+ * A semantic relation between this paragraph and another paragraph (derived-from, supersedes,
+ * refines, package-defined types...) in either direction. Structural edges (the core's
+ * `composition` / `sequence` categories: contains, precedes) never appear.
+ */
+export interface Related {
+  /** Stable key: the relation id. */
+  id: string;
+  relationType: string;
+  direction: "out" | "in";
+  /** The other end's instance id (a paragraph; it may live in another essay). */
+  otherId: string;
+  label: string;
+}
 export interface EssaySummary {
   id: string;
   title: string;
@@ -91,6 +106,8 @@ export interface EssayModel {
   comments: Record<string, Comment[]>;
   /** Attachments by paragraph id (see Attachment). */
   attachments: Record<string, Attachment[]>;
+  /** Semantic relations to other paragraphs by paragraph id (see Related). */
+  related: Record<string, Related[]>;
 }
 
 /**
@@ -195,8 +212,33 @@ const toAttachment = (r: ContextRelation): Attachment | null => {
   };
 };
 
-/** Last attachments read per repository handle, keyed on the engine write epoch. */
-const attachmentCache = new WeakMap<object, { key: string; value: Record<string, Attachment[]> }>();
+/** Relation categories that are layout, not meaning (core RelationTypeDefinition.category). */
+const STRUCTURAL = new Set(["composition", "sequence"]);
+
+const toRelated = (r: ContextRelation, structural: Set<string>): Related | null => {
+  const n = r.neighbour;
+  if (n?.kind !== "record" || n.typeId !== PARAGRAPH_TYPE_ID || structural.has(r.relationType))
+    return null;
+  const outgoing = r.direction === "out";
+  return {
+    id: r.relationId,
+    relationType: r.relationType,
+    direction: r.direction,
+    otherId: n.instanceId,
+    label:
+      (outgoing ? r.targetLabel : r.sourceLabel) ||
+      str(n.fieldValues.paragraph_title) ||
+      str(n.fieldValues.body).slice(0, 40) ||
+      "untitled",
+  };
+};
+
+interface ParagraphContext {
+  attachments: Record<string, Attachment[]>;
+  related: Record<string, Related[]>;
+}
+/** Last context read per repository handle, keyed on the engine write epoch. */
+const attachmentCache = new WeakMap<object, { key: string; value: ParagraphContext }>();
 
 /**
  * Attachments per paragraph from the engine's context read (both directions, neighbours inline).
@@ -204,16 +246,22 @@ const attachmentCache = new WeakMap<object, { key: string; value: Record<string,
  * note in place refreshes too. Cost ~0.14 ms per paragraph per write (100 paragraphs ~14 ms) and
  * writes are commits, not keystrokes; add an engine bulk read if essays get much larger.
  */
-function loadAttachments(repo: SrsRepository, ids: string[]): Record<string, Attachment[]> {
+function loadContext(repo: SrsRepository, ids: string[]): ParagraphContext {
   const key = `${ids.join(",")}|${repo.write_epoch()}`;
   const hit = attachmentCache.get(repo);
   if (hit?.key === key) return hit.value;
-  const out: Record<string, Attachment[]> = {};
+  const structural = new Set(
+    listRelationTypes(repo)
+      .filter((t) => STRUCTURAL.has(t.category ?? ""))
+      .map((t) => t.key)
+  );
+  const out: ParagraphContext = { attachments: {}, related: {} };
   for (const id of ids) {
-    const list = contextRecord(repo, id)
-      .relations.map(toAttachment)
-      .filter((a): a is Attachment => a !== null);
-    if (list.length) out[id] = list;
+    const rels = contextRecord(repo, id).relations;
+    const att = rels.map(toAttachment).filter((a): a is Attachment => a !== null);
+    const rel = rels.map((r) => toRelated(r, structural)).filter((a): a is Related => a !== null);
+    if (att.length) out.attachments[id] = att;
+    if (rel.length) out.related[id] = rel;
   }
   attachmentCache.set(repo, { key, value: out });
   return out;
@@ -242,6 +290,7 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
       if (r.typeId === PARAGRAPH_TYPE_ID) paragraphs[r.instanceId] = toParagraph(r);
     }
   }
+  const context = loadContext(repo, Object.keys(paragraphs));
   const hiddenRaw = state?.fieldValues.hidden_instance_ids;
   return {
     essayId,
@@ -254,7 +303,8 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
     draftContainerId,
     draftEntries,
     comments: loadComments(repo, types),
-    attachments: loadAttachments(repo, Object.keys(paragraphs)),
+    attachments: context.attachments,
+    related: context.related,
   };
 }
 

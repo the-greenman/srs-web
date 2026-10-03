@@ -144,6 +144,25 @@
       <p class="t-muted">Specimen for <span class="t-mono">CommentBadge</span>: right-margin speech bubble with the size of the paragraph's conversation (srs-web#364). Zero shows "+" and only appears on block hover or focus.</p>
       <p><button class="comment-badge" type="button" aria-expanded="false" aria-label="3 comments on Opening">3</button> <button class="comment-badge" type="button" aria-expanded="true" aria-label="1 comment on Claim">1</button> <button class="comment-badge" type="button" aria-label="Add a comment on Aside">+</button></p>
 
+    <h2>ParagraphMargin</h2>
+    <p class="t-muted">Specimen for <span class="t-mono">ParagraphMargin</span> (srs-web#374): one renderer for every annotation kind (comments, attachment, relation), ordered and overflowed in one place. <span class="t-mono">variant</span> is the experiment seam: compact (marks only) and expanded (marks + text), remembered per viewer.</p>
+    <div style="display:flex;gap:var(--space-lg);align-items:flex-start">
+      <div class="margin margin--compact" style="width:2.5rem">
+        <div class="margin__item"><button class="comment-badge" type="button" aria-expanded="false" aria-label="3 comments on Opening">3</button></div>
+        <div class="margin__item"><span class="glyph-wrap"><button class="glyph" style="--glyph-hue:200" type="button" aria-pressed="false">S</button></span></div>
+        <div class="margin__item"><button class="margin__relation" type="button" aria-label="derived-from → Original">→</button></div>
+        <div class="margin__item"><button class="margin__relation" type="button" aria-label="supersedes ← Newer">←</button></div>
+        <div class="margin__overflow"><button class="margin__more" type="button" aria-label="2 more annotations">+2</button></div>
+      </div>
+      <div class="margin margin--expanded" style="width:11rem">
+        <div class="margin__item"><button class="comment-badge" type="button" aria-expanded="false" aria-label="3 comments on Opening">3</button></div>
+        <div class="margin__item"><span class="glyph-wrap"><button class="glyph" style="--glyph-hue:200" type="button" aria-pressed="false">S</button></span><span class="margin__text">Smith 2020</span></div>
+        <div class="margin__item"><button class="margin__relation" type="button" aria-label="derived-from → Original">→</button><span class="margin__text">derived-from · Original</span></div>
+        <div class="margin__item"><button class="margin__relation" type="button" aria-label="supersedes ← Newer">←</button><span class="margin__text">supersedes · Newer</span></div>
+        <div class="margin__overflow"><button class="margin__more" type="button" aria-label="2 more annotations">+2</button></div>
+      </div>
+    </div>
+
     <h2>MCP connection</h2>
     <p class="t-muted">Specimen for <span class="t-mono">McpConnection</span> (srs-web#307): online state with copyable caller URL, rotation, and takeover.</p>
     <section class="mcp-conn" style="margin-top:var(--space-md)">

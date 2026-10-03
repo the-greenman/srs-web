@@ -157,7 +157,9 @@ describe.skipIf(!haveBindings)("paragraph attachments on the real engine (contex
   it("attachments are non-comment, non-paragraph neighbours in both directions; live after a write", async () => {
     const doc = await import("../src/lib/essay/essay-document.js");
     const { COMMENT_TYPE_ID } = await import("../src/lib/essay/type-registry.js");
-    const { createRecord, createRelation, listTypes, updateRecord } = await import("../src/lib/srs-client.js");
+    const { createRecord, createRelation, listTypes, updateRecord } = await import(
+      "../src/lib/srs-client.js"
+    );
     const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
     mkdirSync(dir, { recursive: true });
     copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
@@ -188,6 +190,20 @@ describe.skipIf(!haveBindings)("paragraph attachments on the real engine (contex
       "edited counter-claim"
     );
     const att = doc.loadEssay(repo, essayId).attachments;
+    // Paragraph-to-paragraph: precedes (structural) is dropped by core category; derived-from shows both ways.
+    expect(doc.loadEssay(repo, essayId).related).toEqual({});
+    createRelation(repo, {
+      relationType: "derived-from",
+      sourceInstanceId: b,
+      targetInstanceId: a,
+    });
+    const rel = doc.loadEssay(repo, essayId).related;
+    expect(rel[b].map((r) => [r.relationType, r.direction, r.otherId])).toEqual([
+      ["derived-from", "out", a],
+    ]);
+    expect(rel[a].map((r) => [r.relationType, r.direction, r.otherId])).toEqual([
+      ["derived-from", "in", b],
+    ]);
     expect(att[a].map((r) => [r.relationType, r.direction, r.neighbourId, r.text]).sort()).toEqual(
       [
         ["evidences", "in", x, "edited counter-claim"],

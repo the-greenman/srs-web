@@ -144,6 +144,8 @@ export interface SrsRepository {
   get_type(id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listPackages()
   list_packages(): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listRelationTypes()
+  list_relation_types(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listBlueprints()
   list_blueprints(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in documentViewsForContainer()
@@ -2114,4 +2116,16 @@ export function contextRecord(
   containerId?: string
 ): RecordContext {
   return repo.context_record(JSON.stringify({ recordId, containerId })) as RecordContext;
+}
+
+/** An installed RelationTypeDefinition, reduced to what clients read: `key` is the `relationType` string. */
+export interface RelationTypeInfo {
+  key: string;
+  label: string;
+  category?: string;
+}
+
+/** Installed relation types with the core's `category` (structural, never by name). Pure WASM pass-through. */
+export function listRelationTypes(repo: SrsRepository): RelationTypeInfo[] {
+  return repo.list_relation_types("{}") as RelationTypeInfo[];
 }
