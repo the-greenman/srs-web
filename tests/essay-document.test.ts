@@ -92,7 +92,7 @@ beforeEach(() => {
 
 describe("essay-document", () => {
   it("loads the core's outline body (identity excluded), plus hidden ids and the draft container", () => {
-    const model = loadEssay({} as never, "E");
+    const model = loadEssay({ write_epoch: () => 0 } as never, "E");
     expect(model.entries.map((e) => e.instanceId)).toEqual(["p1", "p2"]);
     expect(model.paragraphs.p1).toEqual({ id: "p1", title: "One", body: "x" });
     expect(model.hidden).toEqual(["p2"]);
@@ -119,7 +119,7 @@ describe("essay-document", () => {
       f.typeName === "comment" ? [c("b", "2"), c("a", "1")] : base(r, f)
     );
     m.listRelations.mockReturnValue([rel("r1", "b"), rel("r2", "a")]);
-    const repo = {};
+    const repo = { write_epoch: () => 0 };
     const commentReads = () =>
       m.listRecords.mock.calls.filter(([, f]) => f.typeName === "comment").length;
     expect(loadEssay(repo as never, "E").comments.p1.map((x) => x.id)).toEqual(["a", "b"]);
@@ -131,7 +131,7 @@ describe("essay-document", () => {
   });
 
   it("passes gestures to the core's relative ops unchanged (no client arithmetic)", () => {
-    const model = loadEssay({} as never, "E");
+    const model = loadEssay({ write_epoch: () => 0 } as never, "E");
     addParagraph({} as never, model, { id: "p1", zone: "after" });
     expect(m.addContainerMemberRelative).toHaveBeenCalledWith({}, "C", "new", "p1", "after");
     addParagraph({} as never, model);
@@ -173,7 +173,7 @@ describe("essay-document", () => {
   });
 
   it("the eye writes hidden ids into the document-state record, not the paragraph", () => {
-    const model = loadEssay({} as never, "E");
+    const model = loadEssay({ write_epoch: () => 0 } as never, "E");
     setHidden({} as never, model, "p1", true);
     expect(m.updateRecord).toHaveBeenCalledWith({}, "S", {
       fieldValues: { essay: "E", hidden_instance_ids: ["p2", "p1"], draft_container_id: "D" },

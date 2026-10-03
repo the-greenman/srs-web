@@ -157,7 +157,7 @@ describe.skipIf(!haveBindings)("paragraph attachments on the real engine (contex
   it("attachments are non-comment, non-paragraph neighbours in both directions; live after a write", async () => {
     const doc = await import("../src/lib/essay/essay-document.js");
     const { COMMENT_TYPE_ID } = await import("../src/lib/essay/type-registry.js");
-    const { createRecord, createRelation, listTypes } = await import("../src/lib/srs-client.js");
+    const { createRecord, createRelation, listTypes, updateRecord } = await import("../src/lib/srs-client.js");
     const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
     mkdirSync(dir, { recursive: true });
     copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
@@ -181,11 +181,16 @@ describe.skipIf(!haveBindings)("paragraph attachments on the real engine (contex
     doc.addComment(repo, a, "just a comment"); // comments-on: the thread's, never a glyph
     createRelation(repo, { relationType: "precedes", sourceInstanceId: a, targetInstanceId: b });
 
+    expect(Object.keys(doc.loadEssay(repo, essayId).attachments)).toEqual([a]);
+    // An in-place edit of an attached record (no relation change) refreshes the glyph text.
+    updateRecord(repo, x, { fieldValues: { comment_text: "edited counter-claim" } });
+    expect(doc.loadEssay(repo, essayId).attachments[a].find((r) => r.neighbourId === x)?.text).toBe(
+      "edited counter-claim"
+    );
     const att = doc.loadEssay(repo, essayId).attachments;
-    expect(Object.keys(att)).toEqual([a]);
     expect(att[a].map((r) => [r.relationType, r.direction, r.neighbourId, r.text]).sort()).toEqual(
       [
-        ["evidences", "in", x, "a counter-claim"],
+        ["evidences", "in", x, "edited counter-claim"],
         ["refines", "out", y, "a source"],
       ].sort()
     );

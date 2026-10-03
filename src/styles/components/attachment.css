@@ -21,7 +21,7 @@
   cursor: pointer;
 }
 .glyph.is-pinned {
-  background: hsl(var(--glyph-hue, 0) 45% 40%);
+  background: hsl(var(--glyph-hue, 0) 55% 26%); /* white text >= 4.5:1 at every hue */
   color: #fff;
 }
 .glyph:focus-visible {
