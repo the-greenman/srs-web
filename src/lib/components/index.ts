@@ -21,7 +21,6 @@ export { default as NavItem } from "./NavItem.svelte";
 
 // Inspector rail
 export { default as Inspector } from "./Inspector.svelte";
-export { default as InspectorSection } from "./InspectorSection.svelte";
 export { default as Meta } from "./Meta.svelte";
 
 // Content / records

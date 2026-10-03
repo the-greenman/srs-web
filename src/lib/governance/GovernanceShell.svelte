@@ -50,8 +50,8 @@
   import Nav from "$lib/components/Nav.svelte";
   import NavGroup from "$lib/components/NavGroup.svelte";
   import NavItem from "$lib/components/NavItem.svelte";
+  import Panel from "$lib/components/Panel.svelte";
   import Inspector from "$lib/components/Inspector.svelte";
-  import InspectorSection from "$lib/components/InspectorSection.svelte";
   import Card from "$lib/components/Card.svelte";
   import CardField from "$lib/components/CardField.svelte";
   import FieldValueView from "../../rendering/FieldValueView.svelte";
@@ -1188,7 +1188,7 @@
   {#snippet inspector()}
     <Inspector label="Inspector">
       {#if selectedRecord && formMode === null}
-        <InspectorSection title={(activeContainer?.title ?? "").replace(/s$/, "")} aside={selectedRecord.typeName}>
+        <Panel title={(activeContainer?.title ?? "").replace(/s$/, "")} aside={selectedRecord.typeName} collapsible={false} class="inspector__section">
           <div class="inspector__kv inspector__kv--meta">
             <span class="inspector__k">ID</span>
             <span class="inspector__v inspector__v--mono">{selectedRecord.instanceId.slice(0, 8)}…</span>
@@ -1222,10 +1222,10 @@
           {#if formError}
             <p class="inspector__error" role="alert">{formError}</p>
           {/if}
-        </InspectorSection>
+        </Panel>
       {/if}
       {#if selectedRecord && formMode === null && activeContainer?.sectionTypeId === DECISION_TYPE_ID}
-        <InspectorSection title="Decision Links" aside={decisionRelations.length === 0 ? "" : String(decisionRelations.length)}>
+        <Panel title="Decision Links" aside={decisionRelations.length === 0 ? "" : String(decisionRelations.length)} collapsible={false} class="inspector__section">
           {#if decisionRelations.length === 0}
             <p class="inspector__empty">No links yet.</p>
           {:else}
@@ -1263,11 +1263,11 @@
             onclick={() => { showLinkPicker = true; linkError = null; }}
             disabled={saving}
           >Link to decision</button>
-        </InspectorSection>
+        </Panel>
       {/if}
 
       {#if selectedRecord && formMode === null && activeContainer?.sectionTypeId === DECISION_TYPE_ID}
-        <InspectorSection title="Tags" aside={selectedRecord.tags?.length ? String(selectedRecord.tags.length) : ""}>
+        <Panel title="Tags" aside={selectedRecord.tags?.length ? String(selectedRecord.tags.length) : ""} collapsible={false} class="inspector__section">
           <div class="inspector__tags" data-testid="inspector-tags">
             {#each selectedRecord.tags ?? [] as tag (tag)}
               <TagChip
@@ -1294,11 +1294,11 @@
               disabled={saving}
             >Add</button>
           </div>
-        </InspectorSection>
+        </Panel>
       {/if}
 
       {#if selectedRecord && formMode === null && activeContainer?.sectionTypeId === DECISION_TYPE_ID}
-        <InspectorSection title="Export decision">
+        <Panel title="Export decision" persistKey="inspector-export-decision" class="inspector__section">
           <div class="inspector__export-row" data-testid="decision-export-group">
             <button
               class="inspector__btn"
@@ -1319,32 +1319,32 @@
           {#if decisionExportError}
             <p class="inspector__error" role="alert">{decisionExportError}</p>
           {/if}
-        </InspectorSection>
+        </Panel>
       {/if}
 
-      <InspectorSection title="Attachments" aside={attachmentCount > 0 ? String(attachmentCount) : ""}>
+      <Panel title="Attachments" aside={attachmentCount > 0 ? String(attachmentCount) : ""} collapsible={false} class="inspector__section">
         <AttachmentsPanel
           {repo}
           onMutate={() => { refreshValidation(); persistWorkingCopy(); }}
           onCountChange={(n) => { attachmentCount = n; }}
         />
-      </InspectorSection>
+      </Panel>
 
       {#if selectedRecord && formMode === null}
-        <InspectorSection title="Linked Attachments" aside={linkedAttachmentCount > 0 ? String(linkedAttachmentCount) : ""}>
+        <Panel title="Linked Attachments" aside={linkedAttachmentCount > 0 ? String(linkedAttachmentCount) : ""} collapsible={false} class="inspector__section">
           <AttachmentLinkPanel
             {repo}
             instanceId={selectedRecord.instanceId}
             onMutate={() => { refreshValidation(); persistWorkingCopy(); }}
             onCountChange={(n) => { linkedAttachmentCount = n; }}
           />
-        </InspectorSection>
+        </Panel>
       {/if}
 
-      <InspectorSection title="Validation" aside={validationAside}>
+      <Panel title="Validation" aside={validationAside} persistKey="inspector-validation" class="inspector__section">
         <Diagnostics {diagnostics} />
-      </InspectorSection>
-      <InspectorSection title="Repository" aside={String(instanceCount)}>
+      </Panel>
+      <Panel title="Repository" aside={String(instanceCount)} persistKey="inspector-repository" class="inspector__section">
         <div class="inspector__kv">
           <span class="inspector__k">File</span>
           <span class="inspector__v">{repoName}</span>
@@ -1353,7 +1353,7 @@
           <span class="inspector__k">Records</span>
           <span class="inspector__v">{instanceCount}</span>
         </div>
-      </InspectorSection>
+      </Panel>
     </Inspector>
   {/snippet}
 </AppShell>
