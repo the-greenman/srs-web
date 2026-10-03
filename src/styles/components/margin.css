@@ -1,0 +1,70 @@
+/* ============================================================================
+   component: paragraph margin (.margin) — Annotation[] beside a paragraph
+   compact = marks only; expanded = marks + a text chip (the column widens).
+   Kind looks live in the marks' own CSS (comments.css, attachment.css, .margin__relation).
+   Story: https://github.com/the-greenman/srs-web/issues/374
+   ========================================================================== */
+.margin {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+.margin__item,
+.margin__list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+.margin__text {
+  min-width: 0;
+  font-size: var(--size-xs);
+  color: var(--color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.margin__relation,
+.margin__more {
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  line-height: 1;
+  color: var(--color-muted);
+  background: none;
+  border: 1px dashed var(--color-line);
+  cursor: pointer;
+}
+.margin__relation:hover,
+.margin__more:hover,
+.margin__relation:focus-visible,
+.margin__more:focus-visible {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.margin__overflow {
+  position: relative;
+}
+.margin__list {
+  position: absolute;
+  z-index: 10;
+  top: 100%;
+  right: 0;
+  margin: 2px 0 0;
+  padding: var(--space-xs) var(--space-sm);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 16rem;
+  background: var(--white, #fff);
+  border: 1px solid var(--black);
+}
+/* Expanded: the right column widens to hold the text chips. */
+.block:has(.margin--expanded) {
+  grid-template-columns: 2rem minmax(0, 1fr) 11rem;
+}

@@ -54,7 +54,9 @@ test("paragraphs render markdown until focused; click shows the source (srs-web#
   await expect(first.locator("strong")).toHaveText("Bold");
   await expect(first.locator("li")).toHaveText(["one", "two"]);
   await first.click(); // back to source
-  await expect(page.locator(".essay-shell__page .block__body").first()).toContainText("**Bold** words");
+  await expect(page.locator(".essay-shell__page .block__body").first()).toContainText(
+    "**Bold** words"
+  );
   await expect(page.locator(".essay-shell__page .block__body").first()).toBeFocused();
 });
 
@@ -258,11 +260,16 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
     method: "tools/call",
     params: {
       name: "note_create",
-      arguments: { title: "Counter-claim", sections: [{ name: "claim", content: "Small is not always better." }] },
+      arguments: {
+        title: "Counter-claim",
+        sections: [{ name: "claim", content: "Small is not always better." }],
+      },
     },
   });
   expect(note.result.isError, JSON.stringify(note)).not.toBe(true);
-  const noteId = JSON.stringify(note).match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)?.[0];
+  const noteId = JSON.stringify(note).match(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
+  )?.[0];
   const rel = await call({
     jsonrpc: "2.0",
     id: 5,
@@ -278,7 +285,36 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
   await glyph.hover();
   await expect(page.locator(".essay-shell__page .hover-card__text")).toBeVisible();
   await glyph.click();
-  await expect(page.locator(".panel-rail .pinned__item")).toContainText("Small is not always better.");
+  await expect(page.locator(".panel-rail .pinned__item")).toContainText(
+    "Small is not always better."
+  );
+
+  // A semantic paragraph-to-paragraph edge (derived-from) shows a relation indicator on both ends;
+  // the structural precedes/contains edges never do (srs-web#374).
+  const first = await call({
+    jsonrpc: "2.0",
+    id: 6,
+    method: "tools/call",
+    params: { name: "find", arguments: { contentMatch: "First paragraph" } },
+  });
+  const firstId = JSON.stringify(first).match(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
+  )?.[0];
+  const derived = await call({
+    jsonrpc: "2.0",
+    id: 7,
+    method: "tools/call",
+    params: {
+      name: "relation_create",
+      arguments: { relationType: "derived-from", sourceInstanceId: id, targetInstanceId: firstId },
+    },
+  });
+  expect(derived.result.isError, JSON.stringify(derived)).not.toBe(true);
+  await expect(page.getByTestId("relation-indicator")).toHaveCount(2);
+  await expect(page.getByTestId("relation-indicator").first()).toHaveAttribute(
+    "aria-label",
+    /derived-from/
+  );
 });
 
 test("New essay creates the record, container, draft area and state", async ({ page }) => {
@@ -318,15 +354,22 @@ test("New essay creates the record, container, draft area and state", async ({ p
   await expect(page.locator(".draft-tray__row")).toHaveCount(1);
 });
 
-test("the page is one white scroll surface; essay and paragraph titles edit inline (srs-web#363)", async ({ page }) => {
+test("the page is one white scroll surface; essay and paragraph titles edit inline (srs-web#363)", async ({
+  page,
+}) => {
   await open(page);
   await page.setViewportSize({ width: 1200, height: 360 });
   // Only the window scrolls: the page grows past the viewport and no block scrolls inside itself.
   expect(await page.evaluate(() => document.documentElement.scrollHeight > innerHeight)).toBe(true);
   expect(
-    await page.locator(".block__body").evaluateAll((els) => els.every((e) => e.scrollHeight <= e.clientHeight + 1)),
+    await page
+      .locator(".block__body")
+      .evaluateAll((els) => els.every((e) => e.scrollHeight <= e.clientHeight + 1))
   ).toBe(true);
-  await expect(page.locator(".essay-shell__page")).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await expect(page.locator(".essay-shell__page")).toHaveCSS(
+    "background-color",
+    "rgb(255, 255, 255)"
+  );
 
   // essay title: click, type, Enter
   await page.locator("h1 .inline-text__view").click();

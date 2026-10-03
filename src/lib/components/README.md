@@ -60,6 +60,7 @@ rail + record headers their printed-ink texture) — see `docs/design/*.html`.
 | `InlineText` | `value` `placeholder?` `label` `oncommit` `as?` `editing?` (bindable) | `.inline-text` | srs-web [#363](https://github.com/the-greenman/srs-web/issues/363) |
 | `MarkdownHelp` | none | `.md-help` | srs-web [#365](https://github.com/the-greenman/srs-web/issues/365) |
 | `CommentBadge` | `count` `label` `open?` `onclick` | `.comment-badge` | srs-web [#364](https://github.com/the-greenman/srs-web/issues/364) |
+| `ParagraphMargin` | `annotations` (`Annotation[]`, essay/annotations.ts) `variant?` (`compact` \| `expanded`) `active?` `max?` `onopen` | `.margin` | srs-web [#374](https://github.com/the-greenman/srs-web/issues/374) |
 | `BlockStack` | `items` `source` `ondrop` `row` snippet `nest?` | `.block-stack` | #328 |
 | `Panel` | `title` `aside?` `open?` `persistKey?` `collapsible?` `actions?` | `.panel` `.panel-rail` | srs-web [#362](https://github.com/the-greenman/srs-web/issues/362) |
 | `AttachmentGlyph` / `HoverCard` / `PinnedPane` | `kind` `title` `text?` `pinned?` `onpin?` / `items` `onunpin` | `.glyph` `.hover-card` `.pinned` | srs-web [#329](https://github.com/the-greenman/srs-web/issues/329) |

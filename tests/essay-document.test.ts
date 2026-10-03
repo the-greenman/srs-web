@@ -30,6 +30,7 @@ const m = vi.hoisted(() => ({
   listRecords: vi.fn(),
   listRelations: vi.fn(() => []),
   contextRecord: vi.fn(() => ({ relations: [] })),
+  listRelationTypes: vi.fn(() => []),
   createRelation: vi.fn(),
 }));
 vi.mock("../src/lib/srs-client.js", () => m);

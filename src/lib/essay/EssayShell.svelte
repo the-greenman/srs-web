@@ -10,12 +10,11 @@
   import { onDestroy, tick, untrack } from "svelte";
   import type { Snippet } from "svelte";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
-  import AttachmentGlyph from "$lib/components/AttachmentGlyph.svelte";
   import PinnedPane from "$lib/components/PinnedPane.svelte";
+  import ParagraphMargin from "$lib/components/ParagraphMargin.svelte";
   import Block from "$lib/components/Block.svelte";
   import BlockStack from "$lib/components/BlockStack.svelte";
   import type { DropTarget } from "$lib/components/BlockStack.svelte";
-  import CommentBadge from "$lib/components/CommentBadge.svelte";
   import CommentThread from "$lib/components/CommentThread.svelte";
   import DraftTray from "$lib/components/DraftTray.svelte";
   import Panel from "$lib/components/Panel.svelte";
@@ -41,6 +40,8 @@
   } from "./essay-document.js";
   import { essayWriteGuard } from "./essay-document.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
+  import { annotationsFor, loadVariant, saveVariant } from "./annotations.js";
+  import type { Annotation } from "./annotations.js";
   import { hiddenByAncestor, outsideRun, visibleEntries } from "./essay-model.js";
 
   let {
@@ -150,6 +151,16 @@
       .filter((a) => pinnedIds.includes(a.id))
       .map((a) => ({ id: a.id, kind: `${a.neighbourType} · ${a.relationType}`, title: a.label, text: a.text })),
   );
+
+  let variant = $state(loadVariant());
+  const toggleVariant = () => saveVariant((variant = variant === "compact" ? "expanded" : "compact"));
+  /** Margin clicks: the one kind -> action mapping (the model says what, the margin how it looks). */
+  function openAnnotation(a: Annotation, paragraphId: string) {
+    if (a.kind === "comments") openThread(paragraphId, !openThreads.has(paragraphId));
+    else if (a.kind === "attachment") togglePin(a.key);
+    else if (a.targetId)
+      document.querySelector<HTMLElement>(`[data-focus-key="body:${a.targetId}"]`)?.focus();
+  }
 
   const hidden = $derived(new Set(model?.hidden ?? []));
   const inherited = $derived(hiddenByAncestor(model?.entries ?? [], hidden));
@@ -272,6 +283,7 @@
       {#if documentDirty}<span class="essay-shell__status" data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
       {#if saveMessage}<span class="essay-shell__status" role="status">{saveMessage}</span>{/if}
       <MarkdownHelp />
+      <Button variant="ghost" active={variant === "expanded"} aria-pressed={variant === "expanded"} data-testid="margin-variant" onclick={toggleVariant}>Margin notes</Button>
       <Button variant="ghost" active={commentMode} aria-pressed={commentMode} data-testid="comment-mode" onclick={() => (commentMode = !commentMode)}>Comments</Button>
       {#if onSave}<Button variant="mono" disabled={saving} onclick={onSave}>{saving ? "Saving…" : "Save"}</Button>{/if}
       <Button variant="mono" onclick={onExport}>Export</Button>
@@ -309,21 +321,12 @@
             {@const p = model!.paragraphs[item.id]}
             {#if p}
               {#snippet margin()}
-                <CommentBadge
-                  count={(model!.comments[p.id] ?? []).length}
-                  label={p.title || "untitled paragraph"}
-                  open={showThread(p.id)}
-                  onclick={() => openThread(p.id, !openThreads.has(p.id))}
+                <ParagraphMargin
+                  annotations={annotationsFor(model!, p.id)}
+                  {variant}
+                  active={[...pinnedIds, ...(showThread(p.id) ? [`comments:${p.id}`] : [])]}
+                  onopen={(a) => openAnnotation(a, p.id)}
                 />
-                {#each model!.attachments[p.id] ?? [] as a (a.id)}
-                  <AttachmentGlyph
-                    kind={a.neighbourType}
-                    title={a.label}
-                    text={a.text}
-                    pinned={pinnedIds.includes(a.id)}
-                    onpin={() => togglePin(a.id)}
-                  />
-                {/each}
               {/snippet}
               <Block
                 id={p.id}
