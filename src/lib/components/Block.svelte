@@ -33,6 +33,7 @@
     onnew,
     onindent,
     onmove,
+    onnavigate,
     onpull,
     onzoom,
     oncopylink,
@@ -52,6 +53,8 @@
     onnew: () => void;
     onindent: (delta: 1 | -1) => void;
     onmove: (dir: 'up' | 'down') => void;
+    /** Caret left the first/last line: focus the neighbouring paragraph (the shell owns the order). */
+    onnavigate?: (dir: 'prev' | 'next') => void;
     onpull?: () => void;
     onzoom?: () => void;
     oncopylink?: () => void;
@@ -112,7 +115,33 @@
     if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
       edit();
+    } else if (plainArrow(e)) {
+      e.preventDefault();
+      onnavigate?.(e.key === 'ArrowUp' ? 'prev' : 'next');
     } else bodyKeydown(e);
+  }
+
+  const plainArrow = (e: KeyboardEvent) =>
+    (e.key === 'ArrowUp' || e.key === 'ArrowDown') && !(e.altKey || e.ctrlKey || e.metaKey || e.shiftKey);
+
+  /** True when the caret sits on the first (up) / last (down) visual line; wrapping makes offsets useless. */
+  function atEdgeLine(up: boolean): boolean {
+    const sel = getSelection();
+    if (!el || !sel?.isCollapsed || !sel.rangeCount) return false;
+    const box = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    const caret = sel.getRangeAt(0).getClientRects()[0];
+    if (!caret || !caret.height) {
+      // A blank line has no rect: decide from the text. An empty body is on both edges.
+      const r = document.createRange();
+      const rng = sel.getRangeAt(0);
+      if (up) r.setStart(el, 0), r.setEnd(rng.startContainer, rng.startOffset);
+      else r.setStart(rng.endContainer, rng.endOffset), r.setEnd(el, el.childNodes.length);
+      return !r.toString().includes('\n');
+    }
+    return up
+      ? caret.top < box.top + parseFloat(cs.paddingTop) + caret.height / 2
+      : caret.bottom > box.bottom - parseFloat(cs.paddingBottom) - caret.height / 2;
   }
 
   function applyMove(m: KeyMove) {
@@ -132,6 +161,12 @@
       e.preventDefault();
       flush();
       applyMove(m);
+      return;
+    }
+    if (plainArrow(e) && atEdgeLine(e.key === 'ArrowUp')) {
+      e.preventDefault();
+      flush();
+      onnavigate?.(e.key === 'ArrowUp' ? 'prev' : 'next');
       return;
     }
     // Tab only indents at the very start of the block, so it never traps keyboard focus.
