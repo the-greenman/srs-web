@@ -26,6 +26,8 @@
   import Button from "$lib/components/Button.svelte";
   import InlineText from "$lib/components/InlineText.svelte";
   import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
+  import ActionMenu from "$lib/components/ActionMenu.svelte";
+  import { NARROW } from "$lib/components/narrow.js";
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
     addComment,
@@ -46,6 +48,7 @@
   import { essayWriteGuard } from "./essay-document.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { formatAddress, parseAddress } from "./address.js";
+  import { headerActions } from "./header-actions.js";
   import { annotationsFor, loadVariant, saveVariant } from "./annotations.js";
   import type { Annotation } from "./annotations.js";
   import { hiddenByAncestor, outsideRun, visibleEntries } from "./essay-model.js";
@@ -358,6 +361,23 @@
   }
   const createEssay = () => openNew(() => newEssay(repo, "Untitled essay"));
   const copyDocument = () => openNew(() => copyEssay(repo, model!));
+  let helpOpen = $state(false);
+  const barActions = $derived(
+    headerActions(
+      {
+        onnew: createEssay,
+        oncopy: model ? copyDocument : undefined,
+        onhelp: () => (helpOpen = !helpOpen),
+        onvariant: toggleVariant,
+        oncomments: () => (commentMode = !commentMode),
+        onsave: onSave,
+        onexport: onExport,
+        onexplorer: onOpenExplorer,
+        onopenanother: onOpenAnother,
+      },
+      { expanded: variant === "expanded", commentMode, saving },
+    ),
+  );
 </script>
 
 <!-- Esc leaves zoom, except while typing (Esc there cancels the field's own edit). -->
@@ -391,16 +411,19 @@
     <div class="essay-shell__actions">
       {#if documentDirty}<span class="essay-shell__status" data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
       {#if saveMessage}<span class="essay-shell__status" role="status">{saveMessage}</span>{/if}
-      <Button variant="ghost" data-testid="new-document" onclick={createEssay}>New document</Button>
-      {#if model}<Button variant="ghost" data-testid="copy-document" onclick={copyDocument}>Copy document</Button>{/if}
-      <MarkdownHelp />
-      <Button variant="ghost" active={variant === "expanded"} aria-pressed={variant === "expanded"} data-testid="margin-variant" onclick={toggleVariant}>Margin notes</Button>
-      <Button variant="ghost" active={commentMode} aria-pressed={commentMode} data-testid="comment-mode" onclick={() => (commentMode = !commentMode)}>Comments</Button>
-      {#if onSave}<Button variant="mono" disabled={saving} onclick={onSave}>{saving ? "Saving…" : "Save"}</Button>{/if}
-      <Button variant="mono" onclick={onExport}>Export</Button>
-      {#if onOpenExplorer}<Button variant="ghost" onclick={onOpenExplorer}>Explorer</Button>{/if}
-      <Button variant="ghost" onclick={onOpenAnother}>Open another</Button>
+      <!-- The one header action list, rendered as buttons here and as the overflow menu on narrow screens (CSS picks one). -->
+      <div class="essay-shell__buttons">
+        {#each barActions as a (a.id)}
+          {#if a.id === "help"}
+            <button type="button" class="md-help__btn" data-md-help-trigger aria-label={a.label} aria-expanded={helpOpen} title={a.label} onclick={a.run}>?</button>
+          {:else}
+            <Button variant={a.variant} active={a.pressed} aria-pressed={a.pressed} data-testid={a.testid} disabled={!a.enabled} onclick={a.run}>{a.label}</Button>
+          {/if}
+        {/each}
+      </div>
+      <ActionMenu class="essay-shell__overflow action-menu--end" testid="header-menu" title="Document actions" label={model?.title ?? repoName} actions={barActions} />
     </div>
+    <MarkdownHelp open={helpOpen} onclose={() => (helpOpen = false)} />
   </header>
 
   {#if notice}
@@ -432,8 +455,8 @@
         />
         {#if zoomId}
           <div class="essay-shell__zoombar">
-            <Button variant="ghost" data-testid="zoom-exit" onclick={() => setZoom(null)}>← Whole document</Button>
-            <Button variant="ghost" data-testid="zoom-copy-link" onclick={() => copyLink(zoomId!, true)}>Copy link</Button>
+            <Button variant="ghost" data-testid="zoom-exit" aria-label="Whole document" onclick={() => setZoom(null)}>←<span class="essay-shell__label"> Whole document</span></Button>
+            <Button variant="ghost" data-testid="zoom-copy-link" aria-label="Copy link" onclick={() => copyLink(zoomId!, true)}><span class="essay-shell__narrow-icon" aria-hidden="true">🔗</span><span class="essay-shell__label">Copy link</span></Button>
           </div>
         {/if}
         {#if items.length === 0}
@@ -483,7 +506,7 @@
         {/if}
       </main>
       <aside class="panel-rail" aria-label="Panels">
-        <Panel title="Layers" persistKey="essay.layers">
+        <Panel title="Layers" persistKey="essay.layers" collapseWhen={NARROW}>
           <LayersPanel
             {layers}
             candrop={essayDrop}
@@ -494,7 +517,7 @@
             onkey={onKey}
           />
         </Panel>
-        <Panel title="Draft" aside={draftItems.length} persistKey="essay.draft">
+        <Panel title="Draft" aside={draftItems.length} persistKey="essay.draft" collapseWhen={NARROW}>
           <DraftTray
             items={draftItems}
             available={!!model.draftContainerId}
@@ -512,7 +535,7 @@
 </div>
 
 {#snippet agents()}
-  <Panel title="Agents" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey="essay.agents">
+  <Panel title="Agents" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey="essay.agents" collapseWhen={NARROW}>
     {#if agentStatus}
       <AgentFeed
         {now}

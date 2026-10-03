@@ -53,6 +53,26 @@
   min-width: 12rem;
 }
 
+/* Phone (srs-web#383): name, reply and the Comment button stack full-width. */
+@media (max-width: 480px) {
+  .comments {
+    margin-left: var(--space-xs);
+  }
+  .comments__reply {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .comments__input,
+  .comments__name {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .comments__reply .btn {
+    width: 100%;
+  }
+}
+
 /* Margin badge: a speech bubble with the count; empty ones appear on block hover / focus only. */
 .comment-badge {
   position: relative;
