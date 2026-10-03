@@ -11,6 +11,7 @@ const handlers = () => ({
   onindent: vi.fn(),
   onhide: vi.fn(),
   onpull: vi.fn(),
+  ondelete: vi.fn(),
   onzoom: vi.fn(),
   oncopylink: vi.fn(),
   onrename: vi.fn(),
@@ -20,18 +21,37 @@ const state = { label: "Claim" };
 it("lists every action once, in order, and each calls its shell callback", () => {
   const h = handlers();
   const list = paragraphActions(h, state);
-  expect(list.map((a) => a.id)).toEqual(["add", "up", "down", "indent", "outdent", "hide", "draft", "zoom", "link", "rename"]);
+  expect(list.map((a) => a.id)).toEqual([
+    "add",
+    "up",
+    "down",
+    "indent",
+    "outdent",
+    "hide",
+    "draft",
+    "delete",
+    "zoom",
+    "link",
+    "rename",
+  ]);
   list.forEach((a) => a.run());
   expect(h.onnew).toHaveBeenCalledOnce();
   expect(h.onmove.mock.calls).toEqual([["up"], ["down"]]);
   expect(h.onindent.mock.calls).toEqual([[1], [-1]]);
   expect(h.onhide).toHaveBeenCalledWith(true);
-  for (const f of [h.onpull, h.onzoom, h.oncopylink, h.onrename]) expect(f).toHaveBeenCalledOnce();
+  for (const f of [h.onpull, h.ondelete, h.onzoom, h.oncopylink, h.onrename])
+    expect(f).toHaveBeenCalledOnce();
 });
 
 it("omits actions without a handler, restricts by id, and reflects hidden state", () => {
   const { onmove, onindent, onhide } = handlers();
-  expect(paragraphActions({ onmove, onindent, onhide }, state).map((a) => a.id)).toEqual(["up", "down", "indent", "outdent", "hide"]);
+  expect(paragraphActions({ onmove, onindent, onhide }, state).map((a) => a.id)).toEqual([
+    "up",
+    "down",
+    "indent",
+    "outdent",
+    "hide",
+  ]);
   expect(paragraphActions(handlers(), state, ["zoom"]).map((a) => a.id)).toEqual(["zoom"]);
   const shown = paragraphActions({ onhide }, { label: "x", hidden: true })[0];
   expect([shown.label, shown.enabled]).toEqual(["Show", true]);
@@ -42,7 +62,10 @@ it("omits actions without a handler, restricts by id, and reflects hidden state"
 
 it("menu: opens with aria state, arrows move, Escape returns focus, a row runs and closes", async () => {
   const h = handlers();
-  const { getByTestId, queryByTestId } = render(ActionMenu, { actions: paragraphActions(h, state), label: "Claim" });
+  const { getByTestId, queryByTestId } = render(ActionMenu, {
+    actions: paragraphActions(h, state),
+    label: "Claim",
+  });
   const btn = getByTestId("paragraph-menu");
   expect(btn.getAttribute("aria-haspopup")).toBe("menu");
   expect(btn.getAttribute("aria-expanded")).toBe("false");

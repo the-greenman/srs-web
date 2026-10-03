@@ -10,6 +10,7 @@ export interface ParagraphHandlers {
   onindent?: (delta: 1 | -1) => void;
   onhide?: (hidden: boolean) => void;
   onpull?: () => void;
+  ondelete?: () => void;
   onzoom?: () => void;
   oncopylink?: () => void;
   onrename?: () => void;
@@ -23,6 +24,7 @@ export type ParagraphActionId =
   | "outdent"
   | "hide"
   | "draft"
+  | "delete"
   | "zoom"
   | "link"
   | "rename";
@@ -38,7 +40,7 @@ export interface ParagraphAction {
 }
 
 /** Ids shown as today's hover tools on devices with hover (the rest live in the ⋯ menu only). */
-export const HOVER_TOOLS: ParagraphActionId[] = ["hide", "draft", "zoom", "link"];
+export const HOVER_TOOLS: ParagraphActionId[] = ["hide", "draft", "delete", "zoom", "link"];
 
 export function paragraphActions(
   h: ParagraphHandlers,
@@ -95,6 +97,14 @@ export function paragraphActions(
       run: h.onpull,
       enabled: true,
       tool: { aria: `Move ${s.label} to draft`, title: "Move to draft" },
+    },
+    !!h.ondelete && {
+      id: "delete",
+      label: "Delete",
+      icon: "✕",
+      run: h.ondelete,
+      enabled: true,
+      tool: { aria: `Delete ${s.label}`, title: "Delete (moves to the Bin)" },
     },
     !!h.onzoom && {
       id: "zoom",

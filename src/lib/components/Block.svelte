@@ -35,6 +35,7 @@
     onmove,
     onnavigate,
     onpull,
+    ondelete,
     onzoom,
     oncopylink,
     margin,
@@ -56,6 +57,7 @@
     /** Caret left the first/last line: focus the neighbouring paragraph (the shell owns the order). */
     onnavigate?: (dir: 'prev' | 'next') => void;
     onpull?: () => void;
+    ondelete?: () => void;
     onzoom?: () => void;
     oncopylink?: () => void;
     /** The one right-margin slot: comment badge, attachment glyphs. */
@@ -192,7 +194,7 @@
   // The one action list: hover tools (devices with hover) and the ⋯ menu are both rendered from it.
   const actions = $derived(
     paragraphActions(
-      { onnew, onmove, onindent, onhide, onpull, onzoom, oncopylink, onrename: () => (editingTitle = true) },
+      { onnew, onmove, onindent, onhide, onpull, ondelete, onzoom, oncopylink, onrename: () => (editingTitle = true) },
       { label: shortLabel, hidden, inherited },
     ),
   );

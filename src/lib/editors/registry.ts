@@ -108,7 +108,7 @@ export const EDITORS: EditorDefinition[] = [
         packageId: "5b14a4d4-ec08-4e5b-be75-c183aec90c40",
         namespace: "com.mudemocracy.essay",
         name: "essay",
-        version: "1.0.0",
+        version: "1.3.0",
       },
     ],
     create: (repo) => {

@@ -403,7 +403,11 @@ test("copy a document: paragraphs are shared and badged; make local copy forks o
 
   await page.getByTestId("copy-document").click();
   await expect(page.getByRole("heading", { name: "Copy of On small democracy" })).toBeVisible();
-  await expect(bodies(page)).toHaveText(["First paragraph.", "Second paragraph.", "Third paragraph."]);
+  await expect(bodies(page)).toHaveText([
+    "First paragraph.",
+    "Second paragraph.",
+    "Third paragraph.",
+  ]);
   await expect(badges).toHaveCount(3);
   await expect(badges.first()).toHaveAttribute("aria-label", "Also in On small democracy");
   await expect(page.getByTestId("essay-error")).toHaveCount(0);
@@ -411,7 +415,11 @@ test("copy a document: paragraphs are shared and badged; make local copy forks o
   // make local copy of the first paragraph: this document keeps its text, the badge goes
   await badges.first().click();
   await expect(badges).toHaveCount(2);
-  await expect(bodies(page)).toHaveText(["First paragraph.", "Second paragraph.", "Third paragraph."]);
+  await expect(bodies(page)).toHaveText([
+    "First paragraph.",
+    "Second paragraph.",
+    "Third paragraph.",
+  ]);
   await bodies(page).first().click();
   await page.keyboard.press("End");
   await page.keyboard.type(" Edited here.");
@@ -420,7 +428,11 @@ test("copy a document: paragraphs are shared and badged; make local copy forks o
   // the original is unchanged: old text, and the other two paragraphs are still shared
   await page.getByLabel("Essay", { exact: true }).selectOption({ label: "On small democracy" });
   await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
-  await expect(bodies(page)).toHaveText(["First paragraph.", "Second paragraph.", "Third paragraph."]);
+  await expect(bodies(page)).toHaveText([
+    "First paragraph.",
+    "Second paragraph.",
+    "Third paragraph.",
+  ]);
   await expect(badges).toHaveCount(2);
   await expect(page).toHaveURL(/#e=/);
 
@@ -441,4 +453,46 @@ test("generic view renders the essay Composition with the supplied container (sr
     timeout: 15000,
   });
   await expect(shell.getByText("section:essay")).toHaveCount(0);
+});
+
+test("delete moves a paragraph to the Bin (v1 state upgrades to v2); restore puts it back", async ({
+  page,
+}) => {
+  await open(page);
+  await expect(page.getByTestId("bin")).toContainText("Deleted paragraphs wait here.");
+  await page.getByRole("button", { name: /Delete Claim$/ }).click();
+  await expect(bodies(page)).toHaveCount(2);
+  await expect(page.getByTestId("bin-row")).toContainText("Claim");
+  await expect(page.getByTestId("essay-error")).toHaveCount(0);
+  await page.getByRole("button", { name: "Restore Claim" }).click();
+  await expect(page.getByTestId("bin-row")).toHaveCount(0);
+  await expect(bodies(page)).toHaveCount(3);
+  await expect(bodies(page).last()).toHaveText("Second paragraph.");
+  // the second delete reuses the Bin (no second container, no error)
+  await page.getByRole("button", { name: /Delete Opening$/ }).click();
+  await expect(page.getByTestId("bin-row")).toHaveCount(1);
+  await expect(page.getByTestId("essay-error")).toHaveCount(0);
+});
+
+test("Delete permanently removes the paragraph and its comment, after a confirm", async ({
+  page,
+}) => {
+  await open(page);
+  const first = page.locator(".essay-shell__page .block-stack__item").first();
+  await first.getByTestId("comment-badge").click();
+  await first.getByLabel("Your name").fill("Ada");
+  await first.getByLabel("Reply").fill("Doomed.");
+  await first.getByRole("button", { name: "Comment", exact: true }).click();
+  await expect(first.getByTestId("comment")).toHaveCount(1);
+  await page.getByRole("button", { name: /Delete Opening$/ }).click();
+  await expect(page.getByTestId("bin-row")).toContainText("Opening");
+  page.once("dialog", (d) => d.dismiss());
+  await page.getByRole("button", { name: "Delete Opening permanently" }).click();
+  await expect(page.getByTestId("bin-row")).toHaveCount(1); // dismissed: still there
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: "Delete Opening permanently" }).click();
+  await expect(page.getByTestId("bin-row")).toHaveCount(0);
+  await expect(page.getByTestId("essay-error")).toHaveCount(0);
+  await expect(page.getByText("Doomed.")).toHaveCount(0);
+  await expect(page.getByText("First paragraph.")).toHaveCount(0);
 });

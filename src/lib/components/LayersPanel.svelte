@@ -30,6 +30,7 @@
     ondrop,
     candrop,
     onhide,
+    ondelete,
     onfold,
     onselect,
     onkey,
@@ -38,6 +39,7 @@
     ondrop: (payload: DragPayload, target: DropTarget) => void;
     candrop?: (dragId: string, targetId: string) => boolean;
     onhide: (id: string, hidden: boolean) => void;
+    ondelete?: (id: string) => void;
     onfold: (id: string, folded: boolean) => void;
     onselect: (id: string) => void;
     onkey: (id: string, move: KeyMove) => void;
@@ -88,6 +90,7 @@
                 onmove: (d) => onkey(l.id, d),
                 onindent: (d) => onkey(l.id, d === 1 ? 'in' : 'out'),
                 onhide: (h) => onhide(l.id, h),
+                ondelete: ondelete && (() => ondelete(l.id)),
               },
               { label: l.label, hidden: l.hidden, inherited: l.inherited },
             )}
