@@ -29,6 +29,7 @@ const model = {
       { id: "r2", relationType: "supersedes", direction: "in", otherId: "z", label: "Newer" },
     ],
   },
+  sharedIn: { p: [{ id: "e2", title: "Other essay" }] },
 } as unknown as EssayModel;
 
 it("lists comments first, then attachments, then relations, with counts and both directions", () => {
@@ -36,17 +37,19 @@ it("lists comments first, then attachments, then relations, with counts and both
   expect(a.map((x) => [x.kind, x.key])).toEqual([
     ["comments", "comments:p"],
     ["attachment", "a1"],
+    ["shared", "shared:p"],
     ["relation", "r1"],
     ["relation", "r2"],
   ]);
+  expect(a[2]).toMatchObject({ label: "Also in Other essay" });
   expect(a[0]).toMatchObject({ count: 2, label: "Opening" });
-  expect(a[2]).toMatchObject({
+  expect(a[3]).toMatchObject({
     icon: "derived-from",
     direction: "out",
     targetId: "q",
     label: "Original",
   });
-  expect(a[3].direction).toBe("in");
+  expect(a[4].direction).toBe("in");
 });
 
 it("a bare paragraph still carries the (empty) comments annotation", () => {
@@ -55,6 +58,7 @@ it("a bare paragraph still carries the (empty) comments annotation", () => {
     comments: {},
     attachments: {},
     related: {},
+    sharedIn: {},
   } as unknown as EssayModel;
   expect(annotationsFor(bare, "p")).toEqual([
     {

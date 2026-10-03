@@ -392,3 +392,39 @@ test("the page is one white scroll surface; essay and paragraph titles edit inli
   await page.keyboard.press("Escape");
   await expect(titleOf(page, 1)).toHaveText("Thesis");
 });
+
+test("copy a document: paragraphs are shared and badged; make local copy forks one here only (srs-web#331)", async ({
+  page,
+}) => {
+  await open(page);
+  const badges = page.getByTestId("shared-badge");
+  await expect(badges).toHaveCount(0);
+
+  await page.getByTestId("copy-document").click();
+  await expect(page.getByRole("heading", { name: "Copy of On small democracy" })).toBeVisible();
+  await expect(bodies(page)).toHaveText(["First paragraph.", "Second paragraph.", "Third paragraph."]);
+  await expect(badges).toHaveCount(3);
+  await expect(badges.first()).toHaveAttribute("aria-label", "Also in On small democracy");
+  await expect(page.getByTestId("essay-error")).toHaveCount(0);
+
+  // make local copy of the first paragraph: this document keeps its text, the badge goes
+  await badges.first().click();
+  await expect(badges).toHaveCount(2);
+  await expect(bodies(page)).toHaveText(["First paragraph.", "Second paragraph.", "Third paragraph."]);
+  await bodies(page).first().click();
+  await page.keyboard.press("End");
+  await page.keyboard.type(" Edited here.");
+  await bodies(page).last().click(); // blur commits
+
+  // the original is unchanged: old text, and the other two paragraphs are still shared
+  await page.getByLabel("Essay", { exact: true }).selectOption({ label: "On small democracy" });
+  await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
+  await expect(bodies(page)).toHaveText(["First paragraph.", "Second paragraph.", "Third paragraph."]);
+  await expect(badges).toHaveCount(2);
+  await expect(page).toHaveURL(/#e=/);
+
+  // a new document is empty and unshared
+  await page.getByTestId("new-document").click();
+  await expect(page.getByRole("heading", { name: "Untitled essay" })).toBeVisible();
+  await expect(badges).toHaveCount(0);
+});

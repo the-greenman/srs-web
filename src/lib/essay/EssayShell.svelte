@@ -30,7 +30,9 @@
   import {
     addComment,
     addParagraph,
+    copyEssay,
     listEssays,
+    makeLocalCopy,
     loadEssay,
     moveEntry,
     newEssay,
@@ -165,6 +167,7 @@
   function openAnnotation(a: Annotation, paragraphId: string) {
     if (a.kind === "comments") openThread(paragraphId, !openThreads.has(paragraphId));
     else if (a.kind === "attachment") togglePin(a.key);
+    else if (a.kind === "shared") void run(() => makeLocalCopy(repo, model!, paragraphId));
     else if (a.targetId)
       document.querySelector<HTMLElement>(`[data-focus-key="body:${a.targetId}"]`)?.focus();
   }
@@ -344,12 +347,17 @@
     } catch {}
   }
 
-  function createEssay() {
+  /** New / copied document: select it (the revision-bump reload loads it) and take the same address path as switching. */
+  function openNew(make: () => string) {
     void run(() => {
-      essayId = newEssay(repo, "Untitled essay");
+      essayId = make();
+      zoomId = null;
+      loadFolded(essayId);
     });
     push();
   }
+  const createEssay = () => openNew(() => newEssay(repo, "Untitled essay"));
+  const copyDocument = () => openNew(() => copyEssay(repo, model!));
 </script>
 
 <!-- Esc leaves zoom, except while typing (Esc there cancels the field's own edit). -->
@@ -383,6 +391,8 @@
     <div class="essay-shell__actions">
       {#if documentDirty}<span class="essay-shell__status" data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
       {#if saveMessage}<span class="essay-shell__status" role="status">{saveMessage}</span>{/if}
+      <Button variant="ghost" data-testid="new-document" onclick={createEssay}>New document</Button>
+      {#if model}<Button variant="ghost" data-testid="copy-document" onclick={copyDocument}>Copy document</Button>{/if}
       <MarkdownHelp />
       <Button variant="ghost" active={variant === "expanded"} aria-pressed={variant === "expanded"} data-testid="margin-variant" onclick={toggleVariant}>Margin notes</Button>
       <Button variant="ghost" active={commentMode} aria-pressed={commentMode} data-testid="comment-mode" onclick={() => (commentMode = !commentMode)}>Comments</Button>

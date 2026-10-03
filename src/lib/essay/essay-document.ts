@@ -9,10 +9,13 @@
 import {
   addContainerMember,
   addContainerMemberRelative,
+  containersForInstance,
   contextRecord,
+  copyContainer,
   createContainer,
   createRecord,
   createRelation,
+  forkRecord,
   getContainerOutline,
   getRecord,
   listContainers,
@@ -108,6 +111,8 @@ export interface EssayModel {
   attachments: Record<string, Attachment[]>;
   /** Semantic relations to other paragraphs by paragraph id (see Related). */
   related: Record<string, Related[]>;
+  /** Other documents (essays) holding each shared paragraph, by paragraph id; absent = not shared. */
+  sharedIn: Record<string, EssaySummary[]>;
 }
 
 /**
@@ -267,6 +272,43 @@ function loadContext(repo: SrsRepository, ids: string[]): ParagraphContext {
   return out;
 }
 
+/** Last shared-in read per repository handle, keyed on the engine write epoch (as loadContext). */
+const sharedCache = new WeakMap<object, { key: string; value: Record<string, EssaySummary[]> }>();
+
+/**
+ * Which other documents hold each paragraph: the engine's reverse membership lookup
+ * (`containers_for_instance`), restricted to the essays' own containers and named by essay title.
+ */
+function loadSharedIn(
+  repo: SrsRepository,
+  types: TypeSummary[],
+  ids: string[],
+  own: (string | null)[]
+): Record<string, EssaySummary[]> {
+  const key = `${ids.join(",")}|${own.join(",")}|${repo.write_epoch()}`;
+  const hit = sharedCache.get(repo);
+  if (hit?.key === key) return hit.value;
+  const byContainer = new Map<string, EssaySummary>();
+  for (const r of recordsOfType(repo, types, ESSAY_TYPE_ID)) {
+    const c = listContainers(repo, { anchorInstanceId: r.instanceId })[0];
+    if (c)
+      byContainer.set(c.containerId, {
+        id: r.instanceId,
+        title: str(r.fieldValues.title) || "Untitled essay",
+      });
+  }
+  const out: Record<string, EssaySummary[]> = {};
+  for (const id of ids) {
+    const others = containersForInstance(repo, id)
+      .filter((c) => !own.includes(c.containerId))
+      .map((c) => byContainer.get(c.containerId))
+      .filter((e): e is EssaySummary => !!e);
+    if (others.length) out[id] = others;
+  }
+  sharedCache.set(repo, { key, value: out });
+  return out;
+}
+
 export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
   const types = listTypes(repo); // resolved once per reload
   const essay = recordsOfType(repo, types, ESSAY_TYPE_ID).find((r) => r.instanceId === essayId);
@@ -305,6 +347,7 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
     comments: loadComments(repo, types),
     attachments: context.attachments,
     related: context.related,
+    sharedIn: loadSharedIn(repo, types, Object.keys(paragraphs), [containerId, draftContainerId]),
   };
 }
 
@@ -392,6 +435,14 @@ export function transfer(
   place(repo, to, id, t);
 }
 
+/** The editor's own state for an essay: a draft container + the document-state record. */
+function addEditorState(repo: SrsRepository, essayId: string, title: string): void {
+  const draft = createContainer(repo, { title: `${title} (draft)` });
+  createRecord(repo, DOCUMENT_STATE_TYPE_ID, typeVersion(repo, DOCUMENT_STATE_TYPE_ID), {
+    fieldValues: { essay: essayId, hidden_instance_ids: [], draft_container_id: draft.containerId },
+  });
+}
+
 /** New essay: record + container (+ draft container + state).. */
 export function newEssay(repo: SrsRepository, title: string): string {
   const essay = createRecord(repo, ESSAY_TYPE_ID, typeVersion(repo, ESSAY_TYPE_ID), {
@@ -403,13 +454,30 @@ export function newEssay(repo: SrsRepository, title: string): string {
     identityInstanceId: essay.instanceId,
     memberInstanceIds: [{ instanceId: essay.instanceId }],
   });
-  const draft = createContainer(repo, { title: `${title} (draft)` });
-  createRecord(repo, DOCUMENT_STATE_TYPE_ID, typeVersion(repo, DOCUMENT_STATE_TYPE_ID), {
-    fieldValues: {
-      essay: essay.instanceId,
-      hidden_instance_ids: [],
-      draft_container_id: draft.containerId,
-    },
-  });
+  addEditorState(repo, essay.instanceId, title);
   return essay.instanceId;
+}
+
+/**
+ * Copy a document: the engine shares every paragraph and forks only the essay record (each
+ * document keeps its own title). The copy gets a fresh, empty editor state like a new essay;
+ * hidden paragraphs and the draft area are per-document and are not carried over.
+ */
+export function copyEssay(repo: SrsRepository, m: EssayModel): string {
+  const title = `Copy of ${m.title}`;
+  const copy = copyContainer(repo, m.containerId, { title });
+  const essayId = copy.container.anchorInstanceId;
+  if (!essayId) throw new Error("The copied document has no essay record");
+  setEssayTitle(repo, essayId, title);
+  addEditorState(repo, essayId, title);
+  return essayId;
+}
+
+/** Make a shared paragraph (and its nested children) this document's own; the fork is `derived-from` the original. */
+export function makeLocalCopy(repo: SrsRepository, m: EssayModel, paragraphId: string): void {
+  const { forks } = forkRecord(repo, m.containerId, paragraphId);
+  // A hidden original stays hidden as its fork: swap the ids in this document's state only.
+  const swap = new Map(forks.map((f) => [f.originalId, f.forkId]));
+  if (m.stateId && m.hidden.some((h) => swap.has(h)))
+    patchRecord(repo, m.stateId, { hidden_instance_ids: m.hidden.map((h) => swap.get(h) ?? h) });
 }
