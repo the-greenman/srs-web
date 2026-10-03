@@ -14,6 +14,7 @@ const m = vi.hoisted(() => ({
   createRecord: vi.fn(() => ({ instanceId: "new" })),
   createContainer: vi.fn(),
   updateRecord: vi.fn(),
+  updateContainer: vi.fn(),
   getRecord: vi.fn(),
   getContainerOutline: vi.fn(),
   listContainers: vi.fn(() => [{ containerId: "C", title: "t" }]),
@@ -187,9 +188,11 @@ describe("essay-document", () => {
     expect(m.updateRecord.mock.calls[1][2].fieldValues.hidden_instance_ids).toEqual([]);
   });
 
-  it("setEssayTitle patches only the essay's title field", () => {
+  it("setEssayTitle patches the essay's title field and renames its container and draft", () => {
     m.getRecord.mockReturnValue(rec("E", ESSAY_TYPE_ID, { title: "Old", other: "kept" }));
-    setEssayTitle({} as never, "E", "New");
+    setEssayTitle({} as never, { essayId: "E", containerId: "C", draftContainerId: "D" }, "New");
+    expect(m.updateContainer).toHaveBeenCalledWith({}, "C", { title: "New" });
+    expect(m.updateContainer).toHaveBeenCalledWith({}, "D", { title: "New (draft)" });
     expect(m.updateRecord).toHaveBeenCalledWith({}, "E", {
       fieldValues: { title: "New", other: "kept" },
     });

@@ -32,7 +32,7 @@
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
   import { connections, credsKey, type AgentConnection } from "$lib/agent-connections.js";
   import { observeSession, pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
-  import type { AgentWriteGuard, McpSession, SrsRepository } from "$lib/srs-client.js";
+  import { listRelations, type AgentWriteGuard, type McpSession, type SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
@@ -349,7 +349,7 @@
     if (entry.session) {
       if (applyGuard(conn.id)) {
         applyAgentActor(entry.session, current as SrsRepository, conn);
-        void h.attach(observeSession(entry.session, conn.id, (w) => (agentWrites = pushWrite(agentWrites, w)), (n) => (clientNames = { ...clientNames, [conn.id]: n })));
+        void h.attach(observeSession(entry.session, conn.id, (w) => (agentWrites = pushWrite(agentWrites, w)), (n) => (clientNames = { ...clientNames, [conn.id]: n }), (id) => listRelations(current as SrsRepository, {}).find((r) => r.relationId === id)?.targetInstanceId));
       }
     } else h.detach();
   }

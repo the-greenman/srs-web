@@ -16,7 +16,7 @@ const status = {
       agentId: "agent:a",
       tool: "record_update",
       instanceId: "p1",
-      fields: ["paragraph_title"],
+      changed: [{ target: "instance", id: "p", kind: "updated" }],
       at: Date.now(),
     },
   ],
@@ -29,7 +29,7 @@ it("a feed entry for a known paragraph is clickable", async () => {
     paragraphLabel: (id: string) => (id === "p1" ? "Opening" : undefined),
     onselect,
   });
-  expect(getByTestId("agent-feed-entry").textContent).toContain("titled ¶ Opening · just now");
+  expect(getByTestId("agent-feed-entry").textContent).toContain("updated ¶ Opening · just now");
   await fireEvent.click(getByTestId("agent-feed-focus"));
   expect(onselect).toHaveBeenCalledWith("p1");
 });

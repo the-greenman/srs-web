@@ -213,55 +213,71 @@ describe.skipIf(!haveBindings)("paragraph attachments on the real engine (contex
   });
 });
 
-describe.skipIf(!haveBindings)("many documents on the real engine (copy, shared, make local copy)", () => {
-  it("copy shares paragraphs and forks the title; make-local-copy forks one paragraph here only", async () => {
-    const doc = await import("../src/lib/essay/essay-document.js");
-    const { listRecords } = await import("../src/lib/srs-client.js");
-    const { PARAGRAPH_TYPE_ID } = await import("../src/lib/essay/type-registry.js");
-    const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
-    mkdirSync(dir, { recursive: true });
-    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
-    const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
-    mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
-    const repo = mod.SrsRepository.load(
-      readFileSync(path.join(__dirname, "../e2e/fixtures/essay-empty.srsj"), "utf8")
-    );
-    const aId = doc.newEssay(repo, "A");
-    const p = doc.addParagraph(repo, doc.loadEssay(repo, aId));
-    const q = doc.addParagraph(repo, doc.loadEssay(repo, aId));
-    const paragraphs = () =>
-      listRecords(repo, {}).filter((r) => r.typeId === PARAGRAPH_TYPE_ID).length;
-    expect(doc.loadEssay(repo, aId).sharedIn).toEqual({});
+describe.skipIf(!haveBindings)(
+  "many documents on the real engine (copy, shared, make local copy)",
+  () => {
+    it("copy shares paragraphs and forks the title; make-local-copy forks one paragraph here only", async () => {
+      const doc = await import("../src/lib/essay/essay-document.js");
+      const { listRecords } = await import("../src/lib/srs-client.js");
+      const { PARAGRAPH_TYPE_ID } = await import("../src/lib/essay/type-registry.js");
+      const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
+      mkdirSync(dir, { recursive: true });
+      copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
+      const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+      mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
+      const repo = mod.SrsRepository.load(
+        readFileSync(path.join(__dirname, "../e2e/fixtures/essay-empty.srsj"), "utf8")
+      );
+      const aId = doc.newEssay(repo, "A");
+      const p = doc.addParagraph(repo, doc.loadEssay(repo, aId));
+      const q = doc.addParagraph(repo, doc.loadEssay(repo, aId));
+      const paragraphs = () =>
+        listRecords(repo, {}).filter((r) => r.typeId === PARAGRAPH_TYPE_ID).length;
+      expect(doc.loadEssay(repo, aId).sharedIn).toEqual({});
 
-    const bId = doc.copyEssay(repo, doc.loadEssay(repo, aId));
-    expect(bId).not.toBe(aId);
-    expect(paragraphs()).toBe(2); // a copy duplicates no paragraph records
-    expect(doc.listEssays(repo).map((e) => e.title).sort()).toEqual(["A", "Copy of A"]);
-    const b = doc.loadEssay(repo, bId);
-    expect(b.entries.map((e) => e.instanceId)).toEqual([p, q]);
-    expect(b.stateId).not.toBeNull(); // fresh editor state, like a new essay
-    expect(b.draftContainerId).not.toBeNull();
-    expect(b.draftContainerId).not.toBe(doc.loadEssay(repo, aId).draftContainerId);
-    expect(Object.keys(b.sharedIn).sort()).toEqual([p, q].sort());
-    expect(b.sharedIn[p].map((e) => e.id)).toEqual([aId]);
-    expect(doc.loadEssay(repo, aId).sharedIn[p].map((e) => e.id)).toEqual([bId]);
+      const bId = doc.copyEssay(repo, doc.loadEssay(repo, aId));
+      expect(bId).not.toBe(aId);
+      expect(paragraphs()).toBe(2); // a copy duplicates no paragraph records
+      expect(
+        doc
+          .listEssays(repo)
+          .map((e) => e.title)
+          .sort()
+      ).toEqual(["A", "Copy of A"]);
+      const b = doc.loadEssay(repo, bId);
+      expect(b.entries.map((e) => e.instanceId)).toEqual([p, q]);
+      expect(b.stateId).not.toBeNull(); // fresh editor state, like a new essay
+      expect(b.draftContainerId).not.toBeNull();
+      expect(b.draftContainerId).not.toBe(doc.loadEssay(repo, aId).draftContainerId);
+      expect(Object.keys(b.sharedIn).sort()).toEqual([p, q].sort());
+      expect(b.sharedIn[p].map((e) => e.id)).toEqual([aId]);
+      expect(doc.loadEssay(repo, aId).sharedIn[p].map((e) => e.id)).toEqual([bId]);
 
-    doc.setHidden(repo, doc.loadEssay(repo, bId), p, true);
-    doc.makeLocalCopy(repo, doc.loadEssay(repo, bId), p);
-    expect(paragraphs()).toBe(3);
-    const b2 = doc.loadEssay(repo, bId);
-    const a2 = doc.loadEssay(repo, aId);
-    expect(b2.entries.length).toBe(2);
-    expect(b2.sharedIn[p]).toBeUndefined();
-    const forkId = b2.entries.map((e) => e.instanceId).find((id) => id !== q) as string;
-    expect(b2.hidden).toEqual([forkId]); // hidden stays hidden, as the fork (not the original id)
-    expect(a2.entries.map((e) => e.instanceId)).toEqual([p, q]); // the other document is unchanged
-    expect(Object.keys(a2.sharedIn)).toEqual([q]);
-    const fork = b2.entries.map((e) => e.instanceId).find((id) => id !== q) as string;
-    expect(b2.related[fork]?.map((r) => [r.relationType, r.direction, r.otherId])).toEqual([
-      ["derived-from", "out", p],
-    ]);
-    const report = repo.validate();
-    expect(report.summary.errors).toBe(0);
-  });
-});
+      // Rename (srs-web#380): the essay record, its container and its draft container follow.
+      doc.setEssayTitle(repo, b, "Renamed");
+      const { getContainer: gc } = await import("../src/lib/srs-client.js");
+      const renamed = doc.loadEssay(repo, bId);
+      expect(renamed.title).toBe("Renamed");
+      expect(gc(repo, renamed.containerId).title).toBe("Renamed");
+      expect(gc(repo, renamed.draftContainerId as string).title).toBe("Renamed (draft)");
+
+      doc.setHidden(repo, doc.loadEssay(repo, bId), p, true);
+      doc.makeLocalCopy(repo, doc.loadEssay(repo, bId), p);
+      expect(paragraphs()).toBe(3);
+      const b2 = doc.loadEssay(repo, bId);
+      const a2 = doc.loadEssay(repo, aId);
+      expect(b2.entries.length).toBe(2);
+      expect(b2.sharedIn[p]).toBeUndefined();
+      const forkId = b2.entries.map((e) => e.instanceId).find((id) => id !== q) as string;
+      expect(b2.hidden).toEqual([forkId]); // hidden stays hidden, as the fork (not the original id)
+      expect(a2.entries.map((e) => e.instanceId)).toEqual([p, q]); // the other document is unchanged
+      expect(Object.keys(a2.sharedIn)).toEqual([q]);
+      const fork = b2.entries.map((e) => e.instanceId).find((id) => id !== q) as string;
+      expect(b2.related[fork]?.map((r) => [r.relationType, r.direction, r.otherId])).toEqual([
+        ["derived-from", "out", p],
+      ]);
+      const report = repo.validate();
+      expect(report.summary.errors).toBe(0);
+    });
+  }
+);

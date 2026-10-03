@@ -3,12 +3,17 @@
  * the agent and the write — the boundary of that agent's own MCP session.
  *
  * The session's actor is the connection id, so authorship is never inferred. A request counts as a
- * write only if the engine says so: `session.write_epoch()` moved (srs-rust#1140). What the core does
- * not yet report is the changed instance ids and operation, so the tool name and its own arguments
- * (and the created id in the result) are read from the request/response. Limits: srs-rust#1202
- * (a per-request write summary from the core would replace this parsing).
+ * write only if the engine says so: `session.take_write_summary()` (srs-rust#1202) names the tool
+ * and every instance / relation / container it changed — including indirect ones (fork, copy).
+ * v1 carries no field names, so verbs say what happened to the target, not which field.
  */
 import type { FrameHandler } from "./mcp/relay-executor";
+
+export interface WriteChange {
+  target: "instance" | "relation" | "container";
+  id: string;
+  kind: "created" | "updated" | "deleted";
+}
 
 export interface AgentWrite {
   /** Monotonic across all agents in this page; the feed key. */
@@ -16,68 +21,55 @@ export interface AgentWrite {
   /** The agent connection id (= the session actor id). */
   agentId: string;
   tool: string;
-  /** The record the write touched, when the request or result names one. */
+  /** Everything the request changed, as reported by the engine. */
+  changed: WriteChange[];
+  /** The record the write touched: the first changed instance, else a changed relation's target. */
   instanceId?: string;
-  /** Field names the request set (`record_update` / `record_create`). */
-  fields: string[];
   at: number;
 }
 
 export const MAX_FEED = 50;
 
-const obj = (v: unknown): Record<string, unknown> | undefined =>
-  v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : undefined;
-const str = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);
-
-/** The write a handled `tools/call` made; undefined for anything that is not a single tool call. */
-export function writeFrom(
-  agentId: string,
-  request: string,
-  response: string | undefined,
-  at: number,
-  seq = 0
-): AgentWrite | undefined {
-  let req: Record<string, unknown> | undefined;
-  let res: Record<string, unknown> | undefined;
-  try {
-    req = obj(JSON.parse(request));
-    res = response ? obj(JSON.parse(response)) : undefined;
-  } catch {
-    return undefined;
-  }
-  if (req?.method !== "tools/call") return undefined;
-  const params = obj(req.params);
-  const tool = str(params?.name);
-  if (!tool) return undefined;
-  const args = obj(params?.arguments) ?? {};
-  const created = obj(obj(res?.result)?.structuredContent);
-  const instanceId = str(args.instanceId) ?? str(args.targetInstanceId) ?? str(created?.instanceId);
-  return { seq, agentId, tool, instanceId, fields: Object.keys(obj(args.fieldValues) ?? {}), at };
-}
+/** The session's host-facing surface: handle a frame, drain the write summary. */
+export type ObservedSession = FrameHandler & {
+  take_write_summary(): string | undefined;
+};
 
 let seq = 0;
 
-/** Wrap a session so each request that mutated the store is reported with its agent. */
+/** Wrap a session so each request that wrote is reported with its agent. */
 export function observeSession(
-  session: FrameHandler & { write_epoch(): number },
+  session: ObservedSession,
   agentId: string,
   onWrite: (w: AgentWrite) => void,
   /** The client's own name from its `initialize` (the engine uses it as the actor name unless the host set a label). */
-  onClientName?: (name: string) => void
+  onClientName?: (name: string) => void,
+  /** The instance a relation points at, so a link is attributed to the record it touches. */
+  relationTarget?: (relationId: string) => string | undefined
 ): FrameHandler {
   return {
     handle(text) {
       if (onClientName && text.includes('"initialize"')) {
         try {
-          const n = obj(obj(obj(JSON.parse(text))?.params)?.clientInfo)?.name;
+          const n = JSON.parse(text)?.params?.clientInfo?.name;
           if (typeof n === "string" && n) onClientName(n);
         } catch {}
       }
-      const before = session.write_epoch();
       const out = session.handle(text);
-      if (session.write_epoch() !== before) {
-        const w = writeFrom(agentId, text, out, Date.now(), ++seq);
-        if (w) onWrite(w);
+      const raw = session.take_write_summary(); // drains: call exactly once per handled request
+      if (raw) {
+        const { tool, changed } = JSON.parse(raw) as { tool: string; changed: WriteChange[] };
+        const rel = changed.find((c) => c.target === "relation");
+        onWrite({
+          seq: ++seq,
+          agentId,
+          tool,
+          changed,
+          instanceId:
+            changed.find((c) => c.target === "instance")?.id ??
+            (rel ? relationTarget?.(rel.id) : undefined),
+          at: Date.now(),
+        });
       }
       return out;
     },
@@ -88,18 +80,13 @@ export function observeSession(
 export const pushWrite = (feed: AgentWrite[], w: AgentWrite, max = MAX_FEED): AgentWrite[] =>
   [w, ...feed].slice(0, max);
 
-const FIELD_VERB: Record<string, string> = {
-  paragraph_title: "titled",
-  body: "edited",
-  comment_text: "commented on",
-};
-/** "titled", "edited", "added", ... — presentation of the tool + fields. */
-export function verb(w: Pick<AgentWrite, "tool" | "fields">): string {
-  const named = w.fields.map((f) => FIELD_VERB[f]).filter(Boolean);
-  if (w.tool === "record_update" && named.length) return named.join(" and ");
-  if (w.tool === "record_create") return named.length ? named[0] : "added";
-  if (w.tool === "relation_create") return "linked";
-  return w.tool.replace(/_/g, " ");
+const KIND_VERB = { created: "added", updated: "updated", deleted: "removed" } as const;
+/** "added", "updated", "linked", ... — presentation of what the engine said the write did. */
+export function verb(w: Pick<AgentWrite, "tool" | "changed">): string {
+  const c = w.changed[0];
+  if (!c) return w.tool.replace(/_/g, " ");
+  if (c.target === "relation") return c.kind === "created" ? "linked" : `${KIND_VERB[c.kind]} link`;
+  return c.target === "container" ? `${KIND_VERB[c.kind]} container` : KIND_VERB[c.kind];
 }
 
 export function ago(at: number, now: number): string {
