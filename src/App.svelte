@@ -778,6 +778,7 @@
     repoName={repoName}
     onExport={handleExportArchive}
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
+    readOnlyReason={activeDocument?.readOnlyReason ?? null}
     {saving}
     {saveMessage}
     documentDirty={documentDirty}
