@@ -188,6 +188,13 @@ describe("essay-document", () => {
     expect(m.updateRecord.mock.calls[1][2].fieldValues.hidden_instance_ids).toEqual([]);
   });
 
+  it("setEssayTitle without a draft container renames only the essay and its container", () => {
+    m.getRecord.mockReturnValue(rec("E", ESSAY_TYPE_ID, { title: "Old" }));
+    m.updateContainer.mockClear();
+    setEssayTitle({} as never, { essayId: "E", containerId: "C", draftContainerId: null }, "New");
+    expect(m.updateContainer.mock.calls).toEqual([[{}, "C", { title: "New" }]]);
+  });
+
   it("setEssayTitle patches the essay's title field and renames its container and draft", () => {
     m.getRecord.mockReturnValue(rec("E", ESSAY_TYPE_ID, { title: "Old", other: "kept" }));
     setEssayTitle({} as never, { essayId: "E", containerId: "C", draftContainerId: "D" }, "New");
