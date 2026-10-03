@@ -108,9 +108,9 @@ test.describe("R1 release walkthrough (#54)", () => {
       await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
       await expect(
         page
-          .locator(".inspector__title")
+          .locator(".panel__head")
           .filter({ hasText: "Validation" })
-          .locator(".inspector__title-aside")
+          .locator(".panel__aside")
       ).toContainText("clean");
     });
 

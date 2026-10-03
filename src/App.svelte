@@ -41,6 +41,7 @@
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import CreateGovernanceDocumentPanel from "$lib/components/CreateGovernanceDocumentPanel.svelte";
   import GitSaveModal from "$lib/components/GitSaveModal.svelte";
+  import Panel from "$lib/components/Panel.svelte";
   import McpConnection from "$lib/components/McpConnection.svelte";
   import { RelayHost, type HostState } from "$lib/mcp/relay-host.js";
   import { untrack } from "svelte";
@@ -820,6 +821,7 @@
       applyGuards();
     }}
     workingCopySaved={workingCopySaved}
+    agentPanel={relayUrl ? agentDock : undefined}
     onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAnother={() => {
       clearWorkingCopy();
@@ -834,27 +836,34 @@
   />
 {/if}
 
-{#if relayUrl && repo}
-  <div class="mcp-dock" style="position:fixed;right:1rem;bottom:1rem;z-index:50;display:grid;gap:.5rem;max-height:60vh;overflow:auto">
-    {#each agents as a (a.conn.id)}
-      <McpConnection
-        status={a.state.status}
-        callerUrl={a.state.callerUrl}
-        error={a.state.error}
-        repositoryName={repoName}
-        agentName={a.conn.label ?? `Agent ${a.conn.id.slice(6, 12)}`}
-        onRotate={() => void hosts.get(a.conn.id)?.host.rotate()}
-        onTakeover={() => void hosts.get(a.conn.id)?.host.takeover()}
-        onDisconnect={() => disconnectAgent(a.conn.id)}
-      />
-    {/each}
-    <details>
-    <summary data-testid="mcp-connect-open">Connect an agent</summary>
-    <form onsubmit={(e) => { e.preventDefault(); connectAgent(newAgentLabel); newAgentLabel = ""; }}>
-      <input class="mcp-conn__input" bind:value={newAgentLabel} placeholder="Agent label (optional)" aria-label="Agent label" data-testid="mcp-agent-label" />
-      <button type="submit" class="btn btn--secondary" data-testid="mcp-connect-agent">Connect</button>
-    </form>
-    </details>
+{#snippet agentDock()}
+<div class="mcp-agents">
+  {#each agents as a (a.conn.id)}
+    <McpConnection
+      status={a.state.status}
+      callerUrl={a.state.callerUrl}
+      error={a.state.error}
+      repositoryName={repoName}
+      agentName={a.conn.label ?? `Agent ${a.conn.id.slice(6, 12)}`}
+      onRotate={() => void hosts.get(a.conn.id)?.host.rotate()}
+      onTakeover={() => void hosts.get(a.conn.id)?.host.takeover()}
+      onDisconnect={() => disconnectAgent(a.conn.id)}
+    />
+  {/each}
+  <details>
+  <summary data-testid="mcp-connect-open">Connect an agent</summary>
+  <form onsubmit={(e) => { e.preventDefault(); connectAgent(newAgentLabel); newAgentLabel = ""; }}>
+    <input class="mcp-conn__input" bind:value={newAgentLabel} placeholder="Agent label (optional)" aria-label="Agent label" data-testid="mcp-agent-label" />
+    <button type="submit" class="btn btn--secondary" data-testid="mcp-connect-agent">Connect</button>
+  </form>
+  </details>
+</div>
+{/snippet}
+
+<!-- Shells that render `agentPanel` (the essay rail) own its placement; the rest get the floating dock. -->
+{#if relayUrl && repo && !getEditor(editorMode)?.hostsAgentPanel}
+  <div class="mcp-dock">
+    <Panel title="Agents" persistKey="dock.agents">{@render agentDock()}</Panel>
   </div>
 {/if}
 

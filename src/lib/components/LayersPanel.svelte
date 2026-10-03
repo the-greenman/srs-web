@@ -45,7 +45,6 @@
 </script>
 
 <section class="layers" aria-label="Layers">
-  <h2 class="layers__title">Layers</h2>
   <BlockStack items={layers} source="essay" nest label="Layers" {ondrop} {candrop}>
     {#snippet row(item, handle)}
       {@const l = byId.get(item.id)}

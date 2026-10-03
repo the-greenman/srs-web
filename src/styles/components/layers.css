@@ -6,16 +6,6 @@
    an aria-pressed toggle (pressed = hidden) drawn with a slash, not colour.
    Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
    ========================================================================== */
-.layers__title,
-.draft-tray__title {
-  margin: 0 0 var(--space-xs);
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  font-weight: 400;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--color-muted);
-}
 .layers__row {
   display: flex;
   align-items: center;

@@ -13,7 +13,7 @@ import type { AgentWriteGuard, SrsRepository, TypeSummary } from "$lib/srs-clien
  * offered for a known contract. Availability is keyed on UUID identity (`entryTypeId`),
  * never on a namespace/name label. Adding an editor = adding one entry here.
  */
-import type { Component } from "svelte";
+import type { Component, Snippet } from "svelte";
 
 /** The spec's packageDependencies shape plus the package UUID (srs#855). */
 export interface PackageRequirement {
@@ -44,6 +44,11 @@ export interface EditorShellProps {
   /** A shell declares (or, with null, withdraws) the write guard App applies to agent MCP writes. */
   /** `replacing` = the guard being withdrawn; App ignores a null from a shell whose guard is no longer current. */
   onAgentWriteGuard?: (guard: AgentWriteGuard | null, replacing?: AgentWriteGuard) => void;
+  /**
+   * The agent (MCP) connections UI, built once by App. A shell that renders it (the essay rail's
+   * Agents panel) owns its placement; App shows the floating dock only for shells that do not.
+   */
+  agentPanel?: Snippet;
 }
 
 export interface EditorDefinition {
@@ -55,6 +60,8 @@ export interface EditorDefinition {
   requires: PackageRequirement[];
   create?: (repo: SrsRepository) => void | Promise<void>;
   component: Component<EditorShellProps>;
+  /** The shell renders `agentPanel` in its own layout, so App hides the floating agent dock. */
+  hostsAgentPanel?: boolean;
 }
 
 export const EDITORS: EditorDefinition[] = [
@@ -86,6 +93,7 @@ export const EDITORS: EditorDefinition[] = [
   {
     id: "essay",
     label: "Essay",
+    hostsAgentPanel: true,
     description: "Structured essay editor.",
     entryTypeId: ESSAY_TYPE_ID,
     requires: [

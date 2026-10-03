@@ -90,18 +90,31 @@
         <li class="block-stack__item" style="--depth:1"><article class="block is-off"><div class="block__gutter"><button class="block__handle" type="button">Child</button><button class="eye eye--inherited is-off" type="button" disabled aria-pressed="true" aria-label="Child is hidden by a parent">&#8856;</button></div><p class="block__closed">Hidden by parent</p></article></li>
         <li class="block-stack__item" style="--depth:0"><article class="block"><div class="block__gutter"><button class="block__handle is-untitled" type="button">&#8942;&#8942;</button></div><div class="block__body" contenteditable="plaintext-only" role="textbox" aria-multiline="true" tabindex="0" data-placeholder="Write&hellip;"></div></article></li>
       </ol>
-      <aside>
-        <section class="layers" aria-label="Layers"><h2 class="layers__title">Layers</h2>
+      <aside class="panel-rail">
+        <details class="panel" open><summary class="panel__head"><span class="panel__title">Layers</span></summary><div class="panel__body">
+        <section class="layers" aria-label="Layers">
           <ol class="block-stack">
             <li class="block-stack__item" style="--depth:0"><div class="layers__row"><button class="layers__fold" type="button">&#9662;</button><button class="eye" type="button" aria-pressed="false" aria-label="Hide Opening">&#9673;</button><button class="layers__label" type="button">Opening</button></div></li>
             <li class="block-stack__item is-drop-into" style="--depth:1"><div class="layers__row"><span class="layers__fold"></span><button class="eye" type="button" aria-pressed="false" aria-label="Hide Claim">&#9673;</button><button class="layers__label" type="button">Claim</button></div></li>
             <li class="block-stack__item" style="--depth:0"><div class="layers__row is-off"><span class="layers__fold"></span><button class="eye is-off" type="button" aria-pressed="true" aria-label="Show Aside">&#8856;</button><button class="layers__label" type="button">Aside</button></div></li>
           </ol>
         </section>
-        <section class="draft-tray" aria-label="Draft tray"><h2 class="draft-tray__title">Draft</h2>
+        </div></details>
+        <details class="panel" open><summary class="panel__head"><span class="panel__title">Draft</span><span class="panel__aside">1</span></summary><div class="panel__body">
+        <section class="draft-tray" aria-label="Draft tray">
           <ol class="block-stack"><li class="block-stack__item"><div class="draft-tray__row"><span class="draft-tray__label">Spare</span><button class="draft-tray__put" type="button">Put back</button></div></li></ol>
         </section>
+        </div></details>
+        <details class="panel"><summary class="panel__head"><span class="panel__title">Agents</span></summary><div class="panel__body"><p class="t-muted">Collapsed panel.</p></div></details>
       </aside>
+    </div>
+
+    <h2>Panel</h2>
+    <p class="t-muted">Specimen for <span class="t-mono">Panel</span> (srs-web#362): native <span class="t-mono">&lt;details&gt;</span> collapse with a mono label, optional aside and actions; a static header when not collapsible. Stack panels in a <span class="t-mono">.panel-rail</span>.</p>
+    <div class="panel-rail" style="position:static;max-width:18rem">
+      <details class="panel" open><summary class="panel__head"><span class="panel__title">Open panel</span><span class="panel__aside">3</span><span class="panel__actions"><button class="btn btn--mono" type="button">Add</button></span></summary><div class="panel__body"><p>Body content.</p></div></details>
+      <details class="panel"><summary class="panel__head"><span class="panel__title">Collapsed panel</span></summary><div class="panel__body"><p>Hidden.</p></div></details>
+      <section class="panel"><div class="panel__head"><span class="panel__title">Static panel</span></div><div class="panel__body"><p>No toggle.</p></div></section>
     </div>
 
     <h2>MCP connection</h2>
