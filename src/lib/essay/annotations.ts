@@ -6,7 +6,7 @@
  */
 import type { EssayModel } from "./essay-document.js";
 
-export type AnnotationKind = "comments" | "attachment" | "relation";
+export type AnnotationKind = "comments" | "attachment" | "relation" | "shared";
 
 export interface Annotation {
   kind: AnnotationKind;
@@ -50,6 +50,15 @@ export function annotationsFor(model: EssayModel, paragraphId: string): Annotati
         direction: a.direction,
       })
     ),
+    ...(model.sharedIn[paragraphId]?.length
+      ? [
+          {
+            kind: "shared",
+            key: `shared:${paragraphId}`,
+            label: `Also in ${model.sharedIn[paragraphId].map((e) => e.title).join(", ")}`,
+          } as Annotation,
+        ]
+      : []),
     ...(model.related[paragraphId] ?? []).map(
       (r): Annotation => ({
         kind: "relation",

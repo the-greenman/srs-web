@@ -128,6 +128,10 @@ export interface SrsRepository {
     placement: string
     // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in addContainerMemberRelative()
   ): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in copyContainer()
+  copy_container(source_id: string, input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in forkRecord()
+  fork_record(container_id: string, instance_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainerOutline()
   get_container_outline(container_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainerArrangement()
@@ -2063,6 +2067,33 @@ export interface CreateContainerInput {
  */
 export function createContainer(repo: SrsRepository, input: CreateContainerInput): Container {
   return repo.create_container(JSON.stringify(input)) as Container;
+}
+
+/** Result of a copy / fork: originals paired with their forks (each recorded `derived-from` its original). */
+export interface ForkResult {
+  forks: { originalId: string; forkId: string }[];
+  relations: unknown[];
+}
+
+/**
+ * Copy a container (srs-rust#1136, build.437): members are shared, only the anchor is forked.
+ * The copy's `container.anchorInstanceId` is the forked anchor.
+ */
+export function copyContainer(
+  repo: SrsRepository,
+  sourceId: string,
+  input: { title?: string } = {}
+): ForkResult & { container: Container } {
+  return wasm(() => repo.copy_container(sourceId, JSON.stringify(input)));
+}
+
+/** Fork `instanceId` and its nested children inside `containerId` only ("make local copy"). */
+export function forkRecord(
+  repo: SrsRepository,
+  containerId: string,
+  instanceId: string
+): ForkResult & { containerId: string } {
+  return wasm(() => repo.fork_record(containerId, instanceId));
 }
 
 // ---------------------------------------------------------------------------

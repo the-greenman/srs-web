@@ -30,6 +30,9 @@ const m = vi.hoisted(() => ({
   listRecords: vi.fn(),
   listRelations: vi.fn(() => []),
   contextRecord: vi.fn(() => ({ relations: [] })),
+  containersForInstance: vi.fn(() => []),
+  copyContainer: vi.fn(),
+  forkRecord: vi.fn(),
   listRelationTypes: vi.fn(() => []),
   createRelation: vi.fn(),
 }));

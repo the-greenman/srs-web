@@ -17,6 +17,7 @@ const model: EssayModel = {
   comments: {},
   attachments: {},
   related: {},
+  sharedIn: {},
 };
 vi.mock("../src/lib/srs-client.js", () => ({ renderMarkdown: (md: string) => `<p>${md}</p>` }));
 const doc = vi.hoisted(() => ({
@@ -24,6 +25,9 @@ const doc = vi.hoisted(() => ({
   loadEssay: vi.fn(),
   setBody: vi.fn(),
   setEssayTitle: vi.fn(),
+  copyEssay: vi.fn(),
+  makeLocalCopy: vi.fn(),
+  newEssay: vi.fn(),
 }));
 vi.mock("../src/lib/essay/essay-document.js", () => ({
   ...doc,
@@ -31,7 +35,6 @@ vi.mock("../src/lib/essay/essay-document.js", () => ({
   addParagraph: vi.fn(),
   essayWriteGuard: vi.fn(),
   moveEntry: vi.fn(),
-  newEssay: vi.fn(),
   shiftEntry: vi.fn(),
   setHidden: vi.fn(),
   setTitle: vi.fn(),
@@ -152,6 +155,26 @@ it("a relation indicator focuses the other paragraph; the variant toggle is reme
   expect(container.querySelector(".margin--expanded")).toBeNull();
   await fireEvent.click(getByTestId("margin-variant"));
   expect(container.querySelector(".margin--expanded")).not.toBeNull();
+});
+
+it("a shared badge names the other documents; clicking it makes a local copy; New/Copy document go through the document ops", async () => {
+  doc.loadEssay.mockReturnValue({ ...model, sharedIn: { p: [{ id: "e2", title: "Other essay" }] } });
+  const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
+  const { getByTestId } = render(EssayShell, {
+    repo: {} as never,
+    repoName: "r",
+    onExport: () => {},
+    documentRevision: 1,
+  });
+  await tick();
+  const badge = getByTestId("shared-badge");
+  expect(badge.getAttribute("aria-label")).toBe("Also in Other essay");
+  await fireEvent.click(badge);
+  expect(doc.makeLocalCopy).toHaveBeenCalledWith({}, expect.objectContaining({ essayId: "e" }), "p");
+  await fireEvent.click(getByTestId("copy-document"));
+  expect(doc.copyEssay).toHaveBeenCalledOnce();
+  await fireEvent.click(getByTestId("new-document"));
+  expect(doc.newEssay).toHaveBeenCalledOnce();
 });
 
 it("the Agents panel shows connected/total, and a feed click leaves zoom and focuses that paragraph (srs-web#372)", async () => {

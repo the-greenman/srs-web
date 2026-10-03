@@ -31,6 +31,7 @@
     comments: { order: 0, chip: false },
     attachment: { order: 1, chip: true },
     relation: { order: 2, chip: true },
+    shared: { order: 3, chip: true },
   };
   const ARROW = { out: "→", in: "←" } as const;
 
@@ -46,6 +47,8 @@
     <CommentBadge count={a.count ?? 0} label={a.label} open={isOn(a)} onclick={() => onopen(a)} />
   {:else if a.kind === "attachment"}
     <AttachmentGlyph kind={a.icon ?? "note"} title={a.label} text={a.text} pinned={isOn(a)} onpin={() => onopen(a)} />
+  {:else if a.kind === "shared"}
+    <button type="button" class="margin__relation" data-testid="shared-badge" aria-label={a.label} title={`${a.label} - make a local copy`} onclick={() => onopen(a)}>⧉</button>
   {:else}
     <button
       type="button"
