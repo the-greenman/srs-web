@@ -1,0 +1,71 @@
+/* ============================================================================
+   component: action menu (.action-menu) — the ⋯ button + its menu of rows
+   Shared by Block (per paragraph) and LayersPanel (per row, touch only).
+   Rows are >=44px. The list floats under the button, right-aligned to it.
+   Story: https://github.com/the-greenman/srs-web/issues/382
+   ========================================================================== */
+.action-menu {
+  position: relative;
+  display: inline-flex;
+}
+.action-menu__trigger {
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+  line-height: 1;
+  color: var(--color-muted);
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+.action-menu__trigger:hover,
+.action-menu__trigger[aria-expanded="true"] {
+  color: var(--ink);
+}
+.action-menu__trigger:focus-visible,
+.action-menu__item:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: -2px;
+}
+.action-menu__list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 12rem;
+  background: var(--color-page);
+  border: 1px solid var(--black);
+  box-shadow: 0 2px 8px rgba(26, 26, 26, 0.18);
+}
+.action-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: 44px;
+  padding: 0 var(--space-sm);
+  font-size: var(--size-sm);
+  text-align: left;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.action-menu__item:hover:not(:disabled),
+.action-menu__item:focus-visible {
+  background: var(--color-line-soft);
+}
+.action-menu__item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.action-menu__icon {
+  width: 1.5em;
+  text-align: center;
+  font-family: var(--font-mono);
+}
+.action-menu--end .action-menu__list {
+  left: auto;
+  right: 0;
+}

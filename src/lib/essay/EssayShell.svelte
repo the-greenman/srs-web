@@ -478,6 +478,9 @@
             {/if}
           {/snippet}
         </BlockStack>
+        {#if items.length > 0 && !zoomId}
+          <Button variant="mono" class="essay-shell__add" data-testid="add-paragraph" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add paragraph</Button>
+        {/if}
       </main>
       <aside class="panel-rail" aria-label="Panels">
         <Panel title="Layers" persistKey="essay.layers">

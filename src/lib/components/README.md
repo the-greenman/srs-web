@@ -56,7 +56,7 @@ rail + record headers their printed-ink texture) — see `docs/design/*.html`.
 | `Button` | `variant` `onDark?` `active?` | `.btn` | B1 [#2](https://github.com/the-greenman/srs-web/issues/2), B10 [#6](https://github.com/the-greenman/srs-web/issues/6) |
 | `Diagnostics` | `diagnostics` | `.diag*` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3), B13 [#9](https://github.com/the-greenman/srs-web/issues/9) |
 | `Lifecycle` | `status` `transitions` `onTransition` | `.lifecycle` | B11 [#7](https://github.com/the-greenman/srs-web/issues/7) |
-| `Block` | `id` `title?` `body?` `hidden?` `handle` `margin?` (one right-margin snippet) `onzoom?` + callbacks | `.block` | srs-web [#328](https://github.com/the-greenman/srs-web/issues/328) |
+| `Block` | `id` `title?` `body?` `hidden?` `handle` `margin?` (one right-margin snippet) `onzoom?` `onpull?` `oncopylink?` + callbacks (hover tools + ⋯ menu both render `paragraphActions`) | `.block` | srs-web [#328](https://github.com/the-greenman/srs-web/issues/328) |
 | `InlineText` | `value` `placeholder?` `label` `oncommit` `as?` `editing?` (bindable) | `.inline-text` | srs-web [#363](https://github.com/the-greenman/srs-web/issues/363) |
 | `MarkdownHelp` | none | `.md-help` | srs-web [#365](https://github.com/the-greenman/srs-web/issues/365) |
 | `ActorChip` | `actor` | `.actor-chip` | srs-web [#330](https://github.com/the-greenman/srs-web/issues/330), [#372](https://github.com/the-greenman/srs-web/issues/372) |
@@ -66,7 +66,8 @@ rail + record headers their printed-ink texture) — see `docs/design/*.html`.
 | `BlockStack` | `items` `source` `ondrop` `row` snippet `nest?` | `.block-stack` | #328 |
 | `Panel` | `title` `aside?` `open?` `persistKey?` `collapsible?` `actions?` | `.panel` `.panel-rail` | srs-web [#362](https://github.com/the-greenman/srs-web/issues/362) |
 | `AttachmentGlyph` / `HoverCard` / `PinnedPane` | `kind` `title` `text?` `pinned?` `onpin?` / `items` `onunpin` | `.glyph` `.hover-card` `.pinned` | srs-web [#329](https://github.com/the-greenman/srs-web/issues/329) |
-| `LayersPanel` | `layers` `ondrop` `onhide` `onfold` `onkey` | `.layers` | #328 |
+| `LayersPanel` | `layers` `ondrop` `onhide` `onfold` `onkey` (touch: per-row ⋯ via `ActionMenu`) | `.layers` | #328, [#382](https://github.com/the-greenman/srs-web/issues/382) |
+| `ActionMenu` | `actions` (`ParagraphAction[]` from `essay/paragraph-actions.ts`, the ONE action list) `label` `testid?` `focusKey?` | `.action-menu` | srs-web [#382](https://github.com/the-greenman/srs-web/issues/382) |
 | `DraftTray` | `items` `available?` `ondrop` `onputback` | `.draft-tray` | #328 |
 | `EyeToggle` | `hidden?` `label?` | `.eye` | #328 |
 

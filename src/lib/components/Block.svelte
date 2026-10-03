@@ -1,5 +1,5 @@
 <!--
-  Block — one paragraph: a narrow gutter (⋮⋮ drag handle; eye + move-to-draft + zoom + copy-link on hover/focus), a right margin slot (`margin`),
+  Block — one paragraph: a narrow gutter (⋮⋮ drag handle; eye + move-to-draft + zoom + copy-link on hover/focus; one ⋯ action menu, the only tool on touch), a right margin slot (`margin`),
   a small mono title above the body (InlineText) and the body in two states: rendered markdown
   (core renderMarkdown, already sanitized) until focused, then a plain-text source editor
   (`contenteditable="plaintext-only"`, no rich-text dependency). Hidden = collapsed in place.
@@ -12,11 +12,13 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import type { Snippet } from 'svelte';
+  import ActionMenu from './ActionMenu.svelte';
   import EyeToggle from './EyeToggle.svelte';
   import InlineText from './InlineText.svelte';
   import { renderMarkdown } from '$lib/srs-client.js';
   import { keyMove } from './dnd';
   import type { KeyMove } from './dnd';
+  import { HOVER_TOOLS, paragraphActions } from '../essay/paragraph-actions.js';
 
   let {
     id,
@@ -152,6 +154,13 @@
   }
 
   const shortLabel = $derived(title || 'untitled paragraph');
+  // The one action list: hover tools (devices with hover) and the ⋯ menu are both rendered from it.
+  const actions = $derived(
+    paragraphActions(
+      { onnew, onmove, onindent, onhide, onpull, onzoom, oncopylink, onrename: () => (editingTitle = true) },
+      { label: shortLabel, hidden, inherited },
+    ),
+  );
 </script>
 
 <article class="block" class:is-off={hidden || inherited} data-block-id={id}>
@@ -166,17 +175,15 @@
       {...handle}
     >⋮⋮</button>
     <div class="block__tools">
-      <EyeToggle {hidden} {inherited} label={shortLabel} onclick={() => onhide(!hidden)} />
-      {#if onpull}
-        <button type="button" class="block__action" aria-label={`Move ${shortLabel} to draft`} title="Move to draft" onclick={onpull}>↧</button>
-      {/if}
-      {#if onzoom}
-        <button type="button" class="block__action" aria-label={`Zoom to ${shortLabel}`} title="Zoom to this paragraph" onclick={onzoom}>⤢</button>
-      {/if}
-      {#if oncopylink}
-        <button type="button" class="block__action" aria-label={`Copy link to ${shortLabel}`} title="Copy link to this paragraph" onclick={oncopylink}>🔗</button>
-      {/if}
+      {#each actions.filter((a) => HOVER_TOOLS.includes(a.id)) as a (a.id)}
+        {#if a.id === 'hide'}
+          <EyeToggle {hidden} {inherited} label={shortLabel} onclick={a.run} />
+        {:else if a.tool}
+          <button type="button" class="block__action" aria-label={a.tool.aria} title={a.tool.title} onclick={a.run}>{a.icon}</button>
+        {/if}
+      {/each}
     </div>
+    <ActionMenu class="block__menu" {actions} label={shortLabel} focusKey={`menu:${id}`} />
   </div>
   <div class="block__main">
     <div class="block__head" class:is-collapsed={!title && !editingTitle}>

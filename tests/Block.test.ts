@@ -60,3 +60,14 @@ it("Ctrl+click on a rendered link opens it instead of editing", async () => {
   expect(open).toHaveBeenCalledWith("https://e.com/", "_blank", "noopener");
   expect(container.querySelector(".block__body")).toBeNull();
 });
+
+it("renders the one ⋯ action menu beside the hover tools (touch CSS hides the stack)", async () => {
+  const { container, getByTestId } = render(Block, { ...props("x"), onzoom: vi.fn(), oncopylink: vi.fn(), onpull: vi.fn() });
+  const btn = getByTestId("paragraph-menu");
+  expect(container.querySelectorAll(".block__tools .block__action")).toHaveLength(3);
+  await fireEvent.click(btn);
+  const items = container.querySelectorAll('[role="menuitem"]');
+  expect([...items].map((i) => i.getAttribute("data-testid"))).toEqual(
+    ["add", "up", "down", "indent", "outdent", "hide", "draft", "zoom", "link", "rename"].map((id) => `paragraph-menu-${id}`),
+  );
+});

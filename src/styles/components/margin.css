@@ -68,3 +68,14 @@
 .block:has(.margin--expanded) {
   grid-template-columns: 2rem minmax(0, 1fr) 11rem;
 }
+
+/* Touch: margin marks are >=44px targets (desktop look unchanged). */
+@media (pointer: coarse) {
+  .margin .comment-badge,
+  .margin .margin__relation,
+  .margin .margin__more,
+  .margin .glyph {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
