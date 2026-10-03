@@ -246,12 +246,15 @@ describe.skipIf(!haveBindings)("many documents on the real engine (copy, shared,
     expect(b.sharedIn[p].map((e) => e.id)).toEqual([aId]);
     expect(doc.loadEssay(repo, aId).sharedIn[p].map((e) => e.id)).toEqual([bId]);
 
-    doc.makeLocalCopy(repo, b, p);
+    doc.setHidden(repo, doc.loadEssay(repo, bId), p, true);
+    doc.makeLocalCopy(repo, doc.loadEssay(repo, bId), p);
     expect(paragraphs()).toBe(3);
     const b2 = doc.loadEssay(repo, bId);
     const a2 = doc.loadEssay(repo, aId);
     expect(b2.entries.length).toBe(2);
     expect(b2.sharedIn[p]).toBeUndefined();
+    const forkId = b2.entries.map((e) => e.instanceId).find((id) => id !== q) as string;
+    expect(b2.hidden).toEqual([forkId]); // hidden stays hidden, as the fork (not the original id)
     expect(a2.entries.map((e) => e.instanceId)).toEqual([p, q]); // the other document is unchanged
     expect(Object.keys(a2.sharedIn)).toEqual([q]);
     const fork = b2.entries.map((e) => e.instanceId).find((id) => id !== q) as string;

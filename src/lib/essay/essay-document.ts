@@ -475,5 +475,9 @@ export function copyEssay(repo: SrsRepository, m: EssayModel): string {
 
 /** Make a shared paragraph (and its nested children) this document's own; the fork is `derived-from` the original. */
 export function makeLocalCopy(repo: SrsRepository, m: EssayModel, paragraphId: string): void {
-  forkRecord(repo, m.containerId, paragraphId);
+  const { forks } = forkRecord(repo, m.containerId, paragraphId);
+  // A hidden original stays hidden as its fork: swap the ids in this document's state only.
+  const swap = new Map(forks.map((f) => [f.originalId, f.forkId]));
+  if (m.stateId && m.hidden.some((h) => swap.has(h)))
+    patchRecord(repo, m.stateId, { hidden_instance_ids: m.hidden.map((h) => swap.get(h) ?? h) });
 }
