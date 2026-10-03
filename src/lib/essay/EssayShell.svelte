@@ -19,6 +19,7 @@
   import BlockStack from "$lib/components/BlockStack.svelte";
   import type { DropTarget } from "$lib/components/BlockStack.svelte";
   import CommentThread from "$lib/components/CommentThread.svelte";
+  import BinTray from "$lib/components/BinTray.svelte";
   import DraftTray from "$lib/components/DraftTray.svelte";
   import Panel from "$lib/components/Panel.svelte";
   import LayersPanel from "$lib/components/LayersPanel.svelte";
@@ -32,7 +33,9 @@
   import {
     addComment,
     addParagraph,
+    binParagraph,
     copyEssay,
+    deleteForever,
     listEssays,
     makeLocalCopy,
     loadEssay,
@@ -181,7 +184,7 @@
   let openThreads = $state<Set<string>>(new Set());
   let commentMode = $state(false);
   let zoomId = $state<string | null>(null);
-  const showThread = (id: string) => commentMode || zoomId === id || openThreads.has(id);
+  const showThread = (id: string) => !!model?.canComment && (commentMode || zoomId === id || openThreads.has(id));
   const openThread = (id: string, on: boolean) => {
     const next = new Set(openThreads);
     if (on) next.add(id);
@@ -210,6 +213,9 @@
       hasChildren: e.hasChildren,
       folded: folded.has(e.instanceId),
     })),
+  );
+  const binItems = $derived(
+    (model?.binEntries ?? []).map((e) => ({ id: e.instanceId, label: label(e.instanceId) })),
   );
   const draftItems = $derived(
     (model?.draftEntries ?? []).map((e) => ({ id: e.instanceId, label: label(e.instanceId) })),
@@ -338,6 +344,14 @@
     const m = model;
     if (!m?.draftContainerId) return;
     void run(() => transfer(repo, m.draftContainerId as string, m.containerId, id));
+  }
+
+  const toBin = (id: string) => run(() => binParagraph(repo, model!, id));
+  const restore = (id: string) =>
+    run(() => transfer(repo, model!.binContainerId!, model!.containerId, id));
+  function forget(id: string) {
+    if (confirm(`Delete "${label(id)}" permanently? This cannot be undone.`))
+      void run(() => deleteForever(repo, model!, id));
   }
 
   function toggleFold(id: string, on: boolean) {
@@ -469,7 +483,7 @@
             {#if p}
               {#snippet margin()}
                 <ParagraphMargin
-                  annotations={annotationsFor(model!, p.id)}
+                  annotations={annotationsFor(model!, p.id).filter((a) => model!.canComment || a.kind !== "comments")}
                   {variant}
                   active={[...pinnedIds, ...(showThread(p.id) ? [`comments:${p.id}`] : [])]}
                   onopen={(a) => openAnnotation(a, p.id)}
@@ -494,6 +508,7 @@
                 onpull={model!.draftContainerId
                   ? () => onDrop("draft", { id: p.id, from: "essay" }, { id: null, zone: "after" })
                   : undefined}
+                ondelete={model!.canBin ? () => toBin(p.id) : undefined}
               />
               {#if showThread(p.id)}
                 <CommentThread comments={model!.comments[p.id] ?? []} needsName={!hasActor} onadd={(t, n) => comment(p.id, t, n)} />
@@ -512,6 +527,7 @@
             candrop={essayDrop}
             ondrop={(p, t) => onDrop("essay", p, t)}
             onhide={(id, h) => run(() => setHidden(repo, model!, id, h))}
+            ondelete={model.canBin ? toBin : undefined}
             onfold={toggleFold}
             onselect={(id) => document.querySelector<HTMLElement>(`[data-focus-key="body:${id}"]`)?.focus()}
             onkey={onKey}
@@ -525,6 +541,15 @@
             candrop={draftDrop}
             ondrop={(p, t) => onDrop("draft", p, t)}
             onputback={putBack}
+          />
+        </Panel>
+        <Panel title="Bin" aside={binItems.length} persistKey="essay.bin" collapseWhen={NARROW}>
+          <BinTray
+            items={binItems}
+            available={model.canBin}
+            unavailableReason="Deleting needs essay package 1.3.0."
+            onrestore={restore}
+            onforget={forget}
           />
         </Panel>
         <PinnedPane items={pinned} onunpin={togglePin} />

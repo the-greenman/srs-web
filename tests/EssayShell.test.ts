@@ -14,6 +14,10 @@ const model: EssayModel = {
   hidden: [],
   draftContainerId: null,
   draftEntries: [],
+  binContainerId: null,
+  binEntries: [],
+  canBin: true,
+  canComment: true,
   comments: {},
   attachments: {},
   related: {},
@@ -33,6 +37,8 @@ const doc = vi.hoisted(() => ({
 vi.mock("../src/lib/essay/essay-document.js", () => ({
   ...doc,
   addComment: vi.fn(),
+  binParagraph: vi.fn(),
+  deleteForever: vi.fn(),
   addParagraph,
   essayWriteGuard: vi.fn(),
   moveEntry: vi.fn(),
@@ -159,7 +165,10 @@ it("a relation indicator focuses the other paragraph; the variant toggle is reme
 });
 
 it("a shared badge names the other documents; clicking it makes a local copy; New/Copy document go through the document ops", async () => {
-  doc.loadEssay.mockReturnValue({ ...model, sharedIn: { p: [{ id: "e2", title: "Other essay" }] } });
+  doc.loadEssay.mockReturnValue({
+    ...model,
+    sharedIn: { p: [{ id: "e2", title: "Other essay" }] },
+  });
   const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
   const { getByTestId } = render(EssayShell, {
     repo: {} as never,
@@ -171,7 +180,11 @@ it("a shared badge names the other documents; clicking it makes a local copy; Ne
   const badge = getByTestId("shared-badge");
   expect(badge.getAttribute("aria-label")).toBe("Also in Other essay");
   await fireEvent.click(badge);
-  expect(doc.makeLocalCopy).toHaveBeenCalledWith({}, expect.objectContaining({ essayId: "e" }), "p");
+  expect(doc.makeLocalCopy).toHaveBeenCalledWith(
+    {},
+    expect.objectContaining({ essayId: "e" }),
+    "p"
+  );
   await fireEvent.click(getByTestId("copy-document"));
   expect(doc.copyEssay).toHaveBeenCalledOnce();
   await fireEvent.click(getByTestId("new-document"));
@@ -185,7 +198,10 @@ it("the Agents panel shows connected/total, and a feed click leaves zoom and foc
       { instanceId: "p", depth: 0, hasChildren: false },
       { instanceId: "q", depth: 0, hasChildren: false },
     ] as EssayModel["entries"],
-    paragraphs: { p: { id: "p", title: "One", body: "a" }, q: { id: "q", title: "Two", body: "b" } },
+    paragraphs: {
+      p: { id: "p", title: "One", body: "a" },
+      q: { id: "q", title: "Two", body: "b" },
+    },
   };
   doc.loadEssay.mockReturnValue(two);
   const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
@@ -193,7 +209,16 @@ it("the Agents panel shows connected/total, and a feed click leaves zoom and foc
     connected: 1,
     total: 2,
     agents: [{ id: "agent:a", name: "alpha", status: "online" }],
-    writes: [{ seq: 1, agentId: "agent:a", tool: "record_update", instanceId: "q", changed: [{ target: "instance", id: "q", kind: "updated" }], at: 1 }],
+    writes: [
+      {
+        seq: 1,
+        agentId: "agent:a",
+        tool: "record_update",
+        instanceId: "q",
+        changed: [{ target: "instance", id: "q", kind: "updated" }],
+        at: 1,
+      },
+    ],
   };
   const { container, getByTestId, getByText } = render(EssayShell, {
     repo: {} as never,
@@ -207,7 +232,9 @@ it("the Agents panel shows connected/total, and a feed click leaves zoom and foc
   await tick();
   expect(getByText("1/2")).toBeTruthy();
   // zoom to p; q is hidden by the zoom
-  await fireEvent.click(container.querySelector<HTMLElement>('[aria-label="Zoom to One"]') as HTMLElement);
+  await fireEvent.click(
+    container.querySelector<HTMLElement>('[aria-label="Zoom to One"]') as HTMLElement
+  );
   expect(container.querySelector('[data-focus-key="body:q"]')).toBeNull();
   await fireEvent.click(getByTestId("agent-feed-focus"));
   await tick();
@@ -224,7 +251,12 @@ async function mountAt(hash: string) {
   history.replaceState(null, "", "/" + hash);
   doc.loadEssay.mockReturnValue(two());
   const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
-  const r = render(EssayShell, { repo: {} as never, repoName: "r", onExport: () => {}, documentRevision: 1 });
+  const r = render(EssayShell, {
+    repo: {} as never,
+    repoName: "r",
+    onExport: () => {},
+    documentRevision: 1,
+  });
   await tick();
   return r;
 }
@@ -263,8 +295,27 @@ it("zooming pushes the hash once and popstate leaves zoom", async () => {
 it("the end-of-page Add paragraph button appends via addParagraph (all devices)", async () => {
   doc.loadEssay.mockReturnValue(model);
   const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
-  const { getByTestId } = render(EssayShell, { repo: {} as never, repoName: "r", onExport: () => {}, documentRevision: 1 });
+  const { getByTestId } = render(EssayShell, {
+    repo: {} as never,
+    repoName: "r",
+    onExport: () => {},
+    documentRevision: 1,
+  });
   await tick();
   await fireEvent.click(getByTestId("add-paragraph"));
   expect(addParagraph).toHaveBeenCalledWith({}, expect.objectContaining({ essayId: "e" }));
+});
+
+it("shows no comment badge or thread when the comment type is not installed", async () => {
+  const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
+  const props = { repo: {} as never, repoName: "r", onExport: () => {}, documentRevision: 1 };
+  doc.loadEssay.mockReturnValue(model);
+  const on = render(EssayShell, props);
+  await tick();
+  expect(on.queryAllByTestId("comment-badge").length).toBeGreaterThan(0);
+  on.unmount();
+  doc.loadEssay.mockReturnValue({ ...model, canComment: false });
+  const off = render(EssayShell, props);
+  await tick();
+  expect(off.queryAllByTestId("comment-badge")).toHaveLength(0);
 });
