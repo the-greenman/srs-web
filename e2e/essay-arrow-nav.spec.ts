@@ -35,3 +35,19 @@ test("arrows cross paragraph boundaries only on the first/last line", async ({ p
   await page.keyboard.press("ArrowDown"); // last line: next paragraph
   await expect(body(page, 2)).toBeFocused();
 });
+
+test("a blank line inside a paragraph is not an edge", async ({ page }) => {
+  await open(page);
+  await body(page, 1).click();
+  await page.keyboard.press("Control+A");
+  await page.keyboard.type("line one\n\nline three");
+  await page.keyboard.press("ArrowUp"); // line three -> blank line
+  await page.keyboard.press("ArrowDown"); // blank -> line three: must not leave
+  await expect(body(page, 1)).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("ArrowUp"); // blank -> line one
+  await expect(body(page, 1)).toBeFocused();
+  await page.keyboard.press("ArrowDown"); // line one -> blank
+  await page.keyboard.press("ArrowUp"); // blank -> line one
+  await expect(body(page, 1)).toBeFocused();
+});

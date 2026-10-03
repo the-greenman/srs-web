@@ -131,7 +131,14 @@
     const box = el.getBoundingClientRect();
     const cs = getComputedStyle(el);
     const caret = sel.getRangeAt(0).getClientRects()[0];
-    if (!caret || !caret.height) return true; // empty line / empty body: nothing above or below
+    if (!caret || !caret.height) {
+      // A blank line has no rect: decide from the text. An empty body is on both edges.
+      const r = document.createRange();
+      const rng = sel.getRangeAt(0);
+      if (up) r.setStart(el, 0), r.setEnd(rng.startContainer, rng.startOffset);
+      else r.setStart(rng.endContainer, rng.endOffset), r.setEnd(el, el.childNodes.length);
+      return !r.toString().includes('\n');
+    }
     return up
       ? caret.top < box.top + parseFloat(cs.paddingTop) + caret.height / 2
       : caret.bottom > box.bottom - parseFloat(cs.paddingBottom) - caret.height / 2;
