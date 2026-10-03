@@ -15,6 +15,7 @@ const model: EssayModel = {
   draftContainerId: null,
   draftEntries: [],
   comments: {},
+  attachments: {},
 };
 const doc = vi.hoisted(() => ({
   listEssays: vi.fn(() => [{ id: "e", title: "Essay" }]),

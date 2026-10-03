@@ -76,3 +76,8 @@ export { default as LayersPanel } from "./LayersPanel.svelte";
 export { default as DraftTray } from "./DraftTray.svelte";
 export { default as CommentThread } from "./CommentThread.svelte";
 export { default as EyeToggle } from "./EyeToggle.svelte";
+
+// Attachments (srs-web#329)
+export { default as AttachmentGlyph } from "./AttachmentGlyph.svelte";
+export { default as HoverCard } from "./HoverCard.svelte";
+export { default as PinnedPane } from "./PinnedPane.svelte";

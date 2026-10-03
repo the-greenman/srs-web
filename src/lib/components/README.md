@@ -59,6 +59,7 @@ rail + record headers their printed-ink texture) — see `docs/design/*.html`.
 | `Block` | `id` `title?` `body?` `hidden?` `handle` + callbacks | `.block` | srs-web [#328](https://github.com/the-greenman/srs-web/issues/328) |
 | `BlockStack` | `items` `source` `ondrop` `row` snippet `nest?` | `.block-stack` | #328 |
 | `Panel` | `title` `aside?` `open?` `persistKey?` `collapsible?` `actions?` | `.panel` `.panel-rail` | srs-web [#362](https://github.com/the-greenman/srs-web/issues/362) |
+| `AttachmentGlyph` / `HoverCard` / `PinnedPane` | `kind` `title` `text?` `pinned?` `onpin?` / `items` `onunpin` | `.glyph` `.hover-card` `.pinned` | srs-web [#329](https://github.com/the-greenman/srs-web/issues/329) |
 | `LayersPanel` | `layers` `ondrop` `onhide` `onfold` `onkey` | `.layers` | #328 |
 | `DraftTray` | `items` `available?` `ondrop` `onputback` | `.draft-tray` | #328 |
 | `EyeToggle` | `hidden?` `label?` | `.eye` | #328 |

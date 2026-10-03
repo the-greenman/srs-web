@@ -233,6 +233,35 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
 
   await expect(page.locator(".essay-shell__page .block__handle").nth(2)).toHaveText("Closing");
   await expect(page.getByTestId("document-dirty-status")).toBeVisible();
+
+  // An agent attaches a note: a glyph appears without reload; hover previews, click pins it (srs-web#329).
+  const note = await call({
+    jsonrpc: "2.0",
+    id: 4,
+    method: "tools/call",
+    params: {
+      name: "note_create",
+      arguments: { title: "Counter-claim", sections: [{ name: "claim", content: "Small is not always better." }] },
+    },
+  });
+  expect(note.result.isError, JSON.stringify(note)).not.toBe(true);
+  const noteId = JSON.stringify(note).match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)?.[0];
+  const rel = await call({
+    jsonrpc: "2.0",
+    id: 5,
+    method: "tools/call",
+    params: {
+      name: "relation_create",
+      arguments: { relationType: "evidences", sourceInstanceId: noteId, targetInstanceId: id },
+    },
+  });
+  expect(rel.result.isError, JSON.stringify(rel)).not.toBe(true);
+  const glyph = page.locator(".essay-shell__page .glyph");
+  await expect(glyph).toHaveCount(1);
+  await glyph.hover();
+  await expect(page.locator(".essay-shell__page .hover-card__text")).toBeVisible();
+  await glyph.click();
+  await expect(page.locator(".panel-rail .pinned__item")).toContainText("Small is not always better.");
 });
 
 test("New essay creates the record, container, draft area and state", async ({ page }) => {

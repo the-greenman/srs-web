@@ -1,0 +1,83 @@
+/* ============================================================================
+   component: attachment glyph (.glyph), hover card (.hover-card), pinned list (.pinned)
+   Small coloured marks beside a paragraph; hue comes from --glyph-hue (set per kind).
+   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224 (srs-web#329)
+   ========================================================================== */
+.glyph-wrap {
+  position: relative;
+  display: inline-block;
+}
+.glyph {
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 1px solid hsl(var(--glyph-hue, 0) 45% 40%);
+  border-radius: 50%;
+  background: hsl(var(--glyph-hue, 0) 60% 94%);
+  color: hsl(var(--glyph-hue, 0) 45% 30%);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  line-height: 1;
+  cursor: pointer;
+}
+.glyph.is-pinned {
+  background: hsl(var(--glyph-hue, 0) 45% 40%);
+  color: #fff;
+}
+.glyph:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: 1px;
+}
+.hover-card {
+  position: absolute;
+  z-index: 10;
+  top: 100%;
+  left: 0;
+  display: none;
+  width: 16rem;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--white, #fff);
+  border: 1px solid var(--black);
+  text-align: left;
+}
+.glyph-wrap:hover .hover-card,
+.glyph-wrap:focus-within .hover-card {
+  display: block;
+}
+.hover-card__kind {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.hover-card__text {
+  margin: var(--space-xs) 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.pinned {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pinned__item {
+  position: relative;
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--color-line-soft);
+}
+.pinned__close {
+  position: absolute;
+  top: var(--space-xs);
+  right: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.block__glyphs {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}

@@ -9,6 +9,7 @@
 import {
   addContainerMember,
   addContainerMemberRelative,
+  contextRecord,
   createContainer,
   createRecord,
   createRelation,
@@ -25,6 +26,7 @@ import {
 import type {
   Actor,
   AgentWriteGuard,
+  ContextRelation,
   OutlineEntry,
   OutlineShift,
   SrsRecord,
@@ -53,6 +55,23 @@ export interface Comment {
   createdAt: string;
   author?: Actor;
 }
+/**
+ * Something attached to a paragraph (an agent's problem, source, counter-claim, note...): any
+ * relation to a resolving non-paragraph, non-comment neighbour. `kind` is data - the relation
+ * type crossed with the neighbour's type - so new kinds need no code here.
+ */
+export interface Attachment {
+  /** Stable key: the relation id. */
+  id: string;
+  relationType: string;
+  direction: "out" | "in";
+  /** Neighbour type name, or "note". */
+  neighbourType: string;
+  neighbourId: string;
+  label: string;
+  /** Readable text of the neighbour (note sections / string field values), blank-line joined. */
+  text: string;
+}
 export interface EssaySummary {
   id: string;
   title: string;
@@ -70,6 +89,8 @@ export interface EssayModel {
   draftEntries: OutlineEntry[];
   /** Comments by paragraph id, oldest first. */
   comments: Record<string, Comment[]>;
+  /** Attachments by paragraph id (see Attachment). */
+  attachments: Record<string, Attachment[]>;
 }
 
 /**
@@ -151,6 +172,55 @@ function loadComments(repo: SrsRepository, types: TypeSummary[]): Record<string,
   return out;
 }
 
+const toAttachment = (r: ContextRelation): Attachment | null => {
+  const n = r.neighbour;
+  if (!n || r.relationType === COMMENTS_ON) return null; // comments have their own thread
+  if (n.kind === "record" && n.typeId === PARAGRAPH_TYPE_ID) return null; // structure, not an attachment
+  const outgoing = r.direction === "out";
+  const label = (outgoing ? r.targetLabel : r.sourceLabel) ?? "";
+  const text =
+    n.kind === "note"
+      ? n.sections.map((x) => x.content).join("\n\n")
+      : Object.values(n.fieldValues)
+          .filter((v): v is string => typeof v === "string")
+          .join("\n\n");
+  return {
+    id: r.relationId,
+    relationType: r.relationType,
+    direction: r.direction,
+    neighbourType: n.kind === "note" ? "note" : n.typeName,
+    neighbourId: n.instanceId,
+    label: label || (n.kind === "note" ? n.title : "") || n.instanceId,
+    text,
+  };
+};
+
+/** Last attachments read per repository handle, keyed on all relation ids. */
+const attachmentCache = new WeakMap<object, { key: string; value: Record<string, Attachment[]> }>();
+
+/**
+ * Attachments per paragraph from the engine's context read (both directions, neighbours inline).
+ * ponytail: one context read per paragraph, re-run only when the set of relations changes, so a
+ * neighbour edited in place shows on the next relation change or essay switch; add an engine
+ * epoch-keyed bulk read if that lag matters.
+ */
+function loadAttachments(repo: SrsRepository, ids: string[]): Record<string, Attachment[]> {
+  const key = `${ids.join(",")}|${listRelations(repo, {})
+    .map((r) => r.relationId)
+    .join(",")}`;
+  const hit = attachmentCache.get(repo);
+  if (hit?.key === key) return hit.value;
+  const out: Record<string, Attachment[]> = {};
+  for (const id of ids) {
+    const list = contextRecord(repo, id)
+      .relations.map(toAttachment)
+      .filter((a): a is Attachment => a !== null);
+    if (list.length) out[id] = list;
+  }
+  attachmentCache.set(repo, { key, value: out });
+  return out;
+}
+
 export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
   const types = listTypes(repo); // resolved once per reload
   const essay = recordsOfType(repo, types, ESSAY_TYPE_ID).find((r) => r.instanceId === essayId);
@@ -186,6 +256,7 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
     draftContainerId,
     draftEntries,
     comments: loadComments(repo, types),
+    attachments: loadAttachments(repo, Object.keys(paragraphs)),
   };
 }
 

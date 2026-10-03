@@ -152,3 +152,42 @@ describe.skipIf(!haveBindings)("write observation on the real engine (srs-web#34
     expect(tracker.dirty).toBe(true);
   });
 });
+
+describe.skipIf(!haveBindings)("paragraph attachments on the real engine (context_record)", () => {
+  it("attachments are non-comment, non-paragraph neighbours in both directions; live after a write", async () => {
+    const doc = await import("../src/lib/essay/essay-document.js");
+    const { COMMENT_TYPE_ID } = await import("../src/lib/essay/type-registry.js");
+    const { createRecord, createRelation, listTypes } = await import("../src/lib/srs-client.js");
+    const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
+    mkdirSync(dir, { recursive: true });
+    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
+    const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+    mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
+    const repo = mod.SrsRepository.load(
+      readFileSync(path.join(__dirname, "../e2e/fixtures/essay-empty.srsj"), "utf8")
+    );
+    const essayId = doc.newEssay(repo, "E");
+    const a = doc.addParagraph(repo, doc.loadEssay(repo, essayId));
+    const b = doc.addParagraph(repo, doc.loadEssay(repo, essayId));
+    expect(doc.loadEssay(repo, essayId).attachments).toEqual({});
+
+    const v = listTypes(repo).find((t) => t.id === COMMENT_TYPE_ID)?.version ?? 1;
+    const mk = (text: string) =>
+      createRecord(repo, COMMENT_TYPE_ID, v, { fieldValues: { comment_text: text } }).instanceId;
+    const x = mk("a counter-claim");
+    createRelation(repo, { relationType: "evidences", sourceInstanceId: x, targetInstanceId: a });
+    const y = mk("a source");
+    createRelation(repo, { relationType: "refines", sourceInstanceId: a, targetInstanceId: y });
+    doc.addComment(repo, a, "just a comment"); // comments-on: the thread's, never a glyph
+    createRelation(repo, { relationType: "precedes", sourceInstanceId: a, targetInstanceId: b });
+
+    const att = doc.loadEssay(repo, essayId).attachments;
+    expect(Object.keys(att)).toEqual([a]);
+    expect(att[a].map((r) => [r.relationType, r.direction, r.neighbourId, r.text]).sort()).toEqual(
+      [
+        ["evidences", "in", x, "a counter-claim"],
+        ["refines", "out", y, "a source"],
+      ].sort()
+    );
+  });
+});

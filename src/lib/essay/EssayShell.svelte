@@ -10,6 +10,8 @@
   import { onDestroy, tick, untrack } from "svelte";
   import type { Snippet } from "svelte";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
+  import AttachmentGlyph from "$lib/components/AttachmentGlyph.svelte";
+  import PinnedPane from "$lib/components/PinnedPane.svelte";
   import Block from "$lib/components/Block.svelte";
   import BlockStack from "$lib/components/BlockStack.svelte";
   import type { DropTarget } from "$lib/components/BlockStack.svelte";
@@ -134,6 +136,17 @@
     }
   }
 
+  /** Pinned attachment ids (relation ids). Derived against the model, so a removed one drops out. */
+  let pinnedIds = $state<string[]>([]);
+  const togglePin = (id: string) =>
+    (pinnedIds = pinnedIds.includes(id) ? pinnedIds.filter((x) => x !== id) : [...pinnedIds, id]);
+  const pinned = $derived(
+    Object.values(model?.attachments ?? {})
+      .flat()
+      .filter((a) => pinnedIds.includes(a.id))
+      .map((a) => ({ id: a.id, kind: `${a.neighbourType} · ${a.relationType}`, title: a.label, text: a.text })),
+  );
+
   const hidden = $derived(new Set(model?.hidden ?? []));
   const inherited = $derived(hiddenByAncestor(model?.entries ?? [], hidden));
   const items = $derived((model?.entries ?? []).map((e) => ({ id: e.instanceId, depth: e.depth })));
@@ -253,6 +266,17 @@
           {#snippet row(item, handle)}
             {@const p = model!.paragraphs[item.id]}
             {#if p}
+              {#snippet glyphs()}
+                {#each model!.attachments[p.id] ?? [] as a (a.id)}
+                  <AttachmentGlyph
+                    kind={a.neighbourType}
+                    title={a.label}
+                    text={a.text}
+                    pinned={pinnedIds.includes(a.id)}
+                    onpin={() => togglePin(a.id)}
+                  />
+                {/each}
+              {/snippet}
               <Block
                 id={p.id}
                 title={p.title}
@@ -260,6 +284,7 @@
                 hidden={hidden.has(p.id)}
                 inherited={inherited.has(p.id)}
                 {handle}
+                glyphs={(model!.attachments[p.id] ?? []).length ? glyphs : undefined}
                 onbody={(v) => run(() => setBody(repo, p.id, v))}
                 ontitle={(v) => run(() => setTitle(repo, p.id, v))}
                 onhide={(h) => run(() => setHidden(repo, model!, p.id, h))}
@@ -297,6 +322,7 @@
             onputback={putBack}
           />
         </Panel>
+        <PinnedPane items={pinned} onunpin={togglePin} />
         {#if agentPanel}
           <Panel title="Agents" persistKey="essay.agents">{@render agentPanel()}</Panel>
         {/if}
