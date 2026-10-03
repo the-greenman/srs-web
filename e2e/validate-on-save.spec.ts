@@ -43,7 +43,7 @@ test.describe("Validate on save (B13)", () => {
   test("Validation panel shows clean after loading", async ({ page }) => {
     // Target the title-aside inside the section whose title reads "Validation"
     await expect(
-      page.locator(".inspector__title").filter({ hasText: "Validation" }).locator(".inspector__title-aside")
+      page.locator(".panel__head").filter({ hasText: "Validation" }).locator(".panel__aside")
     ).toContainText("clean");
   });
 
@@ -52,7 +52,7 @@ test.describe("Validate on save (B13)", () => {
   // --------------------------------------------------------------------------
   test("Validation panel stays clean and record count increases after creating a record", async ({ page }) => {
     // Read the initial instanceCount from the Repository section aside
-    const repoAside = page.locator(".inspector__title").filter({ hasText: "Repository" }).locator(".inspector__title-aside");
+    const repoAside = page.locator(".panel__head").filter({ hasText: "Repository" }).locator(".panel__aside");
     const initialCountText = await repoAside.textContent();
     const initialCount = parseInt(initialCountText ?? "0", 10);
 
@@ -69,7 +69,7 @@ test.describe("Validate on save (B13)", () => {
 
     // Validation should still be clean
     await expect(
-      page.locator(".inspector__title").filter({ hasText: "Validation" }).locator(".inspector__title-aside")
+      page.locator(".panel__head").filter({ hasText: "Validation" }).locator(".panel__aside")
     ).toContainText("clean");
 
     // Repository section should show instanceCount incremented by 1
@@ -93,7 +93,7 @@ test.describe("Validate on save (B13)", () => {
     await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
 
     // Read instanceCount after create (inspector still visible)
-    const repoAside = page.locator(".inspector__title").filter({ hasText: "Repository" }).locator(".inspector__title-aside");
+    const repoAside = page.locator(".panel__head").filter({ hasText: "Repository" }).locator(".panel__aside");
     const countAfterCreate = parseInt((await repoAside.textContent()) ?? "0", 10);
 
     // The new record is selected; the inspector shows the Delete button.
@@ -105,7 +105,7 @@ test.describe("Validate on save (B13)", () => {
 
     // Validation section should still be clean
     await expect(
-      page.locator(".inspector__title").filter({ hasText: "Validation" }).locator(".inspector__title-aside")
+      page.locator(".panel__head").filter({ hasText: "Validation" }).locator(".panel__aside")
     ).toContainText("clean");
 
     // Record count should have decreased by 1
@@ -145,7 +145,7 @@ test.describe("Validate on save (B13)", () => {
 
     // Validation section should still be clean
     await expect(
-      page.locator(".inspector__title").filter({ hasText: "Validation" }).locator(".inspector__title-aside")
+      page.locator(".panel__head").filter({ hasText: "Validation" }).locator(".panel__aside")
     ).toContainText("clean");
   });
 });

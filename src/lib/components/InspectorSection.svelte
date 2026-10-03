@@ -1,11 +1,12 @@
 <!--
   InspectorSection — a titled block in the inspector rail, with an optional
-  right-aligned aside (e.g. a count or "clean"). Wraps .inspector__section
-  (src/styles/components/inspector.css).
+  right-aligned aside (e.g. a count or "clean"). A static <Panel>; keeps the
+  .inspector__section frame (src/styles/components/inspector.css).
   B4 read-only viewer: https://github.com/the-greenman/srs-web/issues/3
 -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import Panel from './Panel.svelte';
 
   let {
     title,
@@ -21,9 +22,6 @@
   } = $props();
 </script>
 
-<section class="inspector__section" class:inspector__section--grow={grow}>
-  <div class="inspector__title">
-    {title}{#if aside}<span class="inspector__title-aside">{aside}</span>{/if}
-  </div>
+<Panel {title} {aside} collapsible={false} class={grow ? 'inspector__section inspector__section--grow' : 'inspector__section'}>
   {@render children?.()}
-</section>
+</Panel>

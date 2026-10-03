@@ -37,7 +37,6 @@
 </script>
 
 <section class="draft-tray" aria-label="Draft tray">
-  <h2 class="draft-tray__title">Draft</h2>
   {#if !available}
     <p class="draft-tray__empty">{unavailableReason}</p>
     {#if oncreate}<button type="button" class="btn btn--mono" onclick={oncreate}>Create draft area</button>{/if}

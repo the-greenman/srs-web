@@ -1,13 +1,12 @@
 /* ============================================================================
    component: draft-tray (.draft-tray)
    ----------------------------------------------------------------------------
-   Set-aside paragraphs. A dashed outline marks it as a holding area (the same
+   Set-aside paragraphs (the body of a Panel). A dashed outline marks it as a holding area (the same
    "not yet" language as draft tags). The list keeps a minimum height so an
    empty tray is still a drop target.
    Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
    ========================================================================== */
 .draft-tray {
-  margin-top: var(--space-md);
   padding: var(--space-xs);
   border: 1px dashed var(--color-line);
 }

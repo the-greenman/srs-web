@@ -8,12 +8,14 @@
 -->
 <script lang="ts">
   import { onDestroy, tick, untrack } from "svelte";
+  import type { Snippet } from "svelte";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import Block from "$lib/components/Block.svelte";
   import BlockStack from "$lib/components/BlockStack.svelte";
   import type { DropTarget } from "$lib/components/BlockStack.svelte";
   import CommentThread from "$lib/components/CommentThread.svelte";
   import DraftTray from "$lib/components/DraftTray.svelte";
+  import Panel from "$lib/components/Panel.svelte";
   import LayersPanel from "$lib/components/LayersPanel.svelte";
   import type { DragPayload, KeyMove } from "$lib/components/dnd.js";
   import Button from "$lib/components/Button.svelte";
@@ -47,6 +49,7 @@
     onOpenAnother,
     onOpenExplorer,
     onAgentWriteGuard,
+    agentPanel,
   }: {
     // Common EditorShellProps this shell does not use (kept so every shell takes one prop set).
     documentProvider?: string;
@@ -64,6 +67,7 @@
     onOpenAnother: () => void;
     onOpenExplorer?: () => void;
     onAgentWriteGuard?: (guard: AgentWriteGuard | null, replacing?: AgentWriteGuard) => void;
+    agentPanel?: Snippet;
   } = $props();
 
   let essays = $state<EssaySummary[]>([]);
@@ -235,6 +239,7 @@
     <div class="essay-shell__empty">
       <p>No essay in this repository yet.</p>
       <Button variant="primary" onclick={createEssay}>New essay</Button>
+      {#if agentPanel}<Panel title="Agents" persistKey="essay.agents">{@render agentPanel()}</Panel>{/if}
     </div>
   {:else}
     <div class="essay-shell__grid">
@@ -270,24 +275,31 @@
           {/snippet}
         </BlockStack>
       </main>
-      <aside class="essay-shell__side">
-        <LayersPanel
-          {layers}
-          candrop={essayDrop}
-          ondrop={(p, t) => onDrop("essay", p, t)}
-          onhide={(id, h) => run(() => setHidden(repo, model!, id, h))}
-          onfold={toggleFold}
-          onselect={(id) => document.querySelector<HTMLElement>(`[data-focus-key="body:${id}"]`)?.focus()}
-          onkey={onKey}
-        />
-        <DraftTray
-          items={draftItems}
-          available={!!model.draftContainerId}
-          unavailableReason="This essay has no draft area."
-          candrop={draftDrop}
-          ondrop={(p, t) => onDrop("draft", p, t)}
-          onputback={putBack}
-        />
+      <aside class="panel-rail" aria-label="Panels">
+        <Panel title="Layers" persistKey="essay.layers">
+          <LayersPanel
+            {layers}
+            candrop={essayDrop}
+            ondrop={(p, t) => onDrop("essay", p, t)}
+            onhide={(id, h) => run(() => setHidden(repo, model!, id, h))}
+            onfold={toggleFold}
+            onselect={(id) => document.querySelector<HTMLElement>(`[data-focus-key="body:${id}"]`)?.focus()}
+            onkey={onKey}
+          />
+        </Panel>
+        <Panel title="Draft" aside={draftItems.length} persistKey="essay.draft">
+          <DraftTray
+            items={draftItems}
+            available={!!model.draftContainerId}
+            unavailableReason="This essay has no draft area."
+            candrop={draftDrop}
+            ondrop={(p, t) => onDrop("draft", p, t)}
+            onputback={putBack}
+          />
+        </Panel>
+        {#if agentPanel}
+          <Panel title="Agents" persistKey="essay.agents">{@render agentPanel()}</Panel>
+        {/if}
       </aside>
     </div>
   {/if}

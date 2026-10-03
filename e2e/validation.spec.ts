@@ -30,33 +30,33 @@ test.describe("Validation inspector", () => {
   });
 
   test("shows Validation inspector section after loading", async ({ page }) => {
-    // InspectorSection renders title in .inspector__title
-    await expect(page.locator(".inspector__title").filter({ hasText: "Validation" })).toBeVisible();
+    // InspectorSection renders title in .panel__head
+    await expect(page.locator(".panel__head").filter({ hasText: "Validation" })).toBeVisible();
   });
 
   test("shows clean status for an empty valid repo", async ({ page }) => {
-    // validationAside = "clean" when errorCount === 0; shown in .inspector__title-aside
+    // validationAside = "clean" when errorCount === 0; shown in .panel__aside
     await expect(
-      page.locator(".inspector__title-aside").filter({ hasText: "clean" })
+      page.locator(".panel__aside").filter({ hasText: "clean" })
     ).toBeVisible();
   });
 
   test("shows Repository inspector section", async ({ page }) => {
-    await expect(page.locator(".inspector__title").filter({ hasText: "Repository" })).toBeVisible();
+    await expect(page.locator(".panel__head").filter({ hasText: "Repository" })).toBeVisible();
   });
 
   test("shows record count in inspector", async ({ page }) => {
     // Empty repo — inspector Repository aside shows "0" (String(instanceCount))
     // and the inspector kv rows show the "Records" label.
     //
-    // Scoped by .inspector__title (the section's own heading), not a
+    // Scoped by .panel__head (the section's own heading), not a
     // whole-section hasText match: a broad match on ".inspector__section"
     // also picks up the Validation section once its diagnostics contain the
     // word "repository" (e.g. the dataModelRevision compatibility warning),
     // which produced a strict-mode violation under build.297.
     const repositorySection = page
       .locator(".inspector__section")
-      .filter({ has: page.locator(".inspector__title", { hasText: "Repository" }) });
+      .filter({ has: page.locator(".panel__head", { hasText: "Repository" }) });
     await expect(repositorySection).toContainText("Records");
   });
 });

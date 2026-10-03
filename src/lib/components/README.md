@@ -58,6 +58,7 @@ rail + record headers their printed-ink texture) — see `docs/design/*.html`.
 | `Lifecycle` | `status` `transitions` `onTransition` | `.lifecycle` | B11 [#7](https://github.com/the-greenman/srs-web/issues/7) |
 | `Block` | `id` `title?` `body?` `hidden?` `handle` + callbacks | `.block` | srs-web [#328](https://github.com/the-greenman/srs-web/issues/328) |
 | `BlockStack` | `items` `source` `ondrop` `row` snippet `nest?` | `.block-stack` | #328 |
+| `Panel` | `title` `aside?` `open?` `persistKey?` `collapsible?` `actions?` | `.panel` `.panel-rail` | srs-web [#362](https://github.com/the-greenman/srs-web/issues/362) |
 | `LayersPanel` | `layers` `ondrop` `onhide` `onfold` `onkey` | `.layers` | #328 |
 | `DraftTray` | `items` `available?` `ondrop` `onputback` | `.draft-tray` | #328 |
 | `EyeToggle` | `hidden?` `label?` | `.eye` | #328 |

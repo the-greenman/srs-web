@@ -290,7 +290,7 @@ describe("GovernanceShell — Repository inspector count", () => {
     await screen.findByRole("button", { name: /Open another file/i });
     const sections = Array.from(container.querySelectorAll(".inspector__section"));
     const repositorySection = sections.find((s) =>
-      s.querySelector(".inspector__title")?.textContent?.includes("Repository")
+      s.querySelector(".panel__head")?.textContent?.includes("Repository")
     );
     expect(repositorySection).toBeDefined();
     expect(repositorySection!.textContent).toContain("3");

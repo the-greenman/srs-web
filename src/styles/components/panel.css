@@ -1,0 +1,66 @@
+/* ============================================================================
+   component: panel (.panel) + rail (.panel-rail)
+   ----------------------------------------------------------------------------
+   A titled, collapsible block for side rails. Native <details>/<summary>; the
+   header is the mono uppercase label. Monochrome: the open/closed state is a
+   drawn chevron, never colour. .panel-rail stacks panels in a sticky column.
+   srs-web#362: https://github.com/the-greenman/srs-web/issues/362
+   ========================================================================== */
+.panel-rail {
+  position: sticky;
+  top: var(--space-sm);
+  align-self: start;
+  display: grid;
+  gap: var(--space-sm);
+}
+.panel__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 400;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+summary.panel__head {
+  cursor: pointer;
+  list-style: none;
+}
+summary.panel__head::-webkit-details-marker {
+  display: none;
+}
+summary.panel__head::before {
+  content: "\25BE";
+}
+.panel:not([open]) > summary.panel__head::before {
+  content: "\25B8";
+}
+.panel:not([open]) > summary.panel__head {
+  margin-bottom: 0;
+}
+summary.panel__head:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: 1px;
+}
+.panel__aside {
+  margin-left: auto;
+  color: var(--ink);
+}
+.panel__actions {
+  display: inline-flex;
+  gap: 4px;
+}
+.panel__aside + .panel__actions {
+  margin-left: 0;
+}
+.panel__title + .panel__actions {
+  margin-left: auto;
+}
+@media (max-width: 960px) {
+  .panel-rail {
+    position: static;
+  }
+}

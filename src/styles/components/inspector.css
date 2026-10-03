@@ -57,7 +57,13 @@
   /* cancel the top margin so the grow section butts up cleanly */
   margin-top: 0 !important;
 }
-.inspector__section--grow > :not(.inspector__title) {
+.inspector__section--grow > .panel__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.inspector__section--grow > .panel__body > * {
   flex: 1;
   min-height: 0;
 }
@@ -76,22 +82,13 @@
   }
 }
 
-.inspector__title {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
+/* Section header: InspectorSection is a static Panel with the inspector's heavier rule. */
+.inspector__section > .panel__head {
   margin-bottom: var(--space-sm);
   padding-bottom: 8px;
   border-bottom: var(--rule-strong);
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--grey-3);
-}
-.inspector__title-aside {
-  margin-left: auto;
-  color: var(--ink);
 }
 
 /* ── Key/value metadata list (provenance, ids, timestamps) ────────────────── */
