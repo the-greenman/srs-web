@@ -38,7 +38,7 @@
   import { definitionToComposites, definitionToFields } from "$lib/editor/blueprint-fields.js";
   import SectionForm from "$lib/editor/SectionForm.svelte";
   import BlueprintDocumentEditor from "$lib/editor/BlueprintDocumentEditor.svelte";
-  import { blueprintForComposition } from "$lib/editor/document-model.js";
+  import { blueprintForComposition, containerForComposition } from "$lib/editor/document-model.js";
   import type { BlueprintSummary } from "$lib/srs-client.js";
   import type { CompositeFormDef } from "$lib/editor/blueprint-fields.js";
   import type { FieldFormDef } from "$lib/governance/types.js";
@@ -162,7 +162,9 @@
     loadingDocument = true;
     documentError = null;
     try {
-      const result = renderDocumentView(repo, compositionId, "html");
+      const composition = compositions.find((c) => c.id === compositionId);
+      const containerId = composition ? containerForComposition(repo, composition) : null;
+      const result = renderDocumentView(repo, compositionId, "html", containerId);
       renderedDocument = result.rendered;
       if (result.diagnostics.length > 0) documentError = result.diagnostics.join(" ");
     } catch (error: unknown) {

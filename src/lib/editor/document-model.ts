@@ -149,6 +149,20 @@ function containerForRootType(
 }
 
 /**
+ * The container a composition renders against (RFC-043 [R9]: an arranged
+ * container-subset section names none, so the caller supplies it): a fixed
+ * container-subset `containerId`, else the container whose root record matches
+ * the composition's `rootTypeRefs`. `null` when neither resolves.
+ */
+export function containerForComposition(
+  repo: SrsRepository,
+  composition: DocumentView | DocumentViewSummary
+): string | null {
+  const full = "sections" in composition ? composition : fullComposition(repo, composition);
+  return (full && fixedContainerId(full)) ?? containerForRootType(repo, composition);
+}
+
+/**
  * Resolve a composition into an editable document: the container it scopes,
  * its anchor/root record, and its top-level blocks, nested and ordered
  * exactly as the engine's own JSON projection returns them (srs-rust#1127).
@@ -162,8 +176,7 @@ export function loadDocument(
   repo: SrsRepository,
   composition: DocumentView | DocumentViewSummary
 ): LoadedDocument | null {
-  const full = "sections" in composition ? composition : fullComposition(repo, composition);
-  const containerId = (full && fixedContainerId(full)) ?? containerForRootType(repo, composition);
+  const containerId = containerForComposition(repo, composition);
   if (!containerId) return null;
 
   const view = resolveContainerView(repo, containerId);
