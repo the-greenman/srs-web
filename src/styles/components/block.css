@@ -85,8 +85,19 @@
 .block:focus-within .block__tools {
   opacity: 1;
 }
+/* ⋯ menu: with hover it joins the hover tools; on touch it is the ONLY gutter tool (no vertical stack). */
+.block__menu {
+  opacity: 0;
+}
+.block:hover .block__menu,
+.block:focus-within .block__menu {
+  opacity: 1;
+}
 @media (hover: none) {
   .block__tools {
+    display: none;
+  }
+  .block__menu {
     opacity: 1;
   }
 }
@@ -232,6 +243,17 @@
 @media (max-width: 720px) {
   .block {
     grid-template-columns: 1.5rem minmax(0, 1fr) 2rem;
+  }
+}
+/* Touch: every gutter / margin target >=44px (the gutter and margin columns widen to hold them). */
+@media (pointer: coarse) {
+  .block {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+  }
+  .block__handle,
+  .block__menu .action-menu__trigger {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 /* Right margin: comment badge, then attachment glyphs, stacked. */

@@ -20,6 +20,7 @@ const model: EssayModel = {
   sharedIn: {},
 };
 vi.mock("../src/lib/srs-client.js", () => ({ renderMarkdown: (md: string) => `<p>${md}</p>` }));
+const addParagraph = vi.hoisted(() => vi.fn());
 const doc = vi.hoisted(() => ({
   listEssays: vi.fn(() => [{ id: "e", title: "Essay" }]),
   loadEssay: vi.fn(),
@@ -32,7 +33,7 @@ const doc = vi.hoisted(() => ({
 vi.mock("../src/lib/essay/essay-document.js", () => ({
   ...doc,
   addComment: vi.fn(),
-  addParagraph: vi.fn(),
+  addParagraph,
   essayWriteGuard: vi.fn(),
   moveEntry: vi.fn(),
   shiftEntry: vi.fn(),
@@ -257,4 +258,13 @@ it("zooming pushes the hash once and popstate leaves zoom", async () => {
   await tick();
   expect(r.container.querySelectorAll(".block")).toHaveLength(2);
   expect(history.length).toBe(before + 1); // applying the URL pushed nothing
+});
+
+it("the end-of-page Add paragraph button appends via addParagraph (all devices)", async () => {
+  doc.loadEssay.mockReturnValue(model);
+  const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
+  const { getByTestId } = render(EssayShell, { repo: {} as never, repoName: "r", onExport: () => {}, documentRevision: 1 });
+  await tick();
+  await fireEvent.click(getByTestId("add-paragraph"));
+  expect(addParagraph).toHaveBeenCalledWith({}, expect.objectContaining({ essayId: "e" }));
 });

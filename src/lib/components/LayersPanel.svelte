@@ -1,16 +1,18 @@
 <!--
   LayersPanel — the essay outline as a layers tree (Photoshop model): eye toggle per layer,
   fold chevron for groups, drag a row to reorder (middle of a row = nest under it), Alt+Arrows
-  as the keyboard alternative. Nesting is layout, not meaning. A group moves with its run.
+  as the keyboard alternative, a ⋯ menu per row on touch. Nesting is layout, not meaning. A group moves with its run.
   Built on BlockStack. Wraps .layers (src/styles/components/layers.css).
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
 -->
 <script lang="ts">
+  import ActionMenu from './ActionMenu.svelte';
   import BlockStack from './BlockStack.svelte';
   import type { DropTarget } from './BlockStack.svelte';
   import EyeToggle from './EyeToggle.svelte';
   import { keyMove } from './dnd';
   import type { DragPayload, KeyMove } from './dnd';
+  import { paragraphActions } from '../essay/paragraph-actions.js';
 
   export interface Layer {
     id: string;
@@ -76,6 +78,20 @@
             }}
             {...handle}
           >{l.label}</button>
+          <!-- Touch reorder: the same action list as Block's menu (move, indent, hide); the menu is shown on hover:none only. -->
+          <ActionMenu
+            class="layers__menu action-menu--end"
+            testid="layer-menu"
+            label={l.label}
+            actions={paragraphActions(
+              {
+                onmove: (d) => onkey(l.id, d),
+                onindent: (d) => onkey(l.id, d === 1 ? 'in' : 'out'),
+                onhide: (h) => onhide(l.id, h),
+              },
+              { label: l.label, hidden: l.hidden, inherited: l.inherited },
+            )}
+          />
         </div>
       {/if}
     {/snippet}

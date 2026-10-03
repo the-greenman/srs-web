@@ -78,3 +78,11 @@
     padding: var(--space-sm);
   }
 }
+.essay-shell__add {
+  margin-top: var(--space-sm);
+}
+@media (pointer: coarse) {
+  .essay-shell__add {
+    min-height: 44px;
+  }
+}

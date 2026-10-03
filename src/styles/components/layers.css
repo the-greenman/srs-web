@@ -71,3 +71,25 @@
 .eye.is-off {
   color: var(--ink);
 }
+
+/* Touch reorder: a ⋯ per row (hover devices keep drag + Alt+Arrows), 44px targets. */
+.layers__menu {
+  display: none;
+}
+@media (hover: none) {
+  .layers__menu {
+    display: inline-flex;
+    flex: none;
+  }
+}
+@media (pointer: coarse) {
+  .layers__menu .action-menu__trigger,
+  .layers__row .eye,
+  .layers__fold {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .layers__label {
+    min-height: 44px;
+  }
+}
