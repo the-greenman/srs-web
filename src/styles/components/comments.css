@@ -52,3 +52,39 @@
   flex: 1;
   min-width: 12rem;
 }
+
+/* Margin badge: a speech bubble with the count; empty ones appear on block hover / focus only. */
+.comment-badge {
+  position: relative;
+  min-width: 1.6rem;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--color-muted);
+  background: none;
+  border: 1px solid var(--color-line);
+  border-radius: 8px 8px 8px 0;
+  cursor: pointer;
+}
+.comment-badge:hover,
+.comment-badge:focus-visible,
+.comment-badge[aria-expanded="true"] {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.comment-badge.is-empty {
+  opacity: 0;
+}
+.block:hover .comment-badge.is-empty,
+.block:focus-within .comment-badge.is-empty,
+.comment-badge.is-empty:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .comment-badge.is-empty {
+    opacity: 1;
+  }
+}
+.essay-shell__zoombar {
+  margin: 0 0 var(--space-sm);
+}

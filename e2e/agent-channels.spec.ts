@@ -114,6 +114,7 @@ test("two agents: distinct authors and ids, guard on both, disconnect leaves the
   }
   const recA = await comment(1, "from alpha");
   const recB = await comment(2, "from beta");
+  await items(page).nth(1).getByTestId("comment-badge").click();
   const c = items(page).nth(1).getByTestId("comment");
   await expect(c).toHaveCount(2);
   await expect(c.getByTestId("comment-author")).toHaveText(["alpha", "beta"]);
@@ -256,6 +257,7 @@ test("reload keeps ids and URLs; a typed label is the author; repo change keeps 
   };
   await comment(1, "one");
   await comment(2, "two");
+  await page.locator(".essay-shell__page .block-stack__item").nth(1).getByTestId("comment-badge").click();
   await expect(
     page.locator(".essay-shell__page .block-stack__item").nth(1).getByTestId("comment-author")
   ).toHaveText(["alpha", "Labelled"]);

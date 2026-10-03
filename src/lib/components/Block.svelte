@@ -1,5 +1,5 @@
 <!--
-  Block — one paragraph: a narrow gutter (⋮⋮ drag handle; eye + move-to-draft on hover/focus),
+  Block — one paragraph: a narrow gutter (⋮⋮ drag handle; eye + move-to-draft + zoom on hover/focus), a right margin slot (`margin`),
   a small mono title above the body (InlineText) and a plain-text body
   (`contenteditable="plaintext-only"`, no rich-text dependency). Hidden = collapsed in place.
   Presentation + events only; the shell commits through the engine.
@@ -29,7 +29,8 @@
     onindent,
     onmove,
     onpull,
-    glyphs,
+    onzoom,
+    margin,
   }: {
     id: string;
     title?: string;
@@ -46,8 +47,9 @@
     onindent: (delta: 1 | -1) => void;
     onmove: (dir: 'up' | 'down') => void;
     onpull?: () => void;
-    /** Marks for things attached to this paragraph (AttachmentGlyph). */
-    glyphs?: Snippet;
+    onzoom?: () => void;
+    /** The one right-margin slot: comment badge, attachment glyphs. */
+    margin?: Snippet;
   } = $props();
 
   let el = $state<HTMLElement>();
@@ -128,14 +130,16 @@
       {#if onpull}
         <button type="button" class="block__action" aria-label={`Move ${shortLabel} to draft`} title="Move to draft" onclick={onpull}>↧</button>
       {/if}
+      {#if onzoom}
+        <button type="button" class="block__action" aria-label={`Zoom to ${shortLabel}`} title="Zoom to this paragraph" onclick={onzoom}>⤢</button>
+      {/if}
     </div>
   </div>
   <div class="block__main">
-    <div class="block__head" class:is-collapsed={!title && !glyphs && !editingTitle}>
+    <div class="block__head" class:is-collapsed={!title && !editingTitle}>
       <span class="block__title">
         <InlineText value={title} placeholder="Add title" label="Paragraph title" oncommit={ontitle} bind:editing={editingTitle} />
       </span>
-      {#if glyphs}<span class="block__glyphs">{@render glyphs()}</span>{/if}
     </div>
     {#if hidden || inherited}
       <p class="block__closed">{inherited && !hidden ? 'Hidden by parent' : 'Hidden paragraph'}</p>
@@ -159,4 +163,5 @@
       ></div>
     {/if}
   </div>
+  {#if margin}<div class="block__margin">{@render margin()}</div>{/if}
 </article>
