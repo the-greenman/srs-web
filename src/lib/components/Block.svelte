@@ -1,6 +1,7 @@
 <!--
   Block — one paragraph: a narrow gutter (⋮⋮ drag handle; eye + move-to-draft + zoom on hover/focus), a right margin slot (`margin`),
-  a small mono title above the body (InlineText) and a plain-text body
+  a small mono title above the body (InlineText) and the body in two states: rendered markdown
+  (core renderMarkdown, already sanitized) until focused, then a plain-text source editor
   (`contenteditable="plaintext-only"`, no rich-text dependency). Hidden = collapsed in place.
   Presentation + events only; the shell commits through the engine.
     Ctrl/Cmd+Enter  new block after this one     Alt+Arrows  move / change level
@@ -9,9 +10,11 @@
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
 -->
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { Snippet } from 'svelte';
   import EyeToggle from './EyeToggle.svelte';
   import InlineText from './InlineText.svelte';
+  import { renderMarkdown } from '$lib/srs-client.js';
   import { keyMove } from './dnd';
   import type { KeyMove } from './dnd';
 
@@ -55,7 +58,18 @@
   let el = $state<HTMLElement>();
   let editingTitle = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let editing = $state(false);
   let committed = '';
+  const html = $derived(body ? renderMarkdown(body) : '');
+
+  // Entering edit: show the source, keep focus, caret at the end.
+  $effect(() => {
+    if (!el) return;
+    el.textContent = untrack(() => body);
+    el.focus();
+    getSelection()?.selectAllChildren(el);
+    getSelection()?.collapseToEnd();
+  });
 
   // Show external changes (agent writes) unless the writer is mid-edit in this block.
   $effect(() => {
@@ -66,11 +80,35 @@
 
   function flush() {
     clearTimeout(timer);
-    const v = el?.innerText ?? '';
+    if (!el) return;
+    const v = el.innerText;
     if (v !== committed) {
       committed = v;
       onbody(v);
     }
+  }
+
+  function edit() {
+    editing = true;
+  }
+
+  // Plain click edits; Ctrl/Cmd+click on a rendered link opens it instead.
+  function renderClick(e: MouseEvent) {
+    const a = (e.target as HTMLElement).closest('a');
+    if (a && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      window.open(a.href, '_blank', 'noopener');
+      return;
+    }
+    e.preventDefault();
+    edit();
+  }
+
+  function renderKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      edit();
+    } else bodyKeydown(e);
   }
 
   function applyMove(m: KeyMove) {
@@ -144,6 +182,7 @@
     {#if hidden || inherited}
       <p class="block__closed">{inherited && !hidden ? 'Hidden by parent' : 'Hidden paragraph'}</p>
     {:else}
+      {#if editing}
       <div
         bind:this={el}
         class="block__body"
@@ -158,9 +197,26 @@
           clearTimeout(timer);
           timer = setTimeout(flush, 400);
         }}
-        onblur={flush}
+        onblur={() => {
+          flush();
+          editing = false;
+        }}
         onkeydown={bodyKeydown}
       ></div>
+      {:else}
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+      <div
+        class="block__render"
+        role="group"
+        tabindex="0"
+        aria-label={`Paragraph text: ${shortLabel}, press Enter to edit`}
+        data-placeholder="Write…"
+        data-focus-key={`body:${id}`}
+        onfocus={edit}
+        onclick={renderClick}
+        onkeydown={renderKeydown}
+      >{@html html}</div>
+      {/if}
     {/if}
   </div>
   {#if margin}<div class="block__margin">{@render margin()}</div>{/if}

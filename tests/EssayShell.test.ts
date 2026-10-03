@@ -17,6 +17,7 @@ const model: EssayModel = {
   comments: {},
   attachments: {},
 };
+vi.mock("../src/lib/srs-client.js", () => ({ renderMarkdown: (md: string) => `<p>${md}</p>` }));
 const doc = vi.hoisted(() => ({
   listEssays: vi.fn(() => [{ id: "e", title: "Essay" }]),
   loadEssay: vi.fn(),
@@ -41,6 +42,8 @@ it("a typing commit reloads the essay once, via documentRevision (essay typing f
   const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
   const props = { repo: {} as never, repoName: "r", onExport: () => {}, documentRevision: 1 };
   const { container, rerender } = render(EssayShell, props);
+  await tick();
+  container.querySelector<HTMLElement>(".block__render")?.focus(); // render state: focus swaps in the editor
   await tick();
   const body = container.querySelector<HTMLElement>(".block__body");
   if (!body) throw new Error("no paragraph body rendered");

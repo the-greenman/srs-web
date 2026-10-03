@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Download, type Page, expect, test } from "@playwright/test";
-import { acceptMigration, openPackageEditor } from "./helpers.js";
+import { openPackageEditor } from "./helpers.js";
 
 /**
  * walkthrough-r1.spec.ts — Release verification: Decision Log R1 "safe to try"
@@ -256,7 +256,6 @@ test.describe("R1 release walkthrough (#54)", () => {
       await expect(banner).toBeVisible({ timeout: 5000 });
       await expect(banner).toContainText("R1 Walkthrough Org");
       await banner.locator(".restore-banner__restore").click();
-      await acceptMigration(page);
 
       await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
       await openPackageEditor(page, "governance");

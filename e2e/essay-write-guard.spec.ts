@@ -8,7 +8,7 @@ import type { Page } from "@playwright/test";
  * (srs-rust#1165). Through the real relay + WASM session: agents cannot write essay text,
  * may fill an empty paragraph_title once, and may comment (new record + relation).
  */
-const bodies = (page: Page) => page.locator(".essay-shell__page .block__body");
+const bodies = (page: Page) => page.locator(".essay-shell__page :is(.block__render, .block__body)");
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
 async function open(page: Page) {
   await page.goto("/");
