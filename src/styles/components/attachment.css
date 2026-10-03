@@ -75,9 +75,3 @@
   background: none;
   cursor: pointer;
 }
-.block__glyphs {
-  margin-left: auto; /* trails the title row */
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}

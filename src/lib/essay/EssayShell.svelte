@@ -15,6 +15,7 @@
   import Block from "$lib/components/Block.svelte";
   import BlockStack from "$lib/components/BlockStack.svelte";
   import type { DropTarget } from "$lib/components/BlockStack.svelte";
+  import CommentBadge from "$lib/components/CommentBadge.svelte";
   import CommentThread from "$lib/components/CommentThread.svelte";
   import DraftTray from "$lib/components/DraftTray.svelte";
   import Panel from "$lib/components/Panel.svelte";
@@ -151,7 +152,26 @@
 
   const hidden = $derived(new Set(model?.hidden ?? []));
   const inherited = $derived(hiddenByAncestor(model?.entries ?? [], hidden));
-  const items = $derived((model?.entries ?? []).map((e) => ({ id: e.instanceId, depth: e.depth })));
+  /** UI-only comment state: which threads are open, show-all mode, and the zoomed paragraph. */
+  let openThreads = $state<Set<string>>(new Set());
+  let commentMode = $state(false);
+  let zoomId = $state<string | null>(null);
+  const showThread = (id: string) => commentMode || zoomId === id || openThreads.has(id);
+  const openThread = (id: string, on: boolean) => {
+    const next = new Set(openThreads);
+    if (on) next.add(id);
+    else next.delete(id);
+    openThreads = next;
+  };
+  const allItems = $derived((model?.entries ?? []).map((e) => ({ id: e.instanceId, depth: e.depth })));
+  /** Zoomed: the paragraph and its subtree (the entries after it that are deeper). */
+  const items = $derived.by(() => {
+    const at = zoomId ? allItems.findIndex((i) => i.id === zoomId) : -1;
+    if (at < 0) return allItems;
+    const rest = allItems.slice(at + 1);
+    const end = rest.findIndex((i) => i.depth <= allItems[at].depth);
+    return [allItems[at], ...(end < 0 ? rest : rest.slice(0, end))];
+  });
   const essayDrop = (drag: string, target: string) => outsideRun(model?.entries ?? [], drag, target);
   const draftDrop = (drag: string, target: string) => outsideRun(model?.draftEntries ?? [], drag, target);
   const label = (id: string) => model?.paragraphs[id]?.title || model?.paragraphs[id]?.body.slice(0, 40) || "untitled";
@@ -174,6 +194,7 @@
     if (name) {
       if (!saveLocalName(name)) return void (error = "Could not remember your name in this browser.");
     }
+    openThread(paragraphId, true);
     void run(() => addComment(repo, paragraphId, text));
   }
 
@@ -220,6 +241,13 @@
   }
 </script>
 
+<!-- Esc leaves zoom, except while typing (Esc there cancels the field's own edit). -->
+<svelte:window
+  onkeydown={(e) => {
+    if (e.key === "Escape" && zoomId && !(e.target as HTMLElement | null)?.closest?.("input, textarea, [contenteditable]")) zoomId = null;
+  }}
+/>
+
 <div class="essay-shell">
   <header class="essay-shell__bar">
     <div class="essay-shell__heading">
@@ -230,6 +258,7 @@
           value={essayId}
           onchange={(e) => {
             essayId = e.currentTarget.value;
+            zoomId = null;
             loadFolded(essayId);
             reload();
           }}
@@ -241,6 +270,7 @@
     <div class="essay-shell__actions">
       {#if documentDirty}<span class="essay-shell__status" data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
       {#if saveMessage}<span class="essay-shell__status" role="status">{saveMessage}</span>{/if}
+      <Button variant="ghost" active={commentMode} aria-pressed={commentMode} data-testid="comment-mode" onclick={() => (commentMode = !commentMode)}>Comments</Button>
       {#if onSave}<Button variant="mono" disabled={saving} onclick={onSave}>{saving ? "Saving…" : "Save"}</Button>{/if}
       <Button variant="mono" onclick={onExport}>Export</Button>
       {#if onOpenExplorer}<Button variant="ghost" onclick={onOpenExplorer}>Explorer</Button>{/if}
@@ -265,6 +295,9 @@
           label="Essay title"
           oncommit={(v) => v.trim() && run(() => setEssayTitle(repo, model!.essayId, v.trim()))}
         />
+        {#if zoomId}
+          <div class="essay-shell__zoombar"><Button variant="ghost" data-testid="zoom-exit" onclick={() => (zoomId = null)}>← Whole document</Button></div>
+        {/if}
         {#if items.length === 0}
           <p class="essay-shell__hint">No paragraphs yet.</p>
           <Button variant="mono" data-testid="first-paragraph" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add first paragraph</Button>
@@ -273,7 +306,13 @@
           {#snippet row(item, handle)}
             {@const p = model!.paragraphs[item.id]}
             {#if p}
-              {#snippet glyphs()}
+              {#snippet margin()}
+                <CommentBadge
+                  count={(model!.comments[p.id] ?? []).length}
+                  label={p.title || "untitled paragraph"}
+                  open={showThread(p.id)}
+                  onclick={() => openThread(p.id, !openThreads.has(p.id))}
+                />
                 {#each model!.attachments[p.id] ?? [] as a (a.id)}
                   <AttachmentGlyph
                     kind={a.neighbourType}
@@ -291,7 +330,8 @@
                 hidden={hidden.has(p.id)}
                 inherited={inherited.has(p.id)}
                 {handle}
-                glyphs={(model!.attachments[p.id] ?? []).length ? glyphs : undefined}
+                {margin}
+                onzoom={() => (zoomId = p.id)}
                 onbody={(v) => run(() => setBody(repo, p.id, v))}
                 ontitle={(v) => run(() => setTitle(repo, p.id, v))}
                 onhide={(h) => run(() => setHidden(repo, model!, p.id, h))}
@@ -302,7 +342,9 @@
                   ? () => onDrop("draft", { id: p.id, from: "essay" }, { id: null, zone: "after" })
                   : undefined}
               />
-              <CommentThread comments={model!.comments[p.id] ?? []} needsName={!hasActor} onadd={(t, n) => comment(p.id, t, n)} />
+              {#if showThread(p.id)}
+                <CommentThread comments={model!.comments[p.id] ?? []} needsName={!hasActor} onadd={(t, n) => comment(p.id, t, n)} />
+              {/if}
             {/if}
           {/snippet}
         </BlockStack>

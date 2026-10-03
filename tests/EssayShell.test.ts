@@ -74,3 +74,42 @@ it("the essay title edits inline: commit writes through setEssayTitle, a new rev
   await tick();
   expect(container.querySelector("h1")?.textContent).toBe("Renamed");
 });
+
+const commented = {
+  ...model,
+  comments: { p: [{ id: "c1", text: "hi", author: { kind: "human", id: "a", name: "Ada" } }] },
+};
+
+it("threads are hidden by default; the badge opens one; comment mode shows all", async () => {
+  doc.loadEssay.mockReturnValue(commented);
+  const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
+  const { container, getByTestId } = render(EssayShell, { repo: {} as never, repoName: "r", onExport: () => {}, documentRevision: 1 });
+  await tick();
+  const thread = () => container.querySelectorAll("[data-testid=comment-thread]").length;
+  const badge = container.querySelector<HTMLElement>("[data-testid=comment-badge]")!;
+  expect(badge.textContent).toBe("1");
+  expect(thread()).toBe(0);
+  await fireEvent.click(badge);
+  expect(thread()).toBe(1);
+  await fireEvent.click(badge);
+  expect(thread()).toBe(0);
+  await fireEvent.click(getByTestId("comment-mode"));
+  expect(thread()).toBe(1);
+});
+
+it("zoom renders only the zoomed paragraph, with its thread, until exited", async () => {
+  doc.loadEssay.mockReturnValue({
+    ...commented,
+    entries: [...model.entries, { instanceId: "q", depth: 0, hasChildren: false } as never],
+    paragraphs: { ...model.paragraphs, q: { id: "q", title: "", body: "Other" } },
+  });
+  const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
+  const { container, getByTestId } = render(EssayShell, { repo: {} as never, repoName: "r", onExport: () => {}, documentRevision: 1 });
+  await tick();
+  expect(container.querySelectorAll(".block")).toHaveLength(2);
+  await fireEvent.click(container.querySelector<HTMLElement>("[aria-label^='Zoom to']")!);
+  expect(container.querySelectorAll(".block")).toHaveLength(1);
+  expect(container.querySelectorAll("[data-testid=comment-thread]")).toHaveLength(1);
+  await fireEvent.click(getByTestId("zoom-exit"));
+  expect(container.querySelectorAll(".block")).toHaveLength(2);
+});

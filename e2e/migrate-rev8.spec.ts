@@ -23,9 +23,10 @@ test("a rev-8 essay offers 8 -> 9, then takes an attributed human reply", async 
   await acceptMigration(page, "rfc046-actor-provenance");
   await page.getByTestId("package-editor-essay").click();
   const first = page.locator(".essay-shell__page .block-stack__item").first();
+  await first.getByTestId("comment-badge").click();
   await first.getByLabel("Your name").fill("Ada");
   await first.getByLabel("Reply").fill("After migration.");
-  await first.getByRole("button", { name: "Comment" }).click();
+  await first.getByRole("button", { name: "Comment", exact: true }).click();
   const c = first.getByTestId("comment");
   await expect(c.getByTestId("comment-author")).toHaveText("Ada");
   await expect(c.getByTestId("comment-kind")).toHaveText("human");
