@@ -79,6 +79,7 @@ test("MCP caller drives the browser session through the relay", async ({ page })
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page.locator('input[type="file"]#srsj-file').setInputFiles(GALLERY);
 
+  await page.getByTestId("mcp-library-connect").first().click();
   await expect(page.getByTestId("mcp-status")).toHaveText("Connected", { timeout: 15000 });
   await expect(page.getByTestId("mcp-caller-url")).toHaveValue(/\/call\/CALLER$/);
   await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
@@ -139,6 +140,7 @@ test("relay origin refusal on bootstrap surfaces invalid_origin", async ({ page 
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page.locator('input[type="file"]#srsj-file').setInputFiles(GALLERY);
+  await page.getByTestId("mcp-library-connect").first().click();
   await expect(page.getByTestId("mcp-status")).toHaveText("Connection failed", { timeout: 15000 });
   await expect(page.getByTestId("mcp-connection").getByRole("alert")).toContainText(
     "invalid_origin"

@@ -77,6 +77,7 @@ test("two agents: distinct authors and ids, guard on both, disconnect leaves the
   await page.locator('input[type="file"]#srsj-file').setInputFiles(ESSAY);
   await page.getByTestId("package-editor-essay").click();
   await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
+  await page.getByTestId("mcp-library-connect").first().click();
   await expect(page.getByTestId("mcp-status")).toHaveText("Connected", { timeout: 15000 });
 
   await page.getByTestId("mcp-connect-open").click();
@@ -133,12 +134,16 @@ test("two agents: distinct authors and ids, guard on both, disconnect leaves the
   // disconnect agent 1: agent 2 keeps working
   await page.getByTestId("mcp-disconnect").first().click();
   await expect(page.getByTestId("mcp-status")).toHaveCount(1);
+  // disconnect keeps the entry; forget removes it
+  await expect(page.getByTestId("mcp-library-item")).toHaveCount(1);
+  await page.getByTestId("mcp-library-forget").click();
+  await expect(page.getByTestId("mcp-library-item")).toHaveCount(0);
   await comment(2, "beta again");
   await expect(c).toHaveCount(3);
   const left = await page.evaluate(
     () => JSON.parse(localStorage.getItem("srs-web.agent-connections") ?? "[]").length
   );
-  expect(left).toBe(1);
+  expect(left).toBe(1); // agent 1 forgotten
 });
 
 test("reload keeps ids and URLs; a typed label is the author; repo change keeps both agents", async ({
@@ -202,6 +207,7 @@ test("reload keeps ids and URLs; a typed label is the author; repo change keeps 
       localStorage.setItem("srs-web.mcp-relay-url", "https://relay.test");
   });
   await open();
+  await page.getByTestId("mcp-library-connect").first().click();
   await expect(page.getByTestId("mcp-status")).toHaveText("Connected", { timeout: 15000 });
   await page.getByTestId("mcp-connect-open").click();
   await page.getByTestId("mcp-agent-label").fill("Labelled");
@@ -218,6 +224,9 @@ test("reload keeps ids and URLs; a typed label is the author; repo change keeps 
   // reload: same ids and caller URLs (no new channels minted)
   const mintedBefore = minted;
   await open();
+  await expect(page.getByTestId("mcp-status")).toHaveCount(0); // nothing auto-connects
+  await page.getByTestId("mcp-library-connect").first().click();
+  await page.getByTestId("mcp-library-connect").first().click();
   await expect(page.getByTestId("mcp-status")).toHaveText(["Connected", "Connected"], {
     timeout: 15000,
   });
@@ -262,8 +271,10 @@ test("reload keeps ids and URLs; a typed label is the author; repo change keeps 
     page.locator(".essay-shell__page .block-stack__item").nth(1).getByTestId("actor-name")
   ).toHaveText(["alpha", "Labelled"]);
 
-  // repo change: reopen the document; both agents come back and both can still write
+  // repo change: reopen the document (reload); reconnect both from the library
   await open();
+  await page.getByTestId("mcp-library-connect").first().click();
+  await page.getByTestId("mcp-library-connect").first().click();
   await expect(page.getByTestId("mcp-status")).toHaveText(["Connected", "Connected"], {
     timeout: 15000,
   });
@@ -329,6 +340,7 @@ test("agent activity: connected count, chip in the feed, paragraph flashes, clic
   await page.locator('input[type="file"]#srsj-file').setInputFiles(ESSAY);
   await page.getByTestId("package-editor-essay").click();
   await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
+  await page.getByTestId("mcp-library-connect").first().click();
   await expect(page.getByTestId("mcp-status")).toHaveText("Connected", { timeout: 15000 });
   await page.getByTestId("mcp-connect-open").click();
   await page.getByTestId("mcp-connect-agent").click();

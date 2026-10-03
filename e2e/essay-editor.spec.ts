@@ -214,6 +214,7 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
     localStorage.setItem("srs-web.mcp-relay-url", "https://relay.test")
   );
   await open(page);
+  await page.getByTestId("mcp-library-connect").first().click();
   await expect(page.getByTestId("mcp-status")).toHaveText("Connected", { timeout: 15000 });
 
   await call({
