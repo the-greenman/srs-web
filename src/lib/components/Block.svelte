@@ -8,6 +8,7 @@
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
 -->
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import EyeToggle from './EyeToggle.svelte';
   import { keyMove } from './dnd';
   import type { KeyMove } from './dnd';
@@ -26,6 +27,7 @@
     onindent,
     onmove,
     onpull,
+    glyphs,
   }: {
     id: string;
     title?: string;
@@ -42,6 +44,8 @@
     onindent: (delta: 1 | -1) => void;
     onmove: (dir: 'up' | 'down') => void;
     onpull?: () => void;
+    /** Marks for things attached to this paragraph (AttachmentGlyph). */
+    glyphs?: Snippet;
   } = $props();
 
   let el = $state<HTMLElement>();
@@ -170,4 +174,5 @@
       onkeydown={bodyKeydown}
     ></div>
   {/if}
+  {#if glyphs}<div class="block__glyphs">{@render glyphs()}</div>{/if}
 </article>

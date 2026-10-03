@@ -179,6 +179,8 @@ export interface SrsRepository {
   get_attachment_bytes(document_id: string): Uint8Array;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getRecordAttachments()
   get_record_attachments(input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in contextRecord()
+  context_record(input_json: string): any;
   create_record_in_container(
     container_id: string,
     type_id: string,
@@ -2047,4 +2049,57 @@ export interface CreateContainerInput {
  */
 export function createContainer(repo: SrsRepository, input: CreateContainerInput): Container {
   return repo.create_container(JSON.stringify(input)) as Container;
+}
+
+// ---------------------------------------------------------------------------
+// Record context read (srs-rust#1134, build.433)
+// ---------------------------------------------------------------------------
+
+/** A relation neighbour loaded inline by the engine: a Record or a Note. */
+export type ContextNeighbour =
+  | {
+      kind: "record";
+      instanceId: string;
+      typeId: string;
+      typeName: string;
+      typeNamespace: string;
+      fieldValues: Record<string, unknown>;
+    }
+  | {
+      kind: "note";
+      instanceId: string;
+      title?: string;
+      sections: { name: string; label?: string; content: string }[];
+    };
+
+/** One edge touching the record; `neighbour` is null when the other end does not resolve. */
+export interface ContextRelation {
+  direction: "out" | "in";
+  relationId: string;
+  relationType: string;
+  sourceId: string;
+  targetId: string;
+  sourceLabel?: string;
+  targetLabel?: string;
+  neighbour: ContextNeighbour | null;
+}
+
+export interface RecordContext {
+  recordId: string;
+  typeId: string;
+  displayLabel: string;
+  fieldValues: Record<string, unknown>;
+  relations: ContextRelation[];
+  /** With `containerId`: this record's arrangement entry and its descendants. */
+  entry?: OutlineEntry;
+  subtree?: OutlineEntry[];
+}
+
+/** Both-direction relations with inline neighbours (+ subtree). ADR-001: pure WASM pass-through. */
+export function contextRecord(
+  repo: SrsRepository,
+  recordId: string,
+  containerId?: string
+): RecordContext {
+  return repo.context_record(JSON.stringify({ recordId, containerId })) as RecordContext;
 }
