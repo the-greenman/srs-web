@@ -42,7 +42,8 @@
 .comments__reply .textarea {
   flex: 1;
   width: auto;
-  min-width: 12rem;
+  min-width: min(12rem, 100%);
+  box-sizing: border-box;
   padding: 4px 8px;
   font-size: var(--size-sm);
   line-height: inherit;

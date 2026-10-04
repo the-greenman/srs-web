@@ -19,7 +19,7 @@
   font-family: var(--font-mono);
   font-size: var(--size-sm);
 }
-.sg section {
+.sg > section {
   display: grid;
   gap: var(--space-sm);
   border-top: var(--rule);
@@ -71,4 +71,41 @@
 .sg__space {
   height: 0.75rem;
   background: var(--color-text);
+}
+
+/* Width frames: rail components at the real rail width. Clipping is deliberate (overflow check). */
+.sg__rails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: flex-start;
+}
+.sg__figure {
+  margin: 0;
+  display: grid;
+  gap: var(--space-xs);
+  max-width: 100%;
+}
+.sg__figure figcaption {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--color-muted);
+}
+.sg__frame {
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: var(--space-xs);
+  border: var(--rule);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-sm);
+  align-content: start;
+}
+.sg__tokens {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
 }

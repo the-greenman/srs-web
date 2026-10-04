@@ -75,6 +75,10 @@ appended below as components gain parts.
 | `HoverCard` | `remove` |
 | `MarkdownHelp` | `close` |
 | `PinnedPane` | `actions` |
+| `Panel` | `head`, `title`, `aside`, `actions`, `body` |
+| `TrayRow` | `row`, `label`, `actions` |
+| `McpConnection` | `head`, `dot`, `status`, `url`, `input`, `actions` |
+| `CommentThread` | `thread`, `item`, `meta`, `text`, `reply` |
 | `ParagraphMargin` | `overflow` |
 
 ### (d) One breakpoint source
@@ -118,6 +122,17 @@ each annotated `/* bp: <role> */`. `tests/breakpoints.test.ts` fails when any `@
 
 ## Consequences
 
-- A skin re-points semantic and component tokens and reaches every shared component.
-- Known gap, tracked by #424: unlayered scoped `<style>` blocks in the shells beat every layer and
-  still carry raw colours.
+- A skin re-points semantic and component tokens and reaches every shared component. The demo theme
+  re-points semantic tokens only; `e2e/styleguide.spec.ts` fails if any specimen still paints a
+  default palette colour, and `tests/demo-theme.test.ts` fails if a semantic colour token is not
+  re-pointed there.
+- Rail components are shown at 18rem and 15rem in `/styleguide`, and an e2e check fails if any of
+  them overflows its frame.
+- Follow-ups:
+  - Consolidating the seven `@media` widths (`phone`, `genericNarrow`, `form`, `compact`,
+    `genericStack`, `rail`, `wide`) into fewer; today they are only named and guarded.
+  - Unlayered scoped `<style>` blocks in the Guides, Governance and Generic shells beat every layer
+    and still carry raw colours: #424 (AppShell) retires them.
+  - Hue unification of `ActorChip` and `AttachmentGlyph` (`hueOf`, a shared `.hue-pill`): #422.
+  - One-off buttons in the modals, `DecisionLogView`, `SourceChooser`, `BlueprintDocumentEditor` and
+    the `SectionForm` table editor.

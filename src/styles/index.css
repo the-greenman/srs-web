@@ -7,6 +7,10 @@
    single-responsibility, BEM-named blocks that can be reused across every
    Track B screen.
 
+   Token tiers (ADR-020): primitive palette -> semantic (tokens.css) -> component
+   (tokens-components.css, --<block>-<property>, declared on :root). Components read
+   semantic and component tokens only.
+
    Cascade order (low -> high priority):
      tokens      design variables only (no selectors that paint)
      base        reset, document defaults, typography, paper grain
@@ -29,6 +33,7 @@
 
 /* Tokens & base */
 @import url("./tokens.css") layer(tokens);
+/* Component tokens: --<block>-<property>[-<state>] on :root, defaults point at semantic tokens */
 @import url("./tokens-components.css") layer(tokens);
 @import url("./base.css") layer(base);
 

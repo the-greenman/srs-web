@@ -12,6 +12,7 @@
     LayersPanel, MarkdownHelp, MarkdownText, McpConnection, Panel, ParagraphMargin, PinnedPane, Select, Tag,
     TagChip, Textarea,
   } from "$lib/components";
+  import Frame from "./styleguide/Frame.svelte";
   import Icons from "./styleguide/icons";
   import { initWasm } from "$lib/srs-client";
   import * as fx from "./styleguide/fixtures";
@@ -34,6 +35,7 @@
   let theme = $state("Default");
   let wasm = $state<"loading" | "ready" | string>("loading");
   let swatchValues = $state<Record<string, string>>({});
+  let tokenValues = $state<Record<string, string>>({});
   let text = $state("Editable text");
   let input = $state("Hello");
   let choice = $state("one");
@@ -55,8 +57,9 @@
   function readTokens() {
     const cs = getComputedStyle(document.documentElement);
     swatchValues = Object.fromEntries(
-      [...fx.swatches, ...fx.sizes, ...fx.spaces].map((n) => [n, cs.getPropertyValue(n).trim()])
+      [...fx.swatches, ...fx.sizes, ...fx.spaces, ...fx.radii].map((n) => [n, cs.getPropertyValue(n).trim()])
     );
+    tokenValues = Object.fromEntries(fx.componentTokens.map((n) => [n, cs.getPropertyValue(n).trim()]));
   }
 
   onMount(() => {
@@ -92,6 +95,36 @@
   {@render gated(inner)}
 {/snippet}
 
+{#snippet rail()}
+  <Panel title="Layers" aside={fx.layers.length + fx.longLayers.length}>
+    <LayersPanel layers={[...fx.layers, ...fx.longLayers]} ondrop={noop} onhide={noop} onfold={noop} onselect={noop} onkey={noop} />
+  </Panel>
+  <Panel title="Draft"><DraftTray items={[...fx.draftItems, ...fx.longDraftItems]} ondrop={noop} onputback={noop} /></Panel>
+  <Panel title="Bin"><BinTray items={[...fx.binItems, ...fx.longBinItems]} onrestore={noop} onforget={noop} /></Panel>
+  {#snippet pinnedPane()}<PinnedPane items={[...fx.pinned, ...fx.longPinned]} onunpin={noop} onremove={noop} />{/snippet}
+  {@render gated(pinnedPane)}
+  <Panel title="Agents">
+    <AgentFeed status={fx.agentStatus} now={fx.NOW} paragraphLabel={fx.paragraphLabel} onselect={noop} />
+    <div class="mcp-agents">
+      <McpConnection
+        status="online" callerUrl={fx.longCallerUrl} repositoryName={fx.longRepoName}
+        actor={fx.agents[0]} lastActivity="titled ¶ Opening · 2 min ago"
+        onDisconnect={noop} onRotate={noop} onTakeover={noop}
+      />
+      <McpConnection
+        status="rejected" error={fx.longError} repositoryName={fx.longRepoName}
+        agentName={fx.longAgentName} onDisconnect={noop} onTakeover={noop}
+      />
+      <div class="mcp-conn__actions" data-testid="mcp-library-item">
+        <strong>{fx.longAgentName}</strong>
+        <Button size="sm" variant="secondary" onclick={noop}>Connect</Button>
+        <Button size="sm" variant="ghost" onclick={noop}>Forget</Button>
+      </div>
+    </div>
+  </Panel>
+  <Panel title="Comments"><CommentThread comments={[...fx.comments, ...fx.longComments]} onadd={noop} /></Panel>
+{/snippet}
+
 <main class="sg">
   <header class="sg__bar">
     <h1>Styleguide</h1>
@@ -122,6 +155,12 @@
     {#each fx.spaces as n}
       <div class="sg__swatch"><span>{n} {swatchValues[n]}</span><div class="sg__space" style:width="var({n})"></div></div>
     {/each}
+    <h3>Radius</h3>
+    {#each fx.radii as n}<div class="sg__swatch"><span>{n} {swatchValues[n]}</span></div>{/each}
+    <h3>Component tokens</h3>
+    <div class="sg__tokens" data-testid="sg-component-tokens">
+      {#each fx.componentTokens as n}<span>{n}</span><span>{tokenValues[n]}</span>{/each}
+    </div>
   </section>
 
   <section id="buttons">
@@ -258,25 +297,11 @@
     <div class="sg__grid">
       <Panel title="Panel" aside={3}><p>Panel body.</p></Panel>
       <Panel title="Static" collapsible={false}><p>Not collapsible.</p></Panel>
-      <Panel title="Layers" aside={fx.layers.length}>
-        <LayersPanel
-          layers={fx.layers} ondrop={noop} onhide={noop} onfold={noop} onselect={noop} onkey={noop}
-        />
-      </Panel>
-      <Panel title="Draft"><DraftTray items={fx.draftItems} ondrop={noop} onputback={noop} /></Panel>
-      <Panel title="Bin"><BinTray items={fx.binItems} onrestore={noop} onforget={noop} /></Panel>
-      <div>
-        {#snippet pinnedPane()}<PinnedPane items={fx.pinned} onunpin={noop} />{/snippet}
-        {@render gated(pinnedPane)}
-      </div>
-      <Panel title="Agents">
-        <AgentFeed status={fx.agentStatus} now={fx.NOW} paragraphLabel={fx.paragraphLabel} onselect={noop} />
-      </Panel>
-      <McpConnection
-        status="online" callerUrl="https://relay.example/mcp/abc123" repositoryName="Specimen repo"
-        actor={fx.agents[0]} lastActivity="titled ¶ Opening · 2 min ago"
-        onDisconnect={noop} onRotate={noop} onTakeover={noop}
-      />
+    </div>
+    <p>Rail components at the real rail width (18rem) and a narrow width (15rem), with long text.</p>
+    <div class="sg__rails">
+      <Frame width="var(--rail-width)" caption="Rail 18rem">{@render rail()}</Frame>
+      <Frame width="15rem" caption="Narrow 15rem">{@render rail()}</Frame>
     </div>
   </section>
 

@@ -411,7 +411,7 @@ Add the Playwright spec `e2e/popover.spec.ts`, run against `/styleguide` with a 
 
 - [x] `grep -rnE 'class="[^"]*\bbtn\b' src --include='*.svelte'` returns only `Button.svelte`.
 - [x] No `select`, `input` or `textarea` element is written by hand in `EssayShell.svelte`, `CommentThread.svelte`, `McpConnection.svelte` or the App `agentDock` (a `<select>` or `<input>` inside `Select`/`Input`/`Textarea` themselves is expected).
-- [ ] `McpConnection` rendered at 18rem and at 15rem has `scrollWidth <= clientWidth` (checked in Phase 5).
+- [x] `McpConnection` rendered at 18rem and at 15rem has `scrollWidth <= clientWidth` (checked in Phase 5).
 - [x] `getByRole("combobox", { name: "Essay" })` still resolves in the essay specs.
 - [x] `tests/McpConnection.test.ts`, `tests/ActorChip.test.ts`, `tests/AttachmentGlyph.test.ts`, `tests/EssayShell.test.ts`, `e2e/agent-channels.spec.ts`, `e2e/mcp-relay.spec.ts`, `e2e/essay-comments.spec.ts` and `e2e/essay-editor.spec.ts` pass.
 
@@ -470,12 +470,12 @@ npx playwright test e2e/agent-channels.spec.ts e2e/mcp-relay.spec.ts e2e/essay-c
 
 #### Acceptance Criteria
 
-- [ ] `/styleguide` shows each rail component in an 18rem frame and a 15rem frame, in both themes.
-- [ ] The overflow e2e passes in both themes at 1280px and 390px, ignoring `[popover]` surfaces.
-- [ ] `tests/demo-theme.test.ts` passes.
-- [ ] The token-derived colour e2e passes under the demo theme with an empty or fully justified `ALLOW` list. To prove the check works, the worker temporarily adds `color: var(--ink)` to one component, confirms the test fails naming that element, then reverts it (state this in the commit message, do not commit the break).
-- [ ] The three existing styleguide tests still pass, and the console is free of errors and page errors.
-- [ ] README, `index.css` header and ADR-020 are consistent with the code (`grep -rn "narrow.ts\|GovernanceShell.svelte:933\|data-md-help-trigger" src docs` returns nothing).
+- [x] `/styleguide` shows each rail component in an 18rem frame and a 15rem frame, in both themes.
+- [x] The overflow e2e passes in both themes at 1280px and 390px, ignoring `[popover]` surfaces.
+- [x] `tests/demo-theme.test.ts` passes.
+- [x] The token-derived colour e2e passes under the demo theme with an empty or fully justified `ALLOW` list. To prove the check works, the worker temporarily adds `color: var(--ink)` to one component, confirms the test fails naming that element, then reverts it (state this in the commit message, do not commit the break).
+- [x] The three existing styleguide tests still pass, and the console is free of errors and page errors.
+- [x] README, `index.css` header and ADR-020 are consistent with the code (`grep -rn "narrow.ts\|GovernanceShell.svelte:933\|data-md-help-trigger" src docs` returns nothing).
 
 #### Testing
 
@@ -496,14 +496,14 @@ npx playwright test e2e/essay-editor.spec.ts e2e/essay-touch.spec.ts e2e/essay-c
 
 ## Final Acceptance
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm run build` succeeds, and `/styleguide` is still a separate lazy chunk
-- [ ] `npm test` passes, including `tests/styles-tokens.test.ts`, `tests/breakpoints.test.ts` and `tests/Popover.test.ts`
-- [ ] `e2e/styleguide.spec.ts` passes (overflow and token-derived colour checks)
-- [ ] The e2e specs named in "Existing tests likely affected" pass
-- [ ] No component outside `Button.svelte` writes a `btn` class; no emoji or Unicode icon glyph remains; one `ink-surface` definition; one Popover dismissal implementation; one breakpoint source
-- [ ] ADR-020 written; ADR-019 "Consequences" updated
+- [x] `npm run typecheck` passes
+- [x] `npm run lint` passes
+- [x] `npm run build` succeeds, and `/styleguide` is still a separate lazy chunk
+- [x] `npm test` passes, including `tests/styles-tokens.test.ts`, `tests/breakpoints.test.ts` and `tests/Popover.test.ts`
+- [x] `e2e/styleguide.spec.ts` passes (overflow and token-derived colour checks)
+- [x] The e2e specs named in "Existing tests likely affected" pass
+- [x] No component outside `Button.svelte` writes a `btn` class; no emoji or Unicode icon glyph remains; one `ink-surface` definition; one Popover dismissal implementation; one breakpoint source
+- [x] ADR-020 written; ADR-019 "Consequences" updated
 
 ## Coordination Rules
 
@@ -522,6 +522,7 @@ npx playwright test e2e/essay-editor.spec.ts e2e/essay-touch.spec.ts e2e/essay-c
 - (Phase 1) Biome formats CSS, so the breakpoint annotation is a `/* bp: <role> */` comment on the line above each `@media`, not inline after the brace.
 - (Phase 1) `e2e/styleguide.spec.ts`: the existing heading-count assertion raced the lazy styleguide chunk (flaked once in four runs); it now uses `expect.poll`. Same threshold.
 - (Phase 2) Lucide 1.52 file names: `trash` (not `trash-2`), `list-indent-increase/decrease` (not `indent-increase/decrease`), `circle-question-mark` (not `circle-help`); the plan's names exist only as `.js` aliases without Svelte types.
+- (Phase 5) `.sg section` in `styleguide.css` leaked its grid layout and top border into every nested `<section>` (Layers, trays), which made the layers rows overflow the frame; it is now `.sg > section`. The existing "no `role=alert`" assertion in the first styleguide test excludes `.mcp-conn__error`, because the required rejected `McpConnection` specimen carries its own alert. The colour check was proven by temporarily adding `color: var(--ink)` to `.tag`: it failed naming `span.tag.tag--*`; reverted, not committed.
 - (Phase 4) The literal grep `class="[^"]*\bbtn\b"` also matches hyphenated one-off classes (`modal-btn`, `te-btn`, `guides-icon-btn`, `controls-bar__sort-btn`, `cloud-browser__scan-btn`), because `\b` sits between `-` and `btn`. Read as the class token `btn`/`btn--*`, it now returns only `Button.svelte` (App, CommentThread, RecordForm, SectionForm converted). The hyphenated one-offs in the three modals, `DecisionLogView`, `SourceChooser`, `BlueprintDocumentEditor`, `SectionForm` (table editor) and `GuidesShell` are left; the shells and editors are #424.
 - (Phase 3) `ActionMenu` and the `ParagraphMargin` "+N" list render their rows only while open (`{#if open}` inside the always-rendered surface), and `Popover` closes on Escape itself when the popover API is missing, so `tests/paragraph-actions.test.ts` and `tests/ParagraphMargin.test.ts` pass unchanged under happy-dom. The ParagraphMargin popover surface is labelled "More annotations" (the trigger keeps "N more annotations").
 - (Phase 3) `AttachmentGlyph` keeps its own Escape handler: a manual popover has no native Escape, and the host owns the open state. Every auto popover relies on the native one.

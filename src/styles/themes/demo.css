@@ -1,20 +1,41 @@
 /* ============================================================================
-   theme: demo — proves the token surface alone can reskin the UI (ADR-019).
-   Tokens only, never component classes. Imported ONLY by Styleguide.svelte, so it
-   ships in the lazy /styleguide chunk and never reaches the app.
+   theme: demo — proves the token surface alone can reskin the UI (ADR-019, ADR-020).
+   Re-points ONLY semantic and component tokens, never the primitive palette (--paper, --ink,
+   --black, --grey-*) and never a component class. Every colour-bearing semantic token gets a sentinel
+   value that differs from every default palette value, so any component still painting a palette
+   colour is a bypass: e2e/styleguide.spec.ts fails on it, and tests/demo-theme.test.ts fails when
+   a semantic token is added to tokens.css and not re-pointed here. Imported ONLY by
+   Styleguide.svelte, so it ships in the lazy /styleguide chunk and never reaches the app.
    ========================================================================== */
 @layer theme {
   :root[data-theme="demo"] {
     color-scheme: light;
 
-    --paper: #fbf1dc;
-    --ink: #3a1f12;
-    --black: #2a140a;
-    --grey-1: #f0dfbd;
-    --grey-2: #dcc08a;
-    --grey-3: #8c5a36;
-    --grey-4: #5e3a22;
+    --color-bg: #fbf1dc;
+    --color-surface: #f6e7c8;
     --color-page: #fffaf0;
+    --color-text: #3a1f12;
+    --color-text-strong: #2a140a;
+    --color-muted: #8c5a36;
+    --color-muted-strong: #5e3a22;
+    --color-line: #dcc08a;
+    --color-line-soft: #f0dfbd;
+    --color-line-strong: #2a140a;
+    --color-nav-bg: #3b2414;
+    --color-focus: #7a2e0e;
+    --color-overlay: rgb(42 20 10 / 55%);
+    --color-on-accent: #fff8ea;
+    --color-surface-raised: #fff6e0;
+    --color-hover: #f3e2bd;
+    --color-on-dark: #fbe9c6;
+    --color-error: #8a1f2b;
+    --color-warn: #8a5a00;
+    --color-success: #1f5a3a;
+
+    --shadow-popover: 0 4px 16px rgb(42 20 10 / 25%);
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
 
     --font-sans: Georgia, "Times New Roman", serif;
     --font-mono: "Courier New", monospace;
