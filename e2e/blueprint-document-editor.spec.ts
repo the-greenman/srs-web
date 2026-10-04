@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { acceptMigration } from "./helpers.js";
+import { acceptMigration, menuItem } from "./helpers.js";
 
 /**
  * blueprint-document-editor.spec.ts — generic, blueprint-driven document
@@ -115,7 +115,7 @@ test.describe("BlueprintDocumentEditor (srs-web#322)", () => {
     // The full-page preview is hidden by default alongside the editor (srs-web#322 part 2)
     // — the editor takes the full width until "Full preview" is toggled on.
     await expect(page.getByTestId("document-full-preview")).toHaveCount(0);
-    await page.getByTestId("full-preview-toggle").click();
+    await menuItem(page, "View", "full-preview-toggle"); // View > Full preview (the Toolbar)
 
     // The rendered preview (re-rendered after the mutation) reflects the same content,
     // and nests the same way the editor does (editor order == preview order).

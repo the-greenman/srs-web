@@ -84,6 +84,14 @@
   --shell-badge-bg: var(--color-text-strong);
   --shell-badge-fg: var(--color-on-dark);
 
+  /* Generic shell relation map (#424). */
+  --generic-graph-line: var(--color-muted);
+  --generic-graph-text: var(--color-muted-strong);
+  --generic-graph-node-fill: var(--color-hover);
+  --generic-graph-node-stroke: var(--color-muted-strong);
+  --generic-graph-focus-fill: var(--color-muted-strong);
+  --generic-graph-focus-stroke: var(--color-text-strong);
+
   /* Toolbar (#423): the generic document bar. */
   --toolbar-bg: transparent;
   --toolbar-border: var(--rule);

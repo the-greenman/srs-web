@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { devices, expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { openInspectorDrawer } from "./helpers.js";
+import { openInspectorDrawer, openNavDrawer } from "./helpers.js";
 
 /** srs-web#383: phone layout of the essay editor (text width, header overflow, inline margin, thread/zoom/help). */
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
@@ -13,12 +13,8 @@ async function open(page: Page) {
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page.locator('input[type="file"]#srsj-file').setInputFiles(ESSAY);
-  await page
-    .getByTestId("package-editor-mobile-essay")
-    .or(page.getByTestId("package-editor-essay"))
-    .locator("visible=true")
-    .first()
-    .tap();
+  await openNavDrawer(page);
+  await page.getByTestId("package-editor-essay").tap();
   await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
 }
 

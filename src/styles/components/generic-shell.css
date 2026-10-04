@@ -1,0 +1,222 @@
+/* ============================================================================
+   component: generic shell (.generic-*) — the repository-first reader (#424)
+   ----------------------------------------------------------------------------
+   Nav, main and inspector styling for GenericSrsShell, which sits on AppShell and Toolbar. Tokens only:
+   semantic colours, plus `--generic-graph-*` for the relation map (tokens-components.css). The nav's
+   dark surface, group labels and item look come from nav.css (`.nav__group`, `.nav__item`).
+   ========================================================================== */
+
+/* ── Nav: buttons that look like nav items ────────────────────────────────── */
+.nav button.nav__item {
+  width: 100%;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.nav button.nav__item:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.generic-tree-root {
+  margin: 0 0 4px;
+  padding: 4px var(--space-sm);
+  border-left: 2px solid var(--color-on-dark-faint);
+  color: var(--color-on-dark-muted);
+  font-size: var(--size-xs);
+}
+.generic-tree-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2rem;
+  align-items: stretch;
+}
+.generic-tree-item > button:first-child {
+  min-width: 0;
+}
+.nav button.generic-tree-toggle {
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+  font-size: var(--size-base);
+}
+.generic-tree-members {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 4px var(--space-sm);
+  border-left: 1px solid var(--color-on-dark-line);
+}
+.generic-tree-members .nav__item {
+  font-size: var(--size-xs);
+}
+.nav .generic-muted {
+  padding: 0 var(--space-sm);
+  color: var(--color-on-dark-muted);
+  font-size: var(--size-xs);
+}
+
+/* ── Main: the view, capped at the content width (Wide widens it) ─────────── */
+.generic-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+.generic-page header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+}
+.generic-page header p,
+.generic-inspector-head p {
+  margin: 0 0 2px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted-strong);
+}
+.generic-page h1,
+.inspector h2 {
+  margin: 0;
+  font-size: var(--size-md);
+}
+.generic-muted {
+  color: var(--color-muted-strong);
+  font-size: var(--size-sm);
+}
+.generic-notice {
+  margin: 0;
+  padding: var(--space-xs) var(--space-xs);
+  background: color-mix(in srgb, var(--color-warn) 10%, transparent);
+  border-left: 3px solid var(--color-warn);
+}
+.document-editor-panel {
+  overflow: auto;
+}
+.document-editor-panel--full {
+  width: 100%;
+}
+.document-preview-panel {
+  overflow: auto;
+}
+.document-preview-panel--full {
+  max-height: 60vh;
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: var(--rule);
+}
+.generic-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+.generic-controls input,
+.generic-controls select,
+.generic-controls button {
+  padding: 6px var(--space-xs);
+  border: var(--rule);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  font: inherit;
+}
+.generic-controls input {
+  flex: 1;
+  min-width: 12rem;
+}
+.generic-records {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.generic-record-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--space-xs);
+  border: var(--rule);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.generic-record-row:hover {
+  border-color: var(--color-line-strong);
+}
+.generic-record-row span {
+  color: var(--color-muted-strong);
+  font-size: var(--size-sm);
+}
+
+/* ── Relation map ─────────────────────────────────────────────────────────── */
+.generic-graph {
+  min-height: 25rem;
+  overflow: auto;
+  border: var(--rule);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+}
+.generic-graph svg {
+  width: 100%;
+  min-width: 38rem;
+  min-height: 25rem;
+}
+.generic-graph line {
+  stroke: var(--generic-graph-line);
+  stroke-width: 1.5;
+}
+.generic-graph text {
+  fill: var(--generic-graph-text);
+  font-size: 10px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.generic-graph g {
+  cursor: pointer;
+}
+.generic-graph circle {
+  fill: var(--generic-graph-node-fill);
+  stroke: var(--generic-graph-node-stroke);
+  stroke-width: 2;
+}
+.generic-graph g:hover circle,
+.generic-graph g.focused circle {
+  fill: var(--generic-graph-focus-fill);
+  stroke: var(--generic-graph-focus-stroke);
+}
+.generic-graph g.focused .node-label {
+  font-weight: 700;
+  fill: var(--generic-graph-focus-stroke);
+}
+
+/* ── Inspector: the selected record ───────────────────────────────────────── */
+.generic-inspector-head span {
+  color: var(--color-muted-strong);
+  font-size: var(--size-sm);
+}
+.generic-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 0;
+  border-bottom: var(--rule-soft);
+  font-size: var(--size-sm);
+}
+.generic-field strong {
+  color: var(--color-muted-strong);
+  font-size: var(--size-xs);
+}
+.generic-edit {
+  margin-top: var(--space-xs);
+  padding: 6px var(--space-xs);
+  border: var(--rule);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  cursor: pointer;
+}

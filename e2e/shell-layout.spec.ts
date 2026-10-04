@@ -24,13 +24,9 @@ async function openGovernance(page: Page) {
   await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
 }
 
-// Until Generic's nav is a drawer (Phase 5) the phone picker is the mobile button.
+// The package picker is in the nav; at phone width that is the drawer.
 async function openEditor(page: Page, id: "governance" | "guides" | "essay") {
-  const desktop = page.getByTestId(`package-editor-${id}`);
-  await ((await desktop.isVisible())
-    ? desktop
-    : page.getByTestId(`package-editor-mobile-${id}`)
-  ).click();
+  await openPackageEditor(page, id);
 }
 
 const scrollY = (page: Page) => page.evaluate(() => window.scrollY);
@@ -309,5 +305,111 @@ test.describe("Essay on the frame: geometry", () => {
     await expect(page.getByTestId("nav-trigger")).toHaveCount(0); // the essay has no nav (#425)
     await page.getByTestId("inspector-trigger").click();
     await expect(page.getByTestId("shell-drawer-inspector").getByTestId("rail")).toBeVisible();
+  });
+});
+
+const widthOf = (page: Page, sel: string) =>
+  page
+    .locator(sel)
+    .first()
+    .evaluate((el) => Math.round(el.getBoundingClientRect().width));
+
+test.describe("Generic on the frame", () => {
+  test("clicking the last nav item leaves the window and the nav's own scroll alone", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 380 });
+    await load(page, "muSrs.srsj");
+    const scroller = page.locator(".app__nav .nav__scroll");
+    await scroller.evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+    });
+    const before = await scroller.evaluate((el) => el.scrollTop);
+    expect(before).toBeGreaterThan(0);
+    // the last navigation item (the package editors below it switch shells)
+    await page.locator('.app__nav .nav__item:not([data-testid^="package-editor"])').last().click();
+    await expect.poll(() => scrollY(page)).toBe(0);
+    expect(await scroller.evaluate((el) => el.scrollTop)).toBe(before);
+    expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(
+      true
+    );
+  });
+
+  test("Wide is one switch across editors: Essay -> Generic -> Essay keeps it; Generic widens past 46rem", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1920, height: 1000 });
+    await load(page, "essay.srsj");
+    expect(await widthOf(page, ".generic-page")).toBeLessThanOrEqual(46 * 16 + 1);
+    await openEditor(page, "essay");
+    await setWide(page, true);
+    expect(await pageWidth(page)).toBeGreaterThan(46 * 16 + 40);
+
+    await page.getByTestId("toolbar-menu-go").click();
+    await page.getByTestId("toolbar-explorer").click(); // back to the generic shell, same repository
+    await expect(page.getByTestId("generic-srs-shell")).toBeVisible();
+    await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
+    expect(await widthOf(page, ".generic-page")).toBeGreaterThan(46 * 16 + 40);
+
+    await openEditor(page, "essay");
+    await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
+    await page.getByTestId("toolbar-menu-go").click();
+    await page.getByTestId("toolbar-explorer").click();
+    await setWide(page, false); // and the other way round
+    await expect(page.locator(".app")).toHaveAttribute("data-margin", "compact");
+    expect(await widthOf(page, ".generic-page")).toBeLessThanOrEqual(46 * 16 + 1);
+
+    await setWide(page, true);
+    await page.reload(); // nothing but localStorage survives: re-upload and reopen
+    await load(page, "essay.srsj");
+    await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
+  });
+
+  test.describe("at 375px", () => {
+    test.use({ viewport: { width: 375, height: 700 } });
+
+    test("the hamburger opens the drawer; choosing Records closes it and the main pane shows it; an editor opens from it", async ({
+      page,
+    }) => {
+      // gallery, not essay: the Records list of essay.srsj throws each_key_duplicate on origin/main too
+      await load(page, "gallery.srsj");
+      await expect(page.getByTestId("shell-drawer-nav")).toBeHidden();
+      await page.getByTestId("nav-trigger").click();
+      const drawer = page.getByTestId("shell-drawer-nav");
+      await expect(drawer).toBeVisible();
+      await drawer.getByRole("button", { name: "Records", exact: true }).click();
+      await expect(drawer).toBeHidden();
+      await expect(page.getByRole("heading", { name: "Records", level: 1 })).toBeVisible();
+      await expect(page.getByTestId("nav-trigger")).toBeFocused();
+
+      await page.getByTestId("nav-trigger").click();
+      await page.getByTestId("package-editor-governance").click();
+      await expect(drawer).toBeHidden();
+      await expect(page.getByTestId("nav-trigger")).toHaveCount(1); // now the Governance shell, same frame
+    });
+
+    // The Layers row menu is the touch reorder control (hover: none only), so this one runs as a touch phone.
+    test.describe("touch", () => {
+      test.use({ isMobile: true, hasTouch: true });
+      test("an ActionMenu inside a drawer: the first Escape closes only the menu, the second closes the drawer", async ({
+        page,
+      }) => {
+        await openEssay(page);
+        await page.getByTestId("inspector-trigger").click();
+        const drawer = page.getByTestId("shell-drawer-inspector");
+        await expect(drawer).toBeVisible();
+        const layers = drawer.locator("details.panel", { hasText: "Layers" }).first();
+        if (!(await layers.evaluate((el: HTMLDetailsElement) => el.open)))
+          await layers.locator("summary").first().click();
+        await drawer.getByTestId("layer-menu").first().click();
+        const menu = page.locator(":popover-open");
+        await expect(menu).toHaveCount(1);
+        await page.keyboard.press("Escape");
+        await expect(menu).toHaveCount(0);
+        await expect(drawer).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(drawer).toBeHidden();
+      });
+    });
   });
 });
