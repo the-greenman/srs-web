@@ -25,7 +25,7 @@ Three tiers, each referencing the one above, so a skin re-points the tier it nee
 |---|---|---|---|
 | Primitive | `tokens.css` | `--paper`, `--ink`, `--black`, `--grey-1..4` | semantic tokens only, never components |
 | Semantic | `tokens.css` | `--color-text`, `--color-surface-raised`, `--color-on-dark`, `--radius-md`, `--shadow-popover`, `--z-overlay`, `--focus-ring`, `--hit-target`, `--rail-width` | components and component tokens |
-| Component | `tokens-components.css` | `--btn-bg`, `--btn-primary-bg`, `--icon-btn-fg`, `--popover-bg`, `--hue-pill-s` | the component's own CSS |
+| Component | `tokens-components.css` | `--btn-bg`, `--btn-primary-bg`, `--icon-btn-fg`, `--popover-bg`, `--hue-pill-s`, `--actor-mark-size`, `--margin-width`, `--comment-thread-max` | the component's own CSS |
 
 Component tokens are named `--<block>-<property>[-<state>]` and are declared on `:root` in the
 `tokens` layer, **never on the component selector**: a skin's `:root[data-theme]` rule would lose
@@ -69,7 +69,7 @@ src/styles/
     popover.css        .popover      the one floating surface (native top-layer popover)
     draft-tray.css     .tray         DraftTray and BinTray rows
     ... and one file per remaining block (see index.css)
-  tokens-components.css  component tokens (--btn-*, --icon-btn-*, --popover-*, --hue-pill-*)
+  tokens-components.css  component tokens (--btn-*, --icon-btn-*, --popover-*, --hue-pill-*, --actor-*, --margin-*, --comment-*)
 ```
 
 ## Conventions

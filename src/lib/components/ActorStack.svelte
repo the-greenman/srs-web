@@ -30,7 +30,7 @@
   {#if rest.length}
     <Popover bind:open={more} placement="bottom-end" role="region" label="More participants" class="actor-stack__list">
       {#snippet trigger({ props })}
-        <Button size="sm" variant="ghost" class="actor-stack__more" aria-label={`${rest.length} more`} {...props}>+{rest.length}</Button>
+        <Button size="sm" variant="ghost" class="actor-stack__more" data-part="more" aria-label={`${rest.length} more`} {...props}>+{rest.length}</Button>
       {/snippet}
       {#if more}
         <ul class="actor-stack__items">

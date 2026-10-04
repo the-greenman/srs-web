@@ -43,6 +43,42 @@ test.describe("Styleguide", () => {
     });
   }
 
+  // ── Agent participation specimens (srs-web#422) ────────────────────────────────────────
+  for (const theme of ["Default", "Demo"]) {
+    test(`actors, annotations and comments render without errors: ${theme} theme`, async ({
+      page,
+    }) => {
+      const errors: string[] = [];
+      page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.goto("/styleguide");
+      await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+      await page.getByLabel("Theme").selectOption(theme);
+
+      const pairs = page.getByTestId("sg-actor-pairs");
+      await expect(pairs.locator(".sg__pair")).toHaveCount(5); // 1 human, 3 agents, unattributed
+      await expect(pairs).toContainText("Unattributed");
+      const clip = (n: number) =>
+        pairs
+          .getByTestId("actor-mark")
+          .nth(n)
+          .evaluate((el) => getComputedStyle(el).clipPath);
+      expect(await clip(0)).toBe("none"); // the human: a circle
+      expect(await clip(2)).not.toBe("none"); // an agent: the notched square
+      await expect(page.locator("#actors .actor-stack__more")).toHaveText(["+3"]);
+
+      const annotations = page.locator("#annotations");
+      await expect(annotations.locator('[data-part="row"]').first()).toBeVisible();
+      await expect(annotations.getByTestId("paragraph-margin")).toHaveCount(8);
+      await expect(annotations.locator('[data-part="earlier"]')).toHaveText("17 earlier comments");
+      await expect(annotations.getByTestId("comment-thread")).toHaveCount(7);
+      await expect(
+        annotations.getByText("<script>alert(1)</script>", { exact: false })
+      ).toBeVisible();
+      expect(errors).toEqual([]);
+    });
+  }
+
   // ── Rail components at real widths: nothing overflows its frame (srs-web#421) ──────────────
   for (const theme of ["Default", "Demo"]) {
     for (const width of [1280, 390]) {

@@ -250,36 +250,56 @@
 
   <section id="actors">
     <h2>Actors</h2>
-    <h3>Compact and full</h3>
-    <div class="sg__row">
-      <ActorMark actor={fx.human} />
-      {#each fx.agents as a}<ActorMark actor={a} />{/each}
-      <ActorMark actor={fx.unattributed} />
-      <ActorMark actor={fx.agents[0]} size="sm" />
+    <p>Shape tells kind, not colour: a human is a circle, an agent a notched square. No actor is "Unattributed".</p>
+    <h3>Compact and full, side by side</h3>
+    <div class="sg__pairs" data-testid="sg-actor-pairs">
+      {#each [fx.human, ...fx.agents, fx.unattributed] as a}
+        <div class="sg__pair"><ActorMark actor={a} /><ActorMark actor={a} size="sm" /><ActorChip actor={a} /></div>
+      {/each}
     </div>
+    <h3>Stack: 3 (no overflow), 6 (+3), with an unattributed entry</h3>
     <div class="sg__row">
-      <ActorChip actor={fx.human} />
-      {#each fx.agents as a}<ActorChip actor={a} />{/each}
-      <ActorChip actor={fx.unattributed} />
-    </div>
-    <h3>Stack (4 actors, then 7)</h3>
-    <div class="sg__row">
-      <ActorStack actors={[fx.human, ...fx.agents]} max={4} />
+      <ActorStack actors={[fx.human, ...fx.agents.slice(0, 2)]} />
       <ActorStack actors={fx.manyActors} />
+      <ActorStack actors={[fx.unattributed, fx.agents[0]]} />
     </div>
   </section>
 
   <section id="annotations">
     <h2>Annotations and comments</h2>
-    <h3>Margin: compact</h3>
-    <AnnotationMargin annotations={fx.annotations} onopen={noop} />
-    <h3>Margin: expanded</h3>
-    <AnnotationMargin annotations={fx.annotations} variant="expanded" onopen={noop} />
+    <h3>Margin: compact, expanded and narrow (inline, as under the phone breakpoint)</h3>
+    <div class="sg__margins">
+      <div class="sg__col" style:width="var(--margin-width-compact)"><AnnotationMargin annotations={fx.annotationSet(4)} onopen={noop} /></div>
+      <div class="sg__col" style:width="var(--margin-width-wide)"><AnnotationMargin annotations={fx.annotationSet(4)} variant="expanded" onopen={noop} /></div>
+      <div class="sg__col sg__inline"><AnnotationMargin annotations={fx.annotationSet(10)} max={5} onopen={noop} /></div>
+    </div>
+    <h3>Long labels (wide column)</h3>
+    <div class="sg__col" style:width="var(--margin-width-wide)"><AnnotationMargin annotations={fx.longLabelAnnotations} variant="expanded" onopen={noop} /></div>
+    <h3>Paragraphs with 0, 1, 4 and 10 annotations (wide margin)</h3>
+    {#snippet annotated()}
+      <div class="sg__wide">
+        <BlockStack items={fx.annotatedItems} source="styleguide-annotated" ondrop={noop} label="Annotated paragraphs">
+          {#snippet row(item, handle)}
+            <Block id={item.id} title={`${item.id.slice(3)} annotations`} body="A paragraph with its margin." {handle} onbody={noop} ontitle={noop} onhide={noop} onnew={noop} onindent={noop} onmove={noop}>
+              {#snippet margin()}
+                <AnnotationMargin annotations={fx.annotationSet(Number(item.id.slice(3)))} variant="expanded" onopen={noop} />
+              {/snippet}
+            </Block>
+          {/snippet}
+        </BlockStack>
+      </div>
+    {/snippet}
+    {@render gated(annotated)}
+    <h3>Comment threads</h3>
     {#snippet threads()}
       <div class="sg__grid">
         <div><h3>Empty</h3><CommentThread onadd={noop} /></div>
-        <div><h3>Agents and a human</h3><CommentThread comments={fx.comments} onadd={noop} /></div>
         <div><h3>Needs a name</h3><CommentThread needsName onadd={noop} /></div>
+        <div><h3>Long agent review plus short replies</h3><CommentThread comments={fx.reviewThread} onadd={noop} /></div>
+        <div><h3>25 comments (earlier collapsed)</h3><CommentThread comments={fx.manyComments} onadd={noop} /></div>
+        <div><h3>Grouped same-author runs</h3><CommentThread comments={fx.runComments} onadd={noop} /></div>
+        <div><h3>Markdown, and inert HTML</h3><CommentThread comments={fx.markdownComments} onadd={noop} /></div>
+        <div><h3>Agents and a human</h3><CommentThread comments={fx.comments} onadd={noop} /></div>
       </div>
     {/snippet}
     {@render gated(threads)}

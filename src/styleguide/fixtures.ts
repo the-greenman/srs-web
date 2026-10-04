@@ -23,7 +23,6 @@ export const manyActors: Actor[] = [
   ...agents,
   { kind: "human", id: "human-bo", name: "Bo" },
   { kind: "ai", id: "agent-mapper", name: "Mapper" },
-  { kind: "ai", id: "agent-checker", name: "Checker" },
 ];
 
 export const statuses: Status[] = [
@@ -73,6 +72,127 @@ export const comments: Comment[] = [
     author: agents[0],
   },
   { id: "3", text: "Thanks, looks right.", createdAt: "2026-10-04T11:58:00Z", author: human },
+];
+
+const att = (i: number, icon: string, label: string, actor?: Actor): Annotation => ({
+  kind: "attachment",
+  key: `att${i}`,
+  label,
+  icon,
+  text: `Preview of ${label}.`,
+  relation: "evidences",
+  actor,
+});
+const rel = (
+  i: number,
+  icon: string,
+  label: string,
+  direction: "out" | "in",
+  actor?: Actor
+): Annotation => ({
+  kind: "relation",
+  key: `rel${i}`,
+  label,
+  icon,
+  direction,
+  actor,
+});
+const KINDS = [
+  "note",
+  "source",
+  "problem",
+  "claim",
+  "counter-claim",
+  "spreadsheet",
+  "document",
+  "image",
+  "link",
+  "mystery",
+];
+/** A paragraph's annotations: 0, 1, 4 or 10 of them (the first is always the comments row). */
+export const annotationSet = (n: number): Annotation[] => {
+  const comments: Annotation = {
+    kind: "comments",
+    key: "c",
+    count: n === 0 ? 0 : 3,
+    label: "Opening",
+  };
+  if (n <= 1) return [comments];
+  const rest: Annotation[] = [
+    ...KINDS.slice(0, 6).map((k, i) =>
+      att(i, k, `A ${k} attached by ${agents[i % 3].name}`, agents[i % 3])
+    ),
+    rel(1, "refines", "Background", "out", human),
+    rel(2, "supersedes", "Conclusion", "in", agents[1]),
+    { kind: "shared", key: "s", label: "Shared with Critic" },
+  ];
+  return [comments, ...rest.slice(0, n - 1)];
+};
+const LONG_LABEL =
+  "An unusually long attached note title that must wrap onto two lines and then clamp, never spilling out of the margin";
+/** Long labels on every row kind. */
+export const longLabelAnnotations: Annotation[] = [
+  { kind: "comments", key: "c", count: 12, label: "Opening" },
+  att(1, "source", LONG_LABEL, agents[0]),
+  att(2, "mystery", "unbrokenrunofcharacters".repeat(6), undefined),
+  rel(1, "derived-from", LONG_LABEL, "in", human),
+  { kind: "shared", key: "s", label: `Also in ${LONG_LABEL}` },
+];
+
+const at = (min: number) => new Date(NOW - min * 60_000).toISOString();
+const c = (id: string, text: string, min: number, author?: Actor): Comment => ({
+  id,
+  text,
+  createdAt: at(min),
+  author,
+});
+const REVIEW = [
+  "**Review of the opening paragraph.** The argument is clear, but three claims need support before it can stand.",
+  "",
+  "1. The first sentence asserts that small groups decide faster. *Which* groups, and measured how?",
+  "2. The second names a cost without a source.",
+  "3. The conclusion repeats the premise.",
+  "",
+  "Suggested sources: the budget workbook, the 2024 meeting notes, and the interview with the clerk. Each of them bears directly on the first claim, and the workbook also answers the second one if you read the Q3 tab.",
+  "",
+  "A longer paragraph follows so this comment is certain to exceed the six-line clamp. ".repeat(6),
+].join("\n");
+export const annotatedItems = [0, 1, 4, 10].map((n) => ({ id: `ann${n}`, depth: 0 }));
+/** One long agent review, then short replies. */
+export const reviewThread: Comment[] = [
+  c("r1", REVIEW, 190, agents[1]),
+  c("r2", "Added the workbook as a source.", 150, agents[0]),
+  c("r3", "Thanks, that covers it.", 140, human),
+];
+/** 25 comments: older ones sit behind "earlier comments". */
+export const manyComments: Comment[] = Array.from({ length: 25 }, (_, i) =>
+  c(
+    `m${i}`,
+    i === 0 ? "The thread starts here." : `Reply number ${i}`,
+    600 - i * 20,
+    i % 3 === 2 ? human : agents[i % 2]
+  )
+);
+/** Consecutive comments by one actor share one chip. */
+export const runComments: Comment[] = [
+  c("u1", "First from Scribe.", 50, agents[0]),
+  c("u2", "Second from Scribe.", 49, agents[0]),
+  c("u3", "Third from Scribe.", 48, agents[0]),
+  c("u4", "Ada replies.", 40, human),
+  c("u5", "Ada again.", 39, human),
+  c("u6", "Critic weighs in.", 30, agents[1]),
+  c("u7", "Unattributed note.", 20),
+  c("u8", "Another unattributed note.", 19),
+];
+/** Markdown renders; raw HTML shows as text. */
+export const markdownComments: Comment[] = [
+  c(
+    "k1",
+    "**Bold**, *italic*, `code`, and a [link](https://example.com).\n\n- one\n- two",
+    10,
+    agents[0]
+  ),
+  c("k2", "<script>alert(1)</script> and <img src=x onerror=alert(2)> stay inert.", 5, agents[1]),
 ];
 
 export const layers: Layer[] = [

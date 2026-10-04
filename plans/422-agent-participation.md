@@ -319,10 +319,10 @@ npx playwright test e2e/agent-channels.spec.ts e2e/essay-write-guard.spec.ts e2e
 
 #### Tasks
 
-- [ ] `Styleguide.svelte` + fixtures: Actors section with compact and full side by side for 1 human + 3 agents, `ActorStack` (3, 6 actors), unattributed. Annotations section: compact / expanded / narrow-inline; paragraphs with 0, 1, 4, 10 annotations; long labels. Comments: long agent review plus short replies; 25 comments (earlier collapsed); grouped same-author runs; markdown; empty; needs-name.
-- [ ] `e2e/styleguide.spec.ts`: no console errors; sections render in both themes; no hard-coded colour under the demo theme for the new marks (the existing computed-style check).
-- [ ] Docs: ADR-020 part table rows (`ActorMark`, `ActorStack`, `CommentThread`, `AnnotationMargin`) and the new tokens; `src/styles/README.md` token list; `src/lib/components/README.md` (rename ParagraphMargin; list new components). No new ADR.
-- [ ] Update this plan's checkboxes.
+- [x] `Styleguide.svelte` + fixtures: Actors section with compact and full side by side for 1 human + 3 agents, `ActorStack` (3, 6 actors), unattributed. Annotations section: compact / expanded / narrow-inline; paragraphs with 0, 1, 4, 10 annotations; long labels. Comments: long agent review plus short replies; 25 comments (earlier collapsed); grouped same-author runs; markdown; empty; needs-name.
+- [x] `e2e/styleguide.spec.ts`: no console errors; sections render in both themes; no hard-coded colour under the demo theme for the new marks (the existing computed-style check).
+- [x] Docs: ADR-020 part table rows (`ActorMark`, `ActorStack`, `CommentThread`, `AnnotationMargin`) and the new tokens; `src/styles/README.md` token list; `src/lib/components/README.md` (rename ParagraphMargin; list new components). No new ADR.
+- [x] Update this plan's checkboxes.
 
 #### Testing
 
@@ -333,10 +333,10 @@ npx playwright test e2e/styleguide.spec.ts e2e/essay-comments.spec.ts e2e/agent-
 
 #### Final Acceptance
 
-- [ ] `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` pass.
-- [ ] `npx playwright test e2e/styleguide.spec.ts e2e/essay-comments.spec.ts e2e/agent-channels.spec.ts e2e/essay-editor.spec.ts e2e/mobile-layout.spec.ts e2e/navigation.spec.ts` green.
-- [ ] `grep -rn "anon" src` shows no actor-name fallback; no raw `hsl(` outside tokens and the shared `.hue-pill` rule set.
-- [ ] WASM loads and calls succeed against `gallery.srsj` and `essay.srsj`.
+- [x] `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` pass.
+- [x] `npx playwright test e2e/styleguide.spec.ts e2e/essay-comments.spec.ts e2e/agent-channels.spec.ts e2e/essay-editor.spec.ts e2e/mobile-layout.spec.ts e2e/navigation.spec.ts` green.
+- [x] `grep -rn "anon" src` shows no actor-name fallback; no raw `hsl(` outside tokens and the shared `.hue-pill` rule set.
+- [x] WASM loads and calls succeed against `gallery.srsj` and `essay.srsj`.
 
 #### Milestone gate
 
@@ -363,6 +363,7 @@ npx playwright test e2e/styleguide.spec.ts e2e/essay-comments.spec.ts e2e/agent-
 - Phase 4 note: at the phone breakpoint the margin keeps its existing marks-in-the-title-row layout (marks, with "+N" for the rest), which `e2e/mobile-layout.spec.ts` asserts; it is not collapsed behind a single count. The row hover card is shown for relation and shared rows only (attachment glyphs already carry their own card).
 - Phase 3 gate did not list `e2e/styleguide.spec.ts`; `CommentThread` gained a WASM dependency (`MarkdownView`), which broke the ungated styleguide specimens. Fixed in the Phase 4 commit by gating them like the other markdown specimens.
 - Phase 5 notes: (a) the non-essay shells share one stateful `src/lib/InstanceNotes.svelte` over `src/lib/instance-notes.ts` (one way), mounted in the Generic inspector (replacing its type-name-only Relations list), a new "Notes" Panel in the Governance inspector, and a "Notes" Panel in the Guides inspector for the selected guide (Guides has no per-section selection, only the guide). (b) The presence strip is an `ActorStack` of agents whose status is `online`; the per-agent status dot already lives in each `McpConnection` row, so none was added to the stack. (c) The 3-agent e2e asserts distinct names and shapes by kind but not hues: agent ids are host-minted random uuids, so only the unit test (`tests/actor-hue.test.ts`) fixes a hue. (d) The write-guard e2e uses the agent's own comment as the "non-guarded, non-paragraph instance" for the known-gap assertion, because the essay record itself is in the guard's `instanceIds`. (e) Not verified: the manual 3-agent live-relay check (no relay in this workspace).
+- Phase 6 note: the Verification (Haiku) sign-off is the Lead Integrator's step; the worker ran the gates. `grep -rn "anon" src` finds only the unrelated word "canonical"; the only `hsl(` is the `.hue-pill` rule set in `comments.css`.
 - `N = 8` earlier-comments threshold, 6-line clamp, `24rem` thread max are defaults on tokens/consts and tunable.
 
 ## Decided by owner 2026-10-04

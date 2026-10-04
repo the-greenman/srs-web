@@ -78,8 +78,10 @@ appended below as components gain parts.
 | `Panel` | `head`, `title`, `aside`, `actions`, `body` |
 | `TrayRow` | `row`, `label`, `actions` |
 | `McpConnection` | `head`, `dot`, `status`, `url`, `input`, `actions` |
-| `CommentThread` | `thread`, `item`, `meta`, `text`, `reply` |
-| `AnnotationMargin` | `overflow` |
+| `CommentThread` | `thread`, `item`, `meta`, `text`, `reply`, `list`, `earlier`, `more`, `time`, `summary` |
+| `ActorMark` | `mark` |
+| `ActorStack` | `more` |
+| `AnnotationMargin` | `overflow`, `row`, `mark`, `label`, `more` |
 
 ### (d) One breakpoint source
 
