@@ -23,25 +23,6 @@ export const HEADER_GROUPS: { id: HeaderGroup; label: string; icon: IconComponen
   { id: "help", label: "Help", icon: CircleQuestionMark },
 ];
 
-/** Menu groups in order, empty groups skipped; the `primary` action is split off (the bar renders it). */
-export function groupedActions<A extends ToolbarAction>(
-  actions: A[],
-  groups: { id: string; label: string; icon?: IconComponent }[] = HEADER_GROUPS
-): { primary: A[]; groups: { group: string; label: string; icon?: IconComponent; items: A[] }[] } {
-  const menu = actions.filter((a) => a.kind !== "primary");
-  return {
-    primary: actions.filter((a) => a.kind === "primary"),
-    groups: groups
-      .map((g) => ({
-        group: g.id,
-        label: g.label,
-        icon: g.icon,
-        items: menu.filter((a) => a.group === g.id),
-      }))
-      .filter((g) => g.items.length > 0),
-  };
-}
-
 export interface HeaderHandlers {
   onnew: () => void;
   oncopy?: () => void;

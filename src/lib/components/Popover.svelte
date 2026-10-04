@@ -158,6 +158,9 @@
   }
   function ontoggle(e: Event) {
     const next = (e as ToggleEvent).newState === 'open';
+    // newState is the state when the event was queued: a stale one (e.g. a close that a reopen already
+    // overtook) disagrees with the surface now and must not undo it.
+    if (surface && next !== isShown(surface)) return;
     if (next) {
       open = true;
       wasOpen = true;
@@ -190,7 +193,8 @@
       e.preventDefault();
       const r = rows();
       const at = r.indexOf(document.activeElement as HTMLElement);
-      r[(at + (e.key === 'ArrowDown' ? 1 : -1) + r.length) % r.length]?.focus();
+      const down = e.key === 'ArrowDown';
+      r[at < 0 ? (down ? 0 : r.length - 1) : (at + (down ? 1 : -1) + r.length) % r.length]?.focus();
     } else if (e.key === 'Home' || e.key === 'End') {
       e.preventDefault();
       const r = rows();

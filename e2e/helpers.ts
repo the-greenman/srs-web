@@ -151,16 +151,16 @@ export async function connectAgents(page: Page, essayPath: string, count: number
 
 /** Open a Toolbar group menu (wide tiers); a no-op when it is already open. */
 export async function openMenu(page: Page, group: "Document" | "View" | "Go"): Promise<void> {
-  const trigger = page.getByRole("button", { name: group, exact: true });
-  if ((await trigger.getAttribute("aria-expanded")) !== "true") await trigger.click();
+  // Read the real popover state: aria-expanded follows the toggle event a tick later.
+  if ((await page.locator(":popover-open").count()) === 0) {
+    await page.getByRole("button", { name: group, exact: true }).click();
+  }
 }
 
 /** Escape, then wait until no popover is open (the toggle event lands a tick after the key). */
 export async function closeMenus(page: Page): Promise<void> {
   await page.keyboard.press("Escape");
   await expect(page.locator(":popover-open")).toHaveCount(0);
-  // aria-expanded follows the toggle event a tick later; reopening before it lands would be undone by it.
-  await expect(page.locator('[aria-haspopup="menu"][aria-expanded="true"]')).toHaveCount(0);
 }
 
 /** Open a group menu, click one item, and close the menu again (View stays open on toggle). */

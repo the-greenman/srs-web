@@ -10,7 +10,7 @@
   A group with a single action renders as an icon button (it keeps popovertarget/aria-expanded when the
   action carries them), never as a menu. Checkable actions are View-style toggles (menuitemcheckbox); on
   the full and compact tiers choosing one leaves the menu open, in the narrow overflow it closes.
-  `tier` forces a tier and `pinned` opens one menu initially (styleguide specimens only). The Toolbar never imports from essay/.
+  `tier` forces a tier. The Toolbar never imports from essay/.
   Tokens `--toolbar-*`; parts `bar lead title status primary menu overflow`. Wraps .toolbar (toolbar.css).
 -->
 <script lang="ts">
@@ -31,7 +31,6 @@
     actions,
     groups,
     tier: forced,
-    pinned,
     root = $bindable(),
   }: {
     /** Document name; the text of the title part unless `titleSlot` replaces it. */
@@ -45,10 +44,8 @@
     actions: ToolbarAction[];
     /** Menu groups in order: id, label, icon (compact trigger / lone-action icon). */
     groups: { id: string; label: string; icon?: IconComponent }[];
-    /** Force a tier (styleguide specimens). */
+    /** @internal Force a tier; only src/styleguide/ToolbarSpecimen.svelte sets it. */
     tier?: Tier;
-    /** Open this group's menu initially (`overflow` for the narrow one): styleguide specimens only. */
-    pinned?: string;
     /** The root element, e.g. as a popover anchor. */
     root?: HTMLElement;
   } = $props();
@@ -105,8 +102,7 @@
         testid="header-menu"
         title="Document actions"
         label={title}
-        open={pinned === 'overflow'}
-        sections={sections.map((g) => ({ label: g.label, items: g.items }))}
+        {sections}
         {itemTestid}
       />
     {:else}
@@ -141,7 +137,6 @@
             triggerLabel={tier === 'full' ? g.label : undefined}
             triggerIcon={tier === 'compact' ? g.icon : undefined}
             keepOpenOnCheck
-            open={pinned === g.id}
             actions={g.items}
             {itemTestid}
           />

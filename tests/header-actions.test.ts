@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { groupedActions, headerActions } from "../src/lib/essay/header-actions.js";
+import { HEADER_GROUPS, headerActions } from "../src/lib/essay/header-actions.js";
 
 const noop = () => {};
 const base = {
@@ -63,39 +63,24 @@ describe("headerActions (srs-web#383)", () => {
     expect([a.label, onagent.mock.calls.length]).toEqual(["Copy for agent", 1]);
   });
 
-  it("groups and orders actions, toggles carry checked, mixed maps through", () => {
+  it("every action names a known group, toggles carry checked, mixed maps through, ids are unique", () => {
     const a = headerActions(
       { ...base, oncopy: noop, onagent: noop, onexportmd: noop, onexplorer: noop, onsave: noop },
       { ...state, comments: "mixed" }
     );
-    const g = groupedActions(a);
-    expect(g.groups.map((x) => x.group)).toEqual(["document", "view", "go", "help"]);
-    expect(g.groups.find((x) => x.group === "view")!.items.map((x) => [x.id, x.kind])).toEqual([
+    const groups = HEADER_GROUPS.map((g) => g.id) as string[];
+    expect(a.every((x) => groups.includes(x.group))).toBe(true);
+    expect(a.filter((x) => x.group === "view").map((x) => [x.id, x.kind])).toEqual([
       ["margin", "toggle"],
       ["comments", "toggle"],
     ]);
+    expect(a.filter((x) => x.kind === "primary").map((x) => x.id)).toEqual(["save"]);
     expect(a.find((x) => x.id === "comments")?.checked).toBe("mixed");
     expect(a.find((x) => x.id === "margin")?.checked).toBe(false);
     expect(new Set(a.map((x) => x.id)).size).toBe(a.length);
-  });
-
-  it("primary is never in a menu group; an emptied group disappears", () => {
-    const g = groupedActions(headerActions({ ...base, onsave: noop }, state));
-    expect(g.primary.map((x) => x.id)).toEqual(["save"]);
-    expect(g.groups.flatMap((x) => x.items).some((x) => x.kind === "primary")).toBe(false);
-    expect(g.groups.map((x) => x.group)).not.toContain("go-empty");
-    const none = groupedActions(headerActions(base, state));
-    expect(none.groups.map((x) => x.group)).toEqual(["document", "view", "go", "help"]);
-    expect(none.primary).toEqual([]);
-    expect(
-      groupedActions(
-        [{ ...none.groups[0].items[0], group: "document" }],
-        [
-          { id: "document", label: "D" },
-          { id: "go", label: "G" },
-        ]
-      ).groups.map((x) => x.group)
-    ).toEqual(["document"]);
+    expect(headerActions(base, state).some((x) => x.group === "go" && x.id === "explorer")).toBe(
+      false
+    );
   });
 
   it("save: Saving… and disabled while saving, disabled when clean, enabled when dirty", () => {

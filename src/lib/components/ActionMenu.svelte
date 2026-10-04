@@ -4,7 +4,7 @@
   (`triggerLabel`) or an icon-only IconButton (`triggerIcon`). A Popover role="menu": rows are >=44px;
   Arrow/Home/End move, Escape / outside click close, focus returns to the trigger (selecting a row focuses
   the trigger first, so the shell's focus restore lands on it).
-  Rows with `checked` are `menuitemcheckbox` (aria-checked true|false|mixed) with a Check/Minus slot of fixed
+  Rows with `checked` are `menuitemcheckbox` (aria-checked true|false|mixed) with a Check/Minus/Square (unchecked) slot of fixed
   width; with `keepOpenOnCheck` choosing one runs it and leaves the menu open and focus where it was, so the
   reader sees the state change. `sections` (group label + rows) replaces `actions` where a menu holds several
   groups. `itemTestid` overrides the default `${testid}-${id}`.
@@ -15,6 +15,7 @@
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import Ellipsis from '@lucide/svelte/icons/ellipsis';
   import Minus from '@lucide/svelte/icons/minus';
+  import Square from '@lucide/svelte/icons/square';
   import Button from './Button.svelte';
   import type { IconComponent } from './icon.js';
   import IconButton from './IconButton.svelte';
@@ -32,7 +33,6 @@
     triggerLabel,
     triggerIcon,
     keepOpenOnCheck = false,
-    open = $bindable(false),
     focusKey,
     placement,
     class: klass = '',
@@ -52,12 +52,12 @@
     /** An icon-only trigger instead of the ellipsis (when `triggerLabel` is omitted). */
     triggerIcon?: IconComponent;
     keepOpenOnCheck?: boolean;
-    open?: boolean;
     focusKey?: string;
     placement?: Placement;
     class?: string;
   } & Record<`data-${string}`, string | undefined> = $props();
 
+  let open = $state(false);
   let root = $state<HTMLElement>();
   const place = $derived(placement ?? 'bottom-start');
   const name = $derived(label ? `${title} for ${label}` : title);
@@ -113,7 +113,7 @@
             data-testid={tid(a)}
             disabled={!a.enabled}
             onclick={() => pick(a)}
-          ><span class="action-menu__icon" aria-hidden="true">{#if a.checked === 'mixed'}<Minus size={16} aria-hidden="true" />{:else if a.checked}<Check size={16} aria-hidden="true" />{/if}</span>{a.label}</button>
+          ><span class="action-menu__icon" aria-hidden="true">{#if a.checked === 'mixed'}<Minus size={16} aria-hidden="true" />{:else if a.checked}<Check size={16} aria-hidden="true" />{:else}<Square size={16} aria-hidden="true" />{/if}</span>{a.label}</button>
         {:else}
           <button
             type="button"

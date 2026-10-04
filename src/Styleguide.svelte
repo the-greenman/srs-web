@@ -10,8 +10,9 @@
     ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, MarkdownHelp, MarkdownText, McpConnection, Panel, AnnotationMargin, PinnedPane, Select, Tag,
-    TagChip, Textarea, Toolbar,
+    TagChip, Textarea,
   } from "$lib/components";
+  import ToolbarSpecimen from "./styleguide/ToolbarSpecimen.svelte";
   import Frame from "./styleguide/Frame.svelte";
   import Icons from "./styleguide/icons";
   import { initWasm } from "$lib/srs-client";
@@ -243,17 +244,17 @@
       <figure class="sg__figure">
         <figcaption>{caption}</figcaption>
         <div class="sg__frame sg__toolbar" data-testid="sg-toolbar-frame" data-tier={tier} style:width>
-          <Toolbar title="On small democracy" {tier} {pinned} groups={HEADER_GROUPS} actions={fx.toolbarActions}>
+          <ToolbarSpecimen title="On small democracy" {tier} {pinned} groups={HEADER_GROUPS} actions={fx.toolbarActions}>
             {#snippet status()}<span>Unsaved changes</span>{/snippet}
-          </Toolbar>
+          </ToolbarSpecimen>
         </div>
       </figure>
     {/each}
     <h3>Toolbar: Save disabled (clean) and a lead slot</h3>
     <div class="sg__frame sg__toolbar" style:width="768px">
-      <Toolbar title="A clean document" tier="compact" groups={HEADER_GROUPS} actions={fx.toolbarActions.map((a) => (a.kind === "primary" ? { ...a, enabled: false } : a))}>
+      <ToolbarSpecimen title="A clean document" tier="compact" groups={HEADER_GROUPS} actions={fx.toolbarActions.map((a) => (a.kind === "primary" ? { ...a, enabled: false } : a))}>
         {#snippet lead()}<IconButton icon={Icons["circle-question-mark"]} label="Lead slot" />{/snippet}
-      </Toolbar>
+      </ToolbarSpecimen>
     </div>
   </section>
 

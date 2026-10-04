@@ -121,3 +121,16 @@ for (const width of [1440, 768, 390]) {
     }
   });
 }
+
+test("390: Help from the overflow opens the Help popover and keeps focus inside it", async ({ page }) => {
+  await open(page, 390);
+  await page.getByTestId("header-menu").click();
+  await page.getByTestId("toolbar-help").click();
+  const help = page.getByRole("region", { name: "Markdown cheat-sheet" });
+  await expect(help).toBeVisible();
+  await expect(page.locator(":popover-open")).toHaveCount(1);
+  // the overflow's close must not pull focus back to its trigger while Help is open
+  await page.waitForTimeout(300);
+  await expect(page.getByTestId("header-menu")).not.toBeFocused();
+  await expect(help).toBeVisible();
+});
