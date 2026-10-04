@@ -6,20 +6,27 @@ import type { Page } from "@playwright/test";
 /**
  * essay-write-guard.spec.ts — srs-web#356: the essay editor declares the engine write guard
  * (srs-rust#1165). Through the real relay + WASM session: agents cannot write essay text,
- * may fill an empty paragraph_title once, and may comment (new record + relation).
+ * may fill an empty paragraph_title once, and may comment (new record + relation), and may delete only a relation they created (relation_delete, srs-rust#1249).
  */
 const bodies = (page: Page) => page.locator(".essay-shell__page :is(.block__render, .block__body)");
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
 async function open(page: Page) {
   await page.goto("/");
-  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({
+    timeout: 15000,
+  });
   await page.locator('input[type="file"]#srsj-file').setInputFiles(ESSAY);
   await page.getByTestId("package-editor-essay").click();
   await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
 }
 type Rpc = {
   error?: unknown;
-  result: { serverInfo?: unknown; tools?: { name: string }[]; isError?: boolean };
+  result: {
+    contents?: { text: string }[];
+    serverInfo?: unknown;
+    tools?: { name: string }[];
+    isError?: boolean;
+  };
 };
 const b64 = (s: string) => Buffer.from(s).toString("base64url");
 
@@ -75,7 +82,9 @@ test("agent writes cannot change the essay text but can comment", async ({ page 
   );
   await open(page);
   await page.getByTestId("mcp-library-connect").first().click();
-  await expect(page.getByTestId("mcp-status")).toHaveText("Connected", { timeout: 15000 });
+  await expect(page.getByTestId("mcp-status")).toHaveText("Connected", {
+    timeout: 15000,
+  });
   await rpc("initialize", {
     protocolVersion: "2025-06-18",
     capabilities: {},
@@ -126,4 +135,55 @@ test("agent writes cannot change the essay text but can comment", async ({ page 
     targetInstanceId: opening,
   });
   expect(rel.result.isError, text(rel)).not.toBe(true);
+
+  // relation_delete is own-only (srs-rust#1249): the agent removes the relation it created ...
+  const relId =
+    /"relationId\\?":\\?"([0-9a-f-]{36})/.exec(text(rel))?.[1] ??
+    /[0-9a-f]{8}-[0-9a-f-]{27}/.exec(text(rel))?.[0];
+  expect(relId, text(rel)).toBeTruthy();
+  const del = await tool("relation_delete", { relationId: relId });
+  expect(del.result.isError, text(del)).not.toBe(true);
+
+  // ... but not one the human created (a comment through the UI).
+  const first = page.locator(".essay-shell__page .block-stack__item").first();
+  await first.getByTestId("comment-badge").click();
+  await first.getByLabel("Your name").fill("Ada");
+  await first.getByLabel("Reply").fill("Human comment.");
+  await first.getByRole("button", { name: "Comment", exact: true }).click();
+  await expect(first.getByTestId("comment")).toHaveCount(1);
+  // The context read now carries each relation's id; the guard refuses to delete the human's.
+  const sections = [
+    ...text(await rpc("resources/list")).matchAll(
+      /srs:\/\/[0-9a-f-]{36}\/container\/[0-9a-f-]{36}/g
+    ),
+  ];
+  let humanRel: string | undefined;
+  for (const [u] of sections) {
+    const c = await rpc("resources/read", {
+      uri: `${u.replace("/container/", "/context/")}/${opening}`,
+    });
+    const body = c.result?.contents?.[0]?.text;
+    const rels: { relationId: string; relationType: string }[] = body
+      ? JSON.parse(body).relations
+      : [];
+    humanRel ??= rels.find((r) => r.relationType.endsWith("comments-on"))?.relationId;
+  }
+  expect(humanRel).toBeTruthy();
+  const refused = await tool("relation_delete", { relationId: humanRel });
+  expect(refused.result.isError, text(refused)).toBe(true);
+  expect(text(refused)).toContain("Rejected by the session write guard");
+  await expect(first.getByTestId("comment")).toHaveCount(1);
+
+  // The human can still remove an agent's relation (the Remove link, srs-web#405).
+  const again = await tool("relation_create", {
+    relationType: "evidences",
+    sourceInstanceId: noteId,
+    targetInstanceId: opening,
+  });
+  expect(again.result.isError, text(again)).not.toBe(true);
+  const glyph = page.locator(".essay-shell__page .glyph");
+  await expect(glyph).toHaveCount(1);
+  await glyph.hover();
+  await page.locator(".essay-shell__page .hover-card__remove").click();
+  await expect(glyph).toHaveCount(0);
 });
