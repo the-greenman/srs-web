@@ -935,14 +935,7 @@
       "name": "governance",
       "namespace": "com.mudemocracy.governance",
       "relationTypes": [
-        "relation-types/delegates-31c82363.json",
-        "relation-types/contains-3a1b2c4d.json",
-        "relation-types/depends-on-7f8e9d0c.json",
-        "relation-types/derived-from-36b78f14.json",
-        "relation-types/evidences-35c7aba2.json",
-        "relation-types/precedes-b24aaf29.json",
-        "relation-types/refines-e5f6a7b8.json",
-        "relation-types/supersedes-a8f3d240.json"
+        "relation-types/delegates-31c82363.json"
       ],
       "status": "active",
       "themes": [],
@@ -962,20 +955,6 @@
       ],
       "vocabularies": []
     },
-    "package/relation-types/contains-3a1b2c4d.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
-      "canonicalDirection": "source is the container; target is the contained member",
-      "category": "composition",
-      "createdAt": "2026-05-29T00:00:00Z",
-      "description": "Source instance contains or is composed of target instance. Defines structural membership or composition boundaries.",
-      "id": "3a1b2c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
-      "inverseType": "part-of",
-      "irreflexive": true,
-      "key": "contains",
-      "label": "Contains",
-      "namespace": "com.semanticops.srs",
-      "version": 1
-    },
     "package/relation-types/delegates-31c82363.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
       "category": "governance",
@@ -984,77 +963,6 @@
       "id": "31c82363-2d6b-4ddd-9aa9-fb9ec7722e63",
       "key": "delegates",
       "label": "Delegates",
-      "namespace": "governance",
-      "version": 1
-    },
-    "package/relation-types/depends-on-7f8e9d0c.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
-      "canonicalDirection": "source depends on target",
-      "category": "dependency",
-      "createdAt": "2026-05-29T00:00:00Z",
-      "description": "Source instance requires target instance to be complete, valid, or usable. Target is a prerequisite.",
-      "id": "7f8e9d0c-1b2a-4f3e-9d8c-7b6a5f4e3d2c",
-      "irreflexive": true,
-      "key": "depends-on",
-      "label": "Depends on",
-      "namespace": "com.semanticops.srs",
-      "version": 1
-    },
-    "package/relation-types/derived-from-36b78f14.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
-      "category": "derivation",
-      "createdAt": "2026-05-31T00:00:00Z",
-      "description": "Target was derived or adapted from source.",
-      "id": "36b78f14-c6dc-46c4-845d-ed107528a88c",
-      "key": "derived-from",
-      "label": "Derived From",
-      "namespace": "governance",
-      "version": 1
-    },
-    "package/relation-types/evidences-35c7aba2.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
-      "category": "evidence",
-      "createdAt": "2026-05-31T00:00:00Z",
-      "description": "Source provides evidence for or supports the target.",
-      "id": "35c7aba2-72f3-42ef-8e44-e3ddd9db969e",
-      "key": "evidences",
-      "label": "Evidences",
-      "namespace": "governance",
-      "version": 1
-    },
-    "package/relation-types/precedes-b24aaf29.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
-      "category": "sequence",
-      "createdAt": "2026-05-31T00:00:00Z",
-      "description": "Source comes before target in a sequence.",
-      "id": "b24aaf29-73b2-4ac2-8dfb-3c848ccbd9ed",
-      "irreflexive": true,
-      "key": "precedes",
-      "label": "Precedes",
-      "namespace": "governance",
-      "version": 1
-    },
-    "package/relation-types/refines-e5f6a7b8.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
-      "canonicalDirection": "source is the more specific instance; target is the general instance",
-      "category": "refinement",
-      "createdAt": "2026-05-29T00:00:00Z",
-      "description": "Source instance is a more specific, detailed, or precise version of target instance. Does not replace or invalidate target.",
-      "id": "e5f6a7b8-c9d0-4e1f-8a2b-3c4d5e6f7a8b",
-      "irreflexive": true,
-      "key": "refines",
-      "label": "Refines",
-      "namespace": "com.semanticops.srs",
-      "version": 1
-    },
-    "package/relation-types/supersedes-a8f3d240.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
-      "category": "lifecycle",
-      "createdAt": "2026-05-31T00:00:00Z",
-      "description": "The source record supersedes the target record, replacing it in the record sequence.",
-      "id": "a8f3d240-5c7b-4e91-b2f6-1d9e0c3a8f72",
-      "key": "supersedes",
-      "label": "Supersedes",
       "namespace": "governance",
       "version": 1
     },

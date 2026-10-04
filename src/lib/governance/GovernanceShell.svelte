@@ -19,7 +19,7 @@
     createRelation,
     deleteRelation,
     resolveContainerView,
-    exportSrsj,
+    listRelationTypes,
     setLifecycleState,
     transitionRecord,
     getAllowedLifecycleTransitions,
@@ -40,7 +40,6 @@
     AllowedTransitionEntry,
   } from "$lib/srs-client.js";
   import type { BreadcrumbItem, Diagnostic, RelationTypeOption } from "$lib/types.js";
-  import { parseRelationTypesFromSrsj } from "$lib/governance/relation-type-utils.js";
 
   import AppShell from "$lib/components/AppShell.svelte";
   import Breadcrumb from "$lib/components/Breadcrumb.svelte";
@@ -244,9 +243,7 @@
   let activeView = $state<ActiveView>("governance");
 
   /**
-   * Relation types installed in the loaded package, derived from the srsj export.
-   * INTERIM FIX (srs-rust#411): populated by loadInstalledRelationTypes() until
-   * the list_relation_types WASM binding is available.
+   * Relation types from the core's `list_relation_types` (package + implicit core types).
    */
   let installedRelationTypes = $state<RelationTypeOption[]>([]);
 
@@ -535,31 +532,6 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Installed relation types (interim — srs-rust#411)
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Extract the installed relation type definitions from the loaded package.
-   *
-   * INTERIM FIX — srs-rust#411: replace this with a single `listRelationTypes(repo)`
-   * WASM call once the `list_relation_types` binding is available. The srsj-parse
-   * approach is an approved ADR-001 residual exception recorded in
-   * `docs/adr/001-thin-client.md` and `plans/decision-link-picker-160.md`.
-   *
-   * The package definition is static within a session (relation types cannot be
-   * mutated via the editor UI), so this is called once at mount time.
-   */
-  function loadInstalledRelationTypes(): RelationTypeOption[] {
-    try {
-      const raw = JSON.parse(exportSrsj(repo)) as Record<string, unknown>;
-      return parseRelationTypesFromSrsj(raw);
-    } catch (e: unknown) {
-      console.warn("loadInstalledRelationTypes: could not export srsj:", e);
-      return [];
-    }
-  }
-
-  // ---------------------------------------------------------------------------
   // Initialisation
   // ---------------------------------------------------------------------------
 
@@ -568,7 +540,8 @@
     loadContainerNav();
     buildContainerSchemas();
     refreshValidation();
-    installedRelationTypes = loadInstalledRelationTypes();
+    // Core-provided vocabulary (includes implicitly merged core types, ADR-025).
+    installedRelationTypes = listRelationTypes(repo).map((t) => ({ value: t.key, label: t.label }));
   });
 
   // ---------------------------------------------------------------------------
@@ -764,6 +737,8 @@
       // to the type's initial state (draft) — no need to pass it explicitly (record_store.rs#1078).
       // Do NOT filter required fields (e.g. status) — the type schema enforces them.
       const result = createRecordSuccessor(repo, selectedRecord.instanceId, {
+        // TODO(srs-web#215 item 2): no binding exposes a final state's requiresRelation (a closed
+        // record has no outgoing transitions to project it from); derive this once one does.
         relationType: "supersedes",
         // RFC-039 round trip: pass the read-back name-keyed object verbatim.
         fieldValues: selectedRecord.fieldValues,
