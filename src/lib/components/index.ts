@@ -52,6 +52,7 @@ export { default as SrsMark } from "./SrsMark.svelte";
 export { default as Tag } from "./Tag.svelte";
 export { default as TagChip } from "./TagChip.svelte";
 export { default as Button } from "./Button.svelte";
+export { default as IconButton } from "./IconButton.svelte";
 export { default as Diagnostics } from "./Diagnostics.svelte";
 export { default as Lifecycle } from "./Lifecycle.svelte";
 

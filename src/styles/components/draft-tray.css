@@ -38,12 +38,3 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.draft-tray__put,
-.bin-tray__put {
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  background: none;
-  border: 1px solid var(--color-line);
-  padding: 2px 6px;
-  cursor: pointer;
-}

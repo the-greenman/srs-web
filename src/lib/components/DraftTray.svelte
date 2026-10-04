@@ -5,6 +5,9 @@
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
 -->
 <script lang="ts">
+  import CornerUpLeft from '@lucide/svelte/icons/corner-up-left';
+  import Button from './Button.svelte';
+  import IconButton from './IconButton.svelte';
   import BlockStack from './BlockStack.svelte';
   import type { DropTarget } from './BlockStack.svelte';
   import type { DragPayload } from './dnd';
@@ -39,7 +42,7 @@
 <section class="draft-tray" aria-label="Draft tray">
   {#if !available}
     <p class="draft-tray__empty">{unavailableReason}</p>
-    {#if oncreate}<button type="button" class="btn btn--mono" onclick={oncreate}>Create draft area</button>{/if}
+    {#if oncreate}<Button size="sm" variant="mono" onclick={oncreate}>Create draft area</Button>{/if}
   {:else}
     {#if items.length === 0}<p class="draft-tray__empty">Drag paragraphs here to set them aside.</p>{/if}
     <BlockStack items={items.map((i) => ({ id: i.id, depth: 0 }))} source="draft" label="Draft paragraphs" {ondrop} {candrop}>
@@ -48,7 +51,7 @@
         {#if d}
           <div class="draft-tray__row">
             <span class="draft-tray__label" aria-roledescription="drag handle" {...handle}>{d.label}</span>
-            <button type="button" class="draft-tray__put" aria-label={`Put back ${d.label}`} onclick={() => onputback(d.id)}>Put back</button>
+            <IconButton icon={CornerUpLeft} variant="outline" label={`Put back ${d.label}`} onclick={() => onputback(d.id)} />
           </div>
         {/if}
       {/snippet}

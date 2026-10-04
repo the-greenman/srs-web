@@ -6,6 +6,9 @@
   Wraps .margin (src/styles/components/margin.css). Story: srs-web#374 (epic #224).
 -->
 <script lang="ts">
+  import ArrowLeft from "@lucide/svelte/icons/arrow-left";
+  import ArrowRight from "@lucide/svelte/icons/arrow-right";
+  import Copy from "@lucide/svelte/icons/copy";
   import AttachmentGlyph from "./AttachmentGlyph.svelte";
   import CommentBadge from "./CommentBadge.svelte";
   import type { Annotation, AnnotationKind } from "../essay/annotations.js";
@@ -36,6 +39,7 @@
     relation: { order: 2, chip: true },
     shared: { order: 3, chip: true },
   };
+  /** Accessible-name wording only; the drawn mark is a Lucide arrow. */
   const ARROW = { out: "→", in: "←" } as const;
 
   const sorted = $derived([...annotations].sort((a, b) => KINDS[a.kind].order - KINDS[b.kind].order));
@@ -51,7 +55,7 @@
   {:else if a.kind === "attachment"}
     <AttachmentGlyph kind={a.icon ?? "note"} title={a.label} text={a.text} relation={a.relation} pinned={isOn(a)} onpin={() => onopen(a)} onremove={onremove && (() => onremove(a))} />
   {:else if a.kind === "shared"}
-    <button type="button" class="margin__relation" data-testid="shared-badge" aria-label={a.label} title={`${a.label} - make a local copy`} onclick={() => onopen(a)}>⧉</button>
+    <button type="button" class="margin__relation" data-testid="shared-badge" aria-label={a.label} title={`${a.label} - make a local copy`} onclick={() => onopen(a)}><Copy size={14} aria-hidden="true" /></button>
   {:else}
     <button
       type="button"
@@ -60,7 +64,7 @@
       aria-label={`${a.icon} ${ARROW[a.direction ?? "out"]} ${a.label}`}
       title={`${a.icon} ${ARROW[a.direction ?? "out"]} ${a.label}`}
       onclick={() => onopen(a)}
-    >{ARROW[a.direction ?? "out"]}</button>
+    >{#if (a.direction ?? "out") === "out"}<ArrowRight size={14} aria-hidden="true" />{:else}<ArrowLeft size={14} aria-hidden="true" />{/if}</button>
   {/if}
 {/snippet}
 

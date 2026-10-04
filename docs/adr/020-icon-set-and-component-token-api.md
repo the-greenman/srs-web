@@ -19,7 +19,27 @@ decided all five parts below on 2026-10-04.
 
 ### (a) Icons: Lucide
 
-*Written in Phase 2.*
+Lucide (`@lucide/svelte`, ISC) is the single icon set. Rules:
+
+- Import each icon from its own file: `import Eye from "@lucide/svelte/icons/eye"`. Never import
+  from the package root and never import the full set (the bundle must tree-shake to the icons used).
+- Use the canonical file name: Lucide renames icons between releases and keeps `.js` aliases that
+  have no `.svelte.d.ts` (so `trash-2`, `indent-increase` and `circle-help` do not typecheck; use
+  `trash`, `list-indent-increase` and `circle-question-mark`). Verify a name against
+  `node_modules/@lucide/svelte/dist/icons/` before using it.
+- Icons draw in `currentColor`, so a control's colour token colours its icon. Pass
+  `aria-hidden="true"`; the control carries the accessible name.
+- Icons are components, never name strings. `MenuAction.icon` and `ParagraphAction.icon` are
+  `IconComponent` (`src/lib/components/icon.ts`). `Annotation.icon` is unrelated: it is a data key
+  (relation or attachment kind) shown as text.
+- `IconButton` (`label` required: it is the accessible name and the tooltip) is the one small icon
+  control. Text controls use `Button`, with `size="sm"` in rails, trays and panels.
+- Alternatives considered: Phosphor (heavier, weight variants we do not need) and Tabler (larger
+  set, same idea).
+- Documented exceptions where a glyph character stays: link text such as `GitSaveModal`
+  "Install / manage on GitHub →", the accessible-name wording of relation marks in
+  `ParagraphMargin`, and the lifecycle transition decoration in `lifecycle.css` (CSS `content`
+  cannot host a component).
 
 ### (b) Component tokens are the public skin API
 
@@ -48,6 +68,8 @@ appended below as components gain parts.
 
 | Component | Parts |
 |---|---|
+| `Block` | `gutter`, `handle`, `tools`, `action`, `menu`, `main`, `head`, `title`, `margin` |
+| `IconButton` | `icon-btn` |
 
 ### (d) One breakpoint source
 

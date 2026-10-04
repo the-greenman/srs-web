@@ -13,6 +13,7 @@
 
   let {
     variant = 'secondary',
+    size = 'md',
     onDark = false,
     active = false,
     class: klass = '',
@@ -20,6 +21,8 @@
     ...rest
   }: {
     variant?: ButtonVariant;
+    /** `sm` is the compact control for rails, trays and panels (wraps its label). */
+    size?: 'md' | 'sm';
     /** Style for placement on the dark nav rail / ink header. */
     onDark?: boolean;
     /** Pressed state for the mono toggle variant. */
@@ -31,6 +34,7 @@
 
 <button
   class={`btn btn--${variant} ${klass}`}
+  class:btn--sm={size === 'sm'}
   class:btn--on-dark={onDark}
   class:is-active={active}
   {...rest}

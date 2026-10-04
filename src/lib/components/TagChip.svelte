@@ -5,6 +5,8 @@
   srs-web#105: decision tag chips + tag filter UI.
 -->
 <script lang="ts">
+  import X from '@lucide/svelte/icons/x';
+  import IconButton from './IconButton.svelte';
   type Props =
     | { label: string; selected?: boolean; onSelect: () => void; onRemove?: never }
     | { label: string; selected?: boolean; onRemove?: () => void; onSelect?: never };
@@ -25,13 +27,14 @@
   <span class="tag-chip" data-testid="tag-chip">
     {label}
     {#if onRemove}
-      <button
-        type="button"
+      <IconButton
         class="tag-chip__remove"
+        size="sm"
+        icon={X}
         onclick={onRemove}
-        aria-label="Remove tag {label}"
+        label="Remove tag {label}"
         data-testid="tag-chip-remove"
-      >×</button>
+      />
     {/if}
   </span>
 {/if}

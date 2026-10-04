@@ -1,4 +1,7 @@
 <script lang="ts">
+  import CornerLeftUp from "@lucide/svelte/icons/corner-left-up";
+  import X from "@lucide/svelte/icons/x";
+  import IconButton from "./IconButton.svelte";
   import type {
     DocumentHandle,
     StorageEntry,
@@ -337,11 +340,12 @@
           <span class="cloud-browser__eyebrow">{BROWSE_LABEL[browsing]}</span>
           <h2 id="cloud-browser-title">Choose a repository</h2>
         </div>
-        <button
+        <IconButton
           class="cloud-browser__close"
-          aria-label="Close browser"
+          icon={X}
+          label="Close browser"
           onclick={closeBrowser}
-        >×</button>
+        />
       </header>
 
       <div class="cloud-browser__path">
@@ -381,7 +385,7 @@
       <div class="cloud-browser__list">
         {#if parents.length > 0}
           <button class="cloud-browser__entry" onclick={goUp}>
-            <span class="cloud-browser__kind">↑</span>
+            <span class="cloud-browser__kind"><CornerLeftUp size={16} aria-hidden="true" /></span>
             <span>Parent folder</span>
           </button>
         {/if}
@@ -516,14 +520,6 @@
     font-size: var(--size-xs);
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;
-  }
-
-  .cloud-browser__close {
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font-size: 1.75rem;
-    cursor: pointer;
   }
 
   .cloud-browser__path {

@@ -61,10 +61,10 @@ it("Ctrl+click on a rendered link opens it instead of editing", async () => {
   expect(container.querySelector(".block__body")).toBeNull();
 });
 
-it("renders the one ⋯ action menu beside the hover tools (touch CSS hides the stack)", async () => {
+it("renders the one ellipsis action menu beside the hover tools (touch CSS hides the stack)", async () => {
   const { container, getByTestId } = render(Block, { ...props("x"), onzoom: vi.fn(), oncopylink: vi.fn(), onpull: vi.fn() });
   const btn = getByTestId("paragraph-menu");
-  expect(container.querySelectorAll(".block__tools .block__action")).toHaveLength(3);
+  expect(container.querySelectorAll('.block__tools [data-part="action"]')).toHaveLength(3);
   await fireEvent.click(btn);
   const items = container.querySelectorAll('[role="menuitem"]');
   expect([...items].map((i) => i.getAttribute("data-testid"))).toEqual(

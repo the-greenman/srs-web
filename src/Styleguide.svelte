@@ -8,7 +8,7 @@
   import { onMount, type Snippet } from "svelte";
   import {
     ActorChip, AgentFeed, AttachmentGlyph, Block, BlockStack, Button,
-    CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, InlineText, Input,
+    CommentBadge, CommentThread, IconButton, DraftTray, EyeToggle, Field, HoverCard, InlineText, Input,
     LayersPanel, McpConnection, ParagraphMargin, PinnedPane, Select, Tag,
     TagChip, Textarea,
   } from "$lib/components";
@@ -17,6 +17,7 @@
   import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
   import Panel from "$lib/components/Panel.svelte";
   import MarkdownText from "$lib/components/MarkdownText.svelte";
+  import Icons from "./styleguide/icons";
   import { initWasm } from "$lib/srs-client";
   import * as fx from "./styleguide/fixtures";
 
@@ -24,7 +25,8 @@
   const KEY = "srs-web.styleguide.theme";
   const sections = [
     ["tokens", "Tokens"],
-    ["buttons", "Buttons"],
+    ["buttons", "Buttons and icons"],
+    ["icons", "Icons"],
     ["menus", "Menus and popovers"],
     ["chips", "Chips and badges"],
     ["actors", "Actors"],
@@ -126,7 +128,8 @@
   </section>
 
   <section id="buttons">
-    <h2>Buttons</h2>
+    <h2>Buttons and icons</h2>
+    <h3>Button md</h3>
     <div class="sg__row">
       {#each ["primary", "secondary", "ghost", "mono"] as const as v}
         <Button variant={v}>{v}</Button>
@@ -135,6 +138,32 @@
       <Button variant="mono" active={pressed} onclick={() => (pressed = !pressed)}>toggle</Button>
       <Button disabled>disabled</Button>
       <Button variant="primary" disabled>primary disabled</Button>
+    </div>
+    <h3>Button sm</h3>
+    <div class="sg__row">
+      {#each ["primary", "secondary", "ghost", "mono"] as const as v}
+        <Button size="sm" variant={v}>{v}</Button>
+      {/each}
+      <Button size="sm" disabled>disabled</Button>
+    </div>
+    <h3>IconButton</h3>
+    <div class="sg__row">
+      <IconButton icon={Icons.plus} label="Plain" />
+      <IconButton icon={Icons.plus} label="Outline" variant="outline" />
+      <IconButton icon={Icons.eye} label="Pressed" variant="outline" pressed />
+      <IconButton icon={Icons.eye} label="Not pressed" variant="outline" pressed={false} />
+      <IconButton icon={Icons.plus} label="Small" size="sm" variant="outline" />
+      <IconButton icon={Icons.plus} label="Disabled" variant="outline" disabled />
+    </div>
+  </section>
+
+  <section id="icons">
+    <h2>Icons</h2>
+    <p>Every icon the UI uses (Lucide, ADR-020).</p>
+    <div class="sg__row">
+      {#each Object.entries(Icons) as [name, icon]}
+        <IconButton {icon} label={name} variant="outline" />
+      {/each}
     </div>
   </section>
 

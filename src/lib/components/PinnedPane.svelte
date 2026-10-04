@@ -4,6 +4,8 @@
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224 (srs-web#329)
 -->
 <script lang="ts">
+  import X from '@lucide/svelte/icons/x';
+  import IconButton from './IconButton.svelte';
   import Panel from './Panel.svelte';
   import { NARROW } from '$lib/breakpoints';
   import { renderMarkdown } from '$lib/srs-client.js';
@@ -45,7 +47,7 @@
         <li class="pinned__item">
           <span class="hover-card__kind">{it.relation ? `${it.kind} · ${it.relation}` : it.kind}</span>
           <strong class="hover-card__title">{it.title}</strong>
-          <button type="button" class="pinned__close" aria-label={`Unpin ${it.title}`} onclick={() => onunpin(it.id)}>×</button>
+          <IconButton class="pinned__close" size="sm" icon={X} label={`Unpin ${it.title}`} onclick={() => onunpin(it.id)} />
           {#if it.text}
             {#if open.has(it.id)}
               <div class="pinned__full">{@html renderMarkdown(it.text)}</div>

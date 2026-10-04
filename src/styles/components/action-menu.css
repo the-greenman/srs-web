@@ -1,5 +1,5 @@
 /* ============================================================================
-   component: action menu (.action-menu) — the ⋯ button + its menu of rows
+   component: action menu (.action-menu) — the ellipsis IconButton + its menu of rows
    Shared by Block (per paragraph) and LayersPanel (per row, touch only).
    Rows are >=44px. The list floats under the button, right-aligned to it.
    Story: https://github.com/the-greenman/srs-web/issues/382
@@ -8,23 +8,8 @@
   position: relative;
   display: inline-flex;
 }
-.action-menu__trigger {
-  font-family: var(--font-mono);
-  font-size: var(--size-sm);
-  line-height: 1;
-  color: var(--color-muted);
-  background: none;
-  border: 0;
-  padding: 2px 4px;
-  cursor: pointer;
-}
-.action-menu__trigger:hover,
-.action-menu__trigger[aria-expanded="true"] {
-  color: var(--color-text);
-}
-.action-menu__trigger:focus-visible,
 .action-menu__item:focus-visible {
-  outline: 2px solid var(--color-text-strong);
+  outline: var(--focus-ring);
   outline-offset: -2px;
 }
 .action-menu__list {
@@ -61,9 +46,12 @@
   cursor: not-allowed;
 }
 .action-menu__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
   width: 1.5em;
-  text-align: center;
-  font-family: var(--font-mono);
+  color: var(--color-muted);
 }
 .action-menu--end .action-menu__list {
   left: auto;

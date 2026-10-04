@@ -1,15 +1,18 @@
 <!--
   LayersPanel — the essay outline as a layers tree (Photoshop model): eye toggle per layer,
   fold chevron for groups, drag a row to reorder (middle of a row = nest under it), Alt+Arrows
-  as the keyboard alternative, a ⋯ menu per row on touch. Nesting is layout, not meaning. A group moves with its run.
+  as the keyboard alternative, an ellipsis menu per row on touch. Nesting is layout, not meaning. A group moves with its run.
   Built on BlockStack. Wraps .layers (src/styles/components/layers.css).
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
 -->
 <script lang="ts">
   import ActionMenu from './ActionMenu.svelte';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import BlockStack from './BlockStack.svelte';
   import type { DropTarget } from './BlockStack.svelte';
   import EyeToggle from './EyeToggle.svelte';
+  import IconButton from './IconButton.svelte';
   import { keyMove } from './dnd';
   import type { DragPayload, KeyMove } from './dnd';
   import { paragraphActions } from '../essay/paragraph-actions.js';
@@ -55,13 +58,13 @@
       {#if l}
         <div class="layers__row" class:is-off={l.hidden || l.inherited}>
           {#if l.hasChildren}
-            <button
-              type="button"
+            <IconButton
               class="layers__fold"
+              icon={l.folded ? ChevronRight : ChevronDown}
               aria-expanded={!l.folded}
-              aria-label={`${l.folded ? 'Expand' : 'Collapse'} ${l.label}`}
+              label={`${l.folded ? 'Expand' : 'Collapse'} ${l.label}`}
               onclick={() => onfold(l.id, !l.folded)}
-            >{l.folded ? '▸' : '▾'}</button>
+            />
           {:else}<span class="layers__fold" aria-hidden="true"></span>{/if}
           <EyeToggle hidden={l.hidden} inherited={l.inherited} label={l.label} onclick={() => onhide(l.id, !l.hidden)} />
           <button

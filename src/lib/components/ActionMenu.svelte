@@ -1,10 +1,12 @@
 <!--
-  ActionMenu — a ⋯ button opening a small menu of MenuAction rows (menu-action.ts; paragraph and header lists).
-  Rows are >=44px; Arrow keys move, Escape / outside click close, focus returns to the ⋯ button
+  ActionMenu — an ellipsis button opening a small menu of MenuAction rows (menu-action.ts; paragraph and header lists).
+  Rows are >=44px; Arrow keys move, Escape / outside click close, focus returns to the trigger
   (selecting a row focuses it first, so the shell's focus restore lands on it). No dependency.
   Wraps .action-menu (src/styles/components/action-menu.css). Story: srs-web#382 (epic #224).
 -->
 <script lang="ts">
+  import Ellipsis from '@lucide/svelte/icons/ellipsis';
+  import IconButton from './IconButton.svelte';
   import type { MenuAction } from './menu-action.js';
 
   let {
@@ -14,6 +16,7 @@
     title = 'Actions',
     focusKey,
     class: klass = '',
+    ...rest
   }: {
     actions: MenuAction[];
     /** Names the target, e.g. the paragraph title. */
@@ -23,7 +26,7 @@
     title?: string;
     focusKey?: string;
     class?: string;
-  } = $props();
+  } & Record<`data-${string}`, string | undefined> = $props();
 
   let open = $state(false);
   let root = $state<HTMLElement>();
@@ -61,19 +64,18 @@
 
 <svelte:window onpointerdown={(e) => open && !root?.contains(e.target as Node) && close(false)} />
 
-<div class={`action-menu ${klass}`} bind:this={root} onkeydown={keydown} role="presentation">
-  <button
-    type="button"
+<div class={`action-menu ${klass}`} bind:this={root} onkeydown={keydown} role="presentation" {...rest}>
+  <IconButton
     class="action-menu__trigger"
-    bind:this={trigger}
+    icon={Ellipsis}
+    bind:ref={trigger}
     aria-haspopup="menu"
     aria-expanded={open}
-    aria-label={`${title} for ${label}`}
-    {title}
+    label={`${title} for ${label}`}
     data-testid={testid}
     data-focus-key={focusKey}
     onclick={toggle}
-  >⋯</button>
+  />
   {#if open}
     <div class="action-menu__list" role="menu" aria-label={`${title} for ${label}`}>
       {#each actions as a (a.id)}
@@ -84,7 +86,7 @@
           data-testid={`${testid}-${a.id}`}
           disabled={!a.enabled}
           onclick={() => pick(a)}
-        >{#if a.icon}<span class="action-menu__icon" aria-hidden="true">{a.icon}</span>{/if}{a.label}</button>
+        >{#if a.icon}{@const Icon = a.icon}<span class="action-menu__icon" aria-hidden="true"><Icon size={16} aria-hidden="true" /></span>{/if}{a.label}</button>
       {/each}
     </div>
   {/if}

@@ -273,12 +273,12 @@ Do not start Phase 2 until this passes.
 
 #### Acceptance Criteria
 
-- [ ] `rg "[◉✕✎✓×↑↓→←⋮⋯↧⤢🔗⧉▸▾]|\\\\(2192|2190|2191|2193|25BE|25B8|25B4|25BC|2715|22EE|22EF)" src/lib/components src/lib/essay src/styles --glob '!*.md'` returns only the exceptions listed in the commit message. This covers CSS escape forms.
-- [ ] Decision on `lifecycle.css:56` (`content: "\2192"`, the arrow on a lifecycle transition label): **kept** as a listed exception, because it decorates text that comes from the engine's transition names (`→ propose`) and CSS `content` cannot host an SVG component. `panel.css` `\25BE`/`\25B8` are replaced by the Lucide chevron.
-- [ ] The bundle imports icons only through `@lucide/svelte/icons/*`: `grep -rn "from \"@lucide/svelte\"\|from '@lucide/svelte'" src` returns nothing.
-- [ ] Every `IconButton` has a non-empty `label` (a compile-time `label: string`, plus a unit test that renders one and checks `aria-label` and `title`).
-- [ ] `e2e/essay-editor.spec.ts`, `essay-touch.spec.ts` and `essay-comments.spec.ts` pass.
-- [ ] 44px hit targets still hold under `pointer: coarse`.
+- [x] `rg "[◉✕✎✓×↑↓→←⋮⋯↧⤢🔗⧉▸▾]|\\\\(2192|2190|2191|2193|25BE|25B8|25B4|25BC|2715|22EE|22EF)" src/lib/components src/lib/essay src/styles --glob '!*.md'` returns only the exceptions listed in the commit message. This covers CSS escape forms.
+- [x] Decision on `lifecycle.css:56` (`content: "\2192"`, the arrow on a lifecycle transition label): **kept** as a listed exception, because it decorates text that comes from the engine's transition names (`→ propose`) and CSS `content` cannot host an SVG component. `panel.css` `\25BE`/`\25B8` are replaced by the Lucide chevron.
+- [x] The bundle imports icons only through `@lucide/svelte/icons/*`: `grep -rn "from \"@lucide/svelte\"\|from '@lucide/svelte'" src` returns nothing.
+- [x] Every `IconButton` has a non-empty `label` (a compile-time `label: string`, plus a unit test that renders one and checks `aria-label` and `title`).
+- [x] `e2e/essay-editor.spec.ts`, `essay-touch.spec.ts` and `essay-comments.spec.ts` pass.
+- [x] 44px hit targets still hold under `pointer: coarse`.
 
 #### Testing
 
@@ -516,6 +516,13 @@ npx playwright test e2e/essay-editor.spec.ts e2e/essay-touch.spec.ts e2e/essay-c
 - Do not change shell-level scoped `<style>` blocks (Guides, Governance, Generic). That is #424.
 
 ## Assumptions
+
+- (Phase 1) New semantic tokens beyond the plan's list: `--color-muted-strong` (the old `--grey-4` role), `--color-error`, `--color-error-subtle`, `--color-warn`, `--color-success` (replacing undefined `--color-error`/`--error`/`--color-warn`/`--color-success` fallbacks and the four distinct red literals). The hue-pill saturation/lightness numbers needed more than the plan's five tokens (`--hue-pill-s-bg`, `--hue-pill-s-solid`, `--hue-pill-l-fg-chip`) to keep rendered colours identical. `hsl(var(--x-hue) ...)` stays in `attachment.css`/`comments.css` as two ALLOW entries in `tests/styles-tokens.test.ts` (the hue is per element).
+- (Phase 1) `SourceChooser` backdrop and shadow now use `color-mix` of semantic tokens instead of `rgb()` literals; the colours shift marginally.
+- (Phase 1) Biome formats CSS, so the breakpoint annotation is a `/* bp: <role> */` comment on the line above each `@media`, not inline after the brace.
+- (Phase 1) `e2e/styleguide.spec.ts`: the existing heading-count assertion raced the lazy styleguide chunk (flaked once in four runs); it now uses `expect.poll`. Same threshold.
+- (Phase 2) Lucide 1.52 file names: `trash` (not `trash-2`), `list-indent-increase/decrease` (not `indent-increase/decrease`), `circle-question-mark` (not `circle-help`); the plan's names exist only as `.js` aliases without Svelte types.
+- (Phase 2) Block gutter controls keep a 20px minimum on a mouse (not `--hit-target`) so the vertical tool stack does not stretch every paragraph; coarse pointers still get 44px.
 
 - `@lucide/svelte` is installable in this environment, and its per-icon path `@lucide/svelte/icons/<name>` exists for Svelte 5.
 - `color-mix()` is acceptable (baseline since 2023); no older-browser support is required.

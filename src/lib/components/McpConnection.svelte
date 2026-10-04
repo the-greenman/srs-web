@@ -7,7 +7,12 @@
 -->
 <script lang="ts">
   import type { Actor } from '$lib/srs-client';
+  import Check from '@lucide/svelte/icons/check';
+  import Copy from '@lucide/svelte/icons/copy';
+  import RefreshCw from '@lucide/svelte/icons/refresh-cw';
   import ActorChip from './ActorChip.svelte';
+  import Button from './Button.svelte';
+  import IconButton from './IconButton.svelte';
   export type McpConnectionStatus = 'idle' | 'connecting' | 'online' | 'offline' | 'replaced' | 'rejected' | 'error';
 
   let {
@@ -73,19 +78,19 @@
   {#if callerUrl}
     <div class="mcp-conn__url">
       <input class="mcp-conn__input" readonly value={callerUrl} aria-label="MCP caller URL" data-testid="mcp-caller-url" onfocus={(e) => e.currentTarget.select()} />
-      <button type="button" class="btn btn--mono" onclick={copy} data-testid="mcp-copy">{copied ? 'Copied' : 'Copy'}</button>
+      <IconButton icon={copied ? Check : Copy} variant="outline" label={copied ? 'Copied' : 'Copy'} onclick={copy} data-testid="mcp-copy" />
     </div>
     <p class="mcp-conn__note">Anyone with this URL can read and write this document while this tab is connected. MCP changes are unsaved until you Save or Export.</p>
   {/if}
   <div class="mcp-conn__actions">
     {#if status === 'rejected' || status === 'replaced'}
-      <button type="button" class="btn btn--secondary" onclick={onTakeover} data-testid="mcp-takeover">Take over here</button>
+      <Button size="sm" variant="secondary" onclick={onTakeover} data-testid="mcp-takeover">Take over here</Button>
     {/if}
     {#if onDisconnect}
-      <button type="button" class="btn btn--ghost" onclick={onDisconnect} data-testid="mcp-disconnect">Disconnect</button>
+      <Button size="sm" variant="ghost" onclick={onDisconnect} data-testid="mcp-disconnect">Disconnect</Button>
     {/if}
     {#if onRotate}
-      <button type="button" class="btn btn--ghost" onclick={onRotate} data-testid="mcp-rotate" title="Moves this agent to a new URL. The old URL goes offline once this tab disconnects, but is not revoked.">Rotate URL</button>
+      <Button size="sm" variant="ghost" onclick={onRotate} data-testid="mcp-rotate" title="Moves this agent to a new URL. The old URL goes offline once this tab disconnects, but is not revoked."><RefreshCw size={14} aria-hidden="true" /> Rotate URL</Button>
     {/if}
   </div>
 </section>

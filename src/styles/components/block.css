@@ -1,7 +1,7 @@
 /* ============================================================================
    component: block (.block) + block-stack (.block-stack)
    ----------------------------------------------------------------------------
-   One paragraph of an essay: a narrow gutter (⋮⋮ drag handle, eye, actions on
+   One paragraph of an essay: a narrow gutter (drag handle, eye, actions on
    hover/focus) beside a small mono title and a plain-text body that reads like a normal document.
    Nesting is layout only: --depth indents.
    Monochrome; drop position is a ruled line / dashed outline, never a colour.
@@ -55,23 +55,17 @@
   align-items: center;
   gap: 4px;
 }
-.block__handle,
-.block__action {
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  color: var(--color-muted);
-  background: none;
-  border: 0;
-  padding: 2px 0;
+/* Gutter controls are compact on a mouse (a tall stack would stretch every paragraph); the
+   coarse-pointer rule below restores 44px targets. */
+.block__gutter .icon-btn {
+  min-width: 20px;
+  min-height: 20px;
+}
+.block__handle {
   cursor: grab;
 }
-.block__action {
-  cursor: pointer;
-}
-.block__handle:hover,
-.block__handle:focus-visible,
-.block__action:hover {
-  color: var(--color-text);
+.block__handle:focus-visible {
+  color: var(--icon-btn-hover-fg);
 }
 /* Opacity, not display: the tools stay in the tab order and appear on keyboard focus. */
 .block__tools {
@@ -85,7 +79,7 @@
 .block:focus-within .block__tools {
   opacity: 1;
 }
-/* ⋯ menu: with hover it joins the hover tools; on touch it is the ONLY gutter tool (no vertical stack). */
+/* Ellipsis menu: with hover it joins the hover tools; on touch it is the ONLY gutter tool (no vertical stack). */
 .block__menu {
   opacity: 0;
 }
@@ -267,7 +261,7 @@
   .block {
     grid-template-columns: 44px minmax(0, 1fr) 44px;
   }
-  .block__handle,
+  .block__gutter .block__handle,
   .block__menu .action-menu__trigger {
     min-width: 44px;
     min-height: 44px;
@@ -311,7 +305,7 @@
     grid-area: gutter;
     flex-direction: row;
   }
-  /* The gutter is now at the right edge, so the ⋯ list opens leftward. */
+  /* The gutter is now at the right edge, so the ellipsis list opens leftward. */
   .block__menu .action-menu__list {
     left: auto;
     right: 0;

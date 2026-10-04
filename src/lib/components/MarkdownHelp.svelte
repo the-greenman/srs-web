@@ -1,6 +1,6 @@
 <!--
   MarkdownHelp — the markdown cheat-sheet popover. The host owns `open` and the trigger (header
-  `?` button or the narrow overflow menu); this closes itself on its × button, Escape or a tap
+  `?` button or the narrow overflow menu); this closes itself on its close button, Escape or a tap
   outside it (a `[data-md-help-trigger]` is outside but toggles itself). Pointer wording: the
   link row says Ctrl/Cmd+click with a mouse and long-press on touch (CSS `pointer: coarse`).
   The syntax is rendered by the core (renderMarkdown); this only lists what to type.
@@ -8,6 +8,8 @@
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
 -->
 <script lang="ts">
+  import X from '@lucide/svelte/icons/x';
+  import IconButton from './IconButton.svelte';
   let { open = false, onclose }: { open?: boolean; onclose: () => void } = $props();
 
   const rows: [string, string][] = [
@@ -28,7 +30,7 @@
 
 {#if open}
   <div class="md-help__pop" role="region" aria-label="Markdown cheat-sheet">
-    <button type="button" class="md-help__close" aria-label="Close Markdown help" onclick={onclose}>×</button>
+    <IconButton class="md-help__close" icon={X} label="Close Markdown help" onclick={onclose} />
     <p class="md-help__lead">Paragraphs are markdown. Click a paragraph to edit its source.</p>
     <dl class="md-help__list">
       {#each rows as [syntax, what]}

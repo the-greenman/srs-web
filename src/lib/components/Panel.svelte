@@ -6,6 +6,7 @@
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224 (srs-web#362)
 -->
 <script lang="ts">
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import type { Snippet } from 'svelte';
 
   let {
@@ -62,6 +63,7 @@
 </script>
 
 {#snippet head()}
+  {#if collapsible}<ChevronDown class="panel__chevron" size={14} aria-hidden="true" />{/if}
   <span class="panel__title">{title}</span>
   {#if hasAside}<span class="panel__aside">{aside}</span>{/if}
   {#if actions}

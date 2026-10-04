@@ -32,11 +32,12 @@ summary.panel__head {
 summary.panel__head::-webkit-details-marker {
   display: none;
 }
-summary.panel__head::before {
-  content: "\25BE";
+.panel__chevron {
+  flex: none;
+  transition: transform 0.1s;
 }
-.panel:not([open]) > summary.panel__head::before {
-  content: "\25B8";
+.panel:not([open]) > summary.panel__head .panel__chevron {
+  transform: rotate(-90deg);
 }
 .panel:not([open]) > summary.panel__head {
   margin-bottom: 0;

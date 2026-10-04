@@ -4,6 +4,9 @@
   Issue: https://github.com/the-greenman/srs-web/issues/397
 -->
 <script lang="ts">
+  import Trash from '@lucide/svelte/icons/trash';
+  import Undo2 from '@lucide/svelte/icons/undo-2';
+  import IconButton from './IconButton.svelte';
   let {
     items,
     onrestore,
@@ -20,8 +23,8 @@
   {#each items as d (d.id)}
     <div class="bin-tray__row" data-testid="bin-row">
       <span class="bin-tray__label">{d.label}</span>
-      <button type="button" class="bin-tray__put" aria-label={`Restore ${d.label}`} onclick={() => onrestore(d.id)}>Restore</button>
-      <button type="button" class="bin-tray__put" aria-label={`Delete ${d.label} permanently`} onclick={() => onforget(d.id)}>Delete permanently</button>
+      <IconButton icon={Undo2} variant="outline" label={`Restore ${d.label}`} onclick={() => onrestore(d.id)} />
+      <IconButton icon={Trash} variant="outline" label={`Delete ${d.label} permanently`} onclick={() => onforget(d.id)} />
     </div>
   {/each}
 </section>

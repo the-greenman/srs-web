@@ -30,6 +30,11 @@
   import MarkdownText from "$lib/components/MarkdownText.svelte";
   import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
   import ActionMenu from "$lib/components/ActionMenu.svelte";
+  import ArrowLeft from "@lucide/svelte/icons/arrow-left";
+  import CircleQuestionMark from "@lucide/svelte/icons/circle-question-mark";
+  import LinkIcon from "@lucide/svelte/icons/link";
+  import X from "@lucide/svelte/icons/x";
+  import IconButton from "$lib/components/IconButton.svelte";
   import { NARROW } from "$lib/breakpoints";
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
@@ -503,7 +508,7 @@
       <div class="essay-shell__buttons">
         {#each barActions as a (a.id)}
           {#if a.id === "help"}
-            <button type="button" class="md-help__btn" data-md-help-trigger aria-label={a.label} aria-expanded={helpOpen} title={a.label} onclick={a.run}>?</button>
+            <IconButton class="md-help__btn" icon={CircleQuestionMark} variant="outline" data-md-help-trigger label={a.label} aria-expanded={helpOpen} onclick={a.run} />
           {:else}
             <Button variant={a.variant} active={a.pressed} aria-pressed={a.pressed} data-testid={a.testid} disabled={!a.enabled} onclick={a.run}>{a.label}</Button>
           {/if}
@@ -516,7 +521,7 @@
 
   {#if notice}
     <p class="essay-shell__status" role="status" data-testid="address-notice">
-      {notice} <button type="button" class="block__action" aria-label="Dismiss" onclick={() => (notice = null)}>×</button>
+      {notice} <IconButton size="sm" icon={X} label="Dismiss" onclick={() => (notice = null)} />
     </p>
   {/if}
   {#if linkFallback}
@@ -555,8 +560,8 @@
         {/if}
         {#if zoomId}
           <div class="essay-shell__zoombar">
-            <Button variant="ghost" data-testid="zoom-exit" aria-label="Whole document" onclick={() => setZoom(null)}>←<span class="essay-shell__label"> Whole document</span></Button>
-            <Button variant="ghost" data-testid="zoom-copy-link" aria-label="Copy link" onclick={() => copyLink(zoomId!, true)}><span class="essay-shell__narrow-icon" aria-hidden="true">🔗</span><span class="essay-shell__label">Copy link</span></Button>
+            <Button variant="ghost" data-testid="zoom-exit" aria-label="Whole document" onclick={() => setZoom(null)}><ArrowLeft size={16} aria-hidden="true" /><span class="essay-shell__label"> Whole document</span></Button>
+            <Button variant="ghost" data-testid="zoom-copy-link" aria-label="Copy link" onclick={() => copyLink(zoomId!, true)}><span class="essay-shell__narrow-icon" aria-hidden="true"><LinkIcon size={16} aria-hidden="true" /></span><span class="essay-shell__label">Copy link</span></Button>
           </div>
         {/if}
         {#if items.length === 0}
