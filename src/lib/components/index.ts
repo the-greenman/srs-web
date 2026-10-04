@@ -93,6 +93,6 @@ export { default as ActorMark } from "./ActorMark.svelte";
 export { default as ActorStack } from "./ActorStack.svelte";
 export { default as AgentFeed } from "./AgentFeed.svelte";
 export { default as CommentBadge } from "./CommentBadge.svelte";
-export { default as ParagraphMargin } from "./ParagraphMargin.svelte";
+export { default as AnnotationMargin } from "./AnnotationMargin.svelte";
 export { default as HoverCard } from "./HoverCard.svelte";
 export { default as PinnedPane } from "./PinnedPane.svelte";

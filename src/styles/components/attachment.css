@@ -7,12 +7,13 @@
   display: inline-block;
 }
 .glyph {
-  width: 1.25rem;
-  height: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--margin-mark-size);
+  height: var(--margin-mark-size);
   padding: 0;
   border-radius: 50%;
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
   line-height: 1;
   cursor: pointer;
 }

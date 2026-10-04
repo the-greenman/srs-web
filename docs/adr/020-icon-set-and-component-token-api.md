@@ -38,7 +38,7 @@ Lucide (`@lucide/svelte`, ISC) is the single icon set. Rules:
   set, same idea).
 - Documented exceptions where a glyph character stays: link text such as `GitSaveModal`
   "Install / manage on GitHub →", the accessible-name wording of relation marks in
-  `ParagraphMargin`, and the lifecycle transition decoration in `lifecycle.css` (CSS `content`
+  `AnnotationMargin`, and the lifecycle transition decoration in `lifecycle.css` (CSS `content`
   cannot host a component).
 
 ### (b) Component tokens are the public skin API
@@ -79,7 +79,7 @@ appended below as components gain parts.
 | `TrayRow` | `row`, `label`, `actions` |
 | `McpConnection` | `head`, `dot`, `status`, `url`, `input`, `actions` |
 | `CommentThread` | `thread`, `item`, `meta`, `text`, `reply` |
-| `ParagraphMargin` | `overflow` |
+| `AnnotationMargin` | `overflow` |
 
 ### (d) One breakpoint source
 
@@ -130,6 +130,21 @@ mark and the text "Unattributed". Hue is the one `actorHue(id)` function (`src/l
 set per element as `--actor-hue` and consumed by the single `.hue-pill` rule set (also used by
 `AttachmentGlyph`, whose hue is the attaching actor's). Tokens: `--actor-mark-size`,
 `--actor-mark-size-sm`, `--actor-stack-overlap`.
+
+### (g) The annotation margin: one grid column, one kind-icon map
+
+`AnnotationMargin` is a real column of the `Block` grid. The width is the token `--margin-width`
+(default `--margin-width-compact`; `--margin-width-wide` when the shell carries
+`data-margin="expanded"`, from 721px up). The essay page grows by the difference, so the text column
+keeps its width and the margin never crosses the page edge or the rail. `data-margin` is the one
+mechanism: the header action sets it today and #424's Wide toggle reuses `src/lib/margin-mode.ts`
+rather than adding a second setter. Other tokens: `--margin-mark-size`, `--margin-row-gap`,
+`--margin-label-lines`, `--essay-page-width`.
+
+Kind icons are mapped once, in `src/lib/components/annotation-icons.ts` (`KIND_ICONS`, owner decision
+D3): the annotation's data key (`Annotation.icon`, the neighbour's type name) to a Lucide component,
+with a fallback icon. A letter is never the only cue. `attachment` is a client presentation grouping
+by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is the attaching actor's.
 
 ## Consequences
 

@@ -14,7 +14,8 @@ it("glyph shows kind initial, hover card text, and pins on click", async () => {
     onpin,
   });
   const btn = getByRole("button");
-  expect(btn.textContent).toBe("S");
+  expect(btn.querySelector("svg")).not.toBeNull(); // the kind icon, never a letter
+  expect(btn.textContent).toBe("");
   expect(container.querySelector(".attachment-preview__text")?.textContent).toBe("body");
   await fireEvent.click(btn);
   expect(onpin).toHaveBeenCalledOnce();

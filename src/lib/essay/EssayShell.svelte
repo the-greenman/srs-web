@@ -15,7 +15,7 @@
   import { ago, verb } from "$lib/agent-activity.js";
   import type { AgentPanelCtx, AgentStatus } from "$lib/agent-activity.js";
   import PinnedPane from "$lib/components/PinnedPane.svelte";
-  import ParagraphMargin from "$lib/components/ParagraphMargin.svelte";
+  import AnnotationMargin from "$lib/components/AnnotationMargin.svelte";
   import Block from "$lib/components/Block.svelte";
   import BlockStack from "$lib/components/BlockStack.svelte";
   import type { DropTarget } from "$lib/components/BlockStack.svelte";
@@ -65,7 +65,8 @@
   import { formatAddress, parseAddress } from "./address.js";
   import { headerActions } from "./header-actions.js";
   import { addComment } from "$lib/comments.js";
-  import { annotationsFor, loadVariant, saveVariant } from "$lib/annotations.js";
+  import { annotationsFor } from "$lib/annotations.js";
+  import { loadMargin, saveMargin } from "$lib/margin-mode.js";
   import type { Annotation } from "$lib/annotations.js";
   import { essaySource } from "./annotation-source.js";
   import { hiddenByAncestor, outsideRun, visibleEntries } from "./essay-model.js";
@@ -205,8 +206,9 @@
       .map((a) => ({ id: a.id, kind: a.neighbourType, relation: a.relationLabel, title: a.label, text: a.text })),
   );
 
-  let variant = $state(loadVariant());
-  const toggleVariant = () => saveVariant((variant = variant === "compact" ? "expanded" : "compact"));
+  /** `data-margin` on the shell: the one setter of the margin mode (#424's Wide toggle reuses it). */
+  let marginMode = $state(loadMargin());
+  const toggleVariant = () => saveMargin((marginMode = marginMode === "compact" ? "expanded" : "compact"));
   /** Margin clicks: the one kind -> action mapping (the model says what, the margin how it looks). */
   function openAnnotation(a: Annotation, paragraphId: string) {
     if (a.kind === "comments") openThread(paragraphId, !openThreads.has(paragraphId));
@@ -473,7 +475,7 @@
         onexplorer: onOpenExplorer,
         onopenanother: onOpenAnother,
       },
-      { expanded: variant === "expanded", commentMode, saving },
+      { expanded: marginMode === "expanded", commentMode, saving },
     ),
   );
 </script>
@@ -486,7 +488,7 @@
   onpopstate={applyAddress}
 />
 
-<div class="essay-shell">
+<div class="essay-shell" data-margin={marginMode}>
   <header class="essay-shell__bar">
     <div class="essay-shell__heading">
       <span class="eyebrow">{repoName}</span>
@@ -577,9 +579,9 @@
             {@const p = model!.paragraphs[item.id]}
             {#if p}
               {#snippet margin()}
-                <ParagraphMargin
+                <AnnotationMargin
                   annotations={annotationsFor(essaySource(model!), p.id)}
-                  {variant}
+                  variant={marginMode}
                   active={[...pinnedIds, ...(showThread(p.id) ? [`comments:${p.id}`] : [])]}
                   onopen={(a) => openAnnotation(a, p.id)}
                   onremove={(a) => run(() => removeAttachment(repo, a.key))}
@@ -618,7 +620,7 @@
           <Button variant="mono" class="essay-shell__add" data-testid="add-paragraph" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add paragraph</Button>
         {/if}
       </main>
-      <aside class="panel-rail" aria-label="Panels">
+      <aside class="panel-rail" aria-label="Panels" data-testid="rail">
         <Panel title="Layers" persistKey="essay.layers" collapseWhen={NARROW}>
           <LayersPanel
             {layers}

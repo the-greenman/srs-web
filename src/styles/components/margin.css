@@ -1,50 +1,74 @@
 /* ============================================================================
-   component: paragraph margin (.margin) — Annotation[] beside a paragraph
-   compact = marks only; expanded = marks + a text chip (the column widens).
+   component: annotation margin (.margin) — Annotation[] beside a paragraph
+   One row system: every row is a mark on a shared left edge (--margin-mark-size) and, expanded,
+   a label clamped to --margin-label-lines. The margin is a real grid column of the block
+   (--margin-width, set by the shell's data-margin), so nothing crosses the page edge or the rail.
    Kind looks live in the marks' own CSS (comments.css, attachment.css, .margin__relation).
-   Story: https://github.com/the-greenman/srs-web/issues/374
+   Story: https://github.com/the-greenman/srs-web/issues/374, #422
    ========================================================================== */
 .margin {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: var(--margin-row-gap);
   min-width: 0;
+  max-width: 100%;
 }
 .margin__item,
 .margin__items li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-xs);
   min-width: 0;
+  max-width: 100%;
+}
+/* The hover card's wrapper is not a cell of the row. */
+.margin__item > .popover {
+  display: contents;
+}
+/* Every mark fills the same box, so marks share one left edge and one height. */
+.margin [data-part="mark"],
+.margin .comment-badge,
+.margin .glyph,
+.margin .margin__relation {
+  flex: none;
+  box-sizing: border-box;
+  width: var(--margin-mark-size);
+  height: var(--margin-mark-size);
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+}
+.margin .glyph-wrap {
+  display: inline-flex;
 }
 .margin__text {
   min-width: 0;
+  align-self: center;
   font-size: var(--size-xs);
   color: var(--color-muted);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--margin-label-lines);
+  line-clamp: var(--margin-label-lines);
+  overflow-wrap: anywhere;
 }
-.margin__relation,
-.margin__more {
-  min-width: 1.25rem;
-  height: 1.25rem;
-  padding: 0 4px;
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  line-height: 1;
-  color: var(--color-muted);
-  background: none;
-  border: 1px dashed var(--color-line);
+.margin__relation {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 .margin__relation:hover,
-.margin__more:hover,
-.margin__relation:focus-visible,
-.margin__more:focus-visible {
-  color: var(--color-text);
+.margin__relation:focus-visible {
   border-color: var(--color-text);
+}
+.margin__more {
+  min-height: 0;
+  height: var(--margin-mark-size);
+  padding: 0 var(--space-xs);
 }
 .margin__list {
   max-width: 16rem;
@@ -56,25 +80,22 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--margin-row-gap);
 }
-/* Expanded: the right column widens to hold the text chips. */
-.block:has(.margin--expanded) {
-  grid-template-columns: 2rem minmax(0, 1fr) 11rem;
+/* The paragraph an annotation belongs to is outlined while its row is hovered or focused. */
+.block[data-annotation-hover] {
+  outline: 1px solid var(--color-text);
+  outline-offset: 2px;
 }
 
 /* Touch: margin marks are >=44px targets (desktop look unchanged). */
 @media (pointer: coarse) {
-  .margin .comment-badge,
-  .margin .margin__relation,
-  .margin .margin__more,
-  .margin .glyph {
-    min-width: 44px;
-    min-height: 44px;
+  .margin {
+    --margin-mark-size: 44px;
   }
 }
 
-/* Phone (srs-web#383): marks flow in a row inside the title row; chips collapse to marks only. */
+/* Phone (srs-web#383): marks flow in a row inside the title row; labels collapse to marks only. */
 /* bp: phone */
 @media (max-width: 480px) {
   .margin {

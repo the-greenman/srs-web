@@ -303,4 +303,11 @@ export const componentTokens = [
   "--actor-mark-radius-ai",
   "--actor-mark-notch",
   "--actor-stack-overlap",
+  "--margin-width",
+  "--margin-width-wide",
+  "--margin-mark-size",
+  "--margin-label-lines",
+  "--comment-thread-max",
+  "--comment-clamp-lines",
+  "--comment-composer-max",
 ];

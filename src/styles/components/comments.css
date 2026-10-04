@@ -64,6 +64,13 @@
   width: 100%;
   text-align: left;
 }
+.comments__count {
+  flex: none;
+  white-space: nowrap;
+}
+.comments__summary .actor-mark-wrap {
+  flex: none;
+}
 .comments__first {
   min-width: 0;
   overflow: hidden;

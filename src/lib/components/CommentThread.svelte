@@ -90,7 +90,7 @@
   {#if long}
     <Button size="sm" variant="ghost" class="comments__summary" data-part="summary" aria-expanded={!folded} onclick={() => (folded = !folded)}>
       <ActorMark actor={comments.at(-1)?.author} size="sm" />
-      <span>{comments.length} comments</span>
+      <span class="comments__count">{comments.length} comments</span>
       <span class="comments__first">{comments[0].text.split('\n')[0]}</span>
     </Button>
   {/if}

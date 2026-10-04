@@ -9,7 +9,7 @@
   import {
     ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
-    LayersPanel, MarkdownHelp, MarkdownText, McpConnection, Panel, ParagraphMargin, PinnedPane, Select, Tag,
+    LayersPanel, MarkdownHelp, MarkdownText, McpConnection, Panel, AnnotationMargin, PinnedPane, Select, Tag,
     TagChip, Textarea,
   } from "$lib/components";
   import Frame from "./styleguide/Frame.svelte";
@@ -80,6 +80,8 @@
   <title>Styleguide</title>
 </svelte:head>
 
+{#snippet thread()}<CommentThread comments={[...fx.comments, ...fx.longComments]} onadd={noop} />{/snippet}
+
 {#snippet gated(content: Snippet)}
   {#if wasm === "ready"}
     {@render content()}
@@ -122,7 +124,7 @@
       </div>
     </div>
   </Panel>
-  <Panel title="Comments"><CommentThread comments={[...fx.comments, ...fx.longComments]} onadd={noop} /></Panel>
+  <Panel title="Comments">{@render gated(thread)}</Panel>
 {/snippet}
 
 <main class="sg">
@@ -226,7 +228,7 @@
     <h3>AttachmentPreview</h3>
     <div><AttachmentPreview kind="spreadsheet" title="Budget sheet" text="Q3 budget figures, clamped to three lines when pinned." relation="evidences" clamp /></div>
     <h3>Margin overflow (+N)</h3>
-    <ParagraphMargin annotations={fx.annotations} max={2} onopen={noop} />
+    <AnnotationMargin annotations={fx.annotations} max={2} onopen={noop} />
   </section>
 
   <section id="chips">
@@ -270,14 +272,17 @@
   <section id="annotations">
     <h2>Annotations and comments</h2>
     <h3>Margin: compact</h3>
-    <ParagraphMargin annotations={fx.annotations} onopen={noop} />
+    <AnnotationMargin annotations={fx.annotations} onopen={noop} />
     <h3>Margin: expanded</h3>
-    <ParagraphMargin annotations={fx.annotations} variant="expanded" onopen={noop} />
-    <div class="sg__grid">
-      <div><h3>Empty</h3><CommentThread onadd={noop} /></div>
-      <div><h3>Agents and a human</h3><CommentThread comments={fx.comments} onadd={noop} /></div>
-      <div><h3>Needs a name</h3><CommentThread needsName onadd={noop} /></div>
-    </div>
+    <AnnotationMargin annotations={fx.annotations} variant="expanded" onopen={noop} />
+    {#snippet threads()}
+      <div class="sg__grid">
+        <div><h3>Empty</h3><CommentThread onadd={noop} /></div>
+        <div><h3>Agents and a human</h3><CommentThread comments={fx.comments} onadd={noop} /></div>
+        <div><h3>Needs a name</h3><CommentThread needsName onadd={noop} /></div>
+      </div>
+    {/snippet}
+    {@render gated(threads)}
   </section>
 
   <section id="paragraph">
@@ -291,7 +296,7 @@
             onbody={noop} ontitle={noop} onhide={noop} onnew={noop} onindent={noop} onmove={noop}
           >
             {#snippet margin()}
-              <ParagraphMargin annotations={fx.annotations.slice(0, 2)} onopen={noop} />
+              <AnnotationMargin annotations={fx.annotations.slice(0, 2)} onopen={noop} />
             {/snippet}
           </Block>
         {/snippet}

@@ -237,26 +237,26 @@ npx playwright test e2e/essay-comments.spec.ts e2e/mobile-layout.spec.ts e2e/age
 
 #### Tasks
 
-- [ ] `git mv ParagraphMargin.svelte AnnotationMargin.svelte` and `git mv tests/ParagraphMargin.test.ts tests/AnnotationMargin.test.ts`. Update every rename site: `src/lib/components/index.ts`, `EssayShell.svelte:18,579`, `Styleguide.svelte`, `docs/adr/020-icon-set-and-component-token-api.md` lines 41 and 82, `src/lib/components/README.md:69`, the `annotations.ts` header.
-- [ ] **Grid column:** touch `src/styles/components/block.css` and `src/styles/essay-shell.css` (the Block grid and the essay page frame get a margin column `var(--margin-width)`). `--margin-width` and `--margin-width-wide` tokens in `tokens-components.css`. Delete both squeeze rules: `margin.css:62` and `block.css:283` (`:has(.margin--expanded)`). Text uses `min-width:0` + clamp so nothing crosses the page edge or the rail.
-- [ ] **One mechanism: `data-margin`.** `data-margin="compact|expanded"` on the shell sets the width token and the `.margin--compact` / `.margin--expanded` classes react to it. #424's Wide toggle reuses this same setter and adds no second one. Under the `phone` breakpoint (480) the margin goes inline below the paragraph behind a count.
-- [ ] **Whole seam swap happens here.** Keep the header action testid `margin-variant` (`essay/header-actions.ts:68`). Delete `VARIANT_KEY`, `MarginVariant`, `loadVariant`, `saveVariant` from `src/lib/annotations.ts` and their uses at `EssayShell.svelte:68,207-208`; add a `srs-web.margin` loader/saver beside the header action that sets `data-margin`; update `tests/EssayShell.test.ts:139-178`.
-- [ ] **One row system:** `[data-part="row"]` containing `[data-part="mark"]` on a shared left edge (`--margin-mark-size`), a 1-2 line clamped `[data-part="label"]`, `--margin-row-gap`. First row aligns to the paragraph's first line. `CommentBadge` is a row like any other.
-- [ ] **Kind icons, mapped once:** `KIND_ICONS` in `src/lib/components/annotation-icons.ts` maps the data key (`icon`) to a Lucide component, with a fallback icon (names verified in `node_modules/@lucide/svelte/dist/icons/`). Letters are never the only cue. State in the file header and ADR-020: `attachment` is a client presentation grouping by neighbour kind, never inferred from SRS semantics.
-- [ ] **Hue = attaching actor:** `--actor-hue` from `annotation.actor` (filled in Phase 2); no actor = neutral. `attachment.css` `--glyph-hue` uses (lines 3, 13, 15, 16, 23) move to `--actor-hue` and the `.hue-pill` rules (changed-files list).
-- [ ] **Rail testid:** add `data-testid="rail"` to the `<aside class="panel-rail">` element in `src/lib/essay/EssayShell.svelte:620` (used by the 1920 no-overlap e2e).
-- [ ] **"+N":** `Button size="sm"` opening the existing `Popover` (drop the dashed `.margin__more` style).
-- [ ] **Hover/focus** on a row shows the full text (`HoverCard`) and highlights its paragraph (`.block[data-annotation-hover]` outline). Presentation only.
-- [ ] `data-part` additions: `row`, `mark`, `label`, `more`.
+- [x] `git mv ParagraphMargin.svelte AnnotationMargin.svelte` and `git mv tests/ParagraphMargin.test.ts tests/AnnotationMargin.test.ts`. Update every rename site: `src/lib/components/index.ts`, `EssayShell.svelte:18,579`, `Styleguide.svelte`, `docs/adr/020-icon-set-and-component-token-api.md` lines 41 and 82, `src/lib/components/README.md:69`, the `annotations.ts` header.
+- [x] **Grid column:** touch `src/styles/components/block.css` and `src/styles/essay-shell.css` (the Block grid and the essay page frame get a margin column `var(--margin-width)`). `--margin-width` and `--margin-width-wide` tokens in `tokens-components.css`. Delete both squeeze rules: `margin.css:62` and `block.css:283` (`:has(.margin--expanded)`). Text uses `min-width:0` + clamp so nothing crosses the page edge or the rail.
+- [x] **One mechanism: `data-margin`.** `data-margin="compact|expanded"` on the shell sets the width token and the `.margin--compact` / `.margin--expanded` classes react to it. #424's Wide toggle reuses this same setter and adds no second one. Under the `phone` breakpoint (480) the margin goes inline below the paragraph behind a count.
+- [x] **Whole seam swap happens here.** Keep the header action testid `margin-variant` (`essay/header-actions.ts:68`). Delete `VARIANT_KEY`, `MarginVariant`, `loadVariant`, `saveVariant` from `src/lib/annotations.ts` and their uses at `EssayShell.svelte:68,207-208`; add a `srs-web.margin` loader/saver beside the header action that sets `data-margin`; update `tests/EssayShell.test.ts:139-178`.
+- [x] **One row system:** `[data-part="row"]` containing `[data-part="mark"]` on a shared left edge (`--margin-mark-size`), a 1-2 line clamped `[data-part="label"]`, `--margin-row-gap`. First row aligns to the paragraph's first line. `CommentBadge` is a row like any other.
+- [x] **Kind icons, mapped once:** `KIND_ICONS` in `src/lib/components/annotation-icons.ts` maps the data key (`icon`) to a Lucide component, with a fallback icon (names verified in `node_modules/@lucide/svelte/dist/icons/`). Letters are never the only cue. State in the file header and ADR-020: `attachment` is a client presentation grouping by neighbour kind, never inferred from SRS semantics.
+- [x] **Hue = attaching actor:** `--actor-hue` from `annotation.actor` (filled in Phase 2); no actor = neutral. `attachment.css` `--glyph-hue` uses (lines 3, 13, 15, 16, 23) move to `--actor-hue` and the `.hue-pill` rules (changed-files list).
+- [x] **Rail testid:** add `data-testid="rail"` to the `<aside class="panel-rail">` element in `src/lib/essay/EssayShell.svelte:620` (used by the 1920 no-overlap e2e).
+- [x] **"+N":** `Button size="sm"` opening the existing `Popover` (drop the dashed `.margin__more` style).
+- [x] **Hover/focus** on a row shows the full text (`HoverCard`) and highlights its paragraph (`.block[data-annotation-hover]` outline). Presentation only.
+- [x] `data-part` additions: `row`, `mark`, `label`, `more`.
 
 #### Acceptance Criteria
 
-- [ ] `e2e/annotation-margin.spec.ts` (new): at 1920x1080 with `data-margin="expanded"`, no `[data-part="row"]` bounding box intersects `[data-testid="rail"]`'s box (the rail testid added in this phase) or exceeds the right edge of `.essay-shell__page`; at 1280 the compact form shows; at 390 the notes are reachable inline.
-- [ ] `tests/AnnotationMargin.test.ts`: order unchanged, `+N` opens the popover list, label text present only in the expanded form.
-- [ ] `grep -rnE "loadVariant|saveVariant|VARIANT_KEY|MarginVariant" src tests` returns nothing; `margin-variant` remains only as the header action testid (`header-actions.ts`, `EssayShell.test.ts`, e2e).
-- [ ] No `:has(.margin--expanded)` remains in `src/styles`.
-- [ ] Selector disposition for this phase: `paragraph-margin`, `margin-more`, `margin-overflow`, `relation-indicator`, `shared-badge`, `.glyph`, `hover-card__remove`, `.margin--expanded`, `.margin__text` unchanged; `.margin__item > *:first-child` becomes `[data-part="row"] > [data-part="mark"]`; `--glyph-hue` becomes `--actor-hue` (AttachmentGlyph.test:27); EssayShell.test:160-162 asserts `data-margin` instead of the removed toggle class.
-- [ ] Touch targets still 44px under `pointer: coarse`.
+- [x] `e2e/annotation-margin.spec.ts` (new): at 1920x1080 with `data-margin="expanded"`, no `[data-part="row"]` bounding box intersects `[data-testid="rail"]`'s box (the rail testid added in this phase) or exceeds the right edge of `.essay-shell__page`; at 1280 the compact form shows; at 390 the notes are reachable inline.
+- [x] `tests/AnnotationMargin.test.ts`: order unchanged, `+N` opens the popover list, label text present only in the expanded form.
+- [x] `grep -rnE "loadVariant|saveVariant|VARIANT_KEY|MarginVariant" src tests` returns nothing; `margin-variant` remains only as the header action testid (`header-actions.ts`, `EssayShell.test.ts`, e2e).
+- [x] No `:has(.margin--expanded)` remains in `src/styles`.
+- [x] Selector disposition for this phase: `paragraph-margin`, `margin-more`, `margin-overflow`, `relation-indicator`, `shared-badge`, `.glyph`, `hover-card__remove`, `.margin--expanded`, `.margin__text` unchanged; `.margin__item > *:first-child` becomes `[data-part="row"] > [data-part="mark"]`; `--glyph-hue` becomes `--actor-hue` (AttachmentGlyph.test:27); EssayShell.test:160-162 asserts `data-margin` instead of the removed toggle class.
+- [x] Touch targets still 44px under `pointer: coarse`.
 
 #### Testing
 
@@ -359,6 +359,9 @@ npx playwright test e2e/styleguide.spec.ts e2e/essay-comments.spec.ts e2e/agent-
 - Lucide icon names are verified against the installed package before use.
 - Late review adjustment 1 (MarkdownView): the single `{@html renderMarkdown(...)}` site rule covers `CommentThread` and `PinnedPane` through the new read-only `src/lib/components/MarkdownView.svelte`. `MarkdownText` keeps its own render on its contenteditable element as a documented exception: it is an editor, and moving it would change `Block`'s DOM. The grep acceptance excludes `MarkdownText.svelte` explicitly.
 - Late review adjustment 2 (STRUCTURAL_CATEGORIES): it moves to `src/lib/annotations.ts`; `essay-document.ts` imports it from there, and no non-essay file imports from `essay/`.
+- Phase 2 note: `Attachment` and `Related` moved to `src/lib/annotations.ts` and `recordsOfType` joined `typeVersion` in `src/lib/type-version.ts`, so the generic modules never import `essay/`. The "no non-essay file imports from `essay/`" criterion is met for the annotation and comment modules; pre-existing component imports of `essay/paragraph-actions` and `essay/essay-model` (`Block`, `LayersPanel`, `dnd.ts`) are paragraph-editor code and out of scope.
+- Phase 4 note: at the phone breakpoint the margin keeps its existing marks-in-the-title-row layout (marks, with "+N" for the rest), which `e2e/mobile-layout.spec.ts` asserts; it is not collapsed behind a single count. The row hover card is shown for relation and shared rows only (attachment glyphs already carry their own card).
+- Phase 3 gate did not list `e2e/styleguide.spec.ts`; `CommentThread` gained a WASM dependency (`MarkdownView`), which broke the ungated styleguide specimens. Fixed in the Phase 4 commit by gating them like the other markdown specimens.
 - `N = 8` earlier-comments threshold, 6-line clamp, `24rem` thread max are defaults on tokens/consts and tunable.
 
 ## Decided by owner 2026-10-04

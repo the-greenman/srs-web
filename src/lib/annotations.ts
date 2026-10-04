@@ -131,19 +131,3 @@ export function annotationsFor(source: AnnotationSource, instanceId: string): An
     ),
   ];
 }
-
-export type MarginVariant = "compact" | "expanded";
-const VARIANT_KEY = "srs-web.margin-variant";
-/** The viewer's remembered margin variant (experiment seam); compact when unset or storage is unavailable. */
-export function loadVariant(): MarginVariant {
-  try {
-    return localStorage.getItem(VARIANT_KEY) === "expanded" ? "expanded" : "compact";
-  } catch {
-    return "compact";
-  }
-}
-export function saveVariant(v: MarginVariant): void {
-  try {
-    localStorage.setItem(VARIANT_KEY, v);
-  } catch {}
-}

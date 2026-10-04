@@ -49,6 +49,15 @@
   --actor-mark-notch: 0.3rem;
   --actor-stack-overlap: -0.3rem;
 
+  /* AnnotationMargin: the margin is a grid column of the block; the shell's data-margin picks the width. */
+  --margin-width-compact: 2.5rem;
+  --margin-width-wide: 11rem;
+  --margin-width: var(--margin-width-compact);
+  --margin-mark-size: 1.5rem;
+  --margin-row-gap: 4px;
+  --margin-label-lines: 2;
+  --essay-page-width: 46rem;
+
   /* CommentThread: bounded list, clamped comments, composer growth. */
   --comment-thread-max: 24rem;
   --comment-clamp-lines: 6;

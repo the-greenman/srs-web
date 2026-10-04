@@ -38,7 +38,7 @@
 
 .block {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) 2.5rem;
+  grid-template-columns: 2rem minmax(0, 1fr) var(--margin-width);
   gap: var(--space-xs);
   padding: var(--space-xs) 0;
   border-radius: 2px;
@@ -259,7 +259,7 @@
 /* Touch: every gutter / margin target >=44px (the gutter and margin columns widen to hold them). */
 @media (pointer: coarse) {
   .block {
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    grid-template-columns: 44px minmax(0, 1fr) max(44px, var(--margin-width));
   }
   .block__gutter .block__handle,
   .block__menu .action-menu__trigger {
@@ -279,8 +279,7 @@
    full-width body, instead of two side columns. CSS grid areas only; markup is unchanged. */
 /* bp: phone */
 @media (max-width: 480px) {
-  .essay-shell .block,
-  .essay-shell .block:has(.margin--expanded) {
+  .essay-shell .block {
     grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-areas: "head margin gutter" "body body body";
     align-items: center;

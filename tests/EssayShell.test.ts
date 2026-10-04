@@ -161,8 +161,11 @@ it("a relation indicator focuses the other paragraph; the variant toggle is reme
   await tick();
   await fireEvent.click(getByTestId("relation-indicator"));
   expect((document.activeElement as HTMLElement | null)?.dataset.focusKey).toBe("body:q");
+  const shell = container.querySelector(".essay-shell") as HTMLElement;
+  expect(shell.dataset.margin).toBe("compact");
   expect(container.querySelector(".margin--expanded")).toBeNull();
   await fireEvent.click(getByTestId("margin-variant"));
+  expect(shell.dataset.margin).toBe("expanded");
   expect(container.querySelector(".margin--expanded")).not.toBeNull();
 });
 
