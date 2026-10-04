@@ -64,6 +64,24 @@ for (const { name, viewport } of widths) {
       await expect(page.getByTestId("comment-thread").first()).toBeVisible();
     });
 
+    test("a toast fits the phone width and does not cover the Toolbar (#441)", async ({
+      page,
+      context,
+    }) => {
+      await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+      await open(page);
+      await page.getByTestId("header-menu").tap();
+      await page.getByTestId("copy-for-agent").tap();
+      const toast = page.locator(".toast-host .toast").first();
+      await expect(toast).toBeVisible();
+      const t = (await toast.boundingBox())!;
+      const bar = (await page.getByTestId("toolbar").boundingBox())!;
+      expect(t.x).toBeGreaterThanOrEqual(0);
+      expect(t.x + t.width).toBeLessThanOrEqual(viewport.width);
+      expect(t.y).toBeGreaterThanOrEqual(bar.y + bar.height);
+      expect(t.y + t.height).toBeLessThanOrEqual(viewport.height);
+    });
+
     test("margin badge sits inline in the title row", async ({ page }) => {
       await open(page);
       const block = page.locator(".essay-shell__page .block").first();

@@ -44,7 +44,8 @@
 }
 .toast--error {
   font-weight: 500;
-  background: var(--notice-error-bg);
+  /* The error fill is translucent: lay it over the opaque toast surface so nothing shows through. */
+  background: linear-gradient(var(--notice-error-bg), var(--notice-error-bg)), var(--toast-bg);
   border-color: var(--color-error);
 }
 .toast--error .toast__icon {

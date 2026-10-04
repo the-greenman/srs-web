@@ -432,22 +432,22 @@ npx playwright test e2e/instance-notes.spec.ts e2e/migrations.spec.ts e2e/migrat
 
 #### Tasks
 
-- [ ] `docs/adr/020-icon-set-and-component-token-api.md`: append **(j) Notices (#441)**: the model (toast = event, Notice = persistent state, Diagnostics = engine findings); roles (two always-present visually-hidden live regions in `Main`, polite and `role=alert`, written into after render, mirror the toasts; the popover host is visual only with no live role; inline Notices: `alert` for error, `status` for the rest); errors sticky and strong, everything else quiet and auto-dismissed; anchoring and the no-layout-shift rule (top-layer popover positioned from the main column rect); the `data-part` table (`Notice`: `icon body dismiss`; `ToastHost`: `host`; `Diagnostics`: `summary toggle group count dismiss`); tokens `--notice-*` `--toast-*`; grouping keys on exact message until the engine exposes `code`; the `no-adhoc-notices` guard (scoped to `role=alert`) and its allowlist; the top-layer `popover="manual"` toast host, re-stack (`hidePopover` then `showPopover`) on a new toast and a drawer opening, the live regions outside the popover, the modal-drawer inert limitation, the one `"save"` key and same-key replacement of a sticky error; `NoticeRegion` for pinned document notices and `Main`'s `bar` snippet (real DOM order bar, notices, content); Toolbar status keeps state ("Unsaved changes"), never events.
-- [ ] `src/styles/README.md`, `src/lib/components/README.md`: file map and component table.
-- [ ] Update this plan's "Captured samples" and tick all boxes.
-- [ ] `e2e/notices.spec.ts` final cases, using Playwright's `page.clock` (`install()` before load, then `runFor(...)`) so toast timeouts are deterministic, with no real sleeps:
+- [x] `docs/adr/020-icon-set-and-component-token-api.md`: append **(j) Notices (#441)**: the model (toast = event, Notice = persistent state, Diagnostics = engine findings); roles (two always-present visually-hidden live regions in `Main`, polite and `role=alert`, written into after render, mirror the toasts; the popover host is visual only with no live role; inline Notices: `alert` for error, `status` for the rest); errors sticky and strong, everything else quiet and auto-dismissed; anchoring and the no-layout-shift rule (top-layer popover positioned from the main column rect); the `data-part` table (`Notice`: `icon body dismiss`; `ToastHost`: `host`; `Diagnostics`: `summary toggle group count dismiss`); tokens `--notice-*` `--toast-*`; grouping keys on exact message until the engine exposes `code`; the `no-adhoc-notices` guard (scoped to `role=alert`) and its allowlist; the top-layer `popover="manual"` toast host, re-stack (`hidePopover` then `showPopover`) on a new toast and a drawer opening, the live regions outside the popover, the modal-drawer inert limitation, the one `"save"` key and same-key replacement of a sticky error; `NoticeRegion` for pinned document notices and `Main`'s `bar` snippet (real DOM order bar, notices, content); Toolbar status keeps state ("Unsaved changes"), never events.
+- [x] `src/styles/README.md`, `src/lib/components/README.md`: file map and component table.
+- [x] Update this plan's "Captured samples" and tick all boxes.
+- [x] `e2e/notices.spec.ts` final cases, using Playwright's `page.clock` (`install()` before load, then `runFor(...)`) so toast timeouts are deterministic, with no real sleeps:
   - Copy link: exactly one toast (`address-notice`, visible row in the host); advance the clock past the duration, then `toHaveCount(0)`; a second click inside the window does not stack.
   - No layout shift: `boundingBox().y` of the first child of `.workspace` is equal before, while the toast is shown and after it is gone.
   - Drawer: at 900px open the inspector drawer and fire a toast; `elementFromPoint` at the toast's centre returns a toast descendant (visible above the scrim). Also: raise a sticky error toast BEFORE opening the inspector drawer; after the drawer opens it is still visible above the scrim (re-stack).
   - Errors stay inline: a location-bound error stays after the clock advances; a save-failure sticky toast (`role=alert`) stays after the clock advances and is replaced by the next save.
   - All Phase 1 specimen testids are visible on `/styleguide`.
   - Plus a mobile-width pass (`e2e/mobile-layout.spec.ts` extended: a toast fits the phone width and does not cover the Toolbar).
-- [ ] Verification agent runs the full suite and the three-viewport screenshot pass on `/styleguide`.
+- [x] Verification agent runs the full suite and the three-viewport screenshot pass on `/styleguide`.
 
 #### Acceptance Criteria
 
-- [ ] Strict-mode `getByRole("alert")` / `[role="alert"]` assertions elsewhere still pass (selector table); no sticky toast leaks between tests (`resetNotices()` on document change; each Playwright test has a fresh page).
-- [ ] ADR-020 (j) exists and cites the tokens and parts actually shipped (the existing doc drift guards pass).
+- [x] Strict-mode `getByRole("alert")` / `[role="alert"]` assertions elsewhere still pass (selector table); no sticky toast leaks between tests (`resetNotices()` on document change; each Playwright test has a fresh page).
+- [x] ADR-020 (j) exists and cites the tokens and parts actually shipped (the existing doc drift guards pass).
 
 #### Testing
 
