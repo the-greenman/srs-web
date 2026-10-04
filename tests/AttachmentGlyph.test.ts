@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { fireEvent, render } from "@testing-library/svelte";
 import { expect, it, vi } from "vitest";
+vi.mock("../src/lib/srs-client.js", () => ({ renderMarkdown: (s: string) => `<p>${s}</p>` }));
 import AttachmentGlyph from "../src/lib/components/AttachmentGlyph.svelte";
 import PinnedPane from "../src/lib/components/PinnedPane.svelte";
 
@@ -25,4 +26,14 @@ it("pinned pane lists items and unpins", async () => {
   const { getByLabelText } = render(PinnedPane, { items: [{ id: "r1", kind: "note", title: "N", text: "t" }], onunpin });
   await fireEvent.click(getByLabelText("Unpin N"));
   expect(onunpin).toHaveBeenCalledWith("r1");
+});
+
+it("pinned pane opens the full text and copies it", async () => {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+  const { getByText } = render(PinnedPane, { items: [{ id: "r1", kind: "note", title: "N", text: "body" }], onunpin: vi.fn() });
+  await fireEvent.click(getByText("Open"));
+  expect(getByText("Close")).toBeTruthy();
+  await fireEvent.click(getByText("Copy"));
+  expect(writeText).toHaveBeenCalledWith("body");
 });

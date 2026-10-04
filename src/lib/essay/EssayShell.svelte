@@ -100,16 +100,23 @@
   let hasActor = $state(currentActor() !== null);
   onDestroy(onActorChange(() => (hasActor = currentActor() !== null)));
 
+  const pinKey = (id: string) => `essay.pins.${id}`;
   const foldKey = (id: string) => `srs-web.essay-fold.${id}`;
   let folded = $state<Set<string>>(new Set());
 
   const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-  function loadFolded(id: string) {
+  function loadViewState(id: string) {
     try {
       folded = new Set(JSON.parse(localStorage.getItem(foldKey(id)) ?? "[]"));
     } catch {
       folded = new Set();
+    }
+    try {
+      const ids = JSON.parse(localStorage.getItem(pinKey(id)) ?? "[]");
+      pinnedIds = Array.isArray(ids) ? ids.filter((x) => typeof x === "string") : [];
+    } catch {
+      pinnedIds = [];
     }
   }
 
@@ -120,7 +127,7 @@
       essays = listEssays(repo);
       if (!essayId || !essays.some((e) => e.id === essayId)) {
         essayId = essays[0]?.id ?? null;
-        if (essayId) loadFolded(essayId);
+        if (essayId) loadViewState(essayId);
       }
       model = essayId ? loadEssay(repo, essayId) : null;
       error = null;
@@ -158,8 +165,25 @@
 
   /** Pinned attachment ids (relation ids). Derived against the model, so a removed one drops out. */
   let pinnedIds = $state<string[]>([]);
+  /** Per browser, not document-state (owner ruling, srs-web#406). */
+  function setPins(ids: string[]) {
+    pinnedIds = ids;
+    if (!essayId) return;
+    try {
+      localStorage.setItem(pinKey(essayId), JSON.stringify(ids));
+    } catch {
+      /* storage blocked or full: pins stay for this session only */
+    }
+  }
   const togglePin = (id: string) =>
-    (pinnedIds = pinnedIds.includes(id) ? pinnedIds.filter((x) => x !== id) : [...pinnedIds, id]);
+    setPins(pinnedIds.includes(id) ? pinnedIds.filter((x) => x !== id) : [...pinnedIds, id]);
+  // Drop pins whose attachment no longer exists, silently.
+  $effect(() => {
+    if (!model) return;
+    const live = new Set(Object.values(model.attachments).flat().map((a) => a.id));
+    const kept = untrack(() => pinnedIds).filter((id) => live.has(id));
+    if (kept.length !== untrack(() => pinnedIds).length) untrack(() => setPins(kept));
+  });
   const pinned = $derived(
     Object.values(model?.attachments ?? {})
       .flat()
@@ -272,7 +296,7 @@
     if (a.essayId && a.essayId !== essayId) {
       if (essays.some((e) => e.id === a.essayId)) {
         essayId = a.essayId;
-        loadFolded(essayId);
+        loadViewState(essayId);
         reload();
       } else notice = "That link points to an essay that is not here; showing the current one.";
     }
@@ -383,7 +407,7 @@
     void run(() => {
       essayId = make();
       zoomId = null;
-      loadFolded(essayId);
+      loadViewState(essayId);
     });
     push();
   }
@@ -427,7 +451,7 @@
           onchange={(e) => {
             essayId = e.currentTarget.value;
             zoomId = null;
-            loadFolded(essayId);
+            loadViewState(essayId);
             reload();
             push();
           }}
