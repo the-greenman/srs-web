@@ -50,10 +50,6 @@
   outline: 1px solid var(--color-line-soft);
   outline-offset: 2px;
 }
-/* With a thread open the frame grows so the absolute hover tool stack stays inside the paragraph's own row. */
-.block-stack__item:has(.comments) .block {
-  min-height: 7.5rem;
-}
 .block__gutter {
   position: relative;
   align-self: start;
