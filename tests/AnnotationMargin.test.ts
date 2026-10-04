@@ -62,3 +62,11 @@ it("expanded shows text chips for relations; compact does not", () => {
     "derived-from · Other 1"
   );
 });
+
+it("without onopen a relation mark is a focusable image, not a button", () => {
+  const { container, queryByTestId } = render(AnnotationMargin, { annotations: [rel(1)] });
+  const mark = queryByTestId("relation-indicator");
+  expect(mark?.tagName).toBe("SPAN");
+  expect(mark?.getAttribute("role")).toBe("img");
+  expect(container.querySelector("button")).toBeNull();
+});

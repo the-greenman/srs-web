@@ -35,6 +35,16 @@ test("gallery (no comment package): relations only, no comment UI, no console er
   expect(errors).toEqual([]);
 });
 
+test("a draft reply does not carry over to the next selected instance", async ({ page }) => {
+  await selectFirstRecord(page, "essay.srsj", "On small democracy");
+  const notes = page.getByTestId("instance-notes");
+  await notes.getByLabel("Reply").fill("A draft for the first instance.");
+  await page.locator(".tree-members button").nth(1).click();
+  await expect(page.getByTestId("instance-notes")).toHaveAttribute("data-srs-instance", /./);
+  await expect(page.getByTestId("instance-notes").getByLabel("Reply")).toHaveValue("");
+  await expect(page.getByTestId("instance-notes").getByTestId("comment")).toHaveCount(0);
+});
+
 test("essay corpus: a comment on a non-paragraph instance works", async ({ page }) => {
   const errors = await selectFirstRecord(page, "essay.srsj", "On small democracy");
   const notes = page.getByTestId("instance-notes");

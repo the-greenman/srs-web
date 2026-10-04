@@ -419,7 +419,7 @@ test("a long thread is bounded and scrolls, the composer stays in view, long com
   await expect(list.getByLabel("Reply")).toHaveCount(0);
   await thread.getByLabel("Reply").scrollIntoViewIfNeeded();
   await expect(thread.getByLabel("Reply")).toBeInViewport();
-  await expect(thread.getByText("reply 25", { exact: true })).toBeInViewport();
+  await expect(thread.getByTestId("comment").getByText("reply 25", { exact: true })).toBeInViewport();
 
   // the 3,000-character comment clamps behind "Show more", and its markdown renders
   const first = thread.getByTestId("comment").first();

@@ -7,9 +7,11 @@
 import {
   createRecord,
   createRelation,
+  deleteRecord,
   listRelationTypes,
   listRelations,
   listTypes,
+  renderMarkdown,
 } from "$lib/srs-client.js";
 import type { Actor, SrsRepository, TypeSummary } from "$lib/srs-client.js";
 import { recordsOfType, typeVersion } from "$lib/type-version.js";
@@ -75,11 +77,19 @@ export function addComment(repo: SrsRepository, targetId: string, text: string):
   const rec = createRecord(repo, COMMENT_TYPE_ID, typeVersion(repo, COMMENT_TYPE_ID), {
     fieldValues: { comment_text: text },
   });
-  createRelation(repo, {
-    relationType: COMMENTS_ON,
-    sourceInstanceId: rec.instanceId,
-    targetInstanceId: targetId,
-  });
+  try {
+    createRelation(repo, {
+      relationType: COMMENTS_ON,
+      sourceInstanceId: rec.instanceId,
+      targetInstanceId: targetId,
+    });
+  } catch (e) {
+    // Not atomic in the engine: do not leave an orphan comment record behind.
+    try {
+      deleteRecord(repo, rec.instanceId);
+    } catch {}
+    throw e;
+  }
 }
 
 /** Threads longer than this keep only the newest this-many comments open; the rest sit behind "N earlier comments". */
@@ -96,14 +106,8 @@ export function groupRuns(comments: Comment[]): Comment[][] {
   return runs;
 }
 
-/** "just now", "N min ago", "N h ago" up to a day, then the locale date; "" without a timestamp. */
-export function relativeTime(iso: string, now: number): string {
-  const t = Date.parse(iso);
-  if (!iso || Number.isNaN(t)) return "";
-  const s = Math.max(0, Math.round((now - t) / 1000));
-  if (s < 60) return "just now";
-  const m = Math.round(s / 60);
-  if (m < 60) return `${m} min ago`;
-  const h = Math.round(m / 60);
-  return h < 24 ? `${h} h ago` : new Date(t).toLocaleDateString();
+/** A comment as one line of plain text: the sanitised renderMarkdown output's textContent (no second markdown grammar, never injected as HTML). */
+export function plainText(md: string): string {
+  const doc = new DOMParser().parseFromString(renderMarkdown(md), "text/html");
+  return (doc.body.textContent ?? "").replace(/\s+/g, " ").trim();
 }

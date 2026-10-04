@@ -58,6 +58,9 @@
   --margin-label-lines: 2;
   --essay-page-width: 46rem;
 
+  /* AgentFeed: the list is bounded and scrolls (newest first). */
+  --agent-feed-max: 16rem;
+
   /* CommentThread: bounded list, clamped comments, composer growth. */
   --comment-thread-max: 24rem;
   --comment-clamp-lines: 6;

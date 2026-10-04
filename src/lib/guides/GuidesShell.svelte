@@ -800,7 +800,9 @@
         {/if}
         {#if selectedGuideId}
           <Panel title="Notes" collapsible={false} class="inspector__section">
-            <InstanceNotes {repo} instanceId={selectedGuideId} revision={documentRevision} />
+            {#key selectedGuideId}
+          <InstanceNotes {repo} instanceId={selectedGuideId} revision={documentRevision} />
+        {/key}
           </Panel>
         {/if}
         <Panel title="Export" collapsible={false} class="inspector__section">

@@ -51,7 +51,7 @@
 
 <section class="instance-notes" data-srs-instance={instanceId} data-testid="instance-notes">
   {#if notes.annotations.length}
-    <AnnotationMargin annotations={notes.annotations} variant="expanded" max={8} onopen={() => {}} />
+    <AnnotationMargin annotations={notes.annotations} variant="expanded" max={8} />
   {/if}
   {#if notes.available}
     <CommentThread comments={notes.comments} needsName={!hasActor} onadd={comment} />

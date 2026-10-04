@@ -601,7 +601,9 @@
           <div class="field"><strong>{name}</strong><FieldValueView {value} /></div>
         {/each}
         <h3>Notes</h3>
-        <InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} />
+        {#key selectedRecord.instanceId}
+          <InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} />
+        {/key}
       {/if}
     {:else}
       <p class="muted">Select a record to inspect its fields and relations.</p>

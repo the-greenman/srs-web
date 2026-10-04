@@ -6,6 +6,9 @@
    Kind looks live in the marks' own CSS (comments.css, attachment.css, .margin__relation).
    Story: https://github.com/the-greenman/srs-web/issues/374, #422
    ========================================================================== */
+.block__margin {
+  align-self: start;
+}
 .margin {
   display: flex;
   flex-direction: column;
@@ -83,7 +86,7 @@
   gap: var(--margin-row-gap);
 }
 /* The paragraph an annotation belongs to is outlined while its row is hovered or focused. */
-.block[data-annotation-hover] {
+.block:has(.margin__item:is(:hover, :focus-within)) {
   outline: 1px solid var(--color-text);
   outline-offset: 2px;
 }

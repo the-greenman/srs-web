@@ -10,9 +10,9 @@
   Wraps .comments (src/styles/components/comments.css). Story: muDemocracy.org#227, srs-web#422
 -->
 <script lang="ts">
-  import { tick } from 'svelte';
   import { SvelteSet } from 'svelte/reactivity';
-  import { EARLIER_THRESHOLD, groupRuns, relativeTime } from '$lib/comments.js';
+  import { EARLIER_THRESHOLD, groupRuns, plainText } from '$lib/comments.js';
+  import { relativeTime } from '$lib/relative-time.js';
   import type { Comment } from '$lib/comments.js';
   import ActorChip from './ActorChip.svelte';
   import ActorMark from './ActorMark.svelte';
@@ -24,11 +24,14 @@
   let {
     comments = [],
     needsName = false,
+    now = Date.now(),
     onadd,
   }: {
     comments?: Comment[];
     /** No actor yet: ask for a display name with the first reply. */
     needsName?: boolean;
+    /** The shell's clock, so "just now" advances with the rest of the panel. */
+    now?: number;
     onadd: (text: string, name?: string) => void;
   } = $props();
 
@@ -44,7 +47,6 @@
   const hidden = $derived(long && !reveal ? comments.length - EARLIER_THRESHOLD : 0);
   const visible = $derived(comments.slice(hidden));
   const runs = $derived(groupRuns(visible));
-  const now = Date.now();
 
   // The newest comment is what a reader wants: scroll to it on mount, on add and after "reveal".
   $effect(() => {
@@ -71,12 +73,6 @@
     else expanded.add(id);
   }
 
-  async function revealAll() {
-    reveal = true;
-    await tick();
-    if (list) list.scrollTop = list.scrollHeight;
-  }
-
   function submit(e?: Event) {
     e?.preventDefault();
     const t = text.trim();
@@ -91,13 +87,13 @@
     <Button size="sm" variant="ghost" class="comments__summary" data-part="summary" aria-expanded={!folded} onclick={() => (folded = !folded)}>
       <ActorMark actor={comments.at(-1)?.author} size="sm" />
       <span class="comments__count">{comments.length} comments</span>
-      <span class="comments__first">{comments[0].text.split('\n')[0]}</span>
+      <span class="comments__first">{plainText(comments[comments.length - 1].text)}</span>
     </Button>
   {/if}
   {#if !folded}
     <div class="comments__list" bind:this={list} data-part="list">
       {#if hidden > 0}
-        <Button size="sm" variant="ghost" class="comments__earlier" data-part="earlier" onclick={revealAll}>{hidden} earlier comments</Button>
+        <Button size="sm" variant="ghost" class="comments__earlier" data-part="earlier" onclick={() => (reveal = true)}>{hidden} earlier comments</Button>
       {/if}
       {#each runs as run (run[0].id)}
         {#each run as c, i (c.id)}

@@ -5,7 +5,8 @@
 -->
 <script lang="ts">
   import ActorMark from './ActorMark.svelte';
-  import { ago, verb } from '$lib/agent-activity.js';
+  import { verb } from '$lib/agent-activity.js';
+  import { relativeTime } from '$lib/relative-time.js';
   import type { AgentStatus, AgentWrite } from '$lib/agent-activity.js';
 
   let {
@@ -39,9 +40,9 @@
         <ActorMark actor={actor(w.agentId)} />
         <span class="agent-activity__who" data-part="name">{actor(w.agentId).name ?? w.agentId}</span>
         {#if w.instanceId && paragraphLabel(w.instanceId) !== undefined}
-          <button type="button" class="agent-activity__what" data-testid="agent-feed-focus" onclick={() => onselect(w.instanceId as string)}>{what(w)} · {ago(w.at, now)}</button>
+          <button type="button" class="agent-activity__what" data-testid="agent-feed-focus" onclick={() => onselect(w.instanceId as string)}>{what(w)} · {relativeTime(w.at, now)}</button>
         {:else}
-          <span class="agent-activity__what">{what(w)} · {ago(w.at, now)}</span>
+          <span class="agent-activity__what">{what(w)} · {relativeTime(w.at, now)}</span>
         {/if}
       </li>
     {/each}

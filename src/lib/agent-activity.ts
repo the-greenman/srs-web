@@ -89,14 +89,6 @@ export function verb(w: Pick<AgentWrite, "tool" | "changed">): string {
   return c.target === "container" ? `${KIND_VERB[c.kind]} container` : KIND_VERB[c.kind];
 }
 
-export function ago(at: number, now: number): string {
-  const s = Math.max(0, Math.round((now - at) / 1000));
-  if (s < 10) return "just now";
-  if (s < 60) return `${s}s ago`;
-  const m = Math.round(s / 60);
-  return m < 60 ? `${m} min ago` : `${Math.round(m / 60)} h ago`;
-}
-
 /** What App's agent panel snippet may use from the shell (the paragraph label lives in the shell). */
 export interface AgentPanelCtx {
   /** "titled ¶ Opening · 2 min ago" for the agent's latest write, or "No activity yet". */

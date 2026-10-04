@@ -50,6 +50,8 @@
   outline-offset: 2px;
 }
 .block__gutter {
+  position: relative;
+  align-self: start;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -69,6 +71,11 @@
 }
 /* Opacity, not display: the tools stay in the tab order and appear on keyboard focus. */
 .block__tools {
+  position: absolute; /* overlay: the hidden tool stack must not set the paragraph's height */
+  top: 3rem;
+  z-index: var(--z-raised);
+  pointer-events: none; /* an idle stack must not catch clicks meant for the paragraph below */
+  background: var(--color-page);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -78,6 +85,7 @@
 .block:hover .block__tools,
 .block:focus-within .block__tools {
   opacity: 1;
+  pointer-events: auto;
 }
 /* Ellipsis menu: with hover it joins the hover tools; on touch it is the ONLY gutter tool (no vertical stack). */
 .block__menu {
@@ -97,6 +105,7 @@
 }
 .block__main {
   min-width: 0;
+  align-self: start; /* the paragraph's own height, so AnnotationMargin can measure it */
 }
 .block__head {
   position: relative;

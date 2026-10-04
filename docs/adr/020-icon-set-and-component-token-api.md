@@ -79,6 +79,8 @@ appended below as components gain parts.
 | `TrayRow` | `row`, `label`, `actions` |
 | `McpConnection` | `head`, `dot`, `status`, `url`, `input`, `actions` |
 | `CommentThread` | `thread`, `item`, `meta`, `text`, `reply`, `list`, `earlier`, `more`, `time`, `summary` |
+| `MarginRow` | `row`, `label` (emitted for `AnnotationMargin`) |
+| `AgentFeed` | `name` |
 | `ActorMark` | `mark` |
 | `ActorStack` | `more` |
 | `AnnotationMargin` | `overflow`, `row`, `mark`, `label`, `more` |

@@ -39,12 +39,14 @@ test("1920 expanded: no row meets the rail or leaves the page; compact at 1280 s
 
   await page.getByTestId("margin-variant").click();
   await expect(shell).toHaveAttribute("data-margin", "expanded");
-  await expect(block.locator(".margin__text").first()).toBeVisible();
+  await block.getByTestId("margin-more").click(); // a one-line paragraph shows 1 row; the rest are in +N
+  await expect(page.getByTestId("margin-overflow").locator(".margin__text").first()).toBeVisible();
+  await page.keyboard.press("Escape");
   const rail = (await page.getByTestId("rail").boundingBox())!;
   const pageBox = (await page.locator(".essay-shell__page").boundingBox())!;
-  const rows = page.locator('.essay-shell__page [data-part="row"]');
+  const rows = page.locator('.essay-shell__page .margin > [data-part="row"]');
   const n = await rows.count();
-  expect(n).toBeGreaterThan(3);
+  expect(n).toBeGreaterThanOrEqual(1);
   for (let i = 0; i < n; i++) {
     const r = (await rows.nth(i).boundingBox())!;
     expect(r.x + r.width, `row ${i} right edge`).toBeLessThanOrEqual(pageBox.x + pageBox.width + 1);
@@ -79,4 +81,27 @@ test("390: the notes are reachable inline in the title row", async ({ page }) =>
   const body = (await block.locator(".block__render").boundingBox())!;
   const last = (await rows.last().boundingBox())!;
   expect(last.y + last.height).toBeLessThanOrEqual(body.y + 1); // above the text: inline in the title row
+});
+
+test("expanded: a one-line paragraph with 4 annotations has no vertical gap; +N holds the rest", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  const { attach } = await connectAgents(page, ESSAY, 1);
+  const block = items(page).nth(0).locator(".block");
+  const id = (await items(page).nth(0).locator("[data-block-id]").getAttribute("data-block-id")) as string;
+  for (let i = 1; i <= 4; i++) await attach(1, `${LONG} ${i}`, `Body ${i}`, id);
+  await page.getByTestId("margin-variant").click();
+  await expect(page.locator(".essay-shell")).toHaveAttribute("data-margin", "expanded");
+  const more = block.getByTestId("margin-more");
+  await expect(more).toBeVisible();
+  const shown = await block.locator('.margin > [data-part="row"]').count();
+  expect(shown).toBeGreaterThanOrEqual(1);
+  expect(shown).toBeLessThan(5);
+  const rest = Number((await more.textContent())?.replace("+", ""));
+  expect(shown + rest).toBe(5); // comments row + 4 attachments
+  const b = (await block.boundingBox())!;
+  const main = (await block.locator(".block__main").boundingBox())!;
+  const row = (await block.locator('[data-part="row"]').first().boundingBox())!;
+  expect(b.height).toBeLessThanOrEqual(main.height + row.height + 8);
 });

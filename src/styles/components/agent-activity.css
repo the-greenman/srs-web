@@ -11,6 +11,8 @@
   padding: 0;
   list-style: none;
   font-size: var(--size-xs);
+  max-height: var(--agent-feed-max);
+  overflow-y: auto;
 }
 .agent-activity__row,
 .agent-activity__entry {
@@ -45,6 +47,7 @@ button.agent-activity__what:focus-visible {
 .agent-activity__head {
   margin: 0;
   font-family: var(--font-mono);
+  font-size: var(--size-xs);
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
   color: var(--color-muted);

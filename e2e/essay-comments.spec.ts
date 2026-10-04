@@ -165,6 +165,7 @@ test("threads are hidden by default; the badge shows the count and opens one; co
 test("zoom shows one paragraph with its thread; Esc returns", async ({ page }) => {
   await open(page);
   const total = await items(page).count();
+  await items(page).nth(1).hover(); // the idle tool stack ignores the pointer (it overlays the next paragraph)
   await items(page).nth(1).getByRole("button", { name: /^Zoom to/ }).click({ force: true });
   await expect(items(page)).toHaveCount(1);
   await expect(page.getByTestId("comment-thread")).toHaveCount(1);
@@ -177,10 +178,12 @@ test("addresses: deep link zooms, Back leaves zoom, copy link carries the paragr
   await open(page);
   const total = await items(page).count();
   const id = (await items(page).nth(1).locator(".block").getAttribute("data-block-id"))!;
+  await items(page).nth(1).hover(); // the idle tool stack ignores the pointer (it overlays the next paragraph)
   await items(page).nth(1).getByRole("button", { name: /^Copy link to/ }).click({ force: true });
   await expect(page.getByTestId("address-notice")).toHaveText(/Link copied/);
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(`p=${id}`);
 
+  await items(page).nth(1).hover(); // the idle tool stack ignores the pointer (it overlays the next paragraph)
   await items(page).nth(1).getByRole("button", { name: /^Zoom to/ }).click({ force: true });
   await expect(items(page)).toHaveCount(1);
   const zoomed = page.url();

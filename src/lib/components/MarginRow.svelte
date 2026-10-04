@@ -1,6 +1,6 @@
 <!--
   MarginRow — one row of an AnnotationMargin: a mark on the shared left edge, then (expanded) a
-  clamped label. Hover or focus highlights the owning paragraph (`.block[data-annotation-hover]`)
+  clamped label. Hover or focus (the owning paragraph's outline is a CSS :has() rule in margin.css)
   and, when `card` is set, shows the full text in a HoverCard (attachments already have their own
   card on the glyph). Presentation only. Wraps .margin__item (margin.css).
 -->
@@ -30,12 +30,7 @@
   let row = $state<HTMLElement>();
   let cardOpen = $state(false);
   const hover = hoverBridge((o) => (cardOpen = o && card));
-  const highlight = (on: boolean) =>
-    on ? row?.closest('.block')?.setAttribute('data-annotation-hover', '') : row?.closest('.block')?.removeAttribute('data-annotation-hover');
-  onDestroy(() => {
-    hover.destroy();
-    highlight(false);
-  });
+  onDestroy(hover.destroy);
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -43,22 +38,10 @@
   class="margin__item"
   data-part="row"
   bind:this={row}
-  onmouseenter={() => {
-    highlight(true);
-    hover.show();
-  }}
-  onmouseleave={() => {
-    highlight(false);
-    hover.hide();
-  }}
-  onfocusin={() => {
-    highlight(true);
-    hover.show();
-  }}
-  onfocusout={() => {
-    highlight(false);
-    hover.hide();
-  }}
+  onmouseenter={hover.show}
+  onmouseleave={hover.hide}
+  onfocusin={hover.show}
+  onfocusout={hover.hide}
 >
   {@render children()}
   {#if text}<span class="margin__text" data-part="label" title={label}>{text}</span>{/if}

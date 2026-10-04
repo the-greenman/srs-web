@@ -1189,7 +1189,9 @@
       {/if}
       {#if selectedRecord && formMode === null}
         <Panel title="Notes" collapsible={false} class="inspector__section">
+          {#key selectedRecord.instanceId}
           <InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} />
+        {/key}
         </Panel>
       {/if}
       {#if selectedRecord && formMode === null && activeContainer?.sectionTypeId === DECISION_TYPE_ID}

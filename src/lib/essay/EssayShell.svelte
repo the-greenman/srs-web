@@ -13,7 +13,8 @@
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import AgentFeed from "$lib/components/AgentFeed.svelte";
   import AgentPresence from "$lib/components/AgentPresence.svelte";
-  import { ago, verb } from "$lib/agent-activity.js";
+  import { verb } from "$lib/agent-activity.js";
+  import { relativeTime } from "$lib/relative-time.js";
   import type { AgentPanelCtx, AgentStatus } from "$lib/agent-activity.js";
   import PinnedPane from "$lib/components/PinnedPane.svelte";
   import AnnotationMargin from "$lib/components/AnnotationMargin.svelte";
@@ -374,7 +375,7 @@
       const w = agentStatus?.writes.find((x) => x.agentId === agentId);
       if (!w) return "No activity yet";
       const l = w.instanceId ? paragraphLabel(w.instanceId) : undefined;
-      return `${l === undefined ? verb(w) : `${verb(w)} ¶ ${l}`} · ${ago(w.at, now)}`;
+      return `${l === undefined ? verb(w) : `${verb(w)} ¶ ${l}`} · ${relativeTime(w.at, now)}`;
     },
   };
 
@@ -612,7 +613,7 @@
                 ondelete={() => toBin(p.id)}
               />
               {#if showThread(p.id)}
-                <CommentThread comments={model!.comments[p.id] ?? []} needsName={!hasActor} onadd={(t, n) => comment(p.id, t, n)} />
+                <CommentThread {now} comments={model!.comments[p.id] ?? []} needsName={!hasActor} onadd={(t, n) => comment(p.id, t, n)} />
               {/if}
             {/if}
           {/snippet}
