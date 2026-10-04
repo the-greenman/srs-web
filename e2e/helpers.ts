@@ -148,3 +148,36 @@ export async function connectAgents(page: Page, essayPath: string, count: number
   }
   return { rpc, tool, comment, attach, relate };
 }
+
+/** Open a Toolbar group menu (wide tiers); a no-op when it is already open. */
+export async function openMenu(page: Page, group: "Document" | "View" | "Go"): Promise<void> {
+  const trigger = page.getByRole("button", { name: group, exact: true });
+  if ((await trigger.getAttribute("aria-expanded")) !== "true") await trigger.click();
+}
+
+/** Escape, then wait until no popover is open (the toggle event lands a tick after the key). */
+export async function closeMenus(page: Page): Promise<void> {
+  await page.keyboard.press("Escape");
+  await expect(page.locator(":popover-open")).toHaveCount(0);
+  // aria-expanded follows the toggle event a tick later; reopening before it lands would be undone by it.
+  await expect(page.locator('[aria-haspopup="menu"][aria-expanded="true"]')).toHaveCount(0);
+}
+
+/** Open a group menu, click one item, and close the menu again (View stays open on toggle). */
+export async function menuItem(
+  page: Page,
+  group: "Document" | "View" | "Go",
+  testid: string
+): Promise<void> {
+  await openMenu(page, group);
+  await page.getByTestId(testid).click();
+  if ((await page.locator(":popover-open").count()) > 0) await closeMenus(page);
+}
+
+/** The Comments toggle's aria-checked ("true" | "false" | "mixed"), read through the View menu. */
+export async function commentsState(page: Page): Promise<string | null> {
+  await openMenu(page, "View");
+  const v = await page.getByTestId("comment-mode").getAttribute("aria-checked");
+  await closeMenus(page);
+  return v;
+}

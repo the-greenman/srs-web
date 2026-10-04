@@ -193,24 +193,24 @@ npm run typecheck && npm run lint && npm test -- Toolbar ActionMenu Popover styl
 
 #### Tasks
 
-- [ ] `EssayShell.svelte`: replace `<header class="essay-shell__bar">...` with `<Toolbar title={model?.title ?? repoName} status={...} actions={barActions} lead={...}>` (pass the essay `Select` through the title slot when `essays.length > 1`; the repo-name eyebrow stays as the title's prefix text). Delete `.essay-shell__buttons`, `.essay-shell__overflow`, `actionsEl`, the `{#each barActions}` button loop, and the `ActionMenu` `header-menu` instance in the shell.
-- [ ] D4 wiring: pass `dirty: documentDirty` into the `headerActions` state so Save is disabled when clean; add an `EssayShell.test.ts` case (Save disabled with no edits, enabled after `documentDirty`).
-- [ ] Status: `document-dirty-status` is its own `role="status"` span rendered ONLY while `documentDirty` (count 0 when clean: essay-editor/essay-write-guard/mcp-relay assert `toHaveCount(0)`); `saveMessage` stays a separate span. The Toolbar takes `status` as a snippet (or two optional strings, `dirtyStatus` with a fixed testid and `message`); Save primary from the registry (`onsave`). Read-only (`readOnlyReason`) hides Save as today (absent `onsave`).
-- [ ] View -> Comments: `oncomments: () => (openThreads = toggleAll(openThreads, shownIds))` and `comments: summary(openThreads, shownIds)` stay the only wiring (item `checked` `"mixed"` when mixed). Add a unit test that the item is `aria-checked="mixed"` with one thread open, and a click goes mixed -> all -> none, matching `thread-visibility.ts` (no fourth flag: assert `grep` below).
-- [ ] View -> Margin notes: `toggleVariant` (existing setter), `checked: marginMode === "expanded"`.
-- [ ] Help: `MarkdownHelp` stays mounted by the shell with `anchor` = the Toolbar root (expose `bind:root` or pass the bar element); wide tier invoker is the Toolbar's lone Help `IconButton` with `popovertarget={helpId}`; narrow tier item `run` sets `helpOpen = true` (selecting it closes the overflow menu and focuses its trigger first, as `ActionMenu.pick` does, so Escape returns focus to `header-menu`).
-- [ ] Delete the dead CSS in `essay-shell.css`: `.essay-shell__bar`, `__heading`, `__actions`, `__buttons`, `__overflow`, `__narrow-icon` (still used by `zoom-copy-link`: keep that one rule), the `.essay-shell__bar .btn` rule, and the phone-tier bar rules (~114-140). Keep `.essay-shell__status` if still used elsewhere (it is: notice rows).
-- [ ] Update every affected spec per the disposition table (essay-comments, essay-editor, essay-purpose, essay-export-markdown, annotation-margin, mobile-layout, popover, `tests/EssayShell.test.ts`), adding a small shared helper `openMenu(page, "Document" | "View" | "Go")` for the e2e specs. New e2e `e2e/essay-toolbar.spec.ts`:
+- [x] `EssayShell.svelte`: replace `<header class="essay-shell__bar">...` with `<Toolbar title={model?.title ?? repoName} status={...} actions={barActions} lead={...}>` (pass the essay `Select` through the title slot when `essays.length > 1`; the repo-name eyebrow stays as the title's prefix text). Delete `.essay-shell__buttons`, `.essay-shell__overflow`, `actionsEl`, the `{#each barActions}` button loop, and the `ActionMenu` `header-menu` instance in the shell.
+- [x] D4 wiring: pass `dirty: documentDirty` into the `headerActions` state so Save is disabled when clean; add an `EssayShell.test.ts` case (Save disabled with no edits, enabled after `documentDirty`).
+- [x] Status: `document-dirty-status` is its own `role="status"` span rendered ONLY while `documentDirty` (count 0 when clean: essay-editor/essay-write-guard/mcp-relay assert `toHaveCount(0)`); `saveMessage` stays a separate span. The Toolbar takes `status` as a snippet (or two optional strings, `dirtyStatus` with a fixed testid and `message`); Save primary from the registry (`onsave`). Read-only (`readOnlyReason`) hides Save as today (absent `onsave`).
+- [x] View -> Comments: `oncomments: () => (openThreads = toggleAll(openThreads, shownIds))` and `comments: summary(openThreads, shownIds)` stay the only wiring (item `checked` `"mixed"` when mixed). Add a unit test that the item is `aria-checked="mixed"` with one thread open, and a click goes mixed -> all -> none, matching `thread-visibility.ts` (no fourth flag: assert `grep` below).
+- [x] View -> Margin notes: `toggleVariant` (existing setter), `checked: marginMode === "expanded"`.
+- [x] Help: `MarkdownHelp` stays mounted by the shell with `anchor` = the Toolbar root (expose `bind:root` or pass the bar element); wide tier invoker is the Toolbar's lone Help `IconButton` with `popovertarget={helpId}`; narrow tier item `run` sets `helpOpen = true` (selecting it closes the overflow menu and focuses its trigger first, as `ActionMenu.pick` does, so Escape returns focus to `header-menu`).
+- [x] Delete the dead CSS in `essay-shell.css`: `.essay-shell__bar`, `__heading`, `__actions`, `__buttons`, `__overflow`, `__narrow-icon` (still used by `zoom-copy-link`: keep that one rule), the `.essay-shell__bar .btn` rule, and the phone-tier bar rules (~114-140). Keep `.essay-shell__status` if still used elsewhere (it is: notice rows).
+- [x] Update every affected spec per the disposition table (essay-comments, essay-editor, essay-purpose, essay-export-markdown, annotation-margin, mobile-layout, popover, `tests/EssayShell.test.ts`), adding a small shared helper `openMenu(page, "Document" | "View" | "Go")` for the e2e specs. New e2e `e2e/essay-toolbar.spec.ts`:
   - 1440 (and 768): Document / View / Go / Help reachable by role and name; Margin notes and Comments are `menuitemcheckbox` with `aria-checked` toggling; Comments shows `mixed` when one thread is open; Escape closes a menu and returns focus to its trigger; the bar holds title, status, Save, menus on one row.
   - 390: bar children are exactly title, Save, overflow trigger (assert by role count); every action is reachable from the overflow; there is no second menu button.
   - Every action that existed before the change is reachable (a table-driven loop over the old ten names: New document, Copy document, Copy for agent, Markdown help, Margin notes, Comments, Export, Export markdown, Explorer, Open another).
 
 #### Acceptance Criteria
 
-- [ ] `grep -n "essay-shell__bar\|essay-shell__buttons\|actionsEl\|aria-pressed" src/lib/essay/EssayShell.svelte src/styles/components/essay-shell.css` finds nothing; `headerActions(` is called once.
-- [ ] `grep -rn "pressed:" src/lib/essay/header-actions.ts` finds nothing; View -> Comments introduces no new `$state` (diff check: the only visibility state is `openThreads`).
-- [ ] All eight listed specs updated and green; the "unchanged" specs green unmodified.
-- [ ] The narrow bar is one row (< 72px), as asserted by `mobile-layout`.
+- [x] `grep -n "essay-shell__bar\|essay-shell__buttons\|actionsEl\|aria-pressed" src/lib/essay/EssayShell.svelte src/styles/components/essay-shell.css` finds nothing; `headerActions(` is called once.
+- [x] `grep -rn "pressed:" src/lib/essay/header-actions.ts` finds nothing; View -> Comments introduces no new `$state` (diff check: the only visibility state is `openThreads`).
+- [x] All eight listed specs updated and green; the "unchanged" specs green unmodified.
+- [x] The narrow bar is one row (< 72px), as asserted by `mobile-layout`.
 
 #### Testing
 

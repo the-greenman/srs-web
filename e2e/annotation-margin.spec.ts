@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { connectAgents } from "./helpers";
+import { connectAgents, menuItem } from "./helpers";
 
 /**
  * annotation-margin.spec.ts — srs-web#422: the margin is a real grid column. Rows never cross the
@@ -37,7 +37,7 @@ test("1920 expanded: no row meets the rail or leaves the page; compact at 1280 s
   await expect(block.locator('[data-part="row"]').first()).toBeVisible();
   await expect(block.locator(".margin__text")).toHaveCount(0); // compact: marks only
 
-  await page.getByTestId("margin-variant").click();
+  await menuItem(page, "View", "margin-variant");
   await expect(shell).toHaveAttribute("data-margin", "expanded");
   await block.getByTestId("margin-more").click(); // a one-line paragraph shows 1 row; the rest are in +N
   await expect(page.getByTestId("margin-overflow").locator(".margin__text").first()).toBeVisible();
@@ -60,7 +60,7 @@ test("1920 expanded: no row meets the rail or leaves the page; compact at 1280 s
   expect(new Set(xs).size).toBe(1);
 
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.getByTestId("margin-variant").click();
+  await menuItem(page, "View", "margin-variant");
   await expect(shell).toHaveAttribute("data-margin", "compact");
   await expect(block.locator(".margin__text")).toHaveCount(0);
 });
@@ -91,7 +91,7 @@ test("expanded: a one-line paragraph with 4 annotations has no vertical gap; +N 
   const block = items(page).nth(0).locator(".block");
   const id = (await items(page).nth(0).locator("[data-block-id]").getAttribute("data-block-id")) as string;
   for (let i = 1; i <= 4; i++) await attach(1, `${LONG} ${i}`, `Body ${i}`, id);
-  await page.getByTestId("margin-variant").click();
+  await menuItem(page, "View", "margin-variant");
   await expect(page.locator(".essay-shell")).toHaveAttribute("data-margin", "expanded");
   const more = block.getByTestId("margin-more");
   await expect(more).toBeVisible();

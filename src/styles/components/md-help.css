@@ -1,11 +1,8 @@
 /* ============================================================================
-   component: md-help (.md-help) — help IconButton + markdown cheat-sheet popover (MarkdownHelp)
+   component: md-help (.md-help) — markdown cheat-sheet popover (MarkdownHelp); the trigger is the Toolbar Help icon
    The help trigger and the popover are separate: the host owns the trigger (a popovertarget invoker) and binds `open`. Monochrome.
    Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
    ========================================================================== */
-.md-help__btn {
-  border-radius: 50%;
-}
 .md-help__pop {
   width: 22rem;
   padding: var(--space-sm);

@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { menuItem } from "./helpers";
 import type { Page } from "@playwright/test";
 
 /**
@@ -48,7 +49,7 @@ test("Copy for agent: header copies the whole essay, a paragraph menu focuses th
   await page.keyboard.type("Persuade the board.");
   await page.getByRole("heading", { name: "On small democracy" }).click();
 
-  await page.getByTestId("copy-for-agent").click();
+  await menuItem(page, "Document", "copy-for-agent");
   await expect(page.getByTestId("address-notice")).toHaveText(/Copied/);
   const whole = await page.evaluate(() => navigator.clipboard.readText());
   expect(whole).toContain("On small democracy");

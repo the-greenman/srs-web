@@ -31,9 +31,8 @@
   import InlineText from "$lib/components/InlineText.svelte";
   import MarkdownText from "$lib/components/MarkdownText.svelte";
   import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
-  import ActionMenu from "$lib/components/ActionMenu.svelte";
+  import Toolbar from "$lib/components/Toolbar.svelte";
   import ArrowLeft from "@lucide/svelte/icons/arrow-left";
-  import CircleQuestionMark from "@lucide/svelte/icons/circle-question-mark";
   import LinkIcon from "@lucide/svelte/icons/link";
   import X from "@lucide/svelte/icons/x";
   import IconButton from "$lib/components/IconButton.svelte";
@@ -65,7 +64,7 @@
   import { downloadText } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { formatAddress, parseAddress } from "./address.js";
-  import { headerActions } from "./header-actions.js";
+  import { HEADER_GROUPS, headerActions } from "./header-actions.js";
   import { canShow, isShown, setOpen, summary, toggle, toggleAll } from "./thread-visibility.js";
   import { addComment } from "$lib/comments.js";
   import { annotationsFor } from "$lib/annotations.js";
@@ -464,7 +463,7 @@
   const copyDocument = () => openNew(() => copyEssay(repo, model!));
   let helpOpen = $state(false);
   const helpId = "essay-md-help";
-  let actionsEl = $state<HTMLElement>();
+  let toolbarEl = $state<HTMLElement>();
   /** The paragraphs in view that can show a thread: the header Comments state is read over these. */
   const shownIds = $derived(items.map((i) => i.id).filter((id) => canShow(id, hidden, inherited)));
   const barActions = $derived(
@@ -496,8 +495,13 @@
 />
 
 <div class="essay-shell" data-margin={marginMode}>
-  <header class="essay-shell__bar">
-    <div class="essay-shell__heading">
+  <Toolbar
+    title={model?.title ?? repoName}
+    actions={barActions}
+    groups={HEADER_GROUPS}
+    bind:root={toolbarEl}
+  >
+    {#snippet titleSlot()}
       <span class="eyebrow">{repoName}</span>
       {#if essays.length > 1}
         <Select
@@ -513,24 +517,13 @@
           }}
         />
       {/if}
-    </div>
-    <div class="essay-shell__actions" bind:this={actionsEl}>
-      {#if documentDirty}<span class="essay-shell__status" data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
-      {#if saveMessage}<span class="essay-shell__status" role="status">{saveMessage}</span>{/if}
-      <!-- The one header action list, rendered as buttons here and as the overflow menu on narrow screens (CSS picks one). -->
-      <div class="essay-shell__buttons">
-        {#each barActions as a (a.id)}
-          {#if a.id === "help"}
-            <IconButton class="md-help__btn" icon={CircleQuestionMark} variant="outline" popovertarget={helpId} popovertargetaction="toggle" label={a.label} aria-expanded={helpOpen} />
-          {:else}
-            <Button variant={a.id === "save" || a.id.startsWith("export") ? "mono" : "ghost"} active={!!a.checked} aria-pressed={a.checked} data-testid={a.testid} disabled={!a.enabled} onclick={a.run}>{a.label}</Button>
-          {/if}
-        {/each}
-      </div>
-      <ActionMenu class="essay-shell__overflow" placement="bottom-end" testid="header-menu" title="Document actions" label={model?.title ?? repoName} actions={barActions} />
-    </div>
-    <MarkdownHelp id={helpId} anchor={actionsEl} bind:open={helpOpen} />
-  </header>
+    {/snippet}
+    {#snippet status()}
+      {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
+      {#if saveMessage}<span role="status">{saveMessage}</span>{/if}
+    {/snippet}
+  </Toolbar>
+  <MarkdownHelp id={helpId} anchor={toolbarEl} bind:open={helpOpen} />
 
   {#if notice}
     <p class="essay-shell__status" role="status" data-testid="address-notice">

@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { menuItem } from "./helpers";
 import type { Page } from "@playwright/test";
 
 /**
@@ -428,7 +429,7 @@ test("copy a document: paragraphs are shared and badged; make local copy forks o
   const badges = page.getByTestId("shared-badge");
   await expect(badges).toHaveCount(0);
 
-  await page.getByTestId("copy-document").click();
+  await menuItem(page, "Document", "copy-document");
   await expect(page.getByRole("heading", { name: "Copy of On small democracy" })).toBeVisible();
   await expect(bodies(page)).toHaveText([
     "First paragraph.",
@@ -464,7 +465,7 @@ test("copy a document: paragraphs are shared and badged; make local copy forks o
   await expect(page).toHaveURL(/#e=/);
 
   // a new document is empty and unshared
-  await page.getByTestId("new-document").click();
+  await menuItem(page, "Document", "new-document");
   await expect(page.getByRole("heading", { name: "Untitled essay" })).toBeVisible();
   await expect(badges).toHaveCount(0);
 });

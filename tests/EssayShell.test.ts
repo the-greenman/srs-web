@@ -114,8 +114,49 @@ it("threads are hidden by default; the badge opens one; comment mode shows all",
   expect(thread()).toBe(1);
   await fireEvent.click(badge);
   expect(thread()).toBe(0);
+  await fireEvent.click(getByTestId("toolbar-menu-view"));
   await fireEvent.click(getByTestId("comment-mode"));
   expect(thread()).toBe(1);
+});
+
+it("View > Comments is aria-checked mixed with one thread open, then goes all, then none (thread-visibility.ts)", async () => {
+  doc.loadEssay.mockReturnValue({
+    ...commented,
+    entries: [...model.entries, { instanceId: "q", depth: 0, hasChildren: false } as never],
+    paragraphs: { ...model.paragraphs, q: { id: "q", title: "", body: "Other" } },
+  });
+  const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
+  const { container, getByTestId } = render(EssayShell, {
+    repo: {} as never,
+    repoName: "r",
+    onExport: () => {},
+    documentRevision: 1,
+  });
+  await tick();
+  await fireEvent.click(getByTestId("toolbar-menu-view"));
+  const item = () => getByTestId("comment-mode");
+  expect(item().getAttribute("role")).toBe("menuitemcheckbox");
+  expect(item().getAttribute("aria-checked")).toBe("false");
+  await fireEvent.click(item());
+  expect(item().getAttribute("aria-checked")).toBe("true");
+  await fireEvent.click(container.querySelector<HTMLElement>("[data-testid=comment-badge]")!);
+  expect(item().getAttribute("aria-checked")).toBe("mixed");
+  await fireEvent.click(item());
+  expect(item().getAttribute("aria-checked")).toBe("true");
+  await fireEvent.click(item());
+  expect(item().getAttribute("aria-checked")).toBe("false");
+});
+
+it("Save is disabled with nothing to save and enabled once the document is dirty", async () => {
+  doc.loadEssay.mockReturnValue(model);
+  const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
+  const props = { repo: {} as never, repoName: "r", onExport: () => {}, onSave: () => {}, documentRevision: 1 };
+  const { getByTestId, rerender } = render(EssayShell, props);
+  await tick();
+  expect(getByTestId("save-document").hasAttribute("disabled")).toBe(true);
+  await rerender({ ...props, documentDirty: true });
+  await tick();
+  expect(getByTestId("save-document").hasAttribute("disabled")).toBe(false);
 });
 
 it("zoom renders only the zoomed paragraph, with its thread, until exited", async () => {
@@ -164,7 +205,10 @@ it("a relation indicator focuses the other paragraph; the variant toggle is reme
   const shell = container.querySelector(".essay-shell") as HTMLElement;
   expect(shell.dataset.margin).toBe("compact");
   expect(container.querySelector(".margin--expanded")).toBeNull();
+  await fireEvent.click(getByTestId("toolbar-menu-view"));
+  expect(getByTestId("margin-variant").getAttribute("aria-checked")).toBe("false");
   await fireEvent.click(getByTestId("margin-variant"));
+  expect(getByTestId("margin-variant").getAttribute("aria-checked")).toBe("true");
   expect(shell.dataset.margin).toBe("expanded");
   expect(container.querySelector(".margin--expanded")).not.toBeNull();
 });
@@ -190,8 +234,10 @@ it("a shared badge names the other documents; clicking it makes a local copy; Ne
     expect.objectContaining({ essayId: "e" }),
     "p"
   );
+  await fireEvent.click(getByTestId("toolbar-menu-document"));
   await fireEvent.click(getByTestId("copy-document"));
   expect(doc.copyEssay).toHaveBeenCalledOnce();
+  await fireEvent.click(getByTestId("toolbar-menu-document"));
   await fireEvent.click(getByTestId("new-document"));
   expect(doc.newEssay).toHaveBeenCalledOnce();
 });

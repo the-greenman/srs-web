@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { commentsState, menuItem } from "./helpers";
 import type { Page } from "@playwright/test";
 
 /**
@@ -158,7 +159,7 @@ test("threads are hidden by default; the badge shows the count and opens one; co
   await expect(items(page).nth(0).getByTestId("comment-badge")).toHaveText("1");
   await items(page).nth(0).getByTestId("comment-badge").click(); // close
   await expect(page.getByTestId("comment-thread")).toHaveCount(0);
-  await page.getByTestId("comment-mode").click();
+  await menuItem(page, "View", "comment-mode");
   await expect(page.getByTestId("comment-thread")).toHaveCount(await items(page).count());
 });
 
@@ -211,27 +212,27 @@ const eye = async (page: Page, n: number) => {
 test("Comments: show all, then hide all; the header reflects all, mixed and none", async ({ page }) => {
   await open(page);
   const total = await items(page).count();
-  const btn = page.getByTestId("comment-mode");
-  await expect(btn).toHaveAttribute("aria-pressed", "false");
-  await btn.click();
+  const btn = () => menuItem(page, "View", "comment-mode");
+  expect(await commentsState(page)).toBe("false");
+  await btn();
   await expect(threads(page)).toHaveCount(total);
-  await expect(btn).toHaveAttribute("aria-pressed", "true");
+  expect(await commentsState(page)).toBe("true");
   await badge(page, 0).click(); // close one: the others stay
   await expect(threads(page)).toHaveCount(total - 1);
-  await expect(btn).toHaveAttribute("aria-pressed", "mixed");
-  await btn.click(); // mixed -> show all
+  expect(await commentsState(page)).toBe("mixed");
+  await btn(); // mixed -> show all
   await expect(threads(page)).toHaveCount(total);
-  await btn.click();
+  await btn();
   await expect(threads(page)).toHaveCount(0);
-  await expect(btn).toHaveAttribute("aria-pressed", "false");
+  expect(await commentsState(page)).toBe("false");
 });
 
 test("a thread opened by its badge is gone after Comments on then off", async ({ page }) => {
   await open(page);
   await badge(page, 1).click();
   await expect(threads(page)).toHaveCount(1);
-  await page.getByTestId("comment-mode").click(); // mixed -> all
-  await page.getByTestId("comment-mode").click(); // all -> none
+  await menuItem(page, "View", "comment-mode"); // mixed -> all
+  await menuItem(page, "View", "comment-mode"); // all -> none
   await expect(threads(page)).toHaveCount(0);
 });
 
@@ -278,8 +279,8 @@ test("hiding the parent hides a child's open thread", async ({ page }) => {
 test("hide one, show all, hide all, unhide it: its thread stays closed (hidden state untouched both ways)", async ({ page }) => {
   await open(page);
   await eye(page, 0);
-  await page.getByTestId("comment-mode").click(); // show all: only the paragraphs in view
-  await page.getByTestId("comment-mode").click(); // hide all
+  await menuItem(page, "View", "comment-mode"); // show all: only the paragraphs in view
+  await menuItem(page, "View", "comment-mode"); // hide all
   await expect(threads(page)).toHaveCount(0);
   await page.locator(".layers").getByRole("button", { name: "Show Opening", exact: true }).click();
   await expect(threads(page)).toHaveCount(0);
@@ -290,7 +291,7 @@ test("show all while zoomed opens only the threads in view", async ({ page }) =>
   await items(page).nth(1).hover();
   await items(page).nth(1).getByRole("button", { name: /^Zoom to/ }).click({ force: true });
   await badge(page, 0).click(); // close the zoom thread
-  await page.getByTestId("comment-mode").click();
+  await menuItem(page, "View", "comment-mode");
   await expect(threads(page)).toHaveCount(await items(page).count());
   await page.keyboard.press("Escape");
   const total = await items(page).count();
@@ -324,10 +325,10 @@ test("deep link into a zoomed paragraph opens its thread, which the badge closes
 test("Hide comments at the bottom closes the thread, focuses the badge and updates the header", async ({ page }) => {
   await open(page);
   await badge(page, 1).click();
-  await expect(page.getByTestId("comment-mode")).toHaveAttribute("aria-pressed", "mixed");
+  expect(await commentsState(page)).toBe("mixed");
   await items(page).nth(1).getByRole("button", { name: "Hide comments" }).click();
   await expect(threads(page)).toHaveCount(0);
   await expect(badge(page, 1)).toHaveAttribute("aria-expanded", "false");
   await expect(badge(page, 1)).toBeFocused();
-  await expect(page.getByTestId("comment-mode")).toHaveAttribute("aria-pressed", "false");
+  expect(await commentsState(page)).toBe("false");
 });

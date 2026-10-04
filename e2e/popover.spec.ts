@@ -181,9 +181,9 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
       const menu = page.getByTestId("header-menu");
       await expect(page.getByRole("button", { name: "Markdown help", exact: true })).toBeHidden(); // desktop invoker is hidden on a phone
       await menu.click();
-      await page.getByTestId("header-menu-help").click();
+      await page.getByTestId("toolbar-help").click();
       await expect(help(page)).toBeVisible();
-      await expect(page.getByTestId("header-menu-help")).toBeHidden();
+      await expect(page.getByTestId("toolbar-help")).toBeHidden();
       expect(await openCount(page)).toBe(1);
       await page.keyboard.press("Escape");
       await expect(help(page)).toBeHidden();
@@ -193,7 +193,7 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
     test("an outside tap closes it", async ({ page }) => {
       await openEssay(page, phone);
       await page.getByTestId("header-menu").click();
-      await page.getByTestId("header-menu-help").click();
+      await page.getByTestId("toolbar-help").click();
       await expect(help(page)).toBeVisible();
       await page.getByRole("heading", { name: "On small democracy" }).click();
       await expect(help(page)).toBeHidden();
