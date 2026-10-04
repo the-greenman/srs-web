@@ -1,0 +1,48 @@
+/* ============================================================================
+   component: notice (.notice) — an inline, persistent message (#441, ADR-020 j)
+   ----------------------------------------------------------------------------
+   Kinds: info, success and warning are quiet (ink text, a thin rule on warning); error is strong
+   (error rule, error fill, medium weight). Tokens --notice-* (tokens-components.css). The grouped
+   Diagnostics notice is this component with a collapsible body (.diag-notice).
+   ========================================================================== */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--notice-gap);
+  margin: var(--space-xs) var(--space-sm);
+  padding: var(--notice-pad);
+  color: var(--color-text);
+  background: var(--notice-bg);
+  border: var(--notice-border);
+  border-radius: var(--notice-radius);
+  font-size: var(--size-sm);
+  line-height: 1.4;
+}
+.notice__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  min-height: 1.4em;
+  color: var(--color-muted-strong);
+}
+.notice__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.notice > .icon-btn {
+  margin-block: calc(-1 * var(--space-xs) / 2);
+  margin-inline-start: auto;
+}
+.notice--warning {
+  border-inline-start: var(--notice-warn-rule);
+}
+.notice--error {
+  font-weight: 500;
+  background: var(--notice-error-bg);
+  border-color: var(--color-error);
+  border-inline-start: var(--notice-error-rule);
+}
+.notice--error .notice__icon {
+  color: var(--color-error);
+}

@@ -10,8 +10,10 @@
     ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, MarkdownHelp, MarkdownText, McpConnection, Panel, AnnotationMargin, PinnedPane, Select, Tag,
-    TagChip, Textarea,
+    TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost,
   } from "$lib/components";
+  import LiveRegions from "$lib/components/LiveRegions.svelte";
+  import { notify } from "$lib/notices.svelte";
   import ToolbarSpecimen from "./styleguide/ToolbarSpecimen.svelte";
   import ShellSpecimen from "./styleguide/ShellSpecimen.svelte";
   import Frame from "./styleguide/Frame.svelte";
@@ -34,6 +36,7 @@
     ["paragraph", "Paragraph"],
     ["panels", "Panels and trays"],
     ["shell", "Page frame"],
+    ["notices", "Notices"],
     ["forms", "Form controls"],
   ];
 
@@ -431,6 +434,31 @@
     </div>
   </section>
 
+  <section id="notices">
+    <h2>Notices</h2>
+    <p class="sg__note">A toast is a transient event (bottom-centre of the main column; errors are sticky), a Notice is persistent
+      state, Diagnostics groups the engine's findings by identical message. Specimens are drawn statically; the button fires the real toast.</p>
+    <h3>Toast</h3>
+    <div class="stack">
+      <Toast data-specimen kind="info" text="Saved. Newer changes remain unsaved." testid="specimen-toast-info" />
+      <Toast data-specimen kind="success" text="Link copied" testid="specimen-toast-success" />
+      <Toast data-specimen kind="error" text="Could not save: the folder is read-only." testid="specimen-toast-error" />
+      <Button variant="secondary" data-testid="specimen-fire-toast" onclick={() => notify({ kind: "success", key: "sg", text: "Link copied" })}>Fire toast</Button>
+    </div>
+    <h3>Notice</h3>
+    <div class="stack">
+      <Notice data-specimen kind="info" testid="specimen-notice-info">This link points to a paragraph that is no longer here.</Notice>
+      <Notice data-specimen kind="warning" testid="specimen-notice-warning">2 size warnings: the document is large.</Notice>
+      <Notice data-specimen kind="error" testid="specimen-notice-error" onDismiss={noop}>Could not export: the engine refused the view.</Notice>
+    </div>
+    <h3>Diagnostics</h3>
+    <div class="stack">
+      <div data-testid="specimen-diagnostics-collapsed"><Diagnostics data-specimen variant="notice" diagnostics={fx.noticeDiagnostics} documentKey="sg-collapsed" /></div>
+      <div data-testid="specimen-diagnostics-expanded"><Diagnostics data-specimen variant="notice" diagnostics={fx.noticeDiagnostics} documentKey="sg-expanded" expanded /></div>
+      <div data-testid="specimen-diagnostics-panel"><Diagnostics diagnostics={fx.noticeDiagnostics} /></div>
+    </div>
+  </section>
+
   <section id="forms">
     <h2>Form controls</h2>
     <div class="sg__grid">
@@ -441,3 +469,5 @@
     </div>
   </section>
 </main>
+<LiveRegions />
+<ToastHost />

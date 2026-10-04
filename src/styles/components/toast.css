@@ -1,0 +1,52 @@
+/* ============================================================================
+   component: toast (.toast-host, .toast) — a transient status (#441, ADR-020 j)
+   ----------------------------------------------------------------------------
+   The host is a native popover="manual" in the top layer: out of flow, so it never shifts layout, and it
+   needs no z-index. ToastHost.svelte sets its top/left (placeBottomCentre); --toast-offset-bottom lifts
+   it clear of the bottom edge (and the agent dock). Tokens --toast-* (tokens-components.css).
+   ========================================================================== */
+.toast-host {
+  inset: auto;
+  margin: 0;
+  padding: 0;
+  width: var(--toast-width);
+  color: var(--color-text);
+  background: none;
+  border: 0;
+  overflow: visible;
+  translate: 0 calc(-1 * var(--toast-offset-bottom));
+}
+.toast-host:popover-open {
+  display: flex;
+  flex-direction: column;
+  gap: var(--toast-gap);
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-sm);
+  background: var(--toast-bg);
+  border: var(--toast-border);
+  border-radius: var(--notice-radius);
+  box-shadow: var(--toast-shadow);
+  font-size: var(--size-sm);
+}
+.toast__icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--color-muted-strong);
+}
+.toast__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.toast--error {
+  font-weight: 500;
+  background: var(--notice-error-bg);
+  border-color: var(--color-error);
+}
+.toast--error .toast__icon {
+  color: var(--color-error);
+}

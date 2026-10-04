@@ -107,3 +107,30 @@
   place-items: center;
   border: 1.5px solid var(--color-text);
 }
+
+/* Grouped rows and the collapsible notice variant (#441). */
+.diag__count {
+  margin-inline-start: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 400;
+  color: var(--color-muted);
+}
+.diag-notice__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.diag-notice__summary {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+}
+.diag-notice .diag-list {
+  margin-top: var(--space-xs);
+}
+.diag-notice .diag-list[hidden] {
+  display: none;
+}
+.diag--collapsed .diag-list {
+  display: none;
+}

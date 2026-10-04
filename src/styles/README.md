@@ -64,7 +64,9 @@ src/styles/
     card.css           .card         record reading view
     log-table.css      .log-table    tabular profile views (decision log)
     field.css          .field        form control + label/help/error + save bar
-    diagnostics.css    .diag         validation panel
+    diagnostics.css    .diag         validation panel, grouped rows and the collapsible notice variant (#441)
+    notice.css         .notice       the inline Notice (#441)
+    toast.css          .toast        the toast host and rows (#441)
     lifecycle.css      .lifecycle    status transition control
     icon-button.css    .icon-btn     the one small icon control (Lucide)
     popover.css        .popover      the one floating surface (native top-layer popover)

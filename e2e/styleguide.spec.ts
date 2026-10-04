@@ -12,7 +12,7 @@ test.describe("Styleguide", () => {
     await expect.poll(() => page.locator("section h2").count()).toBeGreaterThanOrEqual(11);
     await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
     // (the rejected McpConnection specimen carries its own role="alert"; anything else is the gate)
-    await expect(page.locator('[role="alert"]:not(.mcp-conn__error)')).toHaveCount(0);
+    await expect(page.locator('[role="alert"]:not(.mcp-conn__error):not([data-specimen])')).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBeUndefined();
     const bg = () =>
       page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--color-bg"));
@@ -276,5 +276,46 @@ test.describe("Styleguide", () => {
       { palette, allow: ALLOW, skip: SKIP_SELECTORS },
     );
     expect(reports, "elements painting a default palette colour under the demo theme").toEqual([]);
+  });
+});
+
+// ── Notices (srs-web#441) ───────────────────────────────────────────────────────────────
+test.describe("Styleguide notices", () => {
+  for (const theme of ["Default", "Demo"]) {
+    test(`every notice specimen is visible, collapsed and expanded diagnostics differ: ${theme} theme`, async ({
+      page,
+    }) => {
+      await page.goto("/styleguide");
+      await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+      await page.getByLabel("Theme").selectOption(theme);
+      for (const id of [
+        "specimen-toast-info",
+        "specimen-toast-success",
+        "specimen-toast-error",
+        "specimen-notice-info",
+        "specimen-notice-warning",
+        "specimen-notice-error",
+        "specimen-diagnostics-collapsed",
+        "specimen-diagnostics-expanded",
+        "specimen-diagnostics-panel",
+      ]) {
+        await expect(page.getByTestId(id)).toBeVisible();
+      }
+      const collapsed = page.getByTestId("specimen-diagnostics-collapsed");
+      const expanded = page.getByTestId("specimen-diagnostics-expanded");
+      await expect(collapsed.locator(".diag-list")).toBeHidden();
+      await expect(expanded.locator(".diag-list")).toBeVisible();
+      await expect(expanded.locator(".diag__count")).toHaveText("x3");
+    });
+  }
+
+  test("Fire toast raises a real toast that is gone after its time", async ({ page }) => {
+    await page.clock.install();
+    await page.goto("/styleguide");
+    await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+    await page.getByTestId("specimen-fire-toast").click();
+    await expect(page.locator(".toast-host .toast")).toHaveCount(1);
+    await page.clock.runFor(5000);
+    await expect(page.locator(".toast-host .toast")).toHaveCount(0);
   });
 });
