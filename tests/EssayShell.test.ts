@@ -16,8 +16,6 @@ const model: EssayModel = {
   draftEntries: [],
   binContainerId: null,
   binEntries: [],
-  canBin: true,
-  canComment: true,
   comments: {},
   attachments: {},
   related: {},
@@ -304,18 +302,4 @@ it("the end-of-page Add paragraph button appends via addParagraph (all devices)"
   await tick();
   await fireEvent.click(getByTestId("add-paragraph"));
   expect(addParagraph).toHaveBeenCalledWith({}, expect.objectContaining({ essayId: "e" }));
-});
-
-it("shows no comment badge or thread when the comment type is not installed", async () => {
-  const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
-  const props = { repo: {} as never, repoName: "r", onExport: () => {}, documentRevision: 1 };
-  doc.loadEssay.mockReturnValue(model);
-  const on = render(EssayShell, props);
-  await tick();
-  expect(on.queryAllByTestId("comment-badge").length).toBeGreaterThan(0);
-  on.unmount();
-  doc.loadEssay.mockReturnValue({ ...model, canComment: false });
-  const off = render(EssayShell, props);
-  await tick();
-  expect(off.queryAllByTestId("comment-badge")).toHaveLength(0);
 });

@@ -184,7 +184,7 @@
   let openThreads = $state<Set<string>>(new Set());
   let commentMode = $state(false);
   let zoomId = $state<string | null>(null);
-  const showThread = (id: string) => !!model?.canComment && (commentMode || zoomId === id || openThreads.has(id));
+  const showThread = (id: string) => commentMode || zoomId === id || openThreads.has(id);
   const openThread = (id: string, on: boolean) => {
     const next = new Set(openThreads);
     if (on) next.add(id);
@@ -497,7 +497,7 @@
             {#if p}
               {#snippet margin()}
                 <ParagraphMargin
-                  annotations={annotationsFor(model!, p.id).filter((a) => model!.canComment || a.kind !== "comments")}
+                  annotations={annotationsFor(model!, p.id)}
                   {variant}
                   active={[...pinnedIds, ...(showThread(p.id) ? [`comments:${p.id}`] : [])]}
                   onopen={(a) => openAnnotation(a, p.id)}
@@ -523,7 +523,7 @@
                 onpull={model!.draftContainerId
                   ? () => onDrop("draft", { id: p.id, from: "essay" }, { id: null, zone: "after" })
                   : undefined}
-                ondelete={model!.canBin ? () => toBin(p.id) : undefined}
+                ondelete={() => toBin(p.id)}
               />
               {#if showThread(p.id)}
                 <CommentThread comments={model!.comments[p.id] ?? []} needsName={!hasActor} onadd={(t, n) => comment(p.id, t, n)} />
@@ -542,7 +542,7 @@
             candrop={essayDrop}
             ondrop={(p, t) => onDrop("essay", p, t)}
             onhide={(id, h) => run(() => setHidden(repo, model!, id, h))}
-            ondelete={model.canBin ? toBin : undefined}
+            ondelete={toBin}
             onfold={toggleFold}
             onselect={(id) => document.querySelector<HTMLElement>(`[data-focus-key="body:${id}"]`)?.focus()}
             onkey={onKey}
@@ -561,8 +561,6 @@
         <Panel title="Bin" aside={binItems.length} persistKey="essay.bin" collapseWhen={NARROW}>
           <BinTray
             items={binItems}
-            available={model.canBin}
-            unavailableReason="Deleting needs essay package 1.3.0."
             onrestore={restore}
             onforget={forget}
           />

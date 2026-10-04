@@ -894,12 +894,12 @@
         "fields/statement-3b000001.json",
         "fields/title-3b000002.json"
       ],
-      "id": "90677fae-16a7-49ec-8aee-1872cbf8e381",
+      "id": "1cd9622e-3d05-4214-a683-4cb81d0c44d9",
       "lifecycles": [
         "lifecycles/governancelifecycle-3c504040.json"
       ],
-      "name": "governance-core",
-      "namespace": "com.limoma",
+      "name": "governance",
+      "namespace": "com.mudemocracy.governance",
       "protocols": [],
       "relationTypes": [
         "relation-types/contains-3a1b2c4d.json",

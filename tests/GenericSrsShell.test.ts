@@ -50,12 +50,31 @@ describe("GenericSrsShell", () => {
         onExport: vi.fn(),
         onOpenAnother: vi.fn(),
         onOpenEditor: vi.fn(),
+        packageEditors: [{ editor: { id: "governance", label: "Governance", description: "d" }, unmet: null }] as never,
       },
     });
 
     expect(await screen.findByRole("button", { name: /reader/ })).toBeTruthy();
     expect(mocks.renderDocumentView).toHaveBeenCalledWith({}, "composition-1", "html", null);
     expect(screen.getAllByRole("button", { name: "Governance" })).toHaveLength(2); // nav + phone bar (srs-web#381)
+  });
+
+  it("renders an unmet editor disabled with the reason (srs-web#399)", async () => {
+    const onOpenEditor = vi.fn();
+    const governance = { id: "g", label: "Governance", description: "d" };
+    render(GenericSrsShell, {
+      props: {
+        repo: {} as never,
+        repoName: "r",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+        onOpenEditor,
+        packageEditors: [{ editor: governance, unmet: { requirement: { name: "essay", version: "1.3.0" }, have: "1.0.0" } }] as never,
+      },
+    });
+    const [btn] = await screen.findAllByRole("button", { name: "Governance" });
+    expect((btn as HTMLButtonElement).disabled).toBe(true);
+    expect((await screen.findAllByText("Needs essay package 1.3.0 (you have 1.0.0)")).length).toBeGreaterThan(0);
   });
 
   it("renders a relation map scoped by the engine to the active container", async () => {

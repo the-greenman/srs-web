@@ -32,12 +32,12 @@
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
   import { acquireChannelLock, releaseChannelLock, channelsInUseElsewhere, connections, credsKey, type AgentConnection } from "$lib/agent-connections.js";
   import { observeSession, pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
-  import { listRelations, type AgentWriteGuard, type McpSession, type SrsRepository } from "$lib/srs-client.js";
+  import { listRelations, listTypes, type AgentWriteGuard, type McpSession, type SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
-  import { EDITORS, getEditor } from "$lib/editors/registry.js";
+  import { availableEditors } from "$lib/editors/registry.js";
   import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import CreateGovernanceDocumentPanel from "$lib/components/CreateGovernanceDocumentPanel.svelte";
@@ -100,6 +100,17 @@
   let documentDirty = $state(false);
   /** Reactive invalidation signal for UI projections of the in-place repository. */
   let documentRevision = $state(0);
+  /**
+   * The one editor-availability computation (srs-web#399): entry type present and `requires` met by the
+   * core's RFC-044 check. The shell selection below and the picker (GenericSrsShell) both read it.
+   */
+  const offeredEditors = $derived.by(() => {
+    void documentRevision; // re-run after a mutation (a package install changes the answer)
+    return repo ? availableEditors(repo, listTypes(repo)) : [];
+  });
+  const activeEditor = $derived(
+    offeredEditors.find((o) => o.editor.id === editorMode && !o.unmet)?.editor ?? null,
+  );
 
   /**
    * Catalog diagnostics from the load-time `validate()` pass (RFC-038 [R24]).
@@ -806,10 +817,11 @@
 <!-- =========================================================================
      Loaded state — generic shell
      ========================================================================= -->
-{:else if editorMode === "generic"}
+{:else if !activeEditor}
   {@render catalogBanner()}
   <GenericSrsShell
     repo={repo!}
+    packageEditors={offeredEditors}
     repoName={repoName}
     onExport={handleExportArchive}
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
@@ -834,7 +846,7 @@
      ========================================================================= -->
 {:else}
   {@render catalogBanner()}
-  {@const Shell = (getEditor(editorMode) ?? EDITORS[0]).component}
+  {@const Shell = activeEditor!.component}
   <Shell
     repo={repo!}
     repoName={repoName}
@@ -906,7 +918,7 @@
 {/snippet}
 
 <!-- Shells that render `agentPanel` (the essay rail) own its placement; the rest get the floating dock. -->
-{#if relayUrl && repo && !getEditor(editorMode)?.hostsAgentPanel}
+{#if relayUrl && repo && !activeEditor?.hostsAgentPanel}
   <div class="mcp-dock">
     <Panel title="Agents" persistKey="dock.agents">{@render agentDock()}</Panel>
   </div>

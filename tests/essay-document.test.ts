@@ -109,17 +109,6 @@ describe("essay-document", () => {
     expect(model.draftEntries.map((e) => e.instanceId)).toEqual(["p9"]);
   });
 
-  it("canComment is false without the comment type or comments-on, true with both", () => {
-    const repo = { write_epoch: () => 0 } as never;
-    expect(loadEssay(repo, "E").canComment).toBe(false);
-    m.listTypes.mockReturnValueOnce([
-      ...m.listTypes(),
-      { id: COMMENT_TYPE_ID, namespace: "n", name: "comment", version: 1 },
-    ]);
-    m.listRelationTypes.mockReturnValueOnce([{ key: "com.mudemocracy.essay/comments-on" }]);
-    expect(loadEssay(repo, "E").canComment).toBe(true);
-  });
-
   it("reads comment records once per change of the comments-on set, oldest first", () => {
     m.listTypes.mockReturnValue([
       ...m.listTypes(),

@@ -5,7 +5,12 @@ import { ESSAY_TYPE_ID } from "$lib/essay/type-registry.js";
 import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
 import { DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
 import GuidesShell from "$lib/guides/GuidesShell.svelte";
-import type { AgentWriteGuard, SrsRepository, TypeSummary } from "$lib/srs-client.js";
+import {
+  type AgentWriteGuard,
+  type SrsRepository,
+  type TypeSummary,
+  checkPackageRequirements,
+} from "$lib/srs-client.js";
 /**
  * The one editor registry (srs-web#338).
  *
@@ -122,7 +127,33 @@ export function getEditor(id: string): EditorDefinition | undefined {
   return EDITORS.find((editor) => editor.id === id);
 }
 
-export function availableEditors(types: TypeSummary[]): EditorDefinition[] {
+/** An unmet requirement and the version the repository has installed (null = package absent). */
+export interface UnmetRequirement {
+  requirement: PackageRequirement;
+  have: string | null;
+}
+
+/** An editor whose entry type is present; `unmet` = the first requirement the installed packages do not satisfy. */
+export interface OfferedEditor {
+  editor: EditorDefinition;
+  unmet: UnmetRequirement | null;
+}
+
+/**
+ * The one availability computation (srs-web#399): App's shell selection and the picker both consume it.
+ * Entry type present = offered; an unmet `requires` (RFC-044, decided by the core) = offered but unusable.
+ */
+export function availableEditors(repo: SrsRepository, types: TypeSummary[]): OfferedEditor[] {
   const ids = new Set(types.map((type) => type.id));
-  return EDITORS.filter((editor) => ids.has(editor.entryTypeId));
+  return EDITORS.filter((editor) => ids.has(editor.entryTypeId)).map((editor) => {
+    const outcomes = checkPackageRequirements(repo, editor.requires);
+    const i = editor.requires.findIndex((_, n) => !outcomes[n]?.satisfied);
+    return {
+      editor,
+      unmet:
+        i < 0
+          ? null
+          : { requirement: editor.requires[i], have: outcomes[i]?.candidateVersions?.[0] ?? null },
+    };
+  });
 }
