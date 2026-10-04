@@ -127,6 +127,9 @@ test("write, reorder, nest, hide, draft out and back", async ({ page }) => {
 
   // hide follows Photoshop: hiding a parent hides its nested run; children show as hidden-by-parent
   const thirdEye = page.locator(".essay-shell__page .block-stack__item").nth(3).locator(".eye");
+  const itemOf = (name: string | RegExp) =>
+    page.getByRole("button", { name }).first().locator("xpath=ancestor::article[1]");
+  await itemOf("Hide Opening").hover(); // the tools appear on hover
   await page.getByRole("button", { name: "Hide Opening", exact: true }).first().click();
   await expect(page.getByText("Hidden paragraph")).toHaveCount(1);
   await expect(page.getByText("Hidden by parent")).toHaveCount(1);
@@ -138,16 +141,20 @@ test("write, reorder, nest, hide, draft out and back", async ({ page }) => {
   await expect(page.getByText("Hidden by parent")).toHaveCount(0);
   await expect(page.getByText("Hidden paragraph")).toHaveCount(0);
   // a directly hidden child stays hidden after the parent toggles
+  await thirdEye.locator("xpath=ancestor::article[1]").hover();
   await thirdEye.click();
   await expect(page.getByText("Hidden paragraph")).toHaveCount(1);
+  await itemOf("Hide Opening").hover(); // the tools appear on hover
   await page.getByRole("button", { name: "Hide Opening", exact: true }).first().click();
   await page.getByRole("button", { name: "Show Opening", exact: true }).first().click();
   await expect(page.getByText("Hidden paragraph")).toHaveCount(1);
   await expect(page.getByText("Hidden by parent")).toHaveCount(0);
+  await thirdEye.locator("xpath=ancestor::article[1]").hover();
   await thirdEye.click();
   await expect(page.getByText("Hidden paragraph")).toHaveCount(0);
 
   // draft: pull out via the block action, then put back via the tray
+  await page.getByRole("button", { name: /Move Claim to draft/ }).locator("xpath=ancestor::article[1]").hover();
   await page.getByRole("button", { name: /Move Claim to draft/ }).click();
   await expect(bodies(page)).toHaveCount(3);
   await expect(page.locator(".draft-tray")).toContainText("Claim");
@@ -480,6 +487,7 @@ test("delete moves a paragraph to the Bin (v1 state upgrades to v2); restore put
 }) => {
   await open(page);
   await expect(page.getByTestId("bin")).toContainText("Deleted paragraphs wait here.");
+  await page.locator(".essay-shell__page .block-stack__item").nth(1).hover();
   await page.getByRole("button", { name: /Delete Claim$/ }).click();
   await expect(bodies(page)).toHaveCount(2);
   await expect(page.getByTestId("bin-row")).toContainText("Claim");
@@ -489,6 +497,7 @@ test("delete moves a paragraph to the Bin (v1 state upgrades to v2); restore put
   await expect(bodies(page)).toHaveCount(3);
   await expect(bodies(page).last()).toHaveText("Second paragraph.");
   // the second delete reuses the Bin (no second container, no error)
+  await page.getByRole("button", { name: /Delete Opening$/ }).first().locator("xpath=ancestor::article[1]").hover();
   await page.getByRole("button", { name: /Delete Opening$/ }).click();
   await expect(page.getByTestId("bin-row")).toHaveCount(1);
   await expect(page.getByTestId("essay-error")).toHaveCount(0);
@@ -504,6 +513,7 @@ test("Delete permanently removes the paragraph and its comment, after a confirm"
   await first.getByLabel("Reply").fill("Doomed.");
   await first.getByRole("button", { name: "Comment", exact: true }).click();
   await expect(first.getByTestId("comment")).toHaveCount(1);
+  await page.getByRole("button", { name: /Delete Opening$/ }).first().locator("xpath=ancestor::article[1]").hover();
   await page.getByRole("button", { name: /Delete Opening$/ }).click();
   await expect(page.getByTestId("bin-row")).toContainText("Opening");
   page.once("dialog", (d) => d.dismiss());

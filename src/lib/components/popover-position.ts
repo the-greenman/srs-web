@@ -20,20 +20,46 @@ export interface Size {
 const GAP = 4;
 const EDGE = 4;
 
-/** Below the anchor, aligned to the placement edge; flips above when it would overflow the bottom; clamped into the viewport. */
+/** Reading-card width bounds in px (a card widens to its content within these, never past the viewport). */
+export interface CardWidth {
+  min: number;
+  max: number;
+}
+
+/**
+ * Below the anchor, aligned to the placement edge; flips above when it would overflow the bottom; clamped
+ * into the viewport. With `card`, the width is clamped to its bounds and the alignment flips to whichever
+ * side of the anchor has more room when the placement edge cannot hold the card.
+ */
 export function placeNextTo(
   anchor: Rect,
   surface: Size,
   viewport: Size,
-  placement: Placement
-): { top: number; left: number } {
+  placementIn: Placement,
+  card?: CardWidth
+): { top: number; left: number; width?: number } {
+  let placement = placementIn;
+  const width = card
+    ? Math.min(Math.max(surface.width, card.min), card.max, viewport.width - 2 * EDGE)
+    : surface.width;
+  if (card) {
+    const roomRight = viewport.width - EDGE - anchor.left;
+    const roomLeft = anchor.right - EDGE;
+    const fitsStart = roomRight >= width;
+    const fitsEnd = roomLeft >= width;
+    if (placement === "bottom-start" && !fitsStart && fitsEnd) placement = "bottom-end";
+    else if (placement === "bottom-end" && !fitsEnd && fitsStart) placement = "bottom-start";
+    else if (!fitsStart && !fitsEnd)
+      placement = roomLeft > roomRight ? "bottom-end" : "bottom-start";
+  }
   let top = anchor.bottom + GAP;
   if (top + surface.height > viewport.height - EDGE && anchor.top - GAP - surface.height >= EDGE) {
     top = anchor.top - GAP - surface.height;
   }
   top = Math.max(EDGE, Math.min(top, viewport.height - surface.height - EDGE));
-  const left = placement === "bottom-end" ? anchor.right - surface.width : anchor.left;
-  return { top, left: Math.max(EDGE, Math.min(left, viewport.width - surface.width - EDGE)) };
+  const left = placement === "bottom-end" ? anchor.right - width : anchor.left;
+  const clamped = Math.max(EDGE, Math.min(left, viewport.width - width - EDGE));
+  return card ? { top, left: clamped, width } : { top, left: clamped };
 }
 
 /** True where CSS anchor positioning is available (guarded: happy-dom has no `CSS.supports`). */
@@ -57,11 +83,15 @@ export function isShown(el: HTMLElement): boolean {
 /** Inline style props that anchor `surface` to `anchorName` below the anchor (placement picks the span side). */
 export function anchorSurfaceStyle(
   anchorName: string,
-  placement: Placement
+  placement: Placement,
+  card = false
 ): Record<string, string> {
   return {
     "position-anchor": anchorName,
     "position-area": placement === "bottom-end" ? "bottom span-left" : "bottom span-right",
-    "position-try-fallbacks": "flip-block, flip-inline",
+    // A reading card must not shrink into a cramped area: after the flips it spans the whole row.
+    "position-try-fallbacks": card
+      ? "flip-inline, flip-block, flip-block flip-inline, bottom span-all, top span-all"
+      : "flip-block, flip-inline",
   };
 }

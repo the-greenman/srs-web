@@ -38,7 +38,7 @@
 
 .block {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) 2.5rem;
+  grid-template-columns: 2rem minmax(0, 1fr) var(--margin-width);
   gap: var(--space-xs);
   padding: var(--space-xs) 0;
   border-radius: 2px;
@@ -50,6 +50,8 @@
   outline-offset: 2px;
 }
 .block__gutter {
+  position: relative;
+  align-self: start;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -69,6 +71,11 @@
 }
 /* Opacity, not display: the tools stay in the tab order and appear on keyboard focus. */
 .block__tools {
+  position: absolute; /* overlay: the hidden tool stack must not set the paragraph's height */
+  top: 3rem;
+  z-index: var(--z-raised);
+  pointer-events: none; /* an idle stack must not catch clicks meant for the paragraph below */
+  background: var(--color-page);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -78,6 +85,7 @@
 .block:hover .block__tools,
 .block:focus-within .block__tools {
   opacity: 1;
+  pointer-events: auto;
 }
 /* Ellipsis menu: with hover it joins the hover tools; on touch it is the ONLY gutter tool (no vertical stack). */
 .block__menu {
@@ -97,6 +105,7 @@
 }
 .block__main {
   min-width: 0;
+  align-self: start; /* the paragraph's own height, so AnnotationMargin can measure it */
 }
 .block__head {
   position: relative;
@@ -259,7 +268,7 @@
 /* Touch: every gutter / margin target >=44px (the gutter and margin columns widen to hold them). */
 @media (pointer: coarse) {
   .block {
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    grid-template-columns: 44px minmax(0, 1fr) max(44px, var(--margin-width));
   }
   .block__gutter .block__handle,
   .block__menu .action-menu__trigger {
@@ -279,8 +288,7 @@
    full-width body, instead of two side columns. CSS grid areas only; markup is unchanged. */
 /* bp: phone */
 @media (max-width: 480px) {
-  .essay-shell .block,
-  .essay-shell .block:has(.margin--expanded) {
+  .essay-shell .block {
     grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-areas: "head margin gutter" "body body body";
     align-items: center;

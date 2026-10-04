@@ -109,3 +109,38 @@
   font-family: var(--font-mono);
   font-size: var(--size-xs);
 }
+
+/* Actors: compact and full side by side. */
+.sg__pairs {
+  display: grid;
+  gap: var(--space-xs);
+}
+.sg__pair {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+/* Margin specimens: compact, wide and narrow columns, and the wide margin on real paragraphs. */
+.sg__margins {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+.sg__col {
+  min-width: 0;
+  padding: var(--space-xs);
+  border: var(--rule-soft);
+}
+.sg__inline {
+  width: 22rem;
+  max-width: 100%;
+}
+.sg__inline .margin {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.sg__wide {
+  --margin-width: var(--margin-width-wide);
+}

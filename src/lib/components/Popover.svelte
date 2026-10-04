@@ -30,6 +30,7 @@
     trigger,
     children,
     class: klass = '',
+    card = false,
   }: {
     open?: boolean;
     placement?: Placement;
@@ -47,6 +48,8 @@
     children: Snippet;
     /** Classes on the surface (the wrapper is only an inline-flex shell). */
     class?: string;
+    /** A reading card (HoverCard): widens to its content, placed on the side with room. Menus leave it off. */
+    card?: boolean;
   } = $props();
 
   const uid = $props.id();
@@ -82,7 +85,7 @@
   });
   const surfaceStyle = $derived(
     useAnchor
-      ? Object.entries(anchorSurfaceStyle(anchorName, placement)).map(([k, v]) => `${k}:${v}`).join(';')
+      ? Object.entries(anchorSurfaceStyle(anchorName, placement, card)).map(([k, v]) => `${k}:${v}`).join(';')
       : '',
   );
 
@@ -114,11 +117,16 @@
     const target = anchorEl;
     if (!useAnchor && target && native) {
       const place = () => {
+        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+        const vw = window.innerWidth;
+        // Mirrors --hover-card-min/max-width (min(20rem|36rem, 90vw)).
+        const bounds = card ? { min: Math.min(20 * rem, 0.9 * vw), max: Math.min(36 * rem, 0.9 * vw) } : undefined;
         const { top, left } = placeNextTo(
           target.getBoundingClientRect(),
           { width: s.offsetWidth, height: s.offsetHeight },
-          { width: window.innerWidth, height: window.innerHeight },
+          { width: vw, height: window.innerHeight },
           placement,
+          bounds,
         );
         s.style.top = `${top}px`;
         s.style.left = `${left}px`;

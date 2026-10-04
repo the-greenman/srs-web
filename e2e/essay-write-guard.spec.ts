@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { connectAgents } from "./helpers";
 
 /**
  * essay-write-guard.spec.ts — srs-web#356: the essay editor declares the engine write guard
@@ -186,4 +187,39 @@ test("agent writes cannot change the essay text but can comment", async ({ page 
   await glyph.hover();
   await page.locator(".essay-shell__page .hover-card__remove").click();
   await expect(glyph).toHaveCount(0);
+});
+
+test("agents comment on a non-paragraph instance; the guarded text stays refused (srs-web#422)", async ({
+  page,
+}) => {
+  const { tool, comment } = await connectAgents(page, ESSAY, 1);
+  const text = (r: unknown) => JSON.stringify(r);
+  const found = await tool(1, "find", { contentMatch: "On small democracy" });
+  const essayId = /[0-9a-f]{8}-[0-9a-f-]{27}/.exec(text(found))?.[0] as string;
+  expect(essayId).toBeTruthy();
+
+  // (1) a comment record plus `comments-on` targeting a non-paragraph instance (the essay record) succeeds
+  const commentId = await comment(1, "A comment on the essay record.", essayId);
+  const hit = await tool(1, "find", { contentMatch: "A comment on the essay record." });
+  expect(text(hit)).toContain(commentId);
+
+  // (2) an agent record_update of a guarded paragraph's text is refused
+  const paragraph = (await page
+    .locator(".essay-shell__page [data-block-id]")
+    .first()
+    .getAttribute("data-block-id")) as string;
+  const refused = await tool(1, "record_update", {
+    instanceId: paragraph,
+    fieldValues: { paragraph_title: "x", body: "Rewritten." },
+  });
+  expect(text(refused)).toContain("Rejected by the session write guard");
+
+  // (3) KNOWN, ACCEPTED GAP: only the essay shell declares a write guard. A record outside the
+  // guard (here the agent's own comment) can be updated by any agent session: non-essay shells have
+  // no agent write guard. Pre-existing; #422 does not widen it.
+  const allowed = await tool(1, "record_update", {
+    instanceId: commentId,
+    fieldValues: { comment_text: "Edited by an agent: allowed, the documented gap." },
+  });
+  expect(allowed.result?.isError, text(allowed)).not.toBe(true);
 });

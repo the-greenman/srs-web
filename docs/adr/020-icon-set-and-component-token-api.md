@@ -38,7 +38,7 @@ Lucide (`@lucide/svelte`, ISC) is the single icon set. Rules:
   set, same idea).
 - Documented exceptions where a glyph character stays: link text such as `GitSaveModal`
   "Install / manage on GitHub →", the accessible-name wording of relation marks in
-  `ParagraphMargin`, and the lifecycle transition decoration in `lifecycle.css` (CSS `content`
+  `AnnotationMargin`, and the lifecycle transition decoration in `lifecycle.css` (CSS `content`
   cannot host a component).
 
 ### (b) Component tokens are the public skin API
@@ -78,8 +78,12 @@ appended below as components gain parts.
 | `Panel` | `head`, `title`, `aside`, `actions`, `body` |
 | `TrayRow` | `row`, `label`, `actions` |
 | `McpConnection` | `head`, `dot`, `status`, `url`, `input`, `actions` |
-| `CommentThread` | `thread`, `item`, `meta`, `text`, `reply` |
-| `ParagraphMargin` | `overflow` |
+| `CommentThread` | `thread`, `item`, `meta`, `text`, `reply`, `list`, `earlier`, `more`, `time`, `summary` |
+| `MarginRow` | `row`, `label` (emitted for `AnnotationMargin`) |
+| `AgentFeed` | `name` |
+| `ActorMark` | `mark` |
+| `ActorStack` | `more` |
+| `AnnotationMargin` | `overflow`, `row`, `mark`, `label`, `more` |
 
 ### (d) One breakpoint source
 
@@ -111,6 +115,13 @@ each annotated `/* bp: <role> */`. `tests/breakpoints.test.ts` fails when any `@
   `CSS.supports("anchor-name: --x")`; otherwise the pure `placeNextTo(anchorRect, size, viewport,
   placement)` (below the anchor, aligned to the placement edge, flips above, clamps), repositioned on
   scroll (capture) and resize while open.
+- **Reading-card size.** Surface size is tokenised: `--popover-max-width` / `--popover-max-height`
+  (menu values, `min(22rem, 90vw)` / `min(28rem, 80vh)`) and, for `card` popovers (`HoverCard`),
+  `--hover-card-min-width: min(20rem, 90vw)`, `--hover-card-max-width: min(36rem, 90vw)`,
+  `--hover-card-max-height: min(32rem, 70vh)`. A card sizes to its content between min and max and
+  shrinks below min only on a viewport narrower than the 90vw guard. `Popover`'s `card` prop adds
+  anchor fallbacks `bottom span-all` / `top span-all` after the flips, and makes `placeNextTo` clamp
+  the width and pick the side of the anchor with more room. `HoverCard` places `bottom-end` (the card extends toward the page, away from the right rail). Menus are unchanged.
 - **happy-dom.** It lacks the popover API. `Popover` feature-guards: without `showPopover` it toggles
   an `is-open` class and inline `display`, the trigger props carry an `onclick`, and Escape closes it.
   Component tests cover that fallback and the pure placement; light-dismiss, Escape, top layer,
@@ -119,6 +130,32 @@ each annotated `/* bp: <role> */`. `tests/breakpoints.test.ts` fails when any `@
   (both live under one wrapper) and hides it after a 150 ms delay that re-entry cancels, so the
   pointer crossing the gap does not lose "Remove link". No touch claim: touch reaches Remove link
   through `PinnedPane` and the paragraph menu.
+
+### (f) Actor identity: shape, not colour
+
+`ActorMark` is the compact actor identity; `ActorChip` is the full lozenge; `ActorStack` overlaps
+marks. Kind is told by shape so it reads in monochrome: a human is a circle, an agent is a rounded
+square with a notched corner (`--actor-mark-radius-human`, `--actor-mark-radius-ai`,
+`--actor-mark-notch`). No actor (or no id) is the explicit unattributed state: a neutral, hue-less
+mark and the text "Unattributed". Hue is the one `actorHue(id)` function (`src/lib/actor-hue.ts`),
+set per element as `--actor-hue` and consumed by the single `.hue-pill` rule set (also used by
+`AttachmentGlyph`, whose hue is the attaching actor's). Tokens: `--actor-mark-size`,
+`--actor-mark-size-sm`, `--actor-stack-overlap`.
+
+### (g) The annotation margin: one grid column, one kind-icon map
+
+`AnnotationMargin` is a real column of the `Block` grid. The width is the token `--margin-width`
+(default `--margin-width-compact`; `--margin-width-wide` when the shell carries
+`data-margin="expanded"`, from 721px up). The essay page grows by the difference, so the text column
+keeps its width and the margin never crosses the page edge or the rail. `data-margin` is the one
+mechanism: the header action sets it today and #424's Wide toggle reuses `src/lib/margin-mode.ts`
+rather than adding a second setter. Other tokens: `--margin-mark-size`, `--margin-row-gap`,
+`--margin-label-lines`, `--essay-page-width`.
+
+Kind icons are mapped once, in `src/lib/components/annotation-icons.ts` (`KIND_ICONS`, owner decision
+D3): the annotation's data key (`Annotation.icon`, the neighbour's type name) to a Lucide component,
+with a fallback icon. A letter is never the only cue. `attachment` is a client presentation grouping
+by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is the attaching actor's.
 
 ## Consequences
 
@@ -133,6 +170,5 @@ each annotated `/* bp: <role> */`. `tests/breakpoints.test.ts` fails when any `@
     `genericStack`, `rail`, `wide`) into fewer; today they are only named and guarded.
   - Unlayered scoped `<style>` blocks in the Guides, Governance and Generic shells beat every layer
     and still carry raw colours: #424 (AppShell) retires them.
-  - Hue unification of `ActorChip` and `AttachmentGlyph` (`hueOf`, a shared `.hue-pill`): #422.
   - One-off buttons in the modals, `DecisionLogView`, `SourceChooser`, `BlueprintDocumentEditor` and
     the `SectionForm` table editor.

@@ -30,15 +30,45 @@
   --popover-bg: var(--color-surface-raised);
   --popover-border: var(--color-text-strong);
   --popover-shadow: var(--shadow-popover);
+  --popover-max-width: min(22rem, 90vw);
+  --popover-max-height: min(28rem, 80vh);
+  /* Reading card (HoverCard): shrinks below min only on a viewport narrower than the 90vw guard. */
+  --hover-card-min-width: min(20rem, 90vw);
+  --hover-card-max-width: min(36rem, 90vw);
+  --hover-card-max-height: min(32rem, 70vh);
 
-  /* Hue pills (ActorChip, AttachmentGlyph): hsl(<hue> S L), copied from the
-     numbers the two components used before tokenisation. */
+  /* Hue pills (.hue-pill: ActorChip, ActorMark, AttachmentGlyph): hsl(<hue> S L); the hue is
+     --actor-hue, set per element from actorHue(actor.id). */
   --hue-pill-s: 45%;
   --hue-pill-s-bg: 60%;
   --hue-pill-s-solid: 55%;
   --hue-pill-l-border: 40%;
   --hue-pill-l-bg: 94%;
-  --hue-pill-l-fg: 30%;
-  --hue-pill-l-fg-chip: 25%;
+  --hue-pill-l-fg: 25%;
   --hue-pill-l-solid: 26%;
+
+  /* ActorMark / ActorStack: human = circle, agent = rounded square with a notched corner. */
+  --actor-mark-size: 1.25rem;
+  --actor-mark-size-sm: 1rem;
+  --actor-mark-radius-human: 50%;
+  --actor-mark-radius-ai: 25%;
+  --actor-mark-notch: 0.4rem;
+  --actor-stack-overlap: -0.3rem;
+
+  /* AnnotationMargin: the margin is a grid column of the block; the shell's data-margin picks the width. */
+  --margin-width-compact: 2.5rem;
+  --margin-width-wide: 11rem;
+  --margin-width: var(--margin-width-compact);
+  --margin-mark-size: 1.5rem;
+  --margin-row-gap: 4px;
+  --margin-label-lines: 2;
+  --essay-page-width: 46rem;
+
+  /* AgentFeed: the list is bounded and scrolls (newest first). */
+  --agent-feed-max: 16rem;
+
+  /* CommentThread: bounded list, clamped comments, composer growth. */
+  --comment-thread-max: 24rem;
+  --comment-clamp-lines: 6;
+  --comment-composer-max: 10rem;
 }

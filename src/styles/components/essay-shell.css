@@ -48,13 +48,21 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--rail-width);
   gap: var(--space-md);
-  max-width: 72rem;
+  /* The page and the rail never shrink to make room for a wide margin: the grid grows with it. */
+  max-width: calc(72rem + var(--margin-width) - var(--margin-width-compact));
   margin: 0 auto;
   padding: var(--space-md) var(--space-sm);
 }
+/* The wide margin is a real column: the text column keeps its width and the page grows by the extra. */
+/* bp: compact */
+@media (min-width: 721px) {
+  .essay-shell[data-margin="expanded"] {
+    --margin-width: var(--margin-width-wide);
+  }
+}
 .essay-shell__page {
   min-width: 0;
-  max-width: 46rem;
+  max-width: calc(var(--essay-page-width) + var(--margin-width) - var(--margin-width-compact));
   width: 100%;
   margin: 0 auto;
   padding: var(--space-md) var(--space-md) var(--space-lg);

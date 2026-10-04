@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { connectAgents } from "./helpers";
 
 /**
  * agent-channels.spec.ts — srs-web#358: one relay channel + MCP session per agent, each with its
@@ -266,7 +267,11 @@ test("reload keeps ids and URLs; a typed label is the author; repo change keeps 
   };
   await comment(1, "one");
   await comment(2, "two");
-  await page.locator(".essay-shell__page .block-stack__item").nth(1).getByTestId("comment-badge").click();
+  await page
+    .locator(".essay-shell__page .block-stack__item")
+    .nth(1)
+    .getByTestId("comment-badge")
+    .click();
   await expect(
     page.locator(".essay-shell__page .block-stack__item").nth(1).getByTestId("actor-name")
   ).toHaveText(["alpha", "Labelled"]);
@@ -368,10 +373,122 @@ test("agent activity: connected count, chip in the feed, paragraph flashes, clic
 
   const feed = page.getByTestId("agent-feed-entry");
   await expect(feed).toHaveCount(2);
-  await expect(feed.first().getByTestId("actor-name")).toHaveText("alpha");
+  await expect(feed.first().getByTestId("actor-mark")).toHaveAccessibleName("alpha (agent)");
   await expect(feed.first()).toContainText("linked");
   await expect(block).toHaveClass(/is-live/);
 
   await feed.first().getByTestId("agent-feed-focus").click();
   await expect(page.locator(`[data-focus-key="body:${paragraph}"]`)).toBeFocused();
+});
+
+test("a long thread is bounded and scrolls, the composer stays in view, long comments clamp", async ({
+  page,
+}) => {
+  const { comment } = await connectAgents(page, ESSAY, 1);
+  const block = items(page).nth(1);
+  const paragraph = (await block
+    .locator("[data-block-id]")
+    .getAttribute("data-block-id")) as string;
+  await comment(1, `*em* ${"long review text ".repeat(180)}`, paragraph);
+  for (let i = 1; i <= 25; i++) await comment(1, `reply ${i}`, paragraph);
+  await block.getByTestId("comment-badge").click();
+  const thread = block.getByTestId("comment-thread");
+  const list = thread.locator('[data-part="list"]');
+
+  // 26 comments: the newest 8 are open, the older 18 sit behind one button
+  await expect(thread.getByTestId("comment")).toHaveCount(8);
+  const earlier = thread.locator('[data-part="earlier"]');
+  await expect(earlier).toHaveText("18 earlier comments");
+  const maxPx = await list.evaluate((el) => {
+    const probe = document.createElement("div");
+    probe.style.height = getComputedStyle(el).getPropertyValue("--comment-thread-max");
+    document.body.append(probe);
+    const h = probe.getBoundingClientRect().height;
+    probe.remove();
+    return h;
+  });
+  const dims = () =>
+    list.evaluate((el) => ({ c: el.clientHeight, s: el.scrollHeight, t: el.scrollTop }));
+  await earlier.click();
+  await expect(thread.getByTestId("comment")).toHaveCount(26);
+  const d = await dims();
+  expect(d.c).toBeLessThanOrEqual(maxPx + 1);
+  expect(d.s).toBeGreaterThan(d.c);
+  expect(d.t + d.c).toBeGreaterThanOrEqual(d.s - 2); // the newest is scrolled into view
+  // the composer is a sibling of the scroller (never scrolls away): bringing it into view keeps the newest in view too
+  await expect(list.getByLabel("Reply")).toHaveCount(0);
+  await thread.getByLabel("Reply").scrollIntoViewIfNeeded();
+  await expect(thread.getByLabel("Reply")).toBeInViewport();
+  await expect(thread.getByTestId("comment").getByText("reply 25", { exact: true })).toBeInViewport();
+
+  // the 3,000-character comment clamps behind "Show more", and its markdown renders
+  const first = thread.getByTestId("comment").first();
+  await list.evaluate((el) => (el.scrollTop = 0));
+  await expect(first.locator("em")).toHaveText("em");
+  const more = first.locator('[data-part="more"]');
+  await expect(more).toHaveAttribute("aria-expanded", "false");
+  await more.click();
+  await expect(more).toHaveAttribute("aria-expanded", "true");
+  await expect(more).toHaveText("Show less");
+});
+
+test("an agent comment with script and img markup is inert", async ({ page }) => {
+  const dialogs: string[] = [];
+  page.on("dialog", (d) => {
+    dialogs.push(d.message());
+    void d.dismiss();
+  });
+  const { comment } = await connectAgents(page, ESSAY, 1);
+  const block = items(page).nth(1);
+  const paragraph = (await block
+    .locator("[data-block-id]")
+    .getAttribute("data-block-id")) as string;
+  await comment(1, '<script>alert(1)</script> <img src=x onerror="alert(2)"> safe text', paragraph);
+  await block.getByTestId("comment-badge").click();
+  const c = block.getByTestId("comment");
+  await expect(c).toContainText("safe text");
+  await expect(c).toContainText("<script>");
+  await expect(c.locator("img, script")).toHaveCount(0);
+  expect(dialogs).toEqual([]);
+});
+
+test("three agents: each is visible in the presence strip, and their comments keep distinct authors", async ({
+  page,
+}) => {
+  const { comment } = await connectAgents(page, ESSAY, 3);
+  const block = items(page).nth(1);
+  const paragraph = (await block
+    .locator("[data-block-id]")
+    .getAttribute("data-block-id")) as string;
+
+  // presence: one mark per connected agent, named, in an agent (notched) shape
+  const presence = page.getByTestId("presence").first();
+  const marks = presence.getByTestId("actor-mark");
+  await expect(marks).toHaveCount(3);
+  await expect(marks.nth(0)).toHaveAccessibleName("alpha (agent)");
+  await expect(marks.nth(1)).toHaveAccessibleName("beta (agent)");
+  await expect(marks.nth(2)).toHaveAccessibleName("gamma (agent)");
+  const clip = (l: import("@playwright/test").Locator) =>
+    l.first().evaluate((el) => getComputedStyle(el).clipPath);
+  expect(await clip(marks)).not.toBe("none");
+
+  await comment(1, "from alpha", paragraph);
+  await comment(2, "from beta", paragraph);
+  await comment(3, "from gamma", paragraph);
+  await block.getByTestId("comment-badge").click();
+  const thread = block.getByTestId("comment-thread");
+  await expect(thread.getByTestId("comment")).toHaveCount(3);
+  await expect(thread.getByTestId("actor-name")).toHaveText(["alpha", "beta", "gamma"]);
+
+  // a human run: the first comment carries the chip, the next one only the compact mark (a circle)
+  await thread.getByLabel("Your name").fill("Ada");
+  for (const t of ["human one", "human two"]) {
+    await thread.getByLabel("Reply").fill(t);
+    await thread.getByRole("button", { name: "Comment", exact: true }).click();
+    await expect(thread.getByText(t, { exact: true })).toBeVisible();
+  }
+  const human = thread.getByTestId("comment").last().getByTestId("actor-mark");
+  await expect(human).toHaveAccessibleName("Ada (human)");
+  expect(await clip(human)).toBe("none");
+  await expect(thread.getByTestId("actor-name")).toHaveText(["alpha", "beta", "gamma", "Ada"]);
 });

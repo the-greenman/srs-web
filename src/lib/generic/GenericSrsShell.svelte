@@ -43,6 +43,7 @@
   import type { CompositeFormDef } from "$lib/editor/blueprint-fields.js";
   import type { FieldFormDef } from "$lib/governance/types.js";
   import type { OfferedEditor } from "$lib/editors/registry.js";
+  import InstanceNotes from "$lib/InstanceNotes.svelte";
 
   interface Props {
     repo: SrsRepository;
@@ -599,12 +600,10 @@
         {#each Object.entries(selectedRecord.fieldValues) as [name, value] (name)}
           <div class="field"><strong>{name}</strong><FieldValueView {value} /></div>
         {/each}
-        {#if selectedRelations.length > 0}
-          <h3>Relations</h3>
-          {#each selectedRelations as relation (relation.relationId)}
-            <p>{relation.relationType}</p>
-          {/each}
-        {/if}
+        <h3>Notes</h3>
+        {#key selectedRecord.instanceId}
+          <InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} />
+        {/key}
       {/if}
     {:else}
       <p class="muted">Select a record to inspect its fields and relations.</p>

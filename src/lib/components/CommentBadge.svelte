@@ -19,6 +19,7 @@
   class:is-empty={count === 0}
   aria-label={count === 0 ? `Add a comment on ${label}` : `${count} comment${count === 1 ? '' : 's'} on ${label}`}
   aria-expanded={open}
+  data-part="mark"
   data-testid="comment-badge"
   {onclick}
 >{count || '+'}</button>

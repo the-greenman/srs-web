@@ -55,6 +55,7 @@
   import { downloadDocument } from "$lib/storage/index.js";
   import { slugifyFilename } from "$lib/slug.js";
   import type { BreadcrumbItem } from "$lib/types.js";
+  import InstanceNotes from "$lib/InstanceNotes.svelte";
 
   // ---------------------------------------------------------------------------
   // Well-known blueprint identity for this opinionated editor (ADR-008).
@@ -795,6 +796,13 @@
               selectedViewId={guideViewId}
               onSelect={(id) => { guideViewId = id; refreshPreview(); }}
             />
+          </Panel>
+        {/if}
+        {#if selectedGuideId}
+          <Panel title="Notes" collapsible={false} class="inspector__section">
+            {#key selectedGuideId}
+          <InstanceNotes {repo} instanceId={selectedGuideId} revision={documentRevision} />
+        {/key}
           </Panel>
         {/if}
         <Panel title="Export" collapsible={false} class="inspector__section">

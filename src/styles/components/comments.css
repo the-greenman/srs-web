@@ -26,10 +26,63 @@
   border: 1px solid var(--color-line);
   text-transform: uppercase;
 }
-.comments__text {
+/* The body clamps rendered markdown (block children included): .comments__text is display:contents,
+   so the paragraphs are the -webkit-box's own children. */
+.comments__body {
   margin: 2px 0 0;
   font-size: var(--size-sm);
-  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.comments__body.is-clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--comment-clamp-lines);
+  line-clamp: var(--comment-clamp-lines);
+  overflow: hidden;
+}
+.comments__text {
+  display: contents;
+}
+.md-view > :first-child {
+  margin-top: 0;
+}
+.md-view > :last-child {
+  margin-bottom: 0;
+}
+.comments__time {
+  color: var(--color-muted);
+}
+/* The list is the scroller; the composer is its sibling, so it never scrolls away. */
+.comments__list {
+  max-height: var(--comment-thread-max);
+  overflow-y: auto;
+}
+.comments__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  text-align: left;
+}
+.comments__count {
+  flex: none;
+  white-space: nowrap;
+}
+.comments__summary .actor-mark-wrap {
+  flex: none;
+}
+.comments__first {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-muted);
+}
+.comments__earlier,
+.comments__more {
+  margin: 2px 0;
 }
 .comments__reply {
   display: flex;
@@ -47,6 +100,10 @@
   padding: 4px 8px;
   font-size: var(--size-sm);
   line-height: inherit;
+}
+.comments__reply .textarea {
+  max-height: var(--comment-composer-max);
+  overflow-y: auto;
 }
 
 /* Phone (srs-web#383): name, reply and the Comment button stack full-width. */
@@ -106,18 +163,77 @@
   margin: 0 0 var(--space-sm);
 }
 
-/* ActorChip: name + kind on a hue derived from the actor id (--actor-hue). */
-.actor-chip {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
-  padding: 0 6px;
+/* hue-pill: the one rule set that turns --actor-hue into a tinted pill (ActorChip, ActorMark,
+   AttachmentGlyph). Hue is per element; saturation and lightness are --hue-pill-* tokens.
+   --solid is the pinned/active fill; --neutral is the hue-less (unattributed) look. */
+.hue-pill {
   border: 1px solid hsl(var(--actor-hue, 0) var(--hue-pill-s) var(--hue-pill-l-border));
-  border-radius: 999px;
   background: hsl(var(--actor-hue, 0) var(--hue-pill-s-bg) var(--hue-pill-l-bg));
-  color: hsl(var(--actor-hue, 0) var(--hue-pill-s) var(--hue-pill-l-fg-chip));
+  color: hsl(var(--actor-hue, 0) var(--hue-pill-s) var(--hue-pill-l-fg));
+}
+.hue-pill--solid {
+  background: hsl(var(--actor-hue, 0) var(--hue-pill-s-solid) var(--hue-pill-l-solid)); /* white text >= 4.5:1 at every hue */
+  color: var(--color-on-accent);
+}
+.hue-pill--neutral {
+  border-color: var(--color-line);
+  background: var(--color-hover);
+  color: var(--color-muted-strong);
+}
+
+/* ActorMark: the compact identity. Shape tells kind (not colour): human = circle, agent = rounded
+   square with a notched corner (the notch is a clip, so it reads in monochrome). */
+.actor-mark-wrap {
+  display: inline-block;
+}
+.actor-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--actor-mark-size);
+  height: var(--actor-mark-size);
+  flex: none;
+  border-radius: var(--actor-mark-radius-human);
   font-family: var(--font-mono);
   font-size: var(--size-xs);
+  font-weight: 600;
+  line-height: 1;
+}
+.actor-mark--sm {
+  width: var(--actor-mark-size-sm);
+  height: var(--actor-mark-size-sm);
+  font-size: 9px;
+}
+.actor-mark--ai {
+  border-radius: var(--actor-mark-radius-ai);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--actor-mark-notch)) 0,
+    100% var(--actor-mark-notch),
+    100% 100%,
+    0 100%
+  );
+}
+.actor-mark:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+  clip-path: none;
+}
+
+/* ActorChip: name + kind; the leading shape is the mark's. */
+.actor-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px 0 3px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+}
+.actor-chip__shape {
+  border: 0;
+  background: currentColor;
 }
 .actor-chip__name {
   font-weight: 600;
@@ -126,4 +242,41 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
+}
+
+/* ActorStack: overlapping marks, then "+N". */
+.actor-stack {
+  display: inline-flex;
+  align-items: center;
+}
+.actor-stack > .actor-mark-wrap + .actor-mark-wrap {
+  margin-left: var(--actor-stack-overlap);
+}
+.actor-stack .actor-mark {
+  outline: 2px solid var(--color-surface);
+}
+.actor-stack__more {
+  margin-left: var(--space-xs);
+}
+.actor-stack__list {
+  padding: var(--space-xs) var(--space-sm);
+}
+.actor-stack__items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* InstanceNotes: the margin rows and the thread of one selected instance (non-essay shells). */
+.instance-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+.instance-notes .comments {
+  margin-left: 0;
 }

@@ -10,7 +10,7 @@
   import IconButton from './IconButton.svelte';
   import Panel from './Panel.svelte';
   import { NARROW } from '$lib/breakpoints';
-  import { renderMarkdown } from '$lib/srs-client.js';
+  import MarkdownView from './MarkdownView.svelte';
 
   let open = $state<Set<string>>(new Set());
   let copied = $state<string | null>(null);
@@ -50,7 +50,7 @@
           <IconButton class="pinned__close" size="sm" icon={X} label={`Unpin ${it.title}`} onclick={() => onunpin(it.id)} />
           {#if open.has(it.id) && it.text}
             <AttachmentPreview kind={it.kind} title={it.title} relation={it.relation} />
-            <div class="pinned__full">{@html renderMarkdown(it.text)}</div>
+            <MarkdownView class="pinned__full" value={it.text} />
           {:else}
             <AttachmentPreview kind={it.kind} title={it.title} relation={it.relation} text={it.text} clamp />
           {/if}

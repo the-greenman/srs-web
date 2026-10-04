@@ -63,10 +63,15 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `AttachmentPreview` | `kind` `title` `text?` `relation?` `clamp?` | `.attachment-preview` | #421 |
 | `TrayRow` | `label` `labelProps?` `actions?` snippet | `.tray__row` | #421 |
 | `MarkdownHelp` | `open?` (bindable) `id?` `anchor?` `onclose?` | `.md-help` | srs-web [#365](https://github.com/the-greenman/srs-web/issues/365) |
-| `ActorChip` | `actor` | `.actor-chip` | srs-web [#330](https://github.com/the-greenman/srs-web/issues/330), [#372](https://github.com/the-greenman/srs-web/issues/372) |
+| `ActorChip` | `actor?` | `.actor-chip` | srs-web [#330](https://github.com/the-greenman/srs-web/issues/330), [#372](https://github.com/the-greenman/srs-web/issues/372) |
+| `ActorMark` | `actor?` (none = Unattributed) `size?` (`sm` \| `md`) | `.actor-mark` | srs-web [#422](https://github.com/the-greenman/srs-web/issues/422) |
+| `ActorStack` | `actors` (`(Actor \| undefined)[]`) `max?` | `.actor-stack` | #422 |
+| `AgentPresence` | `status` (AgentStatus): an `ActorStack` of the connected agents | `.presence` | #422 |
+| `CommentThread` | `comments` (`Comment[]`, src/lib/comments.ts) `needsName?` `onadd` (bounded list, clamped comments, earlier collapsed, same-author runs) | `.comments` | #227, #422 |
+| `MarkdownView` | `value`: read-only rendered markdown, the one display `{@html renderMarkdown}` site | `.md-view` | #422 |
 | `AgentFeed` | `status` (AgentStatus) `paragraphLabel` `onselect` `now?` `limit?` | `.agent-activity` | srs-web [#372](https://github.com/the-greenman/srs-web/issues/372) |
 | `CommentBadge` | `count` `label` `open?` `onclick` | `.comment-badge` | srs-web [#364](https://github.com/the-greenman/srs-web/issues/364) |
-| `ParagraphMargin` | `annotations` (`Annotation[]`, essay/annotations.ts) `variant?` (`compact` \| `expanded`) `active?` `max?` `onopen` | `.margin` | srs-web [#374](https://github.com/the-greenman/srs-web/issues/374) |
+| `AnnotationMargin` | `annotations` (`Annotation[]`, src/lib/annotations.ts) `variant?` (`compact` \| `expanded`) `active?` `max?` `onopen` | `.margin` | srs-web [#374](https://github.com/the-greenman/srs-web/issues/374) |
 | `BlockStack` | `items` `source` `ondrop` `row` snippet `nest?` | `.block-stack` | #328 |
 | `Panel` | `title` `aside?` `open?` `persistKey?` `collapsible?` `actions?` | `.panel` `.panel-rail` | srs-web [#362](https://github.com/the-greenman/srs-web/issues/362) |
 | `AttachmentGlyph` / `HoverCard` / `PinnedPane` | `kind` `title` `text?` `pinned?` `onpin?` / `open?` `anchor?` `static?` `onremove?` / `items` `onunpin` | `.glyph` `.hover-card` `.pinned` | srs-web [#329](https://github.com/the-greenman/srs-web/issues/329) |

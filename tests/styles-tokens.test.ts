@@ -29,9 +29,8 @@ const svelte = readdirSync(join(ROOT, "src/lib/components"))
 	.map((n) => `src/lib/components/${n}`);
 
 /** Allowed exceptions: every entry needs a reason. */
-const HUE = "hue is per element (--actor-hue / --glyph-hue); saturation and lightness come from --hue-pill-* tokens";
+const HUE = "hue is per element (--actor-hue); saturation and lightness come from --hue-pill-* tokens";
 const ALLOW: { file: string; pattern: RegExp; reason: string }[] = [
-	{ file: "src/styles/components/attachment.css", pattern: /^hsl\($/, reason: HUE },
 	{ file: "src/styles/components/comments.css", pattern: /^hsl\($/, reason: HUE },
 ];
 

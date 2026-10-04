@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
-import { annotationsFor } from "../src/lib/essay/annotations.js";
+import { annotationsFor } from "../src/lib/annotations.js";
+import { essaySource } from "../src/lib/essay/annotation-source.js";
 import type { EssayModel } from "../src/lib/essay/essay-document.js";
 
 const model = {
@@ -33,7 +34,7 @@ const model = {
 } as unknown as EssayModel;
 
 it("lists comments first, then attachments, then relations, with counts and both directions", () => {
-  const a = annotationsFor(model, "p");
+  const a = annotationsFor(essaySource(model), "p");
   expect(a.map((x) => [x.kind, x.key])).toEqual([
     ["comments", "comments:p"],
     ["attachment", "a1"],
@@ -60,7 +61,7 @@ it("a bare paragraph still carries the (empty) comments annotation", () => {
     related: {},
     sharedIn: {},
   } as unknown as EssayModel;
-  expect(annotationsFor(bare, "p")).toEqual([
+  expect(annotationsFor(essaySource(bare), "p")).toEqual([
     {
       kind: "comments",
       key: "comments:p",
@@ -68,5 +69,31 @@ it("a bare paragraph still carries the (empty) comments annotation", () => {
       label: "untitled paragraph",
       actor: undefined,
     },
+  ]);
+});
+
+it("reads any instance-keyed source, not an essay: a generic instance gets comments and relation actors", () => {
+  const who = { kind: "ai" as const, id: "agent:1" };
+  const source = {
+    comments: { i: [{ id: "c", text: "t", createdAt: "", author: who }] },
+    attachments: {},
+    related: {
+      i: [
+        {
+          id: "r",
+          relationType: "refines",
+          direction: "out" as const,
+          otherId: "j",
+          label: "J",
+          actor: who,
+        },
+      ],
+    },
+    label: (id: string) => (id === "i" ? "Instance" : ""),
+  };
+  const a = annotationsFor(source, "i");
+  expect(a.map((x) => [x.kind, x.label, x.actor])).toEqual([
+    ["comments", "Instance", who],
+    ["relation", "J", who],
   ]);
 });

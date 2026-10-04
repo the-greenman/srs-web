@@ -34,7 +34,6 @@ const doc = vi.hoisted(() => ({
 }));
 vi.mock("../src/lib/essay/essay-document.js", () => ({
   ...doc,
-  addComment: vi.fn(),
   binParagraph: vi.fn(),
   deleteForever: vi.fn(),
   addParagraph,
@@ -44,6 +43,11 @@ vi.mock("../src/lib/essay/essay-document.js", () => ({
   setHidden: vi.fn(),
   setTitle: vi.fn(),
   transfer: vi.fn(),
+}));
+
+vi.mock("../src/lib/comments.js", async (orig) => ({
+  ...(await orig<typeof import("../src/lib/comments.js")>()),
+  addComment: vi.fn(),
 }));
 
 it("a typing commit reloads the essay once, via documentRevision (essay typing freeze)", async () => {
@@ -157,8 +161,11 @@ it("a relation indicator focuses the other paragraph; the variant toggle is reme
   await tick();
   await fireEvent.click(getByTestId("relation-indicator"));
   expect((document.activeElement as HTMLElement | null)?.dataset.focusKey).toBe("body:q");
+  const shell = container.querySelector(".essay-shell") as HTMLElement;
+  expect(shell.dataset.margin).toBe("compact");
   expect(container.querySelector(".margin--expanded")).toBeNull();
   await fireEvent.click(getByTestId("margin-variant"));
+  expect(shell.dataset.margin).toBe("expanded");
   expect(container.querySelector(".margin--expanded")).not.toBeNull();
 });
 

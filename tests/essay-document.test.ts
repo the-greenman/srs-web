@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { COMMENT_TYPE_ID } from "../src/lib/comments.js";
 import {
-  COMMENT_TYPE_ID,
   DOCUMENT_STATE_TYPE_ID,
   ESSAY_TYPE_ID,
   PARAGRAPH_TYPE_ID,
@@ -61,6 +61,8 @@ import {
   shiftEntry,
   transfer,
 } from "../src/lib/essay/essay-document.js";
+import { annotationsFor } from "../src/lib/annotations.js";
+import { essaySource } from "../src/lib/essay/annotation-source.js";
 
 const rec = (instanceId: string, typeId: string, fieldValues: Record<string, unknown>) => ({
   instanceId,
@@ -173,6 +175,39 @@ describe("essay-document", () => {
     expect(model.attachments.p1.map((a) => a.relationLabel)).toEqual(["counters", "mystery"]);
     removeAttachment({} as never, "a");
     expect(m.deleteRelation).toHaveBeenCalledWith(expect.anything(), "a");
+  });
+
+  it("carries the relation's createdBy into the attachment and related actor", () => {
+    const who = { kind: "ai", id: "agent:1", name: "Scribe" };
+    const note = { kind: "note", instanceId: "n1", title: "N", sections: [{ content: "c" }] };
+    const para = {
+      kind: "record",
+      instanceId: "p2",
+      typeId: PARAGRAPH_TYPE_ID,
+      typeName: "paragraph",
+      fieldValues: { body: "x" },
+    };
+    const edge = (relationId: string, neighbour: unknown, createdBy?: unknown) => ({
+      direction: "out",
+      relationId,
+      relationType: "evidences",
+      sourceId: "p1",
+      targetId: "x",
+      neighbour,
+      createdBy,
+    });
+    m.contextRecord.mockImplementation(() => ({
+      relations: [edge("a", note, who), edge("b", para, who), edge("c", note)],
+    }));
+    const model = loadEssay({ write_epoch: () => 2 } as never, "E");
+    expect(model.attachments.p1.map((a) => a.actor)).toEqual([who, undefined]);
+    expect(model.related.p1[0].actor).toEqual(who);
+    expect(annotationsFor(essaySource(model), "p1").map((a) => a.actor)).toEqual([
+      undefined, // comments: no comments yet
+      who,
+      undefined,
+      who,
+    ]);
   });
 
   it("reads comment records once per change of the comments-on set, oldest first", () => {

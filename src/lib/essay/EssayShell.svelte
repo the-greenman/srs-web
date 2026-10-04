@@ -12,10 +12,12 @@
   import { repositoryId } from "$lib/srs-client.js";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import AgentFeed from "$lib/components/AgentFeed.svelte";
-  import { ago, verb } from "$lib/agent-activity.js";
+  import AgentPresence from "$lib/components/AgentPresence.svelte";
+  import { verb } from "$lib/agent-activity.js";
+  import { relativeTime } from "$lib/relative-time.js";
   import type { AgentPanelCtx, AgentStatus } from "$lib/agent-activity.js";
   import PinnedPane from "$lib/components/PinnedPane.svelte";
-  import ParagraphMargin from "$lib/components/ParagraphMargin.svelte";
+  import AnnotationMargin from "$lib/components/AnnotationMargin.svelte";
   import Block from "$lib/components/Block.svelte";
   import BlockStack from "$lib/components/BlockStack.svelte";
   import type { DropTarget } from "$lib/components/BlockStack.svelte";
@@ -40,7 +42,6 @@
   import { NARROW } from "$lib/breakpoints";
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
-    addComment,
     addParagraph,
     binParagraph,
     copyEssay,
@@ -65,8 +66,11 @@
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { formatAddress, parseAddress } from "./address.js";
   import { headerActions } from "./header-actions.js";
-  import { annotationsFor, loadVariant, saveVariant } from "./annotations.js";
-  import type { Annotation } from "./annotations.js";
+  import { addComment } from "$lib/comments.js";
+  import { annotationsFor } from "$lib/annotations.js";
+  import { loadMargin, saveMargin } from "$lib/margin-mode.js";
+  import type { Annotation } from "$lib/annotations.js";
+  import { essaySource } from "./annotation-source.js";
   import { hiddenByAncestor, outsideRun, visibleEntries } from "./essay-model.js";
 
   let {
@@ -204,8 +208,9 @@
       .map((a) => ({ id: a.id, kind: a.neighbourType, relation: a.relationLabel, title: a.label, text: a.text })),
   );
 
-  let variant = $state(loadVariant());
-  const toggleVariant = () => saveVariant((variant = variant === "compact" ? "expanded" : "compact"));
+  /** `data-margin` on the shell: the one setter of the margin mode (#424's Wide toggle reuses it). */
+  let marginMode = $state(loadMargin());
+  const toggleVariant = () => saveMargin((marginMode = marginMode === "compact" ? "expanded" : "compact"));
   /** Margin clicks: the one kind -> action mapping (the model says what, the margin how it looks). */
   function openAnnotation(a: Annotation, paragraphId: string) {
     if (a.kind === "comments") openThread(paragraphId, !openThreads.has(paragraphId));
@@ -370,7 +375,7 @@
       const w = agentStatus?.writes.find((x) => x.agentId === agentId);
       if (!w) return "No activity yet";
       const l = w.instanceId ? paragraphLabel(w.instanceId) : undefined;
-      return `${l === undefined ? verb(w) : `${verb(w)} ¶ ${l}`} · ${ago(w.at, now)}`;
+      return `${l === undefined ? verb(w) : `${verb(w)} ¶ ${l}`} · ${relativeTime(w.at, now)}`;
     },
   };
 
@@ -472,7 +477,7 @@
         onexplorer: onOpenExplorer,
         onopenanother: onOpenAnother,
       },
-      { expanded: variant === "expanded", commentMode, saving },
+      { expanded: marginMode === "expanded", commentMode, saving },
     ),
   );
 </script>
@@ -485,7 +490,7 @@
   onpopstate={applyAddress}
 />
 
-<div class="essay-shell">
+<div class="essay-shell" data-margin={marginMode}>
   <header class="essay-shell__bar">
     <div class="essay-shell__heading">
       <span class="eyebrow">{repoName}</span>
@@ -576,9 +581,9 @@
             {@const p = model!.paragraphs[item.id]}
             {#if p}
               {#snippet margin()}
-                <ParagraphMargin
-                  annotations={annotationsFor(model!, p.id)}
-                  {variant}
+                <AnnotationMargin
+                  annotations={annotationsFor(essaySource(model!), p.id)}
+                  variant={marginMode}
                   active={[...pinnedIds, ...(showThread(p.id) ? [`comments:${p.id}`] : [])]}
                   onopen={(a) => openAnnotation(a, p.id)}
                   onremove={(a) => run(() => removeAttachment(repo, a.key))}
@@ -608,7 +613,7 @@
                 ondelete={() => toBin(p.id)}
               />
               {#if showThread(p.id)}
-                <CommentThread comments={model!.comments[p.id] ?? []} needsName={!hasActor} onadd={(t, n) => comment(p.id, t, n)} />
+                <CommentThread {now} comments={model!.comments[p.id] ?? []} needsName={!hasActor} onadd={(t, n) => comment(p.id, t, n)} />
               {/if}
             {/if}
           {/snippet}
@@ -617,7 +622,7 @@
           <Button variant="mono" class="essay-shell__add" data-testid="add-paragraph" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add paragraph</Button>
         {/if}
       </main>
-      <aside class="panel-rail" aria-label="Panels">
+      <aside class="panel-rail" aria-label="Panels" data-testid="rail">
         <Panel title="Layers" persistKey="essay.layers" collapseWhen={NARROW}>
           <LayersPanel
             {layers}
@@ -656,6 +661,7 @@
 
 {#snippet agents()}
   <Panel title="Agents" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey="essay.agents" collapseWhen={NARROW}>
+    {#snippet actions()}{#if agentStatus}<AgentPresence status={agentStatus} />{/if}{/snippet}
     {#if agentStatus}
       <AgentFeed
         {now}
