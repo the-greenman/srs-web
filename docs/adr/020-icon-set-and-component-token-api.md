@@ -228,8 +228,7 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
   Escape and a backdrop click close it, focus returns to the trigger. It is the only `showModal` user;
   the `GitSaveModal` and `SuccessorModal` z-index modals stay with #428 and a drawer must be closed
   before one opens (`ShellState.navOpen` / `inspectorOpen`).
-- **Wide.** One persisted per-viewer switch shared by all editors: `data-margin="expanded"` on `.app`
-  (the one carrier) widens the content cap and the margin column. Only a shell with the capability
+- **Wide.** One persisted per-viewer switch shared by all editors: `data-margin` on `.app` (the one carrier; set to `expanded` only when `wideEnabled` and Wide is on, else `compact`) widens the content cap and the margin column. Only a shell with the capability
   (`ShellState.wideEnabled`, the `wide` prop) shows the action and honours it; a stored Wide never
   changes a shell without the toggle.
 

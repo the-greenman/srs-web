@@ -415,3 +415,39 @@ it("the inspector trigger's badge counts agent writes since the drawer was last 
   await tick();
   expect(queryByTestId("inspector-badge")).toBeNull();
 });
+
+it("history that arrives after mount (no status at first) is seeded as seen, not counted as new", async () => {
+  doc.loadEssay.mockReturnValue(model);
+  vi.stubGlobal("matchMedia", (q: string) => ({
+    matches: Number(/max-width:\s*(\d+)px/.exec(q)?.[1]) >= 1000,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+  const write = (seq: number) => ({
+    seq,
+    agentId: "agent:a",
+    tool: "record_update",
+    instanceId: "p",
+    changed: [{ target: "instance" as const, id: "p", kind: "updated" as const }],
+    at: seq,
+  });
+  const status = (writes: ReturnType<typeof write>[]) => ({
+    connected: 1,
+    total: 1,
+    agents: [{ id: "agent:a", name: "alpha", status: "online" }],
+    writes,
+  });
+  const { queryByTestId, getByTestId, rerender } = render(EssayAgentHost, {
+    repo: {} as never,
+    repoName: "r",
+    onExport: () => {},
+    agentStatus: undefined,
+  });
+  await tick();
+  await rerender({ agentStatus: status([write(5), write(4)]) });
+  await tick();
+  expect(queryByTestId("inspector-badge")).toBeNull();
+  await rerender({ agentStatus: status([write(6), write(5), write(4)]) });
+  await tick();
+  expect(getByTestId("inspector-badge").textContent).toBe("1");
+});

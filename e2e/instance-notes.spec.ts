@@ -20,7 +20,7 @@ async function selectFirstRecord(page: Page, fixture: string, container: string)
   await page.locator('input[type="file"]#srsj-file').setInputFiles(path.join(FIXTURES, fixture));
   await page.getByRole("button", { name: `Toggle ${container}` }).click();
   await page.locator(".generic-tree-members button").first().click();
-  await expect(page.getByRole("heading", { name: "Notes" })).toBeVisible();
+  await expect(page.getByTestId("instance-notes")).toBeAttached();
   return errors;
 }
 
@@ -32,6 +32,7 @@ test("gallery (no comment package): relations only, no comment UI, no console er
   await expect(notes).toHaveAttribute("data-srs-instance", /[0-9a-f-]{36}/);
   await expect(notes.getByRole("textbox", { name: "Reply" })).toHaveCount(0);
   await expect(notes.getByTestId("comment-thread")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Notes" })).toHaveCount(0); // nothing to show: no empty heading
   expect(errors).toEqual([]);
 });
 

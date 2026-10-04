@@ -6,7 +6,7 @@
   boundaries. Package-specific editors remain optional entry points.
 -->
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import {
     find,
     getRecord,
@@ -247,12 +247,22 @@
     refreshRecords();
   }
 
+  /**
+   * At drawer width the record is in the closed inspector drawer: open it. A pick from the nav drawer
+   * closes that dialog in the same click, so wait for it to settle before opening the second modal.
+   */
+  function showInspector(): void {
+    if (!shell.inspectorDrawer) return;
+    void tick().then(() => setTimeout(() => (shell.inspectorOpen = true), 0));
+  }
+
   function openRecord(instanceId: string): void {
     try {
       editing = false;
       editFormDef = null;
       editError = null;
       selectedRecord = getRecord(repo, instanceId);
+      showInspector();
     } catch (error: unknown) {
       recordDiagnostics = [message(error)];
     }
@@ -455,7 +465,7 @@
             <span>{entry.label}</span>
             <small class="nav__item-count">{container.containerType ?? "container"}</small>
           </button>
-          <button class="nav__item generic-tree-toggle" aria-label={`Toggle ${entry.label}`} onclick={() => toggleContainer(container.containerId)}>
+          <button class="nav__item generic-tree-toggle" aria-label={`Toggle ${entry.label}`} aria-expanded={expandedContainerIds.has(container.containerId)} onclick={() => toggleContainer(container.containerId)}>
             {expandedContainerIds.has(container.containerId) ? "−" : "+"}
           </button>
         </div>
@@ -617,9 +627,8 @@
         {#each Object.entries(selectedRecord.fieldValues) as [name, value] (name)}
           <div class="generic-field"><strong>{name}</strong><FieldValueView {value} /></div>
         {/each}
-        <h3>Notes</h3>
         {#key selectedRecord.instanceId}
-          <InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} />
+          <InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} heading />
         {/key}
       {/if}
     {:else}
@@ -629,6 +638,6 @@
 {/snippet}
 
 <div class="generic-shell" data-testid="generic-srs-shell">
-  <AppShell {shell} wide nav={navPane} main={mainPane} inspector={inspectorPane} navLabel="Repository navigation" inspectorLabel="Record" />
+  <AppShell {shell} nav={navPane} main={mainPane} inspector={inspectorPane} navLabel="Repository navigation" inspectorLabel="Record" />
 </div>
 

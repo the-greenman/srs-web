@@ -216,8 +216,12 @@
   const shell = new ShellState({ wideEnabled: true });
   const marginVariant = $derived(shell.wide ? "expanded" : "compact");
   /** Inspector-trigger badge: agent writes newer than the last time the drawer was open (agent-activity.ts; no new data source). */
-  let seenSeq = $state(untrack(() => agentStatus?.writes[0]?.seq ?? 0));
-  const unseen = $derived(agentStatus?.writes.filter((w) => w.seq > seenSeq).length ?? 0);
+  // null until the first status arrives: history that arrives after mount is seeded as seen, not counted as new.
+  let seenSeq = $state<number | null>(untrack(() => (agentStatus ? (agentStatus.writes[0]?.seq ?? 0) : null)));
+  $effect.pre(() => {
+    if (seenSeq === null && agentStatus) seenSeq = agentStatus.writes[0]?.seq ?? 0;
+  });
+  const unseen = $derived(seenSeq === null ? 0 : (agentStatus?.writes.filter((w) => w.seq > seenSeq!).length ?? 0));
   $effect(() => {
     shell.inspectorBadge = shell.inspectorOpen ? 0 : unseen;
   });
@@ -680,7 +684,7 @@
 {/snippet}
 
 <!-- No inspector column until there is something in it (an essay, or the agent panel). -->
-<AppShell {shell} wide main={mainPane} inspector={model || agentPanel ? inspectorPane : undefined} inspectorLabel="Panels" />
+<AppShell {shell} main={mainPane} inspector={model || agentPanel ? inspectorPane : undefined} inspectorLabel="Panels" />
 
 {#snippet agents()}
   <Panel title="Agents" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey="essay.agents" collapseWhen={NARROW}>

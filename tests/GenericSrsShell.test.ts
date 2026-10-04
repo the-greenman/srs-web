@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import GenericSrsShell from "../src/lib/generic/GenericSrsShell.svelte";
 
@@ -337,5 +337,29 @@ describe("GenericSrsShell document revision refresh", () => {
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("second");
     expect(mocks.renderDocumentView).toHaveBeenLastCalledWith({}, "composition-2", "html", null);
     mocks.listDocumentViews.mockReset();
+  });
+});
+
+describe("GenericSrsShell at drawer width", () => {
+  it("choosing a record opens the inspector drawer so the record is shown", async () => {
+    vi.stubGlobal("matchMedia", (q: string) => ({
+      matches: Number(/max-width:\s*(\d+)px/.exec(q)?.[1]) >= 1000,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    render(GenericSrsShell, {
+      props: {
+        repo: {} as never,
+        repoName: "Example repository",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+      },
+    });
+    const drawer = (await screen.findByTestId("shell-drawer-inspector")) as HTMLDialogElement;
+    expect(drawer.open).toBe(false);
+    await fireEvent.click(await screen.findByRole("button", { name: "Records" }));
+    await fireEvent.click(screen.getByRole("button", { name: /First com\.example\/note/ }));
+    await waitFor(() => expect(drawer.open).toBe(true));
+    expect(drawer.textContent).toContain("Edit fields");
   });
 });

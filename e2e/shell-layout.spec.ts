@@ -400,6 +400,30 @@ test.describe("Generic on the frame", () => {
       await expect(page.getByTestId("nav-trigger")).toHaveCount(1); // now the Governance shell, same frame
     });
 
+    test("choosing a record from the nav drawer opens the inspector drawer showing that record", async ({
+      page,
+    }) => {
+      await load(page, "gallery.srsj");
+      await page.getByTestId("nav-trigger").click();
+      const nav = page.getByTestId("shell-drawer-nav");
+      await nav.getByRole("button", { name: "Records", exact: true }).click();
+      await expect(nav).toBeHidden();
+      await page.locator(".generic-record-row").first().click();
+      const insp = page.getByTestId("shell-drawer-inspector");
+      await expect(insp).toBeVisible();
+      await expect(insp.locator(".generic-inspector-head")).toBeVisible();
+      // and a member picked straight from the nav drawer's structure tree
+      await insp.press("Escape");
+      await expect(insp).toBeHidden();
+      await page.getByTestId("nav-trigger").click();
+      await nav.getByRole("button", { name: "Toggle Articles" }).click();
+      await expect(nav).toBeVisible(); // a disclosure leaves the drawer open
+      await nav.locator(".generic-tree-members button").first().click();
+      await expect(nav).toBeHidden();
+      await expect(insp).toBeVisible();
+      await expect(insp.locator(".generic-inspector-head")).toBeVisible();
+    });
+
     // The Layers row menu is the touch reorder control (hover: none only), so this one runs as a touch phone.
     test.describe("touch", () => {
       test.use({ isMobile: true, hasTouch: true });

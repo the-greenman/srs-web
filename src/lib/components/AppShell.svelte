@@ -8,7 +8,9 @@
   the column and the dialog); Panels keep their state through persistKey.
   It creates (or receives, `shell`) the ShellState during script init, so every child, a Topbar or a
   trigger, finds it with getShell(). `data-margin` on .app is the ONE Wide carrier: "expanded" only when
-  the shell has the Wide capability (`wide`) AND the stored Wide is on.
+  the shell has the Wide capability (`wideEnabled`) AND the stored Wide is on; otherwise it is set to
+  "compact". `shell` takes precedence: a given ShellState carries its own `wideEnabled`, and `wide` only
+  applies to a shell that passes none.
   B4 viewer shell: https://github.com/the-greenman/srs-web/issues/3
 -->
 <script lang="ts">
@@ -29,11 +31,11 @@
     nav?: Snippet;
     main: Snippet;
     inspector?: Snippet;
-    /** The shell has the Wide toggle (default false: a stored Wide never changes it). */
+    /** Wide capability, only for a shell that passes no `shell` (a given ShellState has its own `wideEnabled`). Default false: a stored Wide never changes it. */
     wide?: boolean;
     navLabel?: string;
     inspectorLabel?: string;
-    /** A ShellState made by the shell that builds the Wide action (Essay, Generic). */
+    /** A ShellState made by the shell that builds the Wide action (Essay, Generic). Takes precedence over `wide`. */
     shell?: ShellState;
   } = $props();
 
