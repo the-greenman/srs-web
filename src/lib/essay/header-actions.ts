@@ -8,7 +8,7 @@ import type { MenuAction } from "../components/menu-action.js";
 export interface HeaderAction extends MenuAction {
   variant: "ghost" | "mono";
   /** Toggle state (aria-pressed / active) for the button rendering. */
-  pressed?: boolean;
+  pressed?: boolean | "mixed";
   testid?: string;
 }
 
@@ -30,7 +30,7 @@ export interface HeaderHandlers {
 
 export function headerActions(
   h: HeaderHandlers,
-  s: { expanded: boolean; commentMode: boolean; saving: boolean }
+  s: { expanded: boolean; comments: "all" | "none" | "mixed"; saving: boolean }
 ): HeaderAction[] {
   const all: (HeaderAction | false | undefined)[] = [
     {
@@ -73,7 +73,7 @@ export function headerActions(
       variant: "ghost",
       run: h.oncomments,
       enabled: true,
-      pressed: s.commentMode,
+      pressed: s.comments === "mixed" ? "mixed" : s.comments === "all",
       testid: "comment-mode",
     },
     !!h.onsave && {

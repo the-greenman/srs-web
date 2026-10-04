@@ -60,6 +60,11 @@
   --margin-width-wide: 11rem;
   --margin-width: var(--margin-width-compact);
   --margin-mark-size: 1.5rem;
+
+  /* Block hover tool stack: an opaque floating toolbar, so it never sits as bare glyphs on text below. */
+  --block-tools-bg: var(--color-page);
+  --block-tools-border: 1px solid var(--color-line-soft);
+  --block-tools-shadow: var(--shadow-popover);
   --margin-row-gap: 4px;
   --margin-label-lines: 2;
   --essay-page-width: 46rem;
@@ -69,6 +74,7 @@
 
   /* CommentThread: bounded list, clamped comments, composer growth. */
   --comment-thread-max: 24rem;
+  --comment-thread-pad-end: var(--space-sm);
   --comment-clamp-lines: 6;
   --comment-composer-max: 10rem;
 }

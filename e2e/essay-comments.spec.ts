@@ -199,3 +199,135 @@ test("addresses: deep link zooms, Back leaves zoom, copy link carries the paragr
   await page.getByTestId("package-editor-essay").click();
   await expect(items(page)).toHaveCount(1);
 });
+
+// srs-web#431 / #432: one thread-visibility state.
+const threads = (page: Page) => page.getByTestId("comment-thread");
+const badge = (page: Page, n: number) => items(page).nth(n).getByTestId("comment-badge");
+const eye = async (page: Page, n: number) => {
+  await items(page).nth(n).hover();
+  await items(page).nth(n).locator(".eye").click({ force: true });
+};
+
+test("Comments: show all, then hide all; the header reflects all, mixed and none", async ({ page }) => {
+  await open(page);
+  const total = await items(page).count();
+  const btn = page.getByTestId("comment-mode");
+  await expect(btn).toHaveAttribute("aria-pressed", "false");
+  await btn.click();
+  await expect(threads(page)).toHaveCount(total);
+  await expect(btn).toHaveAttribute("aria-pressed", "true");
+  await badge(page, 0).click(); // close one: the others stay
+  await expect(threads(page)).toHaveCount(total - 1);
+  await expect(btn).toHaveAttribute("aria-pressed", "mixed");
+  await btn.click(); // mixed -> show all
+  await expect(threads(page)).toHaveCount(total);
+  await btn.click();
+  await expect(threads(page)).toHaveCount(0);
+  await expect(btn).toHaveAttribute("aria-pressed", "false");
+});
+
+test("a thread opened by its badge is gone after Comments on then off", async ({ page }) => {
+  await open(page);
+  await badge(page, 1).click();
+  await expect(threads(page)).toHaveCount(1);
+  await page.getByTestId("comment-mode").click(); // mixed -> all
+  await page.getByTestId("comment-mode").click(); // all -> none
+  await expect(threads(page)).toHaveCount(0);
+});
+
+test("posting keeps the thread open and the badge still closes it", async ({ page }) => {
+  await open(page);
+  await reply(page, 0, "stays", "Ada");
+  await expect(items(page).nth(0).getByTestId("comment")).toHaveCount(1);
+  await expect(threads(page)).toHaveCount(1);
+  await badge(page, 0).click();
+  await expect(threads(page)).toHaveCount(0);
+});
+
+test("a zoomed paragraph opens its thread, which can be closed", async ({ page }) => {
+  await open(page);
+  await items(page).nth(1).hover();
+  await items(page).nth(1).getByRole("button", { name: /^Zoom to/ }).click({ force: true });
+  await expect(threads(page)).toHaveCount(1);
+  await badge(page, 0).click();
+  await expect(threads(page)).toHaveCount(0);
+});
+
+test("a hidden paragraph shows no thread; unhiding brings it back", async ({ page }) => {
+  await open(page);
+  await badge(page, 0).click();
+  await expect(threads(page)).toHaveCount(1);
+  await eye(page, 0);
+  await expect(threads(page)).toHaveCount(0);
+  await page.locator(".layers").getByRole("button", { name: "Show Opening", exact: true }).click();
+  await expect(threads(page)).toHaveCount(1);
+});
+
+test("hiding the parent hides a child's open thread", async ({ page }) => {
+  await open(page);
+  await items(page).nth(1).locator(".block__render, .block__body").first().click();
+  await page.keyboard.press("Alt+ArrowRight"); // nest paragraph 2 under paragraph 1
+  await badge(page, 1).click();
+  await expect(threads(page)).toHaveCount(1);
+  await eye(page, 0);
+  await expect(threads(page)).toHaveCount(0);
+  await page.getByRole("button", { name: "Show Opening", exact: true }).first().click();
+  await expect(threads(page)).toHaveCount(1);
+});
+
+test("hide one, show all, hide all, unhide it: its thread stays closed (hidden state untouched both ways)", async ({ page }) => {
+  await open(page);
+  await eye(page, 0);
+  await page.getByTestId("comment-mode").click(); // show all: only the paragraphs in view
+  await page.getByTestId("comment-mode").click(); // hide all
+  await expect(threads(page)).toHaveCount(0);
+  await page.locator(".layers").getByRole("button", { name: "Show Opening", exact: true }).click();
+  await expect(threads(page)).toHaveCount(0);
+});
+
+test("show all while zoomed opens only the threads in view", async ({ page }) => {
+  await open(page);
+  await items(page).nth(1).hover();
+  await items(page).nth(1).getByRole("button", { name: /^Zoom to/ }).click({ force: true });
+  await badge(page, 0).click(); // close the zoom thread
+  await page.getByTestId("comment-mode").click();
+  await expect(threads(page)).toHaveCount(await items(page).count());
+  await page.keyboard.press("Escape");
+  const total = await items(page).count();
+  await expect(threads(page)).toHaveCount(1); // the rest were never opened
+  expect(total).toBeGreaterThan(1);
+});
+
+test("a hidden paragraph renders no margin at all", async ({ page }) => {
+  await open(page);
+  await eye(page, 0);
+  await expect(items(page).nth(0).locator(".block__margin")).toHaveCount(0);
+  await expect(badge(page, 0)).toHaveCount(0);
+  await expect(threads(page)).toHaveCount(0);
+});
+
+test("deep link into a zoomed paragraph opens its thread, which the badge closes", async ({ page }) => {
+  await open(page);
+  await items(page).nth(1).hover();
+  await items(page).nth(1).getByRole("button", { name: /^Zoom to/ }).click({ force: true });
+  const zoomed = page.url();
+  await page.goto("about:blank");
+  await page.goto(zoomed);
+  await page.locator('input[type="file"]#srsj-file').setInputFiles(ESSAY);
+  await page.getByTestId("package-editor-essay").click();
+  await expect(items(page)).toHaveCount(1);
+  await expect(threads(page)).toHaveCount(1);
+  await badge(page, 0).click();
+  await expect(threads(page)).toHaveCount(0);
+});
+
+test("Hide comments at the bottom closes the thread, focuses the badge and updates the header", async ({ page }) => {
+  await open(page);
+  await badge(page, 1).click();
+  await expect(page.getByTestId("comment-mode")).toHaveAttribute("aria-pressed", "mixed");
+  await items(page).nth(1).getByRole("button", { name: "Hide comments" }).click();
+  await expect(threads(page)).toHaveCount(0);
+  await expect(badge(page, 1)).toHaveAttribute("aria-expanded", "false");
+  await expect(badge(page, 1)).toBeFocused();
+  await expect(page.getByTestId("comment-mode")).toHaveAttribute("aria-pressed", "false");
+});

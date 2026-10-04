@@ -10,7 +10,7 @@ const base = {
   onexport: noop,
   onopenanother: noop,
 };
-const state = { expanded: false, commentMode: false, saving: false };
+const state = { expanded: false, comments: "none" as const, saving: false };
 
 describe("headerActions (srs-web#383)", () => {
   it("lists the always-present actions in desktop order", () => {
@@ -45,7 +45,7 @@ describe("headerActions (srs-web#383)", () => {
     const onsave = vi.fn();
     const a = headerActions(
       { ...base, onsave },
-      { expanded: true, commentMode: true, saving: true }
+      { expanded: true, comments: "all" as const, saving: true }
     );
     expect(a.find((x) => x.id === "margin")?.pressed).toBe(true);
     expect(a.find((x) => x.id === "comments")?.pressed).toBe(true);

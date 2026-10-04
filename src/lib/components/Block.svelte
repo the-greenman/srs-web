@@ -194,5 +194,5 @@
       />
     {/if}
   </div>
-  {#if margin}<div class="block__margin" data-part="margin">{@render margin()}</div>{/if}
+  {#if margin && !(hidden || inherited)}<div class="block__margin" data-part="margin">{@render margin()}</div>{/if}
 </article>
