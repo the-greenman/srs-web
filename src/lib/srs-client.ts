@@ -378,7 +378,7 @@ export interface CreateRelationInput {
 }
 
 export interface CreateRecordSuccessorInput {
-  relationType: "supersedes" | "refines";
+  relationType: string;
   fieldValues: FieldValues;
   fieldMeta?: FieldMeta;
   lifecycleState?: string;

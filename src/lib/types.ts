@@ -50,11 +50,7 @@ export interface LifecycleTransition {
 
 /**
  * A relation type option for the DecisionLinkPicker dropdown.
- * Derived at runtime from the loaded package's installed relation types.
- *
- * INTERIM: populated by `loadInstalledRelationTypes()` in GovernanceShell (srs-rust#411).
- * Once the `list_relation_types` WASM binding is available, replace the interim parse
- * with a direct `listRelationTypes(repo)` call.
+ * Mapped from the core's `listRelationTypes(repo)` (srs-client).
  */
 export interface RelationTypeOption {
   /** Relation type key as installed in the package (e.g. "precedes"). */

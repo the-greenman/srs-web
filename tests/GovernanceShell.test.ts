@@ -33,6 +33,7 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
     export_archive: () => {
       throw new Error("not mocked");
     },
+    list_relation_types: () => [],
     list_relations: () => {
       throw new Error("not mocked");
     },
@@ -184,6 +185,7 @@ function makeBaseRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
       diagnostics: [],
     }),
     export_srsj: () => "{}",
+    list_relation_types: () => [{ key: "supersedes", label: "Supersedes" }],
     get_allowed_lifecycle_transitions: () => {
       throw new Error("LifecycleNotDefined");
     },

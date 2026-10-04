@@ -63,13 +63,6 @@ here so it isn't mistaken for acceptable presentation logic:
 - **Hardcoded vocabularies** — resolved in srs-web#135 / ADR-012: `lifecycle.ts` deleted
   (hardcoded `LIFECYCLE_TRANSITIONS` / `IMMUTABLE_STATES`); `STATUS_OPTIONS` removed. All
   lifecycle vocabulary is now derived from `get_allowed_lifecycle_transitions` at runtime.
-- **Relation type derivation** — `loadInstalledRelationTypes()` in `GovernanceShell.svelte`
-  derives the installed relation types by parsing the output of `exportSrsj(repo)` rather
-  than calling a dedicated WASM binding. This is an approved interim exception for the
-  transitional period while `list_relation_types` is not yet exposed in `srs-bindings`
-  (tracked as srs-rust#411). Once that binding is available, `loadInstalledRelationTypes`
-  must be replaced with a direct `listRelationTypes(repo)` call and this entry removed.
-  (Added in srs-web#160.)
 
 ## Two-tier persistence model (introduced in srs-web#99)
 
