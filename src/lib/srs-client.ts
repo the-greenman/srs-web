@@ -2177,6 +2177,9 @@ export interface ContextRelation {
   targetId: string;
   sourceLabel?: string;
   targetLabel?: string;
+  /** srs-rust#1249 (build.457): when the relation was created, and by whom (RFC-046 testimony). */
+  createdAt?: string;
+  createdBy?: Actor;
   neighbour: ContextNeighbour | null;
 }
 
