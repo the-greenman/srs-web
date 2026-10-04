@@ -9,7 +9,7 @@ test.describe("Styleguide", () => {
 
     await page.goto("/styleguide");
     // poll: the styleguide is a lazy chunk, so the first count can race the mount
-    await expect.poll(() => page.locator("section h2").count()).toBeGreaterThanOrEqual(9);
+    await expect.poll(() => page.locator("section h2").count()).toBeGreaterThanOrEqual(11);
     await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
     // (the rejected McpConnection specimen carries its own role="alert"; anything else is the gate)
     await expect(page.locator('[role="alert"]:not(.mcp-conn__error)')).toHaveCount(0);
@@ -75,6 +75,54 @@ test.describe("Styleguide", () => {
       await expect(
         annotations.getByText("<script>alert(1)</script>", { exact: false })
       ).toBeVisible();
+      expect(errors).toEqual([]);
+    });
+  }
+
+  // ── Toolbar and paragraph tool specimens (srs-web#423) ─────────────────────────────────────
+  for (const theme of ["Default", "Demo"]) {
+    test(`toolbar tiers and paragraph tool states render without errors: ${theme} theme`, async ({ page }) => {
+      const errors: string[] = [];
+      page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      await page.goto("/styleguide");
+      await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+      await page.getByLabel("Theme").selectOption(theme);
+
+      const frames = page.getByTestId("sg-toolbar-frame");
+      await expect(frames).toHaveCount(3);
+      await expect(frames.evaluateAll((els) => els.map((e) => e.getAttribute("data-tier")))).resolves.toEqual([
+        "full",
+        "compact",
+        "narrow",
+      ]);
+      // full: Document is pinned open and is a real menu; the lone Help is an icon, not a menu
+      const full = frames.nth(0);
+      await expect(full.getByRole("menu", { name: "Document" })).toBeVisible();
+      await expect(full.getByRole("button", { name: "Markdown help", exact: true })).toBeVisible();
+      // View opens on click and carries a mixed checkable row
+      await full.getByRole("button", { name: "View", exact: true }).click();
+      await expect(page.getByRole("menuitemcheckbox", { name: "Comments" })).toHaveAttribute("aria-checked", "mixed");
+      await page.keyboard.press("Escape");
+      // compact: icon-only triggers
+      await expect(frames.nth(1).getByRole("button", { name: "Go", exact: true })).toBeVisible();
+      // narrow: exactly one overflow trigger, holding every group
+      const narrow = frames.nth(2);
+      await expect(narrow.locator('[aria-haspopup="menu"]')).toHaveCount(1);
+      await narrow.getByTestId("header-menu").click();
+      await expect(page.getByRole("menuitem", { name: "Open another" })).toBeVisible();
+      await page.keyboard.press("Escape");
+
+      // paragraph states: idle shows no strip, hover/focus/hidden/long title do, touch hides it
+      const state = (n: number) => page.getByTestId("sg-paragraph-state").nth(n).getByTestId("block-strip");
+      await expect(page.getByTestId("sg-paragraph-state")).toHaveCount(6);
+      await expect(state(0)).toHaveCSS("opacity", "0");
+      for (const n of [1, 2, 3, 4]) await expect(state(n)).toHaveCSS("opacity", "1");
+      await expect(state(5)).toBeHidden();
+      for (const n of [0, 1]) {
+        await expect(page.getByTestId("sg-paragraph-state").nth(n).getByTestId("paragraph-menu")).toBeVisible();
+      }
       expect(errors).toEqual([]);
     });
   }

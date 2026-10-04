@@ -282,17 +282,17 @@ npx playwright test e2e/essay-paragraph-controls.spec.ts e2e/essay-touch.spec.ts
 
 #### Tasks
 
-- [ ] `src/Styleguide.svelte`: add a **Toolbar** section (after "Menus and popovers") with `Toolbar` specimens at fixed widths 1440, 768 and 390 (framed containers that force the tier, via an optional `tier?: "full" | "compact" | "narrow"` override prop on `Toolbar`: when set it replaces the `matchMedia` result; used only by specimens, documented in the component header), each with a menu pinned open (use `ActionMenu`'s controlled `open`/an `defaultOpen` specimen prop): Document, View (one checkable `mixed`), Go, and the narrow overflow. Add to `sections` and fixtures in `src/styleguide/fixtures.ts`.
-- [ ] Extend the **Paragraph** section with the states: idle (handle + ⋯ only), hover (strip visible), focus (strip), hover-wins-over-focus (two adjacent blocks), hidden paragraph, one-line paragraph with a neighbour (showing no overlap), touch (⋯ only, via a forced-state class used only in the specimen).
-- [ ] `e2e/styleguide.spec.ts`: bump the `section h2` minimum, add: Toolbar renders three tier specimens, each menu role present, no console errors, demo theme leaves no hard-coded colour (existing computed-style check covers the new parts).
-- [ ] ADR-020 (`docs/adr/020-icon-set-and-component-token-api.md`): append `data-part` tables for `Toolbar` (`bar`, `lead`, `title`, `status`, `primary`, `menu`, `overflow`) and the paragraph strip (`strip`, `action`), the new `--toolbar-*` and `--block-strip-*` tokens, and the rule "an action registry carries `group` and `kind`; one renderer per surface; a one-item group is an icon, not a menu". Note the amended status in the header.
-- [ ] `src/styles/README.md`: the new files and token families; component header comments for `Toolbar`, `ActionMenu` (checkables), `Block` (strip), `header-actions.ts`, `paragraph-actions.ts` updated.
-- [ ] Final sweep: `grep -rn "variant: \"ghost\" | \"mono\"\|essay-shell__bar\|HOVER_TOOLS\|header-menu-" src tests e2e docs plans/423-toolbar-controls.md` shows only intended references; `grep -rn "name: /Move\|name: /Delete" e2e` shows no use against strip buttons. `.essay-shell__narrow-icon` STAYS (still used by `zoom-copy-link`, `EssayShell.svelte:577`).
+- [x] `src/Styleguide.svelte`: add a **Toolbar** section (after "Menus and popovers") with `Toolbar` specimens at fixed widths 1440, 768 and 390 (framed containers that force the tier, via an optional `tier?: "full" | "compact" | "narrow"` override prop on `Toolbar`: when set it replaces the `matchMedia` result; used only by specimens, documented in the component header), each with a menu pinned open (use `ActionMenu`'s controlled `open`/an `defaultOpen` specimen prop): Document, View (one checkable `mixed`), Go, and the narrow overflow. Add to `sections` and fixtures in `src/styleguide/fixtures.ts`.
+- [x] Extend the **Paragraph** section with the states: idle (handle + ⋯ only), hover (strip visible), focus (strip), hover-wins-over-focus (two adjacent blocks), hidden paragraph, one-line paragraph with a neighbour (showing no overlap), touch (⋯ only, via a forced-state class used only in the specimen).
+- [x] `e2e/styleguide.spec.ts`: bump the `section h2` minimum, add: Toolbar renders three tier specimens, each menu role present, no console errors, demo theme leaves no hard-coded colour (existing computed-style check covers the new parts).
+- [x] ADR-020 (`docs/adr/020-icon-set-and-component-token-api.md`): append `data-part` tables for `Toolbar` (`bar`, `lead`, `title`, `status`, `primary`, `menu`, `overflow`) and the paragraph strip (`strip`, `action`), the new `--toolbar-*` and `--block-strip-*` tokens, and the rule "an action registry carries `group` and `kind`; one renderer per surface; a one-item group is an icon, not a menu". Note the amended status in the header.
+- [x] `src/styles/README.md`: the new files and token families; component header comments for `Toolbar`, `ActionMenu` (checkables), `Block` (strip), `header-actions.ts`, `paragraph-actions.ts` updated.
+- [x] Final sweep: `grep -rn "variant: \"ghost\" | \"mono\"\|essay-shell__bar\|HOVER_TOOLS\|header-menu-" src tests e2e docs plans/423-toolbar-controls.md` shows only intended references; `grep -rn "name: /Move\|name: /Delete" e2e` shows no use against strip buttons. `.essay-shell__narrow-icon` STAYS (still used by `zoom-copy-link`, `EssayShell.svelte:577`).
 
 #### Acceptance Criteria
 
-- [ ] `/styleguide` shows the Toolbar at 1440/768/390 with each menu open, and every paragraph state, in both themes, no console errors.
-- [ ] ADR-020 documents the new parts and tokens; `tests/styles-tokens.test.ts` green.
+- [x] `/styleguide` shows the Toolbar at 1440/768/390 with each menu open, and every paragraph state, in both themes, no console errors.
+- [x] ADR-020 documents the new parts and tokens; `tests/styles-tokens.test.ts` green.
 
 #### Testing
 

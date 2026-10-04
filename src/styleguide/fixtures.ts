@@ -5,6 +5,7 @@ import type { Annotation } from "$lib/annotations";
 import type { Comment } from "$lib/comments";
 import type { Layer } from "$lib/components/LayersPanel.svelte";
 import type { MenuAction } from "$lib/components/menu-action";
+import { headerActions } from "$lib/essay/header-actions";
 import type { Actor } from "$lib/srs-client";
 import type { Status } from "$lib/types";
 
@@ -393,6 +394,15 @@ function fxLongLayers(): Layer[] {
 
 /** Component tokens listed in the Tokens section (names only; values are read from the page). */
 export const componentTokens = [
+  "--toolbar-bg",
+  "--toolbar-border",
+  "--toolbar-gap",
+  "--toolbar-pad",
+  "--toolbar-title-size",
+  "--toolbar-title-max",
+  "--block-tools-bg",
+  "--block-tools-border",
+  "--block-tools-shadow",
   "--btn-bg",
   "--btn-fg",
   "--btn-border",
@@ -431,3 +441,32 @@ export const componentTokens = [
   "--comment-clamp-lines",
   "--comment-composer-max",
 ];
+
+/** The essay header registry with no-op handlers: Save enabled, Comments `mixed`, Margin notes off. */
+const nop = () => {};
+export const toolbarActions = headerActions(
+  {
+    onnew: nop,
+    oncopy: nop,
+    onagent: nop,
+    onhelp: nop,
+    onvariant: nop,
+    oncomments: nop,
+    onsave: nop,
+    onexport: nop,
+    onexportmd: nop,
+    onexplorer: nop,
+    onopenanother: nop,
+  },
+  { expanded: false, comments: "mixed", saving: false, dirty: true }
+);
+
+/** Paragraph strip specimens: one-line, titled, and a long title the strip may cover the end of. */
+export const stripText = {
+  oneLine: { title: "", body: "A one-line paragraph." },
+  titled: { title: "Claim", body: "A titled paragraph with a neighbour." },
+  longTitle: {
+    title: "A very long paragraph title that runs under the hover strip at the end of the row",
+    body: "The strip may cover the end of a long title; that is accepted.",
+  },
+};

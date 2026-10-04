@@ -10,12 +10,13 @@
     ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, MarkdownHelp, MarkdownText, McpConnection, Panel, AnnotationMargin, PinnedPane, Select, Tag,
-    TagChip, Textarea,
+    TagChip, Textarea, Toolbar,
   } from "$lib/components";
   import Frame from "./styleguide/Frame.svelte";
   import Icons from "./styleguide/icons";
   import { initWasm } from "$lib/srs-client";
   import * as fx from "./styleguide/fixtures";
+  import { HEADER_GROUPS } from "$lib/essay/header-actions";
 
   const noop = () => {};
   const KEY = "srs-web.styleguide.theme";
@@ -24,6 +25,7 @@
     ["buttons", "Buttons and icons"],
     ["icons", "Icons"],
     ["menus", "Menus and popovers"],
+    ["toolbar", "Toolbar"],
     ["chips", "Chips and badges"],
     ["actors", "Actors"],
     ["annotations", "Annotations and comments"],
@@ -233,6 +235,28 @@
     <AnnotationMargin annotations={fx.annotations} max={2} onopen={noop} />
   </section>
 
+  <section id="toolbar">
+    <h2>Toolbar</h2>
+    <p class="sg__note">One registry, one renderer. The tier is forced here; the live bar picks it from the width.
+      Document is pinned open; View and the narrow overflow open on click.</p>
+    {#each [["1440px", "full", "Full tier, 1440px: labelled menus, lone Help icon", "document"], ["768px", "compact", "Compact tier, 768px: icon-only menus", undefined], ["390px", "narrow", "Narrow tier, 390px: title, Save, one overflow", undefined]] as const as [width, tier, caption, pinned]}
+      <figure class="sg__figure">
+        <figcaption>{caption}</figcaption>
+        <div class="sg__frame sg__toolbar" data-testid="sg-toolbar-frame" data-tier={tier} style:width>
+          <Toolbar title="On small democracy" {tier} {pinned} groups={HEADER_GROUPS} actions={fx.toolbarActions}>
+            {#snippet status()}<span>Unsaved changes</span>{/snippet}
+          </Toolbar>
+        </div>
+      </figure>
+    {/each}
+    <h3>Toolbar: Save disabled (clean) and a lead slot</h3>
+    <div class="sg__frame sg__toolbar" style:width="768px">
+      <Toolbar title="A clean document" tier="compact" groups={HEADER_GROUPS} actions={fx.toolbarActions.map((a) => (a.kind === "primary" ? { ...a, enabled: false } : a))}>
+        {#snippet lead()}<IconButton icon={Icons["circle-question-mark"]} label="Lead slot" />{/snippet}
+      </Toolbar>
+    </div>
+  </section>
+
   <section id="chips">
     <h2>Chips and badges</h2>
     <div class="sg__row">{#each fx.statuses as s}<Tag status={s}>{s}</Tag>{/each}</div>
@@ -326,6 +350,41 @@
         {@render gated(block)}
       {/snippet}
     </BlockStack>
+    <h3>Paragraph tool states</h3>
+    <p class="sg__note">Handle and ⋯ are always visible. The strip (hide, zoom, copy link) sits inside the title row.</p>
+    {#snippet specimen(label: string, t: { title: string; body: string }, cls: string, o: { hidden?: boolean } = {})}
+      {#snippet one()}
+        <div class={`sg__paragraph ${cls}`} data-testid="sg-paragraph-state" data-state={label}>
+          <Block
+            id={`sg-${label}`} title={t.title} body={t.body} hidden={o.hidden}
+            onbody={noop} ontitle={noop} onhide={noop} onnew={noop} onindent={noop} onmove={noop}
+            onzoom={noop} oncopylink={noop} onpull={noop} ondelete={noop}
+          />
+        </div>
+      {/snippet}
+      <figure class="sg__figure"><figcaption>{label}</figcaption>{@render gated(one)}</figure>
+    {/snippet}
+    {@render specimen("idle: handle and menu only", fx.stripText.titled, "")}
+    {@render specimen("hover: strip shown", fx.stripText.titled, "sg__strip-on")}
+    {@render specimen("focus: strip shown (focused body, nothing hovered)", fx.stripText.oneLine, "sg__strip-on")}
+    {@render specimen("hidden paragraph", fx.stripText.titled, "sg__strip-on", { hidden: true })}
+    {@render specimen("long title: the strip covers the end of it", fx.stripText.longTitle, "sg__strip-on")}
+    {@render specimen("touch: menu only", fx.stripText.titled, "sg__touch")}
+    <h3>Hover wins over focus: one-line paragraph under a neighbour with an open thread (live: focus A's text, hover B)</h3>
+    <div class="essay-shell__page sg__page" data-testid="sg-strip-pair">
+      <BlockStack items={[{ id: "p1", depth: 0 }, { id: "p2", depth: 0 }]} source="styleguide-strip" ondrop={noop} label="Strip pair">
+        {#snippet row(item, handle)}
+          {#snippet block()}
+            <Block
+              id={item.id} title={item.id === "p1" ? "Claim" : ""} body={item.id === "p1" ? "The previous paragraph has an open thread." : "A one-line paragraph."} {handle}
+              onbody={noop} ontitle={noop} onhide={noop} onnew={noop} onindent={noop} onmove={noop} onzoom={noop} oncopylink={noop}
+            />
+            {#if item.id === "p1"}{@render gated(thread)}{/if}
+          {/snippet}
+          {@render gated(block)}
+        {/snippet}
+      </BlockStack>
+    </div>
     <h3>InlineText</h3>
     <InlineText value={text} label="Specimen text" oncommit={(v) => (text = v)} />
     <h3>MarkdownText</h3>

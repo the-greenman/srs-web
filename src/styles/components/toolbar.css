@@ -49,6 +49,10 @@
   gap: var(--toolbar-gap);
   flex: none;
 }
+/* The overflow holds every group (a dozen 44px rows): give it more height than the default menu so it rarely scrolls. */
+.toolbar__overflow .action-menu__list {
+  --popover-max-height: min(40rem, 90vh);
+}
 /* bp: phone */
 @media (max-width: 480px) {
   .toolbar__actions .btn,
