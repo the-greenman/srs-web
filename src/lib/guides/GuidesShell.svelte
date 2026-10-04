@@ -1046,6 +1046,7 @@
   }
 
   /* Preview toggle only useful on narrow screens — inspector is always visible above 1100px */
+  /* bp: wide + 1 */
   @media (min-width: 1101px) {
     :global(.guides-preview-toggle) {
       display: none;

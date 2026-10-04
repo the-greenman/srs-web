@@ -11,21 +11,21 @@
   width: 1.25rem;
   height: 1.25rem;
   padding: 0;
-  border: 1px solid hsl(var(--glyph-hue, 0) 45% 40%);
+  border: 1px solid hsl(var(--glyph-hue, 0) var(--hue-pill-s) var(--hue-pill-l-border));
   border-radius: 50%;
-  background: hsl(var(--glyph-hue, 0) 60% 94%);
-  color: hsl(var(--glyph-hue, 0) 45% 30%);
+  background: hsl(var(--glyph-hue, 0) var(--hue-pill-s-bg) var(--hue-pill-l-bg));
+  color: hsl(var(--glyph-hue, 0) var(--hue-pill-s) var(--hue-pill-l-fg));
   font-family: var(--font-mono);
   font-size: var(--size-xs);
   line-height: 1;
   cursor: pointer;
 }
 .glyph.is-pinned {
-  background: hsl(var(--glyph-hue, 0) 55% 26%); /* white text >= 4.5:1 at every hue */
-  color: #fff;
+  background: hsl(var(--glyph-hue, 0) var(--hue-pill-s-solid) var(--hue-pill-l-solid)); /* white text >= 4.5:1 at every hue */
+  color: var(--color-on-accent);
 }
 .glyph:focus-visible {
-  outline: 2px solid var(--black);
+  outline: 2px solid var(--color-text-strong);
   outline-offset: 1px;
 }
 .hover-card {
@@ -36,8 +36,8 @@
   display: none;
   width: 16rem;
   padding: var(--space-xs) var(--space-sm);
-  background: var(--white, #fff);
-  border: 1px solid var(--black);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-text-strong);
   text-align: left;
 }
 .glyph-wrap:hover .hover-card,

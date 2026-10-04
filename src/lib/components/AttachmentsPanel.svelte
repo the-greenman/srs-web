@@ -253,12 +253,12 @@
     gap: 6px;
   }
   .attachments-panel__error {
-    color: #c00;
+    color: var(--color-error);
     font-size: 0.8em;
     margin: 0;
   }
   .attachments-panel__empty {
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     font-size: 0.85em;
     margin: 0;
   }
@@ -284,7 +284,7 @@
     white-space: nowrap;
   }
   .attachments-panel__id {
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     font-family: monospace;
     font-size: 0.9em;
   }
@@ -303,17 +303,17 @@
   }
   .attachments-panel__preview-status {
     font-size: 0.85em;
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     flex-basis: 100%;
   }
   .attachments-panel__preview-status--error {
-    color: #c00;
+    color: var(--color-error);
   }
   .attachments-panel__thumbnail {
     max-width: 100%;
     max-height: 200px;
     border-radius: 4px;
-    border: 1px solid var(--color-border, #ccc);
+    border: 1px solid var(--color-line);
     display: block;
     flex-basis: 100%;
     object-fit: contain;
@@ -331,7 +331,7 @@
     display: none;
   }
   .attachments-panel__note {
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     font-size: 0.75em;
     margin: 2px 0 0;
   }

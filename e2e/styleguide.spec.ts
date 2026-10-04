@@ -8,7 +8,8 @@ test.describe("Styleguide", () => {
     page.on("pageerror", (e) => errors.push(e.message));
 
     await page.goto("/styleguide");
-    expect(await page.locator("section h2").count()).toBeGreaterThanOrEqual(9);
+    // poll: the styleguide is a lazy chunk, so the first count can race the mount
+    await expect.poll(() => page.locator("section h2").count()).toBeGreaterThanOrEqual(9);
     await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
     await expect(page.getByRole("alert")).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBeUndefined();
@@ -32,4 +33,12 @@ test.describe("Styleguide", () => {
     await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
     await expect(page.locator('a[href*="styleguide"]')).toHaveCount(0);
   });
+
+  for (const path of ["/", "/styleguide"]) {
+    test(`ink-surface filter is defined exactly once on ${path}`, async ({ page }) => {
+      await page.goto(path);
+      expect(await page.locator("filter#ink-surface").count()).toBe(1);
+      expect(await page.evaluate(() => document.getElementById("ink-surface") !== null)).toBe(true);
+    });
+  }
 });

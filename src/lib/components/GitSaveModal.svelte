@@ -100,15 +100,15 @@
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--color-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100;
+    z-index: var(--z-overlay);
   }
 
   .modal-dialog {
-    background: var(--color-surface, #fff);
+    background: var(--color-surface);
     border: 1px solid currentColor;
     border-radius: 4px;
     padding: 1.5rem;
@@ -129,7 +129,7 @@
   }
 
   .git-save__branch {
-    border: 1px solid var(--color-border, #ddd);
+    border: 1px solid var(--color-line);
     border-radius: 4px;
     padding: 0.75rem;
     margin: 0 0 0.75rem;
@@ -151,7 +151,7 @@
     box-sizing: border-box;
     padding: 0.5rem 0.65rem;
     margin: 0 0 0.75rem;
-    border: 1px solid var(--color-border, #ddd);
+    border: 1px solid var(--color-line);
     border-radius: 3px;
     font-size: 0.85rem;
     font-family: inherit;
@@ -175,7 +175,7 @@
 
   .git-save__error {
     font-size: 0.8rem;
-    color: var(--error, #c0392b);
+    color: var(--color-error);
     margin: 0 0 0.75rem;
   }
 

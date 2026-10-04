@@ -35,7 +35,7 @@ button.agent-activity__what {
 }
 button.agent-activity__what:hover,
 button.agent-activity__what:focus-visible {
-  color: var(--ink);
+  color: var(--color-text);
   text-decoration: underline;
 }
 .agent-activity__head {

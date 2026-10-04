@@ -42,12 +42,12 @@ summary.panel__head::before {
   margin-bottom: 0;
 }
 summary.panel__head:focus-visible {
-  outline: 2px solid var(--black);
+  outline: 2px solid var(--color-text-strong);
   outline-offset: 1px;
 }
 .panel__aside {
   margin-left: auto;
-  color: var(--ink);
+  color: var(--color-text);
 }
 .panel__actions {
   display: inline-flex;
@@ -78,6 +78,7 @@ summary.panel__head:focus-visible {
   flex: 1;
   min-height: 0;
 }
+/* bp: rail */
 @media (max-width: 960px) {
   .panel-rail {
     position: static;

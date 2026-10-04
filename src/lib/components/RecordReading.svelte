@@ -43,7 +43,7 @@
     align-items: center;
     gap: 0.25rem;
     font-size: 0.8rem;
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     background: none;
     border: none;
     cursor: pointer;
@@ -52,7 +52,7 @@
   }
 
   .reading__back:hover {
-    color: var(--ink, #111);
+    color: var(--color-text);
   }
 
   .reading__card {

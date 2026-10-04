@@ -38,15 +38,15 @@
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--color-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100;
+    z-index: var(--z-overlay);
   }
 
   .modal-dialog {
-    background: var(--color-surface, #fff);
+    background: var(--color-surface);
     border: 1px solid currentColor;
     border-radius: 4px;
     padding: 1.5rem;

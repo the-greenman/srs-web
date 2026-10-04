@@ -20,11 +20,11 @@
 }
 .action-menu__trigger:hover,
 .action-menu__trigger[aria-expanded="true"] {
-  color: var(--ink);
+  color: var(--color-text);
 }
 .action-menu__trigger:focus-visible,
 .action-menu__item:focus-visible {
-  outline: 2px solid var(--black);
+  outline: 2px solid var(--color-text-strong);
   outline-offset: -2px;
 }
 .action-menu__list {
@@ -36,8 +36,8 @@
   flex-direction: column;
   min-width: 12rem;
   background: var(--color-page);
-  border: 1px solid var(--black);
-  box-shadow: 0 2px 8px rgba(26, 26, 26, 0.18);
+  border: 1px solid var(--color-text-strong);
+  box-shadow: var(--shadow-popover);
 }
 .action-menu__item {
   display: flex;
@@ -47,7 +47,7 @@
   padding: 0 var(--space-sm);
   font-size: var(--size-sm);
   text-align: left;
-  color: var(--ink);
+  color: var(--color-text);
   background: none;
   border: 0;
   cursor: pointer;

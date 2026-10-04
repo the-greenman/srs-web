@@ -1,8 +1,8 @@
 <!--
   Nav — the dark navigation rail. Brand lockup + scrolling section list
   (NavGroup/NavItem children) + optional health footer snippet.
-  Wraps .nav (src/styles/components/nav.css). Requires the host page to define
-  the #ink-surface SVG filter once.
+  Wraps .nav (src/styles/components/nav.css). The #ink-surface SVG filter it
+  uses is defined once in index.html.
   B4 read-only viewer: https://github.com/the-greenman/srs-web/issues/3
 -->
 <script lang="ts">

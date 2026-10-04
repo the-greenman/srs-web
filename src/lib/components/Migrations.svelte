@@ -121,17 +121,17 @@
     font-size: 1.1rem;
     font-weight: 600;
     margin: 0 0 1rem;
-    color: var(--color-fg, inherit);
+    color: var(--color-text);
   }
 
   .migrations__loading,
   .migrations__empty {
-    color: var(--color-muted, #767676);
+    color: var(--color-muted);
     font-style: italic;
   }
 
   .migrations__error {
-    color: var(--color-error, #c0392b);
+    color: var(--color-error);
   }
 
   .migration-row {
@@ -141,7 +141,7 @@
     gap: 0.25rem 0.75rem;
     align-items: center;
     padding: 0.75rem 0;
-    border-bottom: 1px solid var(--color-border, #e0e0e0);
+    border-bottom: 1px solid var(--color-line);
   }
 
   .migration-row__info {
@@ -156,7 +156,7 @@
 
   .migration-row__desc {
     font-size: 0.875rem;
-    color: var(--color-muted, #767676);
+    color: var(--color-muted);
   }
 
   .migration-badge {
@@ -170,26 +170,26 @@
   }
 
   .migration-badge--needed {
-    background: var(--color-warn, #c8a000);
-    color: #fff;
+    background: var(--color-warn);
+    color: var(--color-on-accent);
   }
 
   .migration-badge--applied {
-    background: var(--color-success, #2a7a2a);
-    color: #fff;
+    background: var(--color-success);
+    color: var(--color-on-accent);
   }
 
   .migration-badge--na {
-    background: var(--color-surface-1, #f0f0f0);
-    color: var(--color-muted, #767676);
+    background: var(--color-line-soft);
+    color: var(--color-muted);
   }
 
   .migration-row__apply {
     padding: 0.3rem 0.8rem;
-    border: 1px solid var(--color-border, #ccc);
+    border: 1px solid var(--color-line);
     border-radius: 4px;
     cursor: pointer;
-    background: var(--color-surface-1, #f5f5f5);
+    background: var(--color-line-soft);
     font-size: 0.875rem;
   }
 
@@ -205,11 +205,11 @@
   }
 
   .migration-result--ok {
-    color: var(--color-success, #2a7a2a);
+    color: var(--color-success);
   }
 
   .migration-result--error {
-    color: var(--color-error, #c0392b);
+    color: var(--color-error);
     margin: 0;
   }
 

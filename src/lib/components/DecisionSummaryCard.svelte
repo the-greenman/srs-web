@@ -74,7 +74,7 @@
     display: block;
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--ink);
+    color: var(--color-text);
   }
 
   .dscard__statement {
@@ -93,6 +93,6 @@
   }
 
   .log-table__row--selected td {
-    background: var(--grey-1);
+    background: var(--color-line-soft);
   }
 </style>

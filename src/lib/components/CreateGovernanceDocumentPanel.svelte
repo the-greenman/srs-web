@@ -107,8 +107,8 @@
     min-height: 3rem;
     padding: 0.75rem 1rem;
     box-sizing: border-box;
-    border: 1px solid var(--black);
-    background: var(--paper);
+    border: 1px solid var(--color-text-strong);
+    background: var(--color-bg);
     font-family: var(--font-sans);
     font-size: 1rem;
   }
@@ -128,11 +128,12 @@
   }
 
   .create-panel__error {
-    color: #a22b1f;
+    color: var(--color-error);
     margin: 0;
     font-size: 0.875rem;
   }
 
+  /* bp: form */
   @media (max-width: 640px) {
     .create-panel__destinations {
       grid-template-columns: 1fr;

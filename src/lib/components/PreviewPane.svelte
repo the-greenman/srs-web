@@ -66,7 +66,7 @@
 
   .preview-pane__status {
     font-size: 0.8rem;
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     margin: 0;
     padding: 0.25rem 0;
   }

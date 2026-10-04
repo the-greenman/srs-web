@@ -13,7 +13,7 @@
 
 .card {
   margin-bottom: var(--space-sm);
-  border: 1px solid var(--grey-2);
+  border: 1px solid var(--color-line);
   background: var(--color-surface);
 }
 
@@ -23,8 +23,8 @@
   align-items: baseline;
   gap: 16px;
   padding: 12px 20px;
-  background: var(--black);
-  color: var(--paper);
+  background: var(--color-text-strong);
+  color: var(--color-on-dark);
   filter: url(#ink-surface);
 }
 .card__id {
@@ -37,7 +37,7 @@
   font-size: var(--size-md);
   font-weight: 500;
   letter-spacing: -0.01em;
-  color: var(--paper);
+  color: var(--color-on-dark);
 }
 .card__status {
   margin-left: auto;
@@ -64,13 +64,13 @@
   font-size: var(--size-xs);
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
-  color: var(--grey-3);
+  color: var(--color-muted);
 }
 .card__field-label-text {
   flex: 1 1 auto;
 }
 .card__field-label .req {
-  color: var(--ink);
+  color: var(--color-text);
 }
 
 /* Field help (srs-web#211) — read-view mirror of the editor's #176 treatment.
@@ -83,7 +83,7 @@
   line-height: 1.4;
   text-transform: none;
   letter-spacing: normal;
-  color: var(--grey-3);
+  color: var(--color-muted);
 }
 /* Info toggle — a small monochrome circled "i" that reveals the instructions.
    The button is a 24×24 hit target (WCAG 2.2 SC 2.5.8); the visible ring is the
@@ -112,20 +112,20 @@
   font-size: 10px;
   font-style: italic;
   line-height: 1;
-  color: var(--grey-3);
-  border: 1px solid var(--grey-2);
+  color: var(--color-muted);
+  border: 1px solid var(--color-line);
   border-radius: 50%;
 }
 .card__field-info:hover::before,
 .card__field-info[aria-expanded="true"]::before {
-  color: var(--ink);
-  border-color: var(--ink);
+  color: var(--color-text);
+  border-color: var(--color-text);
 }
 .card__field-info:focus-visible {
   outline: none;
 }
 .card__field-info:focus-visible::before {
-  box-shadow: 0 0 0 1px var(--ink);
+  box-shadow: 0 0 0 1px var(--color-text);
 }
 /* Revealed instructions — offset with a rule so it reads as expanded help. */
 .card__field-instructions {
@@ -135,20 +135,20 @@
   line-height: 1.5;
   text-transform: none;
   letter-spacing: normal;
-  color: var(--grey-3);
+  color: var(--color-muted);
   padding-left: 10px;
-  border-left: 2px solid var(--grey-2);
+  border-left: 2px solid var(--color-line);
 }
 .card__field-value {
   font-family: var(--font-sans);
   font-size: var(--size-base);
   line-height: var(--leading-body);
-  color: var(--ink);
+  color: var(--color-text);
 }
 .card__field-value--empty {
   font-size: var(--size-sm);
   font-style: italic;
-  color: var(--grey-3);
+  color: var(--color-muted);
 }
 
 /* ── Two-up body for compact records (roles, summary cards) ───────────────── */
@@ -169,6 +169,7 @@
   border-right: none;
 }
 
+/* bp: compact */
 @media (max-width: 720px) {
   .card__body--grid {
     grid-template-columns: 1fr;

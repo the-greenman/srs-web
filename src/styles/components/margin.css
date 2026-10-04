@@ -43,8 +43,8 @@
 .margin__more:hover,
 .margin__relation:focus-visible,
 .margin__more:focus-visible {
-  color: var(--ink);
-  border-color: var(--ink);
+  color: var(--color-text);
+  border-color: var(--color-text);
 }
 .margin__overflow {
   position: relative;
@@ -61,8 +61,8 @@
   flex-direction: column;
   gap: 4px;
   max-width: 16rem;
-  background: var(--white, #fff);
-  border: 1px solid var(--black);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-text-strong);
 }
 /* Expanded: the right column widens to hold the text chips. */
 .block:has(.margin--expanded) {
@@ -81,6 +81,7 @@
 }
 
 /* Phone (srs-web#383): marks flow in a row inside the title row; chips collapse to marks only. */
+/* bp: phone */
 @media (max-width: 480px) {
   .margin {
     flex-direction: row;

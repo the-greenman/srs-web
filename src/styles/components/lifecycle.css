@@ -29,7 +29,7 @@
   font-size: var(--size-xs);
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
-  color: var(--grey-3);
+  color: var(--color-muted);
 }
 
 .lifecycle__transitions {
@@ -47,21 +47,21 @@
   font-size: var(--size-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--grey-3);
+  color: var(--color-muted);
   background: transparent;
-  border: 1px solid var(--grey-2);
+  border: 1px solid var(--color-line);
   cursor: pointer;
 }
 .transition::before {
   content: "\2192";
-  color: var(--grey-3);
+  color: var(--color-muted);
 }
 .transition:hover {
-  color: var(--ink);
-  border-color: var(--ink);
+  color: var(--color-text);
+  border-color: var(--color-text);
 }
 .transition:hover::before {
-  color: var(--ink);
+  color: var(--color-text);
 }
 
 /* Transition that spawns a successor record (supersede/amend) */

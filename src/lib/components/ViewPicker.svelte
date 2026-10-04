@@ -59,7 +59,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     white-space: nowrap;
   }
 
@@ -67,15 +67,15 @@
     flex: 1;
     font-size: 0.8rem;
     padding: 0.2rem 0.4rem;
-    border: 1px solid var(--color-border, #ddd);
+    border: 1px solid var(--color-line);
     border-radius: 4px;
-    background: var(--color-surface, #fff);
-    color: var(--color-text, #111);
+    background: var(--color-surface);
+    color: var(--color-text);
     cursor: pointer;
   }
 
   .view-picker__select:focus {
-    outline: 2px solid var(--color-accent, #3b82f6);
+    outline: 2px solid var(--color-focus);
     outline-offset: 1px;
   }
 </style>

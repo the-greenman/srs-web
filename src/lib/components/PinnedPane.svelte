@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import Panel from './Panel.svelte';
-  import { NARROW } from './narrow.js';
+  import { NARROW } from '$lib/breakpoints';
   import { renderMarkdown } from '$lib/srs-client.js';
 
   let open = $state<Set<string>>(new Set());

@@ -142,12 +142,12 @@
     gap: 6px;
   }
   .link-panel__error {
-    color: #c00;
+    color: var(--color-error);
     font-size: 0.8em;
     margin: 0;
   }
   .link-panel__empty {
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     font-size: 0.85em;
     margin: 0;
   }
@@ -193,6 +193,6 @@
   .link-panel__summary {
     font-size: 0.85em;
     cursor: pointer;
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
   }
 </style>

@@ -36,7 +36,7 @@
   border: 0;
   padding: 4px;
   cursor: grab;
-  color: var(--ink);
+  color: var(--color-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -44,7 +44,7 @@
 .layers__label:focus-visible,
 .eye:focus-visible,
 .block__handle:focus-visible {
-  outline: 2px solid var(--black);
+  outline: 2px solid var(--color-text-strong);
   outline-offset: 1px;
 }
 
@@ -62,14 +62,14 @@
   color: var(--color-muted);
 }
 .eye:hover {
-  color: var(--ink);
+  color: var(--color-text);
 }
 .eye--inherited {
   opacity: 0.4;
   cursor: not-allowed;
 }
 .eye.is-off {
-  color: var(--ink);
+  color: var(--color-text);
 }
 
 /* Touch reorder: a ⋯ per row (hover devices keep drag + Alt+Arrows), 44px targets. */

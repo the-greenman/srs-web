@@ -19,8 +19,8 @@
 }
 .md-help__btn:hover,
 .md-help__btn[aria-expanded="true"] {
-  color: var(--ink);
-  border-color: var(--ink);
+  color: var(--color-text);
+  border-color: var(--color-text);
 }
 .md-help__pop {
   position: absolute;
@@ -30,7 +30,7 @@
   width: 22rem;
   max-width: 90vw;
   padding: var(--space-sm);
-  background: var(--paper, #fff);
+  background: var(--color-surface-raised);
   border: 1px solid var(--color-line);
   font-size: var(--size-xs);
 }
@@ -67,7 +67,7 @@
   cursor: pointer;
 }
 .md-help__close:hover {
-  color: var(--ink);
+  color: var(--color-text);
 }
 /* Pointer wording: mouse = Ctrl/Cmd+click; touch = long-press. */
 .md-help__touch {

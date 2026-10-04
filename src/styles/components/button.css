@@ -33,35 +33,35 @@
 
 /* Primary — solid ink, the only filled button */
 .btn--primary {
-  background: var(--black);
-  color: var(--paper);
-  border-color: var(--black);
+  background: var(--color-text-strong);
+  color: var(--color-on-dark);
+  border-color: var(--color-text-strong);
 }
 .btn--primary:hover {
-  background: var(--grey-4);
-  border-color: var(--grey-4);
+  background: var(--color-muted-strong);
+  border-color: var(--color-muted-strong);
 }
 
 /* Secondary — outlined */
 .btn--secondary {
-  color: var(--ink);
-  border-color: var(--grey-4);
+  color: var(--color-text);
+  border-color: var(--color-muted-strong);
   font-weight: 400;
 }
 .btn--secondary:hover {
-  border-color: var(--black);
-  color: var(--black);
+  border-color: var(--color-text-strong);
+  color: var(--color-text-strong);
 }
 
 /* Ghost — low-contrast, tertiary */
 .btn--ghost {
-  color: var(--grey-3);
-  border-color: var(--grey-2);
+  color: var(--color-muted);
+  border-color: var(--color-line);
   font-weight: 400;
 }
 .btn--ghost:hover {
-  border-color: var(--grey-4);
-  color: var(--grey-4);
+  border-color: var(--color-muted-strong);
+  color: var(--color-muted-strong);
 }
 
 /* Mono — utility/format actions: flat, small, all-caps */
@@ -69,37 +69,37 @@
   font-family: var(--font-mono);
   font-size: var(--size-xs);
   font-weight: 400;
-  color: var(--grey-3);
-  border-color: var(--grey-2);
+  color: var(--color-muted);
+  border-color: var(--color-line);
   padding: 7px 14px;
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
 .btn--mono:hover {
-  border-color: var(--grey-4);
-  color: var(--grey-4);
+  border-color: var(--color-muted-strong);
+  color: var(--color-muted-strong);
 }
 .btn--mono.is-active {
-  color: var(--ink);
-  border-color: var(--black);
-  background: var(--grey-1);
+  color: var(--color-text);
+  border-color: var(--color-text-strong);
+  background: var(--color-line-soft);
 }
 
 /* On-dark — for buttons placed on the nav rail / ink headers */
 .btn--on-dark.btn--primary {
-  background: var(--paper);
-  color: var(--black);
-  border-color: var(--paper);
+  background: var(--color-on-dark);
+  color: var(--color-text-strong);
+  border-color: var(--color-on-dark);
 }
 .btn--on-dark.btn--primary:hover {
-  background: var(--grey-1);
-  border-color: var(--grey-1);
+  background: var(--color-line-soft);
+  border-color: var(--color-line-soft);
 }
 .btn--on-dark.btn--mono {
   color: var(--color-on-dark-muted);
   border-color: var(--color-on-dark-line);
 }
 .btn--on-dark.btn--mono:hover {
-  color: var(--paper);
+  color: var(--color-on-dark);
   border-color: var(--color-on-dark-muted);
 }

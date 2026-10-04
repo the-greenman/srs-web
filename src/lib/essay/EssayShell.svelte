@@ -30,7 +30,7 @@
   import MarkdownText from "$lib/components/MarkdownText.svelte";
   import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
   import ActionMenu from "$lib/components/ActionMenu.svelte";
-  import { NARROW } from "$lib/components/narrow.js";
+  import { NARROW } from "$lib/breakpoints";
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
     addComment,

@@ -23,8 +23,8 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 4px 10px;
-  border: 1px solid var(--grey-2);
-  color: var(--grey-3);
+  border: 1px solid var(--color-line);
+  color: var(--color-muted);
 }
 
 .tag--draft {
@@ -34,35 +34,35 @@
   /* base: provisional, quiet */
 }
 .tag--active {
-  color: var(--ink);
-  border-color: var(--grey-4);
+  color: var(--color-text);
+  border-color: var(--color-muted-strong);
 }
 .tag--deferred {
-  background: var(--grey-1);
+  background: var(--color-line-soft);
 }
 .tag--superseded {
-  border-color: var(--grey-1);
+  border-color: var(--color-line-soft);
   text-decoration: line-through;
 }
 .tag--closed {
-  color: var(--paper);
-  background: var(--black);
-  border-color: var(--black);
+  color: var(--color-on-dark);
+  background: var(--color-text-strong);
+  border-color: var(--color-text-strong);
 }
 .tag--rejected {
-  border-color: var(--grey-1);
+  border-color: var(--color-line-soft);
   text-decoration: line-through;
 }
 .tag--archived {
-  border-color: var(--grey-1);
+  border-color: var(--color-line-soft);
 }
 .tag--ratified {
-  color: var(--paper);
-  background: var(--ink);
-  border-color: var(--ink);
+  color: var(--color-on-dark);
+  background: var(--color-text);
+  border-color: var(--color-text);
 }
 .tag--abandoned {
-  border-color: var(--grey-1);
+  border-color: var(--color-line-soft);
   text-decoration: line-through;
 }
 

@@ -35,12 +35,13 @@ body::after {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 9999;
+  z-index: var(--z-grain);
   opacity: 0.02;
   mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23g)' opacity='1'/%3E%3C/svg%3E");
 }
 
+/* bp: form */
 @media (max-width: 640px) {
   body::after {
     opacity: 0.016;
@@ -65,12 +66,12 @@ p:last-child {
 }
 
 a {
-  color: var(--ink);
-  text-decoration-color: var(--grey-2);
+  color: var(--color-text);
+  text-decoration-color: var(--color-line);
   text-underline-offset: 0.16em;
 }
 a:hover {
-  text-decoration-color: var(--ink);
+  text-decoration-color: var(--color-text);
 }
 
 /* Shared form-control reset so widgets start from the same baseline */
@@ -83,6 +84,6 @@ button {
 }
 
 :focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--color-text);
   outline-offset: 2px;
 }

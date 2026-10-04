@@ -54,6 +54,7 @@
 }
 
 /* Phone (srs-web#383): name, reply and the Comment button stack full-width. */
+/* bp: phone */
 @media (max-width: 480px) {
   .comments {
     margin-left: var(--space-xs);
@@ -89,8 +90,8 @@
 .comment-badge:hover,
 .comment-badge:focus-visible,
 .comment-badge[aria-expanded="true"] {
-  color: var(--ink);
-  border-color: var(--ink);
+  color: var(--color-text);
+  border-color: var(--color-text);
 }
 .comment-badge.is-empty {
   opacity: 0;
@@ -115,10 +116,10 @@
   align-items: baseline;
   gap: 4px;
   padding: 0 6px;
-  border: 1px solid hsl(var(--actor-hue, 0) 45% 40%);
+  border: 1px solid hsl(var(--actor-hue, 0) var(--hue-pill-s) var(--hue-pill-l-border));
   border-radius: 999px;
-  background: hsl(var(--actor-hue, 0) 60% 94%);
-  color: hsl(var(--actor-hue, 0) 45% 25%);
+  background: hsl(var(--actor-hue, 0) var(--hue-pill-s-bg) var(--hue-pill-l-bg));
+  color: hsl(var(--actor-hue, 0) var(--hue-pill-s) var(--hue-pill-l-fg-chip));
   font-family: var(--font-mono);
   font-size: var(--size-xs);
 }

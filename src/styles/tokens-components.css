@@ -1,0 +1,47 @@
+/* ============================================================================
+   tokens-components — the component token tier (ADR-020 b)
+   ----------------------------------------------------------------------------
+   Naming: --<block>-<property>[-<state>]. Declared on :root (never on the
+   component selector) so a skin's :root[data-theme] rule can re-point them.
+   Each defaults to a semantic token from tokens.css. Components read these;
+   variants re-assign them on the variant selector.
+   ========================================================================== */
+
+:root {
+  /* Button */
+  --btn-bg: transparent;
+  --btn-fg: var(--color-text);
+  --btn-border: var(--color-line);
+  --btn-hover-border: var(--color-text-strong);
+  --btn-hover-fg: var(--color-text-strong);
+  --btn-primary-bg: var(--color-text-strong);
+  --btn-primary-fg: var(--color-on-dark);
+  --btn-primary-hover-bg: var(--color-muted-strong);
+  --btn-sm-padding: 4px 10px;
+  --btn-sm-size: var(--size-sm);
+
+  /* IconButton */
+  --icon-btn-fg: var(--color-muted-strong);
+  --icon-btn-hover-fg: var(--color-text-strong);
+  --icon-btn-hover-bg: var(--color-hover);
+  --icon-btn-border: var(--color-line);
+
+  /* Floating surfaces (Popover, hover card, menu list) */
+  --popover-bg: var(--color-surface-raised);
+  --popover-border: var(--color-text-strong);
+  --popover-shadow: var(--shadow-popover);
+
+  /* Comments */
+  --comment-surface: var(--color-surface-raised);
+
+  /* Hue pills (ActorChip, AttachmentGlyph): hsl(<hue> S L), copied from the
+     numbers the two components used before tokenisation. */
+  --hue-pill-s: 45%;
+  --hue-pill-s-bg: 60%;
+  --hue-pill-s-solid: 55%;
+  --hue-pill-l-border: 40%;
+  --hue-pill-l-bg: 94%;
+  --hue-pill-l-fg: 30%;
+  --hue-pill-l-fg-chip: 25%;
+  --hue-pill-l-solid: 26%;
+}

@@ -159,7 +159,7 @@
 <style>
   .empty-state {
     padding: var(--space-md);
-    color: var(--ink);
+    color: var(--color-text);
     opacity: 0.6;
     font-size: 0.875rem;
   }
@@ -183,49 +183,49 @@
   .controls-bar__sort-btn {
     font-size: 0.8125rem;
     padding: 0.25rem 0.5rem;
-    border: 1px solid var(--grey-3, #ccc);
+    border: 1px solid var(--color-muted);
     border-radius: 4px;
-    background: var(--surface, #fff);
-    color: var(--ink);
+    background: var(--color-surface);
+    color: var(--color-text);
     cursor: pointer;
   }
 
   .controls-bar__sort-btn:hover {
-    background: var(--grey-1, #f5f5f5);
+    background: var(--color-line-soft);
   }
 
   .controls-bar__search {
     font-size: 0.8125rem;
     padding: 0.25rem 0.5rem;
-    border: 1px solid var(--grey-3, #ccc);
+    border: 1px solid var(--color-muted);
     border-radius: 4px;
-    background: var(--surface, #fff);
-    color: var(--ink);
+    background: var(--color-surface);
+    color: var(--color-text);
     min-width: 160px;
   }
 
   .controls-bar__search:focus {
-    outline: 2px solid var(--accent, #0066cc);
+    outline: 2px solid var(--color-focus);
     outline-offset: 1px;
   }
 
   .controls-bar__show-all-btn {
     font-size: 0.8125rem;
     padding: 0.25rem 0.5rem;
-    border: 1px solid var(--grey-3, #ccc);
+    border: 1px solid var(--color-muted);
     border-radius: 4px;
-    background: var(--surface, #fff);
-    color: var(--ink);
+    background: var(--color-surface);
+    color: var(--color-text);
     cursor: pointer;
   }
 
   .controls-bar__show-all-btn:hover {
-    background: var(--grey-1, #f5f5f5);
+    background: var(--color-line-soft);
   }
 
   .controls-bar__show-all-btn--active {
-    background: var(--grey-2, #e8e8e8);
-    border-color: var(--grey-4, #aaa);
+    background: var(--color-line);
+    border-color: var(--color-muted-strong);
   }
 
   .controls-bar__export {
@@ -237,28 +237,28 @@
 
   .controls-bar__export-label {
     font-size: 0.75rem;
-    color: var(--ink);
+    color: var(--color-text);
     opacity: 0.7;
   }
 
   .controls-bar__export-btn {
     font-size: 0.75rem;
     padding: 0.2rem 0.45rem;
-    border: 1px solid var(--grey-3, #ccc);
+    border: 1px solid var(--color-muted);
     border-radius: 4px;
-    background: var(--surface, #fff);
-    color: var(--ink);
+    background: var(--color-surface);
+    color: var(--color-text);
     cursor: pointer;
   }
 
   .controls-bar__export-btn:hover {
-    background: var(--grey-1, #f5f5f5);
+    background: var(--color-line-soft);
   }
 
   .controls-bar__export-error {
     width: 100%;
     font-size: 0.75rem;
-    color: var(--error, #cc0000);
+    color: var(--color-error);
     margin: 0;
     padding: 0 var(--space-md);
   }

@@ -29,6 +29,7 @@
 
 /* Tokens & base */
 @import url("./tokens.css") layer(tokens);
+@import url("./tokens-components.css") layer(tokens);
 @import url("./base.css") layer(base);
 
 /* Layout */

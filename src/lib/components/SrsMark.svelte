@@ -20,11 +20,11 @@
   aria-hidden="true"
   focusable="false"
 >
-  <circle cx="12" cy="12" r="10.75" fill="var(--black, #000)" stroke="var(--paper, #fff)" stroke-width="1.25" />
+  <circle cx="12" cy="12" r="10.75" fill="var(--color-text-strong)" stroke="var(--color-on-dark)" stroke-width="1.25" />
   <path
     d="M1.25 12 a5.375 5.375 0 0 1 10.75 0 a5.375 5.375 0 0 0 10.75 0"
     fill="none"
-    stroke="var(--paper, #fff)"
+    stroke="var(--color-on-dark)"
     stroke-width="1.5"
     stroke-linecap="round"
   />

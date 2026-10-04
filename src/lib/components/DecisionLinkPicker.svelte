@@ -152,15 +152,15 @@
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--color-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100;
+    z-index: var(--z-overlay);
   }
 
   .modal-dialog {
-    background: var(--color-surface, #fff);
+    background: var(--color-surface);
     border: 1px solid currentColor;
     border-radius: 4px;
     padding: 1.5rem;
@@ -212,7 +212,7 @@
     padding: 0.3rem 0.5rem;
     border: 1px solid currentColor;
     border-radius: 2px;
-    background: var(--color-surface, #fff);
+    background: var(--color-surface);
     color: inherit;
     width: 100%;
     box-sizing: border-box;
@@ -246,9 +246,9 @@
     font-size: 0.8125rem;
     margin: 0;
     padding: 0.4rem 0.5rem;
-    color: var(--color-error, #c00);
-    background: var(--color-error-subtle, rgba(204, 0, 0, 0.06));
-    border: 1px solid var(--color-error, #c00);
+    color: var(--color-error);
+    background: var(--color-error-subtle);
+    border: 1px solid var(--color-error);
     border-radius: 2px;
   }
 
@@ -280,13 +280,13 @@
   }
 
   .dlp-item__btn:hover {
-    background: var(--color-hover, rgba(0, 0, 0, 0.06));
+    background: var(--color-hover);
     opacity: 1;
   }
 
   .dlp-item__btn--selected {
     font-weight: 600;
-    background: var(--color-accent-subtle, rgba(0, 90, 200, 0.08));
+    background: var(--color-hover);
     opacity: 1;
   }
 

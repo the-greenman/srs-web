@@ -38,7 +38,7 @@
   background: var(--color-surface);
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: var(--z-sticky);
 }
 .topbar__crumb {
   display: flex;
@@ -48,13 +48,13 @@
   font-size: var(--size-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--grey-3);
+  color: var(--color-muted);
 }
 .topbar__crumb-sep {
   opacity: 0.5;
 }
 .topbar__crumb-current {
-  color: var(--ink);
+  color: var(--color-text);
 }
 .topbar__crumb-link {
   background: none;
@@ -107,7 +107,7 @@
 .section-head__count {
   font-family: var(--font-mono);
   font-size: var(--size-xs);
-  color: var(--grey-3);
+  color: var(--color-muted);
 }
 .section-head__actions {
   margin-left: auto;
@@ -116,6 +116,7 @@
 }
 
 /* ── Responsive: collapse rails progressively ─────────────────────────────── */
+/* bp: wide */
 @media (max-width: 1100px) {
   .app {
     grid-template-columns: var(--nav-width) minmax(0, 1fr);
@@ -124,6 +125,7 @@
     display: none;
   }
 }
+/* bp: compact */
 @media (max-width: 720px) {
   .app {
     grid-template-columns: 1fr;

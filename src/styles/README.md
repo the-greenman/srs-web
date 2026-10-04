@@ -57,10 +57,8 @@ src/styles/
 @import url("./styles/index.css");
 ```
 
-The `ink-surface` SVG turbulence filter (printed-ink texture, referenced by `card.css`) is
-defined only in `GovernanceShell.svelte`. Other hosts, including `/styleguide`, do not define it,
-so `filter: url(#ink-surface)` is a no-op there and the texture is absent. Consolidating the
-definition into one host-independent place is #421 work.
+The `ink-surface` SVG turbulence filter (printed-ink texture, referenced by `nav.css` and
+`card.css`) is defined once in `index.html`, so every host, including `/styleguide`, has it.
 
 The Vite entry wires `index.css` in once **B1** lands
 ([#2](https://github.com/the-greenman/srs-web/issues/2)).
