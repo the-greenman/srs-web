@@ -32,7 +32,7 @@ test("essay.srsj: Records opens with no console error and each record appears on
   const errors = await openRecordsSurface(page, "essay.srsj");
 
   await expect(page.getByText("7 records")).toBeVisible({ timeout: 15000 });
-  await expect(page.locator(".record-row")).toHaveCount(7, { timeout: 15000 });
+  await expect(page.getByTestId("record-row")).toHaveCount(7, { timeout: 15000 });
 
   expect(errors.filter((e) => e.includes("each_key_duplicate"))).toEqual([]);
 });
