@@ -21,12 +21,14 @@ import {
   getContainerOutline,
   getRecord,
   listContainers,
+  listDocumentViews,
   listRecords,
   listRelationTypes,
   listRelations,
   listTypes,
   moveContainerMemberRelative,
   removeContainerMember,
+  renderDocumentView,
   typeSchema,
   updateContainer,
   updateRecord,
@@ -634,4 +636,17 @@ export function makeLocalCopy(repo: SrsRepository, m: EssayModel, paragraphId: s
   const swap = new Map(forks.map((f) => [f.originalId, f.forkId]));
   if (m.stateId && m.hidden.some((h) => swap.has(h)))
     patchRecord(repo, m.stateId, { hidden_instance_ids: m.hidden.map((h) => swap.get(h) ?? h) });
+}
+
+/**
+ * The essay as static markdown (srs-web#416): the core composition render of the essay
+ * container, minus the document-state hidden ids and the anchor record (the core already emits
+ * the container title as H1). Children of a hidden paragraph are promoted by the core, not lost.
+ * Drafts and the bin are other containers, so never appear.
+ */
+export function essayMarkdown(repo: SrsRepository, m: EssayModel): string {
+  const view = listDocumentViews(repo, { namespace: "com.mudemocracy.essay", name: "essay" })[0];
+  if (!view) throw new Error("This repository has no essay composition to export with.");
+  const exclude = [...m.hidden, m.essayId];
+  return renderDocumentView(repo, view.id, "markdown", m.containerId, null, exclude).rendered;
 }

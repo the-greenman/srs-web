@@ -29,6 +29,8 @@ const m = vi.hoisted(() => ({
     },
   ]),
   listRecords: vi.fn(),
+  listDocumentViews: vi.fn(() => [{ id: "V" }]),
+  renderDocumentView: vi.fn(() => ({ rendered: "# T\n" })),
   listRelations: vi.fn(() => []),
   contextRecord: vi.fn(() => ({ relations: [] })),
   containersForInstance: vi.fn(() => []),
@@ -387,5 +389,22 @@ describe("agentHandoff (srs-web#411)", () => {
   it("no purpose: the line is left out", () => {
     expect(agentHandoff({ ...base, purpose: "" })).not.toContain("Purpose");
     expect(agentHandoff({ ...base, purpose: null })).not.toContain("Purpose");
+  });
+});
+
+describe("essayMarkdown (srs-web#416)", () => {
+  it("renders the essay container, excluding hidden ids and the essay anchor", async () => {
+    const { essayMarkdown } = await import("../src/lib/essay/essay-document.js");
+    const model = { essayId: "E", containerId: "C", hidden: ["h1", "h2"] };
+    expect(essayMarkdown({} as never, model as never)).toBe("# T\n");
+    expect(m.listDocumentViews).toHaveBeenCalledWith(expect.anything(), {
+      namespace: "com.mudemocracy.essay",
+      name: "essay",
+    });
+    expect(m.renderDocumentView).toHaveBeenCalledWith({}, "V", "markdown", "C", null, [
+      "h1",
+      "h2",
+      "E",
+    ]);
   });
 });
