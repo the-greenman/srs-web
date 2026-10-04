@@ -16,6 +16,7 @@
     active = [],
     max = 4,
     onopen,
+    onremove,
   }: {
     annotations: Annotation[];
     variant?: "compact" | "expanded";
@@ -24,6 +25,8 @@
     /** Marks shown before "+N". Comments always count toward it but sort first. */
     max?: number;
     onopen: (a: Annotation) => void;
+    /** Attachments only: remove the link (a human action). */
+    onremove?: (a: Annotation) => void;
   } = $props();
 
   /** The kind -> presentation map: order (lower first) and whether the mark carries a text chip when expanded. */
@@ -46,7 +49,7 @@
   {#if a.kind === "comments"}
     <CommentBadge count={a.count ?? 0} label={a.label} open={isOn(a)} onclick={() => onopen(a)} />
   {:else if a.kind === "attachment"}
-    <AttachmentGlyph kind={a.icon ?? "note"} title={a.label} text={a.text} pinned={isOn(a)} onpin={() => onopen(a)} />
+    <AttachmentGlyph kind={a.icon ?? "note"} title={a.label} text={a.text} relation={a.relation} pinned={isOn(a)} onpin={() => onopen(a)} onremove={onremove && (() => onremove(a))} />
   {:else if a.kind === "shared"}
     <button type="button" class="margin__relation" data-testid="shared-badge" aria-label={a.label} title={`${a.label} - make a local copy`} onclick={() => onopen(a)}>⧉</button>
   {:else}

@@ -20,6 +20,8 @@ export interface Annotation {
   icon?: string;
   /** Preview text for the hover card. */
   text?: string;
+  /** Attachment: the relation type's label (how it relates to the paragraph). */
+  relation?: string;
   actor?: { kind: string; id: string; name?: string };
   /** The other end, when there is one (relation: focus it; attachment: the neighbour). */
   targetId?: string;
@@ -46,6 +48,7 @@ export function annotationsFor(model: EssayModel, paragraphId: string): Annotati
         label: a.label,
         icon: a.neighbourType,
         text: a.text,
+        relation: a.relationLabel,
         targetId: a.neighbourId,
         direction: a.direction,
       })

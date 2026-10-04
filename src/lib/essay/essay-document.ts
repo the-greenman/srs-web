@@ -16,11 +16,13 @@ import {
   createRecord,
   createRelation,
   deleteRecord,
+  deleteRelation,
   forkRecord,
   getContainerOutline,
   getRecord,
   listContainers,
   listRecords,
+  listRelationTypes,
   listRelations,
   listTypes,
   moveContainerMemberRelative,
@@ -69,6 +71,8 @@ export interface Attachment {
   /** Stable key: the relation id. */
   id: string;
   relationType: string;
+  /** The core vocabulary's label for `relationType` (the type key when not installed). */
+  relationLabel: string;
   direction: "out" | "in";
   /** Neighbour type name, or "note". */
   neighbourType: string;
@@ -202,28 +206,31 @@ function loadComments(repo: SrsRepository, types: TypeSummary[]): Record<string,
   return out;
 }
 
-const toAttachment = (r: ContextRelation): Attachment | null => {
-  const n = r.neighbour;
-  if (!n || r.relationType === COMMENTS_ON) return null; // comments have their own thread
-  if (n.kind === "record" && n.typeId === PARAGRAPH_TYPE_ID) return null; // shown as `related`, not an attachment
-  const outgoing = r.direction === "out";
-  const label = (outgoing ? r.targetLabel : r.sourceLabel) ?? "";
-  const text =
-    n.kind === "note"
-      ? n.sections.map((x) => x.content).join("\n\n")
-      : Object.values(n.fieldValues)
-          .filter((v): v is string => typeof v === "string")
-          .join("\n\n");
-  return {
-    id: r.relationId,
-    relationType: r.relationType,
-    direction: r.direction,
-    neighbourType: n.kind === "note" ? "note" : n.typeName,
-    neighbourId: n.instanceId,
-    label: label || (n.kind === "note" ? n.title : "") || n.instanceId,
-    text,
+const toAttachment =
+  (labels: Map<string, string>) =>
+  (r: ContextRelation): Attachment | null => {
+    const n = r.neighbour;
+    if (!n || r.relationType === COMMENTS_ON) return null; // comments have their own thread
+    if (n.kind === "record" && n.typeId === PARAGRAPH_TYPE_ID) return null; // shown as `related`, not an attachment
+    const outgoing = r.direction === "out";
+    const label = (outgoing ? r.targetLabel : r.sourceLabel) ?? "";
+    const text =
+      n.kind === "note"
+        ? n.sections.map((x) => x.content).join("\n\n")
+        : Object.values(n.fieldValues)
+            .filter((v): v is string => typeof v === "string")
+            .join("\n\n");
+    return {
+      id: r.relationId,
+      relationType: r.relationType,
+      relationLabel: labels.get(r.relationType) || r.relationType,
+      direction: r.direction,
+      neighbourType: n.kind === "note" ? "note" : n.typeName,
+      neighbourId: n.instanceId,
+      label: label || (n.kind === "note" ? n.title : "") || n.instanceId,
+      text,
+    };
   };
-};
 
 /** Relation categories that are layout, not meaning: the core leaves them out of the context read. */
 const STRUCTURAL_CATEGORIES = ["composition", "sequence"];
@@ -263,9 +270,10 @@ function loadContext(repo: SrsRepository, ids: string[]): ParagraphContext {
   const hit = attachmentCache.get(repo);
   if (hit?.key === key) return hit.value;
   const out: ParagraphContext = { attachments: {}, related: {} };
+  const toAtt = toAttachment(new Map(listRelationTypes(repo).map((t) => [t.key, t.label])));
   for (const id of ids) {
     const rels = contextRecord(repo, id, undefined, STRUCTURAL_CATEGORIES).relations;
-    const att = rels.map(toAttachment).filter((a): a is Attachment => a !== null);
+    const att = rels.map(toAtt).filter((a): a is Attachment => a !== null);
     const rel = rels.map(toRelated).filter((a): a is Related => a !== null);
     if (att.length) out.attachments[id] = att;
     if (rel.length) out.related[id] = rel;
@@ -421,6 +429,10 @@ export function setEssayTitle(
 }
 export const setTitle = (repo: SrsRepository, id: string, title: string): void =>
   patchRecord(repo, id, { paragraph_title: title });
+
+/** Remove an attached record's link to a paragraph (the relation only; the neighbour stays). */
+export const removeAttachment = (repo: SrsRepository, relationId: string): void =>
+  deleteRelation(repo, relationId);
 
 /** Hide / show a paragraph in place: editor-only state held in the document-state record. */
 export function setHidden(repo: SrsRepository, m: EssayModel, id: string, hidden: boolean): void {

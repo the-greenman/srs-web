@@ -44,6 +44,7 @@
     setBody,
     setEssayTitle,
     shiftEntry,
+    removeAttachment,
     setHidden,
     setTitle,
     transfer,
@@ -188,7 +189,7 @@
     Object.values(model?.attachments ?? {})
       .flat()
       .filter((a) => pinnedIds.includes(a.id))
-      .map((a) => ({ id: a.id, kind: `${a.neighbourType} · ${a.relationType}`, title: a.label, text: a.text })),
+      .map((a) => ({ id: a.id, kind: a.neighbourType, relation: a.relationLabel, title: a.label, text: a.text })),
   );
 
   let variant = $state(loadVariant());
@@ -525,6 +526,7 @@
                   {variant}
                   active={[...pinnedIds, ...(showThread(p.id) ? [`comments:${p.id}`] : [])]}
                   onopen={(a) => openAnnotation(a, p.id)}
+                  onremove={(a) => run(() => removeAttachment(repo, a.key))}
                 />
               {/snippet}
               <Block
@@ -589,7 +591,7 @@
             onforget={forget}
           />
         </Panel>
-        <PinnedPane items={pinned} onunpin={togglePin} />
+        <PinnedPane items={pinned} onunpin={togglePin} onremove={(id) => run(() => removeAttachment(repo, id))} />
         {#if agentPanel}{@render agents()}{/if}
       </aside>
     </div>

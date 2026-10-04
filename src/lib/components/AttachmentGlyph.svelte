@@ -11,9 +11,11 @@
     kind,
     title,
     text = '',
+    relation = '',
     pinned = false,
     onpin,
-  }: { kind: string; title: string; text?: string; pinned?: boolean; onpin?: () => void } = $props();
+    onremove,
+  }: { kind: string; title: string; text?: string; relation?: string; pinned?: boolean; onpin?: () => void; onremove?: () => void } = $props();
 
   // Stable 0-359 hue from the kind string (same kind, same colour, in every session).
   const hue = $derived([...kind].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7));
@@ -26,8 +28,8 @@
     class:is-pinned={pinned}
     style:--glyph-hue={hue}
     aria-pressed={pinned}
-    aria-label={`${kind}: ${title}. ${pinned ? 'Unpin' : 'Pin'}`}
+    aria-label={`${kind}${relation ? ` (${relation})` : ''}: ${title}. ${pinned ? 'Unpin' : 'Pin'}`}
     onclick={onpin}
   >{kind.charAt(0).toUpperCase()}</button>
-  <HoverCard {kind} {title} {text} />
+  <HoverCard {kind} {title} {text} {relation} {onremove} />
 </span>

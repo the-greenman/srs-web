@@ -290,9 +290,25 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
     "Small is not always better."
   );
   // Pins persist per browser (srs-web#406): stored under essay.pins.<essayId>; Open renders full text.
-  expect(await page.evaluate(() => Object.keys(localStorage).some((k) => k.startsWith("essay.pins.")))).toBe(true);
+  expect(
+    await page.evaluate(() => Object.keys(localStorage).some((k) => k.startsWith("essay.pins.")))
+  ).toBe(true);
   await page.locator(".panel-rail .pinned__action", { hasText: "Open" }).click();
-  await expect(page.locator(".panel-rail .pinned__full")).toContainText("Small is not always better.");
+  await expect(page.locator(".panel-rail .pinned__full")).toContainText(
+    "Small is not always better."
+  );
+
+  // The relation type label shows (from the core vocabulary); the human removes the link (srs-web#405).
+  await expect(page.locator(".panel-rail .pinned__item .hover-card__kind")).toContainText(
+    "note · "
+  );
+  await expect(page.locator(".panel-rail .pinned__item .hover-card__kind")).not.toContainText(
+    "evidences"
+  );
+  await glyph.hover();
+  await page.locator(".essay-shell__page .hover-card__remove").click();
+  await expect(page.locator(".essay-shell__page .glyph")).toHaveCount(0);
+  await expect(page.locator(".panel-rail .pinned__item")).toHaveCount(0);
 
   // A semantic paragraph-to-paragraph edge (derived-from) shows a relation indicator on both ends;
   // the structural precedes/contains edges never do (srs-web#374).
