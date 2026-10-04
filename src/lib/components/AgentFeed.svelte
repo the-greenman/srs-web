@@ -1,10 +1,10 @@
 <!--
-  AgentFeed — the newest-first feed of agent writes (the per-agent row lives in McpConnection). Presentation only: App observes the writes (agent-activity.ts); the shell supplies
+  AgentFeed — the newest-first feed of agent writes (the per-agent row lives in McpConnection); each row is a compact ActorMark plus the name. Presentation only: App observes the writes (agent-activity.ts); the shell supplies
   the paragraph label and what a click does. A write whose paragraph is unknown is not clickable.
   Wraps .agent-activity (agent-activity.css). Story: srs-web#372
 -->
 <script lang="ts">
-  import ActorChip from './ActorChip.svelte';
+  import ActorMark from './ActorMark.svelte';
   import { ago, verb } from '$lib/agent-activity.js';
   import type { AgentStatus, AgentWrite } from '$lib/agent-activity.js';
 
@@ -36,7 +36,8 @@
   <ul class="agent-activity" aria-label="Agent activity" data-testid="agent-feed">
     {#each status.writes.slice(0, limit) as w (w.seq)}
       <li class="agent-activity__entry" data-testid="agent-feed-entry">
-        <ActorChip actor={actor(w.agentId)} />
+        <ActorMark actor={actor(w.agentId)} />
+        <span class="agent-activity__who" data-part="name">{actor(w.agentId).name ?? w.agentId}</span>
         {#if w.instanceId && paragraphLabel(w.instanceId) !== undefined}
           <button type="button" class="agent-activity__what" data-testid="agent-feed-focus" onclick={() => onselect(w.instanceId as string)}>{what(w)} · {ago(w.at, now)}</button>
         {:else}

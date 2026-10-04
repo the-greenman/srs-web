@@ -267,3 +267,14 @@
   padding: 0;
   list-style: none;
 }
+
+/* InstanceNotes: the margin rows and the thread of one selected instance (non-essay shells). */
+.instance-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+.instance-notes .comments {
+  margin-left: 0;
+}

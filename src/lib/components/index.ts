@@ -91,6 +91,7 @@ export { default as AttachmentGlyph } from "./AttachmentGlyph.svelte";
 export { default as ActorChip } from "./ActorChip.svelte";
 export { default as ActorMark } from "./ActorMark.svelte";
 export { default as ActorStack } from "./ActorStack.svelte";
+export { default as AgentPresence } from "./AgentPresence.svelte";
 export { default as AgentFeed } from "./AgentFeed.svelte";
 export { default as CommentBadge } from "./CommentBadge.svelte";
 export { default as AnnotationMargin } from "./AnnotationMargin.svelte";

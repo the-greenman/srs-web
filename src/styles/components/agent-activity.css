@@ -1,7 +1,7 @@
 /* ============================================================================
    component: agent activity (.agent-activity) — per-agent status rows + write feed in the
    Agents panel, and the live highlight on paragraphs an agent just touched.
-   Monochrome-friendly: status is the dot fill; colour only comes from ActorChip.
+   Monochrome-friendly: status is the dot fill; colour only comes from ActorMark / ActorChip.
    Story: srs-web#372
    ========================================================================== */
 .agent-activity {
@@ -16,8 +16,12 @@
 .agent-activity__entry {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: 4px 8px;
+}
+.agent-activity__who {
+  font-family: var(--font-mono);
+  font-weight: 600;
 }
 .agent-activity__what {
   flex: 1 1 8rem;

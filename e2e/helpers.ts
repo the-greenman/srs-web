@@ -88,10 +88,8 @@ export async function connectAgents(page: Page, essayPath: string, count: number
   await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
   await page.getByTestId("mcp-library-connect").first().click();
   await expect(page.getByTestId("mcp-status")).toHaveText("Connected", { timeout: 15000 });
-  for (let i = 1; i < count; i++) {
-    await page.getByTestId("mcp-connect-open").click();
-    await page.getByTestId("mcp-connect-agent").click();
-  }
+  if (count > 1) await page.getByTestId("mcp-connect-open").click();
+  for (let i = 1; i < count; i++) await page.getByTestId("mcp-connect-agent").click();
   await expect(page.getByTestId("mcp-status")).toHaveCount(count);
   const names = ["alpha", "beta", "gamma", "delta"];
   for (let a = 1; a <= count; a++)
@@ -116,20 +114,37 @@ export async function connectAgents(page: Page, essayPath: string, count: number
       targetInstanceId: target,
     });
     expect(rel.result?.isError, JSON.stringify(rel)).not.toBe(true);
+    return id;
   }
   /** A note related to `target` by `relationType` (an attachment margin row), written by agent `a`. */
-  async function attach(a: number, title: string, text: string, target: string, relationType = "evidences") {
-    const note = await tool(a, "note_create", { title, sections: [{ name: "claim", content: text }] });
+  async function attach(
+    a: number,
+    title: string,
+    text: string,
+    target: string,
+    relationType = "evidences"
+  ) {
+    const note = await tool(a, "note_create", {
+      title,
+      sections: [{ name: "claim", content: text }],
+    });
     expect(note.result?.isError, JSON.stringify(note)).not.toBe(true);
     const id = /[0-9a-f]{8}-[0-9a-f-]{27}/.exec(JSON.stringify(note.result))?.[0] as string;
-    const rel = await tool(a, "relation_create", { relationType, sourceInstanceId: id, targetInstanceId: target });
+    const rel = await tool(a, "relation_create", {
+      relationType,
+      sourceInstanceId: id,
+      targetInstanceId: target,
+    });
     expect(rel.result?.isError, JSON.stringify(rel)).not.toBe(true);
   }
   /** A paragraph-to-paragraph relation (a relation margin row), written by agent `a`. */
   async function relate(a: number, source: string, target: string, relationType = "derived-from") {
-    const rel = await tool(a, "relation_create", { relationType, sourceInstanceId: source, targetInstanceId: target });
+    const rel = await tool(a, "relation_create", {
+      relationType,
+      sourceInstanceId: source,
+      targetInstanceId: target,
+    });
     expect(rel.result?.isError, JSON.stringify(rel)).not.toBe(true);
   }
   return { rpc, tool, comment, attach, relate };
 }
-

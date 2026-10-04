@@ -12,6 +12,7 @@
   import { repositoryId } from "$lib/srs-client.js";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import AgentFeed from "$lib/components/AgentFeed.svelte";
+  import AgentPresence from "$lib/components/AgentPresence.svelte";
   import { ago, verb } from "$lib/agent-activity.js";
   import type { AgentPanelCtx, AgentStatus } from "$lib/agent-activity.js";
   import PinnedPane from "$lib/components/PinnedPane.svelte";
@@ -659,6 +660,7 @@
 
 {#snippet agents()}
   <Panel title="Agents" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey="essay.agents" collapseWhen={NARROW}>
+    {#snippet actions()}{#if agentStatus}<AgentPresence status={agentStatus} />{/if}{/snippet}
     {#if agentStatus}
       <AgentFeed
         {now}

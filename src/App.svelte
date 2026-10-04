@@ -43,6 +43,7 @@
   import CreateGovernanceDocumentPanel from "$lib/components/CreateGovernanceDocumentPanel.svelte";
   import GitSaveModal from "$lib/components/GitSaveModal.svelte";
   import Panel from "$lib/components/Panel.svelte";
+  import AgentPresence from "$lib/components/AgentPresence.svelte";
   import McpConnection from "$lib/components/McpConnection.svelte";
   import Button from "$lib/components/Button.svelte";
   import Input from "$lib/components/Input.svelte";
@@ -927,7 +928,10 @@
 <!-- Shells that render `agentPanel` (the essay rail) own its placement; the rest get the floating dock. -->
 {#if relayUrl && repo && !activeEditor?.hostsAgentPanel}
   <div class="mcp-dock">
-    <Panel title="Agents" persistKey="dock.agents">{@render agentDock()}</Panel>
+    <Panel title="Agents" persistKey="dock.agents">
+      {#snippet actions()}<AgentPresence status={agentStatus} />{/snippet}
+      {@render agentDock()}
+    </Panel>
   </div>
 {/if}
 

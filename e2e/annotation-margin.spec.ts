@@ -52,7 +52,9 @@ test("1920 expanded: no row meets the rail or leaves the page; compact at 1280 s
     expect(crosses, `row ${i} meets the rail`).toBe(false);
   }
   // one shared left edge: every mark in a block starts at the same x
-  const xs = await block.locator('[data-part="row"] > [data-part="mark"]').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().x)));
+  const xs = await block
+    .locator('[data-part="row"] > [data-part="mark"]')
+    .evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().x)));
   expect(new Set(xs).size).toBe(1);
 
   await page.setViewportSize({ width: 1280, height: 900 });

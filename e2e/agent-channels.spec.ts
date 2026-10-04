@@ -267,7 +267,11 @@ test("reload keeps ids and URLs; a typed label is the author; repo change keeps 
   };
   await comment(1, "one");
   await comment(2, "two");
-  await page.locator(".essay-shell__page .block-stack__item").nth(1).getByTestId("comment-badge").click();
+  await page
+    .locator(".essay-shell__page .block-stack__item")
+    .nth(1)
+    .getByTestId("comment-badge")
+    .click();
   await expect(
     page.locator(".essay-shell__page .block-stack__item").nth(1).getByTestId("actor-name")
   ).toHaveText(["alpha", "Labelled"]);
@@ -369,7 +373,7 @@ test("agent activity: connected count, chip in the feed, paragraph flashes, clic
 
   const feed = page.getByTestId("agent-feed-entry");
   await expect(feed).toHaveCount(2);
-  await expect(feed.first().getByTestId("actor-name")).toHaveText("alpha");
+  await expect(feed.first().getByTestId("actor-mark")).toHaveAccessibleName("alpha (agent)");
   await expect(feed.first()).toContainText("linked");
   await expect(block).toHaveClass(/is-live/);
 
@@ -382,7 +386,9 @@ test("a long thread is bounded and scrolls, the composer stays in view, long com
 }) => {
   const { comment } = await connectAgents(page, ESSAY, 1);
   const block = items(page).nth(1);
-  const paragraph = (await block.locator("[data-block-id]").getAttribute("data-block-id")) as string;
+  const paragraph = (await block
+    .locator("[data-block-id]")
+    .getAttribute("data-block-id")) as string;
   await comment(1, `*em* ${"long review text ".repeat(180)}`, paragraph);
   for (let i = 1; i <= 25; i++) await comment(1, `reply ${i}`, paragraph);
   await block.getByTestId("comment-badge").click();
@@ -401,7 +407,8 @@ test("a long thread is bounded and scrolls, the composer stays in view, long com
     probe.remove();
     return h;
   });
-  const dims = () => list.evaluate((el) => ({ c: el.clientHeight, s: el.scrollHeight, t: el.scrollTop }));
+  const dims = () =>
+    list.evaluate((el) => ({ c: el.clientHeight, s: el.scrollHeight, t: el.scrollTop }));
   await earlier.click();
   await expect(thread.getByTestId("comment")).toHaveCount(26);
   const d = await dims();
@@ -433,7 +440,9 @@ test("an agent comment with script and img markup is inert", async ({ page }) =>
   });
   const { comment } = await connectAgents(page, ESSAY, 1);
   const block = items(page).nth(1);
-  const paragraph = (await block.locator("[data-block-id]").getAttribute("data-block-id")) as string;
+  const paragraph = (await block
+    .locator("[data-block-id]")
+    .getAttribute("data-block-id")) as string;
   await comment(1, '<script>alert(1)</script> <img src=x onerror="alert(2)"> safe text', paragraph);
   await block.getByTestId("comment-badge").click();
   const c = block.getByTestId("comment");
@@ -441,4 +450,45 @@ test("an agent comment with script and img markup is inert", async ({ page }) =>
   await expect(c).toContainText("<script>");
   await expect(c.locator("img, script")).toHaveCount(0);
   expect(dialogs).toEqual([]);
+});
+
+test("three agents: each is visible in the presence strip, and their comments keep distinct authors", async ({
+  page,
+}) => {
+  const { comment } = await connectAgents(page, ESSAY, 3);
+  const block = items(page).nth(1);
+  const paragraph = (await block
+    .locator("[data-block-id]")
+    .getAttribute("data-block-id")) as string;
+
+  // presence: one mark per connected agent, named, in an agent (notched) shape
+  const presence = page.getByTestId("presence").first();
+  const marks = presence.getByTestId("actor-mark");
+  await expect(marks).toHaveCount(3);
+  await expect(marks.nth(0)).toHaveAccessibleName("alpha (agent)");
+  await expect(marks.nth(1)).toHaveAccessibleName("beta (agent)");
+  await expect(marks.nth(2)).toHaveAccessibleName("gamma (agent)");
+  const clip = (l: import("@playwright/test").Locator) =>
+    l.first().evaluate((el) => getComputedStyle(el).clipPath);
+  expect(await clip(marks)).not.toBe("none");
+
+  await comment(1, "from alpha", paragraph);
+  await comment(2, "from beta", paragraph);
+  await comment(3, "from gamma", paragraph);
+  await block.getByTestId("comment-badge").click();
+  const thread = block.getByTestId("comment-thread");
+  await expect(thread.getByTestId("comment")).toHaveCount(3);
+  await expect(thread.getByTestId("actor-name")).toHaveText(["alpha", "beta", "gamma"]);
+
+  // a human run: the first comment carries the chip, the next one only the compact mark (a circle)
+  await thread.getByLabel("Your name").fill("Ada");
+  for (const t of ["human one", "human two"]) {
+    await thread.getByLabel("Reply").fill(t);
+    await thread.getByRole("button", { name: "Comment", exact: true }).click();
+    await expect(thread.getByText(t, { exact: true })).toBeVisible();
+  }
+  const human = thread.getByTestId("comment").last().getByTestId("actor-mark");
+  await expect(human).toHaveAccessibleName("Ada (human)");
+  expect(await clip(human)).toBe("none");
+  await expect(thread.getByTestId("actor-name")).toHaveText(["alpha", "beta", "gamma", "Ada"]);
 });

@@ -70,6 +70,7 @@
   import { definitionToFields } from "$lib/editor/blueprint-fields.js";
   import { setFieldMetaContext, buildFieldMetaMap } from "$lib/governance/field-meta.js";
   import { setRepoContext } from "$lib/governance/repo-context.js";
+  import InstanceNotes from "$lib/InstanceNotes.svelte";
   import { downloadText, markdownToText, wrapLogHtml } from "$lib/governance/decision-export-utils.js";
 
   // ---------------------------------------------------------------------------
@@ -1184,6 +1185,11 @@
           {#if formError}
             <p class="inspector__error" role="alert">{formError}</p>
           {/if}
+        </Panel>
+      {/if}
+      {#if selectedRecord && formMode === null}
+        <Panel title="Notes" collapsible={false} class="inspector__section">
+          <InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} />
         </Panel>
       {/if}
       {#if selectedRecord && formMode === null && activeContainer?.sectionTypeId === DECISION_TYPE_ID}

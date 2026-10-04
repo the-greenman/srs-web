@@ -11,6 +11,7 @@
   import Copy from '@lucide/svelte/icons/copy';
   import RefreshCw from '@lucide/svelte/icons/refresh-cw';
   import ActorChip from './ActorChip.svelte';
+  import ActorMark from './ActorMark.svelte';
   import Button from './Button.svelte';
   import IconButton from './IconButton.svelte';
   import Input from './Input.svelte';
@@ -71,7 +72,7 @@
   <div class="mcp-conn__head" data-part="head">
     <span class="mcp-conn__dot mcp-conn__dot--{status}" data-part="dot" aria-hidden="true"></span>
     <span class="mcp-conn__status" data-part="status" data-testid="mcp-status">{label[status]}</span>
-    {#if actor}<ActorChip {actor} />{:else if agentName}<strong data-testid="mcp-agent-name">{agentName}</strong>{/if}
+    {#if actor}<ActorMark {actor} size="sm" /><ActorChip {actor} />{:else if agentName}<strong data-testid="mcp-agent-name">{agentName}</strong>{/if}
     {#if repositoryName}<span class="mcp-conn__repo">{repositoryName}</span>{/if}
   </div>
   {#if lastActivity}<p class="mcp-conn__note" data-testid="agent-last">{lastActivity}</p>{/if}
