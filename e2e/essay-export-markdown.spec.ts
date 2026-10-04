@@ -5,12 +5,12 @@ import { expect, test } from "@playwright/test";
 /**
  * essay-export-markdown.spec.ts — srs-web#416: "Export markdown" is the visible essay only.
  * Fixture essay.srsj: Opening / Claim / Third (untitled) + a draft "Spare". We nest Claim under
- * Opening and hide Opening: the file has one H1, no hidden or draft text, arranged order, and the
- * hidden parent's child is promoted (srs-rust#1256), not lost.
+ * Opening and hide Opening: the file has one H1, arranged order, and no hidden, hidden-by-parent
+ * or draft text (export = what the editor shows).
  */
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
 
-test("Export markdown: one H1, no hidden or draft text, arranged order, children promoted", async ({
+test("Export markdown: one H1, no hidden, hidden-by-parent or draft text, arranged order", async ({
   page,
 }) => {
   await page.goto("/");
@@ -38,6 +38,6 @@ test("Export markdown: one H1, no hidden or draft text, arranged order, children
   expect(md).not.toContain("First paragraph.");
   expect(md).not.toContain("Spare");
   expect(md).not.toContain("Drafted paragraph.");
-  expect(md.indexOf("Second paragraph.")).toBeGreaterThan(-1);
-  expect(md.indexOf("Third paragraph.")).toBeGreaterThan(md.indexOf("Second paragraph."));
+  expect(md).not.toContain("Second paragraph."); // Claim: hidden by its parent
+  expect(md).toContain("Third paragraph.");
 });

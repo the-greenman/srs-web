@@ -393,9 +393,15 @@ describe("agentHandoff (srs-web#411)", () => {
 });
 
 describe("essayMarkdown (srs-web#416)", () => {
-  it("renders the essay container, excluding hidden ids and the essay anchor", async () => {
+  it("renders the essay container, excluding hidden ids, their nested children and the anchor", async () => {
     const { essayMarkdown } = await import("../src/lib/essay/essay-document.js");
-    const model = { essayId: "E", containerId: "C", hidden: ["h1", "h2"] };
+    const entries = [
+      { instanceId: "h1", parentInstanceId: null },
+      { instanceId: "c1", parentInstanceId: "h1" },
+      { instanceId: "g1", parentInstanceId: "c1" },
+      { instanceId: "v1", parentInstanceId: null },
+    ];
+    const model = { essayId: "E", containerId: "C", hidden: ["h1", "h2"], entries };
     expect(essayMarkdown({} as never, model as never)).toBe("# T\n");
     expect(m.listDocumentViews).toHaveBeenCalledWith(expect.anything(), {
       namespace: "com.mudemocracy.essay",
@@ -404,6 +410,8 @@ describe("essayMarkdown (srs-web#416)", () => {
     expect(m.renderDocumentView).toHaveBeenCalledWith({}, "V", "markdown", "C", null, [
       "h1",
       "h2",
+      "c1",
+      "g1",
       "E",
     ]);
   });

@@ -44,7 +44,7 @@ import type {
   TypeSummary,
 } from "$lib/srs-client.js";
 import type { Zone } from "./essay-model.js";
-import { toggled } from "./essay-model.js";
+import { hiddenByAncestor, toggled } from "./essay-model.js";
 import {
   COMMENTS_ON,
   COMMENT_TYPE_ID,
@@ -647,6 +647,9 @@ export function makeLocalCopy(repo: SrsRepository, m: EssayModel, paragraphId: s
 export function essayMarkdown(repo: SrsRepository, m: EssayModel): string {
   const view = listDocumentViews(repo, { namespace: "com.mudemocracy.essay", name: "essay" })[0];
   if (!view) throw new Error("This repository has no essay composition to export with.");
-  const exclude = [...m.hidden, m.essayId];
+  // What the writer sees: hidden paragraphs and everything nested under them (the editor's
+  // layers model), plus the anchor record so the container title is the only H1.
+  const hidden = new Set(m.hidden);
+  const exclude = [...hidden, ...hiddenByAncestor(m.entries, hidden), m.essayId];
   return renderDocumentView(repo, view.id, "markdown", m.containerId, null, exclude).rendered;
 }
