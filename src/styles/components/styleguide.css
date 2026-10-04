@@ -207,3 +207,9 @@
   font-size: var(--size-xs);
   text-align: center;
 }
+
+/* Notices (#441): the static toast specimens take the host's width, aligned with the Notice specimens. */
+#notices .toast {
+  width: var(--toast-width);
+  margin: var(--space-xs) var(--space-sm);
+}

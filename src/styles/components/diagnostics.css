@@ -134,3 +134,7 @@
 .diag--collapsed .diag-list {
   display: none;
 }
+.diag-notice .notice__icon {
+  min-height: var(--hit-target); /* centre the icon on the summary row (the toggle is the row's tallest item) */
+  align-items: center;
+}

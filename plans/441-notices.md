@@ -465,16 +465,16 @@ npx playwright test e2e/notices.spec.ts e2e/styleguide.spec.ts e2e/mobile-layout
 
 ## Final Acceptance
 
-- [ ] `npm run typecheck`, `npm run lint`, `npm test` and `npm run build` pass.
-- [ ] Full `npx playwright test` is no worse than the last GREEN origin/main run.
-- [ ] e2e (`e2e/notices.spec.ts`):
+- [x] `npm run typecheck`, `npm run lint`, `npm test` and `npm run build` pass.
+- [x] Full `npx playwright test` is no worse than the last GREEN origin/main run.
+- [x] e2e (`e2e/notices.spec.ts`):
   - the catalog notice shows in every shell, not only Generic;
   - repeated R23 on a composition shows a one-line summary that expands to ONE group with a count, and dismiss works per document;
   - Copy link shows exactly one toast (in the polite live region) that disappears, and the `boundingBox().y` of the first child of the main column's `.workspace` is identical before, during and after (no layout shift); a toast fired with the inspector drawer open at 900px is visible above the scrim;
   - an error (Guides export failure, Essay clipboard failure) stays inline, strong, `role=alert`, and persists until its cause or the user clears it.
-- [ ] `/styleguide` shows toast (info, success, error), Notice (three kinds), Diagnostics collapsed and expanded.
-- [ ] `grep -rn "saveMessage" src` is empty; no `.join(" ")` of diagnostics for display; `no-adhoc-notices` guard green.
-- [ ] Out-of-scope items (#442, #424 PR-B, #426, #428) are untouched.
+- [x] `/styleguide` shows toast (info, success, error), Notice (three kinds), Diagnostics collapsed and expanded.
+- [x] `grep -rn "saveMessage" src` is empty; no `.join(" ")` of diagnostics for display; `no-adhoc-notices` guard green.
+- [x] Out-of-scope items (#442, #424 PR-B, #426, #428) are untouched.
 
 ## Coordination Rules
 
