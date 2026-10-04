@@ -34,7 +34,6 @@ const m = vi.hoisted(() => ({
   containersForInstance: vi.fn(() => []),
   copyContainer: vi.fn(),
   forkRecord: vi.fn(),
-  listRelationTypes: vi.fn(() => []),
   createRelation: vi.fn(),
   deleteRecord: vi.fn(),
 }));
@@ -107,6 +106,41 @@ describe("essay-document", () => {
     expect(model.hidden).toEqual(["p2"]);
     expect(model.draftContainerId).toBe("D");
     expect(model.draftEntries.map((e) => e.instanceId)).toEqual(["p9"]);
+  });
+
+  it("asks the core to leave out structural edges; a contains/precedes neighbour is never shown", () => {
+    const para = (instanceId: string) => ({
+      kind: "record",
+      instanceId,
+      typeId: PARAGRAPH_TYPE_ID,
+      typeName: "paragraph",
+      fieldValues: { body: "x" },
+    });
+    const edge = (relationId: string, relationType: string, category: string) => ({
+      direction: "out",
+      relationId,
+      relationType,
+      sourceId: "p1",
+      targetId: "p2",
+      neighbour: para("p2"),
+      category,
+    });
+    const all = [
+      edge("c", "contains", "composition"),
+      edge("s", "precedes", "sequence"),
+      edge("d", "depends-on", "x"),
+    ];
+    // stand-in for the core: honours the exclusion by category
+    m.contextRecord.mockImplementation((_r: unknown, _id: string, _c: unknown, ex?: string[]) => ({
+      relations: all.filter((r) => !ex?.includes(r.category)),
+    }));
+    const model = loadEssay({ write_epoch: () => 0 } as never, "E");
+    expect(m.contextRecord).toHaveBeenCalledWith(expect.anything(), "p1", undefined, [
+      "composition",
+      "sequence",
+    ]);
+    expect(model.attachments.p1).toBeUndefined();
+    expect(model.related.p1.map((r) => r.relationType)).toEqual(["depends-on"]);
   });
 
   it("reads comment records once per change of the comments-on set, oldest first", () => {

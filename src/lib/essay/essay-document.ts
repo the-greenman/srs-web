@@ -21,7 +21,6 @@ import {
   getRecord,
   listContainers,
   listRecords,
-  listRelationTypes,
   listRelations,
   listTypes,
   moveContainerMemberRelative,
@@ -206,7 +205,7 @@ function loadComments(repo: SrsRepository, types: TypeSummary[]): Record<string,
 const toAttachment = (r: ContextRelation): Attachment | null => {
   const n = r.neighbour;
   if (!n || r.relationType === COMMENTS_ON) return null; // comments have their own thread
-  if (n.kind === "record" && n.typeId === PARAGRAPH_TYPE_ID) return null; // structure, not an attachment
+  if (n.kind === "record" && n.typeId === PARAGRAPH_TYPE_ID) return null; // shown as `related`, not an attachment
   const outgoing = r.direction === "out";
   const label = (outgoing ? r.targetLabel : r.sourceLabel) ?? "";
   const text =
@@ -226,13 +225,12 @@ const toAttachment = (r: ContextRelation): Attachment | null => {
   };
 };
 
-/** Relation categories that are layout, not meaning (core RelationTypeDefinition.category). */
-const STRUCTURAL = new Set(["composition", "sequence"]);
+/** Relation categories that are layout, not meaning: the core leaves them out of the context read. */
+const STRUCTURAL_CATEGORIES = ["composition", "sequence"];
 
-const toRelated = (r: ContextRelation, structural: Set<string>): Related | null => {
+const toRelated = (r: ContextRelation): Related | null => {
   const n = r.neighbour;
-  if (n?.kind !== "record" || n.typeId !== PARAGRAPH_TYPE_ID || structural.has(r.relationType))
-    return null;
+  if (n?.kind !== "record" || n.typeId !== PARAGRAPH_TYPE_ID) return null;
   const outgoing = r.direction === "out";
   return {
     id: r.relationId,
@@ -264,16 +262,11 @@ function loadContext(repo: SrsRepository, ids: string[]): ParagraphContext {
   const key = `${ids.join(",")}|${repo.write_epoch()}`;
   const hit = attachmentCache.get(repo);
   if (hit?.key === key) return hit.value;
-  const structural = new Set(
-    listRelationTypes(repo)
-      .filter((t) => STRUCTURAL.has(t.category ?? ""))
-      .map((t) => t.key)
-  );
   const out: ParagraphContext = { attachments: {}, related: {} };
   for (const id of ids) {
-    const rels = contextRecord(repo, id).relations;
+    const rels = contextRecord(repo, id, undefined, STRUCTURAL_CATEGORIES).relations;
     const att = rels.map(toAttachment).filter((a): a is Attachment => a !== null);
-    const rel = rels.map((r) => toRelated(r, structural)).filter((a): a is Related => a !== null);
+    const rel = rels.map(toRelated).filter((a): a is Related => a !== null);
     if (att.length) out.attachments[id] = att;
     if (rel.length) out.related[id] = rel;
   }

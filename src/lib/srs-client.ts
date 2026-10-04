@@ -2195,9 +2195,13 @@ export interface RecordContext {
 export function contextRecord(
   repo: SrsRepository,
   recordId: string,
-  containerId?: string
+  containerId?: string,
+  /** Relation-type categories the core leaves out of `relations` (e.g. `composition`, `sequence`). */
+  excludeRelationCategories?: string[]
 ): RecordContext {
-  return repo.context_record(JSON.stringify({ recordId, containerId })) as RecordContext;
+  return repo.context_record(
+    JSON.stringify({ recordId, containerId, excludeRelationCategories })
+  ) as RecordContext;
 }
 
 /** An installed RelationTypeDefinition, reduced to what clients read: `key` is the `relationType` string. */
