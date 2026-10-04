@@ -70,7 +70,7 @@
   import { definitionToFields } from "$lib/editor/blueprint-fields.js";
   import { setFieldMetaContext, buildFieldMetaMap } from "$lib/governance/field-meta.js";
   import { setRepoContext } from "$lib/governance/repo-context.js";
-  import { triggerDownload, markdownToText, wrapLogHtml } from "$lib/governance/decision-export-utils.js";
+  import { downloadText, markdownToText, wrapLogHtml } from "$lib/governance/decision-export-utils.js";
 
   // ---------------------------------------------------------------------------
   // Props
@@ -920,8 +920,7 @@
         .toLowerCase()
         .replace(/\s+/g, "-")
         .replace(/[^a-z0-9-]/g, "");
-      const blob = new Blob([content], { type: mimeType });
-      triggerDownload(blob, `${slug || "decision"}.${ext}`);
+      downloadText(content, mimeType, `${slug || "decision"}.${ext}`);
     } catch (e) {
       decisionExportError = `Export failed: ${e instanceof Error ? e.message : String(e)}`;
     }

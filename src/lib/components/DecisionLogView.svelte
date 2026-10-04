@@ -5,7 +5,7 @@
 <script lang="ts">
   import type { SrsRecord, SrsRepository } from "$lib/srs-client.js";
   import { listDocumentViews, renderDocumentView } from "$lib/srs-client.js";
-  import { triggerDownload, wrapLogHtml } from "$lib/governance/decision-export-utils.js";
+  import { downloadText, wrapLogHtml } from "$lib/governance/decision-export-utils.js";
   import { computeSearchHitIds, computeTagHitIds, computeLifecycleVisibleIds, sortByCreatedAt } from "./decision-log-utils.js";
   import LogTable from "./LogTable.svelte";
   import DecisionSummaryCard from "./DecisionSummaryCard.svelte";
@@ -54,8 +54,7 @@
       const ext = format === "html" ? "html" : "md";
       const content =
         format === "html" ? wrapLogHtml(result.rendered, "Decision Log") : result.rendered;
-      const blob = new Blob([content], { type: mimeType });
-      triggerDownload(blob, `decision-log.${ext}`);
+      downloadText(content, mimeType, `decision-log.${ext}`);
     } catch (e) {
       exportError = `Export failed: ${e instanceof Error ? e.message : String(e)}`;
     }

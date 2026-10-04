@@ -64,6 +64,11 @@ export function triggerDownload(blob: Blob, filename: string): void {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
+/** Download `text` as a file (the one place a string becomes a download). */
+export function downloadText(text: string, mimeType: string, filename: string): void {
+  triggerDownload(new Blob([text], { type: mimeType }), filename);
+}
+
 /**
  * Wrap an HTML fragment (e.g. from renderDocumentView "html") in a full HTML document.
  * renderDocumentView returns a bare <div class="srs-document">…</div> fragment, not a
