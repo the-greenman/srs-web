@@ -168,6 +168,18 @@ test.describe("drawers at 375px", () => {
     await expect(page.getByTestId("nav-trigger")).toBeFocused();
   });
 
+  test("Governance: both triggers sit inside the viewport (the old Topbar buttons wrap, they are not clipped)", async ({
+    page,
+  }) => {
+    await load(page, "gallery.srsj");
+    await openEditor(page, "governance");
+    for (const id of ["nav-trigger", "inspector-trigger"]) {
+      const box = (await page.getByTestId(id).boundingBox())!;
+      expect(box.x, id).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width, id).toBeLessThanOrEqual(375);
+    }
+  });
+
   test("Governance migrations view renders exactly one nav-trigger", async ({ page }) => {
     await load(page, "gallery.srsj");
     await openEditor(page, "governance");
@@ -267,7 +279,7 @@ test.describe("Essay on the frame: Wide", () => {
     await openEssay(page);
     expect(await pageWidth(page)).toBeLessThanOrEqual(46 * 16 + 1);
     await setWide(page, true);
-    expect(await pageWidth(page)).toBeGreaterThan(46 * 16 + 40);
+    expect(await pageWidth(page)).toBeGreaterThan(1000); // the cap is 80rem (1280px), not just the margin column growing;
     await setWide(page, false);
     expect(await pageWidth(page)).toBeLessThanOrEqual(46 * 16 + 1);
     await setWide(page, true);
@@ -275,7 +287,7 @@ test.describe("Essay on the frame: Wide", () => {
     await page.reload();
     await openEssay(page);
     await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
-    expect(await pageWidth(page)).toBeGreaterThan(46 * 16 + 40);
+    expect(await pageWidth(page)).toBeGreaterThan(1000); // the cap is 80rem (1280px), not just the margin column growing;
   });
 });
 
@@ -343,13 +355,13 @@ test.describe("Generic on the frame", () => {
     expect(await widthOf(page, ".generic-page")).toBeLessThanOrEqual(46 * 16 + 1);
     await openEditor(page, "essay");
     await setWide(page, true);
-    expect(await pageWidth(page)).toBeGreaterThan(46 * 16 + 40);
+    expect(await pageWidth(page)).toBeGreaterThan(1000); // the cap is 80rem (1280px), not just the margin column growing;
 
     await page.getByTestId("toolbar-menu-go").click();
     await page.getByTestId("toolbar-explorer").click(); // back to the generic shell, same repository
     await expect(page.getByTestId("generic-srs-shell")).toBeVisible();
     await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
-    expect(await widthOf(page, ".generic-page")).toBeGreaterThan(46 * 16 + 40);
+    expect(await widthOf(page, ".generic-page")).toBeGreaterThan(1000); // the cap is 80rem (1280px), not just the margin column growing;
 
     await openEditor(page, "essay");
     await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");

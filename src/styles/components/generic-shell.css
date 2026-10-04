@@ -58,6 +58,16 @@
   font-size: var(--size-xs);
 }
 
+/* ── Read-only reason: a line under the bar ────────────────────────────────── */
+.generic-readonly {
+  margin: 0;
+  padding: 6px var(--space-sm);
+  border-bottom: var(--rule-soft);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--color-muted-strong);
+}
+
 /* ── Main: the view, capped at the content width (Wide widens it) ─────────── */
 .generic-page {
   display: flex;
@@ -214,6 +224,8 @@
 }
 .generic-edit {
   margin-top: var(--space-xs);
+  font: inherit;
+  font-size: var(--size-sm);
   padding: 6px var(--space-xs);
   border: var(--rule);
   border-radius: var(--radius-md);

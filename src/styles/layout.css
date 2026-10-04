@@ -49,7 +49,7 @@
 
 /* ── Topbar: breadcrumb + contextual actions ──────────────────────────────── */
 .topbar {
-  height: var(--topbar-height);
+  min-height: var(--topbar-height);
   display: flex;
   align-items: center;
   gap: var(--space-sm);
@@ -59,8 +59,6 @@
   background: var(--color-surface);
 }
 .topbar__crumb {
-  flex: 1 1 auto;
-  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -94,6 +92,24 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+/* On a phone the buttons wrap rather than being clipped (the frame no longer scrolls sideways), so the
+   inspector trigger at the bar's end stays reachable. Desktop is unchanged. */
+/* bp: compact */
+@media (max-width: 720px) {
+  .topbar__actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+    padding: var(--space-xs) 0;
+  }
+}
+/* The inspector trigger is the last item: right-aligned on its own, flush after the actions when there are some. */
+.topbar > .shell-trigger {
+  margin-left: auto;
+}
+.topbar__actions + .shell-trigger {
+  margin-left: 0;
 }
 
 /* ── Scrolling workspace + centred reading/edit canvas ────────────────────── */

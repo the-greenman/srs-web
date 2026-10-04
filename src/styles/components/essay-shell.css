@@ -22,10 +22,11 @@
   font-size: var(--size-sm);
 }
 /* The page sits in the flush .workspace (the one scroller). Its cap is the content cap, which Wide widens
-   (--content-max on .app), plus the margin column's growth, so the margin never crosses the page edge. */
+   (--content-max on .app: read here, on the element, so the override is seen), plus the margin column's
+   growth, so the margin never crosses the page edge. */
 .essay-shell__page {
   min-width: 0;
-  max-width: calc(var(--essay-page-width) + var(--margin-width) - var(--margin-width-compact));
+  max-width: calc(var(--content-max) + var(--margin-width) - var(--margin-width-compact));
   width: calc(100% - 2 * var(--space-sm));
   margin: var(--space-md) auto;
   padding: var(--space-md) var(--space-md) var(--space-lg);

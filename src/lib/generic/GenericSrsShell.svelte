@@ -493,11 +493,12 @@
       {#snippet lead()}<NavTrigger />{/snippet}
       {#snippet trail()}<InspectorTrigger />{/snippet}
       {#snippet status()}
-        {#if !onSave && readOnlyReason}<span data-testid="read-only-note" role="status">{readOnlyReason}</span>{/if}
         {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
         {#if saveMessage}<span role="status">{saveMessage}</span>{/if}
       {/snippet}
     </Toolbar>
+    <!-- The reason is a sentence: a line under the bar (wraps on a phone) rather than in the one-row bar. -->
+    {#if !onSave && readOnlyReason}<p class="generic-readonly" data-testid="read-only-note" role="status">{readOnlyReason}</p>{/if}
     <div class="workspace">
       <div class="generic-page">
     {#if surface === "document"}

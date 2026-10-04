@@ -67,7 +67,6 @@
   --block-tools-shadow: var(--shadow-popover);
   --margin-row-gap: 4px;
   --margin-label-lines: 2;
-  --essay-page-width: var(--content-max);
 
   /* Shell frame (#424): resizable columns, the drawer and its trigger badge. */
   --shell-nav-min: 12rem;
