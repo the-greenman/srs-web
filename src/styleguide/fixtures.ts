@@ -1,9 +1,9 @@
 // Fixture data for the /styleguide route (srs-web#420). Plain objects typed against the
 // component props; no SRS semantics (ADR-001) and never repository data.
 import type { AgentStatus, AgentWrite } from "$lib/agent-activity";
+import type { Annotation } from "$lib/annotations";
 import type { Layer } from "$lib/components/LayersPanel.svelte";
 import type { MenuAction } from "$lib/components/menu-action";
-import type { Annotation } from "$lib/essay/annotations";
 import type { Actor } from "$lib/srs-client";
 import type { Status } from "$lib/types";
 

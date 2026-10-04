@@ -156,7 +156,7 @@ describe.skipIf(!haveBindings)("write observation on the real engine (srs-web#34
 describe.skipIf(!haveBindings)("paragraph attachments on the real engine (context_record)", () => {
   it("attachments are non-comment, non-paragraph neighbours in both directions; live after a write", async () => {
     const doc = await import("../src/lib/essay/essay-document.js");
-    const { COMMENT_TYPE_ID } = await import("../src/lib/essay/type-registry.js");
+    const { COMMENT_TYPE_ID, addComment } = await import("../src/lib/comments.js");
     const { createRecord, createRelation, listTypes, updateRecord } = await import(
       "../src/lib/srs-client.js"
     );
@@ -180,7 +180,7 @@ describe.skipIf(!haveBindings)("paragraph attachments on the real engine (contex
     createRelation(repo, { relationType: "evidences", sourceInstanceId: x, targetInstanceId: a });
     const y = mk("a source");
     createRelation(repo, { relationType: "refines", sourceInstanceId: a, targetInstanceId: y });
-    doc.addComment(repo, a, "just a comment"); // comments-on: the thread's, never a glyph
+    addComment(repo, a, "just a comment"); // comments-on: the thread's, never a glyph
     createRelation(repo, { relationType: "precedes", sourceInstanceId: a, targetInstanceId: b });
 
     expect(Object.keys(doc.loadEssay(repo, essayId).attachments)).toEqual([a]);
@@ -281,3 +281,18 @@ describe.skipIf(!haveBindings)(
     });
   }
 );
+
+describe.skipIf(!haveBindings)("commentsAvailable on the real engine", () => {
+  it("is false for the gallery corpus and true where the essay package is installed", async () => {
+    const { commentsAvailable } = await import("../src/lib/comments.js");
+    const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
+    mkdirSync(dir, { recursive: true });
+    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
+    const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+    mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
+    const load = (f: string) =>
+      mod.SrsRepository.load(readFileSync(path.join(__dirname, "../e2e/fixtures", f), "utf8"));
+    expect(commentsAvailable(load("gallery.srsj"))).toBe(false);
+    expect(commentsAvailable(load("essay.srsj"))).toBe(true);
+  });
+});

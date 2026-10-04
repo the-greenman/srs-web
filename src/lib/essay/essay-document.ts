@@ -1,3 +1,7 @@
+import { STRUCTURAL_CATEGORIES } from "$lib/annotations.js";
+import type { Attachment, Related } from "$lib/annotations.js";
+import { COMMENTS_ON, loadComments } from "$lib/comments.js";
+import type { Comment } from "$lib/comments.js";
 /**
  * Essay document operations: a thin composition of srs-client calls (no SRS semantics here —
  * validation, ordering and depth rules are the engine's). The shell calls these and reloads.
@@ -14,7 +18,6 @@ import {
   copyContainer,
   createContainer,
   createRecord,
-  createRelation,
   deleteRecord,
   deleteRelation,
   forkRecord,
@@ -34,7 +37,6 @@ import {
   updateRecord,
 } from "$lib/srs-client.js";
 import type {
-  Actor,
   AgentWriteGuard,
   ContextRelation,
   OutlineEntry,
@@ -43,60 +45,15 @@ import type {
   SrsRepository,
   TypeSummary,
 } from "$lib/srs-client.js";
+import { recordsOfType, typeVersion } from "$lib/type-version.js";
 import type { Zone } from "./essay-model.js";
 import { hiddenByAncestor, toggled } from "./essay-model.js";
-import {
-  COMMENTS_ON,
-  COMMENT_TYPE_ID,
-  DOCUMENT_STATE_TYPE_ID,
-  ESSAY_TYPE_ID,
-  PARAGRAPH_TYPE_ID,
-} from "./type-registry.js";
+import { DOCUMENT_STATE_TYPE_ID, ESSAY_TYPE_ID, PARAGRAPH_TYPE_ID } from "./type-registry.js";
 
 export interface Paragraph {
   id: string;
   title: string;
   body: string;
-}
-/** A comment on a paragraph; `author` is the engine-stamped `createdBy` (absent = unknown author). */
-export interface Comment {
-  id: string;
-  text: string;
-  createdAt: string;
-  author?: Actor;
-}
-/**
- * Something attached to a paragraph (an agent's problem, source, counter-claim, note...): any
- * relation to a resolving non-paragraph, non-comment neighbour. `kind` is data - the relation
- * type crossed with the neighbour's type - so new kinds need no code here.
- */
-export interface Attachment {
-  /** Stable key: the relation id. */
-  id: string;
-  relationType: string;
-  /** The core vocabulary's label for `relationType` (the type key when not installed). */
-  relationLabel: string;
-  direction: "out" | "in";
-  /** Neighbour type name, or "note". */
-  neighbourType: string;
-  neighbourId: string;
-  label: string;
-  /** Readable text of the neighbour (note sections / string field values), blank-line joined. */
-  text: string;
-}
-/**
- * A semantic relation between this paragraph and another paragraph (derived-from, supersedes,
- * refines, package-defined types...) in either direction. Structural edges (the core's
- * `composition` / `sequence` categories: contains, precedes) never appear.
- */
-export interface Related {
-  /** Stable key: the relation id. */
-  id: string;
-  relationType: string;
-  direction: "out" | "in";
-  /** The other end's instance id (a paragraph; it may live in another essay). */
-  otherId: string;
-  label: string;
 }
 export interface EssaySummary {
   id: string;
@@ -152,20 +109,6 @@ export interface Target {
 
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
 
-function recordsOfType(repo: SrsRepository, types: TypeSummary[], typeId: string): SrsRecord[] {
-  const t = types.find((x) => x.id === typeId);
-  if (!t) return [];
-  return listRecords(repo, { typeNamespace: t.namespace, typeName: t.name }).filter(
-    (r) => r.typeId === typeId
-  );
-}
-
-function typeVersion(repo: SrsRepository, typeId: string): number {
-  const t = listTypes(repo).find((x) => x.id === typeId);
-  if (!t) throw new Error(`Type ${typeId} is not installed`);
-  return t.version;
-}
-
 export function listEssays(repo: SrsRepository): EssaySummary[] {
   return recordsOfType(repo, listTypes(repo), ESSAY_TYPE_ID).map((r) => ({
     id: r.instanceId,
@@ -178,38 +121,6 @@ const toParagraph = (r: SrsRecord): Paragraph => ({
   title: str(r.fieldValues.paragraph_title),
   body: str(r.fieldValues.body),
 });
-
-/** Last comment read per repository handle, keyed on the comments-on relation ids (srs-web#359). */
-const commentCache = new WeakMap<object, { key: string; comments: Record<string, Comment[]> }>();
-
-/**
- * Comments by paragraph, oldest first by the engine's createdAt. One relation read per reload;
- * the comment records (immutable here) are re-read only when the set of comments-on relations
- * changed, which keeps a commit's reload cheap (~6 ms vs ~15 ms on a muSrs-sized repo, 50 comments).
- */
-function loadComments(repo: SrsRepository, types: TypeSummary[]): Record<string, Comment[]> {
-  const rels = listRelations(repo, { relationType: COMMENTS_ON });
-  const key = rels.map((r) => r.relationId).join(",");
-  const hit = commentCache.get(repo);
-  if (hit?.key === key) return hit.comments;
-  const byId = new Map(recordsOfType(repo, types, COMMENT_TYPE_ID).map((r) => [r.instanceId, r]));
-  const out: Record<string, Comment[]> = {};
-  for (const rel of rels) {
-    const r = byId.get(rel.sourceInstanceId);
-    if (!r) continue;
-    out[rel.targetInstanceId] ??= [];
-    out[rel.targetInstanceId].push({
-      id: r.instanceId,
-      text: str(r.fieldValues.comment_text),
-      createdAt: r.createdAt ?? "",
-      author: r.createdBy,
-    });
-  }
-  for (const list of Object.values(out))
-    list.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  commentCache.set(repo, { key, comments: out });
-  return out;
-}
 
 const toAttachment =
   (labels: Map<string, string>) =>
@@ -234,11 +145,9 @@ const toAttachment =
       neighbourId: n.instanceId,
       label: label || (n.kind === "note" ? n.title : "") || n.instanceId,
       text,
+      actor: r.createdBy,
     };
   };
-
-/** Relation categories that are layout, not meaning: the core leaves them out of the context read. */
-const STRUCTURAL_CATEGORIES = ["composition", "sequence"];
 
 const toRelated = (r: ContextRelation): Related | null => {
   const n = r.neighbour;
@@ -254,6 +163,7 @@ const toRelated = (r: ContextRelation): Related | null => {
       str(n.fieldValues.paragraph_title) ||
       str(n.fieldValues.body).slice(0, 40) ||
       "untitled",
+    actor: r.createdBy,
   };
 };
 
@@ -403,18 +313,6 @@ export function addParagraph(repo: SrsRepository, m: EssayModel, t?: Target): st
   });
   place(repo, m.containerId, rec.instanceId, t);
   return rec.instanceId;
-}
-
-/** Reply on a paragraph: a comment record + `comments-on` (comment -> paragraph); never a container member. */
-export function addComment(repo: SrsRepository, paragraphId: string, text: string): void {
-  const rec = createRecord(repo, COMMENT_TYPE_ID, typeVersion(repo, COMMENT_TYPE_ID), {
-    fieldValues: { comment_text: text },
-  });
-  createRelation(repo, {
-    relationType: COMMENTS_ON,
-    sourceInstanceId: rec.instanceId,
-    targetInstanceId: paragraphId,
-  });
 }
 
 function patchRecord(

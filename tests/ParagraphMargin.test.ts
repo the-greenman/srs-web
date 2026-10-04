@@ -2,7 +2,7 @@
 import { fireEvent, render } from "@testing-library/svelte";
 import { expect, it, vi } from "vitest";
 import ParagraphMargin from "../src/lib/components/ParagraphMargin.svelte";
-import type { Annotation } from "../src/lib/essay/annotations.js";
+import type { Annotation } from "../src/lib/annotations.js";
 
 const rel = (i: number): Annotation => ({
   kind: "relation",

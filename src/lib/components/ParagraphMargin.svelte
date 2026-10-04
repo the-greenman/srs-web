@@ -1,5 +1,5 @@
 <!--
-  ParagraphMargin — the right margin of one paragraph: renders Annotation[] (essay/annotations.ts).
+  ParagraphMargin — the right margin of one paragraph: renders Annotation[] (src/lib/annotations.ts).
   The ONE place for order, grouping, overflow ("+N" opens a small list) and each kind's look
   (KINDS: order + presentation). Presentation only: `onopen` reports the click, the shell decides
   what it does. `variant` is the experiment seam: compact = marks only, expanded = marks + text.
@@ -12,7 +12,7 @@
   import AttachmentGlyph from "./AttachmentGlyph.svelte";
   import CommentBadge from "./CommentBadge.svelte";
   import Popover from "./Popover.svelte";
-  import type { Annotation, AnnotationKind } from "../essay/annotations.js";
+  import type { Annotation, AnnotationKind } from "$lib/annotations.js";
 
   let {
     annotations,

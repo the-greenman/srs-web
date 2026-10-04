@@ -40,7 +40,6 @@
   import { NARROW } from "$lib/breakpoints";
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
-    addComment,
     addParagraph,
     binParagraph,
     copyEssay,
@@ -65,8 +64,10 @@
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { formatAddress, parseAddress } from "./address.js";
   import { headerActions } from "./header-actions.js";
-  import { annotationsFor, loadVariant, saveVariant } from "./annotations.js";
-  import type { Annotation } from "./annotations.js";
+  import { addComment } from "$lib/comments.js";
+  import { annotationsFor, loadVariant, saveVariant } from "$lib/annotations.js";
+  import type { Annotation } from "$lib/annotations.js";
+  import { essaySource } from "./annotation-source.js";
   import { hiddenByAncestor, outsideRun, visibleEntries } from "./essay-model.js";
 
   let {
@@ -577,7 +578,7 @@
             {#if p}
               {#snippet margin()}
                 <ParagraphMargin
-                  annotations={annotationsFor(model!, p.id)}
+                  annotations={annotationsFor(essaySource(model!), p.id)}
                   {variant}
                   active={[...pinnedIds, ...(showThread(p.id) ? [`comments:${p.id}`] : [])]}
                   onopen={(a) => openAnnotation(a, p.id)}

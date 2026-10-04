@@ -34,7 +34,6 @@ const doc = vi.hoisted(() => ({
 }));
 vi.mock("../src/lib/essay/essay-document.js", () => ({
   ...doc,
-  addComment: vi.fn(),
   binParagraph: vi.fn(),
   deleteForever: vi.fn(),
   addParagraph,
@@ -45,6 +44,8 @@ vi.mock("../src/lib/essay/essay-document.js", () => ({
   setTitle: vi.fn(),
   transfer: vi.fn(),
 }));
+
+vi.mock("../src/lib/comments.js", () => ({ addComment: vi.fn() }));
 
 it("a typing commit reloads the essay once, via documentRevision (essay typing freeze)", async () => {
   doc.loadEssay.mockReturnValue(model);
