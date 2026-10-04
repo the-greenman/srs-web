@@ -16,6 +16,11 @@
   align-items: center;
   flex: none;
 }
+.toolbar__trail {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
 .toolbar__title {
   display: flex;
   align-items: center;
@@ -39,9 +44,17 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
   font-family: var(--font-mono);
   font-size: var(--size-xs);
+}
+/* A long status shortens with an ellipsis rather than pushing the actions out of the bar. */
+.toolbar__status > * {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .toolbar__actions {
   display: flex;
@@ -64,10 +77,14 @@
   }
 }
 @media (pointer: coarse) {
+  .toolbar__lead .icon-btn,
+  .toolbar__trail .icon-btn,
   .toolbar__actions .btn,
   .toolbar__actions .icon-btn {
     min-height: 44px;
   }
+  .toolbar__lead .icon-btn,
+  .toolbar__trail .icon-btn,
   .toolbar__actions .icon-btn {
     min-width: 44px;
   }

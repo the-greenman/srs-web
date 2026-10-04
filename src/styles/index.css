@@ -50,6 +50,8 @@
 @import url("./components/tag-chip.css") layer(components);
 @import url("./components/nav.css") layer(components);
 @import url("./components/inspector.css") layer(components);
+@import url("./components/shell.css") layer(components);
+@import url("./components/generic-shell.css") layer(components);
 @import url("./components/card.css") layer(components);
 @import url("./components/log-table.css") layer(components);
 @import url("./components/field.css") layer(components);

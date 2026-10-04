@@ -195,7 +195,10 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
       await page.getByTestId("header-menu").click();
       await page.getByTestId("toolbar-help").click();
       await expect(help(page)).toBeVisible();
-      await page.getByRole("heading", { name: "On small democracy" }).click();
+      // Tap outside the popover. (Was the page heading: it sits under the popover, and the old test only
+      // passed because Playwright could scroll the window to move it clear. The page now scrolls in its own
+      // column and is shorter than the viewport, so tap the empty column below it.)
+      await page.mouse.click(200, phone.height - 40);
       await expect(help(page)).toBeHidden();
     });
   });

@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render } from "@testing-library/svelte";
-import { tick } from "svelte";
+import { createRawSnippet, tick } from "svelte";
 import { afterEach, expect, it, vi } from "vitest";
 import Toolbar from "../src/lib/components/Toolbar.svelte";
 import { HEADER_GROUPS, headerActions } from "../src/lib/essay/header-actions.js";
+import { ShellState } from "../src/lib/shell-context.svelte.js";
 
 afterEach(() => {
   cleanup();
@@ -15,14 +16,18 @@ const handlers = {
   onnew: noop,
   oncopy: noop,
   onhelp: noop,
-  onvariant: noop,
   oncomments: noop,
   onsave: noop,
   onexport: noop,
   onopenanother: noop,
   onexplorer: noop,
 };
-const state = { expanded: false, comments: "mixed" as const, saving: false, dirty: true };
+const state = {
+  shell: new ShellState({ wideEnabled: true }),
+  comments: "mixed" as const,
+  saving: false,
+  dirty: true,
+};
 const actions = (s = state) => headerActions(handlers, s);
 
 function width(w: number) {
@@ -68,7 +73,7 @@ it("narrow tier: title, Save and exactly one overflow trigger, no group triggers
 it("View menu rows are menuitemcheckbox with aria-checked and stay open on toggle", async () => {
   width(1440);
   const run = vi.fn();
-  const a = actions().map((x) => (x.id === "margin" ? { ...x, run } : x));
+  const a = actions().map((x) => (x.id === "wide" ? { ...x, run } : x));
   const { getByTestId } = mount({ actions: a });
   await fireEvent.click(getByTestId("toolbar-menu-view"));
   await tick();
@@ -109,4 +114,30 @@ it("one renderer: no action testid appears twice at any tier", async () => {
     expect(ids.length).toBe(new Set(ids).size);
     cleanup();
   }
+});
+
+const slot = (testid: string) =>
+  createRawSnippet(() => ({ render: () => `<button data-testid="${testid}">${testid}</button>` }));
+
+it("lead renders first and trail last, at every tier, and tab order follows", () => {
+  for (const w of [1440, 768, 390]) {
+    width(w);
+    const { container, getByTestId } = mount({ lead: slot("lead-btn"), trail: slot("trail-btn") });
+    const order = [...container.querySelectorAll("button, [tabindex]")].map((e) =>
+      e.getAttribute("data-testid")
+    );
+    expect(order[0]).toBe("lead-btn");
+    expect(order.at(-1)).toBe("trail-btn");
+    // after the primary and the menus or the one overflow
+    expect(order.indexOf("save-document")).toBeLessThan(order.indexOf("trail-btn"));
+    expect(getByTestId("toolbar").querySelector('[data-part="trail"]')).toBeTruthy();
+    cleanup();
+  }
+});
+
+it("no lead or trail part renders when the slots are absent", () => {
+  width(1440);
+  const { container } = mount();
+  expect(container.querySelector('[data-part="trail"]')).toBeNull();
+  expect(container.querySelector('[data-part="lead"]')).toBeNull();
 });

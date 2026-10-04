@@ -13,9 +13,30 @@ import type { Page } from "@playwright/test";
  */
 export async function openPackageEditor(
   page: Page,
-  editor: "governance" | "guides"
+  editor: "governance" | "guides" | "essay"
 ): Promise<void> {
+  await openNavDrawer(page); // the picker is in the nav, a drawer on a phone; a no-op above 720px
   await page.getByTestId(`package-editor-${editor}`).click();
+}
+
+/**
+ * Open the nav drawer when the nav is one (<= 720px); a no-op above that, so one spec body works at any
+ * width. A closed drawer's contents are not visible, so any spec at a drawer width reaches nav content
+ * only through this (#424).
+ */
+export async function openNavDrawer(page: Page): Promise<void> {
+  const trigger = page.getByTestId("nav-trigger");
+  if (!(await trigger.isVisible())) return;
+  await trigger.click();
+  await expect(page.getByTestId("shell-drawer-nav")).toBeVisible();
+}
+
+/** Open the inspector drawer when the inspector is one (<= 1100px); a no-op above that. */
+export async function openInspectorDrawer(page: Page): Promise<void> {
+  const trigger = page.getByTestId("inspector-trigger");
+  if (!(await trigger.isVisible())) return;
+  await trigger.click();
+  await expect(page.getByTestId("shell-drawer-inspector")).toBeVisible();
 }
 
 /**

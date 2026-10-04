@@ -24,7 +24,7 @@ Three tiers, each referencing the one above, so a skin re-points the tier it nee
 | Tier | Where | Examples | Read by |
 |---|---|---|---|
 | Primitive | `tokens.css` | `--paper`, `--ink`, `--black`, `--grey-1..4` | semantic tokens only, never components |
-| Semantic | `tokens.css` | `--color-text`, `--color-surface-raised`, `--color-on-dark`, `--radius-md`, `--shadow-popover`, `--z-overlay`, `--focus-ring`, `--hit-target`, `--rail-width` | components and component tokens |
+| Semantic | `tokens.css` | `--color-text`, `--color-surface-raised`, `--color-on-dark`, `--radius-md`, `--shadow-popover`, `--z-overlay`, `--focus-ring`, `--hit-target`, `--inspector-width`, `--content-max` | components and component tokens |
 | Component | `tokens-components.css` | `--btn-bg`, `--btn-primary-bg`, `--icon-btn-fg`, `--popover-bg`, `--hue-pill-s`, `--actor-mark-size`, `--margin-width`, `--comment-thread-max`, `--toolbar-gap`, `--block-tools-bg` (the paragraph hover strip) | the component's own CSS |
 
 Component tokens are named `--<block>-<property>[-<state>]` and are declared on `:root` in the
@@ -32,8 +32,8 @@ Component tokens are named `--<block>-<property>[-<state>]` and are declared on 
 to the component's own declaration. The component reads them (`.btn { background: var(--btn-bg) }`);
 a variant re-assigns the token on the variant selector (`.btn--primary { --btn-bg: var(--btn-primary-bg) }`).
 No `var(--x, <colour>)` fallbacks: a read token must be defined.
-`tests/styles-tokens.test.ts` enforces this for `src/styles/**` and every `src/lib/components`
-`<style>` block (shells, editors and `App.svelte` are out of scope until #424).
+`tests/styles-tokens.test.ts` enforces this for `src/styles/**`, every `src/lib/components` `<style>` block
+and the converted shells (`src/lib/generic`); the Governance and Guides shells enter the scan with #424 PR-B.
 
 ## `data-part`
 
@@ -52,14 +52,15 @@ src/styles/
   index.css            entry — declares the layer order and @imports everything
   tokens.css           primitive + semantic tokens (palette, colour roles, type, spacing, radius, shadow, z-index, focus, hit target)
   base.css             reset, document defaults, typography, paper grain
-  layout.css           the nav | main | inspector app shell
+  layout.css           the 100dvh nav | main | inspector frame (#424): each column scrolls itself, Wide carrier on .app
   utilities.css        single-purpose helpers (win against components)
   themes/              optional reskins in the `theme` layer (demo.css is styleguide-only)
   components/
     button.css         .btn          actions
     tag.css            .tag          lifecycle status vocabulary
-    nav.css            .nav          dark navigation rail
+    nav.css            .nav          dark navigation rail (.nav__scroll is its one scroller)
     inspector.css      .inspector    right rail + .meta key/value list
+    shell.css          .drawer .resize-handle  frame parts (#424): the off-canvas Drawer, the column resizer, trigger badge
     card.css           .card         record reading view
     log-table.css      .log-table    tabular profile views (decision log)
     field.css          .field        form control + label/help/error + save bar

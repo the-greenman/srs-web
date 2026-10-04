@@ -17,6 +17,7 @@
   import type { Snippet } from 'svelte';
   import { anchorSurfaceStyle, isShown, placeNextTo, supportsAnchor } from './popover-position.js';
   import type { Placement } from './popover-position.js';
+import { supportsPopover } from '../native-support.js';
 
   let {
     open = $bindable(false),
@@ -59,7 +60,7 @@
   let wrap = $state<HTMLElement>();
   let surface = $state<HTMLElement>();
   // Feature detects, once per module load (happy-dom has neither).
-  const native = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
+  const native = supportsPopover();
   const useAnchor = supportsAnchor();
   const anchorEl = $derived(anchor ?? wrap);
 

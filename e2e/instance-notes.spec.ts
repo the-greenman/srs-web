@@ -19,8 +19,8 @@ async function selectFirstRecord(page: Page, fixture: string, container: string)
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page.locator('input[type="file"]#srsj-file').setInputFiles(path.join(FIXTURES, fixture));
   await page.getByRole("button", { name: `Toggle ${container}` }).click();
-  await page.locator(".tree-members button").first().click();
-  await expect(page.getByRole("heading", { name: "Notes" })).toBeVisible();
+  await page.locator(".generic-tree-members button").first().click();
+  await expect(page.getByTestId("instance-notes")).toBeAttached();
   return errors;
 }
 
@@ -32,6 +32,7 @@ test("gallery (no comment package): relations only, no comment UI, no console er
   await expect(notes).toHaveAttribute("data-srs-instance", /[0-9a-f-]{36}/);
   await expect(notes.getByRole("textbox", { name: "Reply" })).toHaveCount(0);
   await expect(notes.getByTestId("comment-thread")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Notes" })).toHaveCount(0); // nothing to show: no empty heading
   expect(errors).toEqual([]);
 });
 
@@ -39,7 +40,7 @@ test("a draft reply does not carry over to the next selected instance", async ({
   await selectFirstRecord(page, "essay.srsj", "On small democracy");
   const notes = page.getByTestId("instance-notes");
   await notes.getByLabel("Reply").fill("A draft for the first instance.");
-  await page.locator(".tree-members button").nth(1).click();
+  await page.locator(".generic-tree-members button").nth(1).click();
   await expect(page.getByTestId("instance-notes")).toHaveAttribute("data-srs-instance", /./);
   await expect(page.getByTestId("instance-notes").getByLabel("Reply")).toHaveValue("");
   await expect(page.getByTestId("instance-notes").getByTestId("comment")).toHaveCount(0);

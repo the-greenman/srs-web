@@ -127,6 +127,39 @@ test.describe("Styleguide", () => {
     });
   }
 
+  // ── Page frame specimen (srs-web#424) ──────────────────────────────────────────────────────
+  for (const theme of ["Default", "Demo"]) {
+    test(`page frame specimen shows closed, nav open and inspector open states, and Wide off/on: ${theme} theme`, async ({ page }) => {
+      const errors: string[] = [];
+      page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.setViewportSize({ width: 390, height: 900 });
+      await page.goto("/styleguide");
+      await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+      await page.getByLabel("Theme").selectOption(theme);
+      const shells = page.getByTestId("sg-shell");
+      await expect(shells).toHaveCount(3);
+      await expect(shells.evaluateAll((els) => els.map((e) => e.getAttribute("data-open")))).resolves.toEqual(["none", "nav", "inspector"]);
+      for (const s of [0, 1, 2]) {
+        await expect(shells.nth(s).getByTestId("nav-trigger")).toBeVisible();
+        await expect(shells.nth(s).getByTestId("inspector-trigger")).toBeVisible();
+        await expect(shells.nth(s).getByTestId("inspector-badge")).toHaveText("3");
+      }
+      await expect(shells.nth(1).locator(".nav")).toBeVisible();
+      await expect(shells.nth(2).locator(".inspector")).toBeVisible();
+      // each frame is a phone-width box; the toolbar inside does not overflow it
+      for (const s of [0, 1, 2]) {
+        const overflow = await shells.nth(s).evaluate((el) => el.scrollWidth > el.clientWidth);
+        expect(overflow, `frame ${s} overflows`).toBe(false);
+      }
+      // Wide: the second cap bar is wider than the first when there is room
+      await page.setViewportSize({ width: 1440, height: 900 });
+      const w = await page.getByTestId("sg-wide").locator(".sg__capbar").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().width));
+      expect(w[1]).toBeGreaterThan(w[0]);
+      expect(errors).toEqual([]);
+    });
+  }
+
   // ── Rail components at real widths: nothing overflows its frame (srs-web#421) ──────────────
   for (const theme of ["Default", "Demo"]) {
     for (const width of [1280, 390]) {

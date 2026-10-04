@@ -1137,13 +1137,15 @@
           <Breadcrumb items={[{ label: repoName }, { label: "Migrations" }]} />
         {/snippet}
       </Topbar>
-      <Migrations
-        repo={repo}
-        onMigrationApplied={() => {
-          loadContainerNav();
-          refreshValidation();
-        }}
-      />
+      <Workspace>
+        <Migrations
+          repo={repo}
+          onMigrationApplied={() => {
+            loadContainerNav();
+            refreshValidation();
+          }}
+        />
+      </Workspace>
     </Main>
     {/if}
   {/snippet}

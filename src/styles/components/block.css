@@ -74,8 +74,9 @@
 /* The hover strip: 2-3 shortcut tools (data-declared `primary` actions) INSIDE the paragraph's own title row,
    at its right end. It never leaves the block, so it cannot touch the previous paragraph's thread, the margin
    column or a neighbour's handle; on hover it may cover the end of a very long title (accepted, #423 N1/N2).
-   Opacity, not display: the tools stay in the tab order and appear on keyboard focus. An untitled paragraph's
-   head row has no height, so there the strip hangs from the block's content top instead of centring. */
+   Opacity, not display: the tools stay in the tab order and appear on keyboard focus. Every paragraph keeps
+   its title row at --block-head-min (the strip's height), titled or not, so the strip always has a row to
+   sit in, never covers body text, and showing it shifts nothing. */
 .block__strip {
   position: absolute;
   top: 50%;
@@ -92,10 +93,6 @@
   box-shadow: var(--block-tools-shadow);
   opacity: 0;
   pointer-events: none; /* an idle strip must not catch clicks meant for the paragraph */
-}
-.block__head.is-collapsed .block__strip {
-  top: 0;
-  transform: none;
 }
 .block__strip .icon-btn,
 .block__strip .eye {
@@ -131,7 +128,8 @@
 .block__head {
   position: relative;
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  min-height: var(--block-head-min);
   gap: var(--space-xs);
   font-family: var(--font-mono);
   font-size: var(--size-xs);
@@ -143,23 +141,17 @@
   min-width: 0;
   flex: 0 1 auto;
 }
-/* Untitled: no row, so paragraphs read as one flow; "Add title" floats in on hover / focus. */
-.block__head.is-collapsed {
-  height: 0;
-}
+/* Untitled: the row stays (empty), and "Add title" fades in within it on hover / focus. */
 .block__head.is-collapsed .block__title {
-  position: absolute;
-  top: -1.2em;
   opacity: 0;
 }
-/* No hover (touch) or a phone: floating "Add title" would sit outside the block frame, so it joins
-   the head row instead, and only while the paragraph has focus (srs-web#383). */
+/* No hover (touch) or a phone: the strip is hidden (the gutter menu is the one tool surface), so no row is
+   reserved; "Add title" joins the head row only while the paragraph has focus (srs-web#383). */
 @media (hover: none), (max-width: 480px) {
-  .block__head.is-collapsed {
-    height: auto;
+  .block__head {
+    min-height: 0;
   }
   .block__head.is-collapsed .block__title {
-    position: static;
     display: none;
     opacity: 1;
   }

@@ -43,7 +43,10 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 
 | Component | Props (key) | CSS block | Issue |
 |---|---|---|---|
-| `AppShell` | `nav` `main` `inspector?` | `.app` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
+| `AppShell` | `nav?` `main` `inspector?` `wide?` `shell?` | `.app` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3), srs-web [#424](https://github.com/the-greenman/srs-web/issues/424) |
+| `Drawer` | `open` (bindable) `side` `label` `closeOnPick?` (a modal `<dialog>`: the nav and inspector below 720 / 1100px) | `.drawer` | srs-web [#424](https://github.com/the-greenman/srs-web/issues/424) |
+| `ResizeHandle` | `kind` `value` `controls` `onchange` `oncommit` (the one column resizer, used by `Nav` and `Inspector`) | `.resize-handle` | srs-web [#424](https://github.com/the-greenman/srs-web/issues/424) |
+| `NavTrigger` / `InspectorTrigger` | none (read the shell context; render only in drawer mode; the Toolbar puts them in `lead` / `trail`, `Topbar` renders them itself) | `.shell-trigger` | srs-web [#424](https://github.com/the-greenman/srs-web/issues/424) |
 | `Main` / `Topbar` / `Workspace` | snippets, `wide?` | `.app__main` `.topbar` `.workspace` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
 | `Nav` / `NavGroup` / `NavItem` | `repo` `label` `count?` `active?` | `.nav*` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
 | `Inspector` / `Meta` | `title` `aside?` `rows` | `.inspector*` `.meta` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |

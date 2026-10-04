@@ -37,7 +37,9 @@ async function boxes(l: Locator): Promise<Box[]> {
   return out;
 }
 
-test("single surface: focus A, hover B: exactly one strip is shown (B's); pointer away: A's remains", async ({ page }) => {
+test("single surface: focus A, hover B: exactly one strip is shown (B's); pointer away: A's remains", async ({
+  page,
+}) => {
   await open(page);
   await items(page).nth(0).locator(".block__render, .block__body").click(); // A: focus in the body
   await page.mouse.move(5, 5);
@@ -46,7 +48,9 @@ test("single surface: focus A, hover B: exactly one strip is shown (B's); pointe
   await expect.poll(() => opacity(strip(page, 1))).toBe("1");
   await expect.poll(() => opacity(strip(page, 0))).toBe("0");
   const all = page.getByTestId("block-strip");
-  const shown = (await all.evaluateAll((els) => els.map((e) => getComputedStyle(e).opacity))).filter((o) => o === "1");
+  const shown = (
+    await all.evaluateAll((els) => els.map((e) => getComputedStyle(e).opacity))
+  ).filter((o) => o === "1");
   expect(shown).toHaveLength(1);
   await page.mouse.move(5, 5);
   await expect.poll(() => opacity(strip(page, 0))).toBe("1");
@@ -57,7 +61,10 @@ test("handle and ⋯ are visible with no hover or focus", async ({ page }) => {
   await open(page);
   await page.mouse.move(5, 5);
   for (let n = 0; n < (await items(page).count()); n++) {
-    for (const t of [items(page).nth(n).locator(".block__handle"), items(page).nth(n).getByTestId("paragraph-menu")]) {
+    for (const t of [
+      items(page).nth(n).locator(".block__handle"),
+      items(page).nth(n).getByTestId("paragraph-menu"),
+    ]) {
       await expect(t).toBeVisible();
       expect(await opacity(t)).toBe("1");
     }
@@ -80,6 +87,7 @@ async function noOverlap(page: Page, n: number) {
   expect(s.x).toBeGreaterThanOrEqual(main.x);
   expect(s.x + s.width).toBeLessThanOrEqual(main.x + main.width + 0.5);
   const others: [string, Locator][] = [
+    ["paragraph body text", items(page).nth(n).locator(".block__body, .block__render")],
     ["handle", page.locator(".essay-shell__page .block__handle")],
     ["⋯", page.locator('.essay-shell__page [data-testid="paragraph-menu"]')],
     ["Add paragraph", page.getByTestId("add-paragraph")],
@@ -93,25 +101,53 @@ async function noOverlap(page: Page, n: number) {
   }
 }
 
-test("no overlap: a one-line paragraph whose previous paragraph has an open thread", async ({ page }) => {
+test("no overlap: a one-line paragraph whose previous paragraph has an open thread", async ({
+  page,
+}) => {
   await open(page);
   await noOverlap(page, 2); // "Third paragraph." is untitled and one line
 });
 
-test("no overlap: a titled paragraph (the strip may cover the end of its title, nothing else)", async ({ page }) => {
+test("no overlap: a titled paragraph (the strip may cover the end of its title, nothing else)", async ({
+  page,
+}) => {
   await open(page);
   await noOverlap(page, 1);
+});
+
+test("no layout shift on hover: every paragraph keeps its title row, so a block is the same height before and after the strip shows", async ({
+  page,
+}) => {
+  await open(page);
+  await page.mouse.move(5, 5);
+  for (const n of [0, 1, 2]) {
+    const block = items(page).nth(n).locator(".block");
+    const head = items(page).nth(n).locator(".block__head");
+    const before = (await block.boundingBox())!.height;
+    // titled or not, the title row is at least the strip's height (--block-head-min)
+    expect((await head.boundingBox())!.height, `paragraph ${n} head row`).toBeGreaterThanOrEqual(
+      30
+    );
+    await items(page).nth(n).hover();
+    await expect.poll(() => opacity(strip(page, n))).toBe("1");
+    expect((await block.boundingBox())!.height, `paragraph ${n} height on hover`).toBe(before);
+  }
 });
 
 test("no overlap: a hidden paragraph", async ({ page }) => {
   await open(page);
   await items(page).nth(2).hover();
-  await items(page).nth(2).getByRole("button", { name: /^Hide / }).click();
+  await items(page)
+    .nth(2)
+    .getByRole("button", { name: /^Hide / })
+    .click();
   await expect(page.getByText("Hidden paragraph")).toHaveCount(1);
   await noOverlap(page, 2);
 });
 
-test("keyboard: Shift+Tab from a paragraph body reaches its strip; it shows even while another paragraph is hovered", async ({ page }) => {
+test("keyboard: Shift+Tab from a paragraph body reaches its strip; it shows even while another paragraph is hovered", async ({
+  page,
+}) => {
   await open(page);
   await items(page).nth(0).locator(".block__render, .block__body").click();
   await page.keyboard.press("End");
@@ -126,7 +162,10 @@ test("keyboard: Shift+Tab from a paragraph body reaches its strip; it shows even
 test("the strip's Hide runs the same callback as the menu's", async ({ page }) => {
   await open(page);
   await items(page).nth(1).hover();
-  await items(page).nth(1).getByRole("button", { name: /^Hide / }).click();
+  await items(page)
+    .nth(1)
+    .getByRole("button", { name: /^Hide / })
+    .click();
   await expect(page.getByText("Hidden paragraph")).toHaveCount(1);
   await page.getByRole("button", { name: "Actions for Claim" }).click();
   await expect(page.getByTestId("paragraph-menu-hide")).toHaveText(/Show/);

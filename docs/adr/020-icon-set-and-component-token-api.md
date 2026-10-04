@@ -6,7 +6,7 @@
 - **Supersedes:** —
 - **Superseded by:** —
 - **Amends:** [ADR-019](019-ui-theming-surface-and-live-styleguide.md) (makes its "hard-coded colours" consequence true)
-- **Amended by:** srs-web#423 (Toolbar and paragraph strip parts and tokens, action-registry rule: see "Toolbar and paragraph strip")
+- **Amended by:** srs-web#423 (Toolbar and paragraph strip parts and tokens, action-registry rule: see "Toolbar and paragraph strip"); srs-web#424 (page frame, Drawer, Wide: see "Shell frame, Drawer, Wide", and parts (g) and (h))
 
 ## Context
 
@@ -46,7 +46,7 @@ Lucide (`@lucide/svelte`, ISC) is the single icon set. Rules:
 
 Three tiers: **primitive** (`--paper`, `--ink`, `--black`, `--grey-N`; never read by components),
 **semantic** (`--color-*`, `--radius-*`, `--shadow-*`, `--z-*`, `--focus-ring`, `--hit-target`,
-`--rail-width`; in `tokens.css`) and **component** (`--<block>-<property>[-<state>]`, for example
+`--inspector-width`, `--content-max`; in `tokens.css`) and **component** (`--<block>-<property>[-<state>]`, for example
 `--btn-bg`, `--btn-primary-bg`, `--popover-border`, `--hue-pill-s`; in `tokens-components.css`).
 
 - Component tokens are declared on `:root` in the `tokens` layer, each defaulting to a semantic
@@ -70,7 +70,7 @@ appended below as components gain parts.
 | Component | Parts |
 |---|---|
 | `Block` | `gutter`, `handle`, `strip`, `action`, `menu`, `main`, `head`, `title`, `margin` |
-| `Toolbar` | `bar` (the root), `lead`, `title`, `status`, `primary`, `menu` (a group trigger or the lone Help icon), `overflow` (the narrow tier's one menu) |
+| `Toolbar` | `bar` (the root), `lead`, `title`, `status`, `primary`, `menu` (a group trigger or the lone Help icon), `overflow` (the narrow tier's one menu), `trail` (the shell's inspector button, last in the bar) |
 | `IconButton` | `icon-btn` |
 | `Popover` | `popover` (wrapper), `surface` |
 | `AttachmentPreview` | `kind`, `title`, `text` |
@@ -148,11 +148,13 @@ set per element as `--actor-hue` and consumed by the single `.hue-pill` rule set
 
 `AnnotationMargin` is a real column of the `Block` grid. The width is the token `--margin-width`
 (default `--margin-width-compact`; `--margin-width-wide` when the shell carries
-`data-margin="expanded"`, from 721px up). The essay page grows by the difference, so the text column
-keeps its width and the margin never crosses the page edge or the rail. `data-margin` is the one
-mechanism: the header action sets it today and #424's Wide toggle reuses `src/lib/margin-mode.ts`
-rather than adding a second setter. Other tokens: `--margin-mark-size`, `--margin-row-gap`,
-`--margin-label-lines`, `--essay-page-width`.
+`data-margin="expanded"`, from 721px up). The essay page grows by the difference, so the margin never
+crosses the page edge or the inspector, and the text column widens with Wide (owner D5, 2026-10-04:
+Wide widens the content cap, `--content-max` 46rem to `--content-max-wide` 80rem, and the margin
+column together). `data-margin` on `.app` is the one mechanism and the one carrier: its setter is
+`src/lib/wide.ts` (`saveWide`, storage key `srs-web.margin` kept so existing viewers keep their
+setting), driven by View > Wide. Other tokens: `--margin-mark-size`, `--margin-row-gap`,
+`--margin-label-lines`. The essay page reads `--content-max` itself (a custom property that aliased it on `:root` would not see the shell's Wide override).
 
 Kind icons are mapped once, in `src/lib/components/annotation-icons.ts` (`KIND_ICONS`, owner decision
 D3): the annotation's data key (`Annotation.icon`, the neighbour's type name) to a Lucide component,
@@ -165,13 +167,13 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
   re-points semantic tokens only; `e2e/styleguide.spec.ts` fails if any specimen still paints a
   default palette colour, and `tests/demo-theme.test.ts` fails if a semantic colour token is not
   re-pointed there.
-- Rail components are shown at 18rem and 15rem in `/styleguide`, and an e2e check fails if any of
+- Inspector components are shown at 20rem (`--inspector-width`) and 15rem in `/styleguide`, and an e2e check fails if any of
   them overflows its frame.
 - Follow-ups:
-  - Consolidating the seven `@media` widths (`phone`, `genericNarrow`, `form`, `compact`,
-    `genericStack`, `rail`, `wide`) into fewer; today they are only named and guarded.
-  - Unlayered scoped `<style>` blocks in the Guides, Governance and Generic shells beat every layer
-    and still carry raw colours: #424 (AppShell) retires them.
+  - Consolidating the five `@media` widths (`phone`, `form`, `compact`, `rail`, `wide`) into fewer;
+    today they are only named and guarded (#424 removed `genericNarrow` and `genericStack`).
+  - Unlayered scoped `<style>` blocks in the Guides and Governance shells beat every layer and still
+    carry raw colours: #424 PR-B retires them (the Generic shell's is gone in PR-A).
   - One-off buttons in the modals, `DecisionLogView`, `SourceChooser`, `BlueprintDocumentEditor` and
     the `SectionForm` table editor.
 
@@ -189,7 +191,7 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
 - **Checkable rows** keep a View-style menu open on toggle (wide tiers) so the reader sees the state change;
   the narrow overflow closes. `Popover` keyboard handling covers `menuitem` and `menuitemcheckbox` rows with
   Arrow, Home and End. State is never duplicated: View > Comments reads and drives `thread-visibility.ts`,
-  View > Margin notes drives `margin-mode.ts`.
+  View > Wide drives `wide.ts`.
 - **Paragraph strip.** `paragraphActions()` marks `primary` actions (hide, zoom, copy link). `Block` renders
   them as a small strip INSIDE the paragraph's own title row at its right end (`.block__head`, absolute,
   `right:0`; centred in a titled head, hanging from the content top in an untitled one), so it never leaves
@@ -201,3 +203,32 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
 - **Tokens.** `--toolbar-bg`, `--toolbar-border`, `--toolbar-gap`, `--toolbar-pad`, `--toolbar-title-size`,
   `--toolbar-title-max`; the strip keeps the opaque `--block-tools-bg|border|shadow` surface (the family was
   the old tool stack's, and is not renamed).
+
+### (i) Shell frame, Drawer, Wide (#424)
+
+- **One frame.** `AppShell` is a `100dvh` grid `nav | main | inspector` that never scrolls the window:
+  the nav scrolls `.nav__scroll`, main has exactly one scroller (`.workspace`, the bar is outside it) and
+  the inspector scrolls `.inspector__body`. Nav and inspector are resizable (`ResizeHandle`, pointer and
+  keys) and persisted per viewer, globally, in `srs-web.columns` (`columns.ts`; limits and defaults are
+  tokens). The state is `ShellState` (`shell-context.svelte.ts`, read with the undefined-safe
+  `getShell()`), so a standalone bar renders no drawer triggers.
+- **Parts.** `AppShell`: `nav main inspector` (the `.app__*` classes). `Drawer`: `scrim` (the dialog, the
+  backdrop hit area), `panel`. `ResizeHandle`: `grip`.
+- **Tokens.** `--nav-width`, `--inspector-width`, `--content-max` (46rem), `--content-max-wide` (80rem),
+  `--canvas-max` (820px, Governance and Guides until their conversion), and in `tokens-components.css`
+  `--shell-nav-min|max`, `--shell-inspector-min|max`, `--shell-resize-hit`, `--shell-drawer-width`,
+  `--shell-drawer-bg`, `--shell-drawer-bg-dark`, `--shell-drawer-motion`, `--shell-scrim`,
+  `--shell-badge-bg|fg`, `--resize-handle-active`.
+- **Breakpoint roles.** `compact` (720) is the nav drawer: at and below it the nav is off-canvas, opened
+  by `NavTrigger`. `wide` (1100) is the inspector drawer, opened by `InspectorTrigger` with an activity
+  badge. `DRAWER_NAV` and `DRAWER_INSPECTOR` are built from `BREAKPOINTS`; one `matchMedia` each, read
+  synchronously. The old 480/600/720/900 per-shell collapses are gone.
+- **Drawer is a second top-layer primitive.** It is a native modal `<dialog>` (`showModal()`), because a
+  drawer is modal (focus trap, inert background) which a popover is not. Dismissal is Popover's (part e):
+  Escape and a backdrop click close it, focus returns to the trigger. It is the only `showModal` user;
+  the `GitSaveModal` and `SuccessorModal` z-index modals stay with #428 and a drawer must be closed
+  before one opens (`ShellState.navOpen` / `inspectorOpen`).
+- **Wide.** One persisted per-viewer switch shared by all editors: `data-margin` on `.app` (the one carrier; set to `expanded` only when `wideEnabled` and Wide is on, else `compact`) widens the content cap and the margin column. Only a shell with the capability
+  (`ShellState.wideEnabled`, the `wide` prop) shows the action and honours it; a stored Wide never
+  changes a shell without the toggle.
+

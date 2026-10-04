@@ -170,3 +170,40 @@
 .sg__page {
   max-width: 40rem;
 }
+
+/* Page frame specimen (#424): three 375px phone frames and the Wide cap bars. */
+.sg__shells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+.sg__shell {
+  position: relative;
+  box-sizing: border-box;
+  width: 375px;
+  max-width: 100%;
+  height: 28rem;
+  overflow: hidden;
+  border: var(--rule);
+  background: var(--color-page);
+}
+.sg__shell-main {
+  margin: 0;
+  padding: var(--space-sm);
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+}
+.sg__drawer {
+  position: absolute;
+  inset: 0;
+  background: var(--shell-scrim);
+}
+.sg__capbar {
+  width: 100%;
+  padding: var(--space-xs);
+  background: var(--color-surface-raised);
+  border: var(--rule-soft);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  text-align: center;
+}

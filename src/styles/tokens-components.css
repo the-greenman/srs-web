@@ -65,9 +65,33 @@
   --block-tools-bg: var(--color-page);
   --block-tools-border: 1px solid var(--color-line-soft);
   --block-tools-shadow: var(--shadow-popover);
+  /* The paragraph title row's minimum height: the hover strip's rendered height (24px tools + 2px padding + 1px border, each side). */
+  --block-head-min: 30px;
   --margin-row-gap: 4px;
   --margin-label-lines: 2;
-  --essay-page-width: 46rem;
+
+  /* Shell frame (#424): resizable columns, the drawer and its trigger badge. */
+  --shell-nav-min: 12rem;
+  --shell-nav-max: 24rem;
+  --shell-inspector-min: 14rem;
+  --shell-inspector-max: 40rem;
+  --shell-resize-hit: 8px;
+  --resize-handle-active: var(--color-muted-strong);
+  --shell-drawer-width: min(20rem, 88vw);
+  --shell-drawer-bg: var(--color-surface);
+  --shell-drawer-bg-dark: var(--color-text-strong);
+  --shell-drawer-motion: 160ms;
+  --shell-scrim: color-mix(in srgb, var(--color-text-strong) 40%, transparent);
+  --shell-badge-bg: var(--color-text-strong);
+  --shell-badge-fg: var(--color-on-dark);
+
+  /* Generic shell relation map (#424). */
+  --generic-graph-line: var(--color-muted);
+  --generic-graph-text: var(--color-muted-strong);
+  --generic-graph-node-fill: var(--color-hover);
+  --generic-graph-node-stroke: var(--color-muted-strong);
+  --generic-graph-focus-fill: var(--color-muted-strong);
+  --generic-graph-focus-stroke: var(--color-text-strong);
 
   /* Toolbar (#423): the generic document bar. */
   --toolbar-bg: transparent;

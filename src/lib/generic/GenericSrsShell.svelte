@@ -6,7 +6,7 @@
   boundaries. Package-specific editors remain optional entry points.
 -->
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import {
     find,
     getRecord,
@@ -44,6 +44,16 @@
   import type { FieldFormDef } from "$lib/governance/types.js";
   import type { OfferedEditor } from "$lib/editors/registry.js";
   import InstanceNotes from "$lib/InstanceNotes.svelte";
+  import AppShell from "$lib/components/AppShell.svelte";
+  import Inspector from "$lib/components/Inspector.svelte";
+  import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
+  import Main from "$lib/components/Main.svelte";
+  import Nav from "$lib/components/Nav.svelte";
+  import NavTrigger from "$lib/components/NavTrigger.svelte";
+  import Toolbar from "$lib/components/Toolbar.svelte";
+  import { BASE_GROUPS } from "$lib/components/shell-actions.js";
+  import { ShellState } from "$lib/shell-context.svelte.js";
+  import { genericActions } from "./toolbar-actions.js";
 
   interface Props {
     repo: SrsRepository;
@@ -81,6 +91,9 @@
   }: Props = $props();
 
   type Surface = "document" | "structure" | "records" | "map";
+
+  /** The frame's state; Wide is its one toggle (View > Wide, saved through wide.ts). */
+  const shell = new ShellState({ wideEnabled: true });
 
   let surface = $state<Surface>("document");
   /** "Full preview" toggle for the Documents surface when a blueprint editor is shown — component state only, not remembered across compositions. */
@@ -234,12 +247,22 @@
     refreshRecords();
   }
 
+  /**
+   * At drawer width the record is in the closed inspector drawer: open it. A pick from the nav drawer
+   * closes that dialog in the same click, so wait for it to settle before opening the second modal.
+   */
+  function showInspector(): void {
+    if (!shell.inspectorDrawer) return;
+    void tick().then(() => setTimeout(() => (shell.inspectorOpen = true), 0));
+  }
+
   function openRecord(instanceId: string): void {
     try {
       editing = false;
       editFormDef = null;
       editError = null;
       selectedRecord = getRecord(repo, instanceId);
+      showInspector();
     } catch (error: unknown) {
       recordDiagnostics = [message(error)];
     }
@@ -387,113 +410,113 @@
   }
 
   onMount(loadCatalog);
+
+  const barActions = $derived(
+    genericActions(
+      {
+        onsave: onSave ? () => void onSave() : undefined,
+        onexport: onExport,
+        onopenanother: onOpenAnother,
+        onpreview: surface === "document" && activeBlueprint && activeComposition ? () => (showFullPreview = !showFullPreview) : undefined,
+      },
+      { shell, saving, dirty: documentDirty, fullPreview: showFullPreview },
+    ),
+  );
 </script>
 
 {#snippet editorButtons(testPrefix: string)}
   {#each packageEditors as { editor, unmet } (editor.id)}
     {#if onOpenEditor}
       {#if unmet}
-        <button data-testid="{testPrefix}-{editor.id}" title={unmet.reason} disabled>{editor.label}</button>
-        <small data-testid="{testPrefix}-{editor.id}-unmet">{unmet.reason}</small>
+        <button class="nav__item" data-testid="{testPrefix}-{editor.id}" title={unmet.reason} disabled>{editor.label}</button>
+        <small class="generic-muted" data-testid="{testPrefix}-{editor.id}-unmet">{unmet.reason}</small>
       {:else}
-        <button data-testid="{testPrefix}-{editor.id}" title={editor.description} onclick={() => onOpenEditor(editor.id)}>{editor.label}</button>
+        <button class="nav__item" data-testid="{testPrefix}-{editor.id}" title={editor.description} onclick={() => onOpenEditor(editor.id)}>{editor.label}</button>
       {/if}
     {/if}
   {/each}
 {/snippet}
 
-<div class="generic-shell" data-testid="generic-srs-shell">
-  <aside class="generic-nav" aria-label="Repository navigation">
-    <div class="generic-brand">
-      <p>SRS repository</p>
-      <strong>{repoName}</strong>
-    </div>
-
-    <section>
-      <h2>Documents</h2>
+{#snippet navPane()}
+  <Nav repo={repoName} eyebrow="SRS repository">
+    {#snippet children()}
+    <section class="nav__group" data-part="documents">
+      <h2 class="nav__group-label">Documents</h2>
       {#if compositions.length === 0}
-        <p class="muted">No compositions declared.</p>
+        <p class="generic-muted">No compositions declared.</p>
       {:else}
         {#each compositions as composition (composition.id)}
-          <button class:active={surface === "document" && selectedCompositionId === composition.id} onclick={() => renderComposition(composition.id)}>
-            <span>{composition.name}</span><small>{composition.namespace}</small>
+          <button class="nav__item" class:nav__item--active={surface === "document" && selectedCompositionId === composition.id} onclick={() => renderComposition(composition.id)}>
+            <span>{composition.name}</span><small class="nav__item-count">{composition.namespace}</small>
           </button>
         {/each}
       {/if}
     </section>
 
-    <section>
-      <h2>Structure</h2>
+    <section class="nav__group" data-part="structure">
+      <h2 class="nav__group-label">Structure</h2>
       {#if navigation}
-        <p class="tree-root">{navigation.identity.displayLabel}</p>
+        <p class="generic-tree-root">{navigation.identity.displayLabel}</p>
       {/if}
       {#each structureContainers as entry (entry.key)}
         {@const container = entry.container}
-        <div class="tree-item" data-depth={entry.depth} style:margin-left="{entry.depth}rem">
-          <button class:active={surface === "structure" && selectedContainerId === container.containerId} onclick={() => selectContainer(container.containerId)}>
+        <div class="generic-tree-item" data-depth={entry.depth} style:margin-left="{entry.depth}rem">
+          <button class="nav__item" class:nav__item--active={surface === "structure" && selectedContainerId === container.containerId} onclick={() => selectContainer(container.containerId)}>
             <span>{entry.label}</span>
-            <small>{container.containerType ?? "container"}</small>
+            <small class="nav__item-count">{container.containerType ?? "container"}</small>
           </button>
-          <button class="tree-toggle" aria-label={`Toggle ${entry.label}`} onclick={() => toggleContainer(container.containerId)}>
+          <button class="nav__item generic-tree-toggle" aria-label={`Toggle ${entry.label}`} aria-expanded={expandedContainerIds.has(container.containerId)} onclick={() => toggleContainer(container.containerId)}>
             {expandedContainerIds.has(container.containerId) ? "−" : "+"}
           </button>
         </div>
         {#if expandedContainerIds.has(container.containerId)}
           {@const members = expandedMembers[container.containerId] ?? []}
-          <div class="tree-members">
-            {#if members.length === 0}<span class="muted">No members</span>{/if}
+          <div class="generic-tree-members">
+            {#if members.length === 0}<span class="generic-muted">No members</span>{/if}
             {#each members as member (member.instanceId)}
-              <button onclick={() => openRecord(member.instanceId)}>{member.displayLabel || member.instanceId.slice(0, 8)}</button>
+              <button class="nav__item" onclick={() => openRecord(member.instanceId)}>{member.displayLabel || member.instanceId.slice(0, 8)}</button>
             {/each}
           </div>
         {/if}
       {/each}
     </section>
 
-    <section>
-      <h2>Explore</h2>
-      <button class:active={surface === "records"} onclick={openRecords}>Records</button>
-      <button class:active={surface === "map"} onclick={openMap}>Map</button>
+    <section class="nav__group" data-part="explore">
+      <h2 class="nav__group-label">Explore</h2>
+      <button class="nav__item" class:nav__item--active={surface === "records"} onclick={openRecords}>Records</button>
+      <button class="nav__item" class:nav__item--active={surface === "map"} onclick={openMap}>Map</button>
     </section>
 
     {#if packageEditors.length > 0}
-      <section>
-        <h2>Package editors</h2>
+      <section class="nav__group" data-part="editors">
+        <h2 class="nav__group-label">Package editors</h2>
         {@render editorButtons("package-editor")}
       </section>
     {/if}
+    {/snippet}
+  </Nav>
+{/snippet}
 
-    <div class="generic-nav-actions">
-      {#if onSave}<button disabled={saving} onclick={onSave}>{saving ? "Saving…" : "Save"}</button>{:else if readOnlyReason}<p class="save-message" data-testid="read-only-note" role="status">{readOnlyReason}</p>{/if}
-      <button onclick={onExport}>Export</button>
-      <button onclick={onOpenAnother}>Open another</button>
-      {#if documentDirty}<p class="save-message" data-testid="document-dirty-status" role="status">Unsaved changes</p>{/if}
-      {#if saveMessage}<p class="save-message" role="status">{saveMessage}</p>{/if}
-    </div>
-  </aside>
-
-  <main class="generic-main">
-    {#if packageEditors.length > 0 && onOpenEditor}
-      <!-- phones: the nav sections are hidden (<=600px), so the picker is repeated here via the same snippet -->
-      <div class="editors-mobile" aria-label="Open in editor"><span>Open in:</span>{@render editorButtons("package-editor-mobile")}</div>
-    {/if}
+{#snippet mainPane()}
+  <Main>
+    <Toolbar title={repoName} actions={barActions} groups={BASE_GROUPS}>
+      {#snippet lead()}<NavTrigger />{/snippet}
+      {#snippet trail()}<InspectorTrigger />{/snippet}
+      {#snippet status()}
+        {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
+        {#if saveMessage}<span role="status">{saveMessage}</span>{/if}
+      {/snippet}
+    </Toolbar>
+    <!-- The reason is a sentence: a line under the bar (wraps on a phone) rather than in the one-row bar. -->
+    {#if !onSave && readOnlyReason}<p class="generic-readonly" data-testid="read-only-note" role="status">{readOnlyReason}</p>{/if}
+    <div class="workspace">
+      <div class="generic-page">
     {#if surface === "document"}
       <header>
         <p>Document</p>
         <h1>{activeComposition?.name ?? "Composition"}</h1>
-        {#if activeBlueprint && activeComposition}
-          <button
-            type="button"
-            class="full-preview-toggle"
-            data-testid="full-preview-toggle"
-            aria-pressed={showFullPreview}
-            onclick={() => (showFullPreview = !showFullPreview)}
-          >
-            {showFullPreview ? "Hide full preview" : "Full preview"}
-          </button>
-        {/if}
       </header>
-      {#if documentError}<p class="notice">{documentError}</p>{/if}
+      {#if documentError}<p class="generic-notice">{documentError}</p>{/if}
       {#if activeBlueprint && activeComposition}
         <div class="document-editor-panel document-editor-panel--full" data-testid="document-editor-panel">
           <BlueprintDocumentEditor
@@ -506,11 +529,11 @@
         </div>
         {#if showFullPreview}
           <div class="document-preview-panel document-preview-panel--full" data-testid="document-full-preview">
-            <PreviewPane html={renderedDocument} loading={loadingDocument} />
+            <div class="generic-preview"><PreviewPane html={renderedDocument} loading={loadingDocument} /></div>
           </div>
         {/if}
       {:else}
-        <PreviewPane html={renderedDocument} loading={loadingDocument} />
+        <div class="generic-preview"><PreviewPane html={renderedDocument} loading={loadingDocument} /></div>
       {/if}
     {:else if surface === "map"}
       <header>
@@ -518,11 +541,11 @@
         <h1>{selectedRecord ? selectedRecord.displayLabel ?? "Record relations" : activeContainer ? activeContainer.title : "Repository records"}</h1>
       </header>
       {#if selectedRecord}<button onclick={() => { clearRecordSelection(); refreshRecords(); }}>Clear record focus</button>{/if}
-      <p class="muted">{selectedRecord ? "Direct relations of the selected record." : selectedContainerId ? "Relations resolved by the engine for the active container." : "Select a container or record to view its relations."}</p>
+      <p class="generic-muted">{selectedRecord ? "Direct relations of the selected record." : selectedContainerId ? "Relations resolved by the engine for the active container." : "Select a container or record to view its relations."}</p>
       {#if graph.nodes.length === 0}
-        <p class="muted">No records match this scope.</p>
+        <p class="generic-muted">No records match this scope.</p>
       {:else}
-        <div class="graph-frame" data-testid="scoped-graph">
+        <div class="generic-graph" data-testid="scoped-graph">
           <svg viewBox="0 0 600 360" role="img" aria-label="Scoped record relation graph">
             {#each graph.relations as relation (relation.relationId)}
               {@const from = graphNodePoint(relation.sourceInstanceId)}
@@ -552,7 +575,7 @@
         <p>{surface === "structure" ? "Structure" : "Explore"}</p>
         <h1>{surface === "structure" ? activeContainer?.title ?? "Container" : "Records"}</h1>
       </header>
-      <div class="record-controls">
+      <div class="generic-controls">
         <input aria-label="Search records" bind:value={search} oninput={refreshRecords} placeholder="Search repository" />
         <select aria-label="Filter records by type" bind:value={selectedTypeId} onchange={refreshRecords}>
           <option value="">All types</option>
@@ -562,20 +585,24 @@
         </select>
         {#if surface === "structure"}<button onclick={openRecords}>Search all records</button>{/if}
       </div>
-      {#if recordDiagnostics.length > 0}<p class="notice">{recordDiagnostics.join(" ")}</p>{/if}
-      <p class="muted">{records.length} record{records.length === 1 ? "" : "s"}</p>
-      <div class="record-list">
+      {#if recordDiagnostics.length > 0}<p class="generic-notice">{recordDiagnostics.join(" ")}</p>{/if}
+      <p class="generic-muted">{records.length} record{records.length === 1 ? "" : "s"}</p>
+      <div class="generic-records">
         {#each records as record (record.instanceId)}
-          <button class="record-row" onclick={() => openRecord(record.instanceId)}>
+          <button class="generic-record-row" onclick={() => openRecord(record.instanceId)}>
             <strong>{record.label || record.instanceId.slice(0, 8)}</strong>
             <span>{record.typeNamespace}/{record.typeName}{record.lifecycleState ? ` · ${record.lifecycleState}` : ""}</span>
           </button>
         {/each}
       </div>
     {/if}
-  </main>
+      </div>
+    </div>
+  </Main>
+{/snippet}
 
-  <aside class="generic-inspector">
+{#snippet inspectorPane()}
+  <Inspector label="Record">
     {#if selectedRecord}
       {#if editing && editFormDef}
         <SectionForm
@@ -590,77 +617,27 @@
           saveError={editError}
         />
       {:else}
-        <header>
+        <header class="generic-inspector-head">
           <p>Record</p>
           <h2>{selectedRecord.displayLabel ?? selectedRecord.instanceId}</h2>
           <span>{selectedRecord.typeNamespace}/{selectedRecord.typeName}</span>
-          <button class="edit-button" disabled={saving} onclick={beginEdit}>Edit fields</button>
-          {#if editError}<p class="notice">{editError}</p>{/if}
+          <button class="generic-edit" disabled={saving} onclick={beginEdit}>Edit fields</button>
+          {#if editError}<p class="generic-notice">{editError}</p>{/if}
         </header>
         {#each Object.entries(selectedRecord.fieldValues) as [name, value] (name)}
-          <div class="field"><strong>{name}</strong><FieldValueView {value} /></div>
+          <div class="generic-field"><strong>{name}</strong><FieldValueView {value} /></div>
         {/each}
-        <h3>Notes</h3>
         {#key selectedRecord.instanceId}
-          <InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} />
+          <InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} heading />
         {/key}
       {/if}
     {:else}
-      <p class="muted">Select a record to inspect its fields and relations.</p>
+      <p class="generic-muted">Select a record to inspect its fields and relations.</p>
     {/if}
-  </aside>
+  </Inspector>
+{/snippet}
+
+<div class="generic-shell" data-testid="generic-srs-shell">
+  <AppShell {shell} nav={navPane} main={mainPane} inspector={inspectorPane} navLabel="Repository navigation" inspectorLabel="Record" />
 </div>
 
-<style>
-  .generic-shell { display:grid; grid-template-columns:17rem minmax(0, 1fr) 22rem; min-height:100dvh; background:#f7f7f5; color:#1f2328; }
-  .generic-nav { background:#1f302d; color:#f7f7f5; padding:1.25rem .8rem; display:flex; flex-direction:column; gap:1.25rem; }
-  .generic-brand p, .generic-main header p, .generic-inspector header p { margin:0 0 .2rem; font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; opacity:.65; }
-  .generic-brand strong { font-size:1.1rem; overflow-wrap:anywhere; }
-  section { display:flex; flex-direction:column; gap:.2rem; }
-  section h2 { font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; margin:0 0 .3rem; opacity:.65; }
-  .generic-nav button { color:inherit; text-align:left; border:0; background:transparent; border-radius:.25rem; padding:.45rem .5rem; cursor:pointer; display:flex; flex-direction:column; gap:.1rem; }
-  .generic-nav button:hover, .generic-nav button.active { background:#405852; }
-  .generic-nav button small { opacity:.65; font-size:.68rem; }
-  .tree-root { margin:0 0 .3rem; padding:.35rem .5rem; color:#d4dfdb; font-size:.78rem; border-left:2px solid #91afa5; }
-  .tree-item { display:grid; grid-template-columns:minmax(0,1fr) 1.8rem; align-items:stretch; }
-  .tree-item > button:first-child { min-width:0; }
-  .tree-item .tree-toggle { align-items:center; justify-content:center; padding:.25rem; font-size:1rem; }
-  .tree-members { display:flex; flex-direction:column; gap:.1rem; margin:0 0 .15rem 1rem; padding-left:.4rem; border-left:1px solid #668078; }
-  .tree-members button { font-size:.72rem; opacity:.82; }
-  .generic-nav-actions { margin-top:auto; display:flex; gap:.4rem; flex-wrap:wrap; }
-  .save-message { flex-basis:100%; margin:.2rem .5rem 0; color:#c8e5d9; font-size:.75rem; }
-  .generic-main { min-width:0; display:flex; flex-direction:column; padding:1.5rem; gap:1rem; }
-  .generic-main h1, .generic-inspector h2 { margin:0; font-size:1.35rem; }
-  .document-editor-panel { overflow:auto; }
-  .document-editor-panel--full { width:100%; }
-  .document-preview-panel { overflow:auto; }
-  .document-preview-panel--full { border-top:1px solid #d5dbd8; padding-top:1rem; margin-top:1rem; max-height:60vh; }
-  .full-preview-toggle { margin-left:auto; font-size:.8rem; padding:.3rem .7rem; border:1px solid #d5dbd8; border-radius:6px; background:#fff; cursor:pointer; }
-  .generic-main header { display:flex; align-items:baseline; gap:.75rem; }
-  .record-controls { display:flex; gap:.5rem; flex-wrap:wrap; }
-  .record-controls input, .record-controls select, .record-controls button { font:inherit; padding:.45rem .6rem; border:1px solid #b9c2be; border-radius:.25rem; background:#fff; }
-  .record-controls input { min-width:15rem; flex:1; }
-  .record-list { display:flex; flex-direction:column; gap:.35rem; overflow:auto; }
-  .record-row { display:flex; flex-direction:column; align-items:flex-start; gap:.15rem; padding:.7rem; border:1px solid #d5dbd8; border-radius:.35rem; background:#fff; text-align:left; cursor:pointer; }
-  .record-row:hover { border-color:#52756c; }
-  .record-row span, .generic-inspector header span, .muted { color:#69736f; font-size:.8rem; }
-  .generic-inspector { border-left:1px solid #d5dbd8; background:#fff; padding:1.5rem; overflow:auto; }
-  .field { padding:.65rem 0; border-bottom:1px solid #e7ebe9; display:flex; flex-direction:column; gap:.25rem; font-size:.9rem; }
-  .field strong { font-size:.75rem; color:#52605b; }
-  .edit-button { margin-top:.75rem; border:1px solid #52756c; color:#23443d; background:#fff; border-radius:.25rem; padding:.35rem .5rem; cursor:pointer; }
-  .notice { padding:.65rem .8rem; background:#fff4d6; border-left:3px solid #a56800; }
-  .graph-frame { min-height:25rem; border:1px solid #d5dbd8; border-radius:.5rem; background:#fff; overflow:auto; }
-  .graph-frame svg { width:100%; min-width:38rem; min-height:25rem; }
-  .graph-frame line { stroke:#9aa9a3; stroke-width:1.5; }
-  .graph-frame text { fill:#61716b; font-size:10px; text-anchor:middle; pointer-events:none; }
-  .graph-frame g { cursor:pointer; }
-  .graph-frame circle { fill:#dceae5; stroke:#52756c; stroke-width:2; }
-  .graph-frame g:hover circle, .graph-frame g.focused circle { fill:#52756c; stroke:#23443d; }
-  .graph-frame g.focused .node-label { font-weight:700; fill:#23443d; }
-  /* bp: genericStack */
-  @media (max-width: 900px) { .generic-shell { grid-template-columns:13rem minmax(0,1fr); } .generic-inspector { grid-column:1 / -1; border-left:0; border-top:1px solid #d5dbd8; } }
-  .editors-mobile { display:none; }
-  .editors-mobile button { font:inherit; min-height:44px; padding:.5rem .8rem; border:1px solid #52756c; border-radius:.25rem; background:#fff; color:#23443d; cursor:pointer; }
-  /* bp: genericNarrow */
-  @media (max-width: 600px) { .editors-mobile { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; } .generic-shell { display:block; } .generic-nav { min-height:auto; } .generic-nav section { display:none; } .generic-nav section:first-of-type { display:flex; } }
-</style>

@@ -6,6 +6,7 @@ import type { Comment } from "$lib/comments";
 import type { Layer } from "$lib/components/LayersPanel.svelte";
 import type { MenuAction } from "$lib/components/menu-action";
 import { headerActions } from "$lib/essay/header-actions";
+import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor } from "$lib/srs-client";
 import type { Status } from "$lib/types";
 
@@ -450,7 +451,6 @@ export const toolbarActions = headerActions(
     oncopy: nop,
     onagent: nop,
     onhelp: nop,
-    onvariant: nop,
     oncomments: nop,
     onsave: nop,
     onexport: nop,
@@ -458,7 +458,7 @@ export const toolbarActions = headerActions(
     onexplorer: nop,
     onopenanother: nop,
   },
-  { expanded: false, comments: "mixed", saving: false, dirty: true }
+  { shell: new ShellState({ wideEnabled: true }), comments: "mixed", saving: false, dirty: true }
 );
 
 /** Paragraph strip specimens: one-line, titled, and a long title the strip may cover the end of. */
@@ -469,4 +469,31 @@ export const stripText = {
     title: "A very long paragraph title that runs under the hover strip at the end of the row",
     body: "The strip may cover the end of a long title; that is accepted.",
   },
+};
+
+/** The shell specimen (#424): a nav of two groups with a count, an inspector of two panels, a badge. */
+export const shellFixture = {
+  repo: "Small democracy",
+  navGroups: [
+    {
+      label: "Sections",
+      items: [
+        { label: "Articles", count: 12, active: true },
+        { label: "Roles", count: 4, active: false },
+      ],
+    },
+    {
+      label: "Repository",
+      items: [
+        { label: "Decision log", count: 31, active: false },
+        { label: "Migrations", count: undefined, active: false },
+      ],
+    },
+  ],
+  panels: [
+    { title: "Record", aside: 1, body: "Article 3: How a decision is reopened." },
+    { title: "Validation", aside: 0, body: "No problems found." },
+  ],
+  badge: 3,
+  mainLine: "The main column holds one line here; the bar above carries both drawer triggers.",
 };

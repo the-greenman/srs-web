@@ -31,7 +31,12 @@
   import InlineText from "$lib/components/InlineText.svelte";
   import MarkdownText from "$lib/components/MarkdownText.svelte";
   import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
+  import AppShell from "$lib/components/AppShell.svelte";
+  import Inspector from "$lib/components/Inspector.svelte";
+  import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
+  import Main from "$lib/components/Main.svelte";
   import Toolbar from "$lib/components/Toolbar.svelte";
+  import { ShellState } from "$lib/shell-context.svelte.js";
   import ArrowLeft from "@lucide/svelte/icons/arrow-left";
   import LinkIcon from "@lucide/svelte/icons/link";
   import X from "@lucide/svelte/icons/x";
@@ -68,7 +73,6 @@
   import { canShow, isShown, setOpen, summary, toggle, toggleAll } from "./thread-visibility.js";
   import { addComment } from "$lib/comments.js";
   import { annotationsFor } from "$lib/annotations.js";
-  import { loadMargin, saveMargin } from "$lib/margin-mode.js";
   import type { Annotation } from "$lib/annotations.js";
   import { essaySource } from "./annotation-source.js";
   import { hiddenByAncestor, outsideRun, visibleEntries } from "./essay-model.js";
@@ -208,9 +212,22 @@
       .map((a) => ({ id: a.id, kind: a.neighbourType, relation: a.relationLabel, title: a.label, text: a.text })),
   );
 
-  /** `data-margin` on the shell: the one setter of the margin mode (#424's Wide toggle reuses it). */
-  let marginMode = $state(loadMargin());
-  const toggleVariant = () => saveMargin((marginMode = marginMode === "compact" ? "expanded" : "compact"));
+  /** The frame's state: Wide is the one setter (`ShellState.toggleWide`, saved through `wide.ts`); `data-margin` on `.app` carries it. */
+  const shell = new ShellState({ wideEnabled: true });
+  const marginVariant = $derived(shell.wide ? "expanded" : "compact");
+  /** Inspector-trigger badge: agent writes newer than the last time the drawer was open (agent-activity.ts; no new data source). */
+  // null until the first status arrives: history that arrives after mount is seeded as seen, not counted as new.
+  let seenSeq = $state<number | null>(untrack(() => (agentStatus ? (agentStatus.writes[0]?.seq ?? 0) : null)));
+  $effect.pre(() => {
+    if (seenSeq === null && agentStatus) seenSeq = agentStatus.writes[0]?.seq ?? 0;
+  });
+  const unseen = $derived(seenSeq === null ? 0 : (agentStatus?.writes.filter((w) => w.seq > seenSeq!).length ?? 0));
+  $effect(() => {
+    shell.inspectorBadge = shell.inspectorOpen ? 0 : unseen;
+  });
+  $effect(() => {
+    if (shell.inspectorOpen) seenSeq = agentStatus?.writes[0]?.seq ?? seenSeq;
+  });
   /** Margin clicks: the one kind -> action mapping (the model says what, the margin how it looks). */
   function openAnnotation(a: Annotation, paragraphId: string) {
     if (a.kind === "comments") openThreads = toggle(openThreads, paragraphId);
@@ -473,7 +490,6 @@
         oncopy: model ? copyDocument : undefined,
         onagent: model ? () => copyForAgent(zoomId ?? undefined) : undefined,
         onhelp: () => { helpOpen = true; },
-        onvariant: toggleVariant,
         oncomments: () => (openThreads = toggleAll(openThreads, shownIds)),
         onsave: onSave,
         onexport: onExport,
@@ -481,7 +497,7 @@
         onexplorer: onOpenExplorer,
         onopenanother: onOpenAnother,
       },
-      { expanded: marginMode === "expanded", comments: summary(openThreads, shownIds), saving, dirty: documentDirty, help: { id: helpId, open: helpOpen } },
+      { shell, comments: summary(openThreads, shownIds), saving, dirty: documentDirty, help: { id: helpId, open: helpOpen } },
     ),
   );
 </script>
@@ -494,7 +510,8 @@
   onpopstate={applyAddress}
 />
 
-<div class="essay-shell" data-margin={marginMode}>
+{#snippet mainPane()}
+    <Main>
   <Toolbar
     title={model?.title ?? repoName}
     actions={barActions}
@@ -518,6 +535,7 @@
         />
       {/if}
     {/snippet}
+    {#snippet trail()}<InspectorTrigger />{/snippet}
     {#snippet status()}
       {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
       {#if saveMessage}<span role="status">{saveMessage}</span>{/if}
@@ -537,15 +555,15 @@
   {/if}
   {#if error}<p class="essay-shell__error" role="alert" data-testid="essay-error">{error}</p>{/if}
 
+
+  <div class="workspace workspace--flush essay-shell">
   {#if !model}
     <div class="essay-shell__empty">
       <p>No essay in this repository yet.</p>
       <Button variant="primary" onclick={createEssay}>New essay</Button>
-      {#if agentPanel}{@render agents()}{/if}
     </div>
   {:else}
-    <div class="essay-shell__grid">
-      <main class="essay-shell__page" aria-label={model.title}>
+      <article class="essay-shell__page" aria-label={model.title}>
         <InlineText
           as="h1"
           value={model.title}
@@ -581,7 +599,7 @@
               {#snippet margin()}
                 <AnnotationMargin
                   annotations={annotationsFor(essaySource(model!), p.id)}
-                  variant={marginMode}
+                  variant={marginVariant}
                   active={[...pinnedIds, ...(showThread(p.id) ? [`comments:${p.id}`] : [])]}
                   onopen={(a) => openAnnotation(a, p.id)}
                   onremove={(a) => run(() => removeAttachment(repo, a.key))}
@@ -619,8 +637,16 @@
         {#if items.length > 0 && !zoomId}
           <Button variant="mono" class="essay-shell__add" data-testid="add-paragraph" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add paragraph</Button>
         {/if}
-      </main>
-      <aside class="panel-rail" aria-label="Panels" data-testid="rail">
+      </article>
+  {/if}
+  </div>
+    </Main>
+{/snippet}
+
+{#snippet inspectorPane()}
+    <Inspector label="Panels">
+      <div class="panel-rail" data-testid="rail">
+{#if model}
         <Panel title="Layers" persistKey="essay.layers" collapseWhen={NARROW}>
           <LayersPanel
             {layers}
@@ -651,11 +677,14 @@
           />
         </Panel>
         <PinnedPane items={pinned} onunpin={togglePin} onremove={(id) => run(() => removeAttachment(repo, id))} />
+{/if}
         {#if agentPanel}{@render agents()}{/if}
-      </aside>
-    </div>
-  {/if}
-</div>
+      </div>
+    </Inspector>
+{/snippet}
+
+<!-- No inspector column until there is something in it (an essay, or the agent panel). -->
+<AppShell {shell} main={mainPane} inspector={model || agentPanel ? inspectorPane : undefined} inspectorLabel="Panels" />
 
 {#snippet agents()}
   <Panel title="Agents" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey="essay.agents" collapseWhen={NARROW}>
