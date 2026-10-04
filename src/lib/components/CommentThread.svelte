@@ -26,6 +26,7 @@
     needsName = false,
     now = Date.now(),
     onadd,
+    onclose,
   }: {
     comments?: Comment[];
     /** No actor yet: ask for a display name with the first reply. */
@@ -33,6 +34,8 @@
     /** The shell's clock, so "just now" advances with the rest of the panel. */
     now?: number;
     onadd: (text: string, name?: string) => void;
+    /** Optional: shows a "Hide comments" control beside Comment (the shell owns the visibility state). */
+    onclose?: () => void;
   } = $props();
 
   let text = $state('');
@@ -130,5 +133,6 @@
       }}
     />
     <Button size="sm" variant="primary" type="submit" disabled={!text.trim() || (needsName && !name.trim())}>Comment</Button>
+    {#if onclose}<Button size="sm" variant="ghost" data-testid="comment-close" onclick={onclose}>Hide comments</Button>{/if}
   </form>
 </section>

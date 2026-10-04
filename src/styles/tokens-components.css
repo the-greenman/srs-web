@@ -74,6 +74,7 @@
 
   /* CommentThread: bounded list, clamped comments, composer growth. */
   --comment-thread-max: 24rem;
+  --comment-thread-pad-end: var(--space-sm);
   --comment-clamp-lines: 6;
   --comment-composer-max: 10rem;
 }

@@ -296,6 +296,7 @@
     {#snippet threads()}
       <div class="sg__grid">
         <div><h3>Empty</h3><CommentThread onadd={noop} /></div>
+        <div><h3>With a close control</h3><CommentThread comments={fx.comments} onadd={noop} onclose={noop} /></div>
         <div><h3>Needs a name</h3><CommentThread needsName onadd={noop} /></div>
         <div><h3>Long agent review plus short replies</h3><CommentThread comments={fx.reviewThread} onadd={noop} /></div>
         <div><h3>25 comments (earlier collapsed)</h3><CommentThread comments={fx.manyComments} onadd={noop} /></div>

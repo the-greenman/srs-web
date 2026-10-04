@@ -226,6 +226,13 @@
   /** UI-only: the opened threads (rules in thread-visibility.ts) and the zoomed paragraph. */
   let openThreads = $state<Set<string>>(new Set());
   let zoomId = $state<string | null>(null);
+  /** Close from the thread's own control: the same toggle as the badge, then focus returns to the badge. */
+  function closeThread(id: string) {
+    openThreads = setOpen(openThreads, id, false);
+    void tick().then(() =>
+      document.querySelector<HTMLElement>(`[data-block-id="${id}"] [data-testid="comment-badge"]`)?.focus(),
+    );
+  }
   const showThread = (id: string) => isShown(openThreads, id, hidden, inherited);
   const allItems = $derived((model?.entries ?? []).map((e) => ({ id: e.instanceId, depth: e.depth })));
   /** Zoomed: the paragraph and its subtree (the entries after it that are deeper). */
@@ -611,7 +618,7 @@
                 ondelete={() => toBin(p.id)}
               />
               {#if showThread(p.id)}
-                <CommentThread {now} comments={model!.comments[p.id] ?? []} needsName={!hasActor} onadd={(t, n) => comment(p.id, t, n)} />
+                <CommentThread {now} comments={model!.comments[p.id] ?? []} needsName={!hasActor} onadd={(t, n) => comment(p.id, t, n)} onclose={() => closeThread(p.id)} />
               {/if}
             {/if}
           {/snippet}

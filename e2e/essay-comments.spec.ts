@@ -320,3 +320,14 @@ test("deep link into a zoomed paragraph opens its thread, which the badge closes
   await badge(page, 0).click();
   await expect(threads(page)).toHaveCount(0);
 });
+
+test("Hide comments at the bottom closes the thread, focuses the badge and updates the header", async ({ page }) => {
+  await open(page);
+  await badge(page, 1).click();
+  await expect(page.getByTestId("comment-mode")).toHaveAttribute("aria-pressed", "mixed");
+  await items(page).nth(1).getByRole("button", { name: "Hide comments" }).click();
+  await expect(threads(page)).toHaveCount(0);
+  await expect(badge(page, 1)).toHaveAttribute("aria-expanded", "false");
+  await expect(badge(page, 1)).toBeFocused();
+  await expect(page.getByTestId("comment-mode")).toHaveAttribute("aria-pressed", "false");
+});

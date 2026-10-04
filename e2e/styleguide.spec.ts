@@ -71,7 +71,7 @@ test.describe("Styleguide", () => {
       await expect(annotations.locator('[data-part="row"]').first()).toBeVisible();
       await expect(annotations.getByTestId("paragraph-margin")).toHaveCount(8);
       await expect(annotations.locator('[data-part="earlier"]')).toHaveText("17 earlier comments");
-      await expect(annotations.getByTestId("comment-thread")).toHaveCount(7);
+      await expect(annotations.getByTestId("comment-thread")).toHaveCount(8);
       await expect(
         annotations.getByText("<script>alert(1)</script>", { exact: false })
       ).toBeVisible();
