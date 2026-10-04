@@ -1,6 +1,6 @@
 /**
- * The ONE per-paragraph action list (srs-web#382). Block renders it as desktop hover tools and
- * as the ellipsis menu; LayersPanel renders a subset as its per-row ellipsis menu. Every entry calls the same
+ * The ONE per-paragraph action list (srs-web#382, #423). Block renders it as the ellipsis menu (everything)
+ * and, for the `primary` entries, as the hover strip; LayersPanel renders a subset as its per-row ellipsis menu. Every entry calls the same
  * shell callback the keyboard shortcut uses, so the surfaces cannot drift. No outline rules here:
  * the engine validates every move and the shell surfaces its error.
  */
@@ -52,12 +52,11 @@ export interface ParagraphAction {
   icon: IconComponent;
   run: () => void;
   enabled: boolean;
-  /** Desktop hover-tool wording (aria-label / title); absent = menu only (hide uses EyeToggle). */
+  /** Strip wording (aria-label / title) for a `primary` action; hide uses EyeToggle, which names itself. */
   tool?: { aria: string; title: string };
+  /** A hover-strip shortcut (owner D3: hide, zoom, link). Every primary is also in the menu; nothing is hover-only. */
+  primary?: boolean;
 }
-
-/** Ids shown as today's hover tools on devices with hover (the rest live in the ellipsis menu only). */
-export const HOVER_TOOLS: ParagraphActionId[] = ["hide", "draft", "delete", "zoom", "link"];
 
 export function paragraphActions(
   h: ParagraphHandlers,
@@ -106,6 +105,7 @@ export function paragraphActions(
       icon: s.hidden ? EyeOff : Eye,
       run: () => h.onhide?.(!s.hidden),
       enabled: !s.inherited,
+      primary: true,
     },
     !!h.onpull && {
       id: "draft",
@@ -113,7 +113,6 @@ export function paragraphActions(
       icon: ArrowDownToLine,
       run: h.onpull,
       enabled: true,
-      tool: { aria: `Move ${s.label} to draft`, title: "Move to draft" },
     },
     !!h.ondelete && {
       id: "delete",
@@ -121,7 +120,6 @@ export function paragraphActions(
       icon: Trash,
       run: h.ondelete,
       enabled: true,
-      tool: { aria: `Delete ${s.label}`, title: "Delete (moves to the Bin)" },
     },
     !!h.onzoom && {
       id: "zoom",
@@ -130,6 +128,7 @@ export function paragraphActions(
       run: h.onzoom,
       enabled: true,
       tool: { aria: `Zoom to ${s.label}`, title: "Zoom to this paragraph" },
+      primary: true,
     },
     !!h.oncopylink && {
       id: "link",
@@ -138,6 +137,7 @@ export function paragraphActions(
       run: h.oncopylink,
       enabled: true,
       tool: { aria: `Copy link to ${s.label}`, title: "Copy link to this paragraph" },
+      primary: true,
     },
     !!h.oncopyagent && {
       id: "agent",

@@ -31,7 +31,7 @@ const depths = (page: Page) =>
 
 test("touch: ⋯ is the only gutter tool, at least 44px, with 44px rows", async ({ page }) => {
   await open(page);
-  await expect(page.locator(".essay-shell__page .block__tools").first()).toBeHidden();
+  await expect(page.locator(".essay-shell__page .block__strip").first()).toBeHidden();
   for (const t of [menuOf(page, 0), page.locator(".block__handle").first(), page.getByTestId("add-paragraph")]) {
     const box = (await t.boundingBox())!;
     expect(box.width).toBeGreaterThanOrEqual(44);

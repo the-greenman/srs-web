@@ -1,5 +1,5 @@
 <!--
-  Block — one paragraph: a narrow gutter (drag handle; eye + move-to-draft + zoom + copy-link on hover/focus; one ellipsis action menu, the only tool on touch), a right margin slot (`margin`),
+  Block — one paragraph: a narrow gutter (drag handle and one ellipsis action menu, both always visible; the menu is the only tool on touch), a hover strip of shortcut tools (hide, zoom, copy link: the `primary` paragraph actions) inside the title row, a right margin slot (`margin`),
   a small mono title above the body (InlineText) and the body in two states: rendered markdown
   (core renderMarkdown, already sanitized) until focused, then a plain-text source editor
   (`contenteditable="plaintext-only"`, no rich-text dependency). Hidden = collapsed in place.
@@ -19,7 +19,7 @@
   import MarkdownText from './MarkdownText.svelte';
   import { keyMove } from './dnd';
   import type { KeyMove } from './dnd';
-  import { HOVER_TOOLS, paragraphActions } from '../essay/paragraph-actions.js';
+  import { paragraphActions } from '../essay/paragraph-actions.js';
 
   let {
     id,
@@ -143,7 +143,7 @@
   }
 
   const shortLabel = $derived(title || 'untitled paragraph');
-  // The one action list: hover tools (devices with hover) and the ellipsis menu are both rendered from it.
+  // The one action list: the hover strip (its `primary` entries) and the ellipsis menu are both rendered from it.
   const actions = $derived(
     paragraphActions(
       { onnew, onmove, onindent, onhide, onpull, ondelete, onzoom, oncopylink, oncopyagent, onrename: () => (editingTitle = true) },
@@ -164,15 +164,6 @@
       onkeydown={handleKeydown}
       {...handle}
     />
-    <div class="block__tools" data-part="tools">
-      {#each actions.filter((a) => HOVER_TOOLS.includes(a.id)) as a (a.id)}
-        {#if a.id === 'hide'}
-          <EyeToggle {hidden} {inherited} label={shortLabel} onclick={a.run} />
-        {:else if a.tool}
-          <IconButton data-part="action" icon={a.icon} label={a.tool.aria} title={a.tool.title} onclick={a.run} />
-        {/if}
-      {/each}
-    </div>
     <ActionMenu class="block__menu" data-part="menu" {actions} label={shortLabel} focusKey={`menu:${id}`} />
   </div>
   <div class="block__main" data-part="main">
@@ -180,6 +171,15 @@
       <span class="block__title" data-part="title">
         <InlineText value={title} placeholder="Add title" label="Paragraph title" oncommit={ontitle} bind:editing={editingTitle} />
       </span>
+      <div class="block__strip" data-part="strip" data-testid="block-strip" role="group" aria-label={`Tools for ${shortLabel}`}>
+        {#each actions.filter((a) => a.primary) as a (a.id)}
+          {#if a.id === 'hide'}
+            <EyeToggle {hidden} {inherited} label={shortLabel} onclick={a.run} />
+          {:else if a.tool}
+            <IconButton data-part="action" icon={a.icon} label={a.tool.aria} title={a.tool.title} onclick={a.run} />
+          {/if}
+        {/each}
+      </div>
     </div>
     {#if hidden || inherited}
       <p class="block__closed">{inherited && !hidden ? 'Hidden by parent' : 'Hidden paragraph'}</p>

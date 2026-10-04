@@ -1,8 +1,9 @@
 /* ============================================================================
    component: block (.block) + block-stack (.block-stack)
    ----------------------------------------------------------------------------
-   One paragraph of an essay: a narrow gutter (drag handle, eye, actions on
-   hover/focus) beside a small mono title and a plain-text body that reads like a normal document.
+   One paragraph of an essay: a narrow gutter (drag handle and the ellipsis menu, always visible) beside a small
+   mono title and a plain-text body that reads like a normal document. A small hover strip of shortcut tools sits
+   inside the title row at its right end (#423).
    Nesting is layout only: --depth indents.
    Monochrome; drop position is a ruled line / dashed outline, never a colour.
    Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
@@ -70,42 +71,57 @@
 .block__handle:focus-visible {
   color: var(--icon-btn-hover-fg);
 }
-/* Opacity, not display: the tools stay in the tab order and appear on keyboard focus. */
-.block__tools {
-  position: absolute; /* overlay: the hidden tool stack must not set the paragraph's height */
-  top: 3rem;
+/* The hover strip: 2-3 shortcut tools (data-declared `primary` actions) INSIDE the paragraph's own title row,
+   at its right end. It never leaves the block, so it cannot touch the previous paragraph's thread, the margin
+   column or a neighbour's handle; on hover it may cover the end of a very long title (accepted, #423 N1/N2).
+   Opacity, not display: the tools stay in the tab order and appear on keyboard focus. An untitled paragraph's
+   head row has no height, so there the strip hangs from the block's content top instead of centring. */
+.block__strip {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
   z-index: var(--z-raised);
-  pointer-events: none; /* an idle stack must not catch clicks meant for the paragraph below */
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
   background: var(--block-tools-bg);
   border: var(--block-tools-border);
   border-radius: 2px;
   box-shadow: var(--block-tools-shadow);
-  padding: 2px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
   opacity: 0;
+  pointer-events: none; /* an idle strip must not catch clicks meant for the paragraph */
 }
-.block:hover .block__tools,
-.block:focus-within .block__tools {
+.block__head.is-collapsed .block__strip {
+  top: 0;
+  transform: none;
+}
+.block__strip .icon-btn,
+.block__strip .eye {
+  min-width: 24px;
+  min-height: 24px;
+}
+/* Shown by hover, or by keyboard focus (a focused editable body matches :focus-visible too). */
+.block-stack__item:hover .block__strip,
+.block__strip:focus-within,
+.block:has(:focus-visible) .block__strip {
   opacity: 1;
   pointer-events: auto;
 }
-/* Ellipsis menu: with hover it joins the hover tools; on touch it is the ONLY gutter tool (no vertical stack). */
-.block__menu {
+/* One surface at a time, hover wins: while any paragraph of the essay is hovered, every other paragraph's strip
+   is hidden, whether its own tools were reached by pointer or by (stale) focus. A strip whose own controls hold
+   keyboard focus stays. Scoped to the essay page so tray / layers / bin stacks do not count. */
+.essay-shell__page
+  .block-stack:has(.block-stack__item:hover)
+  .block-stack__item:not(:hover)
+  .block__strip:not(:focus-within) {
   opacity: 0;
-}
-.block:hover .block__menu,
-.block:focus-within .block__menu {
-  opacity: 1;
+  pointer-events: none;
 }
 @media (hover: none) {
-  .block__tools {
+  .block__strip {
     display: none;
-  }
-  .block__menu {
-    opacity: 1;
   }
 }
 .block__main {
@@ -313,6 +329,10 @@
     grid-area: margin;
     flex-direction: row;
     align-items: center;
+  }
+  /* A phone is touch-like: the gutter menu is the one tool surface. */
+  .block__strip {
+    display: none;
   }
   .block__gutter {
     grid-area: gutter;
