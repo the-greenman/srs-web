@@ -1,8 +1,18 @@
 // @vitest-environment happy-dom
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import GovernanceShell from "../src/lib/governance/GovernanceShell.svelte";
 import type { SrsRepository } from "../src/lib/srs-client.js";
+
+// The shell frame turns the inspector into a closed drawer at <= 1100px (happy-dom is 1024 wide): these
+// tests exercise the desktop frame, so stub a wide viewport (#424).
+beforeEach(() => {
+  vi.stubGlobal("matchMedia", (q: string) => ({
+    matches: Number(/max-width:\s*(\d+)px/.exec(q)?.[1]) >= 1440,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+});
 
 function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
   const base: SrsRepository = {

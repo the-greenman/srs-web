@@ -13,6 +13,7 @@
     TagChip, Textarea,
   } from "$lib/components";
   import ToolbarSpecimen from "./styleguide/ToolbarSpecimen.svelte";
+  import ShellSpecimen from "./styleguide/ShellSpecimen.svelte";
   import Frame from "./styleguide/Frame.svelte";
   import Icons from "./styleguide/icons";
   import { initWasm } from "$lib/srs-client";
@@ -32,6 +33,7 @@
     ["annotations", "Annotations and comments"],
     ["paragraph", "Paragraph"],
     ["panels", "Panels and trays"],
+    ["shell", "Page frame"],
     ["forms", "Form controls"],
   ];
 
@@ -402,6 +404,30 @@
     <div class="sg__rails">
       <Frame width="var(--inspector-width)" caption="Inspector 20rem">{@render rail()}</Frame>
       <Frame width="15rem" caption="Narrow 15rem">{@render rail()}</Frame>
+    </div>
+  </section>
+
+  <section id="shell">
+    <h2>Page frame</h2>
+    <p class="sg__note">One frame for every editor: a 100dvh grid whose nav and inspector scroll themselves. At or below 720px the nav,
+      and at or below 1100px the inspector, are drawers opened from the bar. Shown at 375px: both closed, the nav drawer open, the
+      inspector drawer open (badge = unseen activity). The drawer is drawn statically here; the live one is a modal dialog.</p>
+    <div class="sg__shells">
+      {#each [["none", "Drawers closed"], ["nav", "Nav drawer open"], ["inspector", "Inspector drawer open"]] as const as [open, caption]}
+        <figure class="sg__figure">
+          <figcaption>{caption}</figcaption>
+          <ShellSpecimen {open} />
+        </figure>
+      {/each}
+    </div>
+    <h3>Wide: the content cap, off and on</h3>
+    <div class="sg__row">
+      {#each [["Wide off: --content-max 46rem", "var(--content-max)"], ["Wide on: --content-max-wide 80rem", "var(--content-max-wide)"]] as [caption, cap]}
+        <figure class="sg__figure" data-testid="sg-wide">
+          <figcaption>{caption}</figcaption>
+          <div class="sg__frame"><div class="sg__capbar" style:max-width={cap}>content</div></div>
+        </figure>
+      {/each}
     </div>
   </section>
 

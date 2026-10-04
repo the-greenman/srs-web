@@ -16,6 +16,11 @@
   align-items: center;
   flex: none;
 }
+.toolbar__trail {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
 .toolbar__title {
   display: flex;
   align-items: center;
@@ -64,10 +69,14 @@
   }
 }
 @media (pointer: coarse) {
+  .toolbar__lead .icon-btn,
+  .toolbar__trail .icon-btn,
   .toolbar__actions .btn,
   .toolbar__actions .icon-btn {
     min-height: 44px;
   }
+  .toolbar__lead .icon-btn,
+  .toolbar__trail .icon-btn,
   .toolbar__actions .icon-btn {
     min-width: 44px;
   }

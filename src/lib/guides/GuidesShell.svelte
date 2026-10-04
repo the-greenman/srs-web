@@ -1053,12 +1053,11 @@
     cursor: pointer;
   }
 
-  /* Preview toggle only useful on narrow screens — inspector is always visible above 1100px */
-  /* bp: wide + 1 */
-  @media (min-width: 1101px) {
-    :global(.guides-preview-toggle) {
-      display: none;
-    }
+  /* The shell's InspectorTrigger replaces this toggle in every mode (it opens the inspector drawer at
+     <= 1100px), so Guides never shows two buttons for one inspector. The element stays until PR-B
+     Phase 8 deletes it with previewOpen. */
+  :global(.guides-preview-toggle) {
+    display: none;
   }
 
   .guides-save-message {

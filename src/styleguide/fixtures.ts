@@ -470,3 +470,30 @@ export const stripText = {
     body: "The strip may cover the end of a long title; that is accepted.",
   },
 };
+
+/** The shell specimen (#424): a nav of two groups with a count, an inspector of two panels, a badge. */
+export const shellFixture = {
+  repo: "Small democracy",
+  navGroups: [
+    {
+      label: "Sections",
+      items: [
+        { label: "Articles", count: 12, active: true },
+        { label: "Roles", count: 4, active: false },
+      ],
+    },
+    {
+      label: "Repository",
+      items: [
+        { label: "Decision log", count: 31, active: false },
+        { label: "Migrations", count: undefined, active: false },
+      ],
+    },
+  ],
+  panels: [
+    { title: "Record", aside: 1, body: "Article 3: How a decision is reopened." },
+    { title: "Validation", aside: 0, body: "No problems found." },
+  ],
+  badge: 3,
+  mainLine: "The main column holds one line here; the bar above carries both drawer triggers.",
+};

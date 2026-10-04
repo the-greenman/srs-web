@@ -50,10 +50,17 @@ test.describe("Guides HTML preview (Phase C)", () => {
     expect(srcdoc!.length).toBeGreaterThan(100);
   });
 
-  test("preview collapses on narrow viewport", async ({ page }) => {
+  test("preview collapses on narrow viewport and opens from the inspector trigger", async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 800, height: 900 });
-    // The .app__inspector is display:none below 1100px via layout.css.
+    // Below 1100px the inspector is a closed drawer: its contents are not visible.
     await expect(page.getByTestId("guides-preview-pane")).not.toBeVisible();
+    // The shell's trigger is the one button for it (Guides' own toggle stays hidden).
+    await expect(page.getByTestId("guides-preview-toggle")).toBeHidden();
+    await expect(page.getByTestId("inspector-trigger")).toHaveCount(1);
+    await page.getByTestId("inspector-trigger").click();
+    await expect(page.getByTestId("guides-preview-pane")).toBeVisible();
   });
 
   test("Export Markdown button is present and enabled when guide selected", async ({ page }) => {

@@ -77,8 +77,9 @@
   --shell-resize-hit: 8px;
   --resize-handle-active: var(--color-muted-strong);
   --shell-drawer-width: min(20rem, 88vw);
-  --shell-drawer-bg: var(--color-text-strong);
-  --shell-drawer-fg: var(--color-on-dark);
+  --shell-drawer-bg: var(--color-surface);
+  --shell-drawer-bg-dark: var(--color-text-strong);
+  --shell-drawer-motion: 160ms;
   --shell-scrim: color-mix(in srgb, var(--color-text-strong) 40%, transparent);
   --shell-badge-bg: var(--color-text-strong);
   --shell-badge-fg: var(--color-on-dark);

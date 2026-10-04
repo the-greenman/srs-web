@@ -1,9 +1,11 @@
 // @vitest-environment happy-dom
-import { cleanup, render } from "@testing-library/svelte";
+import { cleanup, fireEvent, render } from "@testing-library/svelte";
 import { createRawSnippet } from "svelte";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import AppShell from "../src/lib/components/AppShell.svelte";
+import Topbar from "../src/lib/components/Topbar.svelte";
 import { ShellState } from "../src/lib/shell-context.svelte.js";
+import ShellHost from "./ShellHost.svelte";
 
 const store = new Map<string, string>();
 beforeEach(() => {
@@ -66,4 +68,72 @@ it("a given ShellState drives the carrier and toggleWide persists through saveWi
   await Promise.resolve();
   expect(app.getAttribute("data-margin")).toBe("expanded");
   expect(store.get("srs-web.margin")).toBe("expanded");
+});
+
+const noop = () => {};
+function width(w: number) {
+  vi.stubGlobal("matchMedia", (q: string) => {
+    const max = Number(/max-width:\s*(\d+)px/.exec(q)?.[1]);
+    return { matches: w <= max, addEventListener: noop, removeEventListener: noop };
+  });
+}
+
+it("desktop mode: nav and inspector are grid columns, no drawers", () => {
+  width(1440);
+  const { container, getByTestId } = render(AppShell, { nav, main, inspector });
+  expect(container.querySelector('[data-testid^="shell-drawer"]')).toBeNull();
+  expect(container.querySelector(".app > [data-testid='nav']")).toBeTruthy();
+  expect(getByTestId("inspector")).toBeTruthy();
+});
+
+it("drawer mode: the nav renders inside the nav drawer and not in the grid; the inspector likewise at <= 1100", () => {
+  width(375);
+  const { container } = render(AppShell, { nav, main, inspector });
+  const navDrawer = container.querySelector('[data-testid="shell-drawer-nav"]')!;
+  const inspDrawer = container.querySelector('[data-testid="shell-drawer-inspector"]')!;
+  expect(navDrawer.querySelector('[data-testid="nav"]')).toBeTruthy();
+  expect(inspDrawer.querySelector('[data-testid="inspector"]')).toBeTruthy();
+  expect(container.querySelector(".app > [data-testid='nav']")).toBeNull();
+  expect(container.querySelector(".app--no-nav.app--no-inspector")).not.toBeNull();
+});
+
+it("between 721 and 1100 only the inspector is a drawer", () => {
+  width(900);
+  const { container } = render(AppShell, { nav, main, inspector });
+  expect(container.querySelector('[data-testid="shell-drawer-nav"]')).toBeNull();
+  expect(container.querySelector('[data-testid="shell-drawer-inspector"]')).not.toBeNull();
+});
+
+it("setShell ran before children: a Topbar inside finds the context and renders both triggers; a standalone Topbar renders none", async () => {
+  width(375);
+  const host = render(ShellHost, { badge: 3 });
+  expect(host.getByTestId("nav-trigger")).toBeTruthy();
+  expect(host.getByTestId("inspector-trigger")).toBeTruthy();
+  expect(host.getByTestId("inspector-badge").textContent).toBe("3");
+  // NavTrigger is first and InspectorTrigger last in the bar.
+  const kids = [...host.container.querySelector(".topbar")!.children].map(
+    (e) => e.getAttribute("data-testid") ?? e.className
+  );
+  expect(kids[0]).toBe("nav-trigger");
+  expect(
+    host.container
+      .querySelector(".topbar")!
+      .lastElementChild!.contains(host.getByTestId("inspector-trigger"))
+  ).toBe(true);
+  // choosing the triggers opens the drawers
+  await fireEvent.click(host.getByTestId("nav-trigger"));
+  expect((host.getByTestId("shell-drawer-nav") as HTMLDialogElement).open).toBe(true);
+  cleanup();
+  const alone = render(Topbar, {
+    crumb: createRawSnippet(() => ({ render: () => "<span>c</span>" })),
+  });
+  expect(alone.queryByTestId("nav-trigger")).toBeNull();
+  expect(alone.queryByTestId("inspector-trigger")).toBeNull();
+});
+
+it("desktop width: the triggers do not render", () => {
+  width(1440);
+  const host = render(ShellHost, { badge: 3 });
+  expect(host.queryByTestId("nav-trigger")).toBeNull();
+  expect(host.queryByTestId("inspector-trigger")).toBeNull();
 });
