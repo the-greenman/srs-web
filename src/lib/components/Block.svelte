@@ -10,12 +10,11 @@
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
 -->
 <script lang="ts">
-  import { untrack } from 'svelte';
   import type { Snippet } from 'svelte';
   import ActionMenu from './ActionMenu.svelte';
   import EyeToggle from './EyeToggle.svelte';
   import InlineText from './InlineText.svelte';
-  import { renderMarkdown } from '$lib/srs-client.js';
+  import MarkdownText from './MarkdownText.svelte';
   import { keyMove } from './dnd';
   import type { KeyMove } from './dnd';
   import { HOVER_TOOLS, paragraphActions } from '../essay/paragraph-actions.js';
@@ -38,6 +37,7 @@
     ondelete,
     onzoom,
     oncopylink,
+    oncopyagent,
     margin,
   }: {
     id: string;
@@ -60,74 +60,18 @@
     ondelete?: () => void;
     onzoom?: () => void;
     oncopylink?: () => void;
+    oncopyagent?: () => void;
     /** The one right-margin slot: comment badge, attachment glyphs. */
     margin?: Snippet;
   } = $props();
 
-  let el = $state<HTMLElement>();
   let editingTitle = $state(false);
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  let editing = $state(false);
-  let committed = '';
-  const html = $derived(body ? renderMarkdown(body) : '');
-
-  // Entering edit: show the source, keep focus, caret at the end.
-  $effect(() => {
-    if (!el) return;
-    el.textContent = untrack(() => body);
-    el.focus();
-    getSelection()?.selectAllChildren(el);
-    getSelection()?.collapseToEnd();
-  });
-
-  // Show external changes (agent writes) unless the writer is mid-edit in this block.
-  $effect(() => {
-    const v = body;
-    committed = v;
-    if (el && document.activeElement !== el && el.innerText !== v) el.textContent = v;
-  });
-
-  function flush() {
-    clearTimeout(timer);
-    if (!el) return;
-    const v = el.innerText;
-    if (v !== committed) {
-      committed = v;
-      onbody(v);
-    }
-  }
-
-  function edit() {
-    editing = true;
-  }
-
-  // Plain click edits; Ctrl/Cmd+click on a rendered link opens it instead.
-  function renderClick(e: MouseEvent) {
-    const a = (e.target as HTMLElement).closest('a');
-    if (a && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      window.open(a.href, '_blank', 'noopener');
-      return;
-    }
-    e.preventDefault();
-    edit();
-  }
-
-  function renderKeydown(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
-      e.preventDefault();
-      edit();
-    } else if (plainArrow(e)) {
-      e.preventDefault();
-      onnavigate?.(e.key === 'ArrowUp' ? 'prev' : 'next');
-    } else bodyKeydown(e);
-  }
 
   const plainArrow = (e: KeyboardEvent) =>
     (e.key === 'ArrowUp' || e.key === 'ArrowDown') && !(e.altKey || e.ctrlKey || e.metaKey || e.shiftKey);
 
   /** True when the caret sits on the first (up) / last (down) visual line; wrapping makes offsets useless. */
-  function atEdgeLine(up: boolean): boolean {
+  function atEdgeLine(el: HTMLElement | undefined, up: boolean): boolean {
     const sel = getSelection();
     if (!el || !sel?.isCollapsed || !sel.rangeCount) return false;
     const box = el.getBoundingClientRect();
@@ -151,7 +95,13 @@
     else onindent(m === 'in' ? 1 : -1);
   }
 
-  function bodyKeydown(e: KeyboardEvent) {
+  /** Paragraph shortcuts, for both the rendered and the editing state of the body. */
+  function bodyKeydown(e: KeyboardEvent, { flush, el, rendered }: { flush: () => void; el?: HTMLElement; rendered: boolean }) {
+    if (rendered && plainArrow(e)) {
+      e.preventDefault();
+      onnavigate?.(e.key === 'ArrowUp' ? 'prev' : 'next');
+      return;
+    }
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       flush();
@@ -165,7 +115,7 @@
       applyMove(m);
       return;
     }
-    if (plainArrow(e) && atEdgeLine(e.key === 'ArrowUp')) {
+    if (plainArrow(e) && atEdgeLine(el, e.key === 'ArrowUp')) {
       e.preventDefault();
       flush();
       onnavigate?.(e.key === 'ArrowUp' ? 'prev' : 'next');
@@ -194,7 +144,7 @@
   // The one action list: hover tools (devices with hover) and the ⋯ menu are both rendered from it.
   const actions = $derived(
     paragraphActions(
-      { onnew, onmove, onindent, onhide, onpull, ondelete, onzoom, oncopylink, onrename: () => (editingTitle = true) },
+      { onnew, onmove, onindent, onhide, onpull, ondelete, onzoom, oncopylink, oncopyagent, onrename: () => (editingTitle = true) },
       { label: shortLabel, hidden, inherited },
     ),
   );
@@ -231,41 +181,14 @@
     {#if hidden || inherited}
       <p class="block__closed">{inherited && !hidden ? 'Hidden by parent' : 'Hidden paragraph'}</p>
     {:else}
-      {#if editing}
-      <div
-        bind:this={el}
-        class="block__body"
-        contenteditable="plaintext-only"
-        role="textbox"
-        tabindex="0"
-        aria-multiline="true"
-        aria-label={`Paragraph text: ${shortLabel}`}
-        data-placeholder="Write…"
-        data-focus-key={`body:${id}`}
-        oninput={() => {
-          clearTimeout(timer);
-          timer = setTimeout(flush, 400);
-        }}
-        onblur={() => {
-          flush();
-          editing = false;
-        }}
+      <MarkdownText
+        value={body}
+        base="block"
+        label={`Paragraph text: ${shortLabel}`}
+        focusKey={`body:${id}`}
+        oncommit={onbody}
         onkeydown={bodyKeydown}
-      ></div>
-      {:else}
-      <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
-      <div
-        class="block__render"
-        role="group"
-        tabindex="0"
-        aria-label={`Paragraph text: ${shortLabel}, press Enter to edit`}
-        data-placeholder="Write…"
-        data-focus-key={`body:${id}`}
-        onfocus={edit}
-        onclick={renderClick}
-        onkeydown={renderKeydown}
-      >{@html html}</div>
-      {/if}
+      />
     {/if}
   </div>
   {#if margin}<div class="block__margin">{@render margin()}</div>{/if}

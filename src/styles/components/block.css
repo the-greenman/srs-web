@@ -152,8 +152,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.block__body,
-.block__render {
+/* The purpose (essay header) shares the body / rendered-markdown look: both are MarkdownText. */
+:is(.block__body, .purpose__body),
+:is(.block__render, .purpose__render) {
   min-height: 1.6em;
   font-size: var(--size-base);
   line-height: var(--leading-body);
@@ -161,86 +162,86 @@
   overflow-wrap: anywhere;
   outline: none;
 }
-.block__body:empty::before,
-.block__render:empty::before {
+:is(.block__body, .purpose__body):empty::before,
+:is(.block__render, .purpose__render):empty::before {
   content: attr(data-placeholder);
   color: var(--color-muted);
 }
-.block__body:focus-visible,
-.block__render:focus-visible {
+:is(.block__body, .purpose__body):focus-visible,
+:is(.block__render, .purpose__render):focus-visible {
   box-shadow: -2px 0 0 var(--black);
 }
 /* Rendered markdown (core renderMarkdown): block flow, so pre-wrap is off. Headings stay close to body size. */
-.block__render {
+:is(.block__render, .purpose__render) {
   white-space: normal;
   cursor: text;
 }
-.block__render > :first-child {
+:is(.block__render, .purpose__render) > :first-child {
   margin-top: 0;
 }
-.block__render > :last-child {
+:is(.block__render, .purpose__render) > :last-child {
   margin-bottom: 0;
 }
-.block__render p,
-.block__render ul,
-.block__render ol,
-.block__render blockquote,
-.block__render pre,
-.block__render table {
+:is(.block__render, .purpose__render) p,
+:is(.block__render, .purpose__render) ul,
+:is(.block__render, .purpose__render) ol,
+:is(.block__render, .purpose__render) blockquote,
+:is(.block__render, .purpose__render) pre,
+:is(.block__render, .purpose__render) table {
   margin: 0 0 var(--space-xs);
 }
-.block__render h1,
-.block__render h2,
-.block__render h3,
-.block__render h4 {
+:is(.block__render, .purpose__render) h1,
+:is(.block__render, .purpose__render) h2,
+:is(.block__render, .purpose__render) h3,
+:is(.block__render, .purpose__render) h4 {
   margin: var(--space-xs) 0;
   line-height: 1.25;
 }
-.block__render h1 {
+:is(.block__render, .purpose__render) h1 {
   font-size: 1.5em;
 }
-.block__render h2 {
+:is(.block__render, .purpose__render) h2 {
   font-size: 1.3em;
 }
-.block__render h3 {
+:is(.block__render, .purpose__render) h3 {
   font-size: 1.15em;
 }
-.block__render h4 {
+:is(.block__render, .purpose__render) h4 {
   font-size: 1em;
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
 }
-.block__render ul,
-.block__render ol {
+:is(.block__render, .purpose__render) ul,
+:is(.block__render, .purpose__render) ol {
   padding-left: 1.4em;
 }
-.block__render blockquote {
+:is(.block__render, .purpose__render) blockquote {
   padding-left: var(--space-sm);
   border-left: 2px solid var(--color-line);
   color: var(--color-muted);
 }
-.block__render code,
-.block__render pre {
+:is(.block__render, .purpose__render) code,
+:is(.block__render, .purpose__render) pre {
   font-family: var(--font-mono);
   font-size: 0.9em;
 }
-.block__render pre {
+:is(.block__render, .purpose__render) pre {
   overflow-x: auto;
 }
-.block__render table {
+:is(.block__render, .purpose__render) table {
   border-collapse: collapse;
 }
-.block__render th,
-.block__render td {
+:is(.block__render, .purpose__render) th,
+:is(.block__render, .purpose__render) td {
   border: 1px solid var(--color-line-soft);
   padding: 2px 8px;
   text-align: left;
 }
-.block__render a {
+:is(.block__render, .purpose__render) a {
   color: inherit;
   text-decoration: underline;
 }
-.block__render del {
+:is(.block__render, .purpose__render) del {
   color: var(--color-muted);
 }
 .block__closed {

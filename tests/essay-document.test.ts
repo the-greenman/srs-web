@@ -37,6 +37,7 @@ const m = vi.hoisted(() => ({
   createRelation: vi.fn(),
   deleteRecord: vi.fn(),
   deleteRelation: vi.fn(),
+  typeSchema: vi.fn(() => ({ schema: { properties: { title: {}, purpose: {} } } })),
   listRelationTypes: vi.fn(() => [
     { key: "evidences", label: "evidences" },
     { key: "x/counters", label: "counters" },
@@ -46,11 +47,13 @@ vi.mock("../src/lib/srs-client.js", () => m);
 
 import {
   addParagraph,
+  agentHandoff,
   binParagraph,
   deleteForever,
   loadEssay,
   moveEntry,
   removeAttachment,
+  setEssayPurpose,
   setEssayTitle,
   setHidden,
   shiftEntry,
@@ -334,5 +337,55 @@ describe("essay-document", () => {
     expect(m.updateRecord).toHaveBeenCalledWith({}, "E", {
       fieldValues: { title: "New", other: "kept" },
     });
+  });
+
+  it("purpose: read when the essay type declares it, null (UI hidden) when not", () => {
+    const repo = { write_epoch: () => 0 } as never;
+    m.listRecords.mockImplementation((_r: unknown, f: { typeName?: string }) =>
+      f.typeName === "essay" ? [rec("E", ESSAY_TYPE_ID, { title: "T", purpose: "Why" })] : []
+    );
+    expect(loadEssay(repo, "E").purpose).toBe("Why");
+    m.typeSchema.mockReturnValue({ schema: { properties: { title: {} } } });
+    expect(loadEssay({ write_epoch: () => 0 } as never, "E").purpose).toBeNull();
+  });
+
+  it("setEssayPurpose patches the purpose field like the title; clearing drops it", () => {
+    m.getRecord.mockReturnValue(rec("E", ESSAY_TYPE_ID, { title: "T", purpose: "old" }));
+    setEssayPurpose({} as never, "E", "new");
+    expect(m.updateRecord).toHaveBeenLastCalledWith({}, "E", {
+      fieldValues: { title: "T", purpose: "new" },
+    });
+    setEssayPurpose({} as never, "E", "");
+    expect(m.updateRecord).toHaveBeenLastCalledWith({}, "E", { fieldValues: { title: "T" } });
+  });
+});
+
+describe("agentHandoff (srs-web#411)", () => {
+  const base = {
+    repositoryId: "R",
+    essay: { id: "E", title: "On small democracy" },
+    containerId: "C",
+  };
+
+  it("whole essay: title, purpose, ids, the container URI and the rules; no focus", () => {
+    const t = agentHandoff({ ...base, purpose: "Persuade the board." });
+    expect(t).toContain("On small democracy");
+    expect(t).toContain("Purpose: Persuade the board.");
+    expect(t).toContain("Repository R, essay record E, container C");
+    expect(t).toContain("srs://R/container/C");
+    expect(t).not.toContain("/context/");
+    expect(t).toContain("The text is the writer's: comment and attach, never edit it.");
+  });
+
+  it("with a focus: its title, id and context URI; stays short", () => {
+    const t = agentHandoff({ ...base, purpose: "P", focus: { id: "p1", title: "Opening" } });
+    expect(t).toContain('"Opening" (paragraph p1)');
+    expect(t).toContain("srs://R/context/C/p1");
+    expect(t.split("\n").length).toBeLessThanOrEqual(15);
+  });
+
+  it("no purpose: the line is left out", () => {
+    expect(agentHandoff({ ...base, purpose: "" })).not.toContain("Purpose");
+    expect(agentHandoff({ ...base, purpose: null })).not.toContain("Purpose");
   });
 });

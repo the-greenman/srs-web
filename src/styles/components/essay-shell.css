@@ -68,6 +68,10 @@
   font-weight: 500;
   margin: 0 0 var(--space-sm);
 }
+.essay-shell__purpose {
+  margin: 0 0 var(--space-md);
+  color: var(--color-muted);
+}
 .essay-shell__hint,
 .essay-shell__empty {
   font-size: var(--size-sm);

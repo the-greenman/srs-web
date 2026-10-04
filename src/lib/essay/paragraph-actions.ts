@@ -13,6 +13,7 @@ export interface ParagraphHandlers {
   ondelete?: () => void;
   onzoom?: () => void;
   oncopylink?: () => void;
+  oncopyagent?: () => void;
   onrename?: () => void;
 }
 
@@ -27,6 +28,7 @@ export type ParagraphActionId =
   | "delete"
   | "zoom"
   | "link"
+  | "agent"
   | "rename";
 
 export interface ParagraphAction {
@@ -121,6 +123,13 @@ export function paragraphActions(
       run: h.oncopylink,
       enabled: true,
       tool: { aria: `Copy link to ${s.label}`, title: "Copy link to this paragraph" },
+    },
+    !!h.oncopyagent && {
+      id: "agent",
+      label: "Copy for agent",
+      icon: "🤖",
+      run: h.oncopyagent,
+      enabled: true,
     },
     !!h.onrename && { id: "rename", label: "Rename", icon: "✎", run: h.onrename, enabled: true },
   ];

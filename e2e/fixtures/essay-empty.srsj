@@ -147,6 +147,22 @@
       "namespace": "com.mudemocracy.essay",
       "version": 1
     },
+    "package/fields/purpose-09612192.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "What the essay is for and what the writer is trying to achieve, one to a few sentences of markdown. Optional. Agents read it for orientation and never write it."
+      },
+      "createdAt": "2026-10-04T00:00:00Z",
+      "description": "What the essay is for.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "09612192-10a1-5a88-a8c4-64face1563bc",
+      "name": "purpose",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
     "package/fields/statement-3b000001.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
       "aiGuidance": {
@@ -230,7 +246,8 @@
         "fields/commenttext-581e484f.json",
         "fields/bincontainerid-95a4f7ad.json",
         "fields/statement-3b000001.json",
-        "fields/title-3b000002.json"
+        "fields/title-3b000002.json",
+        "fields/purpose-09612192.json"
       ],
       "id": "5b14a4d4-ec08-4e5b-be75-c183aec90c40",
       "lifecycles": [],
@@ -510,6 +527,12 @@
           "displayLabel": "Summary",
           "fieldId": "89424121-5cb4-4bfa-8a6f-33911bda8900",
           "order": 1,
+          "required": false
+        },
+        {
+          "displayLabel": "Purpose",
+          "fieldId": "09612192-10a1-5a88-a8c4-64face1563bc",
+          "order": 2,
           "required": false
         }
       ],

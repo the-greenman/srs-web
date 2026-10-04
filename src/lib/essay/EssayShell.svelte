@@ -9,6 +9,7 @@
 <script lang="ts">
   import { onDestroy, onMount, tick, untrack } from "svelte";
   import type { Snippet } from "svelte";
+  import { repositoryId } from "$lib/srs-client.js";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import AgentFeed from "$lib/components/AgentFeed.svelte";
   import { ago, verb } from "$lib/agent-activity.js";
@@ -26,6 +27,7 @@
   import type { DragPayload, KeyMove } from "$lib/components/dnd.js";
   import Button from "$lib/components/Button.svelte";
   import InlineText from "$lib/components/InlineText.svelte";
+  import MarkdownText from "$lib/components/MarkdownText.svelte";
   import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
   import ActionMenu from "$lib/components/ActionMenu.svelte";
   import { NARROW } from "$lib/components/narrow.js";
@@ -42,7 +44,9 @@
     moveEntry,
     newEssay,
     setBody,
+    setEssayPurpose,
     setEssayTitle,
+    agentHandoff,
     shiftEntry,
     removeAttachment,
     setHidden,
@@ -320,6 +324,26 @@
     }
   }
 
+  /** Copy the agent handoff (srs-web#411): the whole essay, or `focusId` as the paragraph to look at. */
+  async function copyForAgent(focusId?: string) {
+    const m = model;
+    if (!m) return;
+    const text = agentHandoff({
+      repositoryId: repositoryId(repo),
+      essay: { id: m.essayId, title: m.title },
+      containerId: m.containerId,
+      purpose: m.purpose,
+      focus: focusId ? { id: focusId, title: m.paragraphs[focusId] ? label(focusId) : "untitled" } : undefined,
+    });
+    try {
+      await navigator.clipboard.writeText(text);
+      linkFallback = null;
+      notice = "Copied";
+    } catch {
+      error = "Could not copy to the clipboard.";
+    }
+  }
+
   /** One clock for every relative time in the Agents panel. */
   let now = $state(Date.now());
   const clock = setInterval(() => (now = Date.now()), 15000);
@@ -420,6 +444,7 @@
       {
         onnew: createEssay,
         oncopy: model ? copyDocument : undefined,
+        onagent: model ? () => copyForAgent(zoomId ?? undefined) : undefined,
         onhelp: () => (helpOpen = !helpOpen),
         onvariant: toggleVariant,
         oncomments: () => (commentMode = !commentMode),
@@ -506,6 +531,18 @@
           label="Essay title"
           oncommit={(v) => v.trim() && run(() => setEssayTitle(repo, model!, v.trim()))}
         />
+        {#if model.purpose !== null}
+          <div class="essay-shell__purpose">
+            <MarkdownText
+              value={model.purpose}
+              base="purpose"
+              label="Essay purpose"
+              placeholder="Add a purpose: what this essay is for"
+              focusKey="purpose"
+              oncommit={(v) => run(() => setEssayPurpose(repo, model!.essayId, v))}
+            />
+          </div>
+        {/if}
         {#if zoomId}
           <div class="essay-shell__zoombar">
             <Button variant="ghost" data-testid="zoom-exit" aria-label="Whole document" onclick={() => setZoom(null)}>←<span class="essay-shell__label"> Whole document</span></Button>
@@ -539,6 +576,7 @@
                 {margin}
                 onzoom={() => setZoom(p.id)}
                 oncopylink={() => copyLink(p.id)}
+                oncopyagent={() => copyForAgent(p.id)}
                 onbody={(v) => run(() => setBody(repo, p.id, v))}
                 ontitle={(v) => run(() => setTitle(repo, p.id, v))}
                 onhide={(h) => run(() => setHidden(repo, model!, p.id, h))}

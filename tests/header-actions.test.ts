@@ -54,4 +54,12 @@ describe("headerActions (srs-web#383)", () => {
     save.run();
     expect(onsave).toHaveBeenCalledOnce();
   });
+
+  it("adds Copy for agent only when its handler exists", () => {
+    expect(headerActions(base, state).some((a) => a.id === "agent")).toBe(false);
+    const onagent = vi.fn();
+    const a = headerActions({ ...base, onagent }, state).find((x) => x.id === "agent")!;
+    a.run();
+    expect([a.label, onagent.mock.calls.length]).toEqual(["Copy for agent", 1]);
+  });
 });
