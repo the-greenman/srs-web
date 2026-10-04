@@ -46,7 +46,7 @@ Lucide (`@lucide/svelte`, ISC) is the single icon set. Rules:
 
 Three tiers: **primitive** (`--paper`, `--ink`, `--black`, `--grey-N`; never read by components),
 **semantic** (`--color-*`, `--radius-*`, `--shadow-*`, `--z-*`, `--focus-ring`, `--hit-target`,
-`--rail-width`; in `tokens.css`) and **component** (`--<block>-<property>[-<state>]`, for example
+`--inspector-width`, `--content-max`; in `tokens.css`) and **component** (`--<block>-<property>[-<state>]`, for example
 `--btn-bg`, `--btn-primary-bg`, `--popover-border`, `--hue-pill-s`; in `tokens-components.css`).
 
 - Component tokens are declared on `:root` in the `tokens` layer, each defaulting to a semantic
@@ -154,7 +154,7 @@ Wide widens the content cap, `--content-max` 46rem to `--content-max-wide` 80rem
 column together). `data-margin` on `.app` is the one mechanism and the one carrier: its setter is
 `src/lib/wide.ts` (`saveWide`, storage key `srs-web.margin` kept so existing viewers keep their
 setting), driven by View > Wide. Other tokens: `--margin-mark-size`, `--margin-row-gap`,
-`--margin-label-lines`, `--essay-page-width`.
+`--margin-label-lines`. The essay page reads `--content-max` itself (a custom property that aliased it on `:root` would not see the shell's Wide override).
 
 Kind icons are mapped once, in `src/lib/components/annotation-icons.ts` (`KIND_ICONS`, owner decision
 D3): the annotation's data key (`Annotation.icon`, the neighbour's type name) to a Lucide component,
@@ -170,10 +170,10 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
 - Inspector components are shown at 20rem (`--inspector-width`) and 15rem in `/styleguide`, and an e2e check fails if any of
   them overflows its frame.
 - Follow-ups:
-  - Consolidating the seven `@media` widths (`phone`, `genericNarrow`, `form`, `compact`,
-    `genericStack`, `rail`, `wide`) into fewer; today they are only named and guarded.
-  - Unlayered scoped `<style>` blocks in the Guides, Governance and Generic shells beat every layer
-    and still carry raw colours: #424 (AppShell) retires them.
+  - Consolidating the five `@media` widths (`phone`, `form`, `compact`, `rail`, `wide`) into fewer;
+    today they are only named and guarded (#424 removed `genericNarrow` and `genericStack`).
+  - Unlayered scoped `<style>` blocks in the Guides and Governance shells beat every layer and still
+    carry raw colours: #424 PR-B retires them (the Generic shell's is gone in PR-A).
   - One-off buttons in the modals, `DecisionLogView`, `SourceChooser`, `BlueprintDocumentEditor` and
     the `SectionForm` table editor.
 
