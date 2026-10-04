@@ -1,0 +1,28 @@
+/* ============================================================================
+   component: shell (.resize-handle, .drawer) — frame parts (#424)
+   ----------------------------------------------------------------------------
+   Tokens `--shell-*` and `--resize-handle-*` (tokens-components.css).
+   ========================================================================== */
+
+/* ── ResizeHandle: a grab strip on a column's inner edge ──────────────────── */
+.resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--shell-resize-hit);
+  cursor: col-resize;
+  touch-action: none;
+  z-index: var(--z-raised);
+  background: transparent;
+}
+.resize-handle--nav {
+  right: 0;
+}
+.resize-handle--inspector {
+  left: 0;
+}
+.resize-handle:hover,
+.resize-handle:active,
+.resize-handle:focus-visible {
+  background: var(--resize-handle-active);
+}

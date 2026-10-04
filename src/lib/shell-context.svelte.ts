@@ -5,6 +5,7 @@
  * Wide is the ONE Wide state; it persists only through `saveWide`.
  */
 import { getContext, setContext } from "svelte";
+import { type Column, loadColumns, saveColumns } from "./columns.js";
 import { loadWide, saveWide } from "./wide.js";
 
 const KEY = Symbol("srs-web.shell");
@@ -23,6 +24,22 @@ export class ShellState {
   inspectorDrawer = $state(false);
   hasNav = $state(false);
   hasInspector = $state(false);
+
+  constructor(opts: { wideEnabled?: boolean } = {}) {
+    this.wideEnabled = opts.wideEnabled ?? false;
+    const c = loadColumns();
+    this.navWidth = c.nav;
+    this.inspectorWidth = c.inspector;
+  }
+
+  /** Live width while dragging (already clamped by the handle). */
+  setColumn = (kind: Column, px: number): void => {
+    if (kind === "nav") this.navWidth = px;
+    else this.inspectorWidth = px;
+  };
+
+  /** Persist both widths (on pointer release or a key press, not per move). */
+  commitColumns = (): void => saveColumns({ nav: this.navWidth, inspector: this.inspectorWidth });
 
   toggleWide = (): void => {
     this.wide = !this.wide;

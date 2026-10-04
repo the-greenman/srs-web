@@ -75,6 +75,7 @@
   --shell-inspector-min: 14rem;
   --shell-inspector-max: 40rem;
   --shell-resize-hit: 8px;
+  --resize-handle-active: var(--color-muted-strong);
   --shell-drawer-width: min(20rem, 88vw);
   --shell-drawer-bg: var(--color-text-strong);
   --shell-drawer-fg: var(--color-on-dark);

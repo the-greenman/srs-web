@@ -1,6 +1,6 @@
 <!--
   Inspector — the right rail container holding stacked Panels (class inspector__section).
-  Includes a drag handle at the left edge to resize the inspector width, and
+  Inside an AppShell it carries a ResizeHandle on its left edge, and
   supports an `open` prop to override the responsive hide rule (used by
   GuidesShell's narrow-screen toggle).
   B4 read-only viewer: https://github.com/the-greenman/srs-web/issues/3
@@ -8,6 +8,8 @@
 -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { getShell } from '../shell-context.svelte.js';
+  import ResizeHandle from './ResizeHandle.svelte';
 
   let {
     label = 'Inspector',
@@ -20,36 +22,25 @@
     children?: Snippet;
   } = $props();
 
-  let aside: HTMLElement;
-
-  function onDragStart(e: PointerEvent) {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startW = aside.offsetWidth;
-    const app = aside.closest<HTMLElement>('.app');
-
-    function onMove(ev: PointerEvent) {
-      const delta = startX - ev.clientX;
-      const w = Math.max(200, Math.min(640, startW + delta));
-      app?.style.setProperty('--inspector-width', `${w}px`);
-    }
-    function onUp() {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    }
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-  }
+  const shell = getShell();
+  const uid = $props.id();
 </script>
 
 <aside
   class="inspector app__inspector"
   class:inspector--open={open}
+  id="inspector-{uid}"
   aria-label={label}
-  bind:this={aside}
 >
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="inspector__drag-handle" onpointerdown={onDragStart} aria-hidden="true"></div>
+  {#if shell && !shell.inspectorDrawer}
+    <ResizeHandle
+      kind="inspector"
+      value={shell.inspectorWidth}
+      controls="inspector-{uid}"
+      onchange={(w) => shell.setColumn('inspector', w)}
+      oncommit={shell.commitColumns}
+    />
+  {/if}
   <div class="inspector__body">
     {@render children?.()}
   </div>

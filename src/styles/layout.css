@@ -9,22 +9,42 @@
      https://github.com/the-greenman/srs-web/issues/3
    ========================================================================== */
 
-/* ── App grid: navigation | workspace | inspector ─────────────────────────── */
+/* ── App grid: navigation | workspace | inspector ───────────────────────────
+   The frame is exactly the viewport and never scrolls itself: each column scrolls its own content
+   (nav: .nav__scroll, main: ONE .workspace, inspector: .inspector__body). The first height line is the one
+   allowed fallback for browsers without dvh. */
 .app {
   display: grid;
   grid-template-columns: var(--nav-width) minmax(0, 1fr) var(--inspector-width);
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.app--no-nav {
+  grid-template-columns: minmax(0, 1fr) var(--inspector-width);
+}
+.app--no-inspector {
+  grid-template-columns: var(--nav-width) minmax(0, 1fr);
+}
+.app--no-nav.app--no-inspector {
+  grid-template-columns: minmax(0, 1fr);
 }
 .app__nav {
   min-width: 0;
+  min-height: 0;
 } /* slot — styled by nav.css */
 .app__inspector {
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 } /* slot — styled by inspector.css */
 .app__main {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ── Topbar: breadcrumb + contextual actions ──────────────────────────────── */
@@ -34,11 +54,9 @@
   align-items: center;
   gap: var(--space-sm);
   padding: 0 var(--space-md);
+  flex: none;
   border-bottom: var(--rule);
   background: var(--color-surface);
-  position: sticky;
-  top: 0;
-  z-index: var(--z-sticky);
 }
 .topbar__crumb {
   display: flex;
@@ -79,8 +97,14 @@
 /* ── Scrolling workspace + centred reading/edit canvas ────────────────────── */
 .workspace {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--space-md);
+}
+/* A scroller whose content brings its own padding (the essay page). */
+.workspace--flush {
+  padding: 0;
 }
 .canvas {
   max-width: var(--canvas-max);
@@ -138,5 +162,16 @@
 @media (max-width: 720px) {
   .app {
     grid-template-columns: 1fr;
+  }
+  /* Temporary (Phase 2 only; Phase 3 deletes this block with the drawers): today's stacked page, so the
+     fixed-height grid does not clip it. Doubled/descendant selectors so reordering this file cannot
+     lose to the base rules above. */
+  .app.app {
+    height: auto;
+    overflow: visible;
+  }
+  .app .app__main,
+  .app .workspace {
+    overflow: visible;
   }
 }
