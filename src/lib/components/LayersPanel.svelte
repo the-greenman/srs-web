@@ -85,7 +85,7 @@
           >{l.label}</button>
           <!-- Touch reorder: the same action list as Block's menu (move, indent, hide); the menu is shown on hover:none only. -->
           <ActionMenu
-            class="layers__menu action-menu--end"
+            class="layers__menu" placement="bottom-end"
             testid="layer-menu"
             label={l.label}
             actions={paragraphActions(

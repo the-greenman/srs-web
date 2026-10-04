@@ -48,7 +48,12 @@
   onmouseleave={hide}
   onfocusin={show}
   onfocusout={hide}
-  onkeydown={(e) => e.key === 'Escape' && (cardOpen = false)}
+  onkeydown={(e) => {
+    if (e.key === 'Escape' && cardOpen) {
+      e.stopPropagation(); // closes the card only, not the shell's zoom
+      cardOpen = false;
+    }
+  }}
 >
   <button
     type="button"

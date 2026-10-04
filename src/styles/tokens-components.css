@@ -31,9 +31,6 @@
   --popover-border: var(--color-text-strong);
   --popover-shadow: var(--shadow-popover);
 
-  /* Comments */
-  --comment-surface: var(--color-surface-raised);
-
   /* Hue pills (ActorChip, AttachmentGlyph): hsl(<hue> S L), copied from the
      numbers the two components used before tokenisation. */
   --hue-pill-s: 45%;

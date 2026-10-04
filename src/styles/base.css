@@ -84,6 +84,6 @@ button {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-text);
-  outline-offset: 2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }

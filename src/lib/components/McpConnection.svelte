@@ -50,7 +50,7 @@
     replaced: 'Taken over by another tab',
     // A browser WebSocket cannot read the HTTP status, so a 409 (held by another tab) and a
     // 403 executor_origin_forbidden both arrive as a refused connect.
-    rejected: 'Connection refused: another tab holds it, or the relay rejected this page origin (executor_origin_forbidden)',
+    rejected: 'Connection refused',
     error: 'Connection failed',
   };
 
@@ -75,7 +75,7 @@
     {#if repositoryName}<span class="mcp-conn__repo">{repositoryName}</span>{/if}
   </div>
   {#if lastActivity}<p class="mcp-conn__note" data-testid="agent-last">{lastActivity}</p>{/if}
-  {#if error}<p class="mcp-conn__error" role="alert">{error}</p>{/if}
+  {#if error}<p class="mcp-conn__error" role="alert">{error}</p>{:else if status === 'rejected'}<p class="mcp-conn__note">Another tab holds it, or the relay rejected this page origin (executor_origin_forbidden).</p>{/if}
   {#if callerUrl}
     <div class="mcp-conn__url" data-part="url">
       <Input readonly value={callerUrl} aria-label="MCP caller URL" data-part="input" data-testid="mcp-caller-url" onfocus={(e) => e.currentTarget.select()} />

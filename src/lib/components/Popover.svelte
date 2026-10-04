@@ -7,7 +7,7 @@
   a small JS placement (below, flip above, clamp; repositions on scroll and resize).
   A trigger never toggles `open` itself: `trigger` receives real `popovertarget` invoker props, the
   browser handles the click, and `open` follows the surface's `toggle` event (so light-dismiss on
-  pointerdown cannot be undone by the click that follows it). Focus return relies on the browser's
+  pointerdown cannot be undone by the click that follows it). `onclose` and the menu focus fallback run on every transition to closed, including when the host sets `open`. Focus return relies on the browser's
   native popover focus restoration, plus one fallback for role="menu" (focus ends on <body> when an
   outside click lands on non-focusable text). Where the popover API is missing (happy-dom) the
   surface falls back to an `is-open` class and inline display, and the trigger props carry an onclick.
@@ -15,7 +15,7 @@
 -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { anchorSurfaceStyle, isShown, placeNextTo, supportsAnchor, supportsPopover } from './popover-position.js';
+  import { anchorSurfaceStyle, isShown, placeNextTo, supportsAnchor } from './popover-position.js';
   import type { Placement } from './popover-position.js';
 
   let {
@@ -36,7 +36,7 @@
     mode?: 'auto' | 'manual';
     /** Accessible name of the surface. */
     label: string;
-    role?: 'menu' | 'dialog' | 'region' | 'tooltip';
+    role?: 'menu' | 'dialog' | 'region' | 'tooltip' | 'group';
     /** Notification only: the surface closed (light-dismiss, Escape or the host). */
     onclose?: () => void;
     /** Position against this element instead of the trigger. */
@@ -55,7 +55,8 @@
 
   let wrap = $state<HTMLElement>();
   let surface = $state<HTMLElement>();
-  const native = $derived(supportsPopover(surface));
+  // Feature detects, once per module load (happy-dom has neither).
+  const native = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
   const useAnchor = supportsAnchor();
   const anchorEl = $derived(anchor ?? wrap);
 
@@ -89,7 +90,7 @@
   $effect(() => {
     const s = surface;
     if (!s) return;
-    if (!supportsPopover(s)) return;
+    if (!native) return;
     if (open && !isShown(s)) {
       try {
         s.showPopover();
@@ -111,7 +112,7 @@
     if (!open || !s) return;
     let stop: (() => void) | undefined;
     const target = anchorEl;
-    if (!useAnchor && target && supportsPopover(s)) {
+    if (!useAnchor && target && native) {
       const place = () => {
         const { top, left } = placeNextTo(
           target.getBoundingClientRect(),
@@ -137,11 +138,9 @@
     return stop;
   });
 
-  function ontoggle(e: Event) {
-    const next = (e as ToggleEvent).newState === 'open';
-    if (next === open) return;
-    open = next;
-    if (next) return;
+  // Runs on every transition to closed, whoever closed it (light-dismiss, Escape, or the host setting `open`).
+  let wasOpen = false;
+  function closed() {
     onclose?.();
     // Native restoration only fires when focus was inside; an outside click on text leaves it on <body>.
     if (role === 'menu') {
@@ -149,12 +148,33 @@
       if (!a || a === document.body || surface?.contains(a)) triggerEl()?.focus();
     }
   }
+  function ontoggle(e: Event) {
+    const next = (e as ToggleEvent).newState === 'open';
+    if (next) {
+      open = true;
+      wasOpen = true;
+    } else {
+      open = false;
+      if (wasOpen) closed();
+      wasOpen = false;
+    }
+  }
+  // Without the popover API there is no toggle event: notify from the open state.
+  $effect(() => {
+    if (native) return;
+    if (open) wasOpen = true;
+    else if (wasOpen) {
+      wasOpen = false;
+      closed();
+    }
+  });
 
   function keydown(e: KeyboardEvent) {
     // Native popovers close on Escape themselves; this is the fallback where the API is missing.
+    // Escape closes this surface only: it must not also cancel an edit or exit zoom in the shell.
+    if (open && e.key === 'Escape') e.stopPropagation();
     if (!native && open && e.key === 'Escape') {
       open = false;
-      triggerEl()?.focus();
       return;
     }
     if (role !== 'menu' || !open) return;

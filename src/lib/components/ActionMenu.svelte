@@ -28,14 +28,13 @@
     /** Trigger label; the accessible name is `${title} for ${label}`. */
     title?: string;
     focusKey?: string;
-    /** Defaults to the `action-menu--end` modifier: bottom-end when present, else bottom-start. */
     placement?: Placement;
     class?: string;
   } & Record<`data-${string}`, string | undefined> = $props();
 
   let open = $state(false);
   let triggerBtn = $state<HTMLButtonElement>();
-  const place = $derived(placement ?? (klass.includes('action-menu--end') ? 'bottom-end' : 'bottom-start'));
+  const place = $derived(placement ?? 'bottom-start');
   const name = $derived(`${title} for ${label}`);
 
   function pick(a: MenuAction) {

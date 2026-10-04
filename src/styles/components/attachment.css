@@ -24,8 +24,8 @@
   color: var(--color-on-accent);
 }
 .glyph:focus-visible {
-  outline: 2px solid var(--color-text-strong);
-  outline-offset: 1px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 .hover-card {
   width: 16rem;

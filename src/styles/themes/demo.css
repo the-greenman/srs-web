@@ -1,6 +1,6 @@
 /* ============================================================================
    theme: demo — proves the token surface alone can reskin the UI (ADR-019, ADR-020).
-   Re-points ONLY semantic and component tokens, never the primitive palette (--paper, --ink,
+   Re-points ONLY semantic tokens (colour, shadow, radius, font), never component tokens (a skin works through the semantic tier, ADR-020 b) and never the primitive palette (--paper, --ink,
    --black, --grey-*) and never a component class. Every colour-bearing semantic token gets a sentinel
    value that differs from every default palette value, so any component still painting a palette
    colour is a bypass: e2e/styleguide.spec.ts fails on it, and tests/demo-theme.test.ts fails when

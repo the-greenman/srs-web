@@ -52,8 +52,8 @@ summary.panel__head::-webkit-details-marker {
   margin-bottom: 0;
 }
 summary.panel__head:focus-visible {
-  outline: 2px solid var(--color-text-strong);
-  outline-offset: 1px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 .panel__aside {
   margin-left: auto;

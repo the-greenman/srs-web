@@ -45,11 +45,6 @@ export function supportsAnchor(): boolean {
   }
 }
 
-/** True where the native `popover` API exists (guarded for happy-dom). */
-export function supportsPopover(el: HTMLElement | undefined): boolean {
-  return !!el && typeof el.showPopover === "function";
-}
-
 /** `:popover-open`, tolerating engines and test DOMs that do not know the selector. */
 export function isShown(el: HTMLElement): boolean {
   try {

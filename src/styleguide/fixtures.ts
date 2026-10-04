@@ -270,7 +270,6 @@ export const componentTokens = [
   "--popover-bg",
   "--popover-border",
   "--popover-shadow",
-  "--comment-surface",
   "--hue-pill-s",
   "--hue-pill-s-bg",
   "--hue-pill-s-solid",

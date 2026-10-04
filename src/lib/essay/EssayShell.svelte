@@ -463,8 +463,7 @@
         onnew: createEssay,
         oncopy: model ? copyDocument : undefined,
         onagent: model ? () => copyForAgent(zoomId ?? undefined) : undefined,
-        // One frame later: the overflow menu closes and returns focus first, so the two popovers never overlap.
-        onhelp: () => requestAnimationFrame(() => { helpOpen = true; }),
+        onhelp: () => { helpOpen = true; },
         onvariant: toggleVariant,
         oncomments: () => (commentMode = !commentMode),
         onsave: onSave,
@@ -518,7 +517,7 @@
           {/if}
         {/each}
       </div>
-      <ActionMenu class="essay-shell__overflow action-menu--end" testid="header-menu" title="Document actions" label={model?.title ?? repoName} actions={barActions} />
+      <ActionMenu class="essay-shell__overflow" placement="bottom-end" testid="header-menu" title="Document actions" label={model?.title ?? repoName} actions={barActions} />
     </div>
     <MarkdownHelp id={helpId} anchor={actionsEl} bind:open={helpOpen} />
   </header>

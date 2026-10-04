@@ -150,12 +150,27 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
     });
   });
 
+  test("Escape in a paragraph menu closes only the menu: the shell stays zoomed", async ({ page }) => {
+    await openEssay(page);
+    const menu = page.locator(".essay-shell__page").getByTestId("paragraph-menu").first();
+    await menu.click();
+    await page.getByTestId("paragraph-menu-zoom").click();
+    await expect(page.getByTestId("zoom-exit")).toBeVisible();
+    await menu.click();
+    await expect(page.getByTestId("paragraph-menu-add")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("paragraph-menu-add")).toHaveCount(0);
+    await expect(page.getByTestId("zoom-exit")).toBeVisible();
+    await expect(menu).toBeFocused();
+  });
+
   test.describe("narrow", () => {
     const phone = { width: 390, height: 800 };
 
     test("choosing help from the overflow menu opens exactly one popover; Escape returns to the menu trigger", async ({ page }) => {
       await openEssay(page, phone);
       const menu = page.getByTestId("header-menu");
+      await expect(page.getByRole("button", { name: "Markdown help", exact: true })).toBeHidden(); // desktop invoker is hidden on a phone
       await menu.click();
       await page.getByTestId("header-menu-help").click();
       await expect(help(page)).toBeVisible();

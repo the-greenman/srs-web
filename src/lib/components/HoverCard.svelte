@@ -32,6 +32,8 @@
     static?: boolean;
     class?: string;
   } = $props();
+  // A tooltip must not hold interactive content: with Remove link it is a labelled group.
+  const role = $derived(onremove ? 'group' : 'tooltip');
 </script>
 
 {#snippet card()}
@@ -40,7 +42,7 @@
 {/snippet}
 
 {#if inFlow}
-  <div class="popover__surface popover__surface--static hover-card {className}" role="tooltip" aria-label={title}>{@render card()}</div>
+  <div class="popover__surface popover__surface--static hover-card {className}" role={role} aria-label={title}>{@render card()}</div>
 {:else}
-  <Popover bind:open mode="manual" role="tooltip" label={title} {anchor} class={`hover-card ${className}`}>{@render card()}</Popover>
+  <Popover bind:open mode="manual" {role} label={title} {anchor} class={`hover-card ${className}`}>{@render card()}</Popover>
 {/if}
