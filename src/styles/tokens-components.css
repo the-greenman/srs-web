@@ -65,6 +65,8 @@
   --block-tools-bg: var(--color-page);
   --block-tools-border: 1px solid var(--color-line-soft);
   --block-tools-shadow: var(--shadow-popover);
+  /* The paragraph title row's minimum height: the hover strip's rendered height (24px tools + 2px padding + 1px border, each side). */
+  --block-head-min: 30px;
   --margin-row-gap: 4px;
   --margin-label-lines: 2;
 
