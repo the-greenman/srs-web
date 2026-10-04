@@ -68,7 +68,9 @@
       .filter(Boolean)
       .join(', ')
   );
-  const kind = $derived(counts.error ? 'error' : counts.warn ? 'warning' : 'info');
+  // Never `error`: the notice is a status, not an alert (an alert on every load would break the no-alert paths);
+  // errors read strong through their own rows.
+  const kind = $derived(counts.error || counts.warn ? 'warning' : 'info');
   const listId = `diag-${Math.random().toString(36).slice(2, 8)}`;
 </script>
 

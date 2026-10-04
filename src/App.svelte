@@ -49,6 +49,7 @@
   import Input from "$lib/components/Input.svelte";
   import { RelayHost, type HostState } from "$lib/mcp/relay-host.js";
   import { untrack } from "svelte";
+  import { notify, pinNotice, resetNotices, toUiDiagnostic, unpinNotice, type NoticeKind } from "$lib/notices.svelte.js";
   import { slugifyFilename } from "$lib/slug.js";
   import {
     createStorageProvidersFromEnv,
@@ -87,7 +88,6 @@
 
   /** Document-level Save (write-capable cloud/git handles only). */
   let saving = $state(false);
-  let saveMessage = $state<string | null>(null);
   /** Git Save dialog (branch choice + install hint) state. */
   let gitSaveOpen = $state(false);
   let gitSaveError = $state<string | null>(null);
@@ -124,8 +124,6 @@
    * diagnostic, not a silent omission — the repository still opens, so the
    * only way the user learns an object was rejected is if we show it.
    */
-  let catalogDiagnostics = $state<{ severity: string; message: string }[]>([]);
-  let catalogDiagnosticsOpen = $state(true);
 
   /** Cached working copy loaded from localStorage on WASM init. */
   let cachedSession = $state<WorkingCopyEntry | null>(null);
@@ -200,6 +198,17 @@
     if (repo) applyActor(repo);
   });
 
+  /** A new document: drop the old one's toasts, dismissals and catalog notice (the load path pins its own after). */
+  function clearNotices(): void {
+    resetNotices();
+    unpinNotice("catalog");
+  }
+
+  /** One save-result toast: the single "save" key, so a later result replaces an earlier (even a sticky error). */
+  const saveToast = (kind: NoticeKind, text: string, duration?: number): void => {
+    notify({ kind, key: "save", text, testid: "save-status", duration });
+  };
+
   function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
     // Every load path passes through here: from now on each engine write reports itself.
     if (repo) {
@@ -207,6 +216,7 @@
       applyActor(repo);
       void resolveSignedInActor();
     }
+    clearNotices();
     workingCopy.cancel();
     workingCopySaved = true;
     const revision = documentMutations.beginDocument(repo?.write_epoch() ?? 0, { dirty });
@@ -471,10 +481,20 @@
         beginDocument({ dirty });
         repoName = stripSrsExtension(handle.name);
         cachedSession = null;
-        saveMessage = dirty ? "Migrated to the current data model. Unsaved - Save to keep it." : null;
-        if (dirty) saveWorkingCopy(repoName, exportSrsj(loaded));
-        catalogDiagnostics = collectCatalogDiagnostics(loaded);
-        catalogDiagnosticsOpen = true;
+        if (dirty) {
+          saveToast("info", "Migrated to the current data model. Unsaved - Save to keep it.", 8000);
+          saveWorkingCopy(repoName, exportSrsj(loaded));
+        }
+        const catalog = collectCatalogDiagnostics(loaded);
+        if (catalog.length) {
+          pinNotice({
+            key: "catalog",
+            documentKey: repoName,
+            kind: "warning",
+            diagnostics: catalog.map(toUiDiagnostic),
+            testid: "catalog-diagnostics",
+          });
+        }
         appState = "loaded";
       });
     } catch (e: unknown) {
@@ -541,7 +561,6 @@
     beginDocument();
     repoName = name;
     cachedSession = null;
-    saveMessage = null;
     appState = "loaded";
   }
 
@@ -560,8 +579,10 @@
         activeDocument = null;
         repoName = stripSrsExtension(name);
         cachedSession = null;
-        saveMessage = dirty ? "Migrated to the current data model. Unsaved - export to keep it." : null;
-        if (dirty) saveWorkingCopy(repoName, exportSrsj(loaded));
+        if (dirty) {
+          saveToast("info", "Migrated to the current data model. Unsaved - export to keep it.", 8000);
+          saveWorkingCopy(repoName, exportSrsj(loaded));
+        }
         appState = "loaded";
       });
     } catch (e: unknown) {
@@ -591,6 +612,11 @@
   // ---------------------------------------------------------------------------
   // Save (write back to the opened cloud/git document)
   // ---------------------------------------------------------------------------
+
+  /** The toast for a completed save: success, or info when newer changes remain unsaved. */
+  function savedMessage(current: boolean, text = "Saved."): [NoticeKind, string] {
+    return current ? ["success", text] : ["info", `${text} Newer changes remain unsaved.`];
+  }
 
   function saveErrorMessage(e: unknown): string {
     const code =
@@ -627,7 +653,6 @@
     syncDocument();
     const saveSnapshot = documentMutations.captureSave();
     saving = true;
-    saveMessage = null;
     try {
       if (handle.kind === "tree") {
         // A tree handle that is not GitBranchAware is an on-device folder
@@ -635,10 +660,10 @@
         // first: the provider fan-out below ends in GitHub, so a "local" handle
         // falling through would try to create a file on GitHub.
         await (handle as DocumentHandle & RepoTreeAware).commitTree(exportTree(repository));
-        saveMessage = completeDocumentSave(saveSnapshot) ? "Saved." : "Saved. Newer changes remain unsaved.";
+        saveToast(...savedMessage(completeDocumentSave(saveSnapshot)));
       } else if (handle.kind === "bytes" && handle.writeBytes) {
         await handle.writeBytes(exportArchive(repository), handle.revision);
-        saveMessage = completeDocumentSave(saveSnapshot) ? "Saved." : "Saved. Newer changes remain unsaved.";
+        saveToast(...savedMessage(completeDocumentSave(saveSnapshot)));
       } else {
         // Auto-upgrade: create a new .srs file and switch the active handle to it.
         const provider =
@@ -651,16 +676,14 @@
           const newName = toArchiveName(handle.name);
           const newHandle = await provider.create(newName, exportArchive(repository));
           activeDocument = newHandle;
-          saveMessage = completeDocumentSave(saveSnapshot)
-            ? `Saved as ${newHandle.name}.`
-            : `Saved as ${newHandle.name}. Newer changes remain unsaved.`;
+          saveToast(...savedMessage(completeDocumentSave(saveSnapshot), `Saved as ${newHandle.name}.`));
         } else {
           await handle.write(exportSrsj(repository), handle.revision);
-          saveMessage = completeDocumentSave(saveSnapshot) ? "Saved." : "Saved. Newer changes remain unsaved.";
+          saveToast(...savedMessage(completeDocumentSave(saveSnapshot)));
         }
       }
     } catch (e: unknown) {
-      saveMessage = saveErrorMessage(e);
+      saveToast("error", saveErrorMessage(e));
     } finally {
       saving = false;
     }
@@ -705,9 +728,13 @@
           throw new Error("Git save is not supported for this document type yet.");
       }
       const saveIsCurrent = completeDocumentSave(saveSnapshot);
-      saveMessage = branchedOff
-        ? `Saved to new branch “${branch}”. Open a pull request on GitHub to merge it.${saveIsCurrent ? "" : " Newer changes remain unsaved."}`
-        : saveIsCurrent ? "Saved." : "Saved. Newer changes remain unsaved.";
+      if (branchedOff) {
+        saveToast(
+          "success",
+          `Saved to new branch “${branch}”. Open a pull request on GitHub to merge it.${saveIsCurrent ? "" : " Newer changes remain unsaved."}`,
+          8000
+        );
+      } else saveToast(...savedMessage(saveIsCurrent));
       gitSaveOpen = false;
     } catch (e: unknown) {
       // Keep the dialog open so the install hint stays visible on a permission error.
@@ -721,28 +748,6 @@
 <!-- =========================================================================
      Boot state
      ========================================================================= -->
-{#snippet catalogBanner()}
-  {#if catalogDiagnostics.length > 0 && catalogDiagnosticsOpen}
-    <div class="catalog-banner" role="alert" data-testid="catalog-diagnostics">
-      <p class="catalog-banner__msg">
-        {catalogDiagnostics.length} catalog diagnostic{catalogDiagnostics.length === 1 ? "" : "s"} in
-        <strong>{repoName}</strong> — objects reported by the engine, not silently dropped.
-      </p>
-      <ul class="catalog-banner__list">
-        {#each catalogDiagnostics.slice(0, 10) as d}
-          <li class="catalog-banner__item" data-severity={d.severity}>{d.severity}: {d.message}</li>
-        {/each}
-      </ul>
-      {#if catalogDiagnostics.length > 10}
-        <p class="catalog-banner__more">…and {catalogDiagnostics.length - 10} more.</p>
-      {/if}
-      <button class="catalog-banner__dismiss" onclick={() => { catalogDiagnosticsOpen = false; }}>
-        Dismiss
-      </button>
-    </div>
-  {/if}
-{/snippet}
-
 {#if appState === "boot"}
   <div class="splash">
     <p class="splash__status">Loading engine…</p>
@@ -824,7 +829,6 @@
      Loaded state — generic shell
      ========================================================================= -->
 {:else if !activeEditor}
-  {@render catalogBanner()}
   <GenericSrsShell
     repo={repo!}
     packageEditors={offeredEditors}
@@ -833,14 +837,13 @@
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
     readOnlyReason={activeDocument?.readOnlyReason ?? null}
     {saving}
-    {saveMessage}
     documentDirty={documentDirty}
     documentRevision={documentRevision}
     onOpenEditor={(id) => { editorMode = id; }}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;
-      saveMessage = null;
+      clearNotices();
       repo = null;
       activeDocument = null;
       appState = "idle";
@@ -851,7 +854,6 @@
      Loaded state — registered editor shell (src/lib/editors/registry.ts)
      ========================================================================= -->
 {:else}
-  {@render catalogBanner()}
   {@const Shell = activeEditor!.component}
   <Shell
     repo={repo!}
@@ -862,7 +864,6 @@
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
     readOnlyReason={activeDocument?.readOnlyReason ?? null}
     saving={saving}
-    saveMessage={saveMessage}
     documentDirty={documentDirty}
     documentRevision={documentRevision}
     onDocumentMutation={syncDocument}
@@ -879,7 +880,6 @@
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;
-      saveMessage = null;
       repo = null;
       beginDocument();
       activeDocument = null;
@@ -997,31 +997,6 @@
   .splash__retry {
     margin-top: 0.5rem;
     cursor: pointer;
-  }
-
-  /* ---- Catalog diagnostics banner (RFC-038 [R24]) ---- */
-  .catalog-banner {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--color-border, #ddd);
-    background: var(--color-warn-bg, #fff8e1);
-    font-size: 0.875rem;
-  }
-  .catalog-banner__msg {
-    margin: 0 0 0.5rem;
-  }
-  .catalog-banner__list {
-    margin: 0;
-    padding-left: 1.25rem;
-  }
-  .catalog-banner__item[data-severity="error"] {
-    color: var(--color-error, #b3261e);
-  }
-  .catalog-banner__more {
-    margin: 0.25rem 0 0;
-    opacity: 0.8;
-  }
-  .catalog-banner__dismiss {
-    margin-top: 0.5rem;
   }
 
   /* ---- Restore banner ---- */

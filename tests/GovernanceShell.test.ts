@@ -2,6 +2,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import GovernanceShell from "../src/lib/governance/GovernanceShell.svelte";
+import { resetNotices } from "../src/lib/notices.svelte.js";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 
 // The shell frame turns the inspector into a closed drawer at <= 1100px (happy-dom is 1024 wide): these
@@ -435,6 +436,8 @@ describe("GovernanceShell — Repository nav group", () => {
 // srs-web#312 — document-mutation save-state gaps from PR #311
 // -----------------------------------------------------------------------------
 
+beforeEach(resetNotices);
+
 describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)", () => {
   const createdRecord = {
     instanceId: "rec-001",
@@ -482,8 +485,10 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
     const failureMessage = await screen.findByTestId("local-save-failed");
     expect(failureMessage.textContent).toContain("could not be saved");
 
-    const savedIndicator = screen.getByText("Saved");
-    expect(savedIndicator.classList.contains("topbar__save-indicator--visible")).toBe(false);
+    // the same "save" key: the failure toast replaced any "Saved" toast, so only the failure is shown
+    expect(screen.queryByTestId("save-status")).toBeNull();
+    expect(failureMessage.getAttribute("role")).toBeNull(); // heard once, from the assertive live region
+    expect(screen.getByTestId("live-assertive").textContent).toContain("could not be saved");
   });
 
   it("shows local-save-failed when a deferred recovery-copy write fails (srs-web#353)", async () => {
@@ -517,8 +522,8 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
     await createRecordViaNewFlow();
 
     expect(onDocumentMutation).toHaveBeenCalled();
-    const savedIndicator = await screen.findByText("Saved");
-    expect(savedIndicator.classList.contains("topbar__save-indicator--visible")).toBe(true);
+    const saved = await screen.findByTestId("save-status");
+    expect(saved.textContent).toContain("Saved");
     expect(screen.queryByTestId("local-save-failed")).toBeNull();
   });
 
@@ -535,8 +540,7 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
       },
     });
     await createRecordViaNewFlow();
-    const savedIndicator = await screen.findByText("Saved");
-    expect(savedIndicator.classList.contains("topbar__save-indicator--visible")).toBe(true);
+    expect((await screen.findByTestId("save-status")).textContent).toContain("Saved");
   });
 });
 

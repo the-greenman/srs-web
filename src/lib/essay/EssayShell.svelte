@@ -83,7 +83,6 @@
     onExport,
     onSave,
     saving = false,
-    saveMessage = null,
     documentDirty = false,
     documentRevision = 0,
     onOpenAnother,
@@ -101,7 +100,6 @@
     onExport: () => void;
     onSave?: () => void;
     saving?: boolean;
-    saveMessage?: string | null;
     documentDirty?: boolean;
     /** Bumped by App on every in-place mutation, including MCP/agent writes. */
     documentRevision?: number;
@@ -512,6 +510,7 @@
 
 {#snippet mainPane()}
     <Main>
+  {#snippet bar()}
   <Toolbar
     title={model?.title ?? repoName}
     actions={barActions}
@@ -538,9 +537,9 @@
     {#snippet trail()}<InspectorTrigger />{/snippet}
     {#snippet status()}
       {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
-      {#if saveMessage}<span role="status">{saveMessage}</span>{/if}
     {/snippet}
   </Toolbar>
+  {/snippet}
   <MarkdownHelp id={helpId} anchor={toolbarEl} bind:open={helpOpen} />
 
   {#if notice}

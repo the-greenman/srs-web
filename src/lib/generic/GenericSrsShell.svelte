@@ -66,7 +66,6 @@
     /** Why `onSave` is undefined, shown where the Save button would be. Null when writable or unknown. */
     readOnlyReason?: string | null;
     saving?: boolean;
-    saveMessage?: string | null;
     /** App-owned dirty state, shared with non-UI repository writers. */
     documentDirty?: boolean;
     /** Changes after mount invalidate derived browser projections of the repository. */
@@ -83,7 +82,6 @@
     onSave,
     readOnlyReason = null,
     saving = false,
-    saveMessage = null,
     documentDirty = false,
     documentRevision = 0,
     onOpenAnother,
@@ -499,14 +497,15 @@
 
 {#snippet mainPane()}
   <Main>
+    {#snippet bar()}
     <Toolbar title={repoName} actions={barActions} groups={BASE_GROUPS}>
       {#snippet lead()}<NavTrigger />{/snippet}
       {#snippet trail()}<InspectorTrigger />{/snippet}
       {#snippet status()}
         {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
-        {#if saveMessage}<span role="status">{saveMessage}</span>{/if}
       {/snippet}
     </Toolbar>
+    {/snippet}
     <!-- The reason is a sentence: a line under the bar (wraps on a phone) rather than in the one-row bar. -->
     {#if !onSave && readOnlyReason}<p class="generic-readonly" data-testid="read-only-note" role="status">{readOnlyReason}</p>{/if}
     <div class="workspace">

@@ -5,6 +5,7 @@
  * (structured diagnostics: srs-rust#1264, and `groupDiagnostics` is the one function that will change).
  * Module-level and shell-free: App and the shells call `notify` / `pinNotice`; `Main` renders them.
  */
+import { untrack } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 import type { Diagnostic as EngineDiagnostic } from "./srs-client.js";
 import type { Diagnostic, DiagnosticSeverity } from "./types.js";
@@ -44,8 +45,10 @@ function clearTimer(id: number): void {
   timers.delete(id);
 }
 
-/** Show a toast; returns its id. */
-export function notify(opts: NotifyOptions): number {
+/** Show a toast; returns its id. Untracked: it reads the list it writes, so it is safe to call from an effect. */
+export const notify = (opts: NotifyOptions): number => untrack(() => show(opts));
+
+function show(opts: NotifyOptions): number {
   const kind = opts.kind ?? "info";
   const sticky = kind === "error";
   const existing = opts.key === undefined ? -1 : toasts.findIndex((t) => t.key === opts.key);
@@ -135,7 +138,9 @@ export interface DiagnosticGroup {
  * The ONE adapter from the engine's shapes to the UI `Diagnostic`: the repository report's
  * `{severity: "warning"}` becomes `warn`; a plain string (render, find, navigation: no severity) is `warn`.
  */
-export function toUiDiagnostic(d: EngineDiagnostic | Diagnostic | string): Diagnostic {
+export function toUiDiagnostic(
+  d: EngineDiagnostic | Diagnostic | { severity: string; message: string } | string
+): Diagnostic {
   if (typeof d === "string") return { severity: "warn", message: d };
   const sev = d.severity as string;
   const severity: DiagnosticSeverity = sev === "error" ? "error" : sev === "info" ? "info" : "warn";

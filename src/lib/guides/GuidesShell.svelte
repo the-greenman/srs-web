@@ -78,7 +78,6 @@
     /** Why `onSave` is undefined, shown where the Save button would be. Null when writable or unknown. */
     readOnlyReason?: string | null;
     saving?: boolean;
-    saveMessage?: string | null;
     /** App-owned dirty state, shared with non-UI repository writers. */
     documentDirty?: boolean;
     /** Changes after mount invalidate derived browser projections of the repository. */
@@ -96,7 +95,6 @@
     onSave,
     readOnlyReason = null,
     saving = false,
-    saveMessage = null,
     documentDirty = false,
     documentRevision = 0,
     onOpenAnother,
@@ -585,50 +583,44 @@
 
     {#snippet main()}
       <Main>
-        <Topbar>
-          {#snippet crumb()}
-            <Breadcrumb items={guideCrumbItems()} />
-          {/snippet}
-          {#snippet actions()}
-            {#if onSave}
+        {#snippet bar()}
+          <Topbar>
+            {#snippet crumb()}
+              <Breadcrumb items={guideCrumbItems()} />
+            {/snippet}
+            {#snippet actions()}
+              {#if onSave}
+                <Button
+                  variant="ghost"
+                  data-testid="save-document"
+                  onclick={onSave}
+                  disabled={saving}
+                >{saving ? "Saving…" : "Save"}</Button>
+              {:else if readOnlyReason}
+                <span class="guides-save-message" data-testid="readonly-reason">{readOnlyReason}</span>
+              {/if}
+              {#if documentDirty}
+                <span class="guides-save-message" data-testid="document-dirty-status">Unsaved changes</span>
+              {/if}
               <Button
                 variant="ghost"
-                data-testid="save-document"
-                onclick={onSave}
-                disabled={saving}
-              >{saving ? "Saving…" : "Save"}</Button>
-            {:else if readOnlyReason}
-              <span class="guides-save-message" data-testid="readonly-reason">{readOnlyReason}</span>
-            {/if}
-            {#if documentDirty}
-              <span class="guides-save-message" data-testid="document-dirty-status">Unsaved changes</span>
-            {/if}
-            {#if saveMessage}
-              <span
-                class="guides-save-message"
-                data-testid="save-status"
-                role="status"
-                aria-live="polite"
-              >{saveMessage}</span>
-            {/if}
-            <Button
-              variant="ghost"
-              data-testid="guides-export-btn"
-              onclick={onExport}
-            >Export .srs</Button>
-            {#if onExportSrsj}
-              <Button variant="ghost" onclick={onExportSrsj}>Export .srsj</Button>
-            {/if}
-            <Button variant="ghost" onclick={onOpenAnother}>Open another file</Button>
-            <Button
-              variant="ghost"
-              class="guides-preview-toggle"
-              data-testid="guides-preview-toggle"
-              onclick={() => { previewOpen = !previewOpen; }}
-              title={previewOpen ? "Hide preview" : "Show preview"}
-            >{previewOpen ? "Hide preview" : "Preview"}</Button>
-          {/snippet}
-        </Topbar>
+                data-testid="guides-export-btn"
+                onclick={onExport}
+              >Export .srs</Button>
+              {#if onExportSrsj}
+                <Button variant="ghost" onclick={onExportSrsj}>Export .srsj</Button>
+              {/if}
+              <Button variant="ghost" onclick={onOpenAnother}>Open another file</Button>
+              <Button
+                variant="ghost"
+                class="guides-preview-toggle"
+                data-testid="guides-preview-toggle"
+                onclick={() => { previewOpen = !previewOpen; }}
+                title={previewOpen ? "Hide preview" : "Show preview"}
+              >{previewOpen ? "Hide preview" : "Preview"}</Button>
+            {/snippet}
+          </Topbar>
+        {/snippet}
 
         {#if warnCount > 0 && errorCount === 0}
           <div class="size-warning-banner" role="status">
