@@ -23,7 +23,7 @@
 }
 .essay-shell__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--rail-width);
+  grid-template-columns: minmax(0, 1fr) var(--inspector-width);
   gap: var(--space-md);
   /* The page and the rail never shrink to make room for a wide margin: the grid grows with it. */
   max-width: calc(72rem + var(--margin-width) - var(--margin-width-compact));

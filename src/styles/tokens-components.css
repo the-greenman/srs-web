@@ -67,7 +67,20 @@
   --block-tools-shadow: var(--shadow-popover);
   --margin-row-gap: 4px;
   --margin-label-lines: 2;
-  --essay-page-width: 46rem;
+  --essay-page-width: var(--content-max);
+
+  /* Shell frame (#424): resizable columns, the drawer and its trigger badge. */
+  --shell-nav-min: 12rem;
+  --shell-nav-max: 24rem;
+  --shell-inspector-min: 14rem;
+  --shell-inspector-max: 40rem;
+  --shell-resize-hit: 8px;
+  --shell-drawer-width: min(20rem, 88vw);
+  --shell-drawer-bg: var(--color-text-strong);
+  --shell-drawer-fg: var(--color-on-dark);
+  --shell-scrim: color-mix(in srgb, var(--color-text-strong) 40%, transparent);
+  --shell-badge-bg: var(--color-text-strong);
+  --shell-badge-fg: var(--color-on-dark);
 
   /* Toolbar (#423): the generic document bar. */
   --toolbar-bg: transparent;

@@ -398,9 +398,9 @@
       <Panel title="Panel" aside={3}><p>Panel body.</p></Panel>
       <Panel title="Static" collapsible={false}><p>Not collapsible.</p></Panel>
     </div>
-    <p>Rail components at the real rail width (18rem) and a narrow width (15rem), with long text.</p>
+    <p>Rail components at the real inspector width (20rem) and a narrow width (15rem), with long text.</p>
     <div class="sg__rails">
-      <Frame width="var(--rail-width)" caption="Rail 18rem">{@render rail()}</Frame>
+      <Frame width="var(--inspector-width)" caption="Inspector 20rem">{@render rail()}</Frame>
       <Frame width="15rem" caption="Narrow 15rem">{@render rail()}</Frame>
     </div>
   </section>

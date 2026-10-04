@@ -68,7 +68,7 @@
   import { canShow, isShown, setOpen, summary, toggle, toggleAll } from "./thread-visibility.js";
   import { addComment } from "$lib/comments.js";
   import { annotationsFor } from "$lib/annotations.js";
-  import { loadMargin, saveMargin } from "$lib/margin-mode.js";
+  import { loadWide, saveWide } from "$lib/wide.js";
   import type { Annotation } from "$lib/annotations.js";
   import { essaySource } from "./annotation-source.js";
   import { hiddenByAncestor, outsideRun, visibleEntries } from "./essay-model.js";
@@ -209,8 +209,11 @@
   );
 
   /** `data-margin` on the shell: the one setter of the margin mode (#424's Wide toggle reuses it). */
-  let marginMode = $state(loadMargin());
-  const toggleVariant = () => saveMargin((marginMode = marginMode === "compact" ? "expanded" : "compact"));
+  let marginMode = $state<"compact" | "expanded">(loadWide() ? "expanded" : "compact");
+  const toggleVariant = () => {
+    marginMode = marginMode === "compact" ? "expanded" : "compact";
+    saveWide(marginMode === "expanded");
+  };
   /** Margin clicks: the one kind -> action mapping (the model says what, the margin how it looks). */
   function openAnnotation(a: Annotation, paragraphId: string) {
     if (a.kind === "comments") openThreads = toggle(openThreads, paragraphId);

@@ -24,7 +24,7 @@ Three tiers, each referencing the one above, so a skin re-points the tier it nee
 | Tier | Where | Examples | Read by |
 |---|---|---|---|
 | Primitive | `tokens.css` | `--paper`, `--ink`, `--black`, `--grey-1..4` | semantic tokens only, never components |
-| Semantic | `tokens.css` | `--color-text`, `--color-surface-raised`, `--color-on-dark`, `--radius-md`, `--shadow-popover`, `--z-overlay`, `--focus-ring`, `--hit-target`, `--rail-width` | components and component tokens |
+| Semantic | `tokens.css` | `--color-text`, `--color-surface-raised`, `--color-on-dark`, `--radius-md`, `--shadow-popover`, `--z-overlay`, `--focus-ring`, `--hit-target`, `--inspector-width`, `--content-max` | components and component tokens |
 | Component | `tokens-components.css` | `--btn-bg`, `--btn-primary-bg`, `--icon-btn-fg`, `--popover-bg`, `--hue-pill-s`, `--actor-mark-size`, `--margin-width`, `--comment-thread-max`, `--toolbar-gap`, `--block-tools-bg` (the paragraph hover strip) | the component's own CSS |
 
 Component tokens are named `--<block>-<property>[-<state>]` and are declared on `:root` in the

@@ -83,7 +83,7 @@
   padding: var(--space-md);
 }
 .canvas {
-  max-width: var(--content-max);
+  max-width: var(--canvas-max);
   margin: 0 auto;
 }
 .canvas--wide {
@@ -113,6 +113,15 @@
   margin-left: auto;
   display: flex;
   gap: 8px;
+}
+
+/* Wide (owner D5): one switch widens the content cap and the margin column. The ONE carrier is .app. */
+/* bp: compact */
+@media (min-width: 721px) {
+  .app[data-margin="expanded"] {
+    --content-max: var(--content-max-wide);
+    --margin-width: var(--margin-width-wide);
+  }
 }
 
 /* ── Responsive: collapse rails progressively ─────────────────────────────── */
