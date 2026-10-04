@@ -69,6 +69,14 @@
   --margin-label-lines: 2;
   --essay-page-width: 46rem;
 
+  /* Toolbar (#423): the generic document bar. */
+  --toolbar-bg: transparent;
+  --toolbar-border: var(--rule);
+  --toolbar-gap: var(--space-xs);
+  --toolbar-pad: var(--space-xs) var(--space-sm);
+  --toolbar-title-size: var(--size-base);
+  --toolbar-title-max: 14rem;
+
   /* AgentFeed: the list is bounded and scrolls (newest first). */
   --agent-feed-max: 16rem;
 

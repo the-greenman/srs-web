@@ -15,3 +15,11 @@ export const BREAKPOINTS = {
 
 /** The phone breakpoint as a media query, for matchMedia. */
 export const NARROW = `(max-width: ${BREAKPOINTS.phone}px)`;
+
+/** The rail breakpoint as a media query: at or below it the toolbar drops to icon-only menus. */
+export const RAIL = `(max-width: ${BREAKPOINTS.rail}px)`;
+
+/** Toolbar width tier: `narrow` (<= phone) wins over `compact` (<= rail); else `full`. */
+export type Tier = "full" | "compact" | "narrow";
+export const tierOf = (narrow: boolean, rail: boolean): Tier =>
+  narrow ? "narrow" : rail ? "compact" : "full";

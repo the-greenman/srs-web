@@ -4,7 +4,9 @@
 // layer, anchor positioning, focus return and clipping are tested in e2e/popover.spec.ts.
 import { cleanup, fireEvent, render } from "@testing-library/svelte";
 import { afterEach, expect, it, vi } from "vitest";
+import { tick } from "svelte";
 import PopoverHost from "./PopoverHost.svelte";
+import PopoverMenuHost from "./PopoverMenuHost.svelte";
 
 afterEach(() => {
   cleanup();
@@ -40,4 +42,24 @@ it("native: calls showPopover when open and does not add an onclick to the trigg
   // The invoker is native: a click must not toggle `open` itself (no close-then-reopen race).
   await fireEvent.click(getByRole("button", { name: "Open things" }));
   expect(hidePopover).not.toHaveBeenCalled();
+});
+
+it("menu keys: ArrowDown/Up/Home/End traverse menuitem and menuitemcheckbox rows, skipping disabled", async () => {
+  const { getByTestId } = render(PopoverMenuHost);
+  await tick();
+  const focus = (id: string) => getByTestId(id).focus();
+  const key = async (k: string) => fireEvent.keyDown(document.activeElement!, { key: k });
+  focus("a");
+  await key("ArrowDown");
+  expect(document.activeElement).toBe(getByTestId("b"));
+  await key("ArrowDown");
+  expect(document.activeElement).toBe(getByTestId("c"));
+  await key("ArrowDown");
+  expect(document.activeElement).toBe(getByTestId("a"));
+  await key("ArrowUp");
+  expect(document.activeElement).toBe(getByTestId("c"));
+  await key("Home");
+  expect(document.activeElement).toBe(getByTestId("a"));
+  await key("End");
+  expect(document.activeElement).toBe(getByTestId("c"));
 });

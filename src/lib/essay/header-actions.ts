@@ -1,8 +1,13 @@
+import CircleQuestionMark from "@lucide/svelte/icons/circle-question-mark";
 /**
  * The ONE essay header action list (srs-web#383, #423). Each entry names its `group` (Document /
  * View / Go / Help) and `kind`; `Toolbar` renders the list once, whatever the width (labelled menus,
  * icon-only menus, or one overflow). Wiring only: each entry calls a shell callback.
  */
+import Compass from "@lucide/svelte/icons/compass";
+import Eye from "@lucide/svelte/icons/eye";
+import FileText from "@lucide/svelte/icons/file-text";
+import type { IconComponent } from "../components/icon.js";
 import type { ToolbarAction } from "../components/menu-action.js";
 
 export type HeaderGroup = "document" | "view" | "go" | "help";
@@ -11,23 +16,28 @@ export interface HeaderAction extends ToolbarAction {
   group: HeaderGroup;
 }
 
-export const HEADER_GROUPS: { id: HeaderGroup; label: string }[] = [
-  { id: "document", label: "Document" },
-  { id: "view", label: "View" },
-  { id: "go", label: "Go" },
-  { id: "help", label: "Help" },
+export const HEADER_GROUPS: { id: HeaderGroup; label: string; icon: IconComponent }[] = [
+  { id: "document", label: "Document", icon: FileText },
+  { id: "view", label: "View", icon: Eye },
+  { id: "go", label: "Go", icon: Compass },
+  { id: "help", label: "Help", icon: CircleQuestionMark },
 ];
 
 /** Menu groups in order, empty groups skipped; the `primary` action is split off (the bar renders it). */
 export function groupedActions<A extends ToolbarAction>(
   actions: A[],
-  groups: { id: string; label: string }[] = HEADER_GROUPS
-): { primary: A[]; groups: { group: string; label: string; items: A[] }[] } {
+  groups: { id: string; label: string; icon?: IconComponent }[] = HEADER_GROUPS
+): { primary: A[]; groups: { group: string; label: string; icon?: IconComponent; items: A[] }[] } {
   const menu = actions.filter((a) => a.kind !== "primary");
   return {
     primary: actions.filter((a) => a.kind === "primary"),
     groups: groups
-      .map((g) => ({ group: g.id, label: g.label, items: menu.filter((a) => a.group === g.id) }))
+      .map((g) => ({
+        group: g.id,
+        label: g.label,
+        icon: g.icon,
+        items: menu.filter((a) => a.group === g.id),
+      }))
       .filter((g) => g.items.length > 0),
   };
 }

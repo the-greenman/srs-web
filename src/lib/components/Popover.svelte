@@ -73,7 +73,7 @@
     ...(native ? {} : { onclick: toggle }),
   });
 
-  const rows = () => Array.from(surface?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)') ?? []);
+  const rows = () => Array.from(surface?.querySelectorAll<HTMLElement>('[role^="menuitem"]:not(:disabled)') ?? []);
   const triggerEl = () => (anchor ?? (wrap?.firstElementChild as HTMLElement | null) ?? null);
 
   // Anchor positioning: name the anchor element; the surface refers to it.
@@ -191,6 +191,10 @@
       const r = rows();
       const at = r.indexOf(document.activeElement as HTMLElement);
       r[(at + (e.key === 'ArrowDown' ? 1 : -1) + r.length) % r.length]?.focus();
+    } else if (e.key === 'Home' || e.key === 'End') {
+      e.preventDefault();
+      const r = rows();
+      (e.key === 'Home' ? r[0] : r[r.length - 1])?.focus();
     } else if (e.key === 'Tab') open = false;
   }
 </script>

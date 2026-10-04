@@ -46,3 +46,13 @@
   width: 1.5em;
   color: var(--color-muted);
 }
+.action-menu__heading {
+  padding: var(--space-xs) var(--space-sm) 2px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--color-muted);
+  border-top: var(--rule-soft);
+}
+.action-menu__heading:first-child {
+  border-top: 0;
+}
