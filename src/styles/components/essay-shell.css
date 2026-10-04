@@ -9,7 +9,6 @@
   color: var(--color-text);
 }
 .essay-shell__bar {
-  position: relative; /* anchors the markdown help popover */
   display: flex;
   align-items: center;
   justify-content: space-between;

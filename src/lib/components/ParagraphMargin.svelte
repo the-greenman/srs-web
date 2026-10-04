@@ -11,6 +11,7 @@
   import Copy from "@lucide/svelte/icons/copy";
   import AttachmentGlyph from "./AttachmentGlyph.svelte";
   import CommentBadge from "./CommentBadge.svelte";
+  import Popover from "./Popover.svelte";
   import type { Annotation, AnnotationKind } from "../essay/annotations.js";
 
   let {
@@ -79,14 +80,18 @@
   {/each}
   {#if rest.length}
     <div class="margin__overflow">
-      <button type="button" class="margin__more" data-testid="margin-more" aria-expanded={more} aria-label={`${rest.length} more annotations`} onclick={() => (more = !more)}>+{rest.length}</button>
-      {#if more}
-        <ul class="margin__list" data-testid="margin-overflow">
-          {#each rest as a (a.key)}
-            <li>{@render mark(a)}<span class="margin__text">{a.kind === "relation" ? `${a.icon} · ` : ""}{a.label}</span></li>
-          {/each}
-        </ul>
-      {/if}
+      <Popover bind:open={more} placement="bottom-end" role="region" label="More annotations" class="margin__list">
+        {#snippet trigger({ props })}
+          <button type="button" class="margin__more" data-testid="margin-more" aria-label={`${rest.length} more annotations`} {...props}>+{rest.length}</button>
+        {/snippet}
+        {#if more}
+          <ul class="margin__items" data-testid="margin-overflow" data-part="overflow">
+            {#each rest as a (a.key)}
+              <li>{@render mark(a)}<span class="margin__text">{a.kind === "relation" ? `${a.icon} · ` : ""}{a.label}</span></li>
+            {/each}
+          </ul>
+        {/if}
+      </Popover>
     </div>
   {/if}
 </div>

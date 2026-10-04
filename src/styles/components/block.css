@@ -305,9 +305,5 @@
     grid-area: gutter;
     flex-direction: row;
   }
-  /* The gutter is now at the right edge, so the ellipsis list opens leftward. */
-  .block__menu .action-menu__list {
-    left: auto;
-    right: 0;
-  }
+  /* The gutter is now at the right edge: the popover flips inline when it would overflow, so the list opens leftward. */
 }

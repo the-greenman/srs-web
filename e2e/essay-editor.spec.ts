@@ -284,7 +284,7 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
   const glyph = page.locator(".essay-shell__page .glyph");
   await expect(glyph).toHaveCount(1);
   await glyph.hover();
-  await expect(page.locator(".essay-shell__page .hover-card__text")).toBeVisible();
+  await expect(page.locator(".essay-shell__page .attachment-preview__text")).toBeVisible();
   await glyph.click();
   await expect(page.locator(".panel-rail .pinned__item")).toContainText(
     "Small is not always better."
@@ -293,16 +293,16 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
   expect(
     await page.evaluate(() => Object.keys(localStorage).some((k) => k.startsWith("essay.pins.")))
   ).toBe(true);
-  await page.locator(".panel-rail .pinned__action", { hasText: "Open" }).click();
+  await page.locator(".panel-rail .pinned__item").getByRole("button", { name: "Open" }).click();
   await expect(page.locator(".panel-rail .pinned__full")).toContainText(
     "Small is not always better."
   );
 
   // The relation type label shows (from the core vocabulary); the human removes the link (srs-web#405).
-  await expect(page.locator(".panel-rail .pinned__item .hover-card__kind")).toContainText(
+  await expect(page.locator(".panel-rail .pinned__item .attachment-preview__kind")).toContainText(
     "note · "
   );
-  await expect(page.locator(".panel-rail .pinned__item .hover-card__kind")).not.toContainText(
+  await expect(page.locator(".panel-rail .pinned__item .attachment-preview__kind")).not.toContainText(
     "evidences"
   );
   await glyph.hover();

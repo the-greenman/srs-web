@@ -70,6 +70,12 @@ appended below as components gain parts.
 |---|---|
 | `Block` | `gutter`, `handle`, `tools`, `action`, `menu`, `main`, `head`, `title`, `margin` |
 | `IconButton` | `icon-btn` |
+| `Popover` | `popover` (wrapper), `surface` |
+| `AttachmentPreview` | `kind`, `title`, `text` |
+| `HoverCard` | `remove` |
+| `MarkdownHelp` | `close` |
+| `PinnedPane` | `actions` |
+| `ParagraphMargin` | `overflow` |
 
 ### (d) One breakpoint source
 
@@ -80,7 +86,35 @@ each annotated `/* bp: <role> */`. `tests/breakpoints.test.ts` fails when any `@
 
 ### (e) Popover
 
-*Written in Phase 3.*
+`Popover.svelte` is the one floating-surface primitive. The surface is a native HTML `popover`
+(top layer): it is never clipped by an `overflow` ancestor and needs no `z-index`, so there is no
+`--z-popover` token and open popovers may sit inside clipped frames.
+
+- **Modes.** `auto` (menus, help, the "+N" list): native light-dismiss and Escape. `manual` (hover
+  previews, `HoverCard`): the host decides when to show or hide; there is no light-dismiss.
+- **Open state.** `open` is bindable. The surface is always rendered and shown or hidden with
+  `showPopover()` / `hidePopover()` (idempotent, guarded by `:popover-open`); the `toggle` event
+  syncs `open` back, so native light-dismiss updates the bound state.
+- **No close-then-reopen race.** A trigger never toggles `open` itself. It is a real
+  `popovertarget` invoker (the trigger snippet receives the props), the browser handles its click
+  natively, and `open` follows the `toggle` event. Hosts that cannot be an invoker (an `ActionMenu`
+  row opening another popover) set `open` one animation frame later.
+- **Focus.** Native popover focus restoration returns focus to the invoker. One fallback for
+  `role="menu"`: when an outside click on non-focusable text leaves focus on `<body>`, focus goes to
+  the trigger. Menus focus their first row on open and move with Arrow keys; Tab closes them.
+- **Positioning, written once** (`popover-position.ts`): CSS anchor positioning
+  (`position-anchor`, `position-area`, `position-try-fallbacks: flip-block, flip-inline`) where
+  `CSS.supports("anchor-name: --x")`; otherwise the pure `placeNextTo(anchorRect, size, viewport,
+  placement)` (below the anchor, aligned to the placement edge, flips above, clamps), repositioned on
+  scroll (capture) and resize while open.
+- **happy-dom.** It lacks the popover API. `Popover` feature-guards: without `showPopover` it toggles
+  an `is-open` class and inline `display`, the trigger props carry an `onclick`, and Escape closes it.
+  Component tests cover that fallback and the pure placement; light-dismiss, Escape, top layer,
+  anchoring, focus return and clipping are tested in `e2e/popover.spec.ts` (Chromium).
+- **Hover bridge.** `AttachmentGlyph` shows its card on hover and focus of the glyph or the card
+  (both live under one wrapper) and hides it after a 150 ms delay that re-entry cancels, so the
+  pointer crossing the gap does not lose "Remove link". No touch claim: touch reaches Remove link
+  through `PinnedPane` and the paragraph menu.
 
 ## Consequences
 

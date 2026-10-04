@@ -347,12 +347,12 @@ npx playwright test e2e/essay-editor.spec.ts e2e/essay-touch.spec.ts e2e/essay-c
 
 #### Acceptance Criteria
 
-- [ ] One implementation of dismissal and focus-return exists: no component other than `Popover.svelte` listens for Escape or outside pointerdown to close a floating surface, and no floating surface is positioned with `position: absolute` against a wrapper (mechanical check: `grep -nE "position:\s*absolute|z-index" src/styles/components/action-menu.css src/styles/components/md-help.css src/styles/components/margin.css src/styles/components/attachment.css` returns nothing, i.e. the former surface selectors `.action-menu__list`, `.md-help__pop`, `.margin__list` and `.hover-card` no longer carry `position: absolute` or `z-index`).
-- [ ] `e2e/popover.spec.ts` passes: a menu inside an `overflow: auto` container is fully visible and closes on Escape and outside click with focus returned.
-- [ ] `MarkdownHelp` opens correctly with the essay header, with the narrow overflow menu at 390px, and standalone in `/styleguide`; the desktop and narrow e2e cases above pass.
-- [ ] ADR-020 part (e) is present, and the `data-part` rows for `Popover` and `AttachmentPreview` are added.
-- [ ] A keyboard user can open ActionMenu, arrow through rows, press Escape and have focus return to the trigger.
-- [ ] `tests/AttachmentGlyph.test.ts`, `tests/ParagraphMargin.test.ts`, `e2e/essay-editor.spec.ts`, `essay-write-guard.spec.ts`, `essay-touch.spec.ts` and `mobile-layout.spec.ts` pass.
+- [x] One implementation of dismissal and focus-return exists: no component other than `Popover.svelte` listens for Escape or outside pointerdown to close a floating surface, and no floating surface is positioned with `position: absolute` against a wrapper (mechanical check: `grep -nE "position:\s*absolute|z-index" src/styles/components/action-menu.css src/styles/components/md-help.css src/styles/components/margin.css src/styles/components/attachment.css` returns nothing, i.e. the former surface selectors `.action-menu__list`, `.md-help__pop`, `.margin__list` and `.hover-card` no longer carry `position: absolute` or `z-index`).
+- [x] `e2e/popover.spec.ts` passes: a menu inside an `overflow: auto` container is fully visible and closes on Escape and outside click with focus returned.
+- [x] `MarkdownHelp` opens correctly with the essay header, with the narrow overflow menu at 390px, and standalone in `/styleguide`; the desktop and narrow e2e cases above pass.
+- [x] ADR-020 part (e) is present, and the `data-part` rows for `Popover` and `AttachmentPreview` are added.
+- [x] A keyboard user can open ActionMenu, arrow through rows, press Escape and have focus return to the trigger.
+- [x] `tests/AttachmentGlyph.test.ts`, `tests/ParagraphMargin.test.ts`, `e2e/essay-editor.spec.ts`, `essay-write-guard.spec.ts`, `essay-touch.spec.ts` and `mobile-layout.spec.ts` pass.
 
 #### Testing
 
@@ -522,6 +522,9 @@ npx playwright test e2e/essay-editor.spec.ts e2e/essay-touch.spec.ts e2e/essay-c
 - (Phase 1) Biome formats CSS, so the breakpoint annotation is a `/* bp: <role> */` comment on the line above each `@media`, not inline after the brace.
 - (Phase 1) `e2e/styleguide.spec.ts`: the existing heading-count assertion raced the lazy styleguide chunk (flaked once in four runs); it now uses `expect.poll`. Same threshold.
 - (Phase 2) Lucide 1.52 file names: `trash` (not `trash-2`), `list-indent-increase/decrease` (not `indent-increase/decrease`), `circle-question-mark` (not `circle-help`); the plan's names exist only as `.js` aliases without Svelte types.
+- (Phase 3) `ActionMenu` and the `ParagraphMargin` "+N" list render their rows only while open (`{#if open}` inside the always-rendered surface), and `Popover` closes on Escape itself when the popover API is missing, so `tests/paragraph-actions.test.ts` and `tests/ParagraphMargin.test.ts` pass unchanged under happy-dom. The ParagraphMargin popover surface is labelled "More annotations" (the trigger keeps "N more annotations").
+- (Phase 3) `AttachmentGlyph` keeps its own Escape handler: a manual popover has no native Escape, and the host owns the open state. Every auto popover relies on the native one.
+- (Phase 3) `Popover` focuses with `preventScroll` so the standalone `MarkdownHelp` in `/styleguide` does not scroll the page on load.
 - (Phase 2) Block gutter controls keep a 20px minimum on a mouse (not `--hit-target`) so the vertical tool stack does not stretch every paragraph; coarse pointers still get 44px.
 
 - `@lucide/svelte` is installable in this environment, and its per-icon path `@lucide/svelte/icons/<name>` exists for Svelte 5.

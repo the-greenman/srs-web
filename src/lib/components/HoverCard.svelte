@@ -1,23 +1,46 @@
 <!--
-  HoverCard — a small read-only preview card (kind, title, text). Presentation only; its host
-  decides when it shows (AttachmentGlyph reveals it on hover/focus with CSS). PinnedPane entries
-  reuse its text classes. Wraps .hover-card (src/styles/components/attachment.css).
+  HoverCard — a small read-only preview card (AttachmentPreview + an optional Remove link) in a
+  manual Popover, role="tooltip". Presentation only: the host decides when it shows by binding
+  `open` and passing the `anchor` it is placed beside (AttachmentGlyph shows it on hover and focus).
+  `static` renders it in flow with no popover, so /styleguide can show it without a hover.
+  Wraps .hover-card (src/styles/components/attachment.css).
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224 (srs-web#329)
 -->
 <script lang="ts">
+  import AttachmentPreview from './AttachmentPreview.svelte';
+  import Button from './Button.svelte';
+  import Popover from './Popover.svelte';
+
   let {
     kind,
     title,
     text = '',
     relation = '',
     onremove,
+    open = $bindable(false),
+    anchor,
+    static: inFlow = false,
     class: className = '',
-  }: { kind: string; title: string; text?: string; relation?: string; onremove?: () => void; class?: string } = $props();
+  }: {
+    kind: string;
+    title: string;
+    text?: string;
+    relation?: string;
+    onremove?: () => void;
+    open?: boolean;
+    anchor?: HTMLElement;
+    static?: boolean;
+    class?: string;
+  } = $props();
 </script>
 
-<div class="hover-card {className}" role="tooltip">
-  <span class="hover-card__kind">{relation ? `${kind} · ${relation}` : kind}</span>
-  <strong class="hover-card__title">{title}</strong>
-  {#if text}<p class="hover-card__text">{text}</p>{/if}
-  {#if onremove}<button type="button" class="hover-card__remove" onclick={onremove}>Remove link</button>{/if}
-</div>
+{#snippet card()}
+  <AttachmentPreview {kind} {title} {text} {relation} />
+  {#if onremove}<Button size="sm" variant="ghost" class="hover-card__remove" data-part="remove" onclick={onremove}>Remove link</Button>{/if}
+{/snippet}
+
+{#if inFlow}
+  <div class="popover__surface popover__surface--static hover-card {className}" role="tooltip" aria-label={title}>{@render card()}</div>
+{:else}
+  <Popover bind:open mode="manual" role="tooltip" label={title} {anchor} class={`hover-card ${className}`}>{@render card()}</Popover>
+{/if}

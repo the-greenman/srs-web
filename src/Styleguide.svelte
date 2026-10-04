@@ -7,16 +7,11 @@
   import "./styles/themes/demo.css";
   import { onMount, type Snippet } from "svelte";
   import {
-    ActorChip, AgentFeed, AttachmentGlyph, Block, BlockStack, Button,
-    CommentBadge, CommentThread, IconButton, DraftTray, EyeToggle, Field, HoverCard, InlineText, Input,
-    LayersPanel, McpConnection, ParagraphMargin, PinnedPane, Select, Tag,
+    ActionMenu, ActorChip, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button,
+    CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
+    LayersPanel, MarkdownHelp, MarkdownText, McpConnection, Panel, ParagraphMargin, PinnedPane, Select, Tag,
     TagChip, Textarea,
   } from "$lib/components";
-  import ActionMenu from "$lib/components/ActionMenu.svelte";
-  import BinTray from "$lib/components/BinTray.svelte";
-  import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
-  import Panel from "$lib/components/Panel.svelte";
-  import MarkdownText from "$lib/components/MarkdownText.svelte";
   import Icons from "./styleguide/icons";
   import { initWasm } from "$lib/srs-client";
   import * as fx from "./styleguide/fixtures";
@@ -44,6 +39,8 @@
   let choice = $state("one");
   let area = $state("Some\nlines");
   let pressed = $state(false);
+  let helpAnchor = $state<HTMLButtonElement>();
+  let helpOpen = $state(false);
 
   function apply(t: string) {
     const root = document.documentElement;
@@ -169,11 +166,28 @@
 
   <section id="menus">
     <h2>Menus and popovers</h2>
+    <h3>ActionMenu</h3>
     <div class="sg__row">
       <ActionMenu actions={fx.menuActions} label="Opening" />
     </div>
-    <div class="sg__pop"><MarkdownHelp open onclose={noop} /></div>
-    <HoverCard kind="note" title="Interview notes" text="A read-only preview card." relation="evidences" />
+    <h3>Inside an overflow container (top layer, never clipped)</h3>
+    <div class="sg__scroll" data-testid="sg-popover-scroll">
+      <div class="sg__scroll-pad"></div>
+      <ActionMenu actions={fx.menuActions} label="Scrolled" testid="sg-scroll-menu" />
+      <button type="button" class="sg__outside" data-testid="sg-outside-button">Another button</button>
+    </div>
+    <h3>MarkdownHelp, standalone (anchored to the button)</h3>
+    <div class="sg__row">
+      <IconButton bind:ref={helpAnchor} icon={Icons["circle-question-mark"]} label="Help anchor" variant="outline" />
+    </div>
+    <MarkdownHelp id="sg-md-help" anchor={helpAnchor} bind:open={helpOpen} />
+    <div class="sg__row"><Button size="sm" variant="mono" popovertarget="sg-md-help" popovertargetaction="toggle">Toggle help</Button></div>
+    <h3>HoverCard (static)</h3>
+    <HoverCard static kind="note" title="Interview notes" text="A read-only preview card." relation="evidences" onremove={noop} />
+    <h3>AttachmentPreview</h3>
+    <div><AttachmentPreview kind="spreadsheet" title="Budget sheet" text="Q3 budget figures, clamped to three lines when pinned." relation="evidences" clamp /></div>
+    <h3>Margin overflow (+N)</h3>
+    <ParagraphMargin annotations={fx.annotations} max={2} onopen={noop} />
   </section>
 
   <section id="chips">

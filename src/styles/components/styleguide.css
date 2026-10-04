@@ -55,15 +55,18 @@
   height: 2.5rem;
   border: var(--rule);
 }
-.sg__pop {
-  position: relative;
-  min-height: 20rem;
+.sg__scroll {
+  height: 6rem;
+  overflow: auto;
+  border: var(--rule);
+  padding: var(--space-xs);
 }
-/* the popover is absolutely placed below its host bar; the specimen has no bar, so pin it to the top */
-.sg__pop .md-help__pop {
-  top: 0;
-  right: auto;
-  left: 0;
+.sg__scroll-pad {
+  height: 5rem;
+}
+.sg__outside {
+  display: block;
+  margin-top: var(--space-xs);
 }
 .sg__space {
   height: 0.75rem;

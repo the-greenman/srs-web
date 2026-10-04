@@ -453,13 +453,16 @@
   const createEssay = () => openNew(() => newEssay(repo, "Untitled essay"));
   const copyDocument = () => openNew(() => copyEssay(repo, model!));
   let helpOpen = $state(false);
+  const helpId = "essay-md-help";
+  let actionsEl = $state<HTMLElement>();
   const barActions = $derived(
     headerActions(
       {
         onnew: createEssay,
         oncopy: model ? copyDocument : undefined,
         onagent: model ? () => copyForAgent(zoomId ?? undefined) : undefined,
-        onhelp: () => (helpOpen = !helpOpen),
+        // One frame later: the overflow menu closes and returns focus first, so the two popovers never overlap.
+        onhelp: () => requestAnimationFrame(() => { helpOpen = true; }),
         onvariant: toggleVariant,
         oncomments: () => (commentMode = !commentMode),
         onsave: onSave,
@@ -501,14 +504,14 @@
         </select>
       {/if}
     </div>
-    <div class="essay-shell__actions">
+    <div class="essay-shell__actions" bind:this={actionsEl}>
       {#if documentDirty}<span class="essay-shell__status" data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
       {#if saveMessage}<span class="essay-shell__status" role="status">{saveMessage}</span>{/if}
       <!-- The one header action list, rendered as buttons here and as the overflow menu on narrow screens (CSS picks one). -->
       <div class="essay-shell__buttons">
         {#each barActions as a (a.id)}
           {#if a.id === "help"}
-            <IconButton class="md-help__btn" icon={CircleQuestionMark} variant="outline" data-md-help-trigger label={a.label} aria-expanded={helpOpen} onclick={a.run} />
+            <IconButton class="md-help__btn" icon={CircleQuestionMark} variant="outline" popovertarget={helpId} popovertargetaction="toggle" label={a.label} aria-expanded={helpOpen} />
           {:else}
             <Button variant={a.variant} active={a.pressed} aria-pressed={a.pressed} data-testid={a.testid} disabled={!a.enabled} onclick={a.run}>{a.label}</Button>
           {/if}
@@ -516,7 +519,7 @@
       </div>
       <ActionMenu class="essay-shell__overflow action-menu--end" testid="header-menu" title="Document actions" label={model?.title ?? repoName} actions={barActions} />
     </div>
-    <MarkdownHelp open={helpOpen} onclose={() => (helpOpen = false)} />
+    <MarkdownHelp id={helpId} anchor={actionsEl} bind:open={helpOpen} />
   </header>
 
   {#if notice}
