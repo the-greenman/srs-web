@@ -15,6 +15,7 @@
   B11 lifecycle & supersession:   https://github.com/the-greenman/srs-web/issues/7
 -->
 <script lang="ts">
+  import Notice from '$lib/components/Notice.svelte';
   import {
     initWasm,
     loadRepo,
@@ -758,7 +759,7 @@
      ========================================================================= -->
 {:else if appState === "error"}
   <div class="splash">
-    <p class="splash__error" role="alert">{errorMsg}</p>
+    <Notice kind="error">{errorMsg}</Notice>
     <button
       class="splash__retry"
       onclick={() => {
@@ -778,7 +779,7 @@
       <strong>{pendingMigration.name}</strong> uses an older SRS data model and cannot be
       opened as-is. Migrating updates the working copy (<code>{pendingMigration.ids.join(", ")}</code>). Nothing is saved until you press Save.
     </p>
-    {#if migrationError}<p class="splash__error" role="alert" data-testid="migration-error">{migrationError}</p>{/if}
+    {#if migrationError}<Notice kind="error" testid="migration-error">{migrationError}</Notice>{/if}
     <div class="restore-banner__actions">
       <button class="restore-banner__restore" data-testid="migration-apply" onclick={runPendingMigration}>Migrate and open</button>
       <button class="restore-banner__dismiss" data-testid="migration-cancel" onclick={cancelPendingMigration}>Cancel</button>
@@ -792,7 +793,7 @@
     {#if cachedSession !== null}
       <div class="restore-banner" role="status">
         <p class="restore-banner__msg">Unsaved session: <strong>{cachedSession.name}</strong></p>
-        {#if restoreError}<p class="restore-banner__error" role="alert">{restoreError}</p>{/if}
+        {#if restoreError}<Notice kind="error">{restoreError}</Notice>{/if}
         <div class="restore-banner__actions">
           <button class="restore-banner__restore" onclick={() => {
             restoreError = null;
@@ -989,11 +990,6 @@
     margin: 0;
   }
 
-  .splash__error {
-    color: #c00;
-    margin: 0;
-  }
-
   .splash__retry {
     margin-top: 0.5rem;
     cursor: pointer;
@@ -1013,12 +1009,6 @@
   .restore-banner__msg {
     margin: 0 0 0.5rem;
     font-size: 0.875rem;
-  }
-
-  .restore-banner__error {
-    font-size: 0.75rem;
-    color: var(--error, #cc0000);
-    margin: 0 0 0.5rem;
   }
 
   .restore-banner__actions {

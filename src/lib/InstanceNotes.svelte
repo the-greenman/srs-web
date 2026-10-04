@@ -8,6 +8,7 @@
   titled panel; Governance and Guides wrap this in a Panel).
 -->
 <script lang="ts">
+  import Notice from '$lib/components/Notice.svelte';
   import { onDestroy } from 'svelte';
   import { currentActor, onActorChange, saveLocalName } from '$lib/actor.js';
   import { addComment } from '$lib/comments.js';
@@ -62,6 +63,6 @@
   {/if}
   {#if notes.available}
     <CommentThread comments={notes.comments} needsName={!hasActor} onadd={comment} />
-    {#if error}<p class="instance-notes__error" role="alert">{error}</p>{/if}
+    {#if error}<Notice kind="error">{error}</Notice>{/if}
   {/if}
 </section>

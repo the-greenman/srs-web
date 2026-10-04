@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Notice from './Notice.svelte';
   import CornerLeftUp from "@lucide/svelte/icons/corner-left-up";
   import X from "@lucide/svelte/icons/x";
   import IconButton from "./IconButton.svelte";
@@ -329,7 +330,7 @@
 </div>
 
 {#if error}
-  <p class="source-chooser__error" role="alert">{error}</p>
+  <Notice kind="error">{error}</Notice>
 {/if}
 
 {#if entries && browsing}
@@ -471,12 +472,6 @@
     pointer-events: none;
   }
 
-  .source-chooser__error {
-    color: var(--color-error);
-    max-width: 38rem;
-    margin: 0.75rem 0 0;
-    font-size: 0.875rem;
-  }
 
   .cloud-browser {
     position: fixed;

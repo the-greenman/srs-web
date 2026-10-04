@@ -400,15 +400,15 @@ npx playwright test e2e/notices.spec.ts e2e/validation.spec.ts e2e/validate-on-s
 
 #### Tasks
 
-- [ ] Swap to `<Notice kind="error">` (testids and text unchanged): `InstanceNotes.svelte:65`, `AttachmentsPanel.svelte:187`, `AttachmentLinkPanel.svelte:95`, `DecisionLogView.svelte:143`, `DecisionLinkPicker.svelte:146`, `BlueprintDocumentEditor.svelte:381, 384`, `CreateGovernanceDocumentPanel.svelte:93`, `SourceChooser.svelte:332`, `Migrations.svelte:74, 103, 107`, and in `App.svelte` A4/A5 (`splash__error`, `migration-error`, `restore-banner__error`).
-- [ ] Remove each now-unused local error class from its CSS; keep the layout classes.
-- [ ] Explicitly NOT touched, with the reason in the PR body: `McpConnection` (#442), `GitSaveModal` and `SuccessorModal` (#428), `SectionForm`, `RecordForm`, `Field` (#426), the Topbar `readonly-reason` / `document-dirty-status` spans (#424 PR-B).
-- [ ] Add a guard test `tests/no-adhoc-notices.test.ts`, scoped to `role=alert` only (it does not police `role=status`). It scans `src/**/*.svelte` for `role="alert"`, `role='alert'` and dynamic `role={...}`; a dynamic `role={...}` is matched but NEVER allowlisted by default (each one must be resolved or given an explicit entry with a reason). It compares per-file counts with a `path -> count` allowlist, each entry with a reason comment: `McpConnection.svelte` (#442), `GitSaveModal.svelte` and `SuccessorModal.svelte` (#428), `SectionForm.svelte` and `RecordForm.svelte` (#426 form errors, incl. `.form-error`), `InspectorTrigger.svelte` (badge, not a notice), `Notice.svelte` and `ToastHost.svelte` (the components themselves), `Styleguide.svelte` (specimens). A new or removed site fails CI until the list is updated.
+- [x] Swap to `<Notice kind="error">` (testids and text unchanged): `InstanceNotes.svelte:65`, `AttachmentsPanel.svelte:187`, `AttachmentLinkPanel.svelte:95`, `DecisionLogView.svelte:143`, `DecisionLinkPicker.svelte:146`, `BlueprintDocumentEditor.svelte:381, 384`, `CreateGovernanceDocumentPanel.svelte:93`, `SourceChooser.svelte:332`, `Migrations.svelte:74, 103, 107`, and in `App.svelte` A4/A5 (`splash__error`, `migration-error`, `restore-banner__error`).
+- [x] Remove each now-unused local error class from its CSS; keep the layout classes.
+- [x] Explicitly NOT touched, with the reason in the PR body: `McpConnection` (#442), `GitSaveModal` and `SuccessorModal` (#428), `SectionForm`, `RecordForm`, `Field` (#426), the Topbar `readonly-reason` / `document-dirty-status` spans (#424 PR-B).
+- [x] Add a guard test `tests/no-adhoc-notices.test.ts`, scoped to `role=alert` only (it does not police `role=status`). It scans `src/**/*.svelte` for `role="alert"`, `role='alert'` and dynamic `role={...}`; a dynamic `role={...}` is matched but NEVER allowlisted by default (each one must be resolved or given an explicit entry with a reason). It compares per-file counts with a `path -> count` allowlist, each entry with a reason comment: `McpConnection.svelte` (#442), `GitSaveModal.svelte` and `SuccessorModal.svelte` (#428), `SectionForm.svelte` and `RecordForm.svelte` (#426 form errors, incl. `.form-error`), `InspectorTrigger.svelte` (badge, not a notice), `Notice.svelte` and `ToastHost.svelte` (the components themselves), `Styleguide.svelte` (specimens). A new or removed site fails CI until the list is updated.
 
 #### Acceptance Criteria
 
-- [ ] The allowlist test passes and lists exactly the entries above.
-- [ ] All existing component tests and e2e for the touched panels pass with unchanged selectors.
+- [x] The allowlist test passes and lists exactly the entries above.
+- [x] All existing component tests and e2e for the touched panels pass with unchanged selectors.
 
 #### Testing
 
@@ -491,6 +491,7 @@ npx playwright test e2e/notices.spec.ts e2e/styleguide.spec.ts e2e/mobile-layout
 
 - `Main` is the one centre-column wrapper every shell renders, one at a time, so one `ToastHost` inside it is "one per app".
 - Playwright's clipboard permission is already granted in the essay e2e (the existing Copy link specs assert the notice).
+- Phase 6: the guard allowlist lists only sites that exist today: `SuccessorModal.svelte` has no `role=alert` (so no entry), and `HoverCard.svelte` has a dynamic `role={role}` (the card's own role, never an alert) with a reason.
 - Phase 4 added `e2e/fixtures/essay-catalog.srsj` (essay.srsj plus one record whose type resolves to nothing: a real `SRS038-R13-DANGLING-REFERENCE` catalog error) for the "catalog notice shows in every shell" e2e.
 - The fixtures can produce a repeated R23 on a composition; if not, a fixture is added (Phase 4), not a route stub. (Result: none did; `e2e/fixtures/r23.srsj` was added in Phase 1.)
 - **Round-3 decision 1 (overrides the plan text above).** The always-rendered error region in `LiveRegions` is `aria-live="assertive" aria-atomic="true"` with NO `role="alert"`: an empty, always-present `role=alert` node would break the zero-alert assertions in `e2e/cloud-storage.spec.ts:623,781`, `e2e/create-document.spec.ts:66` and `e2e/musrs-fixture.spec.ts:38,50`. The polite region stays a plain `aria-live="polite"` div. The LiveRegions unit test and ADR-020 (j) say so. (Wherever this plan says the error region is `role=alert`, read "assertive".)

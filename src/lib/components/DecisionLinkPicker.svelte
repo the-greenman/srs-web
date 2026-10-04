@@ -11,6 +11,7 @@
   srs-web#160: https://github.com/the-greenman/srs-web/issues/160
 -->
 <script lang="ts">
+  import Notice from './Notice.svelte';
   import type { SrsRecord } from "$lib/srs-client.js";
   import type { RelationTypeOption } from "$lib/types.js";
 
@@ -143,7 +144,7 @@
     </div>
 
     {#if linkError}
-      <p class="dlp-error" role="alert" data-testid="link-error">{linkError}</p>
+      <Notice kind="error" testid="link-error">{linkError}</Notice>
     {/if}
   </div>
 </div>
@@ -242,15 +243,6 @@
     opacity: 0.55;
   }
 
-  .dlp-error {
-    font-size: 0.8125rem;
-    margin: 0;
-    padding: 0.4rem 0.5rem;
-    color: var(--color-error);
-    background: var(--color-error-subtle);
-    border: 1px solid var(--color-error);
-    border-radius: 2px;
-  }
 
   .dlp-list {
     list-style: none;
