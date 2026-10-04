@@ -9,7 +9,6 @@
   color: var(--color-text);
 }
 .essay-shell__bar {
-  position: relative; /* anchors the markdown help popover */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -42,12 +41,12 @@
 .essay-shell__error {
   margin: var(--space-xs) var(--space-sm);
   padding: 8px 12px;
-  border: 1px solid var(--black);
+  border: 1px solid var(--color-text-strong);
   font-size: var(--size-sm);
 }
 .essay-shell__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 18rem;
+  grid-template-columns: minmax(0, 1fr) var(--rail-width);
   gap: var(--space-md);
   max-width: 72rem;
   margin: 0 auto;
@@ -61,7 +60,7 @@
   padding: var(--space-md) var(--space-md) var(--space-lg);
   background: var(--color-page);
   border: var(--rule-soft);
-  box-shadow: 0 1px 6px rgba(26, 26, 26, 0.08);
+  box-shadow: 0 1px 6px color-mix(in srgb, var(--color-text-strong) 8%, transparent);
 }
 .essay-shell__page > .inline-text {
   font-size: var(--size-lg);
@@ -80,11 +79,13 @@
 .essay-shell__empty {
   padding: var(--space-md);
 }
+/* bp: rail */
 @media (max-width: 960px) {
   .essay-shell__grid {
     grid-template-columns: 1fr;
   }
 }
+/* bp: compact */
 @media (max-width: 720px) {
   .essay-shell__page {
     padding: var(--space-sm);
@@ -100,7 +101,8 @@
 }
 
 /* Phone (srs-web#383): text first. One bar row (picker + one overflow menu), a near edge-to-edge page,
-   a one-row zoom bar. Mirror of NARROW in components/narrow.ts. */
+   a one-row zoom bar. Mirror of NARROW in src/lib/breakpoints.ts. */
+/* bp: phone */
 @media (max-width: 480px) {
   .essay-shell__bar {
     flex-wrap: nowrap;

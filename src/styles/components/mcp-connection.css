@@ -8,56 +8,74 @@
   flex-direction: column;
   gap: var(--space-sm);
   padding: var(--space-sm);
-  border: 1px solid var(--ink);
-  background: var(--paper, #fff);
+  border: 1px solid var(--color-text);
+  background: var(--color-surface-raised);
   font-size: var(--size-xs);
-  max-width: 28rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .mcp-conn__head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-xs) var(--space-sm);
   font-family: var(--font-mono);
+  min-width: 0;
 }
+.mcp-conn__status {
+  min-width: 0;
+}
+/* The repository name drops below the status when there is no room (no forced margin-left: auto). */
 .mcp-conn__repo {
-  margin-left: auto;
+  flex: 1 1 auto;
+  min-width: 0;
   opacity: 0.6;
 }
 .mcp-conn__dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--color-text);
 }
 .mcp-conn__dot--online {
-  background: var(--ink);
+  background: var(--color-text);
 }
 .mcp-conn__dot--connecting,
 .mcp-conn__dot--offline {
-  background: repeating-linear-gradient(45deg, var(--ink) 0 2px, transparent 2px 4px);
+  background: repeating-linear-gradient(45deg, var(--color-text) 0 2px, transparent 2px 4px);
 }
 .mcp-conn__url {
   display: flex;
-  gap: var(--space-sm);
-}
-.mcp-conn__input {
-  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
   min-width: 0;
+}
+.mcp-conn__url .input {
+  flex: 1 1 8rem;
+  width: auto;
+  min-width: 0;
+  padding: 4px 8px;
   font-family: var(--font-mono);
   font-size: var(--size-xs);
-  padding: 4px;
+  text-overflow: ellipsis;
 }
 .mcp-conn__actions {
   display: flex;
-  gap: var(--space-sm);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
 }
 .mcp-conn__note {
   margin: 0;
   opacity: 0.7;
+  overflow-wrap: anywhere;
 }
 .mcp-conn__error {
   margin: 0;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 /* Floating dock for shells without an agent rail (App.svelte). */
@@ -65,14 +83,14 @@
   position: fixed;
   right: 1rem;
   bottom: 1rem;
-  z-index: 50;
+  z-index: var(--z-dock);
   width: 28rem;
   max-width: calc(100vw - 2rem);
   max-height: 60vh;
   overflow: auto;
   padding: var(--space-xs);
-  background: var(--paper, #fff);
-  border: 1px solid var(--ink);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-text);
 }
 .mcp-agents {
   display: grid;

@@ -13,6 +13,7 @@
   import type { TypeFormDef } from "$lib/governance/types.js";
   import Field from "$lib/components/Field.svelte";
   import FieldInput from "$lib/components/FieldInput.svelte";
+  import Button from "$lib/components/Button.svelte";
   import SaveBar from "$lib/components/SaveBar.svelte";
 
   let {
@@ -120,17 +121,8 @@
 
     <SaveBar>
       {#snippet children()}
-        <button
-          type="button"
-          class="btn btn--secondary"
-          onclick={onCancel}
-          disabled={saving}
-        >Cancel</button>
-        <button
-          type="submit"
-          class="btn btn--primary"
-          disabled={saving}
-        >{saving ? "Saving…" : "Save"}</button>
+        <Button variant="secondary" onclick={onCancel} disabled={saving}>Cancel</Button>
+        <Button variant="primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
       {/snippet}
     </SaveBar>
   </form>

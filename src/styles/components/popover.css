@@ -1,0 +1,29 @@
+/* ============================================================================
+   component: popover (.popover, .popover__surface) — the one floating surface
+   ----------------------------------------------------------------------------
+   The surface is a native [popover] in the top layer, so it is never clipped by an overflow
+   ancestor and needs no z-index. Placement is anchor positioning (inline style from Popover.svelte)
+   or a JS-set top/left. This is the only place a floating panel gets background + border + shadow;
+   .action-menu__list, .md-help__pop, .margin__list and .hover-card only add sizing.
+   ADR-020 (e): https://github.com/the-greenman/srs-web/issues/421
+   ========================================================================== */
+.popover {
+  display: inline-flex;
+}
+.popover__surface {
+  margin: 0;
+  inset: auto;
+  max-width: min(22rem, 90vw);
+  max-height: min(28rem, 80vh);
+  padding: 0;
+  color: var(--color-text);
+  background: var(--popover-bg);
+  border: 1px solid var(--popover-border);
+  box-shadow: var(--popover-shadow);
+  text-align: left;
+}
+/* Shown only while open: an author `display` on the base rule would defeat the UA's hidden state. */
+.popover__surface--static {
+  position: static;
+  display: block;
+}

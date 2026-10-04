@@ -14,12 +14,12 @@
   font-size: var(--size-xs);
   text-transform: uppercase;
   letter-spacing: var(--tracking-eyebrow);
-  color: var(--grey-3);
+  color: var(--color-muted);
 }
 .t-muted {
   font-family: var(--font-mono);
   font-size: var(--size-sm);
-  color: var(--grey-3);
+  color: var(--color-muted);
 }
 .t-mono {
   font-family: var(--font-mono);
@@ -29,7 +29,7 @@
   font-size: var(--size-xs);
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
-  color: var(--grey-3);
+  color: var(--color-muted);
 }
 
 /* Visibility */

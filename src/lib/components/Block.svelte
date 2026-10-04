@@ -1,5 +1,5 @@
 <!--
-  Block — one paragraph: a narrow gutter (⋮⋮ drag handle; eye + move-to-draft + zoom + copy-link on hover/focus; one ⋯ action menu, the only tool on touch), a right margin slot (`margin`),
+  Block — one paragraph: a narrow gutter (drag handle; eye + move-to-draft + zoom + copy-link on hover/focus; one ellipsis action menu, the only tool on touch), a right margin slot (`margin`),
   a small mono title above the body (InlineText) and the body in two states: rendered markdown
   (core renderMarkdown, already sanitized) until focused, then a plain-text source editor
   (`contenteditable="plaintext-only"`, no rich-text dependency). Hidden = collapsed in place.
@@ -11,8 +11,10 @@
 -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import GripVertical from '@lucide/svelte/icons/grip-vertical';
   import ActionMenu from './ActionMenu.svelte';
   import EyeToggle from './EyeToggle.svelte';
+  import IconButton from './IconButton.svelte';
   import InlineText from './InlineText.svelte';
   import MarkdownText from './MarkdownText.svelte';
   import { keyMove } from './dnd';
@@ -141,7 +143,7 @@
   }
 
   const shortLabel = $derived(title || 'untitled paragraph');
-  // The one action list: hover tools (devices with hover) and the ⋯ menu are both rendered from it.
+  // The one action list: hover tools (devices with hover) and the ellipsis menu are both rendered from it.
   const actions = $derived(
     paragraphActions(
       { onnew, onmove, onindent, onhide, onpull, ondelete, onzoom, oncopylink, oncopyagent, onrename: () => (editingTitle = true) },
@@ -151,30 +153,31 @@
 </script>
 
 <article class="block" class:is-off={hidden || inherited} data-block-id={id}>
-  <div class="block__gutter">
-    <button
-      type="button"
+  <div class="block__gutter" data-part="gutter">
+    <IconButton
       class="block__handle"
+      icon={GripVertical}
+      data-part="handle"
       aria-roledescription="drag handle"
-      aria-label={`Move ${shortLabel}. Alt plus arrow keys reorder and change level; F2 renames.`}
+      label={`Move ${shortLabel}. Alt plus arrow keys reorder and change level; F2 renames.`}
       data-focus-key={`handle:${id}`}
       onkeydown={handleKeydown}
       {...handle}
-    >⋮⋮</button>
-    <div class="block__tools">
+    />
+    <div class="block__tools" data-part="tools">
       {#each actions.filter((a) => HOVER_TOOLS.includes(a.id)) as a (a.id)}
         {#if a.id === 'hide'}
           <EyeToggle {hidden} {inherited} label={shortLabel} onclick={a.run} />
         {:else if a.tool}
-          <button type="button" class="block__action" aria-label={a.tool.aria} title={a.tool.title} onclick={a.run}>{a.icon}</button>
+          <IconButton data-part="action" icon={a.icon} label={a.tool.aria} title={a.tool.title} onclick={a.run} />
         {/if}
       {/each}
     </div>
-    <ActionMenu class="block__menu" {actions} label={shortLabel} focusKey={`menu:${id}`} />
+    <ActionMenu class="block__menu" data-part="menu" {actions} label={shortLabel} focusKey={`menu:${id}`} />
   </div>
-  <div class="block__main">
-    <div class="block__head" class:is-collapsed={!title && !editingTitle}>
-      <span class="block__title">
+  <div class="block__main" data-part="main">
+    <div class="block__head" data-part="head" class:is-collapsed={!title && !editingTitle}>
+      <span class="block__title" data-part="title">
         <InlineText value={title} placeholder="Add title" label="Paragraph title" oncommit={ontitle} bind:editing={editingTitle} />
       </span>
     </div>
@@ -191,5 +194,5 @@
       />
     {/if}
   </div>
-  {#if margin}<div class="block__margin">{@render margin()}</div>{/if}
+  {#if margin}<div class="block__margin" data-part="margin">{@render margin()}</div>{/if}
 </article>

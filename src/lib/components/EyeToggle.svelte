@@ -1,9 +1,11 @@
 <!--
   EyeToggle — "hide in place" switch. A real <button aria-pressed>; pressed = hidden.
-  Wraps .eye (src/styles/components/layers.css). Used by Block and LayersPanel.
+  Wraps .eye (src/styles/components/layers.css); Lucide eye / eye-off. Used by Block and LayersPanel.
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
 -->
 <script lang="ts">
+  import Eye from '@lucide/svelte/icons/eye';
+  import EyeOff from '@lucide/svelte/icons/eye-off';
   import type { HTMLButtonAttributes } from 'svelte/elements';
 
   let {
@@ -25,9 +27,5 @@
   disabled={inherited}
   {...rest}
 >
-  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
-    <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z" />
-    <circle cx="12" cy="12" r="3" />
-    {#if hidden || inherited}<path d="M3 3l18 18" />{/if}
-  </svg>
+  {#if hidden || inherited}<EyeOff size={16} aria-hidden="true" />{:else}<Eye size={16} aria-hidden="true" />{/if}
 </button>

@@ -7,16 +7,13 @@
   import "./styles/themes/demo.css";
   import { onMount, type Snippet } from "svelte";
   import {
-    ActorChip, AgentFeed, AttachmentGlyph, Block, BlockStack, Button,
-    CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, InlineText, Input,
-    LayersPanel, McpConnection, ParagraphMargin, PinnedPane, Select, Tag,
+    ActionMenu, ActorChip, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button,
+    CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
+    LayersPanel, MarkdownHelp, MarkdownText, McpConnection, Panel, ParagraphMargin, PinnedPane, Select, Tag,
     TagChip, Textarea,
   } from "$lib/components";
-  import ActionMenu from "$lib/components/ActionMenu.svelte";
-  import BinTray from "$lib/components/BinTray.svelte";
-  import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
-  import Panel from "$lib/components/Panel.svelte";
-  import MarkdownText from "$lib/components/MarkdownText.svelte";
+  import Frame from "./styleguide/Frame.svelte";
+  import Icons from "./styleguide/icons";
   import { initWasm } from "$lib/srs-client";
   import * as fx from "./styleguide/fixtures";
 
@@ -24,7 +21,8 @@
   const KEY = "srs-web.styleguide.theme";
   const sections = [
     ["tokens", "Tokens"],
-    ["buttons", "Buttons"],
+    ["buttons", "Buttons and icons"],
+    ["icons", "Icons"],
     ["menus", "Menus and popovers"],
     ["chips", "Chips and badges"],
     ["actors", "Actors"],
@@ -37,11 +35,14 @@
   let theme = $state("Default");
   let wasm = $state<"loading" | "ready" | string>("loading");
   let swatchValues = $state<Record<string, string>>({});
+  let tokenValues = $state<Record<string, string>>({});
   let text = $state("Editable text");
   let input = $state("Hello");
   let choice = $state("one");
   let area = $state("Some\nlines");
   let pressed = $state(false);
+  let helpAnchor = $state<HTMLButtonElement>();
+  let helpOpen = $state(false);
 
   function apply(t: string) {
     const root = document.documentElement;
@@ -56,8 +57,9 @@
   function readTokens() {
     const cs = getComputedStyle(document.documentElement);
     swatchValues = Object.fromEntries(
-      [...fx.swatches, ...fx.sizes, ...fx.spaces].map((n) => [n, cs.getPropertyValue(n).trim()])
+      [...fx.swatches, ...fx.sizes, ...fx.spaces, ...fx.radii].map((n) => [n, cs.getPropertyValue(n).trim()])
     );
+    tokenValues = Object.fromEntries(fx.componentTokens.map((n) => [n, cs.getPropertyValue(n).trim()]));
   }
 
   onMount(() => {
@@ -93,6 +95,36 @@
   {@render gated(inner)}
 {/snippet}
 
+{#snippet rail()}
+  <Panel title="Layers" aside={fx.layers.length + fx.longLayers.length}>
+    <LayersPanel layers={[...fx.layers, ...fx.longLayers]} ondrop={noop} onhide={noop} onfold={noop} onselect={noop} onkey={noop} />
+  </Panel>
+  <Panel title="Draft"><DraftTray items={[...fx.draftItems, ...fx.longDraftItems]} ondrop={noop} onputback={noop} /></Panel>
+  <Panel title="Bin"><BinTray items={[...fx.binItems, ...fx.longBinItems]} onrestore={noop} onforget={noop} /></Panel>
+  {#snippet pinnedPane()}<PinnedPane items={[...fx.pinned, ...fx.longPinned]} onunpin={noop} onremove={noop} />{/snippet}
+  {@render gated(pinnedPane)}
+  <Panel title="Agents">
+    <AgentFeed status={fx.agentStatus} now={fx.NOW} paragraphLabel={fx.paragraphLabel} onselect={noop} />
+    <div class="mcp-agents">
+      <McpConnection
+        status="online" callerUrl={fx.longCallerUrl} repositoryName={fx.longRepoName}
+        actor={fx.agents[0]} lastActivity="titled ¶ Opening · 2 min ago"
+        onDisconnect={noop} onRotate={noop} onTakeover={noop}
+      />
+      <McpConnection
+        status="rejected" error={fx.longError} repositoryName={fx.longRepoName}
+        agentName={fx.longAgentName} onDisconnect={noop} onTakeover={noop}
+      />
+      <div class="mcp-conn__actions" data-testid="mcp-library-item">
+        <strong>{fx.longAgentName}</strong>
+        <Button size="sm" variant="secondary" onclick={noop}>Connect</Button>
+        <Button size="sm" variant="ghost" onclick={noop}>Forget</Button>
+      </div>
+    </div>
+  </Panel>
+  <Panel title="Comments"><CommentThread comments={[...fx.comments, ...fx.longComments]} onadd={noop} /></Panel>
+{/snippet}
+
 <main class="sg">
   <header class="sg__bar">
     <h1>Styleguide</h1>
@@ -123,10 +155,17 @@
     {#each fx.spaces as n}
       <div class="sg__swatch"><span>{n} {swatchValues[n]}</span><div class="sg__space" style:width="var({n})"></div></div>
     {/each}
+    <h3>Radius</h3>
+    {#each fx.radii as n}<div class="sg__swatch"><span>{n} {swatchValues[n]}</span></div>{/each}
+    <h3>Component tokens</h3>
+    <div class="sg__tokens" data-testid="sg-component-tokens">
+      {#each fx.componentTokens as n}<span>{n}</span><span>{tokenValues[n]}</span>{/each}
+    </div>
   </section>
 
   <section id="buttons">
-    <h2>Buttons</h2>
+    <h2>Buttons and icons</h2>
+    <h3>Button md</h3>
     <div class="sg__row">
       {#each ["primary", "secondary", "ghost", "mono"] as const as v}
         <Button variant={v}>{v}</Button>
@@ -136,15 +175,58 @@
       <Button disabled>disabled</Button>
       <Button variant="primary" disabled>primary disabled</Button>
     </div>
+    <h3>Button sm</h3>
+    <div class="sg__row">
+      {#each ["primary", "secondary", "ghost", "mono"] as const as v}
+        <Button size="sm" variant={v}>{v}</Button>
+      {/each}
+      <Button size="sm" disabled>disabled</Button>
+    </div>
+    <h3>IconButton</h3>
+    <div class="sg__row">
+      <IconButton icon={Icons.plus} label="Plain" />
+      <IconButton icon={Icons.plus} label="Outline" variant="outline" />
+      <IconButton icon={Icons.eye} label="Pressed" variant="outline" pressed />
+      <IconButton icon={Icons.eye} label="Not pressed" variant="outline" pressed={false} />
+      <IconButton icon={Icons.plus} label="Small" size="sm" variant="outline" />
+      <IconButton icon={Icons.plus} label="Disabled" variant="outline" disabled />
+    </div>
+  </section>
+
+  <section id="icons">
+    <h2>Icons</h2>
+    <p>Every icon the UI uses (Lucide, ADR-020).</p>
+    <div class="sg__row">
+      {#each Object.entries(Icons) as [name, icon]}
+        <IconButton {icon} label={name} variant="outline" />
+      {/each}
+    </div>
   </section>
 
   <section id="menus">
     <h2>Menus and popovers</h2>
+    <h3>ActionMenu</h3>
     <div class="sg__row">
       <ActionMenu actions={fx.menuActions} label="Opening" />
     </div>
-    <div class="sg__pop"><MarkdownHelp open onclose={noop} /></div>
-    <HoverCard kind="note" title="Interview notes" text="A read-only preview card." relation="evidences" />
+    <h3>Inside an overflow container (top layer, never clipped)</h3>
+    <div class="sg__scroll" data-testid="sg-popover-scroll">
+      <div class="sg__scroll-pad"></div>
+      <ActionMenu actions={fx.menuActions} label="Scrolled" testid="sg-scroll-menu" />
+      <button type="button" class="sg__outside" data-testid="sg-outside-button">Another button</button>
+    </div>
+    <h3>MarkdownHelp, standalone (anchored to the button)</h3>
+    <div class="sg__row">
+      <IconButton bind:ref={helpAnchor} icon={Icons["circle-question-mark"]} label="Help anchor" variant="outline" />
+    </div>
+    <MarkdownHelp id="sg-md-help" anchor={helpAnchor} bind:open={helpOpen} />
+    <div class="sg__row"><Button size="sm" variant="mono" popovertarget="sg-md-help" popovertargetaction="toggle">Toggle help</Button></div>
+    <h3>HoverCard (static)</h3>
+    <HoverCard static kind="note" title="Interview notes" text="A read-only preview card." relation="evidences" onremove={noop} />
+    <h3>AttachmentPreview</h3>
+    <div><AttachmentPreview kind="spreadsheet" title="Budget sheet" text="Q3 budget figures, clamped to three lines when pinned." relation="evidences" clamp /></div>
+    <h3>Margin overflow (+N)</h3>
+    <ParagraphMargin annotations={fx.annotations} max={2} onopen={noop} />
   </section>
 
   <section id="chips">
@@ -215,25 +297,11 @@
     <div class="sg__grid">
       <Panel title="Panel" aside={3}><p>Panel body.</p></Panel>
       <Panel title="Static" collapsible={false}><p>Not collapsible.</p></Panel>
-      <Panel title="Layers" aside={fx.layers.length}>
-        <LayersPanel
-          layers={fx.layers} ondrop={noop} onhide={noop} onfold={noop} onselect={noop} onkey={noop}
-        />
-      </Panel>
-      <Panel title="Draft"><DraftTray items={fx.draftItems} ondrop={noop} onputback={noop} /></Panel>
-      <Panel title="Bin"><BinTray items={fx.binItems} onrestore={noop} onforget={noop} /></Panel>
-      <div>
-        {#snippet pinnedPane()}<PinnedPane items={fx.pinned} onunpin={noop} />{/snippet}
-        {@render gated(pinnedPane)}
-      </div>
-      <Panel title="Agents">
-        <AgentFeed status={fx.agentStatus} now={fx.NOW} paragraphLabel={fx.paragraphLabel} onselect={noop} />
-      </Panel>
-      <McpConnection
-        status="online" callerUrl="https://relay.example/mcp/abc123" repositoryName="Specimen repo"
-        actor={fx.agents[0]} lastActivity="titled ¶ Opening · 2 min ago"
-        onDisconnect={noop} onRotate={noop} onTakeover={noop}
-      />
+    </div>
+    <p>Rail components at the real rail width (18rem) and a narrow width (15rem), with long text.</p>
+    <div class="sg__rails">
+      <Frame width="var(--rail-width)" caption="Rail 18rem">{@render rail()}</Frame>
+      <Frame width="15rem" caption="Narrow 15rem">{@render rail()}</Frame>
     </div>
   </section>
 

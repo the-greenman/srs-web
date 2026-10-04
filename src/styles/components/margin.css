@@ -12,7 +12,7 @@
   min-width: 0;
 }
 .margin__item,
-.margin__list li {
+.margin__items li {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
@@ -43,26 +43,20 @@
 .margin__more:hover,
 .margin__relation:focus-visible,
 .margin__more:focus-visible {
-  color: var(--ink);
-  border-color: var(--ink);
-}
-.margin__overflow {
-  position: relative;
+  color: var(--color-text);
+  border-color: var(--color-text);
 }
 .margin__list {
-  position: absolute;
-  z-index: 10;
-  top: 100%;
-  right: 0;
-  margin: 2px 0 0;
+  max-width: 16rem;
   padding: var(--space-xs) var(--space-sm);
+}
+.margin__items {
+  margin: 0;
+  padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-width: 16rem;
-  background: var(--white, #fff);
-  border: 1px solid var(--black);
 }
 /* Expanded: the right column widens to hold the text chips. */
 .block:has(.margin--expanded) {
@@ -81,6 +75,7 @@
 }
 
 /* Phone (srs-web#383): marks flow in a row inside the title row; chips collapse to marks only. */
+/* bp: phone */
 @media (max-width: 480px) {
   .margin {
     flex-direction: row;
@@ -91,7 +86,6 @@
     display: none;
   }
   .margin__list {
-    right: 0;
     max-width: 12rem;
   }
 }

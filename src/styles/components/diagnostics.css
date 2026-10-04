@@ -24,11 +24,11 @@
   font-size: var(--size-xs);
 }
 .diag-summary__strong {
-  color: var(--ink);
+  color: var(--color-text);
   font-weight: 600;
 }
 .diag-summary__dim {
-  color: var(--grey-3);
+  color: var(--color-muted);
 }
 
 .diag-list {
@@ -55,38 +55,38 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
-  border: 1px solid var(--grey-2);
-  color: var(--grey-3);
+  border: 1px solid var(--color-line);
+  color: var(--color-muted);
 }
 .diag__msg {
   font-family: var(--font-sans);
   font-size: var(--size-sm);
   line-height: 1.4;
-  color: var(--ink);
+  color: var(--color-text);
 }
 .diag__where {
   margin-top: 2px;
   font-family: var(--font-mono);
   font-size: var(--size-xs);
-  color: var(--grey-3);
+  color: var(--color-muted);
 }
 
 /* Severity modifiers — fill/weight only */
 .diag--error .diag__sev {
-  background: var(--ink);
-  color: var(--paper);
-  border-color: var(--ink);
+  background: var(--color-text);
+  color: var(--color-on-dark);
+  border-color: var(--color-text);
 }
 .diag--error .diag__msg {
   font-weight: 500;
 }
 .diag--warn .diag__sev {
-  color: var(--ink);
-  border-color: var(--ink);
+  color: var(--color-text);
+  border-color: var(--color-text);
 }
 .diag--info .diag__sev {
-  color: var(--grey-3);
-  border-color: var(--grey-2);
+  color: var(--color-muted);
+  border-color: var(--color-line);
 }
 
 /* All-clear */
@@ -97,7 +97,7 @@
   padding: var(--space-sm) 0;
   font-family: var(--font-mono);
   font-size: var(--size-sm);
-  color: var(--ink);
+  color: var(--color-text);
 }
 .diag-clear__check {
   flex: none;
@@ -105,5 +105,5 @@
   height: 16px;
   display: grid;
   place-items: center;
-  border: 1.5px solid var(--ink);
+  border: 1.5px solid var(--color-text);
 }

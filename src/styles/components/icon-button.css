@@ -1,0 +1,42 @@
+/* ============================================================================
+   component: icon button (.icon-btn)
+   ----------------------------------------------------------------------------
+   The one small icon control (IconButton.svelte). Lucide icons draw in
+   currentColor, so the colour follows --icon-btn-fg. The hit target is
+   --hit-target (24px, 44px on a coarse pointer). Hosts that need more
+   (block.css, layers.css) override min-size after this file in the cascade.
+   ADR-020: https://github.com/the-greenman/srs-web/issues/421
+   ========================================================================== */
+.icon-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--hit-target);
+  min-height: var(--hit-target);
+  padding: 0;
+  color: var(--icon-btn-fg);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.icon-btn--outline {
+  border-color: var(--icon-btn-border);
+}
+.icon-btn:hover:not(:disabled),
+.icon-btn[aria-pressed="true"],
+.icon-btn[aria-expanded="true"] {
+  color: var(--icon-btn-hover-fg);
+}
+.icon-btn:hover:not(:disabled) {
+  background: var(--icon-btn-hover-bg);
+}
+.icon-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

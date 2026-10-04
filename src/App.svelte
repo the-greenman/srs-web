@@ -44,6 +44,8 @@
   import GitSaveModal from "$lib/components/GitSaveModal.svelte";
   import Panel from "$lib/components/Panel.svelte";
   import McpConnection from "$lib/components/McpConnection.svelte";
+  import Button from "$lib/components/Button.svelte";
+  import Input from "$lib/components/Input.svelte";
   import { RelayHost, type HostState } from "$lib/mcp/relay-host.js";
   import { untrack } from "svelte";
   import { slugifyFilename } from "$lib/slug.js";
@@ -906,15 +908,17 @@
     <div class="mcp-conn__actions" data-testid="mcp-library-item">
       <strong>{agentName(c)}</strong>
       {#if inUse.has(c.id)}<span class="mcp-conn__note" data-testid="mcp-in-use">in use in another tab</span>{/if}
-      <button type="button" class="btn btn--secondary" disabled={inUse.has(c.id)} onclick={() => void openChannel(c)} data-testid="mcp-library-connect">Connect</button>
-      <button type="button" class="btn btn--ghost" onclick={() => forgetAgent(c.id)} data-testid="mcp-library-forget">Forget</button>
+      <Button size="sm" variant="secondary" disabled={inUse.has(c.id)} onclick={() => void openChannel(c)} data-testid="mcp-library-connect">Connect</Button>
+      <Button size="sm" variant="ghost" onclick={() => forgetAgent(c.id)} data-testid="mcp-library-forget">Forget</Button>
     </div>
   {/each}
   <details>
   <summary data-testid="mcp-connect-open">Connect an agent</summary>
   <form onsubmit={(e) => { e.preventDefault(); connectAgent(newAgentLabel); newAgentLabel = ""; }}>
-    <input class="mcp-conn__input" bind:value={newAgentLabel} placeholder="Agent label (optional)" aria-label="Agent label" data-testid="mcp-agent-label" />
-    <button type="submit" class="btn btn--secondary" data-testid="mcp-connect-agent">Connect</button>
+    <div class="mcp-conn__url">
+      <Input bind:value={newAgentLabel} placeholder="Agent label (optional)" aria-label="Agent label" data-testid="mcp-agent-label" />
+      <Button size="sm" variant="secondary" type="submit" data-testid="mcp-connect-agent">Connect</Button>
+    </div>
   </form>
   </details>
 </div>

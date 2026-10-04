@@ -1,49 +1,47 @@
 /* ============================================================================
-   component: draft-tray (.draft-tray)
+   component: tray (.tray) — DraftTray and BinTray share this one style
    ----------------------------------------------------------------------------
    Set-aside paragraphs (the body of a Panel). A dashed outline marks it as a holding area (the same
-   "not yet" language as draft tags). The list keeps a minimum height so an
-   empty tray is still a drop target.
+   "not yet" language as draft tags). The draft list keeps a minimum height so an empty tray is still
+   a drop target. Rows are TrayRow: a truncating label plus wrapping actions, so a long label or many
+   actions never push the rail wider.
    Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
    ========================================================================== */
-.draft-tray,
-.bin-tray {
+.tray {
+  min-width: 0;
   padding: var(--space-xs);
   border: 1px dashed var(--color-line);
 }
 .draft-tray .block-stack {
   min-height: 3rem;
 }
-.draft-tray__empty,
-.bin-tray__empty {
+.tray__empty {
   margin: 0 0 var(--space-xs);
   font-size: var(--size-sm);
   color: var(--color-muted);
 }
-.draft-tray__row,
-.bin-tray__row {
+.tray__row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-xs);
+  gap: 4px var(--space-xs);
   padding: 4px 0;
   border-bottom: 1px solid var(--color-line-soft);
 }
-.draft-tray__label,
-.bin-tray__label {
-  flex: 1;
+.tray__label {
+  flex: 1 1 6rem;
   min-width: 0;
   font-size: var(--size-sm);
-  cursor: grab;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.draft-tray__put,
-.bin-tray__put {
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  background: none;
-  border: 1px solid var(--color-line);
-  padding: 2px 6px;
-  cursor: pointer;
+.draft-tray .tray__label {
+  cursor: grab;
+}
+.tray__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
 }

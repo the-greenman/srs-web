@@ -30,7 +30,14 @@
   import MarkdownText from "$lib/components/MarkdownText.svelte";
   import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
   import ActionMenu from "$lib/components/ActionMenu.svelte";
-  import { NARROW } from "$lib/components/narrow.js";
+  import ArrowLeft from "@lucide/svelte/icons/arrow-left";
+  import CircleQuestionMark from "@lucide/svelte/icons/circle-question-mark";
+  import LinkIcon from "@lucide/svelte/icons/link";
+  import X from "@lucide/svelte/icons/x";
+  import IconButton from "$lib/components/IconButton.svelte";
+  import Input from "$lib/components/Input.svelte";
+  import Select from "$lib/components/Select.svelte";
+  import { NARROW } from "$lib/breakpoints";
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
     addComment,
@@ -448,13 +455,15 @@
   const createEssay = () => openNew(() => newEssay(repo, "Untitled essay"));
   const copyDocument = () => openNew(() => copyEssay(repo, model!));
   let helpOpen = $state(false);
+  const helpId = "essay-md-help";
+  let actionsEl = $state<HTMLElement>();
   const barActions = $derived(
     headerActions(
       {
         onnew: createEssay,
         oncopy: model ? copyDocument : undefined,
         onagent: model ? () => copyForAgent(zoomId ?? undefined) : undefined,
-        onhelp: () => (helpOpen = !helpOpen),
+        onhelp: () => { helpOpen = true; },
         onvariant: toggleVariant,
         oncomments: () => (commentMode = !commentMode),
         onsave: onSave,
@@ -481,9 +490,10 @@
     <div class="essay-shell__heading">
       <span class="eyebrow">{repoName}</span>
       {#if essays.length > 1}
-        <select
+        <Select
           aria-label="Essay"
-          value={essayId}
+          value={essayId ?? ""}
+          options={essays.map((essay) => ({ value: essay.id, label: essay.title }))}
           onchange={(e) => {
             essayId = e.currentTarget.value;
             zoomId = null;
@@ -491,37 +501,35 @@
             reload();
             push();
           }}
-        >
-          {#each essays as essay (essay.id)}<option value={essay.id}>{essay.title}</option>{/each}
-        </select>
+        />
       {/if}
     </div>
-    <div class="essay-shell__actions">
+    <div class="essay-shell__actions" bind:this={actionsEl}>
       {#if documentDirty}<span class="essay-shell__status" data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
       {#if saveMessage}<span class="essay-shell__status" role="status">{saveMessage}</span>{/if}
       <!-- The one header action list, rendered as buttons here and as the overflow menu on narrow screens (CSS picks one). -->
       <div class="essay-shell__buttons">
         {#each barActions as a (a.id)}
           {#if a.id === "help"}
-            <button type="button" class="md-help__btn" data-md-help-trigger aria-label={a.label} aria-expanded={helpOpen} title={a.label} onclick={a.run}>?</button>
+            <IconButton class="md-help__btn" icon={CircleQuestionMark} variant="outline" popovertarget={helpId} popovertargetaction="toggle" label={a.label} aria-expanded={helpOpen} />
           {:else}
             <Button variant={a.variant} active={a.pressed} aria-pressed={a.pressed} data-testid={a.testid} disabled={!a.enabled} onclick={a.run}>{a.label}</Button>
           {/if}
         {/each}
       </div>
-      <ActionMenu class="essay-shell__overflow action-menu--end" testid="header-menu" title="Document actions" label={model?.title ?? repoName} actions={barActions} />
+      <ActionMenu class="essay-shell__overflow" placement="bottom-end" testid="header-menu" title="Document actions" label={model?.title ?? repoName} actions={barActions} />
     </div>
-    <MarkdownHelp open={helpOpen} onclose={() => (helpOpen = false)} />
+    <MarkdownHelp id={helpId} anchor={actionsEl} bind:open={helpOpen} />
   </header>
 
   {#if notice}
     <p class="essay-shell__status" role="status" data-testid="address-notice">
-      {notice} <button type="button" class="block__action" aria-label="Dismiss" onclick={() => (notice = null)}>×</button>
+      {notice} <IconButton size="sm" icon={X} label="Dismiss" onclick={() => (notice = null)} />
     </p>
   {/if}
   {#if linkFallback}
     <p class="essay-shell__status" role="status">
-      Copy this link: <input readonly aria-label="Link" data-testid="link-fallback" value={linkFallback} onfocus={(e) => e.currentTarget.select()} />
+      Copy this link: <Input readonly aria-label="Link" data-testid="link-fallback" value={linkFallback} onfocus={(e) => e.currentTarget.select()} />
     </p>
   {/if}
   {#if error}<p class="essay-shell__error" role="alert" data-testid="essay-error">{error}</p>{/if}
@@ -555,8 +563,8 @@
         {/if}
         {#if zoomId}
           <div class="essay-shell__zoombar">
-            <Button variant="ghost" data-testid="zoom-exit" aria-label="Whole document" onclick={() => setZoom(null)}>←<span class="essay-shell__label"> Whole document</span></Button>
-            <Button variant="ghost" data-testid="zoom-copy-link" aria-label="Copy link" onclick={() => copyLink(zoomId!, true)}><span class="essay-shell__narrow-icon" aria-hidden="true">🔗</span><span class="essay-shell__label">Copy link</span></Button>
+            <Button variant="ghost" data-testid="zoom-exit" aria-label="Whole document" onclick={() => setZoom(null)}><ArrowLeft size={16} aria-hidden="true" /><span class="essay-shell__label"> Whole document</span></Button>
+            <Button variant="ghost" data-testid="zoom-copy-link" aria-label="Copy link" onclick={() => copyLink(zoomId!, true)}><span class="essay-shell__narrow-icon" aria-hidden="true"><LinkIcon size={16} aria-hidden="true" /></span><span class="essay-shell__label">Copy link</span></Button>
           </div>
         {/if}
         {#if items.length === 0}

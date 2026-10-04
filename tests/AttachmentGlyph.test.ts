@@ -15,7 +15,7 @@ it("glyph shows kind initial, hover card text, and pins on click", async () => {
   });
   const btn = getByRole("button");
   expect(btn.textContent).toBe("S");
-  expect(container.querySelector(".hover-card__text")?.textContent).toBe("body");
+  expect(container.querySelector(".attachment-preview__text")?.textContent).toBe("body");
   await fireEvent.click(btn);
   expect(onpin).toHaveBeenCalledOnce();
 });
@@ -59,7 +59,7 @@ it("hover card shows the relation label and a Remove link action", async () => {
     relation: "counters",
     onremove,
   });
-  expect(container.querySelector(".hover-card__kind")?.textContent).toBe("source · counters");
+  expect(container.querySelector(".attachment-preview__kind")?.textContent).toBe("source · counters");
   await fireEvent.click(getByText("Remove link"));
   expect(onremove).toHaveBeenCalledOnce();
 });
@@ -71,7 +71,7 @@ it("pinned item shows the relation label and removes the link", async () => {
     onunpin: vi.fn(),
     onremove,
   });
-  expect(container.querySelector(".pinned__item .hover-card__kind")?.textContent).toBe(
+  expect(container.querySelector(".pinned__item .attachment-preview__kind")?.textContent).toBe(
     "note · evidences"
   );
   await fireEvent.click(getByText("Remove link"));

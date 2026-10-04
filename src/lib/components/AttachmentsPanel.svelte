@@ -1,5 +1,8 @@
 <!-- AttachmentsPanel.svelte — list repo attachments and upload new files (srs-web#99) -->
 <script lang="ts">
+  import ArrowDown from "@lucide/svelte/icons/arrow-down";
+  import Button from "./Button.svelte";
+  import IconButton from "./IconButton.svelte";
   import { tick } from "svelte";
   import { onDestroy } from "svelte";
   import { listAttachments, addAttachment, getAttachmentBytes } from "$lib/srs-client.js";
@@ -73,7 +76,7 @@
       return;
     }
 
-    // idle or error → start/retry fetch
+    // idle or error: start/retry the fetch
     previewErrors.delete(id);
     previewErrors = new Map(previewErrors);
     previewState.set(id, 'loading');
@@ -196,19 +199,22 @@
             {entry.documentId ? entry.documentId.slice(0, 8) + "…" : "—"}
           </span>
           {#if entry.documentId}
-            <button
-              class="attachments-panel__btn"
+            <IconButton
+              size="sm"
+              variant="outline"
+              icon={ArrowDown}
               data-testid="attachment-download-btn"
-              aria-label="Download {entry.title ?? entry.path.split('/').at(-1) ?? entry.path}"
+              label="Download {entry.title ?? entry.path.split('/').at(-1) ?? entry.path}"
               onclick={() => handleDownload(entry)}
-            >↓</button>
-            <button
-              class="attachments-panel__btn attachments-panel__btn--preview"
+            />
+            <Button
+              size="sm"
+              variant="ghost"
               data-testid="attachment-preview-btn"
               aria-label="Preview {entry.title ?? entry.path.split('/').at(-1) ?? entry.path}"
               disabled={previewState.get(entry.documentId) === 'loading'}
               onclick={() => togglePreview(entry)}
-            >{previewState.get(entry.documentId) === 'loaded' ? 'Hide' : 'Preview'}</button>
+            >{previewState.get(entry.documentId) === 'loaded' ? 'Hide' : 'Preview'}</Button>
           {/if}
           {#if entry.documentId && previewState.get(entry.documentId) === 'loading'}
             <span class="attachments-panel__preview-status" data-testid="attachment-preview-loading">Loading…</span>
@@ -253,12 +259,12 @@
     gap: 6px;
   }
   .attachments-panel__error {
-    color: #c00;
+    color: var(--color-error);
     font-size: 0.8em;
     margin: 0;
   }
   .attachments-panel__empty {
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     font-size: 0.85em;
     margin: 0;
   }
@@ -284,36 +290,23 @@
     white-space: nowrap;
   }
   .attachments-panel__id {
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     font-family: monospace;
     font-size: 0.9em;
   }
-  .attachments-panel__btn {
-    background: none;
-    border: 1px solid currentColor;
-    border-radius: 3px;
-    cursor: pointer;
-    padding: 1px 4px;
-    font-size: 0.85em;
-    flex-shrink: 0;
-  }
-  .attachments-panel__btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
   .attachments-panel__preview-status {
     font-size: 0.85em;
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     flex-basis: 100%;
   }
   .attachments-panel__preview-status--error {
-    color: #c00;
+    color: var(--color-error);
   }
   .attachments-panel__thumbnail {
     max-width: 100%;
     max-height: 200px;
     border-radius: 4px;
-    border: 1px solid var(--color-border, #ccc);
+    border: 1px solid var(--color-line);
     display: block;
     flex-basis: 100%;
     object-fit: contain;
@@ -331,7 +324,7 @@
     display: none;
   }
   .attachments-panel__note {
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     font-size: 0.75em;
     margin: 2px 0 0;
   }

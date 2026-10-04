@@ -18,13 +18,11 @@
   opacity: 0.55;
 }
 .layers__fold {
-  width: 1.2em;
   flex: none;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  color: var(--color-muted);
+  min-width: var(--hit-target);
+}
+span.layers__fold {
+  display: inline-block;
 }
 .layers__label {
   flex: 1;
@@ -36,16 +34,15 @@
   border: 0;
   padding: 4px;
   cursor: grab;
-  color: var(--ink);
+  color: var(--color-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .layers__label:focus-visible,
-.eye:focus-visible,
-.block__handle:focus-visible {
-  outline: 2px solid var(--black);
-  outline-offset: 1px;
+.eye:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 .eye {
@@ -53,26 +50,26 @@
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  min-width: var(--hit-target);
+  min-height: var(--hit-target);
   padding: 0;
   background: none;
   border: 0;
   cursor: pointer;
-  color: var(--color-muted);
+  color: var(--icon-btn-fg);
 }
 .eye:hover {
-  color: var(--ink);
+  color: var(--icon-btn-hover-fg);
 }
 .eye--inherited {
   opacity: 0.4;
   cursor: not-allowed;
 }
 .eye.is-off {
-  color: var(--ink);
+  color: var(--color-text);
 }
 
-/* Touch reorder: a ⋯ per row (hover devices keep drag + Alt+Arrows), 44px targets. */
+/* Touch reorder: an ellipsis menu per row (hover devices keep drag + Alt+Arrows), 44px targets. */
 .layers__menu {
   display: none;
 }

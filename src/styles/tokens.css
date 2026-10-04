@@ -34,13 +34,25 @@
   --color-line: var(--grey-2);
   --color-line-soft: var(--grey-1);
   --color-line-strong: var(--black);
+  --color-text-strong: var(--black);
+  --color-muted-strong: var(--grey-4);
+  --color-nav-bg: var(--black);
+  --color-focus: var(--black);
+  --color-overlay: rgba(26, 26, 26, 0.5);
+  --color-on-accent: #fff; /* text on a filled, hue-tinted control */
+  --color-surface-raised: var(--color-page); /* popover and card surface */
+  --color-hover: var(--grey-1);
+  --color-error: #a22b1f; /* the one non-ink signal: errors and destructive intent */
+  --color-error-subtle: color-mix(in srgb, var(--color-error) 8%, transparent);
+  --color-warn: #8a6d00;
+  --color-success: #2a6a2a;
 
   /* on-dark (the nav rail + record headers sit on --black) */
   --color-on-dark: var(--paper);
-  --color-on-dark-muted: rgba(244, 242, 238, 0.5);
-  --color-on-dark-faint: rgba(244, 242, 238, 0.3);
-  --color-on-dark-line: rgba(244, 242, 238, 0.1);
-  --color-on-dark-hover: rgba(244, 242, 238, 0.06);
+  --color-on-dark-muted: color-mix(in srgb, var(--color-on-dark) 50%, transparent);
+  --color-on-dark-faint: color-mix(in srgb, var(--color-on-dark) 30%, transparent);
+  --color-on-dark-line: color-mix(in srgb, var(--color-on-dark) 10%, transparent);
+  --color-on-dark-hover: color-mix(in srgb, var(--color-on-dark) 6%, transparent);
 
   /* ── Typography ─────────────────────────────────────────────────────────
      Distinctive brand pairing — sans for prose, mono for every label/metadata. */
@@ -72,9 +84,33 @@
   --rule-soft: 1px solid var(--color-line-soft);
   --rule-strong: 2px solid var(--color-line-strong);
 
+  /* ── Radius, shadow, focus, hit target ─────────────────────────────────── */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-pill: 999px;
+  --shadow-popover: 0 4px 16px rgba(26, 26, 26, 0.18);
+  --focus-ring: 2px solid var(--color-focus);
+  --focus-offset: 1px;
+  --hit-target: 24px;
+
+  /* ── Stacking scale (popovers live in the top layer and need none) ──────── */
+  --z-sticky: 5;
+  --z-raised: 10;
+  --z-dock: 50;
+  --z-overlay: 100;
+  --z-grain: 9999; /* paper grain: deliberately above everything */
+
   /* ── App layout dimensions ──────────────────────────────────────────────── */
   --nav-width: 264px;
   --inspector-width: 320px;
   --topbar-height: 56px;
   --content-max: 820px;
+  --rail-width: 18rem;
+}
+
+/* Comfortable touch targets on coarse pointers */
+@media (pointer: coarse) {
+  :root {
+    --hit-target: 44px;
+  }
 }

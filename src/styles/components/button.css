@@ -18,12 +18,21 @@
   line-height: 1;
   letter-spacing: 0.01em;
   padding: 12px 32px;
-  border: 1px solid transparent;
-  background: transparent;
+  color: var(--btn-fg);
+  border: 1px solid var(--btn-border);
+  background: var(--btn-bg);
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
   -webkit-appearance: none;
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--btn-hover-border);
+  color: var(--btn-hover-fg);
+}
+.btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 .btn:disabled,
 .btn[aria-disabled="true"] {
@@ -31,75 +40,79 @@
   cursor: not-allowed;
 }
 
+/* Small — rails, trays and panels: compact, wraps its label instead of overflowing. */
+.btn--sm {
+  padding: var(--btn-sm-padding);
+  font-size: var(--btn-sm-size);
+  min-height: var(--hit-target);
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+
 /* Primary — solid ink, the only filled button */
 .btn--primary {
-  background: var(--black);
-  color: var(--paper);
-  border-color: var(--black);
+  --btn-bg: var(--btn-primary-bg);
+  --btn-fg: var(--btn-primary-fg);
+  --btn-border: var(--btn-primary-bg);
+  --btn-hover-border: var(--btn-primary-hover-bg);
+  --btn-hover-fg: var(--btn-primary-fg);
 }
-.btn--primary:hover {
-  background: var(--grey-4);
-  border-color: var(--grey-4);
+.btn--primary:hover:not(:disabled) {
+  background: var(--btn-primary-hover-bg);
 }
 
 /* Secondary — outlined */
 .btn--secondary {
-  color: var(--ink);
-  border-color: var(--grey-4);
+  --btn-border: var(--color-muted-strong);
   font-weight: 400;
-}
-.btn--secondary:hover {
-  border-color: var(--black);
-  color: var(--black);
 }
 
 /* Ghost — low-contrast, tertiary */
 .btn--ghost {
-  color: var(--grey-3);
-  border-color: var(--grey-2);
+  --btn-fg: var(--color-muted);
+  --btn-hover-border: var(--color-muted-strong);
+  --btn-hover-fg: var(--color-muted-strong);
   font-weight: 400;
-}
-.btn--ghost:hover {
-  border-color: var(--grey-4);
-  color: var(--grey-4);
 }
 
 /* Mono — utility/format actions: flat, small, all-caps */
 .btn--mono {
+  --btn-fg: var(--color-muted);
+  --btn-hover-border: var(--color-muted-strong);
+  --btn-hover-fg: var(--color-muted-strong);
   font-family: var(--font-mono);
   font-size: var(--size-xs);
   font-weight: 400;
-  color: var(--grey-3);
-  border-color: var(--grey-2);
   padding: 7px 14px;
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
-.btn--mono:hover {
-  border-color: var(--grey-4);
-  color: var(--grey-4);
+.btn--mono.btn--sm {
+  padding: var(--btn-sm-padding);
 }
 .btn--mono.is-active {
-  color: var(--ink);
-  border-color: var(--black);
-  background: var(--grey-1);
+  color: var(--color-text);
+  border-color: var(--color-text-strong);
+  background: var(--color-line-soft);
 }
 
 /* On-dark — for buttons placed on the nav rail / ink headers */
 .btn--on-dark.btn--primary {
-  background: var(--paper);
-  color: var(--black);
-  border-color: var(--paper);
+  --btn-bg: var(--color-on-dark);
+  --btn-fg: var(--color-text-strong);
+  --btn-border: var(--color-on-dark);
+  --btn-hover-border: var(--color-line-soft);
+  --btn-hover-fg: var(--color-text-strong);
 }
-.btn--on-dark.btn--primary:hover {
-  background: var(--grey-1);
-  border-color: var(--grey-1);
+.btn--on-dark.btn--primary:hover:not(:disabled) {
+  background: var(--color-line-soft);
 }
 .btn--on-dark.btn--mono {
-  color: var(--color-on-dark-muted);
-  border-color: var(--color-on-dark-line);
-}
-.btn--on-dark.btn--mono:hover {
-  color: var(--paper);
-  border-color: var(--color-on-dark-muted);
+  --btn-fg: var(--color-on-dark-muted);
+  --btn-border: var(--color-on-dark-line);
+  --btn-hover-border: var(--color-on-dark-muted);
+  --btn-hover-fg: var(--color-on-dark);
 }

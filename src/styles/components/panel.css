@@ -11,7 +11,16 @@
   top: var(--space-sm);
   align-self: start;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-sm);
+}
+/* Rail content wraps at any rail width (18rem, 15rem or a phone); nothing forces the panel wider. */
+.panel__body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.panel__title {
+  min-width: 0;
 }
 .panel__head {
   display: flex;
@@ -32,22 +41,23 @@ summary.panel__head {
 summary.panel__head::-webkit-details-marker {
   display: none;
 }
-summary.panel__head::before {
-  content: "\25BE";
+.panel__chevron {
+  flex: none;
+  transition: transform 0.1s;
 }
-.panel:not([open]) > summary.panel__head::before {
-  content: "\25B8";
+.panel:not([open]) > summary.panel__head .panel__chevron {
+  transform: rotate(-90deg);
 }
 .panel:not([open]) > summary.panel__head {
   margin-bottom: 0;
 }
 summary.panel__head:focus-visible {
-  outline: 2px solid var(--black);
-  outline-offset: 1px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 .panel__aside {
   margin-left: auto;
-  color: var(--ink);
+  color: var(--color-text);
 }
 .panel__actions {
   display: inline-flex;
@@ -78,6 +88,7 @@ summary.panel__head:focus-visible {
   flex: 1;
   min-height: 0;
 }
+/* bp: rail */
 @media (max-width: 960px) {
   .panel-rail {
     position: static;

@@ -8,6 +8,7 @@
   Usage: show when a record is selected and formMode is null; clicking back clears selection.
 -->
 <script lang="ts">
+  import ArrowLeft from "@lucide/svelte/icons/arrow-left";
   import type { SrsRecord } from "$lib/srs-client.js";
   import RecordDispatch from "../../rendering/RecordDispatch.svelte";
 
@@ -24,7 +25,7 @@
 
 <div data-testid="record-reading" class="reading">
   <button class="reading__back" data-testid="record-reading-back" onclick={onBack}>
-    ← {sectionLabel}
+    <ArrowLeft size={14} aria-hidden="true" /> {sectionLabel}
   </button>
 
   <div class="reading__card">
@@ -43,7 +44,7 @@
     align-items: center;
     gap: 0.25rem;
     font-size: 0.8rem;
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     background: none;
     border: none;
     cursor: pointer;
@@ -52,7 +53,7 @@
   }
 
   .reading__back:hover {
-    color: var(--ink, #111);
+    color: var(--color-text);
   }
 
   .reading__card {

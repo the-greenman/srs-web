@@ -1,7 +1,7 @@
 /* ============================================================================
    component: block (.block) + block-stack (.block-stack)
    ----------------------------------------------------------------------------
-   One paragraph of an essay: a narrow gutter (⋮⋮ drag handle, eye, actions on
+   One paragraph of an essay: a narrow gutter (drag handle, eye, actions on
    hover/focus) beside a small mono title and a plain-text body that reads like a normal document.
    Nesting is layout only: --depth indents.
    Monochrome; drop position is a ruled line / dashed outline, never a colour.
@@ -23,7 +23,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--black);
+  background: var(--color-text-strong);
 }
 .block-stack__item.is-drop-before::before {
   top: -1px;
@@ -32,7 +32,7 @@
   bottom: -1px;
 }
 .block-stack__item.is-drop-into {
-  outline: 1px dashed var(--black);
+  outline: 1px dashed var(--color-text-strong);
   outline-offset: -1px;
 }
 
@@ -55,23 +55,17 @@
   align-items: center;
   gap: 4px;
 }
-.block__handle,
-.block__action {
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  color: var(--color-muted);
-  background: none;
-  border: 0;
-  padding: 2px 0;
+/* Gutter controls are compact on a mouse (a tall stack would stretch every paragraph); the
+   coarse-pointer rule below restores 44px targets. */
+.block__gutter .icon-btn {
+  min-width: 20px;
+  min-height: 20px;
+}
+.block__handle {
   cursor: grab;
 }
-.block__action {
-  cursor: pointer;
-}
-.block__handle:hover,
-.block__handle:focus-visible,
-.block__action:hover {
-  color: var(--ink);
+.block__handle:focus-visible {
+  color: var(--icon-btn-hover-fg);
 }
 /* Opacity, not display: the tools stay in the tab order and appear on keyboard focus. */
 .block__tools {
@@ -85,7 +79,7 @@
 .block:focus-within .block__tools {
   opacity: 1;
 }
-/* ⋯ menu: with hover it joins the hover tools; on touch it is the ONLY gutter tool (no vertical stack). */
+/* Ellipsis menu: with hover it joins the hover tools; on touch it is the ONLY gutter tool (no vertical stack). */
 .block__menu {
   opacity: 0;
 }
@@ -169,7 +163,7 @@
 }
 :is(.block__body, .purpose__body):focus-visible,
 :is(.block__render, .purpose__render):focus-visible {
-  box-shadow: -2px 0 0 var(--black);
+  box-shadow: -2px 0 0 var(--color-text-strong);
 }
 /* Rendered markdown (core renderMarkdown): block flow, so pre-wrap is off. Headings stay close to body size. */
 :is(.block__render, .purpose__render) {
@@ -256,6 +250,7 @@
 .block.is-off {
   opacity: 0.7;
 }
+/* bp: compact */
 @media (max-width: 720px) {
   .block {
     grid-template-columns: 1.5rem minmax(0, 1fr) 2rem;
@@ -266,7 +261,7 @@
   .block {
     grid-template-columns: 44px minmax(0, 1fr) 44px;
   }
-  .block__handle,
+  .block__gutter .block__handle,
   .block__menu .action-menu__trigger {
     min-width: 44px;
     min-height: 44px;
@@ -282,6 +277,7 @@
 
 /* Phone (srs-web#383): the gutter and the margin annotations sit inline in the title row above a
    full-width body, instead of two side columns. CSS grid areas only; markup is unchanged. */
+/* bp: phone */
 @media (max-width: 480px) {
   .essay-shell .block,
   .essay-shell .block:has(.margin--expanded) {
@@ -309,9 +305,5 @@
     grid-area: gutter;
     flex-direction: row;
   }
-  /* The gutter is now at the right edge, so the ⋯ list opens leftward. */
-  .block__menu .action-menu__list {
-    left: auto;
-    right: 0;
-  }
+  /* The gutter is now at the right edge: the popover flips inline when it would overflow, so the list opens leftward. */
 }

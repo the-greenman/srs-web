@@ -1,50 +1,37 @@
 /* ============================================================================
-   component: attachment glyph (.glyph), hover card (.hover-card), pinned list (.pinned)
+   component: attachment glyph (.glyph), hover card (.hover-card), attachment preview, pinned list (.pinned)
    Small coloured marks beside a paragraph; hue comes from --glyph-hue (set per kind).
    Epic: https://github.com/the-greenman/muDemocracy.org/issues/224 (srs-web#329)
    ========================================================================== */
 .glyph-wrap {
-  position: relative;
   display: inline-block;
 }
 .glyph {
   width: 1.25rem;
   height: 1.25rem;
   padding: 0;
-  border: 1px solid hsl(var(--glyph-hue, 0) 45% 40%);
+  border: 1px solid hsl(var(--glyph-hue, 0) var(--hue-pill-s) var(--hue-pill-l-border));
   border-radius: 50%;
-  background: hsl(var(--glyph-hue, 0) 60% 94%);
-  color: hsl(var(--glyph-hue, 0) 45% 30%);
+  background: hsl(var(--glyph-hue, 0) var(--hue-pill-s-bg) var(--hue-pill-l-bg));
+  color: hsl(var(--glyph-hue, 0) var(--hue-pill-s) var(--hue-pill-l-fg));
   font-family: var(--font-mono);
   font-size: var(--size-xs);
   line-height: 1;
   cursor: pointer;
 }
 .glyph.is-pinned {
-  background: hsl(var(--glyph-hue, 0) 55% 26%); /* white text >= 4.5:1 at every hue */
-  color: #fff;
+  background: hsl(var(--glyph-hue, 0) var(--hue-pill-s-solid) var(--hue-pill-l-solid)); /* white text >= 4.5:1 at every hue */
+  color: var(--color-on-accent);
 }
 .glyph:focus-visible {
-  outline: 2px solid var(--black);
-  outline-offset: 1px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 .hover-card {
-  position: absolute;
-  z-index: 10;
-  top: 100%;
-  left: 0;
-  display: none;
   width: 16rem;
   padding: var(--space-xs) var(--space-sm);
-  background: var(--white, #fff);
-  border: 1px solid var(--black);
-  text-align: left;
 }
-.glyph-wrap:hover .hover-card,
-.glyph-wrap:focus-within .hover-card {
-  display: block;
-}
-.hover-card__kind {
+.attachment-preview__kind {
   display: block;
   font-family: var(--font-mono);
   font-size: var(--size-xs);
@@ -52,10 +39,17 @@
   text-transform: uppercase;
   color: var(--color-muted);
 }
-.hover-card__text {
+.attachment-preview__text {
   margin: var(--space-xs) 0 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+.attachment-preview__text--clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .pinned {
   list-style: none;
@@ -63,24 +57,12 @@
   padding: 0;
 }
 .pinned__item {
-  position: relative;
+  overflow-wrap: anywhere;
   padding: var(--space-xs) 0;
   border-bottom: 1px solid var(--color-line-soft);
 }
 .pinned__close {
-  position: absolute;
-  top: var(--space-xs);
-  right: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-}
-.pinned__clamp {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  float: right;
 }
 .pinned__full {
   margin: var(--space-xs) 0 0;
@@ -88,31 +70,11 @@
 }
 .pinned__actions {
   display: flex;
-  gap: var(--space-sm);
+  flex-wrap: wrap;
+  gap: var(--space-xs);
   margin-top: var(--space-xs);
-}
-.pinned__action {
-  border: 0;
-  background: none;
-  padding: 0;
-  cursor: pointer;
-  text-decoration: underline;
 }
 
 .hover-card__remove {
-  display: block;
   margin-top: var(--space-xs);
-  border: 0;
-  background: none;
-  padding: 0;
-  cursor: pointer;
-  text-decoration: underline;
-}
-/* Touch: remove targets are >=44px (the card opens on tap via :focus-within). */
-@media (pointer: coarse) {
-  .hover-card__remove,
-  .pinned__action {
-    min-height: 44px;
-    min-width: 44px;
-  }
 }

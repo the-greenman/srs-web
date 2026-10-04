@@ -1,37 +1,14 @@
 /* ============================================================================
-   component: md-help (.md-help) — "?" button + markdown cheat-sheet popover (MarkdownHelp)
-   The `?` trigger and the popover are separate: the host (essay header bar, position: relative) owns open state. Monochrome.
+   component: md-help (.md-help) — help IconButton + markdown cheat-sheet popover (MarkdownHelp)
+   The help trigger and the popover are separate: the host owns the trigger (a popovertarget invoker) and binds `open`. Monochrome.
    Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
    ========================================================================== */
 .md-help__btn {
-  cursor: pointer;
-  background: none;
-  padding: 0;
-  display: inline-grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  color: var(--color-muted);
-  border: 1px solid var(--color-line);
   border-radius: 50%;
 }
-.md-help__btn:hover,
-.md-help__btn[aria-expanded="true"] {
-  color: var(--ink);
-  border-color: var(--ink);
-}
 .md-help__pop {
-  position: absolute;
-  right: var(--space-sm);
-  top: calc(100% + var(--space-xs));
-  z-index: 10;
   width: 22rem;
-  max-width: 90vw;
   padding: var(--space-sm);
-  background: var(--paper, #fff);
-  border: 1px solid var(--color-line);
   font-size: var(--size-xs);
 }
 .md-help__lead {
@@ -57,17 +34,6 @@
 
 .md-help__close {
   float: right;
-  min-width: 1.75rem;
-  min-height: 1.75rem;
-  font-size: var(--size-sm);
-  line-height: 1;
-  color: var(--color-muted);
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-.md-help__close:hover {
-  color: var(--ink);
 }
 /* Pointer wording: mouse = Ctrl/Cmd+click; touch = long-press. */
 .md-help__touch {
@@ -79,9 +45,5 @@
   }
   .md-help__touch {
     display: inline;
-  }
-  .md-help__close {
-    min-width: 44px;
-    min-height: 44px;
   }
 }

@@ -33,7 +33,7 @@
   outline: none;
 }
 .inline-text__input {
-  border-bottom-color: var(--black);
+  border-bottom-color: var(--color-text-strong);
   outline: none;
 }
 .inline-text.is-empty .inline-text__view {

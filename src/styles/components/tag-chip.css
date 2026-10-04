@@ -11,9 +11,9 @@
   font-family: var(--font-mono);
   font-size: var(--size-xs);
   padding: 3px 8px;
-  border: 1px solid var(--grey-2);
+  border: 1px solid var(--color-line);
   border-radius: 99px;
-  color: var(--grey-4);
+  color: var(--color-muted-strong);
   background: transparent;
   white-space: nowrap;
 }
@@ -25,30 +25,26 @@
 }
 
 .tag-chip--filter:hover {
-  border-color: var(--grey-3);
-  color: var(--ink);
+  border-color: var(--color-muted);
+  color: var(--color-text);
 }
 
 .tag-chip--selected {
-  border-color: var(--ink);
-  color: var(--ink);
+  border-color: var(--color-text);
+  color: var(--color-text);
   font-weight: 500;
 }
 
 .tag-chip__remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
+  /* Inline with the chip text: smaller than the shared hit target. */
+  min-width: 0;
+  min-height: 0;
   padding: 0 1px;
-  cursor: pointer;
-  font-size: var(--size-xs);
   color: inherit;
   opacity: 0.6;
-  line-height: 1;
 }
 
-.tag-chip__remove:hover {
+.tag-chip__remove:hover:not(:disabled) {
   opacity: 1;
+  background: none;
 }

@@ -4,8 +4,12 @@
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224 (srs-web#329)
 -->
 <script lang="ts">
+  import X from '@lucide/svelte/icons/x';
+  import AttachmentPreview from './AttachmentPreview.svelte';
+  import Button from './Button.svelte';
+  import IconButton from './IconButton.svelte';
   import Panel from './Panel.svelte';
-  import { NARROW } from './narrow.js';
+  import { NARROW } from '$lib/breakpoints';
   import { renderMarkdown } from '$lib/srs-client.js';
 
   let open = $state<Set<string>>(new Set());
@@ -43,22 +47,21 @@
     <ul class="pinned">
       {#each items as it (it.id)}
         <li class="pinned__item">
-          <span class="hover-card__kind">{it.relation ? `${it.kind} · ${it.relation}` : it.kind}</span>
-          <strong class="hover-card__title">{it.title}</strong>
-          <button type="button" class="pinned__close" aria-label={`Unpin ${it.title}`} onclick={() => onunpin(it.id)}>×</button>
-          {#if it.text}
-            {#if open.has(it.id)}
-              <div class="pinned__full">{@html renderMarkdown(it.text)}</div>
-            {:else}
-              <p class="hover-card__text pinned__clamp">{it.text}</p>
-            {/if}
-            <div class="pinned__actions">
-              <button type="button" class="pinned__action" aria-expanded={open.has(it.id)} onclick={() => toggle(it.id)}>{open.has(it.id) ? 'Close' : 'Open'}</button>
-              <button type="button" class="pinned__action" onclick={() => copy(it.id, it.text)}>{copied === it.id ? 'Copied' : 'Copy'}</button>
-            </div>
+          <IconButton class="pinned__close" size="sm" icon={X} label={`Unpin ${it.title}`} onclick={() => onunpin(it.id)} />
+          {#if open.has(it.id) && it.text}
+            <AttachmentPreview kind={it.kind} title={it.title} relation={it.relation} />
+            <div class="pinned__full">{@html renderMarkdown(it.text)}</div>
+          {:else}
+            <AttachmentPreview kind={it.kind} title={it.title} relation={it.relation} text={it.text} clamp />
           {/if}
-          {#if onremove}
-            <div class="pinned__actions"><button type="button" class="pinned__action" onclick={() => onremove(it.id)}>Remove link</button></div>
+          {#if it.text || onremove}
+            <div class="pinned__actions" data-part="actions">
+              {#if it.text}
+                <Button size="sm" variant="ghost" aria-expanded={open.has(it.id)} onclick={() => toggle(it.id)}>{open.has(it.id) ? 'Close' : 'Open'}</Button>
+                <Button size="sm" variant="ghost" onclick={() => copy(it.id, it.text)}>{copied === it.id ? 'Copied' : 'Copy'}</Button>
+              {/if}
+              {#if onremove}<Button size="sm" variant="ghost" onclick={() => onremove(it.id)}>Remove link</Button>{/if}
+            </div>
           {/if}
         </li>
       {/each}

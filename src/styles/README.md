@@ -17,10 +17,40 @@ so cascade order is explicit and independent of import order:
 tokens  →  base  →  layout  →  components  →  theme  →  utilities
 ```
 
+## Token tiers (ADR-020)
+
+Three tiers, each referencing the one above, so a skin re-points the tier it needs:
+
+| Tier | Where | Examples | Read by |
+|---|---|---|---|
+| Primitive | `tokens.css` | `--paper`, `--ink`, `--black`, `--grey-1..4` | semantic tokens only, never components |
+| Semantic | `tokens.css` | `--color-text`, `--color-surface-raised`, `--color-on-dark`, `--radius-md`, `--shadow-popover`, `--z-overlay`, `--focus-ring`, `--hit-target`, `--rail-width` | components and component tokens |
+| Component | `tokens-components.css` | `--btn-bg`, `--btn-primary-bg`, `--icon-btn-fg`, `--popover-bg`, `--hue-pill-s` | the component's own CSS |
+
+Component tokens are named `--<block>-<property>[-<state>]` and are declared on `:root` in the
+`tokens` layer, **never on the component selector**: a skin's `:root[data-theme]` rule would lose
+to the component's own declaration. The component reads them (`.btn { background: var(--btn-bg) }`);
+a variant re-assigns the token on the variant selector (`.btn--primary { --btn-bg: var(--btn-primary-bg) }`).
+No `var(--x, <colour>)` fallbacks: a read token must be defined.
+`tests/styles-tokens.test.ts` enforces this for `src/styles/**` and every `src/lib/components`
+`<style>` block (shells, editors and `App.svelte` are out of scope until #424).
+
+## `data-part`
+
+`data-part="<name>"` marks documented component internals (short lower-kebab-case, scoped to the
+component, e.g. `.block [data-part="handle"]`). BEM classes stay; `data-part` is additive. The tables
+are in [ADR-020](../../docs/adr/020-icon-set-and-component-token-api.md).
+
+## Breakpoints
+
+One source: `src/lib/breakpoints.ts` (`BREAKPOINTS`, `NARROW`). CSS custom properties cannot be used
+inside `@media`, so CSS keeps literal widths with a `/* bp: <role> */` comment above each query, and
+`tests/breakpoints.test.ts` fails when a width under `src/` is not in `BREAKPOINTS`.
+
 ```
 src/styles/
   index.css            entry — declares the layer order and @imports everything
-  tokens.css           design variables only (palette, type, spacing, dimensions)
+  tokens.css           primitive + semantic tokens (palette, colour roles, type, spacing, radius, shadow, z-index, focus, hit target)
   base.css             reset, document defaults, typography, paper grain
   layout.css           the nav | main | inspector app shell
   utilities.css        single-purpose helpers (win against components)
@@ -35,6 +65,11 @@ src/styles/
     field.css          .field        form control + label/help/error + save bar
     diagnostics.css    .diag         validation panel
     lifecycle.css      .lifecycle    status transition control
+    icon-button.css    .icon-btn     the one small icon control (Lucide)
+    popover.css        .popover      the one floating surface (native top-layer popover)
+    draft-tray.css     .tray         DraftTray and BinTray rows
+    ... and one file per remaining block (see index.css)
+  tokens-components.css  component tokens (--btn-*, --icon-btn-*, --popover-*, --hue-pill-*)
 ```
 
 ## Conventions
@@ -42,7 +77,7 @@ src/styles/
 - **BEM naming.** `.block`, `.block__element`, `.block--modifier`. Each component
   is self-contained and reusable in isolation.
 - **Tokens only.** Components never hard-code a colour, font, or size — they
-  reference custom properties from `tokens.css`. Rebranding is a one-file change.
+  reference semantic or component tokens, never the raw palette. Rebranding is a one-file change.
 - **No accent colour.** This is a brand constraint, not an oversight. Hierarchy
   and state come from weight, size, fill, and mono/sans contrast. Validation
   severity (`diagnostics.css`) and invalid fields (`field.css`) follow this rule —
@@ -57,10 +92,8 @@ src/styles/
 @import url("./styles/index.css");
 ```
 
-The `ink-surface` SVG turbulence filter (printed-ink texture, referenced by `card.css`) is
-defined only in `GovernanceShell.svelte`. Other hosts, including `/styleguide`, do not define it,
-so `filter: url(#ink-surface)` is a no-op there and the texture is absent. Consolidating the
-definition into one host-independent place is #421 work.
+The `ink-surface` SVG turbulence filter (printed-ink texture, referenced by `nav.css` and
+`card.css`) is defined once in `index.html`, so every host, including `/styleguide`, has it.
 
 The Vite entry wires `index.css` in once **B1** lands
 ([#2](https://github.com/the-greenman/srs-web/issues/2)).
@@ -99,7 +132,9 @@ comments, paragraphs, panels and trays, form controls. It is the single specimen
 ## Reskinning (the `theme` layer)
 
 - **Re-point tokens.** The normal way to reskin; it works from any layer. `themes/demo.css`
-  (`:root[data-theme="demo"]`) does exactly and only this.
+  (`:root[data-theme="demo"]`) does exactly and only this, and only for semantic tokens: it gives
+  every colour token a sentinel value, so `/styleguide` under the Demo theme proves (e2e) that no
+  component paints a default palette colour.
 - **`theme` layer.** Sits between `components` and `utilities` as the documented escape hatch for
   overriding a component rule that tokens cannot reach.
 - **Known limit.** Unlayered scoped Svelte `<style>` blocks (e.g. the dark-mode blocks in

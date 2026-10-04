@@ -37,11 +37,11 @@
   bottom: 0;
   width: 4px;
   cursor: col-resize;
-  z-index: 10;
+  z-index: var(--z-raised);
 }
 .inspector__drag-handle:hover,
 .inspector__drag-handle:active {
-  background: var(--grey-4, #ccc);
+  background: var(--color-muted-strong);
 }
 
 .inspector__section + .inspector__section {
@@ -49,6 +49,7 @@
 }
 
 /* Force-show on narrow screens (toggle via JS) */
+/* bp: wide */
 @media (max-width: 1100px) {
   .inspector--open {
     display: flex !important;
@@ -56,9 +57,9 @@
     right: 0;
     top: 0;
     bottom: 0;
-    width: var(--inspector-width, 320px);
-    z-index: 50;
-    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
+    width: var(--inspector-width);
+    z-index: var(--z-dock);
+    box-shadow: -4px 0 16px color-mix(in srgb, var(--color-text-strong) 12%, transparent);
   }
 }
 
@@ -68,7 +69,7 @@
   padding-bottom: 8px;
   border-bottom: var(--rule-strong);
   letter-spacing: 0.1em;
-  color: var(--grey-3);
+  color: var(--color-muted);
 }
 
 /* ── Key/value metadata list (provenance, ids, timestamps) ────────────────── */
@@ -88,11 +89,11 @@
   border-bottom: none;
 }
 .meta__key {
-  color: var(--grey-3);
+  color: var(--color-muted);
   letter-spacing: 0.04em;
 }
 .meta__val {
   margin: 0;
-  color: var(--ink);
+  color: var(--color-text);
   word-break: break-word;
 }

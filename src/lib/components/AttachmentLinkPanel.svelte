@@ -1,5 +1,9 @@
 <!-- AttachmentLinkPanel.svelte — show and link attachments for a selected record (srs-web#99) -->
 <script lang="ts">
+  import ArrowDown from "@lucide/svelte/icons/arrow-down";
+  import Check from "@lucide/svelte/icons/check";
+  import Button from "./Button.svelte";
+  import IconButton from "./IconButton.svelte";
   import {
     getRecordAttachments,
     listAttachments,
@@ -100,12 +104,14 @@
           <span class="link-panel__name" title={attachment.contentPath ?? attachment.documentId}>
             {attachment.title ?? attachment.contentPath?.split("/").at(-1) ?? attachment.documentId}
           </span>
-          <button
-            class="link-panel__btn"
+          <IconButton
+            size="sm"
+            variant="outline"
+            icon={ArrowDown}
             data-testid="linked-attachment-download-btn"
-            aria-label="Download {attachment.title ?? attachment.documentId}"
+            label="Download {attachment.title ?? attachment.documentId}"
             onclick={() => handleDownload(attachment)}
-          >↓</button>
+          />
         </li>
       {/each}
     </ul>
@@ -121,13 +127,14 @@
             <span class="link-panel__all-name" title={entry.path}>
               {entry.title ?? entry.path.split("/").at(-1) ?? entry.path}
             </span>
-            <button
-              class="link-panel__btn"
+            <Button
+              size="sm"
+              variant="ghost"
               data-testid="link-attachment-btn"
               disabled={alreadyLinked || !entry.documentId || linking}
               aria-label={alreadyLinked ? "Already linked" : "Link this attachment"}
               onclick={() => entry.documentId && handleLink(entry.documentId)}
-            >{alreadyLinked ? "✓" : "Link"}</button>
+            >{#if alreadyLinked}<Check size={14} aria-hidden="true" />{:else}Link{/if}</Button>
           </li>
         {/each}
       </ul>
@@ -142,12 +149,12 @@
     gap: 6px;
   }
   .link-panel__error {
-    color: #c00;
+    color: var(--color-error);
     font-size: 0.8em;
     margin: 0;
   }
   .link-panel__empty {
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     font-size: 0.85em;
     margin: 0;
   }
@@ -174,25 +181,12 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .link-panel__btn {
-    background: none;
-    border: 1px solid currentColor;
-    border-radius: 3px;
-    cursor: pointer;
-    padding: 1px 6px;
-    font-size: 0.85em;
-    flex-shrink: 0;
-  }
-  .link-panel__btn:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
   .link-panel__picker {
     margin-top: 4px;
   }
   .link-panel__summary {
     font-size: 0.85em;
     cursor: pointer;
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
   }
 </style>

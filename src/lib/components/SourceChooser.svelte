@@ -1,4 +1,7 @@
 <script lang="ts">
+  import CornerLeftUp from "@lucide/svelte/icons/corner-left-up";
+  import X from "@lucide/svelte/icons/x";
+  import IconButton from "./IconButton.svelte";
   import type {
     DocumentHandle,
     StorageEntry,
@@ -337,11 +340,12 @@
           <span class="cloud-browser__eyebrow">{BROWSE_LABEL[browsing]}</span>
           <h2 id="cloud-browser-title">Choose a repository</h2>
         </div>
-        <button
+        <IconButton
           class="cloud-browser__close"
-          aria-label="Close browser"
+          icon={X}
+          label="Close browser"
           onclick={closeBrowser}
-        >×</button>
+        />
       </header>
 
       <div class="cloud-browser__path">
@@ -381,7 +385,7 @@
       <div class="cloud-browser__list">
         {#if parents.length > 0}
           <button class="cloud-browser__entry" onclick={goUp}>
-            <span class="cloud-browser__kind">↑</span>
+            <span class="cloud-browser__kind"><CornerLeftUp size={16} aria-hidden="true" /></span>
             <span>Parent folder</span>
           </button>
         {/if}
@@ -444,15 +448,15 @@
   }
 
   .source-chooser__local {
-    border: 1px solid var(--black);
-    background: var(--black);
-    color: var(--paper);
+    border: 1px solid var(--color-text-strong);
+    background: var(--color-text-strong);
+    color: var(--color-on-dark);
     cursor: pointer;
     font-family: var(--font-sans);
   }
 
   .source-chooser__local:hover {
-    background: var(--grey-4);
+    background: var(--color-muted-strong);
   }
 
   .source-chooser__local.is-busy {
@@ -468,7 +472,7 @@
   }
 
   .source-chooser__error {
-    color: #a22b1f;
+    color: var(--color-error);
     max-width: 38rem;
     margin: 0.75rem 0 0;
     font-size: 0.875rem;
@@ -477,22 +481,22 @@
   .cloud-browser {
     position: fixed;
     inset: 0;
-    z-index: 100;
+    z-index: var(--z-overlay);
     display: grid;
     place-items: center;
     padding: 1rem;
     background:
-      linear-gradient(135deg, rgb(10 20 28 / 82%), rgb(32 22 12 / 78%)),
-      repeating-linear-gradient(90deg, transparent 0 24px, rgb(255 255 255 / 3%) 24px 25px);
+      linear-gradient(135deg, color-mix(in srgb, var(--color-nav-bg) 82%, transparent), color-mix(in srgb, var(--color-text-strong) 78%, transparent)),
+      repeating-linear-gradient(90deg, transparent 0 24px, color-mix(in srgb, var(--color-on-dark) 3%, transparent) 24px 25px);
   }
 
   .cloud-browser__panel {
     width: min(42rem, 100%);
     max-height: min(42rem, calc(100vh - 2rem));
     overflow: hidden;
-    background: var(--paper);
-    border: 1px solid var(--black);
-    box-shadow: 12px 12px 0 rgb(0 0 0 / 25%);
+    background: var(--color-bg);
+    border: 1px solid var(--color-text-strong);
+    box-shadow: 12px 12px 0 color-mix(in srgb, var(--color-text-strong) 25%, transparent);
   }
 
   .cloud-browser__header {
@@ -500,8 +504,8 @@
     justify-content: space-between;
     gap: 2rem;
     padding: 1.25rem 1.5rem;
-    color: var(--paper);
-    background: var(--black);
+    color: var(--color-on-dark);
+    background: var(--color-text-strong);
   }
 
   .cloud-browser__header h2 {
@@ -518,25 +522,17 @@
     text-transform: uppercase;
   }
 
-  .cloud-browser__close {
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font-size: 1.75rem;
-    cursor: pointer;
-  }
-
   .cloud-browser__path {
     padding: 0.75rem 1.5rem;
-    border-bottom: 1px solid var(--grey-2);
-    color: var(--grey-3);
+    border-bottom: 1px solid var(--color-line);
+    color: var(--color-muted);
   }
 
   .cloud-browser__controls {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    border-bottom: 1px solid var(--grey-2);
+    border-bottom: 1px solid var(--color-line);
   }
 
   .cloud-browser__filter {
@@ -545,7 +541,7 @@
     box-sizing: border-box;
     padding: 0.625rem 1.5rem;
     border: 0;
-    background: var(--paper);
+    background: var(--color-bg);
     font-family: var(--font-sans);
     font-size: 0.9rem;
   }
@@ -556,7 +552,7 @@
     gap: 0.375rem;
     padding-right: 1.5rem;
     white-space: nowrap;
-    color: var(--grey-3);
+    color: var(--color-muted);
     font-family: var(--font-mono);
     font-size: var(--size-xs);
     letter-spacing: var(--tracking-label);
@@ -565,7 +561,7 @@
   }
 
   .cloud-browser__filter:focus {
-    outline: 2px solid var(--black);
+    outline: 2px solid var(--color-text-strong);
     outline-offset: -2px;
   }
 
@@ -576,7 +572,7 @@
     gap: 0.75rem;
     min-height: 1.5rem;
     padding: 0.5rem 1.5rem;
-    border-bottom: 1px solid var(--grey-2);
+    border-bottom: 1px solid var(--color-line);
   }
 
   .cloud-browser__scanbar:empty {
@@ -584,7 +580,7 @@
   }
 
   .cloud-browser__scan-status {
-    color: var(--grey-3);
+    color: var(--color-muted);
     font-family: var(--font-mono);
     font-size: var(--size-xs);
     letter-spacing: var(--tracking-label);
@@ -594,8 +590,8 @@
   .cloud-browser__scan-btn {
     margin-left: auto;
     padding: 0.375rem 0.75rem;
-    border: 1px solid var(--black);
-    background: var(--paper);
+    border: 1px solid var(--color-text-strong);
+    background: var(--color-bg);
     font-family: var(--font-mono);
     font-size: var(--size-xs);
     letter-spacing: var(--tracking-label);
@@ -604,14 +600,14 @@
   }
 
   .cloud-browser__scan-btn:hover {
-    background: var(--grey-1);
+    background: var(--color-line-soft);
   }
 
   .cloud-browser__section {
     margin: 0;
     padding: 0.5rem 1.5rem;
-    background: var(--grey-1);
-    color: var(--grey-3);
+    background: var(--color-line-soft);
+    color: var(--color-muted);
     font-family: var(--font-mono);
     font-size: var(--size-xs);
     letter-spacing: var(--tracking-label);
@@ -619,7 +615,7 @@
   }
 
   .cloud-browser__entry--found {
-    background: color-mix(in srgb, var(--grey-1) 60%, transparent);
+    background: color-mix(in srgb, var(--color-line-soft) 60%, transparent);
   }
 
   .cloud-browser__name {
@@ -641,25 +637,26 @@
     gap: 1rem;
     padding: 1rem 1.5rem;
     border: 0;
-    border-bottom: 1px solid var(--grey-2);
+    border-bottom: 1px solid var(--color-line);
     background: transparent;
     text-align: left;
     cursor: pointer;
   }
 
   .cloud-browser__entry:hover {
-    background: var(--grey-1);
+    background: var(--color-line-soft);
   }
 
   .cloud-browser__kind {
-    color: var(--grey-3);
+    color: var(--color-muted);
   }
 
   .cloud-browser__empty {
     padding: 2rem 1.5rem;
-    color: var(--grey-3);
+    color: var(--color-muted);
   }
 
+  /* bp: form */
   @media (max-width: 640px) {
     .source-chooser {
       grid-template-columns: 1fr;
