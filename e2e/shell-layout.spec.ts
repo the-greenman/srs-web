@@ -25,7 +25,7 @@ async function openGovernance(page: Page) {
 }
 
 // Until Generic's nav is a drawer (Phase 5) the phone picker is the mobile button.
-async function openEditor(page: Page, id: "governance" | "guides") {
+async function openEditor(page: Page, id: "governance" | "guides" | "essay") {
   const desktop = page.getByTestId(`package-editor-${id}`);
   await ((await desktop.isVisible())
     ? desktop
@@ -242,5 +242,72 @@ test.describe("drawers at 375px", () => {
     await expect(page.getByTestId("guides-section-item").first()).toBeVisible({ timeout: 5000 });
     await openInspectorDrawer(page);
     await expect(page.getByTestId("guides-preview-pane")).toBeVisible();
+  });
+});
+
+async function openEssay(page: Page) {
+  await load(page, "essay.srsj");
+  await openEditor(page, "essay");
+  await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
+}
+
+async function setWide(page: Page, on: boolean) {
+  await page.getByTestId("toolbar-menu-view").click();
+  const item = page.getByTestId("margin-variant");
+  if ((await item.getAttribute("aria-checked")) !== String(on)) await item.click();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".app")).toHaveAttribute("data-margin", on ? "expanded" : "compact");
+}
+
+const pageWidth = (page: Page) =>
+  page.locator(".essay-shell__page").evaluate((el) => Math.round(el.getBoundingClientRect().width));
+
+test.describe("Essay on the frame: Wide", () => {
+  test.use({ viewport: { width: 1920, height: 1000 } });
+
+  test("Wide widens the page past 46rem; off is the 46rem column; it persists across a reload", async ({
+    page,
+  }) => {
+    await openEssay(page);
+    expect(await pageWidth(page)).toBeLessThanOrEqual(46 * 16 + 1);
+    await setWide(page, true);
+    expect(await pageWidth(page)).toBeGreaterThan(46 * 16 + 40);
+    await setWide(page, false);
+    expect(await pageWidth(page)).toBeLessThanOrEqual(46 * 16 + 1);
+    await setWide(page, true);
+
+    await page.reload();
+    await openEssay(page);
+    await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
+    expect(await pageWidth(page)).toBeGreaterThan(46 * 16 + 40);
+  });
+});
+
+test.describe("Essay on the frame: geometry", () => {
+  test("1280 with Wide on: no horizontal overflow in main or the workspace; the margin stays clear of the inspector", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await openEssay(page);
+    await setWide(page, true);
+    for (const sel of [".app__main", ".app__main > .workspace"]) {
+      const over = await page.locator(sel).evaluate((el) => el.scrollWidth > el.clientWidth);
+      expect(over, `${sel} overflows horizontally`).toBe(false);
+    }
+    const insp = (await page.locator(".app__inspector").boundingBox())!;
+    const pageBox = (await page.locator(".essay-shell__page").boundingBox())!;
+    expect(pageBox.x + pageBox.width).toBeLessThanOrEqual(insp.x + 1);
+  });
+
+  test("375: the bar is one row with the inspector trigger and the rail opens in the drawer", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 800 });
+    await openEssay(page);
+    expect((await page.getByTestId("toolbar").boundingBox())!.height).toBeLessThan(72);
+    await expect(page.getByTestId("inspector-trigger")).toBeVisible();
+    await expect(page.getByTestId("nav-trigger")).toHaveCount(0); // the essay has no nav (#425)
+    await page.getByTestId("inspector-trigger").click();
+    await expect(page.getByTestId("shell-drawer-inspector").getByTestId("rail")).toBeVisible();
   });
 });

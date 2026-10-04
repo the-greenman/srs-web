@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { devices, expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { openInspectorDrawer } from "./helpers.js";
 
 /** srs-web#383: phone layout of the essay editor (text width, header overflow, inline margin, thread/zoom/help). */
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
@@ -36,6 +37,8 @@ for (const { name, viewport } of widths) {
       await open(page);
       const box = (await page.locator(".essay-shell__page .block__render").first().boundingBox())!;
       expect(box.width / viewport.width).toBeGreaterThanOrEqual(0.85);
+      // The panels live in the closed inspector drawer: open it, then they start collapsed.
+      await openInspectorDrawer(page);
       for (const title of ["Layers", "Draft"]) {
         await expect(page.locator("details.panel", { hasText: title }).first()).not.toHaveAttribute(
           "open",
@@ -48,6 +51,7 @@ for (const { name, viewport } of widths) {
       await open(page);
       expect((await page.getByTestId("toolbar").boundingBox())!.height).toBeLessThan(72);
       await expect(page.getByTestId("comment-mode")).toBeHidden();
+      await expect(page.getByTestId("inspector-trigger")).toBeVisible(); // the rail's trigger sits in the bar
       await page.getByTestId("header-menu").tap();
       for (const id of [
         "new-document",

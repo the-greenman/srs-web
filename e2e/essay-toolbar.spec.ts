@@ -42,7 +42,7 @@ for (const width of [1440, 768]) {
     expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(24);
   });
 
-  test(`${width}: Margin notes and Comments are menuitemcheckbox; Comments shows mixed`, async ({ page }) => {
+  test(`${width}: Wide and Comments are menuitemcheckbox; Comments shows mixed`, async ({ page }) => {
     await open(page, width);
     await openMenu(page, "View");
     const margin = page.getByTestId("margin-variant");
@@ -52,7 +52,7 @@ for (const width of [1440, 768]) {
     await expect(margin).toHaveAttribute("aria-checked", "false");
     await margin.click();
     await expect(margin).toHaveAttribute("aria-checked", "true"); // View stays open on toggle
-    await expect(page.locator(".essay-shell")).toHaveAttribute("data-margin", "expanded");
+    await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
     await closeMenus(page);
     await items(page).nth(1).getByTestId("comment-badge").click();
     expect(await commentsState(page)).toBe("mixed");
@@ -78,8 +78,8 @@ for (const width of [1440, 768]) {
 test("390: the bar is title, Save and one overflow; every action is in it", async ({ page }) => {
   await open(page, 390);
   const bar = page.getByTestId("toolbar");
-  // title + one overflow (+ Save when the document is writable; a loaded .srsj is not)
-  await expect(bar.getByRole("button")).toHaveCount(1 + (await page.getByTestId("save-document").count()));
+  // title + one overflow + the inspector trigger (the rail is a drawer on a phone) (+ Save when the document is writable; a loaded .srsj is not)
+  await expect(bar.getByRole("button")).toHaveCount(2 + (await page.getByTestId("save-document").count()));
   await expect(page.getByTestId("header-menu")).toBeVisible();
   await expect(page.getByRole("button", { name: "Document", exact: true })).toHaveCount(0);
   expect((await bar.boundingBox())!.height).toBeLessThan(72);
@@ -96,7 +96,7 @@ const OLD_TEN: [string, string, "Document" | "View" | "Go" | null][] = [
   ["Copy for agent", "copy-for-agent", "Document"],
   ["Export", "toolbar-export", "Document"],
   ["Export markdown", "export-markdown", "Document"],
-  ["Margin notes", "margin-variant", "View"],
+  ["Wide", "margin-variant", "View"],
   ["Comments", "comment-mode", "View"],
   ["Explorer", "toolbar-explorer", "Go"],
   ["Open another", "toolbar-other", "Go"],
@@ -111,7 +111,7 @@ for (const width of [1440, 768, 390]) {
       const target =
         width !== 390 && !group
           ? page.getByRole("button", { name, exact: true })
-          : page.getByRole(/margin|comment/i.test(name) ? "menuitemcheckbox" : "menuitem", { name, exact: true });
+          : page.getByRole(/wide|comment/i.test(name) ? "menuitemcheckbox" : "menuitem", { name, exact: true });
       if (name === "Explorer" && (await page.getByTestId(testid).count()) === 0) {
         await closeMenus(page); // no Explorer in this host
         continue;

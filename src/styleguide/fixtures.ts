@@ -6,6 +6,7 @@ import type { Comment } from "$lib/comments";
 import type { Layer } from "$lib/components/LayersPanel.svelte";
 import type { MenuAction } from "$lib/components/menu-action";
 import { headerActions } from "$lib/essay/header-actions";
+import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor } from "$lib/srs-client";
 import type { Status } from "$lib/types";
 
@@ -450,7 +451,6 @@ export const toolbarActions = headerActions(
     oncopy: nop,
     onagent: nop,
     onhelp: nop,
-    onvariant: nop,
     oncomments: nop,
     onsave: nop,
     onexport: nop,
@@ -458,7 +458,7 @@ export const toolbarActions = headerActions(
     onexplorer: nop,
     onopenanother: nop,
   },
-  { expanded: false, comments: "mixed", saving: false, dirty: true }
+  { shell: new ShellState({ wideEnabled: true }), comments: "mixed", saving: false, dirty: true }
 );
 
 /** Paragraph strip specimens: one-line, titled, and a long title the strip may cover the end of. */

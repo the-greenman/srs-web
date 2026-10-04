@@ -9,6 +9,8 @@ import Eye from "@lucide/svelte/icons/eye";
 import FileText from "@lucide/svelte/icons/file-text";
 import type { IconComponent } from "../components/icon.js";
 import type { ToolbarAction } from "../components/menu-action.js";
+import { wideAction } from "../components/shell-actions.js";
+import type { ShellState } from "../shell-context.svelte.js";
 
 export type HeaderGroup = "document" | "view" | "go" | "help";
 
@@ -29,7 +31,6 @@ export interface HeaderHandlers {
   /** Copy the agent handoff (whole essay, or the zoom target). Absent while no essay is open. */
   onagent?: () => void;
   onhelp: () => void;
-  onvariant: () => void;
   oncomments: () => void;
   onsave?: () => void;
   onexport: () => void;
@@ -42,7 +43,8 @@ export interface HeaderHandlers {
 export function headerActions(
   h: HeaderHandlers,
   s: {
-    expanded: boolean;
+    /** The shell's state: View > Wide is its one toggle (`wideAction`), present only when the shell has the capability. */
+    shell: ShellState;
     comments: "all" | "none" | "mixed";
     saving: boolean;
     /** Anything to save; Save is disabled when clean (D4). */
@@ -105,16 +107,7 @@ export function headerActions(
       enabled: true,
       testid: "export-markdown",
     },
-    {
-      id: "margin",
-      group: "view",
-      kind: "toggle",
-      label: "Margin notes",
-      run: h.onvariant,
-      enabled: true,
-      checked: s.expanded,
-      testid: "margin-variant",
-    },
+    wideAction(s.shell) as HeaderAction | undefined,
     {
       id: "comments",
       group: "view",

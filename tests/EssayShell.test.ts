@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import { fireEvent, render } from "@testing-library/svelte";
-import { createRawSnippet, tick } from "svelte";
-import { expect, it, vi } from "vitest";
+import { tick } from "svelte";
+import { beforeEach, expect, it, vi } from "vitest";
+import EssayAgentHost from "./EssayAgentHost.svelte";
 import type { EssayModel } from "../src/lib/essay/essay-document.js";
 
 const model: EssayModel = {
@@ -21,6 +22,23 @@ const model: EssayModel = {
   related: {},
   sharedIn: {},
 };
+// The frame turns the rail into a closed drawer at <= 1100px (happy-dom is 1024 wide): these tests
+// exercise the desktop frame, so stub a wide viewport (#424).
+const store = new Map<string, string>();
+beforeEach(() => {
+  store.clear();
+  vi.stubGlobal("localStorage", {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+  });
+  vi.stubGlobal("matchMedia", (q: string) => ({
+    matches: Number(/max-width:\s*(\d+)px/.exec(q)?.[1]) >= 1440,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+});
+
 vi.mock("../src/lib/srs-client.js", () => ({ renderMarkdown: (md: string) => `<p>${md}</p>` }));
 const addParagraph = vi.hoisted(() => vi.fn());
 const doc = vi.hoisted(() => ({
@@ -150,7 +168,13 @@ it("View > Comments is aria-checked mixed with one thread open, then goes all, t
 it("Save is disabled with nothing to save and enabled once the document is dirty", async () => {
   doc.loadEssay.mockReturnValue(model);
   const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
-  const props = { repo: {} as never, repoName: "r", onExport: () => {}, onSave: () => {}, documentRevision: 1 };
+  const props = {
+    repo: {} as never,
+    repoName: "r",
+    onExport: () => {},
+    onSave: () => {},
+    documentRevision: 1,
+  };
   const { getByTestId, rerender } = render(EssayShell, props);
   await tick();
   expect(getByTestId("save-document").hasAttribute("disabled")).toBe(true);
@@ -181,7 +205,7 @@ it("zoom renders only the zoomed paragraph, with its thread, until exited", asyn
   expect(container.querySelectorAll(".block")).toHaveLength(2);
 });
 
-it("a relation indicator focuses the other paragraph; the variant toggle is remembered", async () => {
+it("a relation indicator focuses the other paragraph; Wide is the one toggle and is remembered", async () => {
   doc.loadEssay.mockReturnValue({
     ...model,
     entries: [...model.entries, { instanceId: "q", depth: 0, hasChildren: false } as never],
@@ -202,7 +226,7 @@ it("a relation indicator focuses the other paragraph; the variant toggle is reme
   await tick();
   await fireEvent.click(getByTestId("relation-indicator"));
   expect((document.activeElement as HTMLElement | null)?.dataset.focusKey).toBe("body:q");
-  const shell = container.querySelector(".essay-shell") as HTMLElement;
+  const shell = container.querySelector(".app") as HTMLElement; // the ONE data-margin carrier
   expect(shell.dataset.margin).toBe("compact");
   expect(container.querySelector(".margin--expanded")).toBeNull();
   await fireEvent.click(getByTestId("toolbar-menu-view"));
@@ -211,6 +235,8 @@ it("a relation indicator focuses the other paragraph; the variant toggle is reme
   expect(getByTestId("margin-variant").getAttribute("aria-checked")).toBe("true");
   expect(shell.dataset.margin).toBe("expanded");
   expect(container.querySelector(".margin--expanded")).not.toBeNull();
+  expect(container.querySelector(".essay-shell[data-margin]")).toBeNull(); // no second carrier
+  expect(store.get("srs-web.margin")).toBe("expanded");
 });
 
 it("a shared badge names the other documents; clicking it makes a local copy; New/Copy document go through the document ops", async () => {
@@ -255,7 +281,6 @@ it("the Agents panel shows connected/total, and a feed click leaves zoom and foc
     },
   };
   doc.loadEssay.mockReturnValue(two);
-  const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
   const agentStatus = {
     connected: 1,
     total: 2,
@@ -271,13 +296,10 @@ it("the Agents panel shows connected/total, and a feed click leaves zoom and foc
       },
     ],
   };
-  const { container, getByTestId, getByText } = render(EssayShell, {
+  const { container, getByTestId, getByText } = render(EssayAgentHost, {
     repo: {} as never,
     repoName: "r",
     onExport: () => {},
-    agentPanel: createRawSnippet((ctx: () => { lastActivity(id: string): string } | undefined) => ({
-      render: () => `<span>controls ${ctx()?.lastActivity("agent:a")}</span>`,
-    })),
     agentStatus,
   });
   await tick();
@@ -355,4 +377,41 @@ it("the end-of-page Add paragraph button appends via addParagraph (all devices)"
   await tick();
   await fireEvent.click(getByTestId("add-paragraph"));
   expect(addParagraph).toHaveBeenCalledWith({}, expect.objectContaining({ essayId: "e" }));
+});
+
+it("the inspector trigger's badge counts agent writes since the drawer was last open, and clears on open", async () => {
+  doc.loadEssay.mockReturnValue(model);
+  vi.stubGlobal("matchMedia", (q: string) => ({
+    matches: Number(/max-width:\s*(\d+)px/.exec(q)?.[1]) >= 1000,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+  const write = (seq: number) => ({
+    seq,
+    agentId: "agent:a",
+    tool: "record_update",
+    instanceId: "p",
+    changed: [{ target: "instance" as const, id: "p", kind: "updated" as const }],
+    at: seq,
+  });
+  const status = (writes: ReturnType<typeof write>[]) => ({
+    connected: 1,
+    total: 1,
+    agents: [{ id: "agent:a", name: "alpha", status: "online" }],
+    writes,
+  });
+  const { getByTestId, queryByTestId, rerender } = render(EssayAgentHost, {
+    repo: {} as never,
+    repoName: "r",
+    onExport: () => {},
+    agentStatus: status([write(1)]),
+  });
+  await tick();
+  expect(queryByTestId("inspector-badge")).toBeNull(); // writes made before mount are not "new"
+  await rerender({ agentStatus: status([write(3), write(2), write(1)]) });
+  await tick();
+  expect(getByTestId("inspector-badge").textContent).toBe("2");
+  await fireEvent.click(getByTestId("inspector-trigger"));
+  await tick();
+  expect(queryByTestId("inspector-badge")).toBeNull();
 });

@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { devices, expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { openInspectorDrawer } from "./helpers.js";
 
 /**
  * essay-touch.spec.ts — srs-web#382: the per-paragraph ⋯ action menu and the end-of-page
@@ -20,6 +21,8 @@ async function open(page: Page) {
   await page.getByTestId("package-editor-essay").tap();
   await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
   await page.setViewportSize(phone.viewport);
+  // The rail becomes a drawer on the media-query change: wait for its trigger so helpers do not race it.
+  await expect(page.getByTestId("inspector-trigger")).toBeVisible();
 }
 
 const bodies = (page: Page) => page.locator(".essay-shell__page :is(.block__render, .block__body)");
@@ -75,6 +78,12 @@ test("touch: move down, then indent and outdent, change the outline", async ({ p
 
 test("touch: Layers rows reorder through their own ⋯", async ({ page }) => {
   await open(page);
+  await openInspectorDrawer(page); // the Layers panel is in the inspector drawer at phone width
+  // The drawer mounts the panels fresh at phone width, so they start collapsed (collapseWhen): expand Layers.
+  const layers = page.locator("details.panel", { hasText: "Layers" }).first();
+  await expect(layers).toBeVisible();
+  if (!(await layers.evaluate((el: HTMLDetailsElement) => el.open))) await layers.locator("summary").first().tap();
+  await expect(layers).toHaveAttribute("open", "");
   await page.locator(".layers").getByTestId("layer-menu").first().tap();
   await page.getByTestId("layer-menu-down").tap();
   await expect(bodies(page)).toHaveText(["Second paragraph.", "First paragraph.", "Third paragraph."]);

@@ -381,13 +381,17 @@ test("New essay creates the record, container, draft area and state", async ({ p
   await expect(page.locator('.draft-tray [data-part="row"]')).toHaveCount(1);
 });
 
-test("the page is one white scroll surface; essay and paragraph titles edit inline (srs-web#363)", async ({
+test("the main column is the one scroll surface (superseding #363: the window no longer scrolls); the page is white; essay and paragraph titles edit inline", async ({
   page,
 }) => {
   await open(page);
   await page.setViewportSize({ width: 1200, height: 360 });
-  // Only the window scrolls: the page grows past the viewport and no block scrolls inside itself.
-  expect(await page.evaluate(() => document.documentElement.scrollHeight > innerHeight)).toBe(true);
+  // #424: the window never scrolls; the main column (.workspace) is the single scroll surface for the
+  // page, and no block scrolls inside itself.
+  expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(true);
+  expect(
+    await page.locator(".app__main > .workspace").evaluate((el) => el.scrollHeight > el.clientHeight)
+  ).toBe(true);
   expect(
     await page
       .locator(".block__body")

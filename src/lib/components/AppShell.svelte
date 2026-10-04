@@ -40,10 +40,16 @@
   // svelte-ignore state_referenced_locally
   const shell = given ?? new ShellState({ wideEnabled: wide });
   setShell(shell);
+  // Set at init so the bar's triggers are right on first paint, then kept in step (a shell may add or
+  // drop its inspector, e.g. the essay once it has something to show).
   // svelte-ignore state_referenced_locally
   shell.hasNav = !!nav;
   // svelte-ignore state_referenced_locally
   shell.hasInspector = !!inspector;
+  $effect.pre(() => {
+    shell.hasNav = !!nav;
+    shell.hasInspector = !!inspector;
+  });
 
   // One matchMedia each, read synchronously (no first-paint flash; this is a SPA, nothing to hydrate).
   const mq = (q: string) => (typeof matchMedia === 'function' ? matchMedia(q) : undefined);
