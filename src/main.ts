@@ -20,6 +20,13 @@ const handledOAuth =
     redirectUri: import.meta.env.VITE_GITHUB_REDIRECT_URI ?? `${window.location.origin}/`,
   }));
 
-const app = handledOAuth ? null : mount(App, { target });
+// Hidden, unlinked live styleguide (ADR-019): lazy so it never reaches the app chunk.
+const isStyleguide = location.pathname.replace(/\/$/, "") === "/styleguide";
+const Root = handledOAuth
+  ? null
+  : isStyleguide
+    ? (await import("./Styleguide.svelte")).default
+    : App;
+const app = Root ? mount(Root, { target }) : null;
 
 export default app;

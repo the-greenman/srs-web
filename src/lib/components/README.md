@@ -36,8 +36,8 @@ The global stylesheet is imported once at the app root (wired by B1
 import './styles/index.css';
 ```
 
-Each host page also defines the `#ink-surface` SVG filter once (gives the nav
-rail + record headers their printed-ink texture) — see `docs/design/*.html`.
+The `#ink-surface` SVG filter (printed-ink texture) is defined only in `GovernanceShell.svelte`;
+`/styleguide` does not define it, so the texture is absent there (consolidating it is #421 work). Every component is shown live at `/styleguide`.
 
 ## Components
 
@@ -67,15 +67,11 @@ rail + record headers their printed-ink texture) — see `docs/design/*.html`.
 | `Panel` | `title` `aside?` `open?` `persistKey?` `collapsible?` `actions?` | `.panel` `.panel-rail` | srs-web [#362](https://github.com/the-greenman/srs-web/issues/362) |
 | `AttachmentGlyph` / `HoverCard` / `PinnedPane` | `kind` `title` `text?` `pinned?` `onpin?` / `items` `onunpin` | `.glyph` `.hover-card` `.pinned` | srs-web [#329](https://github.com/the-greenman/srs-web/issues/329) |
 | `LayersPanel` | `layers` `ondrop` `onhide` `onfold` `onkey` (touch: per-row ⋯ via `ActionMenu`) | `.layers` | #328, [#382](https://github.com/the-greenman/srs-web/issues/382) |
-| `ActionMenu` | `actions` (`ParagraphAction[]` from `essay/paragraph-actions.ts`, the ONE action list) `label` `testid?` `focusKey?` | `.action-menu` | srs-web [#382](https://github.com/the-greenman/srs-web/issues/382) |
+| `ActionMenu` | `actions` (`MenuAction[]` from `menu-action.ts`; `essay/paragraph-actions.ts` builds the paragraph list) `label` `testid?` `focusKey?` | `.action-menu` | srs-web [#382](https://github.com/the-greenman/srs-web/issues/382) |
 | `DraftTray` | `items` `available?` `ondrop` `onputback` | `.draft-tray` | #328 |
 | `EyeToggle` | `hidden?` `label?` | `.eye` | #328 |
 
 ## Status
 
-The `.svelte` files are authored against the locked CSS contract but are **not
-yet compiled** — there is no Vite/Svelte build in the repo until B1
-([#2](https://github.com/the-greenman/srs-web/issues/2)) scaffolds it. The
-verified visual proof is the static showcase in
-[`docs/design`](../../../docs/design). Type imports (`svelte`, `svelte/elements`)
-resolve once B1 installs dependencies.
+Compiled by the Vite/Svelte build. The live visual reference is `/styleguide`
+(`src/Styleguide.svelte`, ADR-019).
