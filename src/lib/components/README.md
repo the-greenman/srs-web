@@ -36,8 +36,8 @@ The global stylesheet is imported once at the app root (wired by B1
 import './styles/index.css';
 ```
 
-Each host page may define the `#ink-surface` SVG filter once (gives record headers their
-printed-ink texture); no page defines it today. Every component is shown live at `/styleguide`.
+The `#ink-surface` SVG filter (printed-ink texture) is defined only in `GovernanceShell.svelte`;
+`/styleguide` does not define it, so the texture is absent there (consolidating it is #421 work). Every component is shown live at `/styleguide`.
 
 ## Components
 

@@ -5,7 +5,7 @@
    Exercise Book / Decision Log) sourced from list_records, with per-section
    counts and a repository-health footer fed by validate().
 
-   The `ink-surface` SVG turbulence filter (defined once in each HTML host)
+   The `ink-surface` SVG turbulence filter (currently defined in GovernanceShell.svelte)
    gives the dark block a printed-ink texture, matching the muDemocracy brand.
 
    Sidebar is the core of the read-only viewer — B4:

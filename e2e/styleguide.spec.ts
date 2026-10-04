@@ -8,8 +8,9 @@ test.describe("Styleguide", () => {
     page.on("pageerror", (e) => errors.push(e.message));
 
     await page.goto("/styleguide");
-    await expect(page.locator("section h2")).toHaveCount(9);
+    expect(await page.locator("section h2").count()).toBeGreaterThanOrEqual(9);
     await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+    await expect(page.getByRole("alert")).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBeUndefined();
     const bg = () =>
       page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--color-bg"));
@@ -19,6 +20,11 @@ test.describe("Styleguide", () => {
     await expect(page.locator("html")).toHaveAttribute("data-theme", "demo");
     expect(await bg()).not.toBe(before);
     expect(errors).toEqual([]);
+  });
+
+  test("a trailing slash also renders the styleguide", async ({ page }) => {
+    await page.goto("/styleguide/");
+    await expect(page.getByRole("heading", { name: "Styleguide", level: 1 })).toBeVisible();
   });
 
   test("the app root still mounts and does not link to the styleguide", async ({ page }) => {

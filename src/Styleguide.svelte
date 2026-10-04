@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import "./styles/themes/demo.css";
-  import { onMount } from "svelte";
+  import { onMount, type Snippet } from "svelte";
   import {
     ActorChip, AgentFeed, AttachmentGlyph, Block, BlockStack, Button,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, InlineText, Input,
@@ -78,9 +78,9 @@
   <title>Styleguide</title>
 </svelte:head>
 
-{#snippet md(value: string, label: string)}
+{#snippet gated(content: Snippet)}
   {#if wasm === "ready"}
-    <MarkdownText {value} base="block" {label} oncommit={noop} />
+    {@render content()}
   {:else if wasm === "loading"}
     <p>Loading…</p>
   {:else}
@@ -88,11 +88,16 @@
   {/if}
 {/snippet}
 
+{#snippet md(value: string, label: string)}
+  {#snippet inner()}<MarkdownText {value} base="block" {label} oncommit={noop} />{/snippet}
+  {@render gated(inner)}
+{/snippet}
+
 <main class="sg">
   <header class="sg__bar">
     <h1>Styleguide</h1>
     <Field label="Theme" id="sg-theme">
-      <Select id="sg-theme" bind:value={theme} options={["Default", "Demo"]} onchange={() => apply(theme)} />
+      <Select id="sg-theme" bind:value={theme} options={["Default", "Demo"]} onchange={(e) => apply(e.currentTarget.value)} />
     </Field>
   </header>
   <nav class="sg__toc" aria-label="Sections">
@@ -186,7 +191,7 @@
     <BlockStack items={fx.stackItems} source="styleguide" ondrop={noop} label="Specimen paragraphs">
       {#snippet row(item, handle)}
         {@const t = fx.stackText[item.id]}
-        {#if wasm === "ready"}
+        {#snippet block()}
           <Block
             id={item.id} title={t.title} body={t.body} {handle}
             onbody={noop} ontitle={noop} onhide={noop} onnew={noop} onindent={noop} onmove={noop}
@@ -195,9 +200,8 @@
               <ParagraphMargin annotations={fx.annotations.slice(0, 2)} onopen={noop} />
             {/snippet}
           </Block>
-        {:else}
-          <p>{wasm === "loading" ? "Loading…" : `Markdown unavailable: ${wasm}`}</p>
-        {/if}
+        {/snippet}
+        {@render gated(block)}
       {/snippet}
     </BlockStack>
     <h3>InlineText</h3>
@@ -219,9 +223,8 @@
       <Panel title="Draft"><DraftTray items={fx.draftItems} ondrop={noop} onputback={noop} /></Panel>
       <Panel title="Bin"><BinTray items={fx.binItems} onrestore={noop} onforget={noop} /></Panel>
       <div>
-        {#if wasm === "ready"}
-          <PinnedPane items={fx.pinned} onunpin={noop} />
-        {:else}<p>{wasm === "loading" ? "Loading…" : `Markdown unavailable: ${wasm}`}</p>{/if}
+        {#snippet pinnedPane()}<PinnedPane items={fx.pinned} onunpin={noop} />{/snippet}
+        {@render gated(pinnedPane)}
       </div>
       <Panel title="Agents">
         <AgentFeed status={fx.agentStatus} now={fx.NOW} paragraphLabel={fx.paragraphLabel} onselect={noop} />

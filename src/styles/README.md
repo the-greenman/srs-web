@@ -58,9 +58,9 @@ src/styles/
 ```
 
 The `ink-surface` SVG turbulence filter (printed-ink texture, referenced by `card.css`) is
-not defined anywhere in the app today: the static pages that carried it are gone and the
-governance shell no longer defines it, so `filter: url(#ink-surface)` is currently a no-op.
-A host that wants the texture must define `<filter id="ink-surface">` once in its markup.
+defined only in `GovernanceShell.svelte`. Other hosts, including `/styleguide`, do not define it,
+so `filter: url(#ink-surface)` is a no-op there and the texture is absent. Consolidating the
+definition into one host-independent place is #421 work.
 
 The Vite entry wires `index.css` in once **B1** lands
 ([#2](https://github.com/the-greenman/srs-web/issues/2)).
