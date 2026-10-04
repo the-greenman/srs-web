@@ -46,7 +46,7 @@
   --actor-mark-size-sm: 1rem;
   --actor-mark-radius-human: 50%;
   --actor-mark-radius-ai: 25%;
-  --actor-mark-notch: 0.3rem;
+  --actor-mark-notch: 0.4rem;
   --actor-stack-overlap: -0.3rem;
 
   /* AnnotationMargin: the margin is a grid column of the block; the shell's data-margin picks the width. */
