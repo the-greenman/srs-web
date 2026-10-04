@@ -90,7 +90,8 @@ export interface SrsRepository {
     view_id: string,
     format: string,
     container_id?: string | null,
-    instance_id_filter?: string | null
+    instance_id_filter?: string | null,
+    exclude_instance_ids?: string[] | null
     // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in renderDocumentView()
   ): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listContainers()
@@ -1122,19 +1123,23 @@ export interface DocumentViewResult {
  * `containerId` scopes ContainerSubset sections (e.g. selecting which guide to render).
  * `instanceIdFilter` scopes ContainerSubset sections to a single record, producing a
  * per-record export document (srs-rust#373) — used for single-decision export.
+ * `excludeInstanceIds` drops those entries from arranged container-subset sections; an excluded
+ * entry's children are promoted one level, not lost (srs-rust#1256).
  */
 export function renderDocumentView(
   repo: SrsRepository,
   viewId: string,
   format: string,
   containerId?: string | null,
-  instanceIdFilter?: string | null
+  instanceIdFilter?: string | null,
+  excludeInstanceIds?: string[] | null
 ): DocumentViewResult {
   return repo.render_composition(
     viewId,
     format,
     containerId,
-    instanceIdFilter
+    instanceIdFilter,
+    excludeInstanceIds
   ) as DocumentViewResult;
 }
 
