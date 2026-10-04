@@ -4,9 +4,9 @@
    Story: https://github.com/the-greenman/muDemocracy.org/issues/227
    ========================================================================== */
 .comments {
-  margin: 0 0 var(--space-sm) var(--space-md);
-  padding-left: var(--space-xs);
-  border-left: 1px solid var(--color-line);
+  margin: 0 0 var(--space-xs) calc(2rem + var(--space-xs));
+  padding: var(--space-xs) var(--space-xs) 0 0;
+  border-top: 1px solid var(--color-line-soft);
 }
 .comments__item {
   padding: 4px 0;

@@ -298,11 +298,11 @@ test("show all while zoomed opens only the threads in view", async ({ page }) =>
   expect(total).toBeGreaterThan(1);
 });
 
-test("a hidden paragraph's margin is inert: the badge cannot be focused or activated", async ({ page }) => {
+test("a hidden paragraph renders no margin at all", async ({ page }) => {
   await open(page);
   await eye(page, 0);
-  await expect(items(page).nth(0).locator(".block__margin")).toHaveAttribute("inert", "");
-  await badge(page, 0).click({ force: true });
+  await expect(items(page).nth(0).locator(".block__margin")).toHaveCount(0);
+  await expect(badge(page, 0)).toHaveCount(0);
   await expect(threads(page)).toHaveCount(0);
 });
 

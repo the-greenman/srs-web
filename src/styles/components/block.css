@@ -44,10 +44,15 @@
   border-radius: 2px;
 }
 /* One flow of text: no rule between paragraphs, only a faint outline under the pointer / focus. */
-.block:hover,
-.block:focus-within {
+/* The frame is the whole row item: the paragraph AND its open thread are one unit (srs-web#432). */
+.block-stack__item:hover,
+.block-stack__item:focus-within {
   outline: 1px solid var(--color-line-soft);
   outline-offset: 2px;
+}
+/* With a thread open the frame grows so the absolute hover tool stack stays inside the paragraph's own row. */
+.block-stack__item:has(.comments) .block {
+  min-height: 7.5rem;
 }
 .block__gutter {
   position: relative;
@@ -75,7 +80,11 @@
   top: 3rem;
   z-index: var(--z-raised);
   pointer-events: none; /* an idle stack must not catch clicks meant for the paragraph below */
-  background: var(--color-page);
+  background: var(--block-tools-bg);
+  border: var(--block-tools-border);
+  border-radius: 2px;
+  box-shadow: var(--block-tools-shadow);
+  padding: 2px;
   display: flex;
   flex-direction: column;
   align-items: center;
