@@ -62,7 +62,7 @@
   padding: var(--space-xs);
 }
 .sg__scroll-pad {
-  height: 5rem;
+  height: 3.5rem;
 }
 .sg__outside {
   display: block;
