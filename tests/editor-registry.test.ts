@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EDITORS, availableEditors } from "../src/lib/editors/registry.js";
+import { EDITORS, availableEditors, usableEditor } from "../src/lib/editors/registry.js";
 
 const check = vi.hoisted(() => vi.fn());
 vi.mock("../src/lib/srs-client.js", () => ({ checkPackageRequirements: check }));
@@ -40,7 +40,10 @@ describe("editor registry", () => {
     const [offered] = availableEditors(repo, [
       { id: essay.entryTypeId, namespace: "n", name: "x", version: 1 },
     ]);
-    expect(offered.unmet).toEqual({ requirement: essay.requires[0], have: "1.0.0" });
+    expect(offered.unmet).toEqual({
+      requirement: essay.requires[0],
+      reason: "Needs essay package 1.3.0 (you have 1.0.0)",
+    });
     expect(check).toHaveBeenCalledWith(repo, essay.requires);
   });
 
@@ -51,5 +54,43 @@ describe("editor registry", () => {
       { id: guides.entryTypeId, namespace: "n", name: "x", version: 1 },
     ]);
     expect(offered.unmet).toBeNull();
+  });
+
+  it("fails closed when the check throws: editors with requirements are unmet, others are not", () => {
+    check.mockImplementation(() => {
+      throw new Error("boom");
+    });
+    const offered = availableEditors(
+      repo,
+      EDITORS.map((e) => ({ id: e.entryTypeId, namespace: "n", name: "x", version: 1 }))
+    );
+    for (const o of offered) {
+      expect(o.unmet?.reason ?? null).toBe(
+        o.editor.requires.length ? "Could not check package requirements" : null
+      );
+    }
+    expect(offered.some((o) => o.unmet)).toBe(true);
+  });
+
+  it("lists every installed version in the core's order, skipping unknown ones", () => {
+    const essay = EDITORS.find((e) => e.id === "essay")!;
+    check.mockReturnValue([{ satisfied: false, candidateVersions: ["1.1.0", null, "1.0.0"] }]);
+    const [o] = availableEditors(repo, [
+      { id: essay.entryTypeId, namespace: "n", name: "x", version: 1 },
+    ]);
+    expect(o.unmet?.reason).toBe("Needs essay package 1.3.0 (you have 1.1.0, 1.0.0)");
+  });
+
+  it("the shell gate refuses an unmet editor even when the mode names it", () => {
+    const essay = EDITORS.find((e) => e.id === "essay")!;
+    const guides = EDITORS.find((e) => e.id === "guides")!;
+    const offered = [
+      { editor: essay, unmet: { reason: "Needs essay package 1.3.0" } },
+      { editor: guides, unmet: null },
+    ];
+    expect(usableEditor(offered, "essay")).toBeNull();
+    expect(usableEditor(offered, "guides")).toBe(guides);
+    expect(usableEditor(offered, "absent")).toBeNull();
+    expect(usableEditor(offered, "generic")).toBeNull();
   });
 });

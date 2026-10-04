@@ -6,31 +6,22 @@
 <script lang="ts">
   let {
     items,
-    available = true,
-    unavailableReason = 'This essay has no Bin.',
     onrestore,
     onforget,
   }: {
     items: { id: string; label: string }[];
-    /** False when the installed essay package cannot record a Bin. */
-    available?: boolean;
-    unavailableReason?: string;
     onrestore: (id: string) => void;
     onforget: (id: string) => void;
   } = $props();
 </script>
 
 <section class="bin-tray" aria-label="Bin" data-testid="bin">
-  {#if !available}
-    <p class="bin-tray__empty">{unavailableReason}</p>
-  {:else}
-    {#if items.length === 0}<p class="bin-tray__empty">Deleted paragraphs wait here.</p>{/if}
-    {#each items as d (d.id)}
-      <div class="bin-tray__row" data-testid="bin-row">
-        <span class="bin-tray__label">{d.label}</span>
-        <button type="button" class="bin-tray__put" aria-label={`Restore ${d.label}`} onclick={() => onrestore(d.id)}>Restore</button>
-        <button type="button" class="bin-tray__put" aria-label={`Delete ${d.label} permanently`} onclick={() => onforget(d.id)}>Delete permanently</button>
-      </div>
-    {/each}
-  {/if}
+  {#if items.length === 0}<p class="bin-tray__empty">Deleted paragraphs wait here.</p>{/if}
+  {#each items as d (d.id)}
+    <div class="bin-tray__row" data-testid="bin-row">
+      <span class="bin-tray__label">{d.label}</span>
+      <button type="button" class="bin-tray__put" aria-label={`Restore ${d.label}`} onclick={() => onrestore(d.id)}>Restore</button>
+      <button type="button" class="bin-tray__put" aria-label={`Delete ${d.label} permanently`} onclick={() => onforget(d.id)}>Delete permanently</button>
+    </div>
+  {/each}
 </section>

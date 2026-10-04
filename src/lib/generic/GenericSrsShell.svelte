@@ -392,8 +392,8 @@
   {#each packageEditors as { editor, unmet } (editor.id)}
     {#if onOpenEditor}
       {#if unmet}
-        <button data-testid="{testPrefix}-{editor.id}" title="Needs {unmet.requirement.name} package {unmet.requirement.version}{unmet.have ? ` (you have ${unmet.have})` : ''}" disabled>{editor.label}</button>
-        <small data-testid="{testPrefix}-{editor.id}-unmet">Needs {unmet.requirement.name} package {unmet.requirement.version}{unmet.have ? ` (you have ${unmet.have})` : ""}</small>
+        <button data-testid="{testPrefix}-{editor.id}" title={unmet.reason} disabled>{editor.label}</button>
+        <small data-testid="{testPrefix}-{editor.id}-unmet">{unmet.reason}</small>
       {:else}
         <button data-testid="{testPrefix}-{editor.id}" title={editor.description} onclick={() => onOpenEditor(editor.id)}>{editor.label}</button>
       {/if}

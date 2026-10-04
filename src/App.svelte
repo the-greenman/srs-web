@@ -37,7 +37,7 @@
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
-  import { availableEditors } from "$lib/editors/registry.js";
+  import { availableEditors, usableEditor } from "$lib/editors/registry.js";
   import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import CreateGovernanceDocumentPanel from "$lib/components/CreateGovernanceDocumentPanel.svelte";
@@ -108,9 +108,12 @@
     void documentRevision; // re-run after a mutation (a package install changes the answer)
     return repo ? availableEditors(repo, listTypes(repo)) : [];
   });
-  const activeEditor = $derived(
-    offeredEditors.find((o) => o.editor.id === editorMode && !o.unmet)?.editor ?? null,
-  );
+  const activeEditor = $derived(usableEditor(offeredEditors, editorMode));
+  // An editor that stops being usable drops back to the generic shell for good, so a later
+  // package install never flips the user back into it unasked.
+  $effect(() => {
+    if (!activeEditor && editorMode !== "generic") editorMode = "generic";
+  });
 
   /**
    * Catalog diagnostics from the load-time `validate()` pass (RFC-038 [R24]).

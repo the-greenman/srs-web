@@ -1453,8 +1453,16 @@ export interface RequirementOutcome {
   version: string;
   satisfied: boolean;
   reason?: string;
-  /** Versions of that package the repository has installed. */
-  candidateVersions?: string[];
+  /** Installed versions of that package, in the core's installed-set order (not sorted; null = unknown). */
+  candidateVersions?: (string | null)[];
+}
+
+/** The spec's packageDependencies shape plus the package UUID (srs#855). */
+export interface PackageRequirement {
+  packageId: string;
+  namespace: string;
+  name: string;
+  version: string;
 }
 
 /**
@@ -1463,10 +1471,11 @@ export interface RequirementOutcome {
  */
 export function checkPackageRequirements(
   repo: SrsRepository,
-  requires: { packageId: string; namespace: string; name: string; version: string }[]
+  requires: PackageRequirement[]
 ): RequirementOutcome[] {
   if (requires.length === 0) return [];
   const result = repo.check_package_requirements(JSON.stringify({ packageDependencies: requires }));
+  if (!Array.isArray(result?.dependencies)) throw new Error("malformed requirement check result");
   return result.dependencies as RequirementOutcome[];
 }
 

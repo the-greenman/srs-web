@@ -69,7 +69,7 @@ describe("GenericSrsShell", () => {
         onExport: vi.fn(),
         onOpenAnother: vi.fn(),
         onOpenEditor,
-        packageEditors: [{ editor: governance, unmet: { requirement: { name: "essay", version: "1.3.0" }, have: "1.0.0" } }] as never,
+        packageEditors: [{ editor: governance, unmet: { reason: "Needs essay package 1.3.0 (you have 1.0.0)" } }] as never,
       },
     });
     const [btn] = await screen.findAllByRole("button", { name: "Governance" });

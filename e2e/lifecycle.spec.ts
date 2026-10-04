@@ -100,8 +100,9 @@ test.describe("Lifecycle transitions (B11)", () => {
     await expect(page.locator(".inspector__btn--transition", { hasText: "→ active" })).not.toBeVisible();
     await expect(page.locator(".inspector__btn--transition", { hasText: "→ deferred" })).not.toBeVisible();
 
-    // Count: exactly 1 transition button (propose is the only transition from draft)
-    await expect(page.locator(".inspector__btn--transition")).toHaveCount(1);
+    // Governance 1.1.0 adds draft -> abandoned beside propose: exactly these two buttons.
+    await expect(page.locator(".inspector__btn--transition", { hasText: "→ abandon" })).toBeVisible();
+    await expect(page.locator(".inspector__btn--transition")).toHaveCount(2);
   });
 
   // --------------------------------------------------------------------------
