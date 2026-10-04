@@ -43,6 +43,7 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import Breadcrumb from "$lib/components/Breadcrumb.svelte";
   import Main from "$lib/components/Main.svelte";
+  import Notice from "$lib/components/Notice.svelte";
   import { notify, toUiDiagnostic } from "$lib/notices.svelte.js";
   import Topbar from "$lib/components/Topbar.svelte";
   import Workspace from "$lib/components/Workspace.svelte";
@@ -1025,9 +1026,9 @@
       {/snippet}
 
       {#if warnCount > 0 && errorCount === 0}
-        <div class="size-warning-banner" role="status">
+        <Notice kind="warning" testid="size-warning">
           {warnCount} size warning{warnCount === 1 ? "" : "s"} — see Repository panel for details.
-        </div>
+        </Notice>
       {/if}
 
       <Workspace>
@@ -1161,7 +1162,7 @@
             </div>
           {/if}
           {#if formError}
-            <p class="inspector__error" role="alert">{formError}</p>
+            <Notice kind="error">{formError}</Notice>
           {/if}
         </Panel>
       {/if}
@@ -1265,7 +1266,7 @@
             >TXT</button>
           </div>
           {#if decisionExportError}
-            <p class="inspector__error" role="alert">{decisionExportError}</p>
+            <Notice kind="error">{decisionExportError}</Notice>
           {/if}
         </Panel>
       {/if}
@@ -1608,28 +1609,5 @@
     display: flex;
     gap: 0.4rem;
     align-items: center;
-  }
-
-  .inspector__error {
-    font-size: 0.7rem;
-    color: var(--error, #cc0000);
-    margin: 0.25rem 0 0;
-  }
-
-  /* ---- Size warning banner ---- */
-  .size-warning-banner {
-    padding: 0.4rem 1.25rem;
-    font-size: 0.8rem;
-    background: color-mix(in srgb, var(--warn, #b45309) 10%, transparent);
-    color: var(--warn-text, #92400e);
-    border-bottom: 1px solid color-mix(in srgb, var(--warn, #b45309) 20%, transparent);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .size-warning-banner {
-      background: color-mix(in srgb, #d97706 12%, transparent);
-      color: #fde68a;
-      border-bottom-color: color-mix(in srgb, #d97706 25%, transparent);
-    }
   }
 </style>

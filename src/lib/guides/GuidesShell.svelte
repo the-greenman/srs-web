@@ -45,6 +45,7 @@
   import NavGroup from "$lib/components/NavGroup.svelte";
   import NavItem from "$lib/components/NavItem.svelte";
   import Main from "$lib/components/Main.svelte";
+  import Notice from "$lib/components/Notice.svelte";
   import Topbar from "$lib/components/Topbar.svelte";
   import Workspace from "$lib/components/Workspace.svelte";
   import Panel from "$lib/components/Panel.svelte";
@@ -623,13 +624,13 @@
         {/snippet}
 
         {#if warnCount > 0 && errorCount === 0}
-          <div class="size-warning-banner" role="status">
+          <Notice kind="warning" testid="size-warning">
             {warnCount} size warning{warnCount === 1 ? "" : "s"} — see Repository panel for details.
-          </div>
+          </Notice>
         {/if}
 
         {#if schemaError}
-          <div class="guides-error" role="alert">{schemaError}</div>
+          <Notice kind="error" testid="guides-error">{schemaError}</Notice>
         {/if}
 
         <Workspace wide>
@@ -674,9 +675,7 @@
                 </div>
 
                 {#if exportError}
-                  <div class="guides-error" role="alert" data-testid="guides-export-error">
-                    {exportError}
-                  </div>
+                  <Notice kind="error" testid="guides-export-error">{exportError}</Notice>
                 {/if}
 
                 <div class="guides-section-bar guides-body-bar">
@@ -840,14 +839,6 @@
     color: rgba(255, 255, 255, 0.45);
     font-style: italic;
     margin: 0;
-  }
-
-  .guides-error {
-    padding: 0.5rem 1.25rem;
-    background: #fef2f2;
-    color: #b91c1c;
-    font-size: 0.85rem;
-    border-bottom: 1px solid #fca5a5;
   }
 
   .guides-form-panel {
@@ -1057,22 +1048,4 @@
     opacity: 0.75;
     max-width: 22rem;
   }
-
-  /* ---- Size warning banner ---- */
-  .size-warning-banner {
-    padding: 0.4rem 1.25rem;
-    font-size: 0.8rem;
-    background: color-mix(in srgb, var(--warn, #b45309) 10%, transparent);
-    color: var(--warn-text, #92400e);
-    border-bottom: 1px solid color-mix(in srgb, var(--warn, #b45309) 20%, transparent);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .size-warning-banner {
-      background: color-mix(in srgb, #d97706 12%, transparent);
-      color: #fde68a;
-      border-bottom-color: color-mix(in srgb, #d97706 25%, transparent);
-    }
-  }
-
 </style>

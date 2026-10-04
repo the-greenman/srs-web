@@ -224,7 +224,7 @@ describe("GovernanceShell — size warning banner", () => {
     });
     // Wait for mount to complete then check the banner by its specific class
     await screen.findByRole("button", { name: /Open another file/i });
-    const banner = container.querySelector(".size-warning-banner");
+    const banner = container.querySelector('[data-testid="size-warning"]');
     expect(banner).not.toBeNull();
     expect(banner!.textContent).toContain("1 size warning");
   });
@@ -249,7 +249,7 @@ describe("GovernanceShell — size warning banner", () => {
       },
     });
     await screen.findByRole("button", { name: /Open another file/i });
-    expect(container.querySelector(".size-warning-banner")).toBeNull();
+    expect(container.querySelector('[data-testid="size-warning"]')).toBeNull();
   });
 
   it("shows plural form for multiple warnings", async () => {
@@ -272,7 +272,7 @@ describe("GovernanceShell — size warning banner", () => {
       },
     });
     await screen.findByRole("button", { name: /Open another file/i });
-    const banner = container.querySelector(".size-warning-banner");
+    const banner = container.querySelector('[data-testid="size-warning"]');
     expect(banner).not.toBeNull();
     expect(banner!.textContent).toContain("2 size warnings");
   });

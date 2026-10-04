@@ -367,16 +367,16 @@ npx playwright test e2e/notices.spec.ts e2e/local-folder.spec.ts e2e/load-repo.s
 
 #### Tasks
 
-- [ ] Governance: V6 `size-warning-banner` becomes `Notice kind="warning" testid="size-warning"`; V7 `inspector__error` become `Notice kind="error"`; delete the `.size-warning-banner` CSS (1666-1682).
-- [ ] Guides: U3 as V6; U4/U5 `Notice kind="error"` with testids `guides-error` (added) and `guides-export-error`; delete `.guides-error`, `.size-warning-banner` CSS and the `guides-save-message` rules no longer used.
-- [ ] Re-point the selectors in the disposition table: `GuidesShell.test.ts:179-217`, `GovernanceShell.test.ts:226-274` to `[data-testid="size-warning"]`, `guides-view-discovery.spec.ts:39` to `getByTestId("guides-error")`.
-- [ ] Do not touch layout, Topbar structure, `Workspace`, or `.canvas` (PR-B). Do not convert `readonly-reason` / `document-dirty-status`.
-- [ ] `e2e/notices.spec.ts` (second part): Guides export failure shows an inline error `Notice` (no toast, `role=alert`, persistent) and a successful save still shows the `save-status` toast.
+- [x] Governance: V6 `size-warning-banner` becomes `Notice kind="warning" testid="size-warning"`; V7 `inspector__error` become `Notice kind="error"`; delete the `.size-warning-banner` CSS (1666-1682).
+- [x] Guides: U3 as V6; U4/U5 `Notice kind="error"` with testids `guides-error` (added) and `guides-export-error`; delete `.guides-error`, `.size-warning-banner` CSS and the `guides-save-message` rules no longer used.
+- [x] Re-point the selectors in the disposition table: `GuidesShell.test.ts:179-217`, `GovernanceShell.test.ts:226-274` to `[data-testid="size-warning"]`, `guides-view-discovery.spec.ts:39` to `getByTestId("guides-error")`.
+- [x] Do not touch layout, Topbar structure, `Workspace`, or `.canvas` (PR-B). Do not convert `readonly-reason` / `document-dirty-status`.
+- [x] `e2e/notices.spec.ts` (second part): Guides export failure shows an inline error `Notice` (no toast, `role=alert`, persistent) and a successful save still shows the `save-status` toast.
 
 #### Acceptance Criteria
 
-- [ ] `grep -rn "size-warning-banner\|guides-error" src` finds only testid or Notice usage; no hard-coded notice colours remain in either shell.
-- [ ] The Governance validation panel is unchanged apart from grouping counts.
+- [x] `grep -rn "size-warning-banner\|guides-error" src` finds only testid or Notice usage; no hard-coded notice colours remain in either shell.
+- [x] The Governance validation panel is unchanged apart from grouping counts.
 
 #### Testing
 

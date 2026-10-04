@@ -75,3 +75,31 @@ test.describe("Catalog notice", () => {
     expect(order[1]).toBeLessThan(order[2]);
   });
 });
+
+test.describe("Errors stay inline", () => {
+  test("a Guides export failure is an inline, strong, role=alert Notice that persists and is no toast", async ({
+    page,
+  }) => {
+    await page.clock.install();
+    // the download path is the failure: no repository data is stubbed
+    await page.addInitScript(() => {
+      URL.createObjectURL = () => {
+        throw new Error("blocked by the test");
+      };
+    });
+    await open(page, path.join(dir, "muSrs.srsj"));
+    await openPackageEditor(page, "guides");
+    await expect(page.getByTestId("guides-shell")).toBeVisible({ timeout: 5000 });
+    await page.getByTestId("guides-guide-item").first().click();
+    await page.getByTestId("guides-export-guide-json").click();
+
+    const error = page.getByTestId("guides-export-error");
+    await expect(error).toBeVisible();
+    await expect(error).toHaveAttribute("role", "alert");
+    await expect(error).toContainText("Export failed");
+    await expect(page.locator(".toast")).toHaveCount(0);
+
+    await page.clock.runFor(60_000);
+    await expect(error).toBeVisible();
+  });
+});
