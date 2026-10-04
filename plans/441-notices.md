@@ -298,16 +298,16 @@ npx playwright test e2e/rfc038-concurrency.spec.ts e2e/local-folder.spec.ts e2e/
 
 #### Tasks
 
-- [ ] E2/E3: `copyLink` and `copyForAgent` call `notify` (key `copy-link` / `copy-agent`, `testid: "address-notice"`, texts "Link copied" / "Copied for agent"). `notice` state now holds only the address facts (E1).
-- [ ] E1, E4, E5 render as `Notice` (info with `onDismiss`, info holding the `Input`, error) where they are today, directly under the Toolbar inside `Main`, with the existing testids (location-bound, so inline; only the catalog notice goes through `NoticeRegion`). The "could not copy" failures (E5 at 383) stay as the inline error.
-- [ ] Delete `.essay-shell__status`, `.essay-shell__error` from `essay-shell.css`; E6 `saveMessage` span already gone (Phase 2).
-- [ ] Update `EssayShell.test.ts:350-352` only if the markup moved; text assertions stay.
-- [ ] Exports: `exportMarkdown` success raises `notify({kind:"success", key:"export", text:"Exported"})`; failure stays `error`.
+- [x] E2/E3: `copyLink` and `copyForAgent` call `notify` (key `copy-link` / `copy-agent`, `testid: "address-notice"`, texts "Link copied" / "Copied for agent"). `notice` state now holds only the address facts (E1).
+- [x] E1, E4, E5 render as `Notice` (info with `onDismiss`, info holding the `Input`, error) where they are today, directly under the Toolbar inside `Main`, with the existing testids (location-bound, so inline; only the catalog notice goes through `NoticeRegion`). The "could not copy" failures (E5 at 383) stay as the inline error.
+- [x] Delete `.essay-shell__status`, `.essay-shell__error` from `essay-shell.css`; E6 `saveMessage` span already gone (Phase 2).
+- [x] Update `EssayShell.test.ts:350-352` only if the markup moved; text assertions stay.
+- [x] Exports: `exportMarkdown` success raises `notify({kind:"success", key:"export", text:"Exported"})`; failure stays `error`.
 
 #### Acceptance Criteria
 
-- [ ] Copy link shows exactly one toast (`role=status`), repeating the click does not stack, it disappears after the timeout, and the first child of `.workspace` does not move (Phase 5 e2e).
-- [ ] An unresolvable address shows the inline info Notice with a working dismiss.
+- [x] Copy link shows exactly one toast (`role=status`), repeating the click does not stack, it disappears after the timeout, and the first child of `.workspace` does not move (Phase 5 e2e).
+- [x] An unresolvable address shows the inline info Notice with a working dismiss.
 
 #### Testing
 

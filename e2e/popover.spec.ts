@@ -120,7 +120,7 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
     if (viewport) await page.setViewportSize(viewport);
   }
   const help = (page: Page) => page.getByRole("region", { name: "Markdown cheat-sheet" });
-  const openCount = (page: Page) => page.locator(":popover-open").count();
+  const openCount = (page: Page) => page.locator(":popover-open:not(.toast-host)").count();
 
   test.describe("desktop", () => {
     test("? opens, ? again closes and stays closed", async ({ page }) => {

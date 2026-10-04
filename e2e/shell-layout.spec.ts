@@ -438,7 +438,7 @@ test.describe("Generic on the frame", () => {
         if (!(await layers.evaluate((el: HTMLDetailsElement) => el.open)))
           await layers.locator("summary").first().click();
         await drawer.getByTestId("layer-menu").first().click();
-        const menu = page.locator(":popover-open");
+        const menu = page.locator(":popover-open:not(.toast-host)");
         await expect(menu).toHaveCount(1);
         await page.keyboard.press("Escape");
         await expect(menu).toHaveCount(0);
