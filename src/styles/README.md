@@ -14,7 +14,7 @@ Everything is wrapped in a named [`@layer`](https://developer.mozilla.org/en-US/
 so cascade order is explicit and independent of import order:
 
 ```
-tokens  →  base  →  layout  →  components  →  utilities
+tokens  →  base  →  layout  →  components  →  theme  →  utilities
 ```
 
 ```
@@ -24,6 +24,7 @@ src/styles/
   base.css             reset, document defaults, typography, paper grain
   layout.css           the nav | main | inspector app shell
   utilities.css        single-purpose helpers (win against components)
+  themes/              optional reskins in the `theme` layer (demo.css is styleguide-only)
   components/
     button.css         .btn          actions
     tag.css            .tag          lifecycle status vocabulary
@@ -56,9 +57,10 @@ src/styles/
 @import url("./styles/index.css");
 ```
 
-Each host page must define the `ink-surface` SVG turbulence filter once (it gives
-the dark nav rail and record headers their printed-ink texture). See the
-`<svg>…<filter id="ink-surface">` block in `docs/design/*.html`.
+The `ink-surface` SVG turbulence filter (printed-ink texture, referenced by `card.css`) is
+not defined anywhere in the app today: the static pages that carried it are gone and the
+governance shell no longer defines it, so `filter: url(#ink-surface)` is currently a no-op.
+A host that wants the texture must define `<filter id="ink-surface">` once in its markup.
 
 The Vite entry wires `index.css` in once **B1** lands
 ([#2](https://github.com/the-greenman/srs-web/issues/2)).
@@ -88,11 +90,18 @@ import './styles/index.css';
 
 ## Live showcase
 
-`docs/design/index.html` links two screens built entirely from these components,
-populated with the LiMoMa gallery fixture:
+`/styleguide` (hidden, unlinked, `src/Styleguide.svelte`) mounts the **real** components with
+fixture props in a theme switcher: tokens, buttons, menus, chips, actors, annotations and
+comments, paragraphs, panels and trays, form controls. It is the single specimen surface
+([ADR-019](../../docs/adr/019-ui-theming-surface-and-live-styleguide.md)); the static
+`docs/design/*.html` pages it replaced drifted from the components and were deleted.
 
-- `viewer.html` — read-only governance viewer (B4/B5)
-- `editor.html` — generated edit form widgets (B9/B13)
+## Reskinning (the `theme` layer)
 
-These are static HTML (no build needed) and are the verified visual reference;
-the Svelte components mirror them 1:1.
+- **Re-point tokens.** The normal way to reskin; it works from any layer. `themes/demo.css`
+  (`:root[data-theme="demo"]`) does exactly and only this.
+- **`theme` layer.** Sits between `components` and `utilities` as the documented escape hatch for
+  overriding a component rule that tokens cannot reach.
+- **Known limit.** Unlayered scoped Svelte `<style>` blocks (e.g. the dark-mode blocks in
+  `GuidesShell.svelte` and `GovernanceShell.svelte`) beat every layer, including `theme`.
+- Rendered-document preview themes (ADR-007) are a separate concern from UI chrome.

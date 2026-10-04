@@ -12,11 +12,12 @@
      base        reset, document defaults, typography, paper grain
      layout      the three-pane app shell + structural regions
      components  reusable, self-contained blocks (.btn, .card, .field, ...)
+     theme       optional reskins (tokens first; overrides of component rules as the escape hatch)
      utilities   single-purpose overrides, always win against components
 
    Consumed by the Vite entry once B1 lands (scaffold srs-web):
      https://github.com/the-greenman/srs-web/issues/2
-   Showcased in ../../docs/design/*.html.
+   Showcased live at /styleguide (src/Styleguide.svelte, ADR-019).
 
    Brand: extends the muDemocracy design language (paper + ink, no accent
    colour, IBM Plex Sans/Mono). Hierarchy comes from weight, size, and
@@ -24,7 +25,7 @@
    Epic: https://github.com/the-greenman/srs-web/issues/1
    ========================================================================== */
 
-@layer tokens, base, layout, components, utilities;
+@layer tokens, base, layout, components, theme, utilities;
 
 /* Tokens & base */
 @import url("./tokens.css") layer(tokens);
@@ -57,6 +58,7 @@
 @import url("./components/attachment.css") layer(components);
 @import url("./components/margin.css") layer(components);
 @import url("./components/agent-activity.css") layer(components);
+@import url("./components/styleguide.css") layer(components);
 
 /* Utilities — last word in the cascade */
 @import url("./utilities.css") layer(utilities);

@@ -1,0 +1,22 @@
+/* ============================================================================
+   theme: demo — proves the token surface alone can reskin the UI (ADR-019).
+   Tokens only, never component classes. Imported ONLY by Styleguide.svelte, so it
+   ships in the lazy /styleguide chunk and never reaches the app.
+   ========================================================================== */
+@layer theme {
+  :root[data-theme="demo"] {
+    color-scheme: light;
+
+    --paper: #fbf1dc;
+    --ink: #3a1f12;
+    --black: #2a140a;
+    --grey-1: #f0dfbd;
+    --grey-2: #dcc08a;
+    --grey-3: #8c5a36;
+    --grey-4: #5e3a22;
+    --color-page: #fffaf0;
+
+    --font-sans: Georgia, "Times New Roman", serif;
+    --font-mono: "Courier New", monospace;
+  }
+}

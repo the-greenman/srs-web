@@ -1,0 +1,71 @@
+/* component: styleguide — page layout for the /styleguide route only (srs-web#420). */
+.sg {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-sm);
+  display: grid;
+  gap: var(--space-md);
+}
+.sg__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.sg__toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+}
+.sg section {
+  display: grid;
+  gap: var(--space-sm);
+  border-top: var(--rule);
+  padding-top: var(--space-sm);
+}
+.sg h3 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.sg__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.sg__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-sm);
+  align-items: start;
+}
+.sg__swatch {
+  display: grid;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+}
+.sg__chip {
+  height: 2.5rem;
+  border: var(--rule);
+}
+.sg__pop {
+  position: relative;
+  min-height: 20rem;
+}
+/* the popover is absolutely placed below its host bar; the specimen has no bar, so pin it to the top */
+.sg__pop .md-help__pop {
+  top: 0;
+  right: auto;
+  left: 0;
+}
+.sg__space {
+  height: 0.75rem;
+  background: var(--color-text);
+}
