@@ -53,7 +53,8 @@
     setTitle,
     transfer,
   } from "./essay-document.js";
-  import { essayWriteGuard } from "./essay-document.js";
+  import { essayMarkdown, essayWriteGuard } from "./essay-document.js";
+  import { downloadText } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { formatAddress, parseAddress } from "./address.js";
   import { headerActions } from "./header-actions.js";
@@ -324,6 +325,14 @@
     }
   }
 
+  function exportMarkdown() {
+    try {
+      downloadText(essayMarkdown(repo, model!), "text/markdown", `${model!.title}.md`);
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    }
+  }
+
   /** Copy the agent handoff (srs-web#411): the whole essay, or `focusId` as the paragraph to look at. */
   async function copyForAgent(focusId?: string) {
     const m = model;
@@ -450,6 +459,7 @@
         oncomments: () => (commentMode = !commentMode),
         onsave: onSave,
         onexport: onExport,
+        onexportmd: model ? exportMarkdown : undefined,
         onexplorer: onOpenExplorer,
         onopenanother: onOpenAnother,
       },

@@ -22,6 +22,8 @@ export interface HeaderHandlers {
   oncomments: () => void;
   onsave?: () => void;
   onexport: () => void;
+  /** Download the visible essay text as markdown. Absent while no essay is open. */
+  onexportmd?: () => void;
   onexplorer?: () => void;
   onopenanother: () => void;
 }
@@ -82,6 +84,14 @@ export function headerActions(
       enabled: !s.saving,
     },
     { id: "export", label: "Export", variant: "mono", run: h.onexport, enabled: true },
+    !!h.onexportmd && {
+      id: "export-md",
+      label: "Export markdown",
+      variant: "mono",
+      run: h.onexportmd,
+      enabled: true,
+      testid: "export-markdown",
+    },
     !!h.onexplorer && {
       id: "explorer",
       label: "Explorer",
