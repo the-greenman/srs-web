@@ -75,3 +75,26 @@
   background: none;
   cursor: pointer;
 }
+.pinned__clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pinned__full {
+  margin: var(--space-xs) 0 0;
+  overflow-wrap: anywhere;
+}
+.pinned__actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}
+.pinned__action {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
