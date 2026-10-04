@@ -129,6 +129,15 @@
     <p class="t-muted">Specimen for <span class="t-mono">MarkdownHelp</span> (srs-web#365): the cheat-sheet popover (the host owns the <span class="t-mono">?</span> trigger and open state; it closes on its &times; button, Escape or an outside tap; link wording follows <span class="t-mono">pointer: coarse</span>). The block above also shows the rendered state (<span class="t-mono">.block__render</span>), which becomes the plain-text source editor on focus.</p>
     <div style="display:flex;justify-content:flex-end;min-height:16rem"><div style="position:relative;width:100%;height:14rem"><div class="md-help__pop" style="top:0" role="region" aria-label="Markdown cheat-sheet"><button class="md-help__close" type="button" aria-label="Close Markdown help">&times;</button><p class="md-help__lead">Paragraphs are markdown. Click a paragraph to edit its source.</p><dl class="md-help__list"><dt><code># Heading</code></dt><dd>also ## and ###</dd><dt><code>**bold** *italic*</code></dt><dd>emphasis</dd><dt><code>[text](https://example.com)</code></dt><dd>link<span class="md-help__mouse"> (Ctrl/Cmd+click opens)</span><span class="md-help__touch"> (long-press to open)</span></dd></dl></div></div></div>
 
+    <h2>MarkdownText</h2>
+    <p class="t-muted">Specimen for <span class="t-mono">MarkdownText</span> (srs-web#411): multi-line text rendered as markdown (core <span class="t-mono">renderMarkdown</span>) until focused, then edited as plain-text source. One mechanism for the paragraph body (<span class="t-mono">Block</span>, base <span class="t-mono">block</span>) and the essay purpose (base <span class="t-mono">purpose</span>, under the essay title). Classes are <span class="t-mono">&lt;base&gt;__render</span> and <span class="t-mono">&lt;base&gt;__body</span>.</p>
+    <div class="essay-shell__purpose" style="max-width:36rem">
+      <div class="purpose__render" role="group" tabindex="0" aria-label="Essay purpose, press Enter to edit"><p>Argue that <strong>small polities</strong> sustain trust; I want sources for and against, and challenges to the second paragraph.</p></div>
+    </div>
+    <div class="essay-shell__purpose" style="max-width:36rem;margin-top:var(--space-sm)">
+      <div class="purpose__render" role="group" tabindex="0" aria-label="Essay purpose, press Enter to edit" data-placeholder="What is this essay for?"></div>
+    </div>
+
     <h2>Panel</h2>
     <p class="t-muted">Specimen for <span class="t-mono">Panel</span> (srs-web#362): native <span class="t-mono">&lt;details&gt;</span> collapse with a mono label, optional aside and actions; a static header when not collapsible. Stack panels in a <span class="t-mono">.panel-rail</span>.</p>
     <div class="panel-rail" style="position:static;max-width:18rem">

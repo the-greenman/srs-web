@@ -15,6 +15,8 @@ export interface HeaderAction extends MenuAction {
 export interface HeaderHandlers {
   onnew: () => void;
   oncopy?: () => void;
+  /** Copy the agent handoff (whole essay, or the zoom target). Absent while no essay is open. */
+  onagent?: () => void;
   onhelp: () => void;
   onvariant: () => void;
   oncomments: () => void;
@@ -44,6 +46,14 @@ export function headerActions(
       run: h.oncopy,
       enabled: true,
       testid: "copy-document",
+    },
+    !!h.onagent && {
+      id: "agent",
+      label: "Copy for agent",
+      variant: "ghost",
+      run: h.onagent,
+      enabled: true,
+      testid: "copy-for-agent",
     },
     { id: "help", label: "Markdown help", variant: "ghost", run: h.onhelp, enabled: true },
     {

@@ -27,6 +27,7 @@ import {
   listTypes,
   moveContainerMemberRelative,
   removeContainerMember,
+  typeSchema,
   updateContainer,
   updateRecord,
 } from "$lib/srs-client.js";
@@ -102,6 +103,8 @@ export interface EssaySummary {
 export interface EssayModel {
   essayId: string;
   title: string;
+  /** The essay's `purpose` field (markdown); null when the installed essay type has no such field (hide the UI). */
+  purpose: string | null;
   containerId: string;
   /** Ordered outline of the essay container (`outline.body`: identity / anchor excluded). */
   entries: OutlineEntry[];
@@ -319,6 +322,23 @@ function loadSharedIn(
   return out;
 }
 
+/** Whether the installed essay type declares `purpose` (older packages do not). Cached per type version. */
+const purposeCache = new WeakMap<object, { version: number; ok: boolean }>();
+function hasPurposeField(repo: SrsRepository, types: TypeSummary[]): boolean {
+  const version = types.find((x) => x.id === ESSAY_TYPE_ID)?.version ?? 0;
+  const hit = purposeCache.get(repo);
+  if (hit?.version === version) return hit.ok;
+  let ok = false;
+  try {
+    ok =
+      "purpose" in ((typeSchema(repo, ESSAY_TYPE_ID, version).schema.properties as object) ?? {});
+  } catch {
+    /* type not resolvable: no purpose */
+  }
+  purposeCache.set(repo, { version, ok });
+  return ok;
+}
+
 export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
   const types = listTypes(repo); // resolved once per reload
   const essay = recordsOfType(repo, types, ESSAY_TYPE_ID).find((r) => r.instanceId === essayId);
@@ -347,6 +367,7 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
   return {
     essayId,
     title: str(essay.fieldValues.title) || "Untitled essay",
+    purpose: hasPurposeField(repo, types) ? str(essay.fieldValues.purpose) : null,
     containerId,
     entries,
     paragraphs,
@@ -403,7 +424,8 @@ function patchRecord(
   const cur = getRecord(repo, id);
   if (!cur) throw new Error("Record not found");
   const fieldValues: Record<string, unknown> = { ...cur.fieldValues, ...patch };
-  if (fieldValues.paragraph_title === "") fieldValues.paragraph_title = undefined; // optional: clear
+  for (const k of ["paragraph_title", "purpose"])
+    if (fieldValues[k] === "") fieldValues[k] = undefined; // optional: clear
   updateRecord(repo, id, {
     fieldValues: JSON.parse(JSON.stringify(fieldValues)),
     ...(typeVersion && { typeVersion }),
@@ -412,6 +434,37 @@ function patchRecord(
 
 export const setBody = (repo: SrsRepository, id: string, body: string): void =>
   patchRecord(repo, id, { body });
+/** Write the essay's purpose (markdown) through the same record patch as the title. */
+export const setEssayPurpose = (repo: SrsRepository, essayId: string, purpose: string): void =>
+  patchRecord(repo, essayId, { purpose });
+
+/**
+ * The short markdown the writer pastes into an agent (srs-web#411): what the essay is for, where
+ * to read it (MCP resources) and the rules. `focus` = the paragraph (or zoom target) to look at.
+ */
+export function agentHandoff(a: {
+  repositoryId: string;
+  essay: { id: string; title: string };
+  containerId: string;
+  purpose?: string | null;
+  focus?: { id: string; title: string };
+}): string {
+  const uri = `srs://${a.repositoryId}`;
+  return [
+    `# Essay: ${a.essay.title}`,
+    ...(a.purpose?.trim() ? [`Purpose: ${a.purpose.trim()}`] : []),
+    `Repository ${a.repositoryId}, essay record ${a.essay.id}, container ${a.containerId}.`,
+    `Read: ${uri}/container/${a.containerId}`,
+    ...(a.focus
+      ? [
+          `Focus: "${a.focus.title}" (paragraph ${a.focus.id})`,
+          `Read: ${uri}/context/${a.containerId}/${a.focus.id}`,
+        ]
+      : []),
+    "The text is the writer's: comment and attach, never edit it.",
+  ].join("\n");
+}
+
 /** A side area's container title (draft / bin), from its essay's (one convention for new, copy and rename). */
 const areaTitle = (title: string, area: "draft" | "bin"): string => `${title} (${area})`;
 
