@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { connectAgents } from "./helpers";
+import { connectAgents, openMenus } from "./helpers";
 
 /**
  * popover.spec.ts — the Popover primitive (srs-web#421, ADR-020 e). Chromium only (the pinned
@@ -120,7 +120,7 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
     if (viewport) await page.setViewportSize(viewport);
   }
   const help = (page: Page) => page.getByRole("region", { name: "Markdown cheat-sheet" });
-  const openCount = (page: Page) => page.locator(":popover-open:not(.toast-host)").count();
+  const openCount = (page: Page) => openMenus(page).count();
 
   test.describe("desktop", () => {
     test("? opens, ? again closes and stays closed", async ({ page }) => {

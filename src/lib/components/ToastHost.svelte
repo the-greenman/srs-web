@@ -8,12 +8,12 @@
   the top layer above the modal Drawer and its scrim (the live regions are outside, so nothing is
   re-announced). Limitation: while a MODAL drawer is open the toast is visible but inert, so its close
   button cannot be clicked; a sticky error stays until the drawer closes and it is dismissed, or the
-  next save (same "save" key) replaces it. Unmount clears the timers (resetNotices). Parts: `host`.
+  next save (same "save" key) replaces it. Unmount clears the toasts and their timers. Parts: `host`.
   Wraps .toast (toast.css); tokens `--toast-*`.
 -->
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
-  import { dismiss, toasts } from '../notices.svelte.js';
+  import { clearToasts, dismiss, toasts } from '../notices.svelte.js';
   import { getShell } from '../shell-context.svelte.js';
   import { isShown, placeBottomCentre } from './popover-position.js';
   import Toast from './Toast.svelte';
@@ -84,10 +84,13 @@
     if (frame) ro?.observe(frame);
     window.addEventListener('resize', place);
     window.visualViewport?.addEventListener('resize', place);
+    window.visualViewport?.addEventListener('scroll', place); // panning and the keyboard move offsetTop without a resize
     return () => {
+      clearToasts();
       ro?.disconnect();
       window.removeEventListener('resize', place);
       window.visualViewport?.removeEventListener('resize', place);
+      window.visualViewport?.removeEventListener('scroll', place);
     };
   });
 </script>

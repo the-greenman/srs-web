@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { closeMenus, commentsState, menuItem, openMenu } from "./helpers";
+import { closeMenus, commentsState, menuItem, openMenu, openMenus } from "./helpers";
 
 /**
  * essay-toolbar.spec.ts — srs-web#423: the essay header is the generic Toolbar. One registry, one
@@ -67,9 +67,9 @@ for (const width of [1440, 768]) {
     for (const n of ["Document", "View", "Go"] as const) {
       const trigger = page.getByRole("button", { name: n, exact: true });
       await trigger.click();
-      await expect(page.locator(":popover-open:not(.toast-host)")).toHaveCount(1);
+      await expect(openMenus(page)).toHaveCount(1);
       await page.keyboard.press("Escape");
-      await expect(page.locator(":popover-open:not(.toast-host)")).toHaveCount(0);
+      await expect(openMenus(page)).toHaveCount(0);
       await expect(trigger).toBeFocused();
     }
   });
@@ -128,7 +128,7 @@ test("390: Help from the overflow opens the Help popover and keeps focus inside 
   await page.getByTestId("toolbar-help").click();
   const help = page.getByRole("region", { name: "Markdown cheat-sheet" });
   await expect(help).toBeVisible();
-  await expect(page.locator(":popover-open:not(.toast-host)")).toHaveCount(1);
+  await expect(openMenus(page)).toHaveCount(1);
   // the overflow's close must not pull focus back to its trigger while Help is open
   await page.waitForTimeout(300);
   await expect(page.getByTestId("header-menu")).not.toBeFocused();

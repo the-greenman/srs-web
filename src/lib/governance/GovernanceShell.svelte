@@ -263,13 +263,13 @@
   let decisionExportError = $state<string | null>(null);
 
   /**
-   * The local recovery copy's result is a toast on the one "save" key (#441): a later save result, success
-   * included, replaces a sticky failure.
+   * The local recovery copy's result is a toast on its own "recovery" key (#441), never the document-save
+   * "save" key, so an autosave can not replace a document-save error.
    */
   const localSaveFailed = () =>
     notify({
       kind: "error",
-      key: "save",
+      key: "recovery",
       testid: "local-save-failed",
       text: "Local recovery copy could not be saved",
     });
@@ -503,7 +503,7 @@
     try {
       const savedLocally = onDocumentMutation();
       if (savedLocally) {
-        notify({ kind: "success", key: "save", testid: "save-status", text: "Saved" });
+        notify({ kind: "success", key: "recovery", testid: "recovery-status", text: "Recovery copy saved" });
       } else {
         localSaveFailed();
         console.warn("persistWorkingCopy: local recovery-copy write failed");

@@ -107,3 +107,13 @@ describe("ToastHost", () => {
     }
   });
 });
+
+it("unmount clears the toasts and their timers", async () => {
+  vi.useFakeTimers();
+  const r = render(ToastHost);
+  notify({ text: "x" });
+  await tick();
+  r.unmount();
+  expect(toasts).toHaveLength(0);
+  expect(vi.getTimerCount()).toBe(0);
+});

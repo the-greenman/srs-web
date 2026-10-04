@@ -2,7 +2,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import GovernanceShell from "../src/lib/governance/GovernanceShell.svelte";
-import { resetNotices } from "../src/lib/notices.svelte.js";
+import { notify, resetNotices } from "../src/lib/notices.svelte.js";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 
 // The shell frame turns the inspector into a closed drawer at <= 1100px (happy-dom is 1024 wide): these
@@ -485,8 +485,8 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
     const failureMessage = await screen.findByTestId("local-save-failed");
     expect(failureMessage.textContent).toContain("could not be saved");
 
-    // the same "save" key: the failure toast replaced any "Saved" toast, so only the failure is shown
-    expect(screen.queryByTestId("save-status")).toBeNull();
+    // the same "recovery" key: the failure toast replaced any "Recovery copy saved" toast
+    expect(screen.queryByTestId("recovery-status")).toBeNull();
     expect(failureMessage.getAttribute("role")).toBeNull(); // heard once, from the assertive live region
     expect(screen.getByTestId("live-assertive").textContent).toContain("could not be saved");
   });
@@ -522,9 +522,26 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
     await createRecordViaNewFlow();
 
     expect(onDocumentMutation).toHaveBeenCalled();
-    const saved = await screen.findByTestId("save-status");
-    expect(saved.textContent).toContain("Saved");
+    const saved = await screen.findByTestId("recovery-status");
+    expect(saved.textContent).toContain("Recovery copy saved");
     expect(screen.queryByTestId("local-save-failed")).toBeNull();
+  });
+
+  it("an autosave never replaces a document-save error toast (separate keys)", async () => {
+    notify({ kind: "error", key: "save", testid: "save-status", text: "Save failed: nope" });
+    render(GovernanceShell, {
+      props: {
+        repo: repoWithCreatableRecord(),
+        repoName: "test.srsj",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+        onDocumentMutation: vi.fn(() => true),
+      },
+    });
+    await createRecordViaNewFlow();
+    expect((await screen.findByTestId("recovery-status")).textContent).toContain("Recovery copy saved");
+    expect(screen.getByTestId("save-status").textContent).toContain("Save failed");
   });
 
   it("defaults onDocumentMutation to a no-op success so callers that don't care can omit it", async () => {
@@ -540,7 +557,7 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
       },
     });
     await createRecordViaNewFlow();
-    expect((await screen.findByTestId("save-status")).textContent).toContain("Saved");
+    expect((await screen.findByTestId("recovery-status")).textContent).toContain("Recovery copy saved");
   });
 });
 

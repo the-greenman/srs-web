@@ -65,6 +65,7 @@ function show(opts: NotifyOptions): number {
   return id;
 }
 
+// Read-then-write: wrap in untrack if ever called from an effect (as `notify` does).
 export function dismiss(id: number): void {
   clearTimer(id);
   const i = toasts.findIndex((t) => t.id === id);
@@ -90,7 +91,7 @@ export interface PinnedNotice {
 
 export const pinned = $state<PinnedNotice[]>([]);
 
-/** Same key replaces. */
+/** Same key replaces. Read-then-write: wrap in untrack if ever called from an effect. */
 export function pinNotice(n: PinnedNotice): void {
   const i = pinned.findIndex((p) => p.key === n.key);
   if (i >= 0) pinned[i] = n;
@@ -112,6 +113,12 @@ export const dismissDiagnostics = (documentKey: string, hash: string): void => {
 /** Dismissed only while the diagnostics are the ones that were dismissed; a change re-shows them. */
 export const isDiagnosticsDismissed = (documentKey: string, hash: string): boolean =>
   dismissedDocs.get(documentKey) === hash;
+
+/** Clear the toasts and their timers (a host unmounting); dismissals are untouched. */
+export function clearToasts(): void {
+  for (const id of [...timers.keys()]) clearTimer(id);
+  toasts.splice(0, toasts.length);
+}
 
 /**
  * Clear toasts (and their timers) and the diagnostics dismissals. Pinned notices are NOT cleared: the
