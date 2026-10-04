@@ -83,3 +83,11 @@ it("menu: opens with aria state, arrows move, Escape returns focus, a row runs a
   expect(h.onmove).toHaveBeenCalledWith("down");
   expect(queryByTestId("paragraph-menu-down")).toBeNull();
 });
+
+it("primary (the hover strip) is hide, zoom and link only; each is also in the full list; draft and delete are not", () => {
+  const list = paragraphActions(handlers(), state);
+  const primary = list.filter((a) => a.primary).map((a) => a.id);
+  expect(primary).toEqual(["hide", "zoom", "link"]);
+  expect(primary.every((id) => list.some((a) => a.id === id))).toBe(true);
+  expect(list.filter((a) => ["draft", "delete"].includes(a.id)).some((a) => a.primary)).toBe(false);
+});

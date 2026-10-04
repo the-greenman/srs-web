@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { menuItem } from "./helpers";
 import type { Page } from "@playwright/test";
 
 /**
@@ -154,8 +155,8 @@ test("write, reorder, nest, hide, draft out and back", async ({ page }) => {
   await expect(page.getByText("Hidden paragraph")).toHaveCount(0);
 
   // draft: pull out via the block action, then put back via the tray
-  await page.getByRole("button", { name: /Move Claim to draft/ }).locator("xpath=ancestor::article[1]").hover();
-  await page.getByRole("button", { name: /Move Claim to draft/ }).click();
+  await page.getByRole("button", { name: "Actions for Claim" }).click();
+  await page.getByTestId("paragraph-menu-draft").click();
   await expect(bodies(page)).toHaveCount(3);
   await expect(page.locator(".draft-tray")).toContainText("Claim");
   await page.getByRole("button", { name: "Put back Claim" }).click();
@@ -374,10 +375,8 @@ test("New essay creates the record, container, draft area and state", async ({ p
   await expect(bodies(page)).toHaveText(["Opening line.", "Second line."]);
 
   // pull a paragraph into the new draft area: proves the draft container is real
-  await page
-    .getByRole("button", { name: /Move .* to draft/ })
-    .first()
-    .click();
+  await page.locator(".essay-shell__page").getByTestId("paragraph-menu").first().click();
+  await page.getByTestId("paragraph-menu-draft").click();
   await expect(bodies(page)).toHaveCount(1);
   await expect(page.locator('.draft-tray [data-part="row"]')).toHaveCount(1);
 });
@@ -428,7 +427,7 @@ test("copy a document: paragraphs are shared and badged; make local copy forks o
   const badges = page.getByTestId("shared-badge");
   await expect(badges).toHaveCount(0);
 
-  await page.getByTestId("copy-document").click();
+  await menuItem(page, "Document", "copy-document");
   await expect(page.getByRole("heading", { name: "Copy of On small democracy" })).toBeVisible();
   await expect(bodies(page)).toHaveText([
     "First paragraph.",
@@ -464,7 +463,7 @@ test("copy a document: paragraphs are shared and badged; make local copy forks o
   await expect(page).toHaveURL(/#e=/);
 
   // a new document is empty and unshared
-  await page.getByTestId("new-document").click();
+  await menuItem(page, "Document", "new-document");
   await expect(page.getByRole("heading", { name: "Untitled essay" })).toBeVisible();
   await expect(badges).toHaveCount(0);
 });
@@ -487,8 +486,8 @@ test("delete moves a paragraph to the Bin (v1 state upgrades to v2); restore put
 }) => {
   await open(page);
   await expect(page.getByTestId("bin")).toContainText("Deleted paragraphs wait here.");
-  await page.locator(".essay-shell__page .block-stack__item").nth(1).hover();
-  await page.getByRole("button", { name: /Delete Claim$/ }).click();
+  await page.getByRole("button", { name: "Actions for Claim" }).click();
+  await page.getByTestId("paragraph-menu-delete").click();
   await expect(bodies(page)).toHaveCount(2);
   await expect(page.getByTestId("bin-row")).toContainText("Claim");
   await expect(page.getByTestId("essay-error")).toHaveCount(0);
@@ -497,8 +496,8 @@ test("delete moves a paragraph to the Bin (v1 state upgrades to v2); restore put
   await expect(bodies(page)).toHaveCount(3);
   await expect(bodies(page).last()).toHaveText("Second paragraph.");
   // the second delete reuses the Bin (no second container, no error)
-  await page.getByRole("button", { name: /Delete Opening$/ }).first().locator("xpath=ancestor::article[1]").hover();
-  await page.getByRole("button", { name: /Delete Opening$/ }).click();
+  await page.getByRole("button", { name: "Actions for Opening" }).click();
+  await page.getByTestId("paragraph-menu-delete").click();
   await expect(page.getByTestId("bin-row")).toHaveCount(1);
   await expect(page.getByTestId("essay-error")).toHaveCount(0);
 });
@@ -513,8 +512,8 @@ test("Delete permanently removes the paragraph and its comment, after a confirm"
   await first.getByLabel("Reply").fill("Doomed.");
   await first.getByRole("button", { name: "Comment", exact: true }).click();
   await expect(first.getByTestId("comment")).toHaveCount(1);
-  await page.getByRole("button", { name: /Delete Opening$/ }).first().locator("xpath=ancestor::article[1]").hover();
-  await page.getByRole("button", { name: /Delete Opening$/ }).click();
+  await page.getByRole("button", { name: "Actions for Opening" }).click();
+  await page.getByTestId("paragraph-menu-delete").click();
   await expect(page.getByTestId("bin-row")).toContainText("Opening");
   page.once("dialog", (d) => d.dismiss());
   await page.getByRole("button", { name: "Delete Opening permanently" }).click();

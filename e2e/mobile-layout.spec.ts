@@ -46,13 +46,21 @@ for (const { name, viewport } of widths) {
 
     test("header fits one row; the overflow menu holds the actions", async ({ page }) => {
       await open(page);
-      expect((await page.locator(".essay-shell__bar").boundingBox())!.height).toBeLessThan(72);
+      expect((await page.getByTestId("toolbar").boundingBox())!.height).toBeLessThan(72);
       await expect(page.getByTestId("comment-mode")).toBeHidden();
       await page.getByTestId("header-menu").tap();
-      for (const id of ["new", "copy", "help", "margin", "comments", "export", "other"]) {
-        await expect(page.getByTestId(`header-menu-${id}`)).toBeVisible();
+      for (const id of [
+        "new-document",
+        "copy-document",
+        "toolbar-help",
+        "margin-variant",
+        "comment-mode",
+        "toolbar-export",
+        "toolbar-other",
+      ]) {
+        await expect(page.getByTestId(id)).toBeVisible();
       }
-      await page.getByTestId("header-menu-comments").tap();
+      await page.getByTestId("comment-mode").tap();
       await expect(page.getByTestId("comment-thread").first()).toBeVisible();
     });
 
@@ -72,7 +80,7 @@ for (const { name, viewport } of widths) {
     }) => {
       await open(page);
       await page.getByTestId("header-menu").tap();
-      await page.getByTestId("header-menu-comments").tap();
+      await page.getByTestId("comment-mode").tap();
       const reply = page.getByRole("textbox", { name: "Reply" }).first();
       const send = page.getByRole("button", { name: "Comment", exact: true }).first();
       const r = (await reply.boundingBox())!;
@@ -90,7 +98,7 @@ for (const { name, viewport } of widths) {
       expect(a!.height).toBeLessThan(60);
 
       await page.getByTestId("header-menu").tap();
-      await page.getByTestId("header-menu-help").tap();
+      await page.getByTestId("toolbar-help").tap();
       const pop = page.getByRole("region", { name: "Markdown cheat-sheet" });
       await expect(pop).toBeVisible();
       await expect(pop).toContainText("long-press");

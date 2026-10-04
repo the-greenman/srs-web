@@ -6,8 +6,12 @@ import { expect, it, vi } from "vitest";
 // Stand-in for the core: escapes everything, so the XSS case proves Block never re-injects the source.
 vi.mock("../src/lib/srs-client.js", () => ({
   renderMarkdown: (md: string) =>
-    `<p>${md.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")}</p>`,
+    `<p>${md
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")}</p>`,
 }));
+import { paragraphActions } from "../src/lib/essay/paragraph-actions.js";
 import Block from "../src/lib/components/Block.svelte";
 
 const props = (body: string, onbody = vi.fn()) => ({
@@ -61,13 +65,23 @@ it("Ctrl+click on a rendered link opens it instead of editing", async () => {
   expect(container.querySelector(".block__body")).toBeNull();
 });
 
-it("renders the one ellipsis action menu beside the hover tools (touch CSS hides the stack)", async () => {
-  const { container, getByTestId } = render(Block, { ...props("x"), onzoom: vi.fn(), oncopylink: vi.fn(), onpull: vi.fn() });
+it("renders the one ellipsis action menu and a hover strip of the primary actions (touch CSS hides the strip)", async () => {
+  const handlers = { onzoom: vi.fn(), oncopylink: vi.fn(), onpull: vi.fn() };
+  const { container, getByTestId } = render(Block, { ...props("x"), ...handlers });
   const btn = getByTestId("paragraph-menu");
-  expect(container.querySelectorAll('.block__tools [data-part="action"]')).toHaveLength(3);
+  // hide is the EyeToggle; zoom and link are the data-part="action" buttons: the count comes from the registry
+  const primary = paragraphActions({ onhide: vi.fn(), ...handlers }, { label: "x" }).filter(
+    (a) => a.primary
+  );
+  expect(primary.map((a) => a.id)).toEqual(["hide", "zoom", "link"]);
+  expect(getByTestId("block-strip").querySelectorAll('[data-part="action"], .eye')).toHaveLength(
+    primary.length
+  );
   await fireEvent.click(btn);
   const items = container.querySelectorAll('[role="menuitem"]');
   expect([...items].map((i) => i.getAttribute("data-testid"))).toEqual(
-    ["add", "up", "down", "indent", "outdent", "hide", "draft", "zoom", "link", "rename"].map((id) => `paragraph-menu-${id}`),
+    ["add", "up", "down", "indent", "outdent", "hide", "draft", "zoom", "link", "rename"].map(
+      (id) => `paragraph-menu-${id}`
+    )
   );
 });

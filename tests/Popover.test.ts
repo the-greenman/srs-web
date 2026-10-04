@@ -4,7 +4,9 @@
 // layer, anchor positioning, focus return and clipping are tested in e2e/popover.spec.ts.
 import { cleanup, fireEvent, render } from "@testing-library/svelte";
 import { afterEach, expect, it, vi } from "vitest";
+import { tick } from "svelte";
 import PopoverHost from "./PopoverHost.svelte";
+import PopoverMenuHost from "./PopoverMenuHost.svelte";
 
 afterEach(() => {
   cleanup();
@@ -40,4 +42,61 @@ it("native: calls showPopover when open and does not add an onclick to the trigg
   // The invoker is native: a click must not toggle `open` itself (no close-then-reopen race).
   await fireEvent.click(getByRole("button", { name: "Open things" }));
   expect(hidePopover).not.toHaveBeenCalled();
+});
+
+it("menu keys: ArrowDown/Up/Home/End traverse menuitem and menuitemcheckbox rows, skipping disabled", async () => {
+  const { getByTestId } = render(PopoverMenuHost);
+  await tick();
+  const focus = (id: string) => getByTestId(id).focus();
+  const key = async (k: string) => fireEvent.keyDown(document.activeElement!, { key: k });
+  focus("a");
+  await key("ArrowDown");
+  expect(document.activeElement).toBe(getByTestId("b"));
+  await key("ArrowDown");
+  expect(document.activeElement).toBe(getByTestId("c"));
+  await key("ArrowDown");
+  expect(document.activeElement).toBe(getByTestId("a"));
+  await key("ArrowUp");
+  expect(document.activeElement).toBe(getByTestId("c"));
+  await key("Home");
+  expect(document.activeElement).toBe(getByTestId("a"));
+  await key("End");
+  expect(document.activeElement).toBe(getByTestId("c"));
+});
+
+it("a stale 'closed' toggle after a reopen is ignored; a genuine close still closes", async () => {
+  Object.assign(HTMLElement.prototype, { showPopover: vi.fn(), hidePopover: vi.fn() });
+  let shown = true; // the surface's actual DOM state (:popover-open)
+  const real = HTMLElement.prototype.matches;
+  const spy = vi
+    .spyOn(HTMLElement.prototype, "matches")
+    .mockImplementation(function (this: HTMLElement, q: string) {
+      return q === ":popover-open" ? shown : real.call(this, q);
+    });
+  const { getByRole, container } = render(PopoverHost, { label: "Things", open: true });
+  await tick();
+  const surface = container.querySelector<HTMLElement>('[data-part="surface"]')!;
+  const trigger = getByRole("button", { name: "Open things" });
+  const toggle = (newState: string) =>
+    surface.dispatchEvent(Object.assign(new Event("toggle"), { newState }));
+  toggle("closed"); // stale: the surface is open again
+  await tick();
+  expect(trigger.getAttribute("aria-expanded")).toBe("true");
+  shown = false;
+  toggle("closed"); // genuine
+  await tick();
+  expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  spy.mockRestore();
+});
+
+it("ArrowUp with no focused row picks the last row; ArrowDown the first", async () => {
+  const { getByTestId } = render(PopoverMenuHost);
+  await tick();
+  (document.activeElement as HTMLElement | null)?.blur();
+  const surface = getByTestId("a").parentElement!;
+  await fireEvent.keyDown(surface, { key: "ArrowUp" });
+  expect(document.activeElement).toBe(getByTestId("c"));
+  (document.activeElement as HTMLElement).blur();
+  await fireEvent.keyDown(surface, { key: "ArrowDown" });
+  expect(document.activeElement).toBe(getByTestId("a"));
 });

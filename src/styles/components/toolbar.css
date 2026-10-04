@@ -1,0 +1,74 @@
+/* ============================================================================
+   component: toolbar (.toolbar) — the generic document bar (#423)
+   One row: [lead] title status ... primary menus. Tokens --toolbar-* (tokens-components.css).
+   The narrow tier keeps one row (title ellipsises) and holds one overflow menu.
+   ========================================================================== */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--toolbar-gap);
+  padding: var(--toolbar-pad);
+  background: var(--toolbar-bg);
+  border-bottom: var(--toolbar-border);
+}
+.toolbar__lead {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+.toolbar__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.toolbar__name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--toolbar-title-size);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.toolbar__title select {
+  min-width: 0;
+  max-width: var(--toolbar-title-max);
+}
+.toolbar__status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+}
+.toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--toolbar-gap);
+  flex: none;
+}
+/* The overflow holds every group (a dozen 44px rows): give it more height than the default menu so it rarely scrolls. */
+.toolbar__overflow .action-menu__list {
+  --popover-max-height: min(40rem, 90vh);
+}
+/* bp: phone */
+@media (max-width: 480px) {
+  .toolbar__actions .btn,
+  .toolbar__overflow .action-menu__trigger {
+    min-height: 44px;
+  }
+  .toolbar__overflow .action-menu__trigger {
+    min-width: 44px;
+  }
+}
+@media (pointer: coarse) {
+  .toolbar__actions .btn,
+  .toolbar__actions .icon-btn {
+    min-height: 44px;
+  }
+  .toolbar__actions .icon-btn {
+    min-width: 44px;
+  }
+}

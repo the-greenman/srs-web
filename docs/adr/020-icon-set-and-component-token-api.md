@@ -6,6 +6,7 @@
 - **Supersedes:** —
 - **Superseded by:** —
 - **Amends:** [ADR-019](019-ui-theming-surface-and-live-styleguide.md) (makes its "hard-coded colours" consequence true)
+- **Amended by:** srs-web#423 (Toolbar and paragraph strip parts and tokens, action-registry rule: see "Toolbar and paragraph strip")
 
 ## Context
 
@@ -68,7 +69,8 @@ appended below as components gain parts.
 
 | Component | Parts |
 |---|---|
-| `Block` | `gutter`, `handle`, `tools`, `action`, `menu`, `main`, `head`, `title`, `margin` |
+| `Block` | `gutter`, `handle`, `strip`, `action`, `menu`, `main`, `head`, `title`, `margin` |
+| `Toolbar` | `bar` (the root), `lead`, `title`, `status`, `primary`, `menu` (a group trigger or the lone Help icon), `overflow` (the narrow tier's one menu) |
 | `IconButton` | `icon-btn` |
 | `Popover` | `popover` (wrapper), `surface` |
 | `AttachmentPreview` | `kind`, `title`, `text` |
@@ -172,3 +174,30 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
     and still carry raw colours: #424 (AppShell) retires them.
   - One-off buttons in the modals, `DecisionLogView`, `SourceChooser`, `BlueprintDocumentEditor` and
     the `SectionForm` table editor.
+
+### (h) Toolbar and paragraph strip (#423)
+
+- **Action registry.** A client's action list is one array of `ToolbarAction` (`menu-action.ts`): `group`
+  (the menu it lives in), `kind` (`primary` = a bar button, `toggle` = a checkable row, `action` = a plain
+  row) and `checked` (`true | false | "mixed"`, present = `menuitemcheckbox`). The essay's list is
+  `headerActions()`; a shell passes its own groups. One renderer per surface (`Toolbar`), at every width: tiers
+  `full` (labelled menus), `compact` (icon-only menus) and `narrow` (title, primary and one overflow menu
+  with a section per group) are chosen from `BREAKPOINTS` (`RAIL`, `NARROW`, `tierOf`), and only the active
+  tier's DOM exists, so no action is rendered twice. A group with one action is an icon button, not a menu
+  (the Help icon keeps its native `popovertarget`). The narrow overflow is the toolbar's own; a shell's nav
+  hamburger goes in the `lead` slot (#424).
+- **Checkable rows** keep a View-style menu open on toggle (wide tiers) so the reader sees the state change;
+  the narrow overflow closes. `Popover` keyboard handling covers `menuitem` and `menuitemcheckbox` rows with
+  Arrow, Home and End. State is never duplicated: View > Comments reads and drives `thread-visibility.ts`,
+  View > Margin notes drives `margin-mode.ts`.
+- **Paragraph strip.** `paragraphActions()` marks `primary` actions (hide, zoom, copy link). `Block` renders
+  them as a small strip INSIDE the paragraph's own title row at its right end (`.block__head`, absolute,
+  `right:0`; centred in a titled head, hanging from the content top in an untitled one), so it never leaves
+  the block and cannot touch a neighbour's handle or thread composer or the margin column; on hover it may
+  cover the end of a long title. The handle and the ellipsis menu are always visible; everything (the strip's
+  tools included) is in the menu. One surface at a time, in CSS only: hover wins over pointer and stale
+  focus, a strip whose own controls hold keyboard focus stays, and a focused editable body matches
+  `:focus-visible`. The strip is hidden on touch and on a phone.
+- **Tokens.** `--toolbar-bg`, `--toolbar-border`, `--toolbar-gap`, `--toolbar-pad`, `--toolbar-title-size`,
+  `--toolbar-title-max`; the strip keeps the opaque `--block-tools-bg|border|shadow` surface (the family was
+  the old tool stack's, and is not renamed).

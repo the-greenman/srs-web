@@ -144,3 +144,29 @@
 .sg__wide {
   --margin-width: var(--margin-width-wide);
 }
+
+/* Toolbar and paragraph-tool specimens. The forced states exist only here, to show a hover/focus/touch
+   state without a pointer; the live rules are in block.css. */
+.sg__note {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+}
+.sg__toolbar {
+  padding: 0;
+}
+.sg__paragraph {
+  max-width: 40rem;
+  padding: 0 var(--space-xs);
+  border: var(--rule-soft);
+}
+.sg__strip-on .block__strip {
+  opacity: 1;
+  pointer-events: auto;
+}
+.sg__touch .block__strip {
+  display: none;
+}
+.sg__page {
+  max-width: 40rem;
+}

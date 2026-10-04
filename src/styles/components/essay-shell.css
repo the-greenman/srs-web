@@ -8,31 +8,8 @@
   background: var(--color-bg);
   color: var(--color-text);
 }
-.essay-shell__bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-  padding: var(--space-xs) var(--space-sm);
-  border-bottom: var(--rule);
-}
-.essay-shell__heading,
-.essay-shell__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  flex-wrap: wrap;
-}
-.essay-shell__buttons {
-  display: contents; /* wide: the action buttons sit in the actions row as before */
-}
-.essay-shell__overflow,
 .essay-shell__narrow-icon {
   display: none;
-}
-.essay-shell__bar .btn {
-  padding: 8px 16px;
 }
 .essay-shell__status {
   font-family: var(--font-mono);
@@ -112,32 +89,6 @@
    a one-row zoom bar. Mirror of NARROW in src/lib/breakpoints.ts. */
 /* bp: phone */
 @media (max-width: 480px) {
-  .essay-shell__bar {
-    flex-wrap: nowrap;
-  }
-  .essay-shell__heading {
-    flex: 1;
-    min-width: 0;
-    flex-wrap: nowrap;
-  }
-  .essay-shell__heading select {
-    min-width: 0;
-    max-width: 100%;
-  }
-  .essay-shell__actions {
-    flex-wrap: nowrap;
-  }
-  .essay-shell__buttons {
-    display: none;
-  }
-  .essay-shell__overflow {
-    display: inline-flex;
-  }
-  .essay-shell__overflow .action-menu__trigger {
-    min-width: 44px;
-    min-height: 44px;
-    font-size: var(--size-base);
-  }
   .essay-shell__grid {
     padding: var(--space-xs) 0;
     gap: var(--space-xs);

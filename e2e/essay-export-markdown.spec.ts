@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { openMenu } from "./helpers";
 
 /**
  * essay-export-markdown.spec.ts — srs-web#416: "Export markdown" is the visible essay only.
@@ -23,11 +24,13 @@ test("Export markdown: one H1, no hidden, hidden-by-parent or draft text, arrang
   await bodies.nth(1).click(); // Claim
   await page.keyboard.press("Home");
   await page.keyboard.press("Tab"); // nest under Opening
+  // The tools show on hover: hover the paragraph explicitly (the old run relied on where the pointer happened to rest).
+  await page.locator(".essay-shell__page .block-stack__item").first().hover();
   await page.getByRole("button", { name: "Hide Opening", exact: true }).first().click();
 
   const [download] = await Promise.all([
     page.waitForEvent("download"),
-    page.getByTestId("export-markdown").click(),
+    (async () => { await openMenu(page, "Document"); await page.getByTestId("export-markdown").click(); })(),
   ]);
   expect(download.suggestedFilename()).toBe("On small democracy.md");
   const chunks: Buffer[] = [];
