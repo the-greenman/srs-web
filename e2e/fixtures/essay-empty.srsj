@@ -147,21 +147,21 @@
       "namespace": "com.mudemocracy.essay",
       "version": 1
     },
-    "package/fields/purpose-09612192.json": {
+    "package/fields/purpose-2a86b087.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "id": "2a86b087-ed1c-404f-9890-632804b8a135",
+      "namespace": "com.mudemocracy.essay",
+      "name": "purpose",
+      "version": 1,
+      "description": "What the writer seeks to achieve with the essay and the help they want.",
       "aiGuidance": {
-        "purpose": "What the essay is for and what the writer is trying to achieve, one to a few sentences of markdown. Optional. Agents read it for orientation and never write it."
+        "purpose": "What the writer seeks to achieve with this essay and the help they want from collaborators. Optional and human-authored. Agents read it first to orient themselves and never edit it. It is distinct from summary, which says what the essay says."
       },
-      "createdAt": "2026-10-04T00:00:00Z",
-      "description": "What the essay is for.",
       "fieldType": {
         "datatype": "string",
         "format": "markdown"
       },
-      "id": "09612192-10a1-5a88-a8c4-64face1563bc",
-      "name": "purpose",
-      "namespace": "com.mudemocracy.essay",
-      "version": 1
+      "createdAt": "2026-10-04T00:00:00Z"
     },
     "package/fields/statement-3b000001.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
@@ -247,7 +247,7 @@
         "fields/bincontainerid-95a4f7ad.json",
         "fields/statement-3b000001.json",
         "fields/title-3b000002.json",
-        "fields/purpose-09612192.json"
+        "fields/purpose-2a86b087.json"
       ],
       "id": "5b14a4d4-ec08-4e5b-be75-c183aec90c40",
       "lifecycles": [],
@@ -531,7 +531,7 @@
         },
         {
           "displayLabel": "Purpose",
-          "fieldId": "09612192-10a1-5a88-a8c4-64face1563bc",
+          "fieldId": "2a86b087-ed1c-404f-9890-632804b8a135",
           "order": 2,
           "required": false
         }

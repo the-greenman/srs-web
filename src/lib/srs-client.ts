@@ -759,6 +759,7 @@ export function exportSrsj(repo: SrsRepository): string {
 }
 
 /** The repository's manifest id (the `srs://<id>/...` resource namespace), read from the srsj envelope. */
+// ponytail: full exportSrsj per call; replace with the core accessor (srs-rust#1250)
 export function repositoryId(repo: SrsRepository): string {
   return JSON.parse(exportSrsj(repo)).manifest.repositoryId as string;
 }
