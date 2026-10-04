@@ -31,14 +31,21 @@
   --popover-border: var(--color-text-strong);
   --popover-shadow: var(--shadow-popover);
 
-  /* Hue pills (ActorChip, AttachmentGlyph): hsl(<hue> S L), copied from the
-     numbers the two components used before tokenisation. */
+  /* Hue pills (.hue-pill: ActorChip, ActorMark, AttachmentGlyph): hsl(<hue> S L); the hue is
+     --actor-hue, set per element from actorHue(actor.id). */
   --hue-pill-s: 45%;
   --hue-pill-s-bg: 60%;
   --hue-pill-s-solid: 55%;
   --hue-pill-l-border: 40%;
   --hue-pill-l-bg: 94%;
-  --hue-pill-l-fg: 30%;
-  --hue-pill-l-fg-chip: 25%;
+  --hue-pill-l-fg: 25%;
   --hue-pill-l-solid: 26%;
+
+  /* ActorMark / ActorStack: human = circle, agent = rounded square with a notched corner. */
+  --actor-mark-size: 1.25rem;
+  --actor-mark-size-sm: 1rem;
+  --actor-mark-radius-human: 50%;
+  --actor-mark-radius-ai: 25%;
+  --actor-mark-notch: 0.3rem;
+  --actor-stack-overlap: -0.3rem;
 }

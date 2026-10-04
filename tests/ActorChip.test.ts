@@ -14,3 +14,10 @@ it("shows name and kind, falling back to the id; same id, same hue", () => {
     (b.getAllByTestId("actor-chip")[1] as HTMLElement).style.getPropertyValue("--actor-hue")
   ).toBe(hue);
 });
+
+it("no actor is the explicit Unattributed state: no kind, never anon or HUMAN", () => {
+  const { getByTestId, queryByTestId, container } = render(ActorChip, {});
+  expect(getByTestId("actor-name").textContent).toBe("Unattributed");
+  expect(queryByTestId("actor-kind")).toBeNull();
+  expect(container.textContent).not.toMatch(/anon|human/i);
+});

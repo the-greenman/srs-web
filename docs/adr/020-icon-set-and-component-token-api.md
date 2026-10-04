@@ -120,6 +120,17 @@ each annotated `/* bp: <role> */`. `tests/breakpoints.test.ts` fails when any `@
   pointer crossing the gap does not lose "Remove link". No touch claim: touch reaches Remove link
   through `PinnedPane` and the paragraph menu.
 
+### (f) Actor identity: shape, not colour
+
+`ActorMark` is the compact actor identity; `ActorChip` is the full lozenge; `ActorStack` overlaps
+marks. Kind is told by shape so it reads in monochrome: a human is a circle, an agent is a rounded
+square with a notched corner (`--actor-mark-radius-human`, `--actor-mark-radius-ai`,
+`--actor-mark-notch`). No actor (or no id) is the explicit unattributed state: a neutral, hue-less
+mark and the text "Unattributed". Hue is the one `actorHue(id)` function (`src/lib/actor-hue.ts`),
+set per element as `--actor-hue` and consumed by the single `.hue-pill` rule set (also used by
+`AttachmentGlyph`, whose hue is the attaching actor's). Tokens: `--actor-mark-size`,
+`--actor-mark-size-sm`, `--actor-stack-overlap`.
+
 ## Consequences
 
 - A skin re-points semantic and component tokens and reaches every shared component. The demo theme
@@ -133,6 +144,5 @@ each annotated `/* bp: <role> */`. `tests/breakpoints.test.ts` fails when any `@
     `genericStack`, `rail`, `wide`) into fewer; today they are only named and guarded.
   - Unlayered scoped `<style>` blocks in the Guides, Governance and Generic shells beat every layer
     and still carry raw colours: #424 (AppShell) retires them.
-  - Hue unification of `ActorChip` and `AttachmentGlyph` (`hueOf`, a shared `.hue-pill`): #422.
   - One-off buttons in the modals, `DecisionLogView`, `SourceChooser`, `BlueprintDocumentEditor` and
     the `SectionForm` table editor.

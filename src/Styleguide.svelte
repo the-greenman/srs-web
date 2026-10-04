@@ -7,7 +7,7 @@
   import "./styles/themes/demo.css";
   import { onMount, type Snippet } from "svelte";
   import {
-    ActionMenu, ActorChip, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button,
+    ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, MarkdownHelp, MarkdownText, McpConnection, Panel, ParagraphMargin, PinnedPane, Select, Tag,
     TagChip, Textarea,
@@ -248,10 +248,22 @@
 
   <section id="actors">
     <h2>Actors</h2>
+    <h3>Compact and full</h3>
+    <div class="sg__row">
+      <ActorMark actor={fx.human} />
+      {#each fx.agents as a}<ActorMark actor={a} />{/each}
+      <ActorMark actor={fx.unattributed} />
+      <ActorMark actor={fx.agents[0]} size="sm" />
+    </div>
     <div class="sg__row">
       <ActorChip actor={fx.human} />
       {#each fx.agents as a}<ActorChip actor={a} />{/each}
       <ActorChip actor={fx.unattributed} />
+    </div>
+    <h3>Stack (4 actors, then 7)</h3>
+    <div class="sg__row">
+      <ActorStack actors={[fx.human, ...fx.agents]} max={4} />
+      <ActorStack actors={fx.manyActors} />
     </div>
   </section>
 

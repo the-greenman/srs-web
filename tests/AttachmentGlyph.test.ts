@@ -20,12 +20,20 @@ it("glyph shows kind initial, hover card text, and pins on click", async () => {
   expect(onpin).toHaveBeenCalledOnce();
 });
 
-it("same kind gets the same hue", () => {
-  const hue = () =>
-    render(AttachmentGlyph, { kind: "problem", title: "t" })
-      .container.querySelector<HTMLElement>(".glyph")
-      ?.style.getPropertyValue("--glyph-hue");
-  expect(hue()).toBe(hue());
+it("the glyph takes its hue from the attaching actor, neutral without one", () => {
+  const glyph = (actor?: { kind: "ai"; id: string }) =>
+    render(AttachmentGlyph, {
+      kind: "problem",
+      title: "t",
+      actor,
+    }).container.querySelector<HTMLElement>(".glyph")!;
+  expect(glyph({ kind: "ai", id: "agent:x" }).style.getPropertyValue("--actor-hue")).toBe(
+    glyph({ kind: "ai", id: "agent:x" }).style.getPropertyValue("--actor-hue")
+  );
+  expect(glyph({ kind: "ai", id: "agent:x" }).style.getPropertyValue("--actor-hue")).not.toBe("");
+  const none = glyph();
+  expect(none.style.getPropertyValue("--actor-hue")).toBe("");
+  expect(none.classList.contains("hue-pill--neutral")).toBe(true);
 });
 
 it("pinned pane lists items and unpins", async () => {
@@ -59,7 +67,9 @@ it("hover card shows the relation label and a Remove link action", async () => {
     relation: "counters",
     onremove,
   });
-  expect(container.querySelector(".attachment-preview__kind")?.textContent).toBe("source · counters");
+  expect(container.querySelector(".attachment-preview__kind")?.textContent).toBe(
+    "source · counters"
+  );
   await fireEvent.click(getByText("Remove link"));
   expect(onremove).toHaveBeenCalledOnce();
 });

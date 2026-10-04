@@ -15,7 +15,15 @@ export const agents: Actor[] = [
   { kind: "ai", id: "agent-critic", name: "Critic" },
   { kind: "ai", id: "agent-linker", name: "Linker" },
 ];
-export const unattributed: Actor = { kind: "human", id: "anon" };
+/** An unattributed author is no actor at all. */
+export const unattributed: Actor | undefined = undefined;
+export const manyActors: Actor[] = [
+  human,
+  ...agents,
+  { kind: "human", id: "human-bo", name: "Bo" },
+  { kind: "ai", id: "agent-mapper", name: "Mapper" },
+  { kind: "ai", id: "agent-checker", name: "Checker" },
+];
 
 export const statuses: Status[] = [
   "draft",
@@ -276,6 +284,11 @@ export const componentTokens = [
   "--hue-pill-l-border",
   "--hue-pill-l-bg",
   "--hue-pill-l-fg",
-  "--hue-pill-l-fg-chip",
   "--hue-pill-l-solid",
+  "--actor-mark-size",
+  "--actor-mark-size-sm",
+  "--actor-mark-radius-human",
+  "--actor-mark-radius-ai",
+  "--actor-mark-notch",
+  "--actor-stack-overlap",
 ];

@@ -1,6 +1,6 @@
 /* ============================================================================
    component: attachment glyph (.glyph), hover card (.hover-card), attachment preview, pinned list (.pinned)
-   Small coloured marks beside a paragraph; hue comes from --glyph-hue (set per kind).
+   Small coloured marks beside a paragraph; hue comes from --actor-hue (the attaching actor) through .hue-pill.
    Epic: https://github.com/the-greenman/muDemocracy.org/issues/224 (srs-web#329)
    ========================================================================== */
 .glyph-wrap {
@@ -10,18 +10,11 @@
   width: 1.25rem;
   height: 1.25rem;
   padding: 0;
-  border: 1px solid hsl(var(--glyph-hue, 0) var(--hue-pill-s) var(--hue-pill-l-border));
   border-radius: 50%;
-  background: hsl(var(--glyph-hue, 0) var(--hue-pill-s-bg) var(--hue-pill-l-bg));
-  color: hsl(var(--glyph-hue, 0) var(--hue-pill-s) var(--hue-pill-l-fg));
   font-family: var(--font-mono);
   font-size: var(--size-xs);
   line-height: 1;
   cursor: pointer;
-}
-.glyph.is-pinned {
-  background: hsl(var(--glyph-hue, 0) var(--hue-pill-s-solid) var(--hue-pill-l-solid)); /* white text >= 4.5:1 at every hue */
-  color: var(--color-on-accent);
 }
 .glyph:focus-visible {
   outline: var(--focus-ring);

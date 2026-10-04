@@ -1,7 +1,6 @@
 import { expect, it } from "vitest";
 import {
   type AgentWrite,
-  actorHue,
   ago,
   observeSession,
   pushWrite,
@@ -65,8 +64,7 @@ it("the feed is newest first and capped", () => {
   expect(pushWrite([w(1), w(2)], w(3), 2).map((x) => x.at)).toEqual([3, 1]);
 });
 
-it("hue is stable per actor id and ago reads naturally", () => {
-  expect(actorHue("agent:x")).toBe(actorHue("agent:x"));
+it("ago reads naturally", () => {
   expect(ago(0, 5000)).toBe("just now");
   expect(ago(0, 120000)).toBe("2 min ago");
 });
