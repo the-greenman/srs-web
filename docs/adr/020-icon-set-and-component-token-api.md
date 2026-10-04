@@ -115,6 +115,13 @@ each annotated `/* bp: <role> */`. `tests/breakpoints.test.ts` fails when any `@
   `CSS.supports("anchor-name: --x")`; otherwise the pure `placeNextTo(anchorRect, size, viewport,
   placement)` (below the anchor, aligned to the placement edge, flips above, clamps), repositioned on
   scroll (capture) and resize while open.
+- **Reading-card size.** Surface size is tokenised: `--popover-max-width` / `--popover-max-height`
+  (menu values, `min(22rem, 90vw)` / `min(28rem, 80vh)`) and, for `card` popovers (`HoverCard`),
+  `--hover-card-min-width: min(20rem, 90vw)`, `--hover-card-max-width: min(36rem, 90vw)`,
+  `--hover-card-max-height: min(32rem, 70vh)`. A card sizes to its content between min and max and
+  shrinks below min only on a viewport narrower than the 90vw guard. `Popover`'s `card` prop adds
+  anchor fallbacks `bottom span-all` / `top span-all` after the flips, and makes `placeNextTo` clamp
+  the width and pick the side of the anchor with more room. `HoverCard` places `bottom-end` (the card extends toward the page, away from the right rail). Menus are unchanged.
 - **happy-dom.** It lacks the popover API. `Popover` feature-guards: without `showPopover` it toggles
   an `is-open` class and inline `display`, the trigger props carry an `onclick`, and Escape closes it.
   Component tests cover that fallback and the pure placement; light-dismiss, Escape, top layer,

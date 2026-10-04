@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { connectAgents } from "./helpers";
 
 /**
  * popover.spec.ts — the Popover primitive (srs-web#421, ADR-020 e). Chromium only (the pinned
@@ -67,7 +68,9 @@ test.describe("Popover in an overflow container", () => {
     await expect(trigger(page)).toBeFocused();
   });
 
-  test("an outside click on non-focusable text closes it and focus returns to the trigger", async ({ page }) => {
+  test("an outside click on non-focusable text closes it and focus returns to the trigger", async ({
+    page,
+  }) => {
     await styleguide(page);
     await trigger(page).click();
     await expect(rows(page).first()).toBeVisible();
@@ -76,7 +79,9 @@ test.describe("Popover in an overflow container", () => {
     await expect(trigger(page)).toBeFocused();
   });
 
-  test("an outside click on another focusable button closes it and focus stays there", async ({ page }) => {
+  test("an outside click on another focusable button closes it and focus stays there", async ({
+    page,
+  }) => {
     await styleguide(page);
     await trigger(page).click();
     await expect(rows(page).first()).toBeVisible();
@@ -150,7 +155,9 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
     });
   });
 
-  test("Escape in a paragraph menu closes only the menu: the shell stays zoomed", async ({ page }) => {
+  test("Escape in a paragraph menu closes only the menu: the shell stays zoomed", async ({
+    page,
+  }) => {
     await openEssay(page);
     const menu = page.locator(".essay-shell__page").getByTestId("paragraph-menu").first();
     await menu.click();
@@ -167,7 +174,9 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
   test.describe("narrow", () => {
     const phone = { width: 390, height: 800 };
 
-    test("choosing help from the overflow menu opens exactly one popover; Escape returns to the menu trigger", async ({ page }) => {
+    test("choosing help from the overflow menu opens exactly one popover; Escape returns to the menu trigger", async ({
+      page,
+    }) => {
       await openEssay(page, phone);
       const menu = page.getByTestId("header-menu");
       await expect(page.getByRole("button", { name: "Markdown help", exact: true })).toBeHidden(); // desktop invoker is hidden on a phone
@@ -189,5 +198,45 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
       await page.getByRole("heading", { name: "On small democracy" }).click();
       await expect(help(page)).toBeHidden();
     });
+  });
+});
+
+const LONG = "A long reading note that should not be squeezed into a narrow column. ".repeat(8);
+/** Hover the first attachment glyph (long text) and return the card, the viewport and its box. */
+async function hoverCard(page: Page, width: number, height: number) {
+  const { tool, attach } = await connectAgents(page, ESSAY, 1);
+  const found = await tool(1, "find", { contentMatch: "First paragraph." });
+  const target = /[0-9a-f]{8}-[0-9a-f-]{27}/.exec(JSON.stringify(found))?.[0] as string;
+  await attach(1, "Long note", LONG, target);
+  await page.setViewportSize({ width, height });
+  const glyph = page.locator(".essay-shell__page .glyph").first();
+  await expect(glyph).toBeVisible();
+  await glyph.hover();
+  const card = page.locator(".hover-card").first();
+  await expect(card).toBeVisible();
+  return { card, box: (await card.boundingBox())! };
+}
+
+test.describe("HoverCard width (srs-web#422)", () => {
+  test("1440: a long-text card is at least 20rem, in the viewport, and clear of the rail", async ({
+    page,
+  }) => {
+    const { card, box } = await hoverCard(page, 1440, 900);
+    const rem = await page.evaluate(() =>
+      Number.parseFloat(getComputedStyle(document.documentElement).fontSize)
+    );
+    console.log(`hover card width @1440: ${box.width}px`);
+    expect(box.width).toBeGreaterThanOrEqual(20 * rem - 1);
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(1440);
+    expect(box.y + box.height).toBeLessThanOrEqual(900);
+    const rail = await page.getByTestId("rail").boundingBox();
+    if (rail) expect(box.x + box.width <= rail.x || box.x >= rail.x + rail.width).toBe(true);
+    await expect(card).toBeVisible();
+  });
+  test("390: the card fits within the viewport", async ({ page }) => {
+    const { box } = await hoverCard(page, 390, 800);
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(390);
   });
 });

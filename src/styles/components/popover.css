@@ -13,8 +13,8 @@
 .popover__surface {
   margin: 0;
   inset: auto;
-  max-width: min(22rem, 90vw);
-  max-height: min(28rem, 80vh);
+  max-width: var(--popover-max-width);
+  max-height: var(--popover-max-height);
   padding: 0;
   color: var(--color-text);
   background: var(--popover-bg);

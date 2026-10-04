@@ -44,5 +44,5 @@
 {#if inFlow}
   <div class="popover__surface popover__surface--static hover-card {className}" role={role} aria-label={title}>{@render card()}</div>
 {:else}
-  <Popover bind:open mode="manual" {role} label={title} {anchor} class={`hover-card ${className}`}>{@render card()}</Popover>
+  <Popover bind:open mode="manual" card placement="bottom-end" {role} label={title} {anchor} class={`hover-card ${className}`}>{@render card()}</Popover>
 {/if}

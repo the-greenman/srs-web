@@ -225,6 +225,8 @@
     <div class="sg__row"><Button size="sm" variant="mono" popovertarget="sg-md-help" popovertargetaction="toggle">Toggle help</Button></div>
     <h3>HoverCard (static)</h3>
     <HoverCard static kind="note" title="Interview notes" text="A read-only preview card." relation="evidences" onremove={noop} />
+    <h3>HoverCard (static, long text)</h3>
+    <HoverCard static kind="note" title="Interview notes" text={'A longer reading card. '.repeat(24)} relation="evidences" onremove={noop} />
     <h3>AttachmentPreview</h3>
     <div><AttachmentPreview kind="spreadsheet" title="Budget sheet" text="Q3 budget figures, clamped to three lines when pinned." relation="evidences" clamp /></div>
     <h3>Margin overflow (+N)</h3>

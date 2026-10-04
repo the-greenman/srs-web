@@ -21,8 +21,12 @@
   outline: var(--focus-ring);
   outline-offset: var(--focus-offset);
 }
-.hover-card {
-  width: 16rem;
+.popover__surface.hover-card {
+  /* Reading card: widens to its content between the min and max tokens (a menu-sized surface is too narrow to read). */
+  --popover-max-width: var(--hover-card-max-width);
+  --popover-max-height: var(--hover-card-max-height);
+  width: max-content;
+  min-width: var(--hover-card-min-width);
   padding: var(--space-xs) var(--space-sm);
 }
 .attachment-preview__kind {
