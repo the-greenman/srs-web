@@ -5,7 +5,13 @@ import { ESSAY_TYPE_ID } from "$lib/essay/type-registry.js";
 import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
 import { DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
 import GuidesShell from "$lib/guides/GuidesShell.svelte";
-import type { AgentWriteGuard, SrsRepository, TypeSummary } from "$lib/srs-client.js";
+import {
+  type AgentWriteGuard,
+  type PackageRequirement,
+  type SrsRepository,
+  type TypeSummary,
+  checkPackageRequirements,
+} from "$lib/srs-client.js";
 /**
  * The one editor registry (srs-web#338).
  *
@@ -15,14 +21,6 @@ import type { AgentWriteGuard, SrsRepository, TypeSummary } from "$lib/srs-clien
  * never on a namespace/name label. Adding an editor = adding one entry here.
  */
 import type { Component, Snippet } from "svelte";
-
-/** The spec's packageDependencies shape plus the package UUID (srs#855). */
-export interface PackageRequirement {
-  packageId: string;
-  namespace: string;
-  name: string;
-  version: string;
-}
 
 /** The props App passes to every editor shell; each component is type-checked against this. */
 export interface EditorShellProps {
@@ -118,11 +116,54 @@ export const EDITORS: EditorDefinition[] = [
   },
 ];
 
-export function getEditor(id: string): EditorDefinition | undefined {
-  return EDITORS.find((editor) => editor.id === id);
+/** An unmet requirement and the one human-readable reason (built once; the picker shows it in two places). */
+export interface UnmetRequirement {
+  requirement?: PackageRequirement;
+  reason: string;
 }
 
-export function availableEditors(types: TypeSummary[]): EditorDefinition[] {
+/** An editor whose entry type is present; `unmet` = why it cannot be opened (null = usable). */
+export interface OfferedEditor {
+  editor: EditorDefinition;
+  unmet: UnmetRequirement | null;
+}
+
+function unmetReason(req: PackageRequirement, have: (string | null)[] | undefined): string {
+  // The core's installed-set order is shown as given: no client version comparison.
+  const installed = (have ?? []).filter((v): v is string => !!v);
+  return `Needs ${req.name} package ${req.version}${installed.length ? ` (you have ${installed.join(", ")})` : ""}`;
+}
+
+/**
+ * The one availability computation (srs-web#399): App's shell selection and the picker both consume it.
+ * Entry type present = offered; an unmet `requires` (RFC-044, decided by the core) = offered but unusable.
+ * Fails closed: if the check throws or returns nonsense, every editor with requirements is unmet.
+ */
+export function availableEditors(repo: SrsRepository, types: TypeSummary[]): OfferedEditor[] {
   const ids = new Set(types.map((type) => type.id));
-  return EDITORS.filter((editor) => ids.has(editor.entryTypeId));
+  return EDITORS.filter((editor) => ids.has(editor.entryTypeId)).map((editor) => {
+    if (editor.requires.length === 0) return { editor, unmet: null };
+    let outcomes: ReturnType<typeof checkPackageRequirements>;
+    try {
+      outcomes = checkPackageRequirements(repo, editor.requires);
+    } catch {
+      return { editor, unmet: { reason: "Could not check package requirements" } };
+    }
+    const i = editor.requires.findIndex((_, n) => !outcomes[n]?.satisfied);
+    return {
+      editor,
+      unmet:
+        i < 0
+          ? null
+          : {
+              requirement: editor.requires[i],
+              reason: unmetReason(editor.requires[i], outcomes[i]?.candidateVersions),
+            },
+    };
+  });
+}
+
+/** The one shell gate: the editor App may render for `mode`, or null (generic shell) if it is absent or unmet. */
+export function usableEditor(offered: OfferedEditor[], mode: string): EditorDefinition | null {
+  return offered.find((o) => o.editor.id === mode && !o.unmet)?.editor ?? null;
 }

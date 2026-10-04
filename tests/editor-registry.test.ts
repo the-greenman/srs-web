@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { EDITORS, availableEditors } from "../src/lib/editors/registry.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { EDITORS, availableEditors, usableEditor } from "../src/lib/editors/registry.js";
 
+const check = vi.hoisted(() => vi.fn());
+vi.mock("../src/lib/srs-client.js", () => ({ checkPackageRequirements: check }));
+const repo = {} as never;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 describe("editor registry", () => {
@@ -13,17 +16,81 @@ describe("editor registry", () => {
     }
   });
 
+  beforeEach(() => {
+    check.mockImplementation((_r, reqs) => reqs.map(() => ({ satisfied: true })));
+  });
+
   it("offers nothing without an entry type, and keys on the type UUID alone", () => {
-    expect(availableEditors([])).toEqual([]);
+    expect(availableEditors(repo, [])).toEqual([]);
     const types = EDITORS.map((e) => ({
       id: e.entryTypeId,
       namespace: "any",
       name: "x",
       version: 1,
     }));
-    expect(availableEditors(types).map((e) => e.id)).toEqual(EDITORS.map((e) => e.id));
+    expect(availableEditors(repo, types).map((o) => o.editor.id)).toEqual(EDITORS.map((e) => e.id));
     expect(
-      availableEditors([{ id: "guide", namespace: "com.mudemocracy", name: "guide", version: 1 }])
+      availableEditors(repo, [{ id: "guide", namespace: "com.mudemocracy", name: "guide", version: 1 }])
     ).toEqual([]);
+  });
+
+  it("marks an editor unmet when the core says its requirement is not satisfied", () => {
+    const essay = EDITORS.find((e) => e.id === "essay")!;
+    check.mockReturnValue([{ satisfied: false, reason: "version-too-low", candidateVersions: ["1.0.0"] }]);
+    const [offered] = availableEditors(repo, [
+      { id: essay.entryTypeId, namespace: "n", name: "x", version: 1 },
+    ]);
+    expect(offered.unmet).toEqual({
+      requirement: essay.requires[0],
+      reason: "Needs essay package 1.3.0 (you have 1.0.0)",
+    });
+    expect(check).toHaveBeenCalledWith(repo, essay.requires);
+  });
+
+  it("an editor with no requirements is never unmet", () => {
+    const guides = EDITORS.find((e) => e.id === "guides")!;
+    check.mockReturnValue([]);
+    const [offered] = availableEditors(repo, [
+      { id: guides.entryTypeId, namespace: "n", name: "x", version: 1 },
+    ]);
+    expect(offered.unmet).toBeNull();
+  });
+
+  it("fails closed when the check throws: editors with requirements are unmet, others are not", () => {
+    check.mockImplementation(() => {
+      throw new Error("boom");
+    });
+    const offered = availableEditors(
+      repo,
+      EDITORS.map((e) => ({ id: e.entryTypeId, namespace: "n", name: "x", version: 1 }))
+    );
+    for (const o of offered) {
+      expect(o.unmet?.reason ?? null).toBe(
+        o.editor.requires.length ? "Could not check package requirements" : null
+      );
+    }
+    expect(offered.some((o) => o.unmet)).toBe(true);
+  });
+
+  it("lists every installed version in the core's order, skipping unknown ones", () => {
+    const essay = EDITORS.find((e) => e.id === "essay")!;
+    check.mockReturnValue([{ satisfied: false, candidateVersions: ["1.1.0", null, "1.0.0"] }]);
+    const [o] = availableEditors(repo, [
+      { id: essay.entryTypeId, namespace: "n", name: "x", version: 1 },
+    ]);
+    expect(o.unmet?.reason).toBe("Needs essay package 1.3.0 (you have 1.1.0, 1.0.0)");
+  });
+
+  it("the shell gate refuses an unmet editor even when the mode names it", () => {
+    const essay = EDITORS.find((e) => e.id === "essay")!;
+    const guides = EDITORS.find((e) => e.id === "guides")!;
+    const offered = [
+      { editor: essay, unmet: { reason: "Needs essay package 1.3.0" } },
+      { editor: guides, unmet: null },
+    ];
+    expect(usableEditor(offered, "essay")).toBeNull();
+    expect(usableEditor(offered, "guides")).toBe(guides);
+    expect(usableEditor(offered, "absent")).toBeNull();
+    expect(usableEditor(offered, "generic")).toBeNull();
   });
 });

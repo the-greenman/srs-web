@@ -152,6 +152,8 @@ export interface SrsRepository {
   get_type(id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listPackages()
   list_packages(): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in checkPackageRequirements()
+  check_package_requirements(input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listRelationTypes()
   list_relation_types(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listBlueprints()
@@ -1441,6 +1443,40 @@ export function listPackages(repo: SrsRepository): PackageSummary[] {
     fieldCount: item.fieldCount ?? item.field_count ?? 0,
     typeCount: item.typeCount ?? item.type_count ?? 0,
   }));
+}
+
+/** One RFC-044 requirement outcome from the core (`reason` is one of its codes when unsatisfied). */
+export interface RequirementOutcome {
+  packageId?: string;
+  namespace: string;
+  name: string;
+  version: string;
+  satisfied: boolean;
+  reason?: string;
+  /** Installed versions of that package, in the core's installed-set order (not sorted; null = unknown). */
+  candidateVersions?: (string | null)[];
+}
+
+/** The spec's packageDependencies shape plus the package UUID (srs#855). */
+export interface PackageRequirement {
+  packageId: string;
+  namespace: string;
+  name: string;
+  version: string;
+}
+
+/**
+ * RFC-044 requirement check against the installed packages. The core decides satisfaction
+ * (compatibility band, minimum version); the client only presents the outcome.
+ */
+export function checkPackageRequirements(
+  repo: SrsRepository,
+  requires: PackageRequirement[]
+): RequirementOutcome[] {
+  if (requires.length === 0) return [];
+  const result = repo.check_package_requirements(JSON.stringify({ packageDependencies: requires }));
+  if (!Array.isArray(result?.dependencies)) throw new Error("malformed requirement check result");
+  return result.dependencies as RequirementOutcome[];
 }
 
 // --- listBlueprints --------------------------------------------------------

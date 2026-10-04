@@ -42,10 +42,12 @@
   import type { BlueprintSummary } from "$lib/srs-client.js";
   import type { CompositeFormDef } from "$lib/editor/blueprint-fields.js";
   import type { FieldFormDef } from "$lib/governance/types.js";
-  import { availableEditors } from "$lib/editors/registry.js";
+  import type { OfferedEditor } from "$lib/editors/registry.js";
 
   interface Props {
     repo: SrsRepository;
+    /** Editors offered for this repo, computed once by App (registry.availableEditors). */
+    packageEditors?: OfferedEditor[];
     repoName: string;
     onExport: () => void;
     /** Write the engine-owned current repository to the opened backend, when allowed. */
@@ -64,6 +66,7 @@
 
   let {
     repo,
+    packageEditors = [],
     repoName,
     onExport,
     onSave,
@@ -110,7 +113,6 @@
   const activeContainer = $derived(
     containers.find((container) => container.containerId === selectedContainerId) ?? null,
   );
-  const packageEditors = $derived(availableEditors(types));
 
   function message(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
@@ -387,9 +389,14 @@
 </script>
 
 {#snippet editorButtons(testPrefix: string)}
-  {#each packageEditors as editor (editor.id)}
+  {#each packageEditors as { editor, unmet } (editor.id)}
     {#if onOpenEditor}
-      <button data-testid="{testPrefix}-{editor.id}" title={editor.description} onclick={() => onOpenEditor(editor.id)}>{editor.label}</button>
+      {#if unmet}
+        <button data-testid="{testPrefix}-{editor.id}" title={unmet.reason} disabled>{editor.label}</button>
+        <small data-testid="{testPrefix}-{editor.id}-unmet">{unmet.reason}</small>
+      {:else}
+        <button data-testid="{testPrefix}-{editor.id}" title={editor.description} onclick={() => onOpenEditor(editor.id)}>{editor.label}</button>
+      {/if}
     {/if}
   {/each}
 {/snippet}
