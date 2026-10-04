@@ -26,10 +26,54 @@
   border: 1px solid var(--color-line);
   text-transform: uppercase;
 }
-.comments__text {
+/* The body clamps rendered markdown (block children included): .comments__text is display:contents,
+   so the paragraphs are the -webkit-box's own children. */
+.comments__body {
   margin: 2px 0 0;
   font-size: var(--size-sm);
-  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.comments__body.is-clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--comment-clamp-lines);
+  line-clamp: var(--comment-clamp-lines);
+  overflow: hidden;
+}
+.comments__text {
+  display: contents;
+}
+.md-view > :first-child {
+  margin-top: 0;
+}
+.md-view > :last-child {
+  margin-bottom: 0;
+}
+.comments__time {
+  color: var(--color-muted);
+}
+/* The list is the scroller; the composer is its sibling, so it never scrolls away. */
+.comments__list {
+  max-height: var(--comment-thread-max);
+  overflow-y: auto;
+}
+.comments__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: 100%;
+  text-align: left;
+}
+.comments__first {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-muted);
+}
+.comments__earlier,
+.comments__more {
+  margin: 2px 0;
 }
 .comments__reply {
   display: flex;
@@ -47,6 +91,10 @@
   padding: 4px 8px;
   font-size: var(--size-sm);
   line-height: inherit;
+}
+.comments__reply .textarea {
+  max-height: var(--comment-composer-max);
+  overflow-y: auto;
 }
 
 /* Phone (srs-web#383): name, reply and the Comment button stack full-width. */

@@ -2,6 +2,7 @@
 // component props; no SRS semantics (ADR-001) and never repository data.
 import type { AgentStatus, AgentWrite } from "$lib/agent-activity";
 import type { Annotation } from "$lib/annotations";
+import type { Comment } from "$lib/comments";
 import type { Layer } from "$lib/components/LayersPanel.svelte";
 import type { MenuAction } from "$lib/components/menu-action";
 import type { Actor } from "$lib/srs-client";
@@ -58,10 +59,20 @@ export const annotations: Annotation[] = [
   { kind: "shared", key: "s", label: "Shared with Critic", actor: agents[1] },
 ];
 
-export const comments = [
-  { id: "1", text: "This paragraph needs a source.", author: agents[1] },
-  { id: "2", text: "Added one from the budget sheet.", author: agents[0] },
-  { id: "3", text: "Thanks, looks right.", author: human },
+export const comments: Comment[] = [
+  {
+    id: "1",
+    text: "This paragraph needs a source.",
+    createdAt: "2026-10-04T11:40:00Z",
+    author: agents[1],
+  },
+  {
+    id: "2",
+    text: "Added one from the budget sheet.",
+    createdAt: "2026-10-04T11:52:00Z",
+    author: agents[0],
+  },
+  { id: "3", text: "Thanks, looks right.", createdAt: "2026-10-04T11:58:00Z", author: human },
 ];
 
 export const layers: Layer[] = [
@@ -228,10 +239,11 @@ export const longPinned = [
     text: `Quarterly figures ${LONG_WORD} ${LONG_WORD}`,
   },
 ];
-export const longComments = [
+export const longComments: Comment[] = [
   {
     id: "lc1",
     text: `A comment with an unbreakable run: ${LONG_WORD} ${LONG_WORD}`,
+    createdAt: "",
     author: agents[1],
   },
 ];

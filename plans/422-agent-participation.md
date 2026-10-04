@@ -200,21 +200,21 @@ npx playwright test e2e/essay-comments.spec.ts e2e/essay-write-guard.spec.ts e2e
 
 #### Tasks (`CommentThread.svelte`, `comments.css`, `src/lib/comments.ts`)
 
-- [ ] **Bounded + scroll:** `.comments__list` is the scroller: `max-height: var(--comment-thread-max)` (default `24rem`), `overflow-y: auto`; scroll to the newest on mount, on add, and after "reveal all". The composer sits **outside** the scroller (a sibling below it, not sticky), so it never scrolls away.
-- [ ] **Clamp long comments:** wrapper uses `display:-webkit-box; -webkit-line-clamp: var(--comment-clamp-lines)` (default 6); verify it clamps rendered markdown with block children (paragraphs, lists). A real `Button size="sm" variant="ghost"` "Show more / Show less" with `aria-expanded`, shown only when `scrollHeight > clientHeight`.
-- [ ] **Collapse long threads:** beyond `N = 8` (named const) older comments sit behind "N earlier comments"; plus a one-line thread summary (last author `ActorMark`, count, first line) toggle.
-- [ ] **Group runs:** pure `groupRuns(comments)` in `src/lib/comments.ts` (consecutive same `actor.id`, or consecutive unattributed). First of a run: full `ActorChip`; later items: compact `ActorMark`.
-- [ ] **Markdown:** `MarkdownText` is an editor, so extract a read-only `src/lib/components/MarkdownView.svelte` (`value` -> `{@html renderMarkdown(value)}`) as the ONLY `{@html renderMarkdown(...)}` site. `MarkdownText`'s rendered mode (line ~117) and `PinnedPane.svelte:53` move onto it (both are direct fits); `CommentThread` uses it.
-- [ ] **Timestamps:** `<time datetime title>` only when `createdAt` is non-empty (omit the element otherwise). A small `relativeTime(iso, now)` in `src/lib/comments.ts`: relative up to a day ("just now", "N min ago", "N h ago"), then `toLocaleDateString`; the full locale time goes in `title`. Do not reuse `ago` (no day bucket); unit-test the buckets and the empty case.
-- [ ] **Composer:** `Textarea` autogrows to `--comment-composer-max`; Ctrl/Cmd+Enter submits; submit is `Button size="sm" variant="primary"`, enabled as soon as there is text; `Your name` input kept.
-- [ ] `data-part` additions: `list`, `earlier`, `more`, `time`, `summary`.
+- [x] **Bounded + scroll:** `.comments__list` is the scroller: `max-height: var(--comment-thread-max)` (default `24rem`), `overflow-y: auto`; scroll to the newest on mount, on add, and after "reveal all". The composer sits **outside** the scroller (a sibling below it, not sticky), so it never scrolls away.
+- [x] **Clamp long comments:** wrapper uses `display:-webkit-box; -webkit-line-clamp: var(--comment-clamp-lines)` (default 6); verify it clamps rendered markdown with block children (paragraphs, lists). A real `Button size="sm" variant="ghost"` "Show more / Show less" with `aria-expanded`, shown only when `scrollHeight > clientHeight`.
+- [x] **Collapse long threads:** beyond `N = 8` (named const) older comments sit behind "N earlier comments"; plus a one-line thread summary (last author `ActorMark`, count, first line) toggle.
+- [x] **Group runs:** pure `groupRuns(comments)` in `src/lib/comments.ts` (consecutive same `actor.id`, or consecutive unattributed). First of a run: full `ActorChip`; later items: compact `ActorMark`.
+- [x] **Markdown:** `MarkdownText` is an editor, so extract a read-only `src/lib/components/MarkdownView.svelte` (`value` -> `{@html renderMarkdown(value)}`) as the ONLY `{@html renderMarkdown(...)}` site. `MarkdownText`'s rendered mode (line ~117) and `PinnedPane.svelte:53` move onto it (both are direct fits); `CommentThread` uses it.
+- [x] **Timestamps:** `<time datetime title>` only when `createdAt` is non-empty (omit the element otherwise). A small `relativeTime(iso, now)` in `src/lib/comments.ts`: relative up to a day ("just now", "N min ago", "N h ago"), then `toLocaleDateString`; the full locale time goes in `title`. Do not reuse `ago` (no day bucket); unit-test the buckets and the empty case.
+- [x] **Composer:** `Textarea` autogrows to `--comment-composer-max`; Ctrl/Cmd+Enter submits; submit is `Button size="sm" variant="primary"`, enabled as soon as there is text; `Your name` input kept.
+- [x] `data-part` additions: `list`, `earlier`, `more`, `time`, `summary`.
 
 #### Acceptance Criteria
 
-- [ ] e2e in `e2e/agent-channels.spec.ts`, using its existing MCP comment helper: a 3,000-character agent comment plus 25 replies. Assert the scroller's `clientHeight` <= the computed max in px (resolve `--comment-thread-max` rem to px) and `scrollHeight > clientHeight`; the composer is inside the viewport; "N earlier comments" reveals the rest and the newest is scrolled into view; "Show more" toggles `aria-expanded` (e2e only: happy-dom has no layout); `*em*` renders as `<em>`.
-- [ ] e2e: an agent comment containing `<script>` and `<img onerror>` is inert (no script run, no `img` element in the DOM, text escaped).
-- [ ] Vitest: `groupRuns`, `relativeTime`, `grep -rn "{@html renderMarkdown" src` returns only `MarkdownView.svelte`; a `MarkdownView` test covers emphasis and escaped HTML.
-- [ ] Selector disposition for this phase: `comment`, `comment-thread`, `comment-badge`, `Reply`, `Your name`, `Comment`, `.comments__text` pass unchanged; the "Unknown author" span becomes an unattributed `ActorMark` (`getByTestId("actor-mark")`).
+- [x] e2e in `e2e/agent-channels.spec.ts`, using its existing MCP comment helper: a 3,000-character agent comment plus 25 replies. Assert the scroller's `clientHeight` <= the computed max in px (resolve `--comment-thread-max` rem to px) and `scrollHeight > clientHeight`; the composer is inside the viewport; "N earlier comments" reveals the rest and the newest is scrolled into view; "Show more" toggles `aria-expanded` (e2e only: happy-dom has no layout); `*em*` renders as `<em>`.
+- [x] e2e: an agent comment containing `<script>` and `<img onerror>` is inert (no script run, no `img` element in the DOM, text escaped).
+- [x] Vitest: `groupRuns`, `relativeTime`, `grep -rn "{@html renderMarkdown" src` returns only `MarkdownView.svelte`; a `MarkdownView` test covers emphasis and escaped HTML.
+- [x] Selector disposition for this phase: `comment`, `comment-thread`, `comment-badge`, `Reply`, `Your name`, `Comment`, `.comments__text` pass unchanged; the "Unknown author" span becomes an unattributed `ActorMark` (`getByTestId("actor-mark")`).
 
 #### Testing
 

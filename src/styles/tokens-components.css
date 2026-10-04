@@ -48,4 +48,9 @@
   --actor-mark-radius-ai: 25%;
   --actor-mark-notch: 0.3rem;
   --actor-stack-overlap: -0.3rem;
+
+  /* CommentThread: bounded list, clamped comments, composer growth. */
+  --comment-thread-max: 24rem;
+  --comment-clamp-lines: 6;
+  --comment-composer-max: 10rem;
 }

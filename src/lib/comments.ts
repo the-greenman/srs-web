@@ -81,3 +81,29 @@ export function addComment(repo: SrsRepository, targetId: string, text: string):
     targetInstanceId: targetId,
   });
 }
+
+/** Threads longer than this keep only the newest this-many comments open; the rest sit behind "N earlier comments". */
+export const EARLIER_THRESHOLD = 8;
+
+/** Consecutive comments by the same actor id (or consecutive unattributed ones) form one run. */
+export function groupRuns(comments: Comment[]): Comment[][] {
+  const runs: Comment[][] = [];
+  for (const c of comments) {
+    const last = runs.at(-1);
+    if (last && last[0].author?.id === c.author?.id) last.push(c);
+    else runs.push([c]);
+  }
+  return runs;
+}
+
+/** "just now", "N min ago", "N h ago" up to a day, then the locale date; "" without a timestamp. */
+export function relativeTime(iso: string, now: number): string {
+  const t = Date.parse(iso);
+  if (!iso || Number.isNaN(t)) return "";
+  const s = Math.max(0, Math.round((now - t) / 1000));
+  if (s < 60) return "just now";
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  return h < 24 ? `${h} h ago` : new Date(t).toLocaleDateString();
+}

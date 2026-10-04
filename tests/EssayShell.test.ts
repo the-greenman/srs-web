@@ -45,7 +45,10 @@ vi.mock("../src/lib/essay/essay-document.js", () => ({
   transfer: vi.fn(),
 }));
 
-vi.mock("../src/lib/comments.js", () => ({ addComment: vi.fn() }));
+vi.mock("../src/lib/comments.js", async (orig) => ({
+  ...(await orig<typeof import("../src/lib/comments.js")>()),
+  addComment: vi.fn(),
+}));
 
 it("a typing commit reloads the essay once, via documentRevision (essay typing freeze)", async () => {
   doc.loadEssay.mockReturnValue(model);
