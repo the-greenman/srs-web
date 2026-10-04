@@ -482,7 +482,7 @@
         onexplorer: onOpenExplorer,
         onopenanother: onOpenAnother,
       },
-      { expanded: marginMode === "expanded", comments: summary(openThreads, shownIds), saving },
+      { expanded: marginMode === "expanded", comments: summary(openThreads, shownIds), saving, dirty: documentDirty, help: { id: helpId, open: helpOpen } },
     ),
   );
 </script>
@@ -523,7 +523,7 @@
           {#if a.id === "help"}
             <IconButton class="md-help__btn" icon={CircleQuestionMark} variant="outline" popovertarget={helpId} popovertargetaction="toggle" label={a.label} aria-expanded={helpOpen} />
           {:else}
-            <Button variant={a.variant} active={!!a.pressed} aria-pressed={a.pressed} data-testid={a.testid} disabled={!a.enabled} onclick={a.run}>{a.label}</Button>
+            <Button variant={a.id === "save" || a.id.startsWith("export") ? "mono" : "ghost"} active={!!a.checked} aria-pressed={a.checked} data-testid={a.testid} disabled={!a.enabled} onclick={a.run}>{a.label}</Button>
           {/if}
         {/each}
       </div>
