@@ -58,16 +58,6 @@
   font-size: var(--size-xs);
 }
 
-/* ── Read-only reason: a line under the bar ────────────────────────────────── */
-.generic-readonly {
-  margin: 0;
-  padding: 6px var(--space-sm);
-  border-bottom: var(--rule-soft);
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  color: var(--color-muted-strong);
-}
-
 /* ── Main: the view, capped at the content width (Wide widens it) ─────────── */
 .generic-page {
   display: flex;
@@ -98,12 +88,6 @@
 .generic-muted {
   color: var(--color-muted-strong);
   font-size: var(--size-sm);
-}
-.generic-notice {
-  margin: 0;
-  padding: var(--space-xs) var(--space-xs);
-  background: color-mix(in srgb, var(--color-warn) 10%, transparent);
-  border-left: 3px solid var(--color-warn);
 }
 /* One scroller per column: the editor, preview and record list flow at full height and `.workspace`
    scrolls them. (An `overflow:auto` flex item shrinks to its min size 0 and becomes a nested scroller.) */

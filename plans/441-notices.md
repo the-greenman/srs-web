@@ -331,19 +331,19 @@ npx playwright test e2e/essay-comments.spec.ts e2e/essay-purpose.spec.ts e2e/ess
 
 #### Tasks
 
-- [ ] Split `documentError` into `documentDiagnostics: string[]` (from `renderDocumentView().diagnostics`, line 185) and `documentError: string | null` (thrown, 164/188); same split for `recordDiagnostics` (217/232/235). Delete both `.join(" ")` uses.
-- [ ] Render: `<Diagnostics variant="notice" diagnostics={diagnosticsFromStrings(documentDiagnostics)} documentKey={repositoryId + ":" + selectedCompositionId}>` under the title, errors via `Notice kind="error"`. Record-list diagnostics likewise with key `...:records:<containerId>`.
-- [ ] G1 read-only note and G4 edit error become `Notice` (testids `read-only-note`, `generic-edit-error`).
-- [ ] A3 is done in Phase 2 (store plus `NoticeRegion`); here verify Generic shows it below the Toolbar and delete the App CSS `.catalog-banner*` (1002-1026) if Phase 2 left it. `local-folder.spec.ts:130` must still see zero for a clean tree. Add an e2e that a registered-editor shell (Essay or Guides) shows the catalog notice too, because the old banner rendered for every shell.
-- [ ] Delete `.generic-notice`, `.generic-readonly` from `generic-shell.css`.
-- [ ] Add `tests/GenericSrsShell.test.ts` cases: a render result with the same warning three times yields one group "x3"; collapsed by default; expand shows one row; dismiss hides it for that composition and a second composition still shows its own; a thrown render shows an error `Notice`.
-- [ ] `e2e/notices.spec.ts` (new; first part): load a repo whose composition emits a repeated R23 (use the Phase 1 captured sample; add a fixture under `e2e/fixtures/` if none produces a repeated R23; `page.route` stubs are not allowed), assert one collapsed line, expand to one group with the count, dismiss, switch composition and back (still dismissed), reload (shown again, session scope).
+- [x] Split `documentError` into `documentDiagnostics: string[]` (from `renderDocumentView().diagnostics`, line 185) and `documentError: string | null` (thrown, 164/188); same split for `recordDiagnostics` (217/232/235). Delete both `.join(" ")` uses.
+- [x] Render: `<Diagnostics variant="notice" diagnostics={diagnosticsFromStrings(documentDiagnostics)} documentKey={repositoryId + ":" + selectedCompositionId}>` under the title, errors via `Notice kind="error"`. Record-list diagnostics likewise with key `...:records:<containerId>`.
+- [x] G1 read-only note and G4 edit error become `Notice` (testids `read-only-note`, `generic-edit-error`).
+- [x] A3 is done in Phase 2 (store plus `NoticeRegion`); here verify Generic shows it below the Toolbar and delete the App CSS `.catalog-banner*` (1002-1026) if Phase 2 left it. `local-folder.spec.ts:130` must still see zero for a clean tree. Add an e2e that a registered-editor shell (Essay or Guides) shows the catalog notice too, because the old banner rendered for every shell.
+- [x] Delete `.generic-notice`, `.generic-readonly` from `generic-shell.css`.
+- [x] Add `tests/GenericSrsShell.test.ts` cases: a render result with the same warning three times yields one group "x3"; collapsed by default; expand shows one row; dismiss hides it for that composition and a second composition still shows its own; a thrown render shows an error `Notice`.
+- [x] `e2e/notices.spec.ts` (new; first part): load a repo whose composition emits a repeated R23 (use the Phase 1 captured sample; add a fixture under `e2e/fixtures/` if none produces a repeated R23; `page.route` stubs are not allowed), assert one collapsed line, expand to one group with the count, dismiss, switch composition and back (still dismissed), reload (shown again, session scope).
 
 #### Acceptance Criteria
 
-- [ ] No `join(" ")` of diagnostics in `GenericSrsShell.svelte`.
-- [ ] Repeated R23 shows one line, then one group with a count; dismiss works per document.
-- [ ] The read-only note keeps testid `read-only-note` and the Toolbar is unchanged.
+- [x] No `join(" ")` of diagnostics in `GenericSrsShell.svelte`.
+- [x] Repeated R23 shows one line, then one group with a count; dismiss works per document.
+- [x] The read-only note keeps testid `read-only-note` and the Toolbar is unchanged.
 
 #### Testing
 
@@ -491,6 +491,7 @@ npx playwright test e2e/notices.spec.ts e2e/styleguide.spec.ts e2e/mobile-layout
 
 - `Main` is the one centre-column wrapper every shell renders, one at a time, so one `ToastHost` inside it is "one per app".
 - Playwright's clipboard permission is already granted in the essay e2e (the existing Copy link specs assert the notice).
+- Phase 4 added `e2e/fixtures/essay-catalog.srsj` (essay.srsj plus one record whose type resolves to nothing: a real `SRS038-R13-DANGLING-REFERENCE` catalog error) for the "catalog notice shows in every shell" e2e.
 - The fixtures can produce a repeated R23 on a composition; if not, a fixture is added (Phase 4), not a route stub. (Result: none did; `e2e/fixtures/r23.srsj` was added in Phase 1.)
 - **Round-3 decision 1 (overrides the plan text above).** The always-rendered error region in `LiveRegions` is `aria-live="assertive" aria-atomic="true"` with NO `role="alert"`: an empty, always-present `role=alert` node would break the zero-alert assertions in `e2e/cloud-storage.spec.ts:623,781`, `e2e/create-document.spec.ts:66` and `e2e/musrs-fixture.spec.ts:38,50`. The polite region stays a plain `aria-live="polite"` div. The LiveRegions unit test and ADR-020 (j) say so. (Wherever this plan says the error region is `role=alert`, read "assertive".)
 - **Round-3 decision 2 (overrides).** In the visual toast rows `aria-hidden="true"` is on the TEXT span only, never on a row that contains the focusable close button; screen readers hear the text once, from the live region. Confirmed: no e2e uses `getByRole("status")`.
