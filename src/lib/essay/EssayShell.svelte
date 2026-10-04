@@ -66,7 +66,7 @@
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { formatAddress, parseAddress } from "./address.js";
   import { headerActions } from "./header-actions.js";
-  import { isShown, setOpen, summary, toggle, toggleAll } from "./thread-visibility.js";
+  import { canShow, isShown, setOpen, summary, toggle, toggleAll } from "./thread-visibility.js";
   import { addComment } from "$lib/comments.js";
   import { annotationsFor } from "$lib/annotations.js";
   import { loadMargin, saveMargin } from "$lib/margin-mode.js";
@@ -214,9 +214,7 @@
   const toggleVariant = () => saveMargin((marginMode = marginMode === "compact" ? "expanded" : "compact"));
   /** Margin clicks: the one kind -> action mapping (the model says what, the margin how it looks). */
   function openAnnotation(a: Annotation, paragraphId: string) {
-    if (a.kind === "comments") {
-      if (!hidden.has(paragraphId) && !inherited.has(paragraphId)) openThreads = toggle(openThreads, paragraphId);
-    }
+    if (a.kind === "comments") openThreads = toggle(openThreads, paragraphId);
     else if (a.kind === "attachment") togglePin(a.key);
     else if (a.kind === "shared") void run(() => makeLocalCopy(repo, model!, paragraphId));
     else if (a.targetId)
@@ -461,7 +459,7 @@
   const helpId = "essay-md-help";
   let actionsEl = $state<HTMLElement>();
   /** The paragraphs in view that can show a thread: the header Comments state is read over these. */
-  const shownIds = $derived(items.map((i) => i.id).filter((id) => !hidden.has(id) && !inherited.has(id)));
+  const shownIds = $derived(items.map((i) => i.id).filter((id) => canShow(id, hidden, inherited)));
   const barActions = $derived(
     headerActions(
       {
@@ -470,7 +468,7 @@
         onagent: model ? () => copyForAgent(zoomId ?? undefined) : undefined,
         onhelp: () => { helpOpen = true; },
         onvariant: toggleVariant,
-        oncomments: () => (openThreads = toggleAll(openThreads, shownIds, allItems.map((i) => i.id))),
+        oncomments: () => (openThreads = toggleAll(openThreads, shownIds)),
         onsave: onSave,
         onexport: onExport,
         onexportmd: model ? exportMarkdown : undefined,

@@ -63,4 +63,4 @@ Gates green; commit referencing (#431, #432).
 
 ## Assumptions
 
-- Header state is read over the non-hidden paragraphs in view; show all opens every paragraph, so hidden ones come back open.
+- Header Comments is symmetric over the non-hidden paragraphs in view: show opens them, hide closes them; hidden and out-of-zoom state is untouched.

@@ -266,12 +266,57 @@ test("a hidden paragraph shows no thread; unhiding brings it back", async ({ pag
 test("hiding the parent hides a child's open thread", async ({ page }) => {
   await open(page);
   await items(page).nth(1).locator(".block__render, .block__body").first().click();
-  await page.keyboard.press("Home");
-  await page.keyboard.press("Tab"); // nest paragraph 2 under paragraph 1
+  await page.keyboard.press("Alt+ArrowRight"); // nest paragraph 2 under paragraph 1
   await badge(page, 1).click();
   await expect(threads(page)).toHaveCount(1);
   await eye(page, 0);
   await expect(threads(page)).toHaveCount(0);
   await page.getByRole("button", { name: "Show Opening", exact: true }).first().click();
   await expect(threads(page)).toHaveCount(1);
+});
+
+test("hide one, show all, hide all, unhide it: its thread stays closed (hidden state untouched both ways)", async ({ page }) => {
+  await open(page);
+  await eye(page, 0);
+  await page.getByTestId("comment-mode").click(); // show all: only the paragraphs in view
+  await page.getByTestId("comment-mode").click(); // hide all
+  await expect(threads(page)).toHaveCount(0);
+  await page.locator(".layers").getByRole("button", { name: "Show Opening", exact: true }).click();
+  await expect(threads(page)).toHaveCount(0);
+});
+
+test("show all while zoomed opens only the threads in view", async ({ page }) => {
+  await open(page);
+  await items(page).nth(1).hover();
+  await items(page).nth(1).getByRole("button", { name: /^Zoom to/ }).click({ force: true });
+  await badge(page, 0).click(); // close the zoom thread
+  await page.getByTestId("comment-mode").click();
+  await expect(threads(page)).toHaveCount(await items(page).count());
+  await page.keyboard.press("Escape");
+  const total = await items(page).count();
+  await expect(threads(page)).toHaveCount(1); // the rest were never opened
+  expect(total).toBeGreaterThan(1);
+});
+
+test("a hidden paragraph's margin is inert: the badge cannot be focused or activated", async ({ page }) => {
+  await open(page);
+  await eye(page, 0);
+  await expect(items(page).nth(0).locator(".block__margin")).toHaveAttribute("inert", "");
+  await badge(page, 0).click({ force: true });
+  await expect(threads(page)).toHaveCount(0);
+});
+
+test("deep link into a zoomed paragraph opens its thread, which the badge closes", async ({ page }) => {
+  await open(page);
+  await items(page).nth(1).hover();
+  await items(page).nth(1).getByRole("button", { name: /^Zoom to/ }).click({ force: true });
+  const zoomed = page.url();
+  await page.goto("about:blank");
+  await page.goto(zoomed);
+  await page.locator('input[type="file"]#srsj-file').setInputFiles(ESSAY);
+  await page.getByTestId("package-editor-essay").click();
+  await expect(items(page)).toHaveCount(1);
+  await expect(threads(page)).toHaveCount(1);
+  await badge(page, 0).click();
+  await expect(threads(page)).toHaveCount(0);
 });

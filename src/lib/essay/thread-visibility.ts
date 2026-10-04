@@ -6,9 +6,13 @@
 export type Open = ReadonlySet<string>;
 export type Summary = "all" | "none" | "mixed";
 
-/** A thread shows iff the reader opened it and its paragraph is neither hidden nor inherited-hidden. */
+/** The one hidden rule: a paragraph hidden directly or by an ancestor never shows a thread. */
+export const canShow = (id: string, hidden: Open, inherited: Open): boolean =>
+  !hidden.has(id) && !inherited.has(id);
+
+/** A thread shows iff the reader opened it and its paragraph can show one. */
 export const isShown = (open: Open, id: string, hidden: Open, inherited: Open): boolean =>
-  open.has(id) && !hidden.has(id) && !inherited.has(id);
+  open.has(id) && canShow(id, hidden, inherited);
 
 export function setOpen(open: Open, id: string, on: boolean): Set<string> {
   const next = new Set(open);
@@ -26,8 +30,8 @@ export function summary(open: Open, ids: readonly string[]): Summary {
   return n === 0 ? "none" : n === ids.length ? "all" : "mixed";
 }
 
-/** Header Comments: everything open hides all; none or mixed shows all. Hidden paragraphs keep their state. */
-export function toggleAll(open: Open, ids: readonly string[], all: readonly string[]): Set<string> {
+/** Header Comments, symmetric over `ids` (the non-hidden paragraphs in view): all open closes them, else opens them. Everything else is untouched. */
+export function toggleAll(open: Open, ids: readonly string[]): Set<string> {
   if (summary(open, ids) === "all") return new Set([...open].filter((id) => !ids.includes(id)));
-  return new Set([...open, ...all]);
+  return new Set([...open, ...ids]);
 }

@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { isShown, setOpen, summary, toggle, toggleAll } from "../src/lib/essay/thread-visibility";
+import { canShow, isShown, setOpen, summary, toggle, toggleAll } from "../src/lib/essay/thread-visibility";
 
 const ids = ["a", "b", "c"];
 const none = new Set<string>();
@@ -17,18 +17,25 @@ it("badge toggles one; header toggles all/none; mixed shows all", () => {
   expect(summary(open, ids)).toBe("none");
   open = toggle(open, "a");
   expect(summary(open, ids)).toBe("mixed");
-  open = toggleAll(open, ids, ids);
+  open = toggleAll(open, ids);
   expect(summary(open, ids)).toBe("all");
   open = toggle(open, "b");
   expect([...open].sort()).toEqual(["a", "c"]);
-  open = toggleAll(open, ids, ids); // mixed -> all
+  open = toggleAll(open, ids); // mixed -> all
   expect(summary(open, ids)).toBe("all");
-  expect(summary(toggleAll(open, ids, ids), ids)).toBe("none");
+  expect(summary(toggleAll(open, ids), ids)).toBe("none");
 });
 
-it("hide all keeps the state of paragraphs outside the view; show all opens every paragraph", () => {
+it("hide all keeps the state of paragraphs outside the view; show opens only the ids in view", () => {
   const open = new Set(["a", "x"]);
-  expect([...toggleAll(open, ["a"], ["a", "x", "y"])]).toEqual(["x"]);
-  expect([...toggleAll(new Set(), ["a"], ["a", "x"])].sort()).toEqual(["a", "x"]);
+  expect([...toggleAll(open, ["a"])]).toEqual(["x"]);
+  expect([...toggleAll(new Set(["x"]), ["a"])].sort()).toEqual(["a", "x"]); // show opens only `ids`
+  expect([...toggleAll(new Set(), ["a"])]).toEqual(["a"]);
   expect([...setOpen(open, "a", false)]).toEqual(["x"]);
+});
+
+it("canShow is the one hidden rule", () => {
+  expect(canShow("a", none, none)).toBe(true);
+  expect(canShow("a", new Set(["a"]), none)).toBe(false);
+  expect(canShow("a", none, new Set(["a"]))).toBe(false);
 });
