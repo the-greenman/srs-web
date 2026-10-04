@@ -28,7 +28,12 @@
   let {
     items,
     onunpin,
-  }: { items: { id: string; kind: string; title: string; text: string }[]; onunpin: (id: string) => void } = $props();
+    onremove,
+  }: {
+    items: { id: string; kind: string; relation?: string; title: string; text: string }[];
+    onunpin: (id: string) => void;
+    onremove?: (id: string) => void;
+  } = $props();
 </script>
 
 <Panel title="Pinned" aside={items.length} persistKey="essay.pinned" collapseWhen={NARROW}>
@@ -38,7 +43,7 @@
     <ul class="pinned">
       {#each items as it (it.id)}
         <li class="pinned__item">
-          <span class="hover-card__kind">{it.kind}</span>
+          <span class="hover-card__kind">{it.relation ? `${it.kind} · ${it.relation}` : it.kind}</span>
           <strong class="hover-card__title">{it.title}</strong>
           <button type="button" class="pinned__close" aria-label={`Unpin ${it.title}`} onclick={() => onunpin(it.id)}>×</button>
           {#if it.text}
@@ -51,6 +56,9 @@
               <button type="button" class="pinned__action" aria-expanded={open.has(it.id)} onclick={() => toggle(it.id)}>{open.has(it.id) ? 'Close' : 'Open'}</button>
               <button type="button" class="pinned__action" onclick={() => copy(it.id, it.text)}>{copied === it.id ? 'Copied' : 'Copy'}</button>
             </div>
+          {/if}
+          {#if onremove}
+            <div class="pinned__actions"><button type="button" class="pinned__action" onclick={() => onremove(it.id)}>Remove link</button></div>
           {/if}
         </li>
       {/each}

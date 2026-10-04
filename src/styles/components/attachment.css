@@ -98,3 +98,21 @@
   cursor: pointer;
   text-decoration: underline;
 }
+
+.hover-card__remove {
+  display: block;
+  margin-top: var(--space-xs);
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+/* Touch: remove targets are >=44px (the card opens on tap via :focus-within). */
+@media (pointer: coarse) {
+  .hover-card__remove,
+  .pinned__action {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

@@ -36,6 +36,11 @@ const m = vi.hoisted(() => ({
   forkRecord: vi.fn(),
   createRelation: vi.fn(),
   deleteRecord: vi.fn(),
+  deleteRelation: vi.fn(),
+  listRelationTypes: vi.fn(() => [
+    { key: "evidences", label: "evidences" },
+    { key: "x/counters", label: "counters" },
+  ]),
 }));
 vi.mock("../src/lib/srs-client.js", () => m);
 
@@ -45,6 +50,7 @@ import {
   deleteForever,
   loadEssay,
   moveEntry,
+  removeAttachment,
   setEssayTitle,
   setHidden,
   shiftEntry,
@@ -141,6 +147,27 @@ describe("essay-document", () => {
     ]);
     expect(model.attachments.p1).toBeUndefined();
     expect(model.related.p1.map((r) => r.relationType)).toEqual(["depends-on"]);
+  });
+
+  it("labels an attachment from the core vocabulary (key when unknown); removeAttachment deletes the relation", () => {
+    const note = { kind: "note", instanceId: "n1", title: "N", sections: [{ content: "c" }] };
+    const edge = (relationId: string, relationType: string) => ({
+      direction: "in",
+      relationId,
+      relationType,
+      sourceId: "n1",
+      targetId: "p1",
+      sourceLabel: "N",
+      neighbour: note,
+      category: "x",
+    });
+    m.contextRecord.mockImplementation(() => ({
+      relations: [edge("a", "x/counters"), edge("b", "mystery")],
+    }));
+    const model = loadEssay({ write_epoch: () => 1 } as never, "E");
+    expect(model.attachments.p1.map((a) => a.relationLabel)).toEqual(["counters", "mystery"]);
+    removeAttachment({} as never, "a");
+    expect(m.deleteRelation).toHaveBeenCalledWith(expect.anything(), "a");
   });
 
   it("reads comment records once per change of the comments-on set, oldest first", () => {
