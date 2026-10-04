@@ -13,14 +13,18 @@
     ...rest
   }: {
     value?: string;
-    /** The field's allowedValues. */
-    options: string[];
+    /** The field's allowedValues, or `{value, label}` pairs when the shown text differs from the value. */
+    options: (string | { value: string; label: string })[];
     class?: string;
   } & HTMLSelectAttributes = $props();
 </script>
 
 <select class={`select ${klass}`} bind:value {...rest}>
   {#each options as opt}
-    <option value={opt}>{opt}</option>
+    {#if typeof opt === 'string'}
+      <option value={opt}>{opt}</option>
+    {:else}
+      <option value={opt.value}>{opt.label}</option>
+    {/if}
   {/each}
 </select>

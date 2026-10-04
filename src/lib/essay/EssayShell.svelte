@@ -35,6 +35,8 @@
   import LinkIcon from "@lucide/svelte/icons/link";
   import X from "@lucide/svelte/icons/x";
   import IconButton from "$lib/components/IconButton.svelte";
+  import Input from "$lib/components/Input.svelte";
+  import Select from "$lib/components/Select.svelte";
   import { NARROW } from "$lib/breakpoints";
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
@@ -489,9 +491,10 @@
     <div class="essay-shell__heading">
       <span class="eyebrow">{repoName}</span>
       {#if essays.length > 1}
-        <select
+        <Select
           aria-label="Essay"
-          value={essayId}
+          value={essayId ?? ""}
+          options={essays.map((essay) => ({ value: essay.id, label: essay.title }))}
           onchange={(e) => {
             essayId = e.currentTarget.value;
             zoomId = null;
@@ -499,9 +502,7 @@
             reload();
             push();
           }}
-        >
-          {#each essays as essay (essay.id)}<option value={essay.id}>{essay.title}</option>{/each}
-        </select>
+        />
       {/if}
     </div>
     <div class="essay-shell__actions" bind:this={actionsEl}>
@@ -529,7 +530,7 @@
   {/if}
   {#if linkFallback}
     <p class="essay-shell__status" role="status">
-      Copy this link: <input readonly aria-label="Link" data-testid="link-fallback" value={linkFallback} onfocus={(e) => e.currentTarget.select()} />
+      Copy this link: <Input readonly aria-label="Link" data-testid="link-fallback" value={linkFallback} onfocus={(e) => e.currentTarget.select()} />
     </p>
   {/if}
   {#if error}<p class="essay-shell__error" role="alert" data-testid="essay-error">{error}</p>{/if}

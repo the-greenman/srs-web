@@ -11,16 +11,24 @@
   border: 1px solid var(--color-text);
   background: var(--color-surface-raised);
   font-size: var(--size-xs);
-  max-width: 28rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .mcp-conn__head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-xs) var(--space-sm);
   font-family: var(--font-mono);
+  min-width: 0;
 }
+.mcp-conn__status {
+  min-width: 0;
+}
+/* The repository name drops below the status when there is no room (no forced margin-left: auto). */
 .mcp-conn__repo {
-  margin-left: auto;
+  flex: 1 1 auto;
+  min-width: 0;
   opacity: 0.6;
 }
 .mcp-conn__dot {
@@ -38,26 +46,36 @@
 }
 .mcp-conn__url {
   display: flex;
-  gap: var(--space-sm);
-}
-.mcp-conn__input {
-  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
   min-width: 0;
+}
+.mcp-conn__url .input {
+  flex: 1 1 8rem;
+  width: auto;
+  min-width: 0;
+  padding: 4px 8px;
   font-family: var(--font-mono);
   font-size: var(--size-xs);
-  padding: 4px;
+  text-overflow: ellipsis;
 }
 .mcp-conn__actions {
   display: flex;
-  gap: var(--space-sm);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
 }
 .mcp-conn__note {
   margin: 0;
   opacity: 0.7;
+  overflow-wrap: anywhere;
 }
 .mcp-conn__error {
   margin: 0;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 /* Floating dock for shells without an agent rail (App.svelte). */

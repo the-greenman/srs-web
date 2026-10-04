@@ -142,6 +142,11 @@
   min-height: 92px;
   resize: vertical;
 }
+/* Grows with its text (rows is the fallback where field-sizing is unsupported). */
+.textarea--grow {
+  field-sizing: content;
+  min-height: 0;
+}
 
 .select {
   padding-right: 34px;

@@ -8,6 +8,7 @@
   import CornerUpLeft from '@lucide/svelte/icons/corner-up-left';
   import Button from './Button.svelte';
   import IconButton from './IconButton.svelte';
+  import TrayRow from './TrayRow.svelte';
   import BlockStack from './BlockStack.svelte';
   import type { DropTarget } from './BlockStack.svelte';
   import type { DragPayload } from './dnd';
@@ -39,20 +40,21 @@
   const byId = $derived(new Map(items.map((i) => [i.id, i])));
 </script>
 
-<section class="draft-tray" aria-label="Draft tray">
+<section class="tray draft-tray" aria-label="Draft tray">
   {#if !available}
-    <p class="draft-tray__empty">{unavailableReason}</p>
+    <p class="tray__empty">{unavailableReason}</p>
     {#if oncreate}<Button size="sm" variant="mono" onclick={oncreate}>Create draft area</Button>{/if}
   {:else}
-    {#if items.length === 0}<p class="draft-tray__empty">Drag paragraphs here to set them aside.</p>{/if}
+    {#if items.length === 0}<p class="tray__empty">Drag paragraphs here to set them aside.</p>{/if}
     <BlockStack items={items.map((i) => ({ id: i.id, depth: 0 }))} source="draft" label="Draft paragraphs" {ondrop} {candrop}>
       {#snippet row(item, handle)}
         {@const d = byId.get(item.id)}
         {#if d}
-          <div class="draft-tray__row">
-            <span class="draft-tray__label" aria-roledescription="drag handle" {...handle}>{d.label}</span>
-            <IconButton icon={CornerUpLeft} variant="outline" label={`Put back ${d.label}`} onclick={() => onputback(d.id)} />
-          </div>
+          <TrayRow label={d.label} labelProps={{ 'aria-roledescription': 'drag handle', ...handle }}>
+            {#snippet actions()}
+              <IconButton icon={CornerUpLeft} variant="outline" label={`Put back ${d.label}`} onclick={() => onputback(d.id)} />
+            {/snippet}
+          </TrayRow>
         {/if}
       {/snippet}
     </BlockStack>

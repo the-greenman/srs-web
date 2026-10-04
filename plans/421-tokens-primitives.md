@@ -409,11 +409,11 @@ Add the Playwright spec `e2e/popover.spec.ts`, run against `/styleguide` with a 
 
 #### Acceptance Criteria
 
-- [ ] `grep -rnE 'class="[^"]*\bbtn\b' src --include='*.svelte'` returns only `Button.svelte`.
-- [ ] No `select`, `input` or `textarea` element is written by hand in `EssayShell.svelte`, `CommentThread.svelte`, `McpConnection.svelte` or the App `agentDock` (a `<select>` or `<input>` inside `Select`/`Input`/`Textarea` themselves is expected).
+- [x] `grep -rnE 'class="[^"]*\bbtn\b' src --include='*.svelte'` returns only `Button.svelte`.
+- [x] No `select`, `input` or `textarea` element is written by hand in `EssayShell.svelte`, `CommentThread.svelte`, `McpConnection.svelte` or the App `agentDock` (a `<select>` or `<input>` inside `Select`/`Input`/`Textarea` themselves is expected).
 - [ ] `McpConnection` rendered at 18rem and at 15rem has `scrollWidth <= clientWidth` (checked in Phase 5).
-- [ ] `getByRole("combobox", { name: "Essay" })` still resolves in the essay specs.
-- [ ] `tests/McpConnection.test.ts`, `tests/ActorChip.test.ts`, `tests/AttachmentGlyph.test.ts`, `tests/EssayShell.test.ts`, `e2e/agent-channels.spec.ts`, `e2e/mcp-relay.spec.ts`, `e2e/essay-comments.spec.ts` and `e2e/essay-editor.spec.ts` pass.
+- [x] `getByRole("combobox", { name: "Essay" })` still resolves in the essay specs.
+- [x] `tests/McpConnection.test.ts`, `tests/ActorChip.test.ts`, `tests/AttachmentGlyph.test.ts`, `tests/EssayShell.test.ts`, `e2e/agent-channels.spec.ts`, `e2e/mcp-relay.spec.ts`, `e2e/essay-comments.spec.ts` and `e2e/essay-editor.spec.ts` pass.
 
 #### Testing
 
@@ -522,6 +522,7 @@ npx playwright test e2e/essay-editor.spec.ts e2e/essay-touch.spec.ts e2e/essay-c
 - (Phase 1) Biome formats CSS, so the breakpoint annotation is a `/* bp: <role> */` comment on the line above each `@media`, not inline after the brace.
 - (Phase 1) `e2e/styleguide.spec.ts`: the existing heading-count assertion raced the lazy styleguide chunk (flaked once in four runs); it now uses `expect.poll`. Same threshold.
 - (Phase 2) Lucide 1.52 file names: `trash` (not `trash-2`), `list-indent-increase/decrease` (not `indent-increase/decrease`), `circle-question-mark` (not `circle-help`); the plan's names exist only as `.js` aliases without Svelte types.
+- (Phase 4) The literal grep `class="[^"]*\bbtn\b"` also matches hyphenated one-off classes (`modal-btn`, `te-btn`, `guides-icon-btn`, `controls-bar__sort-btn`, `cloud-browser__scan-btn`), because `\b` sits between `-` and `btn`. Read as the class token `btn`/`btn--*`, it now returns only `Button.svelte` (App, CommentThread, RecordForm, SectionForm converted). The hyphenated one-offs in the three modals, `DecisionLogView`, `SourceChooser`, `BlueprintDocumentEditor`, `SectionForm` (table editor) and `GuidesShell` are left; the shells and editors are #424.
 - (Phase 3) `ActionMenu` and the `ParagraphMargin` "+N" list render their rows only while open (`{#if open}` inside the always-rendered surface), and `Popover` closes on Escape itself when the popover API is missing, so `tests/paragraph-actions.test.ts` and `tests/ParagraphMargin.test.ts` pass unchanged under happy-dom. The ParagraphMargin popover surface is labelled "More annotations" (the trigger keeps "N more annotations").
 - (Phase 3) `AttachmentGlyph` keeps its own Escape handler: a manual popover has no native Escape, and the host owns the open state. Every auto popover relies on the native one.
 - (Phase 3) `Popover` focuses with `preventScroll` so the standalone `MarkdownHelp` in `/styleguide` does not scroll the page on load.

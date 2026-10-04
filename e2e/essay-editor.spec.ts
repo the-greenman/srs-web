@@ -156,7 +156,7 @@ test("write, reorder, nest, hide, draft out and back", async ({ page }) => {
 
   // native drag from the tray into the essay (put back at a chosen position)
   await page
-    .locator(".draft-tray__label", { hasText: "Spare" })
+    .locator('.draft-tray [data-part="label"]', { hasText: "Spare" })
     .dragTo(page.locator(".essay-shell__page .block-stack__item").first(), {
       targetPosition: { x: 40, y: 2 },
     });
@@ -372,7 +372,7 @@ test("New essay creates the record, container, draft area and state", async ({ p
     .first()
     .click();
   await expect(bodies(page)).toHaveCount(1);
-  await expect(page.locator(".draft-tray__row")).toHaveCount(1);
+  await expect(page.locator('.draft-tray [data-part="row"]')).toHaveCount(1);
 });
 
 test("the page is one white scroll surface; essay and paragraph titles edit inline (srs-web#363)", async ({

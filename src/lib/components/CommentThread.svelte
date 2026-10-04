@@ -9,6 +9,9 @@
 <script lang="ts">
   import type { Actor } from '$lib/srs-client';
   import ActorChip from './ActorChip.svelte';
+  import Button from './Button.svelte';
+  import Input from './Input.svelte';
+  import Textarea from './Textarea.svelte';
 
   export interface ThreadComment {
     id: string;
@@ -39,24 +42,24 @@
   }
 </script>
 
-<section class="comments" aria-label="Comments" data-testid="comment-thread">
+<section class="comments" aria-label="Comments" data-testid="comment-thread" data-part="thread">
   {#each comments as c (c.id)}
-    <article class="comments__item" data-testid="comment">
-      <header class="comments__meta">
+    <article class="comments__item" data-testid="comment" data-part="item">
+      <header class="comments__meta" data-part="meta">
         {#if c.author}
           <ActorChip actor={c.author} />
         {:else}
           <span class="comments__author" data-testid="comment-author">Unknown author</span>
         {/if}
       </header>
-      <p class="comments__text">{c.text}</p>
+      <p class="comments__text" data-part="text">{c.text}</p>
     </article>
   {/each}
-  <form class="comments__reply" onsubmit={submit}>
+  <form class="comments__reply" data-part="reply" onsubmit={submit}>
     {#if needsName}
-      <input class="comments__name" aria-label="Your name" placeholder="Your name" bind:value={name} required />
+      <Input aria-label="Your name" placeholder="Your name" bind:value={name} required />
     {/if}
-    <textarea class="comments__input" aria-label="Reply" placeholder="Reply…" rows="2" bind:value={text}></textarea>
-    <button class="btn btn--mono" type="submit" disabled={!text.trim() || (needsName && !name.trim())}>Comment</button>
+    <Textarea class="textarea--grow" aria-label="Reply" placeholder="Reply…" rows={2} bind:value={text} />
+    <Button size="sm" variant="mono" type="submit" disabled={!text.trim() || (needsName && !name.trim())}>Comment</Button>
   </form>
 </section>

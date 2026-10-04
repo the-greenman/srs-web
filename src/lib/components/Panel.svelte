@@ -64,22 +64,22 @@
 
 {#snippet head()}
   {#if collapsible}<ChevronDown class="panel__chevron" size={14} aria-hidden="true" />{/if}
-  <span class="panel__title">{title}</span>
-  {#if hasAside}<span class="panel__aside">{aside}</span>{/if}
+  <span class="panel__title" data-part="title">{title}</span>
+  {#if hasAside}<span class="panel__aside" data-part="aside">{aside}</span>{/if}
   {#if actions}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <span class="panel__actions" onclick={(e) => { if (collapsible) e.preventDefault(); }}>{@render actions()}</span>
+    <span class="panel__actions" data-part="actions" onclick={(e) => { if (collapsible) e.preventDefault(); }}>{@render actions()}</span>
   {/if}
 {/snippet}
 
 {#if collapsible}
   <details class={cls} bind:open ontoggle={remember}>
-    <summary class="panel__head">{@render head()}</summary>
-    <div class="panel__body">{@render children?.()}</div>
+    <summary class="panel__head" data-part="head">{@render head()}</summary>
+    <div class="panel__body" data-part="body">{@render children?.()}</div>
   </details>
 {:else}
   <section class={cls}>
-    <div class="panel__head">{@render head()}</div>
-    <div class="panel__body">{@render children?.()}</div>
+    <div class="panel__head" data-part="head">{@render head()}</div>
+    <div class="panel__body" data-part="body">{@render children?.()}</div>
   </section>
 {/if}

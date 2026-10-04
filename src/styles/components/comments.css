@@ -38,19 +38,14 @@
   align-items: flex-end;
   padding-top: 4px;
 }
-.comments__input,
-.comments__name {
-  font: inherit;
-  font-size: var(--size-sm);
-  padding: 4px 8px;
-  border: 1px solid var(--color-line);
-  background: transparent;
-  color: inherit;
-}
-.comments__input {
-  field-sizing: content; /* grows with the text; rows is the fallback */
+.comments__reply .input,
+.comments__reply .textarea {
   flex: 1;
+  width: auto;
   min-width: 12rem;
+  padding: 4px 8px;
+  font-size: var(--size-sm);
+  line-height: inherit;
 }
 
 /* Phone (srs-web#383): name, reply and the Comment button stack full-width. */
@@ -63,8 +58,8 @@
     flex-direction: column;
     align-items: stretch;
   }
-  .comments__input,
-  .comments__name {
+  .comments__reply .input,
+  .comments__reply .textarea {
     min-width: 0;
     width: 100%;
     box-sizing: border-box;

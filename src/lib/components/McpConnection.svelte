@@ -13,6 +13,7 @@
   import ActorChip from './ActorChip.svelte';
   import Button from './Button.svelte';
   import IconButton from './IconButton.svelte';
+  import Input from './Input.svelte';
   export type McpConnectionStatus = 'idle' | 'connecting' | 'online' | 'offline' | 'replaced' | 'rejected' | 'error';
 
   let {
@@ -67,22 +68,22 @@
 </script>
 
 <section class="mcp-conn" data-testid="mcp-connection" aria-label="MCP connection">
-  <div class="mcp-conn__head">
-    <span class="mcp-conn__dot mcp-conn__dot--{status}" aria-hidden="true"></span>
-    <span class="mcp-conn__status" data-testid="mcp-status">{label[status]}</span>
+  <div class="mcp-conn__head" data-part="head">
+    <span class="mcp-conn__dot mcp-conn__dot--{status}" data-part="dot" aria-hidden="true"></span>
+    <span class="mcp-conn__status" data-part="status" data-testid="mcp-status">{label[status]}</span>
     {#if actor}<ActorChip {actor} />{:else if agentName}<strong data-testid="mcp-agent-name">{agentName}</strong>{/if}
     {#if repositoryName}<span class="mcp-conn__repo">{repositoryName}</span>{/if}
   </div>
   {#if lastActivity}<p class="mcp-conn__note" data-testid="agent-last">{lastActivity}</p>{/if}
   {#if error}<p class="mcp-conn__error" role="alert">{error}</p>{/if}
   {#if callerUrl}
-    <div class="mcp-conn__url">
-      <input class="mcp-conn__input" readonly value={callerUrl} aria-label="MCP caller URL" data-testid="mcp-caller-url" onfocus={(e) => e.currentTarget.select()} />
+    <div class="mcp-conn__url" data-part="url">
+      <Input readonly value={callerUrl} aria-label="MCP caller URL" data-part="input" data-testid="mcp-caller-url" onfocus={(e) => e.currentTarget.select()} />
       <IconButton icon={copied ? Check : Copy} variant="outline" label={copied ? 'Copied' : 'Copy'} onclick={copy} data-testid="mcp-copy" />
     </div>
     <p class="mcp-conn__note">Anyone with this URL can read and write this document while this tab is connected. MCP changes are unsaved until you Save or Export.</p>
   {/if}
-  <div class="mcp-conn__actions">
+  <div class="mcp-conn__actions" data-part="actions">
     {#if status === 'rejected' || status === 'replaced'}
       <Button size="sm" variant="secondary" onclick={onTakeover} data-testid="mcp-takeover">Take over here</Button>
     {/if}

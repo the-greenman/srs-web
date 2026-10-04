@@ -80,6 +80,7 @@ export { default as MarkdownText } from "./MarkdownText.svelte";
 export { default as Panel } from "./Panel.svelte";
 export { default as Popover } from "./Popover.svelte";
 export { default as AttachmentPreview } from "./AttachmentPreview.svelte";
+export { default as TrayRow } from "./TrayRow.svelte";
 export { default as DraftTray } from "./DraftTray.svelte";
 export { default as CommentThread } from "./CommentThread.svelte";
 export { default as EyeToggle } from "./EyeToggle.svelte";
