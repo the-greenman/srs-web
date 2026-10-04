@@ -61,6 +61,9 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* The nav's own scrollbar sits against the main column's left edge: keep it thin and on-dark, not a light OS bar. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-on-dark-faint) transparent;
   padding: var(--space-sm) 0;
 }
 

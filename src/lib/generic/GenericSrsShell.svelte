@@ -529,11 +529,11 @@
         </div>
         {#if showFullPreview}
           <div class="document-preview-panel document-preview-panel--full" data-testid="document-full-preview">
-            <PreviewPane html={renderedDocument} loading={loadingDocument} />
+            <div class="generic-preview"><PreviewPane html={renderedDocument} loading={loadingDocument} /></div>
           </div>
         {/if}
       {:else}
-        <PreviewPane html={renderedDocument} loading={loadingDocument} />
+        <div class="generic-preview"><PreviewPane html={renderedDocument} loading={loadingDocument} /></div>
       {/if}
     {:else if surface === "map"}
       <header>

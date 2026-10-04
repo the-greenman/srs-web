@@ -449,3 +449,55 @@ test.describe("Generic on the frame", () => {
     });
   });
 });
+
+test.describe("Generic explorer: one scroller per column", () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  // Anything inside .workspace that scrolls itself, minus the two documented exceptions: the sandboxed
+  // preview iframe (cannot report its height) and the relation map's sideways pan.
+  const nested = (page: Page) =>
+    page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>(".app__main .workspace *")]
+        .filter((e) => !e.closest("iframe, .generic-graph"))
+        .filter((e) => {
+          const s = getComputedStyle(e);
+          return ["auto", "scroll"].includes(s.overflowY) && e.scrollHeight > e.clientHeight;
+        })
+        .map((e) => `${e.tagName}.${e.className}`)
+    );
+
+  test("a composition preview is reading-height, not crushed, and nothing nests a scroller", async ({
+    page,
+  }) => {
+    await load(page, "muSrs.srsj");
+    const docs = page.locator('.nav__group[data-part="documents"] button');
+    const n = await docs.count();
+    expect(n).toBeGreaterThan(0);
+    for (let i = 0; i < n; i++) {
+      await docs.nth(i).click();
+      await expect(page.locator("iframe, .document-editor-panel").first()).toBeVisible();
+      expect(await nested(page), `composition ${i}`).toEqual([]);
+      const panel = page.getByTestId("document-editor-panel");
+      if (await panel.count()) {
+        // the blueprint editor flows at its content height (its inline block previews are small by design)
+        expect(await panel.evaluate((el) => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+      } else {
+        expect((await page.locator("iframe").first().boundingBox())!.height).toBeGreaterThan(540);
+      }
+    }
+  });
+
+  test("a preview-only composition (gallery) is reading-height", async ({ page }) => {
+    await load(page, "gallery.srsj");
+    await expect(page.locator("iframe").first()).toBeVisible();
+    expect((await page.locator("iframe").first().boundingBox())!.height).toBeGreaterThan(900 * 0.6);
+    expect(await nested(page)).toEqual([]);
+  });
+
+  test("the Records list view nests no scroller", async ({ page }) => {
+    await load(page, "muSrs.srsj");
+    await page.getByRole("button", { name: "Records", exact: true }).click();
+    await expect(page.locator(".generic-record-row").first()).toBeVisible();
+    expect(await nested(page)).toEqual([]);
+  });
+});
