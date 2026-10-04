@@ -259,6 +259,10 @@
 .block.is-off {
   opacity: 0.7;
 }
+/* A hidden paragraph's margin marks are not active controls (srs-web#432). */
+.block.is-off .block__margin {
+  pointer-events: none;
+}
 /* bp: compact */
 @media (max-width: 720px) {
   .block {

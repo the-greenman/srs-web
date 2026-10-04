@@ -66,6 +66,7 @@
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { formatAddress, parseAddress } from "./address.js";
   import { headerActions } from "./header-actions.js";
+  import { isShown, setOpen, summary, toggle, toggleAll } from "./thread-visibility.js";
   import { addComment } from "$lib/comments.js";
   import { annotationsFor } from "$lib/annotations.js";
   import { loadMargin, saveMargin } from "$lib/margin-mode.js";
@@ -213,7 +214,9 @@
   const toggleVariant = () => saveMargin((marginMode = marginMode === "compact" ? "expanded" : "compact"));
   /** Margin clicks: the one kind -> action mapping (the model says what, the margin how it looks). */
   function openAnnotation(a: Annotation, paragraphId: string) {
-    if (a.kind === "comments") openThread(paragraphId, !openThreads.has(paragraphId));
+    if (a.kind === "comments") {
+      if (!hidden.has(paragraphId) && !inherited.has(paragraphId)) openThreads = toggle(openThreads, paragraphId);
+    }
     else if (a.kind === "attachment") togglePin(a.key);
     else if (a.kind === "shared") void run(() => makeLocalCopy(repo, model!, paragraphId));
     else if (a.targetId)
@@ -222,17 +225,10 @@
 
   const hidden = $derived(new Set(model?.hidden ?? []));
   const inherited = $derived(hiddenByAncestor(model?.entries ?? [], hidden));
-  /** UI-only comment state: which threads are open, show-all mode, and the zoomed paragraph. */
+  /** UI-only: the opened threads (rules in thread-visibility.ts) and the zoomed paragraph. */
   let openThreads = $state<Set<string>>(new Set());
-  let commentMode = $state(false);
   let zoomId = $state<string | null>(null);
-  const showThread = (id: string) => commentMode || zoomId === id || openThreads.has(id);
-  const openThread = (id: string, on: boolean) => {
-    const next = new Set(openThreads);
-    if (on) next.add(id);
-    else next.delete(id);
-    openThreads = next;
-  };
+  const showThread = (id: string) => isShown(openThreads, id, hidden, inherited);
   const allItems = $derived((model?.entries ?? []).map((e) => ({ id: e.instanceId, depth: e.depth })));
   /** Zoomed: the paragraph and its subtree (the entries after it that are deeper). */
   const items = $derived.by(() => {
@@ -267,7 +263,7 @@
     if (name) {
       if (!saveLocalName(name)) return void (error = "Could not remember your name in this browser.");
     }
-    openThread(paragraphId, true);
+    openThreads = setOpen(openThreads, paragraphId, true);
     void run(() => addComment(repo, paragraphId, text));
   }
 
@@ -306,6 +302,7 @@
   };
   function setZoom(id: string | null) {
     zoomId = id;
+    if (id) openThreads = setOpen(openThreads, id, true);
     push();
   }
   function applyAddress() {
@@ -321,6 +318,7 @@
     const want = a.zoomId ?? a.paragraphId;
     if (want && !allItems.some((i) => i.id === want)) notice ??= "That paragraph is no longer here; showing the whole document.";
     zoomId = a.zoomId && allItems.some((i) => i.id === a.zoomId) ? a.zoomId : null;
+    if (zoomId) openThreads = setOpen(openThreads, zoomId, true);
     if (a.paragraphId && !zoomId && allItems.some((i) => i.id === a.paragraphId)) void focusParagraph(a.paragraphId, "handle");
   }
   onMount(() => applyAddress());
@@ -462,6 +460,8 @@
   let helpOpen = $state(false);
   const helpId = "essay-md-help";
   let actionsEl = $state<HTMLElement>();
+  /** The paragraphs in view that can show a thread: the header Comments state is read over these. */
+  const shownIds = $derived(items.map((i) => i.id).filter((id) => !hidden.has(id) && !inherited.has(id)));
   const barActions = $derived(
     headerActions(
       {
@@ -470,14 +470,14 @@
         onagent: model ? () => copyForAgent(zoomId ?? undefined) : undefined,
         onhelp: () => { helpOpen = true; },
         onvariant: toggleVariant,
-        oncomments: () => (commentMode = !commentMode),
+        oncomments: () => (openThreads = toggleAll(openThreads, shownIds, allItems.map((i) => i.id))),
         onsave: onSave,
         onexport: onExport,
         onexportmd: model ? exportMarkdown : undefined,
         onexplorer: onOpenExplorer,
         onopenanother: onOpenAnother,
       },
-      { expanded: marginMode === "expanded", commentMode, saving },
+      { expanded: marginMode === "expanded", comments: summary(openThreads, shownIds), saving },
     ),
   );
 </script>
@@ -518,7 +518,7 @@
           {#if a.id === "help"}
             <IconButton class="md-help__btn" icon={CircleQuestionMark} variant="outline" popovertarget={helpId} popovertargetaction="toggle" label={a.label} aria-expanded={helpOpen} />
           {:else}
-            <Button variant={a.variant} active={a.pressed} aria-pressed={a.pressed} data-testid={a.testid} disabled={!a.enabled} onclick={a.run}>{a.label}</Button>
+            <Button variant={a.variant} active={!!a.pressed} aria-pressed={a.pressed} data-testid={a.testid} disabled={!a.enabled} onclick={a.run}>{a.label}</Button>
           {/if}
         {/each}
       </div>
