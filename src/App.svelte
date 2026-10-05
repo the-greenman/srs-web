@@ -39,7 +39,7 @@
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
-  import { availableEditors, usableEditor } from "$lib/editors/registry.js";
+  import { availableEditors, installEditor as installEditorPackages, usableEditor } from "$lib/editors/registry.js";
   import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import CreateGovernanceDocumentPanel from "$lib/components/CreateGovernanceDocumentPanel.svelte";
@@ -568,6 +568,24 @@
     }
   }
 
+  /**
+   * Install an unmet editor's packages through the write-observed repo (so the document is
+   * marked unsaved), then open it. Packages installed before a failure stay (the user can
+   * discard unsaved changes); a throw reaches the shell, which shows it beside the button.
+   * Whether the editor is now usable is re-derived, never assumed: an editor that is still
+   * unmet drops back to generic.
+   */
+  async function installEditor(id: string): Promise<void> {
+    const offered = offeredEditors.find((o) => o.editor.id === id);
+    if (!repo || !offered?.unmet?.install) return;
+    try {
+      installEditorPackages(repo, offered);
+    } finally {
+      syncDocument();
+    }
+    editorMode = id;
+  }
+
   // ---------------------------------------------------------------------------
   // Create new governance document (srs-web#141)
   // ---------------------------------------------------------------------------
@@ -882,6 +900,7 @@
     documentDirty={documentDirty}
     documentRevision={documentRevision}
     onOpenEditor={(id) => { editorMode = id; }}
+    onInstallEditor={installEditor}
     onOpenAgents={openDock}
     onOpenAnother={() => {
       clearWorkingCopy();

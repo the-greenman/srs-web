@@ -122,11 +122,11 @@ If D1(a) is chosen, `create`'s input gains an optional `namespace`. That change 
 **Acceptance:** a fresh `npm run fetch-bindings` writes the essay bundle. `tests/package-bundles.test.ts` passes.
 
 ### Phase 2: Install an editor's packages (#340)
-- [ ] `srs-client.ts`: add `installPackageBundle` and `createBlankRepository`. Add `install_package_bundle` to the local WASM interface.
-- [ ] `registry.ts`: install-aware `availableEditors`, plus `installEditor(repo, editor)`, which installs each `unmet.install` bundle in order.
-- [ ] GenericSrsShell `editorButtons` snippet: when `unmet.install` is set, render an `Install {label}` button (`{prefix}-{id}-install`) that calls a new prop `onInstallEditor(id): Promise<void>`. Show busy and disabled while it runs, and the error in a `<Notice>`. The WASM call is synchronous, so a brief freeze is acceptable for a 22 KB bundle.
-- [ ] App `installEditor(id)`: `installBundles(repo, ids)` through the write-observed repo, so `syncDocument` marks it dirty (no new API). Then `editorMode = id`. R3 and R4 apply.
-- [ ] Tests:
+- [x] `srs-client.ts`: add `installPackageBundle` and `createBlankRepository`. Add `install_package_bundle` to the local WASM interface.
+- [x] `registry.ts`: install-aware `availableEditors`, plus `installEditor(repo, editor)`, which installs each `unmet.install` bundle in order.
+- [x] GenericSrsShell `editorButtons` snippet: when `unmet.install` is set, render an `Install {label}` button (`{prefix}-{id}-install`) that calls a new prop `onInstallEditor(id): Promise<void>`. Show busy and disabled while it runs, and the error in a `<Notice>`. The WASM call is synchronous, so a brief freeze is acceptable for a 22 KB bundle.
+- [x] App `installEditor(id)`: `installBundles(repo, ids)` through the write-observed repo, so `syncDocument` marks it dirty (no new API). Then `editorMode = id`. R3 and R4 apply.
+- [x] Tests:
   - `tests/editor-registry.test.ts` (mocked outcomes), covering R1 and R2:
     - `missing` with a bundle gives `install`
     - `missing` with no bundle is blocked

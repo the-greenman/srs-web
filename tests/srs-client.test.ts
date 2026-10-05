@@ -12,6 +12,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 import {
+  createBlankRepository,
+  initWasm,
+  installPackageBundle,
   type AddAttachmentInput,
   type AllowedLifecycleTransitionsResult,
   type ContainerListFilter,
@@ -1786,5 +1789,37 @@ describe("core relative outline ops (srs-rust#1156)", () => {
       expect(call).toThrow(Error);
       expect(call).toThrow("arrangement-target");
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createBlankRepository / installPackageBundle (srs-web#340, #341)
+// ---------------------------------------------------------------------------
+
+describe("createBlankRepository", () => {
+  it("sends only the trimmed title: the core derives the namespace", async () => {
+    await initWasm();
+    const { SrsRepository: Ctor } = (await import(
+      "../src/lib/srs_bindings/srs_bindings.js" as string
+    )) as { SrsRepository: { create?: unknown } };
+    const create = vi.fn().mockReturnValue({});
+    Ctor.create = create;
+    createBlankRepository("  My Essays ");
+    expect(JSON.parse(create.mock.calls[0][0])).toEqual({ title: "My Essays" });
+    expect(() => createBlankRepository("  ")).toThrow(/name is required/);
+  });
+});
+
+describe("installPackageBundle", () => {
+  it("passes the bundle through and returns the core's result", () => {
+    const result = { name: "essay", version: "1.5.0", installed: 3, skippedIdentical: 0, conflicts: [], notes: [] };
+    const spy = vi.fn().mockReturnValue(result);
+    expect(installPackageBundle(mockRepo({ install_package_bundle: spy }), "BUNDLE")).toBe(result);
+    expect(spy).toHaveBeenCalledWith("BUNDLE", "{}");
+  });
+
+  it("throws on conflicts, with the core's notes", () => {
+    const spy = vi.fn().mockReturnValue({ name: "essay", version: "1.5.0", conflicts: [{}], notes: ["n1"] });
+    expect(() => installPackageBundle(mockRepo({ install_package_bundle: spy }), "B")).toThrow(/conflicting.*n1/);
   });
 });

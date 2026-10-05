@@ -77,6 +77,8 @@
     /** Opens the App-level agent dock. */
     onOpenAgents?: () => void;
     onOpenEditor?: (id: string) => void;
+    /** Install an unmet editor's packages and open it; rejects with the reason it could not. */
+    onInstallEditor?: (id: string) => Promise<void>;
   }
 
   let {
@@ -92,7 +94,23 @@
     onOpenAnother,
     onOpenAgents,
     onOpenEditor,
+    onInstallEditor,
   }: Props = $props();
+
+  let installing = $state<string | null>(null);
+  let installError = $state<{ id: string; message: string } | null>(null);
+
+  async function install(id: string): Promise<void> {
+    installing = id;
+    installError = null;
+    try {
+      await onInstallEditor?.(id);
+    } catch (e: unknown) {
+      installError = { id, message: e instanceof Error ? e.message : String(e) };
+    } finally {
+      installing = null;
+    }
+  }
 
   type Surface = "document" | "structure" | "records" | "map";
 
@@ -441,6 +459,12 @@
       {#if unmet}
         <button class="nav__item" data-testid="{testPrefix}-{editor.id}" title={unmet.reason} disabled>{editor.label}</button>
         <small class="generic-muted" data-testid="{testPrefix}-{editor.id}-unmet">{unmet.reason}</small>
+        {#if unmet.install && onInstallEditor}
+          <button class="nav__item" data-testid="{testPrefix}-{editor.id}-install" disabled={installing !== null} onclick={() => void install(editor.id)}>{installing === editor.id ? "Installing…" : `Install ${editor.label}`}</button>
+        {/if}
+        {#if installError?.id === editor.id}
+          <Notice kind="error">{installError.message}</Notice>
+        {/if}
       {:else}
         <button class="nav__item" data-testid="{testPrefix}-{editor.id}" title={editor.description} onclick={() => onOpenEditor(editor.id)}>{editor.label}</button>
       {/if}
