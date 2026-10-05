@@ -75,7 +75,7 @@ The start screen offers **New repository** beside opening an existing file. You 
 
 In the generic view, an editor whose packages are missing offers **Install <editor>**. Installing marks the document unsaved and opens the editor. The core decides what is missing (RFC-044 reason `missing`). An outdated or incompatible package is never installed over. It stays blocked with its message.
 
-Installable bundles are pinned in `packages.lock.json` (`packageId`, `url`, `sha256`). `scripts/ensure-packages.mjs` downloads and sha256-verifies them into the gitignored `src/lib/packages/<packageId>.srspkg`. It runs from `predev`, `prebuild`, `pretest`, `pree2e` and `fetch-bindings`, and a mismatch fails the build. To add or bump a bundle, publish it as a public release asset (for example srs-web `packages-essay-1.5.0`) and update the lock entry.
+Installable bundles are pinned in `packages.lock.json` (`packageId`, `url`, `sha256`). `scripts/ensure-packages.mjs` downloads and sha256-verifies them into the gitignored `src/lib/packages/<packageId>.srspkg`. It runs from `predev`, `prebuild`, `pretest`, `pree2e` and `fetch-bindings`, and a mismatch fails the build. To add or bump a bundle, publish it as a public release asset (for example srs-web `packages-essay-1.5.0`) and update the lock entry (`version`, `url`, `sha256`). `scripts/check-pin-freshness.mjs` (CI) warns, never fails, when a newer `packages-<name>-<version>` release exists on srs-web than the lock's `version`; a separate "unchecked" warning means the release list or the lock could not be read.
 
 ## Autosave and session restore
 
