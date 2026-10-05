@@ -43,7 +43,7 @@ test.describe("Gallery fixture — real records render", () => {
     await expect(page.locator(".record-list__item").first()).toBeVisible();
 
     // Empty state message must NOT be shown
-    await expect(page.locator(".empty-state")).not.toBeVisible();
+    await expect(page.locator(".governance-empty-state")).not.toBeVisible();
   });
 
   test("Articles list rows show view-driven columns from the DocumentView spec (#94)", async ({ page }) => {
@@ -113,7 +113,7 @@ test.describe("Gallery fixture — real records render", () => {
 
     // gallery.srsj has 3 roles
     await expect(page.locator(".record-list__item").first()).toBeVisible();
-    await expect(page.locator(".empty-state")).not.toBeVisible();
+    await expect(page.locator(".governance-empty-state")).not.toBeVisible();
   });
 
   test("Exercises section renders cards, not empty state", async ({ page }) => {
@@ -122,7 +122,7 @@ test.describe("Gallery fixture — real records render", () => {
 
     // gallery.srsj has 2 exercises
     await expect(page.locator(".record-list__item").first()).toBeVisible();
-    await expect(page.locator(".empty-state")).not.toBeVisible();
+    await expect(page.locator(".governance-empty-state")).not.toBeVisible();
   });
 
   test("Exercises section shows count badge matching record count", async ({ page }) => {

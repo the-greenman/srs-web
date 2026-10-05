@@ -26,7 +26,6 @@
   }: {
     schema: TypeFormDef;
     record?: SrsRecord | null;
-    /** Remove max-width cap so the form fills its container. */
     onSave: (input: CreateRecordInput | UpdateRecordInput) => void;
     onCancel: () => void;
     saving?: boolean;

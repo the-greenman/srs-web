@@ -1,7 +1,7 @@
 /* ============================================================================
    layout — the three-pane application shell
    ----------------------------------------------------------------------------
-   Structural regions only: the nav | main | inspector grid, 
+   Structural regions only: the nav | main | inspector grid
    and the scrolling content canvas. Visual styling of what goes *inside* each
    region lives in the component files (nav.css, inspector.css, ...).
 

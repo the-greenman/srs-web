@@ -367,7 +367,7 @@ PLAYWRIGHT_PORT=5195 npx playwright test
 - A4: `Save` in Governance and Guides stays enabled whenever the shell is not `saving` (today's behaviour; specs click it on a clean document in places). Essay's dirty-gated Save (#423 D4) is not extended to them in this PR (owner N4).
 - A5: The Migrations view of Governance shares the shell's bar (owner N5).
 - A6: Export items are `Export .srs` / `Export .srsj` in both shells (ids `export`, `export-srsj`; testids `toolbar-export`, `toolbar-export-srsj`); the old "Download" wording and the `guides-export-btn` testid (no spec or test uses it) are retired. Harmonising with Essay's plain "Export" is a copy question, not structure.
-- A7: happy-dom unit tests for Governance and Guides stub `matchMedia` to a desktop width (the 424 A7 note); Toolbar then renders the `full` tier and its menu items are in the DOM without opening.
+- A7: happy-dom unit tests for Governance and Guides stub `matchMedia` to a desktop width (the 424 A7 note); Toolbar then renders the `full` tier: a single-action group (Go with no agents handler) is an always-present button, while multi-action groups render their rows only while open (see the Phase 1 note above), so tests open the menu first.
 - A8: Pre-existing known red (424 A9 f: `each_key_duplicate` opening Records on `essay.srsj`) is unrelated; do not fix here.
 
 ---
