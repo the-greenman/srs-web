@@ -254,23 +254,23 @@ npx playwright test e2e/styleguide.spec.ts
 
 #### Tasks
 
-- [ ] `e2e/helpers.ts` `routeRelayChannels`: add `pairing?: { ttlMs?: number; status?: number }` to the options. When set, also route `https://${host}/v1/channels/*/pairing/*`: method `POST`; channel read from the URL. **Code format (exact):** per-route call counter `n` starting at 1, the code is the literal "TEST", then n, then "-ABCDE" (tests never exceed 9 calls, so `n` is one digit and the code always matches `/^[0-9A-Z]{5}-[0-9A-Z]{5}$/`: `TEST1-ABCDE`, `TEST2-ABCDE`); `expiresAt = Date.now() + (ttlMs ?? 600_000)`, `connectorUrl = https://${host}/v1/channels/${ch}/call`. `status` set (e.g. 403) returns that status with `{ error: "executor_origin_forbidden" }`; a mutable `pairing.status` on the returned handle lets a test switch back to success for Retry. Requests are recorded.
-- [ ] **Return-type impact:** `routeRelayChannels` currently returns `Promise<void>` and is called from `e2e/helpers.ts` (`connectAgents`) and the specs (`agent-library`, `agent-channels`, `mcp-relay`) as `await routeRelayChannels(page, …)` with the result ignored. It changes to `Promise<{ pairingRequests: string[]; pairing: { status?: number } }>`; no existing call site reads the value, so none changes. `pairing` is optional and off by default, so existing specs add no route.
-- [ ] `e2e/agent-library.spec.ts` (reuse `load`, `addRelay`, `stubExecutors`; `context.grantPermissions(["clipboard-read","clipboard-write"])`):
+- [x] `e2e/helpers.ts` `routeRelayChannels`: add `pairing?: { ttlMs?: number; status?: number }` to the options. When set, also route `https://${host}/v1/channels/*/pairing/*`: method `POST`; channel read from the URL. **Code format (exact):** per-route call counter `n` starting at 1, the code is the literal "TEST", then n, then "-ABCDE" (tests never exceed 9 calls, so `n` is one digit and the code always matches `/^[0-9A-Z]{5}-[0-9A-Z]{5}$/`: `TEST1-ABCDE`, `TEST2-ABCDE`); `expiresAt = Date.now() + (ttlMs ?? 600_000)`, `connectorUrl = https://${host}/v1/channels/${ch}/call`. `status` set (e.g. 403) returns that status with `{ error: "executor_origin_forbidden" }`; a mutable `pairing.status` on the returned handle lets a test switch back to success for Retry. Requests are recorded.
+- [x] **Return-type impact:** `routeRelayChannels` currently returns `Promise<void>` and is called from `e2e/helpers.ts` (`connectAgents`) and the specs (`agent-library`, `agent-channels`, `mcp-relay`) as `await routeRelayChannels(page, …)` with the result ignored. It changes to `Promise<{ pairingRequests: string[]; pairing: { status?: number } }>`; no existing call site reads the value, so none changes. `pairing` is optional and off by default, so existing specs add no route.
+- [x] `e2e/agent-library.spec.ts` (reuse `load`, `addRelay`, `stubExecutors`; `context.grantPermissions(["clipboard-read","clipboard-write"])`):
   1. Pair: add relay, connect agent, `agent-menu` -> `agent-pair`; `pair-code` = `TEST1-ABCDE`; `pair-url` ends `/v1/channels/c1/call` and contains no `CALLER`/`EXEC`; exactly one request to `/v1/channels/c1/pairing/EXEC1`; countdown matches `/about (9|10) min/` (the displayed value depends on `Date.now()` and the 15 s tick; never assert exactly 10).
   2. Copy: both Copy buttons; read clipboard back.
   3. Auto-refresh: `ttlMs: 7000`; `pair-code` becomes `TEST2-ABCDE` without a click and the polite live region (`live-polite`) says "New pairing code"; no "New code" button (`getByRole("button", { name: /new code/i })` count 0).
   4. Advanced: direct URL hidden by default; `mcp-advanced-open` reveals `/call/CALLER1` and the warning.
   5. Failure: status 403 -> `pair-error` with the origin message; switch to success; `pair-retry` shows the code.
   6. Rotate while pairing is shown closes the view (no `pair-code`) and focus is on the row's `agent-menu`.
-- [ ] Docs: `README.md` "Agents and relays" (new bullet: Pair an agent… shows a connector URL and a 10-character code that refreshes every 10 minutes; paste the URL into any MCP client that supports the standard MCP sign-in; **the direct (capability) URL is deliberately hidden under "Advanced: direct URL"**; client verification is tracked in semanticops-relay#1). `src/lib/components/README.md`: `AgentPanel` row (+`pair`), `McpConnection` row (`pairingView?` `onClosePair?` `onRetryPair?`, Advanced), new `CopyField` and `PairingLoader` rows. ADR-020 (k): "Pairing (#447)" bullet (parts, inline error, notify-based announcement, no new tokens) and the specimen line "four groups" -> "five groups (… connection errors, pairing shown)".
-- [ ] Tick plan checkboxes; add "Deviations (as built)" if anything changed.
+- [x] Docs: `README.md` "Agents and relays" (new bullet: Pair an agent… shows a connector URL and a 10-character code that refreshes every 10 minutes; paste the URL into any MCP client that supports the standard MCP sign-in; **the direct (capability) URL is deliberately hidden under "Advanced: direct URL"**; client verification is tracked in semanticops-relay#1). `src/lib/components/README.md`: `AgentPanel` row (+`pair`), `McpConnection` row (`pairingView?` `onClosePair?` `onRetryPair?`, Advanced), new `CopyField` and `PairingLoader` rows. ADR-020 (k): "Pairing (#447)" bullet (parts, inline error, notify-based announcement, no new tokens) and the specimen line "four groups" -> "five groups (… connection errors, pairing shown)".
+- [x] Tick plan checkboxes; add "Deviations (as built)" if anything changed.
 
 #### Acceptance Criteria
 
-- [ ] All six e2e cases pass; `agent-channels`, `agent-library`, `mcp-relay` otherwise unchanged in behaviour.
-- [ ] Docs updated as listed.
-- [ ] All gates and `npx playwright test e2e/agent-library.spec.ts e2e/agent-channels.spec.ts e2e/mcp-relay.spec.ts e2e/styleguide.spec.ts` pass.
+- [x] All six e2e cases pass; `agent-channels`, `agent-library`, `mcp-relay` otherwise unchanged in behaviour.
+- [x] Docs updated as listed.
+- [x] All gates and `npx playwright test e2e/agent-library.spec.ts e2e/agent-channels.spec.ts e2e/mcp-relay.spec.ts e2e/styleguide.spec.ts` pass.
 
 #### Testing
 
@@ -318,3 +318,13 @@ npx playwright test e2e/agent-library.spec.ts e2e/agent-channels.spec.ts e2e/mcp
 - `PairingLoader` focuses `pair-code` in `tick().then(...)` (like `startRename`) so it does not race `ActionMenu` returning focus to its trigger; covered by the focus acceptance test.
 - The loader's refresh-scheduling `$effect` reads only its `data` state, never the `now` prop; one loader test asserts that advancing `now` does not call `pair()` again.
 - The "New pairing code" `notify` is also a visible toast for 4 s; accepted (existing channel, no `silent` option) and noted in the ADR-020 (k) bullet.
+
+## Deviations (as built)
+
+- Vendored protocol bump: `DEFAULT_LIMITS.maxBodyBytes` changed 128 KiB -> 700 KiB upstream (value only, no export added/removed/reshaped; srs-web does not use it), besides the additive pairing exports.
+- `PairingLoader`'s `children` snippet receives `(view, retry)`; `PairingView` is `{data, error, minutes}` as planned, and `retry` is passed alongside so AgentPanel can wire `onRetryPair` without a new prop.
+- Loader schedules via a `settled` counter (re-arms after every settled call) and skips scheduling while the first call is in flight; initial focus uses `document.querySelector` on `pair-code` / `pair-close` (the loader is headless).
+- `AgentPanel` tags each row `data-agent-id` to find the row's `agent-menu` for focus return; the row markup shares a local `conn` snippet.
+- `Styleguide.svelte` renders the `pairing` group with `McpConnection` directly (no `AgentPanel`), as planned; `AgentPanel` call sites there also pass a `pair` stub.
+- e2e: `openAdvanced(page)` helper added to `e2e/helpers.ts` for readers of the direct URL.
+

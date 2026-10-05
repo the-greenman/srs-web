@@ -198,3 +198,79 @@ test.describe("Go > Agents…", () => {
     expect(b.x + b.width).toBeLessThanOrEqual(390);
   });
 });
+
+// ── Pair an agent (srs-web#447) ─────────────────────────────────────────────────────────────
+async function pairing(page: Page, o: { ttlMs?: number; status?: number } = {}) {
+  const relay = await routeRelayChannels(page, { pairing: o });
+  await stubExecutors(page);
+  await load(page, ESSAY);
+  await addRelay(page, "Test relay", "https://relay.test");
+  await page.getByTestId("mcp-library-connect").click();
+  await expect(page.getByTestId("mcp-status")).toHaveText("Connected", { timeout: 15000 });
+  await page.getByTestId("agent-menu").click();
+  await page.getByTestId("agent-pair").click();
+  return relay;
+}
+
+test.describe("Pair an agent", () => {
+  test("shows a secret-free connector URL, a code and the expiry; one request", async ({
+    page,
+  }) => {
+    const relay = await pairing(page);
+    await expect(page.getByTestId("pair-code")).toHaveValue("TEST1-ABCDE");
+    const url = await page.getByTestId("pair-url").inputValue();
+    expect(url).toMatch(/\/v1\/channels\/c1\/call$/);
+    expect(url).not.toMatch(/CALLER|EXEC/);
+    await expect(page.getByTestId("pair-countdown")).toHaveText(/about (9|10) min/);
+    expect(relay.pairingRequests).toEqual(["/v1/channels/c1/pairing/EXEC1"]);
+    await expect(page.getByTestId("pair-code")).toBeFocused();
+  });
+
+  test("both Copy buttons put the value on the clipboard", async ({ page, context }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await pairing(page);
+    await expect(page.getByTestId("pair-code")).toHaveValue("TEST1-ABCDE");
+    await page.getByTestId("pair-code-copy").click();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("TEST1-ABCDE");
+    await page.getByTestId("pair-url-copy").click();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/\/c1\/call$/);
+  });
+
+  test("the code refreshes itself and announces it; there is no New code button", async ({
+    page,
+  }) => {
+    await pairing(page, { ttlMs: 7000 });
+    await expect(page.getByTestId("pair-code")).toHaveValue("TEST1-ABCDE");
+    await expect(page.getByTestId("pair-code")).toHaveValue("TEST2-ABCDE", { timeout: 15000 });
+    await expect(page.getByTestId("live-polite")).toContainText("New pairing code");
+    await expect(page.getByRole("button", { name: /new code/i })).toHaveCount(0);
+  });
+
+  test("the direct URL is under Advanced, closed by default", async ({ page }) => {
+    await pairing(page);
+    await expect(page.getByTestId("mcp-caller-url")).toHaveCount(0);
+    await page.getByTestId("mcp-advanced-open").click();
+    await expect(page.getByTestId("mcp-caller-url")).toHaveValue(/\/call\/CALLER1$/);
+    await expect(page.getByTestId("mcp-connection")).toContainText(
+      "Anyone with this URL can read and write this document"
+    );
+  });
+
+  test("a refused pairing shows an inline error, and Retry recovers", async ({ page }) => {
+    const relay = await pairing(page, { status: 403 });
+    await expect(page.getByTestId("pair-error")).toContainText("executor_origin_forbidden");
+    relay.pairing.status = undefined;
+    await page.getByTestId("pair-retry").click();
+    await expect(page.getByTestId("pair-code")).toHaveValue("TEST1-ABCDE", { timeout: 15000 });
+    await expect(page.getByTestId("pair-error")).toHaveCount(0);
+  });
+
+  test("rotating while pairing closes the view and focuses the row menu", async ({ page }) => {
+    await pairing(page);
+    await expect(page.getByTestId("pair-code")).toBeVisible();
+    await page.getByTestId("agent-menu").click();
+    await page.getByTestId("mcp-rotate").click();
+    await expect(page.getByTestId("pair-code")).toHaveCount(0);
+    await expect(page.getByTestId("agent-menu")).toBeFocused();
+  });
+});
