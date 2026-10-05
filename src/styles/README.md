@@ -25,7 +25,7 @@ Three tiers, each referencing the one above, so a skin re-points the tier it nee
 |---|---|---|---|
 | Primitive | `tokens.css` | `--paper`, `--ink`, `--black`, `--grey-1..4` | semantic tokens only, never components |
 | Semantic | `tokens.css` | `--color-text`, `--color-surface-raised`, `--color-on-dark`, `--radius-md`, `--shadow-popover`, `--z-overlay`, `--focus-ring`, `--hit-target`, `--inspector-width`, `--content-max` | components and component tokens |
-| Component | `tokens-components.css` | `--btn-bg`, `--btn-primary-bg`, `--icon-btn-fg`, `--popover-bg`, `--hue-pill-s`, `--actor-mark-size`, `--margin-width`, `--comment-thread-max`, `--toolbar-gap`, `--block-tools-bg` (the paragraph hover strip) | the component's own CSS |
+| Component | `tokens-components.css` | `--btn-bg`, `--btn-primary-bg`, `--icon-btn-fg`, `--popover-bg`, `--modal-bg`/`--modal-pad`/`--modal-backdrop`, `--checkbox-accent`, `--hue-pill-s`, `--actor-mark-size`, `--margin-width`, `--comment-thread-max`, `--toolbar-gap`, `--block-tools-bg` (the paragraph hover strip) | the component's own CSS |
 
 Component tokens are named `--<block>-<property>[-<state>]` and are declared on `:root` in the
 `tokens` layer, **never on the component selector**: a skin's `:root[data-theme]` rule would lose
@@ -70,6 +70,7 @@ src/styles/
     lifecycle.css      .lifecycle    status transition control
     icon-button.css    .icon-btn     the one small icon control (Lucide)
     popover.css        .popover      the one floating surface (native top-layer popover)
+    modal.css          .modal        the titled native <dialog> (showModal; `inline` specimen)
     action-menu.css    .action-menu  the menu of rows (plain and checkable, grouped)
     toolbar.css        .toolbar      the generic document bar (#423): context row + grouped menus, three width tiers
     draft-tray.css     .tray         DraftTray and BinTray rows

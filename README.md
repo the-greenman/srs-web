@@ -32,7 +32,7 @@ npm run typecheck  # svelte-check
 npm run lint       # Biome
 ```
 
-The WASM bindings are **not committed** — `scripts/ensure-bindings.mjs` downloads `srs-bindings-web.tar.gz` from the `srs-rust` GitHub releases over plain HTTPS (no auth). `prebuild` fetches only if `src/lib/srs_bindings/` is missing (so fresh clones and CI build with zero setup); `predeploy`/`fetch-bindings` always re-download with `--force` so a stale binding can never ship. See [Cloudflare Workers production](#cloudflare-workers-production) for building bindings locally against an unreleased engine.
+The WASM bindings are **not committed** — `scripts/ensure-bindings.mjs` downloads `srs-bindings-web.tar.gz` from the `srs-rust` GitHub releases over plain HTTPS (no auth). `prebuild` fetches only if `src/lib/srs_bindings/` is missing (so fresh clones and CI build with zero setup); `predeploy`/`fetch-bindings` always re-download with `--force` so a stale binding can never ship. The installable package bundles are fetched alongside by `scripts/ensure-packages.mjs`; see [Creating a new repository](#creating-a-new-repository-and-installing-editor-packages). See [Cloudflare Workers production](#cloudflare-workers-production) for building bindings locally against an unreleased engine.
 
 ## How it uses SRS
 
@@ -65,17 +65,17 @@ The app offers two editors (ADR-002):
 
 ---
 
-## Creating a new governance document
+## Creating a new repository and installing editor packages
 
-The governance editor's start screen offers **Create new** alongside opening
-an existing file: enter a name, pick a destination (this device / Dropbox /
-Google Drive), and the app scaffolds a complete governance document — identity
-record, Decision Log container, and root container — via the WASM
-`scaffold_new_repository` binding. The seed ships inside the
-`srs-bindings-web.tar.gz` release artifact and lands at
-`src/lib/srs_bindings/governance-seed.srsj` via `scripts/ensure-bindings.mjs`,
-so it always matches the engine that scaffolds it — never hand-edit or vendor
-a copy.
+The start screen offers **New repository** beside opening an existing file. You enter a name, tick the editors to start with, and press **Create**. The repository is created in the browser only and nothing is saved yet. The first **Save** asks where to put it (this device, Dropbox or Google Drive); later saves go to that file. All semantics run in the WASM core.
+
+- **Governance** scaffolds identity, the Decision Log container and the root container from `governance-seed.srsj`, through `scaffold_new_repository`. The seed ships inside the `srs-bindings-web.tar.gz` release artifact and lands at `src/lib/srs_bindings/governance-seed.srsj` via `scripts/ensure-bindings.mjs`, so it always matches the engine. Never hand-edit or vendor a copy.
+- **Any other editor** starts from a blank repository (`SrsRepository.create({title})`, where the core derives the namespace). Its packages are installed from pinned bundles (`install_package_bundle`), then the editor opens.
+- **No editor ticked** gives a blank repository in the generic view.
+
+In the generic view, an editor whose packages are missing offers **Install <editor>**. Installing marks the document unsaved and opens the editor. The core decides what is missing (RFC-044 reason `missing`). An outdated or incompatible package is never installed over. It stays blocked with its message.
+
+Installable bundles are pinned in `packages.lock.json` (`packageId`, `url`, `sha256`). `scripts/ensure-packages.mjs` downloads and sha256-verifies them into the gitignored `src/lib/packages/<packageId>.srspkg`. It runs from `predev`, `prebuild`, `pretest`, `pree2e` and `fetch-bindings`, and a mismatch fails the build. To add or bump a bundle, publish it as a public release asset (for example srs-web `packages-essay-1.5.0`) and update the lock entry.
 
 ## Autosave and session restore
 

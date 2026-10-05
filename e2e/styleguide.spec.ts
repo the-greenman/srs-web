@@ -339,4 +339,20 @@ test.describe("Styleguide notices", () => {
       expect(overflowing).toEqual([]);
     });
   }
+
+  // ── Modal and Checkbox specimens (srs-web#341, #428) ──────────────────────────────────
+  for (const theme of ["Default", "Demo"]) {
+    test(`dialog and checkbox specimens render: ${theme} theme`, async ({ page }) => {
+      await page.goto("/styleguide");
+      await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+      await page.getByLabel("Theme").selectOption(theme);
+      const modal = page.getByTestId("sg-modal");
+      await expect(modal).toBeVisible();
+      await expect(modal).toHaveAttribute("aria-labelledby", /.+/);
+      await expect(modal.getByRole("button")).toHaveCount(4);
+      const boxes = page.getByTestId("sg-checkbox").locator('input[type="checkbox"]');
+      await expect(boxes.first()).toBeChecked();
+      await expect(boxes.last()).not.toBeChecked();
+    });
+  }
 });
