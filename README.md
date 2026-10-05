@@ -221,6 +221,13 @@ override the source with `SRS_BINDINGS_URL`). It runs in two modes:
   re-downloads (`--force`), overwriting whatever was there, so there's no way
   to accidentally ship a stale binding on deploy.
 
+The tarball is verified against a sha256 pinned in `ensure-bindings.mjs` before
+extraction; a mismatch fails without touching `src/lib/srs_bindings/`. Bumping
+the pin means changing `DEFAULT_URL` and `SHA256` together; get the value with
+`gh release download <tag> --repo the-greenman/srs-rust --pattern 'srs-bindings-web.tar.gz.sha256' -O -`.
+`SRS_BINDINGS_URL` overrides require `SRS_BINDINGS_SHA256` (without it a loud
+warning is printed and verification is skipped).
+
 If you're actively developing new bindings in `srs-rust` and want to test
 unreleased changes in srs-web before they're merged, build locally instead —
 this overwrites the fetched artifact until you next run `fetch-bindings` or

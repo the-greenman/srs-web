@@ -8,8 +8,16 @@
 // before deploys to pick up the latest release).
 //
 // No auth and no gh CLI required: srs-rust is public, so the artifact is a
-// plain HTTPS download. Override the source with SRS_BINDINGS_URL if needed.
+// plain HTTPS download. The tarball is verified against a pinned sha256 (SHA256 below) before
+// anything is extracted or touched, so a bad download (or --force) never clobbers working bindings.
+//
+// Local override: SRS_BINDINGS_URL replaces the source and then REQUIRES SRS_BINDINGS_SHA256 to
+// verify against. If it is absent a loud warning is printed and verification is skipped — a local
+// override is a deliberate developer action.
+//
+// Bumping the pin: change DEFAULT_URL and SHA256 together (README, "WASM bindings").
 
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -18,12 +26,20 @@ import { fileURLToPath } from "node:url";
 
 const DEFAULT_URL =
   "https://github.com/the-greenman/srs-rust/releases/download/v0.1.0-build.468/srs-bindings-web.tar.gz";
+// sha256 of the tarball at DEFAULT_URL (the release's srs-bindings-web.tar.gz.sha256 asset).
+const SHA256 = "1719b1162555e8d4dfb1dd3fd408b8cb4f8e889459e17a7a974259a3ea14bc1d";
+
+const verifySha256 = (bytes, expected) =>
+  createHash("sha256").update(bytes).digest("hex") === expected.trim().toLowerCase();
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const bindingsDir = join(root, "src", "lib", "srs_bindings");
 const entryFiles = ["srs_bindings.js", "srs_bindings_bg.wasm", "governance-seed.srsj"];
 const force = process.argv.includes("--force");
 const url = process.env.SRS_BINDINGS_URL ?? DEFAULT_URL;
+
+const overridden = process.env.SRS_BINDINGS_URL !== undefined;
+const expected = overridden ? process.env.SRS_BINDINGS_SHA256 : SHA256;
 
 const present = entryFiles.every((f) => existsSync(join(bindingsDir, f)));
 if (present && !force) {
@@ -40,10 +56,20 @@ if (!res.ok) {
   process.exit(1);
 }
 
+const bytes = Buffer.from(await res.arrayBuffer());
+if (expected) {
+  if (!verifySha256(bytes, expected)) {
+    console.error(`srs-bindings-web sha256 mismatch for ${url} (expected ${expected}); bindings untouched`);
+    process.exit(1);
+  }
+} else {
+  console.warn(`WARNING: SRS_BINDINGS_URL is set without SRS_BINDINGS_SHA256 — NOT verifying ${url}`);
+}
+
 const tmp = mkdtempSync(join(tmpdir(), "srs-bindings-"));
 try {
   const tarball = join(tmp, "srs-bindings-web.tar.gz");
-  writeFileSync(tarball, Buffer.from(await res.arrayBuffer()));
+  writeFileSync(tarball, bytes);
 
   mkdirSync(bindingsDir, { recursive: true });
   const tar = spawnSync("tar", ["-xzf", tarball, "-C", bindingsDir], { stdio: "inherit" });
