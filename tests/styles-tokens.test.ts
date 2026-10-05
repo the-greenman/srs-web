@@ -25,8 +25,13 @@ const svelteIn = (dir: string) =>
   readdirSync(join(ROOT, dir))
     .filter((n) => n.endsWith(".svelte"))
     .map((n) => `${dir}/${n}`);
-/** Shells already converted to component CSS (#424): they may carry no scoped style at all. Governance and Guides join in PR-B. */
-const SHELL_FILES = svelteIn("src/lib/generic");
+/** The four shells (#424, #463): all on component CSS, so they may carry no scoped style at all. */
+const SHELL_FILES = [
+  ...svelteIn("src/lib/generic"),
+  ...svelteIn("src/lib/governance"),
+  ...svelteIn("src/lib/guides"),
+  ...svelteIn("src/lib/essay"),
+];
 /** Editors whose controls moved onto Button/IconButton (#428): scanned for raw colour too. */
 const EDITOR_FILES = ["src/lib/editor/SectionForm.svelte", "src/lib/editor/BlueprintDocumentEditor.svelte"];
 const svelte = [...svelteIn("src/lib/components"), ...SHELL_FILES, ...EDITOR_FILES];

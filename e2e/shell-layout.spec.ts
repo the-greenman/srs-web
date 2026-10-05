@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { openInspectorDrawer, openNavDrawer, openPackageEditor, openMenus, navItem } from "./helpers.js";
+import { navItem, openInspectorDrawer, openMenus, openNavDrawer, openPackageEditor, setWide } from "./helpers.js";
 
 /**
  * shell-layout.spec.ts — the shared page frame (#424): the window never scrolls, each column scrolls
@@ -253,14 +253,6 @@ async function openEssay(page: Page) {
   await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
 }
 
-async function setWide(page: Page, on: boolean) {
-  await page.getByTestId("toolbar-menu-view").click();
-  const item = page.getByTestId("margin-variant");
-  if ((await item.getAttribute("aria-checked")) !== String(on)) await item.click();
-  await page.keyboard.press("Escape");
-  await expect(page.locator(".app")).toHaveAttribute("data-margin", on ? "expanded" : "compact");
-}
-
 const pageWidth = (page: Page) =>
   page.locator(".essay-shell__page").evaluate((el) => Math.round(el.getBoundingClientRect().width));
 
@@ -283,6 +275,34 @@ test.describe("Essay on the frame: Wide", () => {
     await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
     expect(await pageWidth(page)).toBeGreaterThan(1000); // the cap is 80rem (1280px), not just the margin column growing;
   });
+});
+
+// Wide in every shell: one setting, one carrier, the same cap (content width read from the element that caps it).
+const WIDE_SHELLS = [
+  { name: "Essay", file: "essay.srsj", editor: "essay", cap: ".essay-shell__page" },
+  { name: "Generic", file: "gallery.srsj", editor: null, cap: ".generic-page" },
+  { name: "Governance", file: "gallery.srsj", editor: "governance", cap: ".canvas" },
+  { name: "Guides", file: "muSrs.srsj", editor: "guides", cap: ".canvas" },
+] as const;
+
+test.describe("Wide in every shell", () => {
+  test.use({ viewport: { width: 1920, height: 1000 } });
+  for (const sh of WIDE_SHELLS) {
+    test(`${sh.name}: off is at most 46rem, on is wider, and it survives a reload`, async ({ page }) => {
+      const open = async () => {
+        await load(page, sh.file);
+        if (sh.editor) await openEditor(page, sh.editor);
+      };
+      await open();
+      expect(await widthOf(page, sh.cap)).toBeLessThanOrEqual(46 * 16 + 1);
+      await setWide(page, true);
+      expect(await widthOf(page, sh.cap)).toBeGreaterThan(46 * 16 + 1);
+      await page.reload(); // nothing but localStorage survives: re-upload and reopen
+      await open();
+      await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
+      expect(await widthOf(page, sh.cap)).toBeGreaterThan(46 * 16 + 1);
+    });
+  }
 });
 
 test.describe("Essay on the frame: geometry", () => {
@@ -339,14 +359,6 @@ test.describe("Generic on the frame", () => {
     expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(
       true
     );
-  });
-
-  test("Wide in Governance sets data-margin and persists across a reload", async ({ page }) => {
-    await page.setViewportSize({ width: 1920, height: 1000 });
-    await openGovernance(page);
-    await setWide(page, true);
-    await openGovernanceAfterReload(page);
-    await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
   });
 
   test("Wide is one switch across editors: Essay -> Generic -> Essay keeps it; Generic widens past 46rem", async ({

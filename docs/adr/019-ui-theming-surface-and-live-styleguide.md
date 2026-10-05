@@ -37,8 +37,9 @@ Constraint: ADR-001 (thin client). The styleguide is presentation only.
 ## Consequences
 
 - Specimens cannot drift from the components, and each component is checked against a second skin.
-- **Known limit.** Unlayered scoped Svelte `<style>` blocks, such as the dark-mode blocks in
-  `GuidesShell.svelte` and `GovernanceShell.svelte`, beat every layer, including `theme`. Moving the
-  shells onto `AppShell` removes them (#424).
+- **Closed limit.** Unlayered scoped Svelte `<style>` blocks, such as the dark-mode blocks that were in
+  `GuidesShell.svelte` and `GovernanceShell.svelte`, beat every layer, including `theme`. #441 replaced the
+  banners with `Notice` and #424 PR-B (#463) moved both shells' styles into component CSS in the `components`
+  layer; the token scan now covers all four shells and asserts none carries a `<style>` block.
 - Hard-coded colours in components used to ignore the demo theme; [ADR-020](020-icon-set-and-component-token-api.md) (#421) fixed that for shared components with semantic and component tokens, a static guard and a demo-theme e2e check.
 - The route is public but holds fixture data only. Production's SPA fallback serves it unchanged.

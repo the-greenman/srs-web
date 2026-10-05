@@ -620,7 +620,7 @@
           <Notice kind="error" testid="guides-error">{schemaError}</Notice>
         {/if}
 
-        <Workspace wide>
+        <Workspace>
           {#if formMode !== null && activeSectionDescriptor !== null}
             <div class="guides-form-panel">
               <SectionForm
@@ -628,7 +628,6 @@
                 fields={activeSectionDescriptor.fields}
                 composites={activeSectionDescriptor.composites}
                 record={editingRecord}
-                wide
                 onSave={handleSave}
                 onCancel={cancelForm}
                 saving={formSaving}
@@ -640,7 +639,6 @@
               <RecordForm
                 schema={activeFormDef}
                 record={editingRecord}
-                wide
                 onSave={handleSave}
                 onCancel={cancelForm}
                 saving={formSaving}

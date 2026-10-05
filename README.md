@@ -81,8 +81,8 @@ Installable bundles are pinned in `packages.lock.json` (`packageId`, `url`, `sha
 
 The governance editor autosaves the working copy to `localStorage` after every successful write
 (create, update, delete, lifecycle transition, relation, tag update). A "Saved" flash appears
-briefly in the topbar after each autosave. If the local write itself fails (quota exceeded,
-private-browsing block), the topbar shows a distinct, non-dismissing "Local recovery copy could
+briefly in the toolbar after each autosave. If the local write itself fails (quota exceeded,
+private-browsing block), the toolbar shows a distinct, non-dismissing "Local recovery copy could
 not be saved" message instead of a false "Saved" — this does not affect the WASM repository or a
 subsequent provider save, only the local recovery copy.
 

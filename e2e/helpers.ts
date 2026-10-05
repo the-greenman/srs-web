@@ -272,3 +272,12 @@ export const exportItem = (page: Page, kind: "srs" | "srsj") =>
 
 /** Go > Open another. */
 export const openAnother = (page: Page) => menuItem(page, "Go", "toolbar-other");
+
+/** Set View > Wide to `on` (a no-op when it already is) and wait for the shell's `data-margin` carrier. */
+export async function setWide(page: Page, on: boolean): Promise<void> {
+  await openMenu(page, "View");
+  const item = page.getByTestId("margin-variant");
+  if ((await item.getAttribute("aria-checked")) !== String(on)) await item.click();
+  await closeMenus(page);
+  await expect(page.locator(".app")).toHaveAttribute("data-margin", on ? "expanded" : "compact");
+}

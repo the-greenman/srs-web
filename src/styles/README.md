@@ -33,7 +33,7 @@ to the component's own declaration. The component reads them (`.btn { background
 a variant re-assigns the token on the variant selector (`.btn--primary { --btn-bg: var(--btn-primary-bg) }`).
 No `var(--x, <colour>)` fallbacks: a read token must be defined.
 `tests/styles-tokens.test.ts` enforces this for `src/styles/**`, every `src/lib/components` `<style>` block
-and the converted shells (`src/lib/generic`); the Governance and Guides shells enter the scan with #424 PR-B.
+and all four shells (`src/lib/generic`, `governance`, `guides`, `essay`), which carry no scoped `<style>`.
 
 ## `data-part`
 
