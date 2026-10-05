@@ -250,10 +250,9 @@ test("a reopen refused by a lingering socket takes over exactly once; manual Con
 
   // a manual Connect that is refused stays refused
   await page.getByTestId("mcp-disconnect").first().click();
-  // the in-use list refreshes on focus; the lock release lags the click that asked for it
-  await page.waitForTimeout(300);
-  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
-  await expect(page.getByTestId("mcp-library-connect")).toBeEnabled({ timeout: 15000 });
+  await expect(page.getByTestId("mcp-library-connect")).toBeEnabled(); // right after Disconnect, no focus event
+  await page.waitForTimeout(500); // and it stays enabled
+  await expect(page.getByTestId("mcp-library-connect")).toBeEnabled();
   ex.refuse.next = true;
   await page.getByTestId("mcp-library-connect").first().click();
   await expect(status(page)).toHaveText("Connection refused", { timeout: 15000 });

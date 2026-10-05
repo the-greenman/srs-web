@@ -469,14 +469,15 @@
     library = [...connections.rename(id, label)];
   }
   /** Detach in this tab; the channel and its credentials stay in the library. */
-  function disconnectAgent(id: string) {
+  async function disconnectAgent(id: string) {
     const h = hosts.get(id);
     h?.host.detach();
     h?.session?.free();
     library = [...connections.setReopen(id, null)];
     hosts.delete(id);
-    releaseChannelLock(id);
+    const released = releaseChannelLock(id);
     agents = agents.filter((a) => a.conn.id !== id);
+    await released; // the in-use query must not still see our own lock
     refreshInUse();
   }
   function forgetAgent(id: string) {

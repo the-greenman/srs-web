@@ -192,8 +192,7 @@ describe("one tab per channel (Web Locks)", () => {
     held.add("srs-web.channel.agent:2"); // another tab
     expect(await acquireChannelLock("agent:2")).toBe(false);
     expect([...(await channelsInUseElsewhere())]).toEqual(["agent:2"]); // not our own agent:1
-    releaseChannelLock("agent:1");
-    await new Promise((r) => setTimeout(r, 0));
+    await releaseChannelLock("agent:1"); // resolves once the lock is really free
     expect(held.has("srs-web.channel.agent:1")).toBe(false);
   });
   it("degrades to free without navigator.locks", async () => {

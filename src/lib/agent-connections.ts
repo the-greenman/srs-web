@@ -176,18 +176,19 @@ export const connections = createConnectionStore();
  * Without `navigator.locks` everything degrades to "free": the relay's 409 stays the backstop.
  */
 const lockName = (id: string) => `srs-web.channel.${id}`;
-const releasers = new Map<string, () => void>();
+const releasers = new Map<string, { release: () => void; released: () => Promise<unknown> }>();
 
 /** Take the channel's lock for this tab. False when another tab holds it. */
 export function acquireChannelLock(id: string): Promise<boolean> {
   const locks = globalThis.navigator?.locks;
   if (!locks || releasers.has(id)) return Promise.resolve(true);
   return new Promise((resolve) => {
-    locks
+    let released: Promise<unknown> = Promise.resolve();
+    released = locks
       .request(lockName(id), { ifAvailable: true }, (lock) => {
         if (!lock) return void resolve(false);
         return new Promise<void>((release) => {
-          releasers.set(id, release);
+          releasers.set(id, { release, released: () => released });
           resolve(true);
         });
       })
@@ -195,9 +196,12 @@ export function acquireChannelLock(id: string): Promise<boolean> {
   });
 }
 
-export function releaseChannelLock(id: string): void {
-  releasers.get(id)?.();
+/** Resolves once the browser has actually released the lock (the request promise settles after the callback does). */
+export async function releaseChannelLock(id: string): Promise<void> {
+  const r = releasers.get(id);
   releasers.delete(id);
+  r?.release();
+  await r?.released();
 }
 
 /** Ids of channels held by another tab (our own locks are excluded). */
