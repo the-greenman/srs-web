@@ -7,6 +7,7 @@ import type { Layer } from "$lib/components/LayersPanel.svelte";
 import type { PanelAgent } from "$lib/components/agent-panel";
 import type { MenuAction } from "$lib/components/menu-action";
 import { headerActions } from "$lib/essay/header-actions";
+import type { PairingResponse } from "$lib/mcp/relay-protocol";
 import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor } from "$lib/srs-client";
 import type { Diagnostic, Status } from "$lib/types";
@@ -413,6 +414,18 @@ export const agentGroups = {
         state: { status: "error" as const, callerUrl: null, error: "relay bootstrap failed: 502" },
       },
     ],
+  },
+  pairing: {
+    relays: [relays[0]],
+    agents: [panelAgents[0]],
+    pairing: {
+      data: {
+        code: "K7QPM-2XD4R",
+        connectorUrl: "https://relay.example.com/v1/channels/ch1/call",
+        expiresAt: NOW + 9 * 60_000 + 41_000,
+      } as PairingResponse,
+      error: null as string | null,
+    },
   },
 };
 export const agentWidths = [

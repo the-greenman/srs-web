@@ -1004,6 +1004,11 @@
     onRename={renameAgent}
     onRotate={(id) => void hosts.get(id)?.host.rotate()}
     onTakeover={(id) => void hosts.get(id)?.host.takeover()}
+    pair={async (id) => {
+      const e = hosts.get(id);
+      if (!e) throw new Error("No channel yet: connect the agent first.");
+      return e.host.pair();
+    }}
   />
 {/snippet}
 

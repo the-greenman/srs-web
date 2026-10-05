@@ -9,8 +9,8 @@ import {
   RelayExecutor,
   type SocketLike,
 } from "./relay-executor";
-import type { ChannelBootstrap } from "./relay-protocol";
-import { bootstrapChannel } from "./relay-wire";
+import type { ChannelBootstrap, PairingResponse } from "./relay-protocol";
+import { bootstrapChannel, requestPairing } from "./relay-wire";
 
 export type HostStatus = ExecutorStatus | "idle" | "error";
 
@@ -34,6 +34,9 @@ export interface RelayHostOptions {
 }
 
 const KEY = "srs-web.mcp-relay";
+
+/** pair() result discarded: the channel was rotated, taken over or detached while it was in flight. */
+export class StalePairing extends Error {}
 
 export class RelayHost {
   #exec: RelayExecutor | null = null;
@@ -83,6 +86,16 @@ export class RelayHost {
     this.#exec = null;
     this.#session = null;
     this.#set({ status: "idle" });
+  }
+
+  /** Current pairing code for the attached channel; no state change. */
+  async pair(): Promise<PairingResponse> {
+    const creds = this.#creds;
+    const seq = this.#seq;
+    if (!creds || !this.#session) throw new Error("No channel yet: connect the agent first.");
+    const r = await requestPairing(this.o.relayUrl, creds, this.o.fetchImpl);
+    if (seq !== this.#seq || this.#creds !== creds) throw new StalePairing();
+    return r;
   }
 
   async rotate(): Promise<void> {

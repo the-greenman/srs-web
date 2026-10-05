@@ -3,7 +3,7 @@
 // the pinned commit (srs-web#347). Bump PIN here and in the vendored file's header together.
 import { readFileSync } from "node:fs";
 
-const PIN = "02232f78daab342fcbc049f955cd2f4ca5f0b04f";
+const PIN = "8db0fd9a8981a830234beea6c377625671d9b371";
 const url = `https://raw.githubusercontent.com/the-greenman/browser-executor-relay/${PIN}/src/protocol.ts`;
 const res = await fetch(url);
 if (!res.ok) {

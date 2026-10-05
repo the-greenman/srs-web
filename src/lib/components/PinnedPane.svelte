@@ -10,6 +10,7 @@
   import IconButton from './IconButton.svelte';
   import Panel from './Panel.svelte';
   import { NARROW } from '$lib/breakpoints';
+  import { copyText } from '$lib/clipboard';
   import MarkdownView from './MarkdownView.svelte';
 
   let open = $state<Set<string>>(new Set());
@@ -20,12 +21,10 @@
     open = next;
   };
   async function copy(id: string, text: string) {
-    try {
-      await navigator.clipboard.writeText(text);
+    // false (unavailable or denied): no feedback
+    if (await copyText(text)) {
       copied = id;
       setTimeout(() => copied === id && (copied = null), 1200);
-    } catch {
-      /* clipboard unavailable or denied: no feedback */
     }
   }
 

@@ -325,11 +325,12 @@ test.describe("Styleguide notices", () => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/styleguide");
       await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
-      for (const g of ["none", "empty", "several", "errors"]) {
+      for (const g of ["none", "empty", "several", "errors", "pairing"]) {
         await expect(page.getByTestId(`sg-agent-${g}`).getByTestId("sg-agent-frame")).toHaveCount(3);
       }
       await expect(page.getByTestId("sg-agent-none").getByTestId("agent-panel-empty").first()).toBeVisible();
       await expect(page.getByTestId("sg-agent-errors").getByTestId("mcp-connection").first()).toBeVisible();
+      await expect(page.getByTestId("sg-agent-pairing").getByTestId("pair-code").first()).toBeVisible();
       await expect(page.locator(".agent-panel h1, .agent-panel h2, .agent-panel h3, .agent-panel h4, .agent-panel h5, .agent-panel h6, .agent-panel details")).toHaveCount(0);
       const overflowing = await page.evaluate(() =>
         [...document.querySelectorAll<HTMLElement>('[data-testid="sg-agent-frame"]')]

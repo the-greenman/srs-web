@@ -9,6 +9,7 @@
 <script lang="ts">
   import { onDestroy, onMount, tick, untrack } from "svelte";
   import type { Snippet } from "svelte";
+  import { copyText } from "$lib/clipboard.js";
   import { repositoryId } from "$lib/srs-client.js";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import AgentFeed from "$lib/components/AgentFeed.svelte";
@@ -345,11 +346,10 @@
   async function copyLink(id: string, zoom = false) {
     const url = location.origin + location.pathname + location.search +
       formatAddress({ essayId: essayId ?? undefined, [zoom ? "zoomId" : "paragraphId"]: id });
-    try {
-      await navigator.clipboard.writeText(url);
+    if (await copyText(url)) {
       linkFallback = null;
       notify({ kind: "success", key: "copy-link", text: "Link copied", testid: "address-notice" });
-    } catch {
+    } else {
       linkFallback = url;
     }
   }
@@ -374,11 +374,10 @@
       purpose: m.purpose,
       focus: focusId ? { id: focusId, title: m.paragraphs[focusId] ? label(focusId) : "untitled" } : undefined,
     });
-    try {
-      await navigator.clipboard.writeText(text);
+    if (await copyText(text)) {
       linkFallback = null;
       notify({ kind: "success", key: "copy-agent", text: "Copied for agent", testid: "address-notice" });
-    } catch {
+    } else {
       error = "Could not copy to the clipboard.";
     }
   }
