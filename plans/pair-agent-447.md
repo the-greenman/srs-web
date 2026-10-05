@@ -174,20 +174,20 @@ Styles: `src/styles/components/mcp-connection.css` only (`.mcp-conn__code` mono,
 
 #### Tasks
 
-- [ ] Bump `relay-protocol.ts` and `PIN`; run `node scripts/check-relay-protocol.mjs`.
-- [ ] `src/lib/mcp/relay-wire.ts` (`relayErrorCode` extracted from `bootstrapChannel`, `executorCredential`, `requestPairing`), `relay-host.ts` (`pair`, `StalePairing`), `pairingMinutesLeft` in `agent-panel.ts`.
-- [ ] Tests: `tests/relay-pairing.test.ts`, extend `tests/relay-host.test.ts`, `pairingMinutesLeft` unit tests.
-- [ ] **Separate commit first:** `src/lib/clipboard.ts` + migrate PinnedPane and EssayShell (2 sites) + `tests/clipboard.test.ts`. (McpConnection's site is replaced by `CopyField` in Phase 2.)
+- [x] Bump `relay-protocol.ts` and `PIN`; run `node scripts/check-relay-protocol.mjs`.
+- [x] `src/lib/mcp/relay-wire.ts` (`relayErrorCode` extracted from `bootstrapChannel`, `executorCredential`, `requestPairing`), `relay-host.ts` (`pair`, `StalePairing`), `pairingMinutesLeft` in `agent-panel.ts`.
+- [x] Tests: `tests/relay-pairing.test.ts`, extend `tests/relay-host.test.ts`, `pairingMinutesLeft` unit tests.
+- [x] **Separate commit first:** `src/lib/clipboard.ts` + migrate PinnedPane and EssayShell (2 sites) + `tests/clipboard.test.ts`. (McpConnection's site is replaced by `CopyField` in Phase 2.)
 
 #### Acceptance Criteria
 
-- [ ] `executorCredential("wss://relay.test/v1/channels/c1/executor/EXEC1?generation=x")` is `"EXEC1"`; also `"EXEC1"` with a trailing slash and with a query only; `null` for no `/executor/` segment, an empty segment (`.../executor/` and `.../executor//x`), and an unparsable string.
-- [ ] `requestPairing` sends exactly one `POST https://relay.test/v1/channels/c1/pairing/EXEC1` (assert URL and method; no body; no headers), including with a trailing slash on `relayUrl`.
-- [ ] Error mapping (unit): 403 `executor_origin_forbidden` -> origin message; 403 `invalid_credential` -> "no longer valid; rotate the URL or reconnect."; 500 `{error:"x"}` -> `pairing failed: 500 (x)`; 502 with a non-JSON body -> `pairing failed: 502`; malformed 200 -> `pairing failed: malformed response`. No message contains `EXEC1`. Existing `bootstrapChannel` tests still pass through `relayErrorCode`.
-- [ ] `RelayHost.pair()` uses the attached channel's creds; rejects before any channel exists; **stale guard**: start `pair()` against a fetch that resolves later, call `rotate()` (new creds) before it resolves, and the promise rejects with `StalePairing` (never resolves with the old channel's code); same for `detach()` and for a takeover re-open. A `pair()` after the rotate settles uses the new credential.
-- [ ] `pairingMinutesLeft`: cases listed under Contracts, including the clamp (`+11 min` -> 10) and `<= now` -> 0.
-- [ ] `copyText` returns true on success, false when the write rejects, and false (no throw) when `navigator.clipboard` is undefined; EssayShell/PinnedPane behaviour unchanged (existing tests pass).
-- [ ] `check-relay-protocol.mjs` passes; `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` pass.
+- [x] `executorCredential("wss://relay.test/v1/channels/c1/executor/EXEC1?generation=x")` is `"EXEC1"`; also `"EXEC1"` with a trailing slash and with a query only; `null` for no `/executor/` segment, an empty segment (`.../executor/` and `.../executor//x`), and an unparsable string.
+- [x] `requestPairing` sends exactly one `POST https://relay.test/v1/channels/c1/pairing/EXEC1` (assert URL and method; no body; no headers), including with a trailing slash on `relayUrl`.
+- [x] Error mapping (unit): 403 `executor_origin_forbidden` -> origin message; 403 `invalid_credential` -> "no longer valid; rotate the URL or reconnect."; 500 `{error:"x"}` -> `pairing failed: 500 (x)`; 502 with a non-JSON body -> `pairing failed: 502`; malformed 200 -> `pairing failed: malformed response`. No message contains `EXEC1`. Existing `bootstrapChannel` tests still pass through `relayErrorCode`.
+- [x] `RelayHost.pair()` uses the attached channel's creds; rejects before any channel exists; **stale guard**: start `pair()` against a fetch that resolves later, call `rotate()` (new creds) before it resolves, and the promise rejects with `StalePairing` (never resolves with the old channel's code); same for `detach()` and for a takeover re-open. A `pair()` after the rotate settles uses the new credential.
+- [x] `pairingMinutesLeft`: cases listed under Contracts, including the clamp (`+11 min` -> 10) and `<= now` -> 0.
+- [x] `copyText` returns true on success, false when the write rejects, and false (no throw) when `navigator.clipboard` is undefined; EssayShell/PinnedPane behaviour unchanged (existing tests pass).
+- [x] `check-relay-protocol.mjs` passes; `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` pass.
 
 #### Testing
 

@@ -1,5 +1,5 @@
 // VENDORED VERBATIM from the-greenman/browser-executor-relay src/protocol.ts at commit
-// 02232f78daab342fcbc049f955cd2f4ca5f0b04f. Do not edit; CI (scripts/check-relay-protocol.mjs) diffs
+// 8db0fd9a8981a830234beea6c377625671d9b371. Do not edit; CI (scripts/check-relay-protocol.mjs) diffs
 // everything below this header against that commit. To update, bump the pin there and re-copy.
 /**
  * Generic relay protocol: the dependency-free, Worker-free entry for executor
@@ -22,7 +22,8 @@ export const EXECUTOR_TAKEOVER_HEADER = "x-relay-executor-takeover";
 export const EXECUTOR_GENERATION_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 
 export const DEFAULT_LIMITS = {
-  maxBodyBytes: 128 * 1024,
+  // 700 KB: base64url encoding adds ~1/3, keeping the response frame under Cloudflare's 1 MiB WebSocket message limit.
+  maxBodyBytes: 700 * 1024,
   maxPendingCalls: 32,
   deadlineMs: 30_000,
 } as const;
@@ -124,4 +125,23 @@ export function randomBase64Url(byteLength: number): string {
 
 export function utf8Bytes(value: string): Uint8Array {
   return new TextEncoder().encode(value);
+}
+
+/** Response of POST /v1/channels/{ch}/pairing/{executorCred}. */
+export interface PairingResponse {
+  /** Display form XXXXX-XXXXX (Crockford base32, 50 bits). */
+  code: string;
+  /** Unix ms at which the current 10-minute pairing window ends (conservative display deadline). */
+  expiresAt: number;
+  /** https://<relay-origin>/v1/channels/{ch}/call: contains no secret. */
+  connectorUrl: string;
+}
+export const PAIRING_ROUTE = "pairing"; // /v1/channels/{ch}/pairing/{executorCred}
+export const PAIRING_WINDOW_SECONDS = 600;
+export const PAIRING_CODE_LENGTH = 10;
+export function pairingPath(channel: string, executorCredential: string): string {
+  return `/v1/channels/${channel}/${PAIRING_ROUTE}/${executorCredential}`;
+}
+export function connectorPath(channel: string): string {
+  return `/v1/channels/${channel}/call`;
 }
