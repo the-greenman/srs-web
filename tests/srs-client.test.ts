@@ -16,6 +16,7 @@ import {
   initWasm,
   installBundles,
   installPackageBundle,
+  upgradeBundles,
   type AddAttachmentInput,
   type AllowedLifecycleTransitionsResult,
   type ContainerListFilter,
@@ -1847,5 +1848,22 @@ describe("installBundles", () => {
     const check = vi.fn().mockReturnValue({ dependencies: [] });
     installBundles(mockRepo({ check_package_requirements: check, install_package_bundle: install }), [ESSAY, ESSAY]);
     expect(install).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("upgradeBundles", () => {
+  const ESSAY = "5b14a4d4-ec08-4e5b-be75-c183aec90c40";
+
+  it("throws for a package with no pinned bundle, before any write", () => {
+    const upgrade = vi.fn();
+    expect(() => upgradeBundles(mockRepo({ upgrade_package_bundle: upgrade }), ["no-such-package"])).toThrow(/No bundled package/);
+    expect(upgrade).not.toHaveBeenCalled();
+  });
+
+  it("upgrades each package once and passes the dry-run option to the core", () => {
+    const upgrade = vi.fn().mockReturnValue({ name: "essay" });
+    upgradeBundles(mockRepo({ upgrade_package_bundle: upgrade }), [ESSAY, ESSAY], { dryRun: true });
+    expect(upgrade).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(upgrade.mock.calls[0][1])).toEqual({ dryRun: true });
   });
 });

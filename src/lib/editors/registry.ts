@@ -10,12 +10,15 @@ import {
   type AgentWriteGuard,
   type PackageRequirement,
   REQUIREMENT_MISSING,
+  REQUIREMENT_VERSION_TOO_LOW,
   type RequirementOutcome,
   type SrsRepository,
   type TypeSummary,
+  type UpgradePackageResult,
   checkPackageRequirements,
   createGovernanceDocument,
   installBundles,
+  upgradeBundles,
 } from "$lib/srs-client.js";
 /**
  * The one editor registry (srs-web#338).
@@ -132,6 +135,8 @@ export interface UnmetRequirement {
   reason: string;
   /** Present only when every unsatisfied requirement is missing and has a pinned bundle (Install offers these). */
   install?: PackageRequirement[];
+  /** Present only when every unsatisfied requirement is outdated (`version-too-low`) and has a pinned bundle (Upgrade offers these). */
+  upgrade?: PackageRequirement[];
 }
 
 /** An editor that is offered; `unmet` = why it cannot be opened (null = usable). */
@@ -147,22 +152,37 @@ function unmetReason(req: PackageRequirement, have: (string | null)[] | undefine
 }
 
 /**
- * The unsatisfied requirements, when every one is installable: the core says it is `missing`
- * (R1; an outdated or incompatible package is never installed over) and a bundle is pinned.
- * Undefined when nothing is unsatisfied or any one is not installable.
+ * The unsatisfied requirements, when every one has the core's `reason` and a pinned bundle.
+ * Undefined when nothing is unsatisfied or any one does not qualify (so a mix of missing and
+ * outdated is blocked: neither Install nor Upgrade is offered, one consistent rule).
  */
-export function installableRequirements(
+function bundledUnsatisfied(
   outcomes: (RequirementOutcome | undefined)[],
-  requires: PackageRequirement[]
+  requires: PackageRequirement[],
+  reason: string
 ): PackageRequirement[] | undefined {
   const unsatisfied = requires.filter((_, n) => !outcomes[n]?.satisfied);
-  const installable = unsatisfied.every(
-    (req) =>
-      outcomes[requires.indexOf(req)]?.reason === REQUIREMENT_MISSING &&
-      bundledPackage(req.packageId)
+  const ok = unsatisfied.every(
+    (req) => outcomes[requires.indexOf(req)]?.reason === reason && bundledPackage(req.packageId)
   );
-  return unsatisfied.length > 0 && installable ? unsatisfied : undefined;
+  return unsatisfied.length > 0 && ok ? unsatisfied : undefined;
 }
+
+/** Installable (R1): the core says `missing` (an outdated or incompatible package is never installed over) and a bundle is pinned. */
+export const installableRequirements = (
+  outcomes: (RequirementOutcome | undefined)[],
+  requires: PackageRequirement[]
+) => bundledUnsatisfied(outcomes, requires, REQUIREMENT_MISSING);
+
+/**
+ * Upgradable (#450): the core says `version-too-low` and a bundle is pinned. Whether the bundle
+ * satisfies the requirement is the core's, checked after the upgrade by re-deriving availability.
+ * `incompatible` (another major) is never upgraded across.
+ */
+export const upgradableRequirements = (
+  outcomes: (RequirementOutcome | undefined)[],
+  requires: PackageRequirement[]
+) => bundledUnsatisfied(outcomes, requires, REQUIREMENT_VERSION_TOO_LOW);
 
 /**
  * The one availability computation (srs-web#399): App's shell selection and the picker both consume it.
@@ -194,6 +214,7 @@ export function availableEditors(repo: SrsRepository, types: TypeSummary[]): Off
       continue;
     }
     const install = installableRequirements(outcomes, editor.requires);
+    const upgrade = upgradableRequirements(outcomes, editor.requires);
     if (!present && !install) continue;
     offered.push({
       editor,
@@ -201,6 +222,7 @@ export function availableEditors(repo: SrsRepository, types: TypeSummary[]): Off
         requirement: editor.requires[i],
         reason: unmetReason(editor.requires[i], outcomes[i]?.candidateVersions),
         install,
+        upgrade,
       },
     });
   }
@@ -212,6 +234,22 @@ export function installEditor(repo: SrsRepository, offered: OfferedEditor): void
   installBundles(
     repo,
     (offered.unmet?.install ?? []).map((req) => req.packageId)
+  );
+}
+
+/**
+ * Upgrade the packages an offered editor needs (its `unmet.upgrade`) from the pinned bundles; the core
+ * decides conflicts and keeps local edits. `dryRun` returns the plan and writes nothing.
+ */
+export function upgradeEditor(
+  repo: SrsRepository,
+  offered: OfferedEditor,
+  options: { dryRun?: boolean } = {}
+): UpgradePackageResult[] {
+  return upgradeBundles(
+    repo,
+    (offered.unmet?.upgrade ?? []).map((req) => req.packageId),
+    options
   );
 }
 

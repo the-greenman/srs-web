@@ -41,7 +41,7 @@
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
-  import { EDITORS, availableEditors, installEditor as installEditorPackages, usableEditor } from "$lib/editors/registry.js";
+  import { EDITORS, availableEditors, installEditor as installEditorPackages, upgradeEditor as upgradeEditorPackages, usableEditor } from "$lib/editors/registry.js";
   import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import CreateRepositoryPanel from "$lib/components/CreateRepositoryPanel.svelte";
@@ -646,6 +646,28 @@
     editorMode = id;
   }
 
+  /** The dry-run plan to upgrade an outdated editor's packages (#450); writes nothing. */
+  function planUpgrade(id: string) {
+    const offered = offeredEditors.find((o) => o.editor.id === id);
+    if (!repo || !offered?.unmet?.upgrade) throw new Error("Nothing to upgrade for this editor.");
+    return upgradeEditorPackages(repo, offered, { dryRun: true });
+  }
+
+  /**
+   * Apply the upgrade through the write-observed repo (so the document is marked unsaved), then open
+   * the editor. Whether it is now usable is re-derived, never assumed: a still-unmet editor drops back to generic.
+   */
+  async function upgradeEditor(id: string): Promise<void> {
+    const offered = offeredEditors.find((o) => o.editor.id === id);
+    if (!repo || !offered?.unmet?.upgrade) throw new Error("Nothing to upgrade for this editor.");
+    try {
+      upgradeEditorPackages(repo, offered);
+    } finally {
+      syncDocument();
+    }
+    editorMode = id;
+  }
+
   // ---------------------------------------------------------------------------
   // Create new repository (srs-web#141, #341)
   // ---------------------------------------------------------------------------
@@ -994,6 +1016,8 @@
     documentRevision={documentRevision}
     onOpenEditor={(id) => { editorMode = id; }}
     onInstallEditor={installEditor}
+    onPlanUpgrade={planUpgrade}
+    onUpgradeEditor={upgradeEditor}
     onOpenAgents={openDock}
     onOpenAnother={() => {
       clearWorkingCopy();

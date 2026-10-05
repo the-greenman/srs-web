@@ -158,6 +158,8 @@ export interface SrsRepository {
   check_package_requirements(input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in installPackageBundle()
   install_package_bundle(bundle_json: string, options_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in upgradePackageBundle()
+  upgrade_package_bundle(bundle_json: string, options_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listRelationTypes()
   list_relation_types(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listBlueprints()
@@ -1519,6 +1521,10 @@ export function checkPackageRequirements(
 
 /** The core's RFC-044 code for a requirement with no installed candidate (the only installable one). */
 export const REQUIREMENT_MISSING = "missing";
+/** The core's code for an installed package below the required version (the only upgradable one). */
+export const REQUIREMENT_VERSION_TOO_LOW = "version-too-low";
+/** The core's code for an installed package in a different compatibility band: never upgraded across. */
+export const REQUIREMENT_INCOMPATIBLE = "incompatible";
 
 /** `package install` payload (srs-cli schema package-install.json), the fields presented. */
 export interface InstallPackageResult {
@@ -1568,6 +1574,66 @@ export function installBundles(repo: SrsRepository, packageIds: string[]): Insta
       throw new Error(`${packageId} needs ${unmet.name} ${unmet.version}`);
     }
     return installPackageBundle(repo, text);
+  });
+}
+
+/** One definition in an upgrade plan list (`added`, `updated`, ...). */
+export interface UpgradeItem {
+  kind: string;
+  id: string;
+  version: number;
+  name: string;
+}
+
+/** A definition the upgrade would not overwrite: the local copy is kept. */
+export interface UpgradeConflict extends UpgradeItem {
+  conflictKind: "local-edit" | "no-reference-copy" | "key-collision";
+}
+
+/** `upgrade_package_bundle` result (srs-rust#1269), the fields presented. */
+export interface UpgradePackageResult {
+  packageId: string;
+  name: string;
+  previousVersion: string;
+  version: string;
+  upgraded: boolean;
+  dryRun: boolean;
+  added: UpgradeItem[];
+  newVersions: UpgradeItem[];
+  updated: UpgradeItem[];
+  unchanged: UpgradeItem[];
+  repaired: UpgradeItem[];
+  conflicts: UpgradeConflict[];
+  removedUpstream: UpgradeItem[];
+  dependencyWarnings: string[];
+  notes: string[];
+}
+
+/**
+ * Upgrade the installed package to the bundle's version. The core decides everything (downgrade
+ * refusal, conflicts, local edits kept); a dry run writes nothing and returns the plan.
+ */
+export function upgradePackageBundle(
+  repo: SrsRepository,
+  bundleText: string,
+  { dryRun = false }: { dryRun?: boolean } = {}
+): UpgradePackageResult {
+  return repo.upgrade_package_bundle(
+    bundleText,
+    JSON.stringify({ dryRun })
+  ) as UpgradePackageResult;
+}
+
+/** Upgrade (or dry-run) the pinned bundles for `packageIds`, deduped, in order. Throws when one is not bundled. */
+export function upgradeBundles(
+  repo: SrsRepository,
+  packageIds: string[],
+  options: { dryRun?: boolean } = {}
+): UpgradePackageResult[] {
+  return [...new Set(packageIds)].map((packageId) => {
+    const text = bundledPackage(packageId);
+    if (!text) throw new Error(`No bundled package ${packageId}`);
+    return upgradePackageBundle(repo, text, options);
   });
 }
 

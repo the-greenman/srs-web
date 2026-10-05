@@ -351,6 +351,10 @@ test.describe("Styleguide notices", () => {
       await expect(modal).toBeVisible();
       await expect(modal).toHaveAttribute("aria-labelledby", /.+/);
       await expect(modal.getByRole("button")).toHaveCount(4);
+      const plan = page.getByTestId("sg-upgrade-plan");
+      await expect(plan).toContainText("Upgrade essay 1.2.0 → 1.5.0");
+      await expect(plan.getByTestId("upgrade-conflicts")).toContainText("local-edit");
+      if (theme === "Demo") await plan.screenshot({ path: process.env.SHOT_SPECIMEN ?? "test-results/upgrade-specimen.png" });
       const boxes = page.getByTestId("sg-checkbox").locator('input[type="checkbox"]');
       await expect(boxes.first()).toBeChecked();
       await expect(boxes.last()).not.toBeChecked();

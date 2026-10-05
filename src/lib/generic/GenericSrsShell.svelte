@@ -43,6 +43,8 @@
   import type { CompositeFormDef } from "$lib/editor/blueprint-fields.js";
   import type { FieldFormDef } from "$lib/governance/types.js";
   import type { OfferedEditor } from "$lib/editors/registry.js";
+  import UpgradePlan from "$lib/components/UpgradePlan.svelte";
+  import type { UpgradePackageResult } from "$lib/srs-client.js";
   import InstanceNotes from "$lib/InstanceNotes.svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import Inspector from "$lib/components/Inspector.svelte";
@@ -79,6 +81,10 @@
     onOpenEditor?: (id: string) => void;
     /** Install an unmet editor's packages and open it; rejects with the reason it could not. */
     onInstallEditor?: (id: string) => Promise<void>;
+    /** Dry-run the pinned bundles' upgrade for an outdated editor (writes nothing); throws the reason it could not. */
+    onPlanUpgrade?: (id: string) => UpgradePackageResult[];
+    /** Apply the upgrade and open the editor; rejects with the reason it could not. */
+    onUpgradeEditor?: (id: string) => Promise<void>;
   }
 
   let {
@@ -95,6 +101,8 @@
     onOpenAgents,
     onOpenEditor,
     onInstallEditor,
+    onPlanUpgrade,
+    onUpgradeEditor,
   }: Props = $props();
 
   let installing = $state<string | null>(null);
@@ -109,6 +117,33 @@
       installError = { id, message: e instanceof Error ? e.message : String(e) };
     } finally {
       installing = null;
+    }
+  }
+
+  /** The upgrade being planned (dry run) for an editor, shown in the plan modal until applied or cancelled. */
+  let upgradePlan = $state<{ id: string; plans: UpgradePackageResult[] } | null>(null);
+  let upgrading = $state(false);
+
+  function planUpgrade(id: string): void {
+    installError = null;
+    try {
+      upgradePlan = { id, plans: onPlanUpgrade?.(id) ?? [] };
+    } catch (e: unknown) {
+      installError = { id, message: e instanceof Error ? e.message : String(e) };
+    }
+  }
+
+  async function applyUpgrade(): Promise<void> {
+    if (!upgradePlan) return;
+    const { id } = upgradePlan;
+    upgrading = true;
+    try {
+      await onUpgradeEditor?.(id);
+      upgradePlan = null;
+    } catch (e: unknown) {
+      installError = { id, message: e instanceof Error ? e.message : String(e) };
+    } finally {
+      upgrading = false;
     }
   }
 
@@ -462,6 +497,9 @@
         {#if unmet.install && onInstallEditor}
           <button class="nav__item" data-testid="{testPrefix}-{editor.id}-install" disabled={installing !== null} onclick={() => void install(editor.id)}>{installing === editor.id ? "Installing…" : `Install ${editor.label}`}</button>
         {/if}
+        {#if unmet.upgrade && onPlanUpgrade}
+          <button class="nav__item" data-testid="{testPrefix}-{editor.id}-upgrade" disabled={upgrading} onclick={() => planUpgrade(editor.id)}>Upgrade {editor.label}</button>
+        {/if}
         {#if installError?.id === editor.id}
           <Notice kind="error">{installError.message}</Notice>
         {/if}
@@ -677,5 +715,14 @@
 
 <div class="generic-shell" data-testid="generic-srs-shell">
   <AppShell {shell} nav={navPane} main={mainPane} inspector={inspectorPane} navLabel="Repository navigation" inspectorLabel="Record" />
+{#if upgradePlan}
+  <UpgradePlan
+    plans={upgradePlan.plans}
+    busy={upgrading}
+    error={installError?.id === upgradePlan.id ? installError.message : null}
+    onApply={() => void applyUpgrade()}
+    onCancel={() => { if (!upgrading) upgradePlan = null; }}
+  />
+{/if}
 </div>
 

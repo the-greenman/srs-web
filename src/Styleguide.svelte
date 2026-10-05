@@ -12,6 +12,7 @@
     LayersPanel, MarkdownHelp, MarkdownText, AgentPanel, McpConnection, Panel, AnnotationMargin, PinnedPane, Select, Tag,
     TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost,
   } from "$lib/components";
+  import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import LiveRegions from "$lib/components/LiveRegions.svelte";
   import { notify } from "$lib/notices.svelte";
   import { pairingMinutesLeft } from "$lib/components/agent-panel";
@@ -519,6 +520,7 @@
         <Button size="sm" variant="primary">Save</Button>
       {/snippet}
     </Modal>
+    <UpgradePlan inline testid="sg-upgrade-plan" plans={[fx.upgradePlan]} onApply={() => {}} onCancel={() => {}} />
   </section>
 </main>
 <LiveRegions />

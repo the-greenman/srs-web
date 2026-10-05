@@ -9,7 +9,7 @@ import type { MenuAction } from "$lib/components/menu-action";
 import { headerActions } from "$lib/essay/header-actions";
 import type { PairingResponse } from "$lib/mcp/relay-protocol";
 import { ShellState } from "$lib/shell-context.svelte";
-import type { Actor } from "$lib/srs-client";
+import type { Actor, UpgradePackageResult } from "$lib/srs-client";
 import type { Diagnostic, Status } from "$lib/types";
 
 export const NOW = Date.parse("2026-10-04T12:00:00Z");
@@ -600,3 +600,24 @@ export const noticeDiagnostics: Diagnostic[] = [
   { severity: "warn", message: "[section:essay] container not found; rendering section as empty" },
   { severity: "error", message: "view dispatch failed for type governance/decision_log" },
 ];
+
+/** A package upgrade plan with one kept local edit (UpgradePlan specimen, #450). */
+export const upgradePlan: UpgradePackageResult = {
+  packageId: "5b14a4d4-ec08-4e5b-be75-c183aec90c40",
+  name: "essay",
+  previousVersion: "1.2.0",
+  version: "1.5.0",
+  upgraded: false,
+  dryRun: true,
+  added: [{ kind: "field", id: "f1", version: 1, name: "purpose" }],
+  newVersions: [{ kind: "type", id: "t1", version: 2, name: "essay" }],
+  updated: [],
+  unchanged: [],
+  repaired: [],
+  conflicts: [
+    { kind: "type", id: "t2", version: 1, name: "paragraph", conflictKind: "local-edit" },
+  ],
+  removedUpstream: [],
+  dependencyWarnings: [],
+  notes: [],
+};
