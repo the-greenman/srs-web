@@ -1,19 +1,21 @@
 # srs-web
 
-An opinionated **SRS governance web editor** — a browser app for creating, viewing, and editing SRS (Semantic Record System) governance documents (`.srsj` / `.json`). Deployed as a Cloudflare Worker at [`app.mudemocracy.org`](https://app.mudemocracy.org).
+A browser editor for SRS repositories: edit them entirely client-side, on storage you own, with an agents panel for connecting MCP agents to the open document. Deployed as a Cloudflare Worker at [`app.mudemocracy.org`](https://app.mudemocracy.org).
 
-It is a **thin client** (ADR-001): it carries zero SRS semantics in TypeScript. All record, type, relation, container, lifecycle, validation, and rendering logic is delegated to the Rust engine (`srs-rust`) compiled to WASM; the web app adds presentation only.
+SRS (pronounced "source") is an open standard for portable semantic documents that people and AI can both understand and use. [semanticops.com](https://semanticops.com) explains it (agents start at [`/llms.txt`](https://semanticops.com/llms.txt)); [srs.semanticops.com](https://srs.semanticops.com) hosts the specification and schemas.
 
-## The ecosystem
+It is a **thin client** (ADR-001) over the WASM core: it carries zero SRS semantics in TypeScript. All record, type, relation, container, lifecycle, validation, and rendering logic is delegated to the Rust engine ([`srs-rust`](https://github.com/the-greenman/srs-rust)) compiled to WASM; the web app adds presentation only. It works against local files, Dropbox, Google Drive and GitHub.
 
-Part of the SemanticOps monorepo — four independent git repos under a shared parent:
+## The SemanticOps projects
 
-| Repo | Role |
-|------|------|
-| [`srs`](../srs) | Canonical spec: RFCs, JSON schemas, spec-as-records |
-| [`srs-rust`](../srs-rust) | Reference implementation — the `srs` CLI engine + WASM bindings |
-| [`srs-vscode`](../srs-vscode) | VS Code extension (thin client over the `srs` CLI) |
-| **srs-web** (this repo) | Governance web editor (thin client over the WASM bindings) |
+| Project | Kind | In one line |
+|---|---|---|
+| [srs](https://github.com/the-greenman/srs) | Open standard | The specification, authored as its own data. |
+| [srs-rust](https://github.com/the-greenman/srs-rust) | Reference engine | One core behind a CLI, WebAssembly bindings and an MCP server. |
+| [srs-web](https://github.com/the-greenman/srs-web) (this repo) | Browser editor | Edit SRS repositories entirely client-side, on storage you own. |
+| [srs-vscode](https://github.com/the-greenman/srs-vscode) | VS Code extension | Repositories in your workspace, with views for navigating them. |
+
+muDemocracy is the first consumer of SRS, covering decision practice. See [semanticops.com/projects](https://semanticops.com/projects/) for each project in context.
 
 ## Tech stack
 
@@ -32,7 +34,7 @@ npm run typecheck  # svelte-check
 npm run lint       # Biome
 ```
 
-The WASM bindings are **not committed** — `scripts/ensure-bindings.mjs` downloads `srs-bindings-web.tar.gz` from the `srs-rust` GitHub releases over plain HTTPS (no auth). `predev`/`prebuild` fetch when `src/lib/srs_bindings/` is missing or holds a different build than the pin (a `.pin` marker records the downloaded URL + sha256, so a pin bump refreshes every checkout); `predeploy`/`fetch-bindings` always re-download with `--force` so a stale binding can never ship. The installable package bundles are fetched alongside by `scripts/ensure-packages.mjs`; see [Creating a new repository](#creating-a-new-repository-and-installing-editor-packages). See [Cloudflare Workers production](#cloudflare-workers-production) for building bindings locally against an unreleased engine.
+The WASM bindings are **not committed**: `scripts/ensure-bindings.mjs` downloads `srs-bindings-web.tar.gz` from the `srs-rust` GitHub releases over plain HTTPS (no auth). `predev`/`prebuild` fetch when `src/lib/srs_bindings/` is missing or holds a different build than the pin (a `.pin` marker records the downloaded URL + sha256, so a pin bump refreshes every checkout); `predeploy`/`fetch-bindings` always re-download with `--force` so a stale binding can never ship. The installable package bundles are fetched alongside by `scripts/ensure-packages.mjs`; see [Creating a new repository](#creating-a-new-repository-and-installing-editor-packages). See [Cloudflare Workers production](#cloudflare-workers-production) for building bindings locally against an unreleased engine.
 
 ## How it uses SRS
 
@@ -41,27 +43,31 @@ The WASM bindings are **not committed** — `scripts/ensure-bindings.mjs` downlo
 ## Project structure (`src/`)
 
 ```
-App.svelte            app shell — WASM init, repo loading, boot/idle/loaded/error state machine
+App.svelte            app shell: WASM init, repo loading, boot/idle/loaded/error state machine
 main.ts               Vite entry
-lib/srs-client.ts     the WASM facade (~1,150 LOC)
+lib/srs-client.ts     the WASM facade
+lib/editors/           the one editor registry (which shell may open which repository)
 lib/components/        design-system Svelte components (Nav, Inspector, RecordForm, Lifecycle, ...)
 lib/governance/        GovernanceShell + type-registry, sections, decision-export helpers
-lib/guides/            GuidesShell — blueprint-schema-driven guides editor (ADR-003)
+lib/guides/            GuidesShell: blueprint-schema-driven guides editor (ADR-003)
+lib/essay/             EssayShell: essays as structured paragraphs
+lib/generic/           GenericSrsShell: the repository-first explorer
+lib/mcp/               the MCP relay host behind the Agents panel
 lib/storage/           pluggable providers: local, dropbox, google-drive, github, git-contents
 lib/srs_bindings/      generated WASM bindings + governance-seed.srsj (NOT committed)
 rendering/             read-only record renderers (RecordView, DecisionView, ...)
 styles/                CSS token / utility / layout system
-worker/index.ts        the only server code — GitHub OAuth token-exchange proxy (ADR-011)
+worker/index.ts        the only server code: GitHub OAuth token-exchange proxy (ADR-011)
 ```
 
-~10,800 LOC across `src/` + `worker/` (47 Svelte components), 13 ADRs in `docs/adr/`.
+## Editors
 
-## Editor modes
+A repository opens in the editor that matches its types, or in the generic explorer. Which shell is offered for which repository is one registry (`src/lib/editors/registry.ts`), keyed on type UUID identity (ADR-002 records the original explicit-selection decision).
 
-The app offers two editors (ADR-002):
-
-- **Governance editor** — create/open/edit governance documents: schema-driven record forms, lifecycle transitions (driven entirely by the WASM core, ADR-012), relations including a Decision-Link picker, supersession/successor flow, tags, a Decision Log view with lifecycle filtering, and a diagnostics panel from `validate()`.
-- **Guides editor** — a blueprint-schema-driven editor whose forms are generated generically from `blueprintSchema()`.
+- **Governance editor**: create/open/edit governance documents: schema-driven record forms, lifecycle transitions (driven entirely by the WASM core, ADR-012), relations including a Decision-Link picker, supersession/successor flow, tags, a Decision Log view with lifecycle filtering, and a diagnostics panel from `validate()`.
+- **Guides editor**: a blueprint-schema-driven editor whose forms are generated generically from `blueprintSchema()`.
+- **Essay editor**: essays as structured paragraphs, with the Agents panel in its rail and addressable paragraphs (see [Paragraph addresses](#paragraph-addresses)).
+- **Generic explorer**: a repository-first reader that renders only what the engine resolves (Compositions, navigation, container membership, discovery results) and works on any valid repository.
 
 ---
 
@@ -79,21 +85,21 @@ Installable bundles are pinned in `packages.lock.json` (`packageId`, `url`, `sha
 
 ## Autosave and session restore
 
-The governance editor autosaves the working copy to `localStorage` after every successful write
+The app autosaves the working copy to `localStorage` after every successful write
 (create, update, delete, lifecycle transition, relation, tag update). A "Saved" flash appears
 briefly in the toolbar after each autosave. If the local write itself fails (quota exceeded,
 private-browsing block), the toolbar shows a distinct, non-dismissing "Local recovery copy could
-not be saved" message instead of a false "Saved" — this does not affect the WASM repository or a
+not be saved" message instead of a false "Saved". This does not affect the WASM repository or a
 subsequent provider save, only the local recovery copy.
 
 While a provider save (cloud/git) is in flight, every control that would mutate the in-place
-repository — New, Edit, Delete, lifecycle transitions, add/remove tag, relation create/delete, and
-(in Guides mode) section reorder/removal and "+ New guide" — is disabled, so a mutation can never
+repository (New, Edit, Delete, lifecycle transitions, add/remove tag, relation create/delete, and,
+in Guides mode, section reorder/removal and "+ New guide") is disabled, so a mutation can never
 race a pending write. `DocumentMutationTracker` still independently guards against a stale save
 completing after a later mutation (e.g. from an external MCP writer) by comparing epoch/revision;
 a stale save reports "Newer changes remain unsaved" and the recovery copy is retained.
 
-On reload, if a cached session is found the app goes directly to the governance file-picker
+On reload, if a cached session is found the app goes directly to the file picker
 with a **Restore session** banner. Clicking **Restore session** reloads the in-memory repository
 from the cache and resumes editing. Clicking **Discard** or opening a different file clears the
 cache.
@@ -109,7 +115,7 @@ Google Drive (`StorageProvider.create`); and **Save** edits back to any
 write-capable cloud/git document. Cloud client IDs are public browser
 identifiers; never add a provider client secret to this application. GitHub's
 token exchange needs a secret, so it runs server-side in a tiny same-origin
-Worker (see [ADR-011](docs/adr/011-oauth-proxy-worker.md)) — the secret is a
+Worker (see [ADR-011](docs/adr/011-oauth-proxy-worker.md)); the secret is a
 Worker secret, never in the bundle.
 
 Copy `.env.example` to `.env.local` and fill in the configured provider values.
@@ -149,39 +155,39 @@ consoles before production deployment.
 1. Create a **GitHub App** (Settings → Developer settings → GitHub Apps) with
    **Contents: Read & write** and **Metadata: Read** repository permissions.
    (Production uses the `mudemocracy` GitHub App; a classic OAuth App also
-   works with this code, but a GitHub App is preferred — fine-grained
+   works with this code, but a GitHub App is preferred: fine-grained
    permissions, and tokens scoped to installations.)
 2. **Make the app public** (app settings → Advanced → Make public). A private
    GitHub App's authorize page returns **GitHub's 404** for every user except
-   the app owner — sign-in appears to work for the owner while every new user
+   the app owner. Sign-in appears to work for the owner while every new user
    gets a 404 in the OAuth popup. Public is required for anyone else to sign
    in or install the app.
 3. Set the Authorization callback URL to `http://localhost:5173/` for local dev
-   (and the production origin — see below — before deploying).
+   (and the production origin, see below, before deploying).
 4. Put the app's **Client ID** in `VITE_GITHUB_CLIENT_ID` and set
    `VITE_GITHUB_REDIRECT_URI` to the matching redirect URI.
 5. The app requests the `repo` scope (GitHub Apps ignore the scope parameter
    and use their installation permissions instead) so it can read/write a public **or private**
    governance repository. Sign in, then browse **repo → branch → file** (the
    loader lists branches after you pick a repo; the default branch sorts first),
-   open a `.srsj`, edit, and **Save** — each Save is a new commit whose blob SHA
+   open a `.srsj`, edit, and **Save**. Each Save is a new commit whose blob SHA
    becomes the revision; a concurrent edit is reported as a conflict rather than
    silently clobbered. Opening from a branch binds the document to it, so Save
    defaults back to that branch.
 6. **Save dialog:** saving a git document opens a dialog to commit to the current
    branch or **create a new branch** (useful when the default branch is
    protected), with an optional commit message. Set `VITE_GITHUB_APP_SLUG` (the
-   app's URL slug) so the dialog can show an **Install / manage** link — a GitHub
+   app's URL slug) so the dialog can show an **Install / manage** link. A GitHub
    App must be *installed* on the repo's account (not just authorized at sign-in)
    before it can list private repos or write.
 7. **Exploded-repo mode (Epic 10):** browsing into a directory that contains
-   `manifest.json` (a git-diffable, multi-file SRS repository — every record,
-   type, and field as its own file — rather than a single `.srsj` blob) shows an
+   `manifest.json` (a git-diffable, multi-file SRS repository with every record,
+   type, and field as its own file, rather than a single `.srsj` blob) shows an
    **"Open as SRS repository"** entry instead of listing `manifest.json` itself.
    Opening it loads every file in that directory via the GitHub Git Data API
    (not the Contents API the single-file flow above uses); the same Save dialog
    then commits only the files that actually changed, in one commit, scoped to
-   that directory — everything else in the repo is left byte-identical. See
+   that directory; everything else in the repo is left byte-identical. See
    [ADR-016](docs/adr/016-exploded-repo-tree-storage.md).
 
 GitHub's token endpoint requires a client secret and has no browser CORS, so the
@@ -194,20 +200,22 @@ an allow-list so it can't be used as an open token oracle.
 `npm run dev` (Vite proxies `/api/*` to `http://localhost:8787`); in another run
 `wrangler dev`. Copy `.dev.vars.example` to `.dev.vars` (gitignored) and fill in
 the OAuth App's client ID + secret. Without `wrangler dev`, local files and the
-other providers still work — only GitHub sign-in is inert.
+other providers still work; only GitHub sign-in is inert.
 
 ### Cloudflare Workers production
 
-Deployed as a Cloudflare Worker — a static-assets SPA **plus** the minimal
-`worker/index.ts` OAuth token-exchange route (ADR-011) — with the
+Deployed as a Cloudflare Worker (a static-assets SPA **plus** the minimal
+`worker/index.ts` OAuth token-exchange route, ADR-011) with the
 custom domain `https://app.mudemocracy.org` attached directly in
 `wrangler.jsonc` (`routes: [{ pattern: "app.mudemocracy.org", custom_domain:
-true }]`) — the first `wrangler deploy` provisions the DNS + custom domain
-binding automatically, no dashboard step required. Deploys are run locally by
-a human via `npm run deploy` (`vite build && wrangler deploy`); there is no
-CI/CD deploy workflow.
+true }]`). The first `wrangler deploy` provisions the DNS + custom domain
+binding automatically, no dashboard step required. Deploys are done by
+Cloudflare Workers Builds on every push to `main` (Cloudflare's own Git
+integration, not a GitHub Action, so there is no deploy workflow here).
+`npm run deploy` (`vite build && wrangler deploy`) remains a manual override
+for the owner only.
 
-The WASM bindings are not committed here — they are fetched from the
+The WASM bindings are not committed here: they are fetched from the
 `srs-rust` GitHub releases (`srs-bindings-web.tar.gz`, built by that repo's
 `release.yml` on every merge to master) by `scripts/ensure-bindings.mjs`, a
 plain-HTTPS download with no auth or `gh` CLI required (srs-rust is public;
@@ -232,8 +240,8 @@ the pin means changing `DEFAULT_URL` and `SHA256` together; get the value with
 warning is printed and verification is skipped).
 
 If you're actively developing new bindings in `srs-rust` and want to test
-unreleased changes in srs-web before they're merged, build locally instead —
-this overwrites the fetched artifact until you next run `fetch-bindings` or
+unreleased changes in srs-web before they're merged, build locally instead.
+This overwrites the fetched artifact until you next run `fetch-bindings` or
 `deploy`:
 
 ```bash
@@ -264,7 +272,7 @@ Before deploying:
   allow-list values are plaintext `[vars]` in `wrangler.jsonc`.
 
   `vite build` runs in production mode by default and loads `.env.production`
-  automatically — these values are compiled into the static bundle the same
+  automatically, so these values are compiled into the static bundle the same
   way any other Vite env file would be. No Cloudflare dashboard environment
   variable configuration is needed (that was a Pages-specific mechanism that
   no longer applies).
@@ -275,7 +283,7 @@ Configure the provider consoles with:
 - Google authorized JavaScript origin: `https://app.mudemocracy.org`
 - Google API key website restriction: `https://app.mudemocracy.org/*`
 - GitHub App authorization callback URL: `https://app.mudemocracy.org/`
-- GitHub App visibility: **public** (Advanced → Make public) — private apps
+- GitHub App visibility: **public** (Advanced → Make public); private apps
   404 the authorize page for every user except the owner
 
 The Dropbox app key, Google OAuth client ID, Google API key, and Google project
@@ -284,7 +292,7 @@ secrets. Their protection comes from exact provider redirect/origin rules,
 minimal OAuth scopes, and restricting the Google API key to the production
 hostname and Google Picker API.
 
-Do not configure these production values for arbitrary Cloudflare preview URLs —
+Do not configure these production values for arbitrary Cloudflare preview URLs:
 each deployment gets a unique hash URL that cannot be statically registered as an
 OAuth redirect URI. Only the stable workers.dev hostname for the `preview`
 environment (see below) gets OAuth support.
@@ -300,14 +308,14 @@ To enable GitHub sign-in on a stable preview deployment:
    subdomain; the URL is `https://srs-web-preview.<account>.workers.dev`.
 3. Register that URL as the Authorization callback URL in the preview GitHub OAuth App.
 4. Copy `.env.preview.example` to `.env.preview` (gitignored) and fill in the preview
-   OAuth App's client ID and the stable redirect URI — Vite bakes these into the bundle
+   OAuth App's client ID and the stable redirect URI. Vite bakes these into the bundle
    and they **must match** the `"preview"` env vars in `wrangler.jsonc`.
 5. Set the preview secret: `wrangler secret put GITHUB_CLIENT_SECRET --env preview`.
 6. Deploy: `npm run deploy:preview` (`vite build --mode preview && wrangler deploy --env preview`).
-   Plain `npm run deploy` always targets production — the `:preview` variant is required.
+   Plain `npm run deploy` always targets production; the `:preview` variant is required.
 
 If `GITHUB_CLIENT_SECRET` is not set for the preview environment, the Worker returns
-`{ "error": "server_misconfigured" }` (HTTP 500) — no secret is exposed. Arbitrary
+`{ "error": "server_misconfigured" }` (HTTP 500); no secret is exposed. Arbitrary
 per-deployment preview URLs (`preview_urls` is disabled in the `"preview"` env block) remain
 auth-disabled by design; only the stable workers.dev env URL gets OAuth support.
 Dropbox and Google Drive OAuth remain disabled on preview unless separately registered
@@ -335,15 +343,15 @@ repository and calls the provider-agnostic, revision-aware `write()`:
 await activeDocument.write(exportSrsj(repo), activeDocument.revision);
 ```
 
-The revision is the provider's concurrency token — Dropbox `rev`, Drive `etag`,
+The revision is the provider's concurrency token: Dropbox `rev`, Drive `etag`,
 GitHub blob SHA. A stale write raises `StorageConflictError`, which the UI
 surfaces as a reload-and-retry prompt instead of clobbering the newer version.
 Local browser files remain download-only (`Open` + `Download`).
 
 ## Documentation
 
-- [`docs/adr/`](docs/adr/) — 13 architecture decision records (001 thin client, 002 editor modes, 011 OAuth proxy, 012 lifecycle-via-WASM, …).
-- [`CLAUDE.md`](CLAUDE.md) — contributor guidance.
+- [`docs/adr/`](docs/adr/): architecture decision records (001 thin client, 002 editor modes, 011 OAuth proxy, 012 lifecycle-via-WASM, and more).
+- [`CLAUDE.md`](CLAUDE.md): contributor guidance.
 
 ## Licence
 
