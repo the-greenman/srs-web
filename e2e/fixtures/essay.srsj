@@ -93,6 +93,22 @@
       "namespace": "com.mudemocracy.essay",
       "version": 1
     },
+    "package/fields/bundlecontainerid-ef74b78e.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Editor state only: the containerId of the container whose declared members are everything the essay consists of and refers to (essay record, document-state, paragraphs in the essay, draft and bin containers, comments, and one-hop referenced problems, sources and claims). The editor refreshes it at export and slices it (RFC-026) as the essay's snapshot. Optional; absent until the first snapshot export. Ignored by compositions and renderers."
+      },
+      "createdAt": "2026-10-04T00:00:00Z",
+      "description": "Container bundling everything this essay consists of and refers to.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "uuid"
+      },
+      "id": "ef74b78e-ee7f-4b76-8964-aaea7b430315",
+      "name": "bundle_container_id",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
     "package/fields/commenttext-581e484f.json": {
       "aiGuidance": {
         "purpose": "Plain markdown text of one comment. Agents and humans may write comments. A comment is feedback on exactly one paragraph (linked by comments-on) and never edits it. Authorship is the engine-stamped createdBy (RFC-046); never write an author here."
@@ -178,19 +194,19 @@
     },
     "package/fields/purpose-2a86b087.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
-      "id": "2a86b087-ed1c-404f-9890-632804b8a135",
-      "namespace": "com.mudemocracy.essay",
-      "name": "purpose",
-      "version": 1,
-      "description": "What the writer seeks to achieve with the essay and the help they want.",
       "aiGuidance": {
         "purpose": "What the writer seeks to achieve with this essay and the help they want from collaborators. Optional and human-authored. Agents read it first to orient themselves and never edit it. It is distinct from summary, which says what the essay says."
       },
+      "createdAt": "2026-10-04T00:00:00Z",
+      "description": "What the writer seeks to achieve with the essay and the help they want.",
       "fieldType": {
         "datatype": "string",
         "format": "markdown"
       },
-      "createdAt": "2026-10-04T00:00:00Z"
+      "id": "2a86b087-ed1c-404f-9890-632804b8a135",
+      "name": "purpose",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
     },
     "package/fields/statement-3b000001.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
@@ -274,9 +290,10 @@
         "fields/essay-0a74cd82.json",
         "fields/commenttext-581e484f.json",
         "fields/bincontainerid-95a4f7ad.json",
+        "fields/purpose-2a86b087.json",
+        "fields/bundlecontainerid-ef74b78e.json",
         "fields/statement-3b000001.json",
-        "fields/title-3b000002.json",
-        "fields/purpose-2a86b087.json"
+        "fields/title-3b000002.json"
       ],
       "id": "5b14a4d4-ec08-4e5b-be75-c183aec90c40",
       "lifecycles": [],
@@ -306,7 +323,7 @@
         "types/comment-7482e41b.json",
         "types/purpose-3c000001.json"
       ],
-      "version": "1.3.0",
+      "version": "1.5.0",
       "views": [
         "views/paragraph-view-16210dc2.json"
       ],
@@ -505,7 +522,7 @@
         "purpose": "Editor state, one record per essay: which members the editor hides or folds, which container holds the draft paragraphs, and which container is the Bin (paragraphs deleted from the essay; deleting from the Bin is permanent). Hide/fold, drafts and the bin are editor mechanics, not document meaning, so spec renderers and compositions ignore this type. Do not use it to carry content."
       },
       "createdAt": "2026-10-02T00:00:00Z",
-      "description": "Application-private editor state for one essay: hidden members, the draft container and the bin container.",
+      "description": "Application-private editor state for one essay: hidden members, the draft container, the bin container and the snapshot bundle container.",
       "fields": [
         {
           "displayLabel": "Essay",
@@ -530,6 +547,12 @@
           "fieldId": "95a4f7ad-757b-41bb-a301-e97da1a32148",
           "order": 3,
           "required": false
+        },
+        {
+          "displayLabel": "Bundle container id",
+          "fieldId": "ef74b78e-ee7f-4b76-8964-aaea7b430315",
+          "order": 4,
+          "required": false
         }
       ],
       "id": "9785968f-bdd4-4c91-81ef-0e62075f3503",
@@ -541,7 +564,7 @@
     "package/types/essay-0021ef06.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
       "aiGuidance": {
-        "purpose": "The identity record of one essay: its title and optional summary. The essay's container is anchored on this record; the prose lives in paragraph records arranged in that container, never in this record."
+        "purpose": "The identity record of one essay: its title, optional summary and optional purpose. The essay's container is anchored on this record; the prose lives in paragraph records arranged in that container, never in this record. Purpose is the writer's own and agents never edit it."
       },
       "createdAt": "2026-10-02T00:00:00Z",
       "description": "The document anchor and identity record of one essay in the agent-supported essay editor.",
@@ -574,7 +597,7 @@
     "package/types/paragraph-ec61d93d.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
       "aiGuidance": {
-        "purpose": "One paragraph of an essay. Prose only: no headings or other structural markup in the body; structure comes from paragraph types and the arrangement (entry order and depth in the essay container), not markup. Agents read, title and annotate paragraphs but do not write the writer's prose."
+        "purpose": "One paragraph of an essay. Prose only: no headings or other structural markup in the body; structure comes from paragraph types and the arrangement (entry order and depth in the essay container), not markup. Agents read, title and annotate paragraphs but do not write the writer's prose. To annotate a paragraph, create records and relations, never body edits: `com.mudemocracy.essay/bears-on` (paragraph -> problem it addresses); core `evidences` (source or claim -> paragraph, supports it); `com.mudemocracy.essay/counters` (source or claim -> paragraph, cuts against it); feedback as a `com.mudemocracy.essay/comment` record plus `com.mudemocracy.essay/comments-on` (comment -> paragraph). Created records take no `containerId`. Authorship is the engine-stamped `createdBy`, so no `authored-by`. Never edit the body."
       },
       "createdAt": "2026-10-02T00:00:00Z",
       "description": "One paragraph of an essay: optional gutter title and plain markdown prose.",

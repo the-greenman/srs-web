@@ -17,6 +17,8 @@ const m = vi.hoisted(() => ({
   updateContainer: vi.fn(),
   getRecord: vi.fn(),
   getContainerOutline: vi.fn(),
+  getContainer: vi.fn(),
+  exportSlice: vi.fn(() => new Uint8Array([1])),
   listContainers: vi.fn(() => [{ containerId: "C", title: "t" }]),
   listTypes: vi.fn(() => [
     { id: "0021ef06-4d6b-42fb-af5a-2d53d287138c", namespace: "n", name: "essay", version: 1 },
@@ -54,6 +56,7 @@ import {
   deleteForever,
   loadEssay,
   moveEntry,
+  refreshBundle,
   removeAttachment,
   setEssayPurpose,
   setEssayTitle,
@@ -449,5 +452,63 @@ describe("essayMarkdown (srs-web#416)", () => {
       "g1",
       "E",
     ]);
+  });
+});
+
+describe("refreshBundle (srs-web#417)", () => {
+  // biome-ignore lint/suspicious/noExplicitAny: a hand-built model with only what the refresh reads
+  const model = (over: Record<string, unknown> = {}): any => ({
+    essayId: "E",
+    title: "T",
+    containerId: "C",
+    draftContainerId: "D",
+    binContainerId: null,
+    stateId: "S",
+    canSnapshot: true,
+    bundleContainerId: null,
+    paragraphs: { p1: {}, p2: {} },
+    comments: { p1: [{ id: "c1" }] },
+    attachments: { p2: [{ neighbourId: "prob" }] },
+    ...over,
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    m.getRecord.mockReturnValue({ instanceId: "S", fieldValues: { essay: "E" } });
+  });
+
+  it("first use: creates the bundle declaring the containers as children and the records as members, and links it from the state", () => {
+    m.createContainer.mockReturnValue({ containerId: "B" });
+    expect(refreshBundle({} as never, model())).toBe("B");
+    const input = m.createContainer.mock.calls[0][1];
+    expect(input.childContainerIds).toEqual(["C", "D"]);
+    expect(input.memberInstanceIds.map((e: { instanceId: string }) => e.instanceId).sort()).toEqual(
+      ["E", "S", "c1", "prob"]
+    );
+    expect(m.updateRecord.mock.calls[0][2].fieldValues.bundle_container_id).toBe("B");
+  });
+
+  it("later: applies only the difference with the member ops, and children once", () => {
+    m.getContainer.mockReturnValue({
+      childContainerIds: ["C", "D"],
+      memberInstanceIds: [{ instanceId: "E" }, { instanceId: "S" }, { instanceId: "gone" }],
+    });
+    refreshBundle({} as never, model({ bundleContainerId: "B" }));
+    expect(m.createContainer).not.toHaveBeenCalled();
+    expect(m.updateContainer).not.toHaveBeenCalled();
+    expect(m.removeContainerMember).toHaveBeenCalledWith(expect.anything(), "B", "gone");
+    expect(m.addContainerMember.mock.calls.map((c) => c[2]).sort()).toEqual(["c1", "prob"]);
+  });
+
+  it("a new bin is declared as a child on the next refresh", () => {
+    m.getContainer.mockReturnValue({ childContainerIds: ["C", "D"], memberInstanceIds: [] });
+    refreshBundle({} as never, model({ bundleContainerId: "B", binContainerId: "X" }));
+    expect(m.updateContainer).toHaveBeenCalledWith(expect.anything(), "B", {
+      childContainerIds: ["C", "D", "X"],
+    });
+  });
+
+  it("refuses when the package cannot record a bundle", () => {
+    expect(() => refreshBundle({} as never, model({ canSnapshot: false }))).toThrow();
   });
 });

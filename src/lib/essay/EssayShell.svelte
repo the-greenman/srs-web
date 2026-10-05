@@ -66,8 +66,8 @@
     setTitle,
     transfer,
   } from "./essay-document.js";
-  import { essayMarkdown, essayWriteGuard } from "./essay-document.js";
-  import { downloadText } from "$lib/governance/decision-export-utils.js";
+  import { essayMarkdown, essaySnapshot, essayWriteGuard } from "./essay-document.js";
+  import { downloadText, triggerDownload } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { formatAddress, parseAddress } from "./address.js";
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
@@ -363,6 +363,19 @@
     }
   }
 
+  /** Export snapshot (srs-web#417): refresh the bundle, then the core's slice of it as a `.srs`. */
+  function exportSnapshot() {
+    try {
+      const { bytes } = essaySnapshot(repo, model!);
+      triggerDownload(new Blob([bytes], { type: "application/zip" }), `${model!.title} (snapshot).srs`);
+      notify({ kind: "success", key: "export", text: "Snapshot exported" });
+    } catch (e) {
+      error = msg(e);
+    } finally {
+      reload(); // the bundle may be new (even if the export was refused): model, write guard and handoff learn it
+    }
+  }
+
   /** Copy the agent handoff (srs-web#411): the whole essay, or `focusId` as the paragraph to look at. */
   async function copyForAgent(focusId?: string) {
     const m = model;
@@ -372,6 +385,7 @@
       essay: { id: m.essayId, title: m.title },
       containerId: m.containerId,
       purpose: m.purpose,
+      bundleContainerId: m.bundleContainerId,
       focus: focusId ? { id: focusId, title: m.paragraphs[focusId] ? label(focusId) : "untitled" } : undefined,
     });
     if (await copyText(text)) {
@@ -500,6 +514,7 @@
         onsave: onSave,
         onexport: onExport,
         onexportmd: model ? exportMarkdown : undefined,
+        onsnapshot: model?.canSnapshot ? exportSnapshot : undefined,
         onexplorer: onOpenExplorer,
         onopenagents: agentPanel ? openAgents : undefined,
         onopenanother: onOpenAnother,

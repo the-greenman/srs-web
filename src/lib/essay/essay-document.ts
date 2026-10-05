@@ -20,7 +20,9 @@ import {
   createRecord,
   deleteRecord,
   deleteRelation,
+  exportSlice,
   forkRecord,
+  getContainer,
   getContainerOutline,
   getRecord,
   listContainers,
@@ -75,6 +77,10 @@ export interface EssayModel {
   /** The Bin: created on the first delete (null until then). */
   binContainerId: string | null;
   binEntries: OutlineEntry[];
+  /** The snapshot bundle (srs-web#417): created on the first Export snapshot (null until then). */
+  bundleContainerId: string | null;
+  /** Whether the installed document-state type can record a bundle (older packages cannot: no Export snapshot). */
+  canSnapshot: boolean;
   /** Comments by paragraph id, oldest first. */
   comments: Record<string, Comment[]>;
   /** Attachments by paragraph id (see Attachment). */
@@ -95,6 +101,7 @@ export function essayWriteGuard(m: EssayModel): AgentWriteGuard {
       m.containerId,
       ...(m.draftContainerId ? [m.draftContainerId] : []),
       ...(m.binContainerId ? [m.binContainerId] : []),
+      ...(m.bundleContainerId ? [m.bundleContainerId] : []),
     ],
     instanceIds: [m.essayId, ...(m.stateId ? [m.stateId] : [])],
     fillOnlyFields: ["paragraph_title"],
@@ -234,20 +241,27 @@ function loadSharedIn(
   return out;
 }
 
-/** Whether the installed essay type declares `purpose` (older packages do not). Cached per type version. */
-const purposeCache = new WeakMap<object, { version: number; ok: boolean }>();
-function hasPurposeField(repo: SrsRepository, types: TypeSummary[]): boolean {
-  const version = types.find((x) => x.id === ESSAY_TYPE_ID)?.version ?? 0;
-  const hit = purposeCache.get(repo);
+/** Whether the installed `typeId` declares `field` (older packages do not). Cached per type version. */
+const fieldCache = new WeakMap<object, Map<string, { version: number; ok: boolean }>>();
+function hasField(
+  repo: SrsRepository,
+  types: TypeSummary[],
+  typeId: string,
+  field: string
+): boolean {
+  const version = types.find((x) => x.id === typeId)?.version ?? 0;
+  const cache = fieldCache.get(repo) ?? new Map();
+  fieldCache.set(repo, cache);
+  const key = `${typeId}.${field}`;
+  const hit = cache.get(key);
   if (hit?.version === version) return hit.ok;
   let ok = false;
   try {
-    ok =
-      "purpose" in ((typeSchema(repo, ESSAY_TYPE_ID, version).schema.properties as object) ?? {});
+    ok = field in ((typeSchema(repo, typeId, version).schema.properties as object) ?? {});
   } catch {
-    /* type not resolvable: no purpose */
+    /* type not resolvable: no such field */
   }
-  purposeCache.set(repo, { version, ok });
+  cache.set(key, { version, ok });
   return ok;
 }
 
@@ -279,7 +293,9 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
   return {
     essayId,
     title: str(essay.fieldValues.title) || "Untitled essay",
-    purpose: hasPurposeField(repo, types) ? str(essay.fieldValues.purpose) : null,
+    purpose: hasField(repo, types, ESSAY_TYPE_ID, "purpose")
+      ? str(essay.fieldValues.purpose)
+      : null,
     containerId,
     entries,
     paragraphs,
@@ -289,6 +305,8 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
     draftEntries,
     binContainerId,
     binEntries,
+    bundleContainerId: str(state?.fieldValues.bundle_container_id) || null,
+    canSnapshot: !!state && hasField(repo, types, DOCUMENT_STATE_TYPE_ID, "bundle_container_id"),
     comments: loadComments(repo, types),
     attachments: context.attachments,
     related: context.related,
@@ -347,6 +365,8 @@ export function agentHandoff(a: {
   essay: { id: string; title: string };
   containerId: string;
   purpose?: string | null;
+  /** The snapshot bundle, once an Export snapshot has made one. */
+  bundleContainerId?: string | null;
   focus?: { id: string; title: string };
 }): string {
   const uri = `srs://${a.repositoryId}`;
@@ -355,6 +375,11 @@ export function agentHandoff(a: {
     ...(a.purpose?.trim() ? [`Purpose: ${a.purpose.trim()}`] : []),
     `Repository ${a.repositoryId}, essay record ${a.essay.id}, container ${a.containerId}.`,
     `Read: ${uri}/container/${a.containerId}`,
+    ...(a.bundleContainerId
+      ? [
+          `Snapshot bundle (everything the essay consists of and refers to): ${uri}/container/${a.bundleContainerId}`,
+        ]
+      : []),
     ...(a.focus
       ? [
           `Focus: "${a.focus.title}" (paragraph ${a.focus.id})`,
@@ -366,12 +391,16 @@ export function agentHandoff(a: {
 }
 
 /** A side area's container title (draft / bin), from its essay's (one convention for new, copy and rename). */
-const areaTitle = (title: string, area: "draft" | "bin"): string => `${title} (${area})`;
+const areaTitle = (title: string, area: "draft" | "bin" | "snapshot"): string =>
+  `${title} (${area})`;
 
 /** Rename the essay record and its containers (the document's, its draft's and its bin's). */
 export function setEssayTitle(
   repo: SrsRepository,
-  m: Pick<EssayModel, "essayId" | "containerId" | "draftContainerId" | "binContainerId">,
+  m: Pick<
+    EssayModel,
+    "essayId" | "containerId" | "draftContainerId" | "binContainerId" | "bundleContainerId"
+  >,
   title: string
 ): void {
   patchRecord(repo, m.essayId, { title });
@@ -379,6 +408,8 @@ export function setEssayTitle(
   if (m.draftContainerId)
     updateContainer(repo, m.draftContainerId, { title: areaTitle(title, "draft") });
   if (m.binContainerId) updateContainer(repo, m.binContainerId, { title: areaTitle(title, "bin") });
+  if (m.bundleContainerId)
+    updateContainer(repo, m.bundleContainerId, { title: areaTitle(title, "snapshot") });
 }
 export const setTitle = (repo: SrsRepository, id: string, title: string): void =>
   patchRecord(repo, id, { paragraph_title: title });
@@ -550,4 +581,57 @@ export function essayMarkdown(repo: SrsRepository, m: EssayModel): string {
   const hidden = new Set(m.hidden);
   const exclude = [...hidden, ...hiddenByAncestor(m.entries, hidden), m.essayId];
   return renderDocumentView(repo, view.id, "markdown", m.containerId, null, exclude).rendered;
+}
+
+/**
+ * (Re)declare the snapshot bundle (srs-web#417): its `childContainerIds` are the essay, draft and
+ * bin containers (RFC-034 I-151: their paragraphs, hidden ones included, come with them) and its own
+ * members the essay record, document-state, this essay's comments and the one-hop non-structural
+ * neighbours of its paragraphs (problems, sources, claims). Created on first use and linked from
+ * document-state; later refreshes apply only the difference. Membership is declared here, never
+ * derived. Returns the bundle's container id.
+ */
+export function refreshBundle(repo: SrsRepository, m: EssayModel): string {
+  if (!m.stateId || !m.canSnapshot)
+    throw new Error("This essay's package cannot record a snapshot bundle.");
+  const children = [m.containerId, m.draftContainerId, m.binContainerId].filter(
+    (c): c is string => !!c
+  );
+  const own = new Set<string>([m.essayId, m.stateId]);
+  for (const id of Object.keys(m.paragraphs)) {
+    for (const c of m.comments[id] ?? []) own.add(c.id);
+    for (const a of m.attachments[id] ?? []) own.add(a.neighbourId);
+  }
+  let bundle = m.bundleContainerId;
+  if (!bundle) {
+    bundle = createContainer(repo, {
+      title: areaTitle(m.title, "snapshot"),
+      childContainerIds: children,
+      memberInstanceIds: [...own].map((instanceId) => ({ instanceId })),
+    }).containerId;
+    // v1 state records upgrade to the installed type in the same write that records the bundle.
+    patchRecord(
+      repo,
+      m.stateId,
+      { bundle_container_id: bundle },
+      typeVersion(repo, DOCUMENT_STATE_TYPE_ID)
+    );
+    return bundle;
+  }
+  const cur = getContainer(repo, bundle);
+  if (children.join() !== (cur.childContainerIds ?? []).join())
+    updateContainer(repo, bundle, { childContainerIds: children });
+  const have = new Set((cur.memberInstanceIds ?? []).map((e) => e.instanceId));
+  for (const id of have) if (!own.has(id)) removeContainerMember(repo, bundle, id);
+  for (const id of own) if (!have.has(id)) addContainerMember(repo, bundle, id);
+  return bundle;
+}
+
+/** Export snapshot: refresh the bundle, then the core slice of it (`.srs` bytes). Refusals come from the core. */
+export function essaySnapshot(
+  repo: SrsRepository,
+  m: EssayModel
+): { bundleId: string; bytes: Uint8Array<ArrayBuffer> } {
+  const bundleId = refreshBundle(repo, m);
+  return { bundleId, bytes: exportSlice(repo, bundleId) };
 }
