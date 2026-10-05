@@ -76,6 +76,9 @@ export type {
 
 // MCP relay connection (srs-web#307)
 export { default as McpConnection } from "./McpConnection.svelte";
+export { default as AgentPanel } from "./AgentPanel.svelte";
+export { default as Disclosure } from "./Disclosure.svelte";
+export type { PanelAgent } from "./agent-panel.js";
 
 // Essay editor writing surface (srs-web#328)
 export { default as Block } from "./Block.svelte";

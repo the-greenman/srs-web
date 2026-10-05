@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { commentsState, menuItem } from "./helpers";
+import { commentsState, menuItem, routeRelayChannels } from "./helpers";
 import type { Page } from "@playwright/test";
 
 /**
@@ -58,15 +58,7 @@ test("comments on two paragraphs stay separate and oldest first", async ({ page 
 });
 
 test("an MCP-created comment shows the agent author, live", async ({ page }) => {
-  await page.route("https://relay.test/v1/channels", (route) =>
-    route.fulfill({
-      json: {
-        channel: "c",
-        callerUrl: "https://relay.test/v1/channels/c/call/CALLER",
-        executorUrl: "wss://relay.test/v1/channels/c/executor/EXEC",
-      },
-    })
-  );
+  await routeRelayChannels(page, { fixed: true });
   let toExecutor: (frame: unknown) => void = () => {};
   const replies = new Map<string, (r: { status: number; body?: string }) => void>();
   let executorUrl = "";

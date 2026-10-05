@@ -27,7 +27,7 @@ npm run dev        # Vite dev server (proxies /api/* to a local Worker for GitHu
 npm run build      # prebuild fetches WASM bindings if missing, then vite build
 npm run preview    # preview a production build
 npm test           # Vitest unit tests
-npm run e2e        # Playwright e2e specs
+npm run e2e        # Playwright e2e specs (stop any running dev server first: the suite reuses one on :5173)
 npm run typecheck  # svelte-check
 npm run lint       # Biome
 ```
@@ -302,6 +302,15 @@ per-deployment preview URLs (`preview_urls` is disabled in the `"preview"` env b
 auth-disabled by design; only the stable workers.dev env URL gets OAuth support.
 Dropbox and Google Drive OAuth remain disabled on preview unless separately registered
 with their provider consoles.
+
+## Agents and relays
+
+Agents connect to the open document through an MCP relay. The **Agents** panel (the essay rail, or a floating dock in the other editors; Go → Agents… in the essay and explorer toolbars) is always present once a repository is open, and manages two per-viewer libraries (`localStorage`, client configuration only):
+
+- **Relays** (`srs-web.relays`): add, rename, edit the URL, remove, and mark one as the default. A relay must be `https` (`http` only for `localhost`); it is stored as its bare origin. A relay with agents cannot be removed, and its URL cannot be edited, until those agents are forgotten.
+- **Agents** (`srs-web.agent-connections`): each is fixed to one relay at creation (chosen in the connect form when more than one relay exists), keeps its id and channel credentials across reloads, can be renamed while disconnected, and shows when it last connected. With no relay the panel says "No relay yet."; the first-run agent stays hidden and is bound to the first relay you add.
+
+`VITE_MCP_RELAY_URL` (empty in `.env.example`; `.env.production` sets the hosted relay) and the legacy `localStorage["srs-web.mcp-relay-url"]` key (the dev and e2e seed) **seed the relay library once**. Deleting a seeded relay sticks, and changing `VITE_MCP_RELAY_URL` in a later build does not re-seed a viewer who already has a library: they add the new relay by hand. e2e sets the legacy key in an init script before the first load, and `playwright.config.ts` pins `VITE_MCP_RELAY_URL` empty so a developer's `.env.local` cannot leak in.
 
 ## Save-ready storage contract
 

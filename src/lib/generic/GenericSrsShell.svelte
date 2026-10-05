@@ -74,6 +74,8 @@
     /** Changes after mount invalidate derived browser projections of the repository. */
     documentRevision?: number;
     onOpenAnother: () => void;
+    /** Opens the App-level agent dock. */
+    onOpenAgents?: () => void;
     onOpenEditor?: (id: string) => void;
   }
 
@@ -88,6 +90,7 @@
     documentDirty = false,
     documentRevision = 0,
     onOpenAnother,
+    onOpenAgents,
     onOpenEditor,
   }: Props = $props();
 
@@ -424,6 +427,7 @@
         onsave: onSave ? () => void onSave() : undefined,
         onexport: onExport,
         onopenanother: onOpenAnother,
+        onopenagents: onOpenAgents,
         onpreview: surface === "document" && activeBlueprint && activeComposition ? () => (showFullPreview = !showFullPreview) : undefined,
       },
       { shell, saving, dirty: documentDirty, fullPreview: showFullPreview },

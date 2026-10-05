@@ -5,12 +5,12 @@
 -->
 <script lang="ts">
   import type { Snippet } from "svelte";
-  let { width, caption, children }: { width: string; caption: string; children: Snippet } = $props();
+  let { width, caption, testid = "sg-frame", children }: { width: string; caption: string; testid?: string; children: Snippet } = $props();
 </script>
 
 <figure class="sg__figure">
   <figcaption>{caption}</figcaption>
-  <div class="sg__frame" data-testid="sg-frame" data-caption={caption} style:width>
+  <div class="sg__frame" data-testid={testid} data-caption={caption} style:width>
     {@render children()}
   </div>
 </figure>

@@ -124,3 +124,26 @@ describe("one tab per channel (Web Locks)", () => {
     expect((await channelsInUseElsewhere()).size).toBe(0);
   });
 });
+
+describe("relay binding (#442)", () => {
+  it("add binds a relay; rename, touch and count behave", () => {
+    const c = store();
+    c.list();
+    const b = c.add("Bot", "relay:1")[1];
+    expect(b.relayId).toBe("relay:1");
+    expect(c.count("relay:1")).toBe(1);
+    expect(c.rename(b.id, " New ")[1].label).toBe("New");
+    expect(c.rename(b.id, "")[1].label).toBeUndefined();
+    expect(c.touch(b.id, "2026-01-01T00:00:00.000Z")[1].lastConnectedAt).toBe("2026-01-01T00:00:00.000Z");
+    expect(store().list()[1].lastConnectedAt).toBe("2026-01-01T00:00:00.000Z");
+  });
+  it("a seeded entry stays unbound until adoptRelay binds it (bound ones keep theirs)", () => {
+    const c = store();
+    const [seed] = c.list();
+    expect(seed.relayId).toBeUndefined();
+    c.add("x", "relay:own");
+    const l = c.adoptRelay("relay:default");
+    expect(l.map((x) => x.relayId)).toEqual(["relay:default", "relay:own"]);
+    expect(c.count("relay:default")).toBe(1);
+  });
+});

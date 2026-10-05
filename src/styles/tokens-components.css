@@ -104,6 +104,14 @@
   /* AgentFeed: the list is bounded and scrolls (newest first). */
   --agent-feed-max: 16rem;
 
+  /* AgentPanel (#442): rows in the 18-20rem rail. Name = body size, meta = the smaller panel size. */
+  --agent-panel-gap: var(--space-sm);
+  --agent-panel-row-pad: var(--space-xs) 0;
+  --agent-panel-row-gap: var(--space-xs) var(--space-sm);
+  --agent-panel-dot-size: 8px;
+  --agent-panel-name-size: var(--size-sm);
+  --agent-panel-meta-size: var(--size-xs);
+
   /* CommentThread: bounded list, clamped comments, composer growth. */
   --comment-thread-max: 24rem;
   --comment-thread-pad-end: var(--space-sm);

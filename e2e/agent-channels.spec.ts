@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { connectAgents } from "./helpers";
+import { connectAgents, routeRelayChannels } from "./helpers";
 
 /**
  * agent-channels.spec.ts — srs-web#358: one relay channel + MCP session per agent, each with its
@@ -15,17 +15,7 @@ const items = (page: Page) => page.locator(".essay-shell__page .block-stack__ite
 test("two agents: distinct authors and ids, guard on both, disconnect leaves the other", async ({
   page,
 }) => {
-  let minted = 0;
-  await page.route("https://relay.test/v1/channels", (route) => {
-    const k = ++minted;
-    return route.fulfill({
-      json: {
-        channel: `c${k}`,
-        callerUrl: `https://relay.test/v1/channels/c${k}/call/CALLER${k}`,
-        executorUrl: `wss://relay.test/v1/channels/c${k}/executor/EXEC${k}`,
-      },
-    });
-  });
+  await routeRelayChannels(page);
   const sockets = new Map<number, { send: (f: unknown) => void; url: string }>();
   const replies = new Map<string, (r: { status: number; body?: string }) => void>();
   await page.routeWebSocket(/relay\.test.*executor/, (ws) => {
@@ -137,6 +127,7 @@ test("two agents: distinct authors and ids, guard on both, disconnect leaves the
   await expect(page.getByTestId("mcp-status")).toHaveCount(1);
   // disconnect keeps the entry; forget removes it
   await expect(page.getByTestId("mcp-library-item")).toHaveCount(1);
+  await page.getByTestId("mcp-library-item").getByTestId("agent-menu").click(); // Forget lives in the row's ⋯ menu
   await page.getByTestId("mcp-library-forget").click();
   await expect(page.getByTestId("mcp-library-item")).toHaveCount(0);
   await comment(2, "beta again");
@@ -150,17 +141,9 @@ test("two agents: distinct authors and ids, guard on both, disconnect leaves the
 test("reload keeps ids and URLs; a typed label is the author; repo change keeps both agents", async ({
   page,
 }) => {
-  let minted = 0;
-  await page.route("https://relay.test/v1/channels", (route) => {
-    const k = ++minted;
-    return route.fulfill({
-      json: {
-        channel: `c${k}`,
-        callerUrl: `https://relay.test/v1/channels/c${k}/call/CALLER${k}`,
-        executorUrl: `wss://relay.test/v1/channels/c${k}/executor/EXEC${k}`,
-      },
-    });
-  });
+  await routeRelayChannels(page);
+  let minted = 0; // bootstrap requests seen: a reload must reuse the stored channels
+  page.on("request", (r) => r.url().endsWith("/v1/channels") && minted++);
   const sockets = new Map<number, { send: (f: unknown) => void; url: string }>();
   const replies = new Map<string, (r: { status: number; body?: string }) => void>();
   await page.routeWebSocket(/relay\.test.*executor/, (ws) => {
@@ -215,7 +198,12 @@ test("reload keeps ids and URLs; a typed label is the author; repo change keeps 
   await page.getByTestId("mcp-connect-agent").click();
   await expect(page.getByTestId("mcp-status")).toHaveText(["Connected", "Connected"]);
   const snapshot = async () => ({
-    ids: await page.evaluate(() => localStorage.getItem("srs-web.agent-connections")),
+    // ids only: lastConnectedAt (#442) legitimately changes on reconnect
+    ids: await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("srs-web.agent-connections") ?? "[]").map(
+        (c: { id: string }) => c.id
+      )
+    ),
     urls: await page
       .getByTestId("mcp-caller-url")
       .evaluateAll((e) => e.map((i) => (i as HTMLInputElement).value)),
@@ -288,17 +276,7 @@ test("reload keeps ids and URLs; a typed label is the author; repo change keeps 
 test("agent activity: connected count, chip in the feed, paragraph flashes, click focuses it", async ({
   page,
 }) => {
-  let minted = 0;
-  await page.route("https://relay.test/v1/channels", (route) => {
-    const k = ++minted;
-    return route.fulfill({
-      json: {
-        channel: `c${k}`,
-        callerUrl: `https://relay.test/v1/channels/c${k}/call/CALLER${k}`,
-        executorUrl: `wss://relay.test/v1/channels/c${k}/executor/EXEC${k}`,
-      },
-    });
-  });
+  await routeRelayChannels(page);
   const sockets = new Map<number, { send: (f: unknown) => void; url: string }>();
   const replies = new Map<string, (r: { status: number; body?: string }) => void>();
   await page.routeWebSocket(/relay\.test.*executor/, (ws) => {

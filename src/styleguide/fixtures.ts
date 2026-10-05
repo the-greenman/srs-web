@@ -4,6 +4,7 @@ import type { AgentStatus, AgentWrite } from "$lib/agent-activity";
 import type { Annotation } from "$lib/annotations";
 import type { Comment } from "$lib/comments";
 import type { Layer } from "$lib/components/LayersPanel.svelte";
+import type { PanelAgent } from "$lib/components/agent-panel";
 import type { MenuAction } from "$lib/components/menu-action";
 import { headerActions } from "$lib/essay/header-actions";
 import { ShellState } from "$lib/shell-context.svelte";
@@ -347,6 +348,78 @@ export const longRepoName = `The Limehouse Town Hall Working Group Governance Re
 export const longCallerUrl = `https://relay.example.org/v1/mcp/${LONG_WORD}/0000-1111-2222-3333-4444-5555-6666-7777/session`;
 export const longError = `Connection refused: another tab holds it, or the relay rejected this page origin (executor_origin_forbidden). ${LONG_WORD}`;
 export const longAgentName = `Scribe agent for the quarterly governance review ${LONG_WORD}`;
+export const relays = [
+  { id: "relay:a", label: "Test relay", url: "https://relay.example.org", isDefault: true },
+  {
+    id: "relay:b",
+    label: `Long relay label ${LONG_WORD}`,
+    url: `https://${LONG_WORD}.example.org`,
+    isDefault: false,
+  },
+];
+export const panelAgents: PanelAgent[] = [
+  {
+    conn: { id: "agent:alpha", relayId: "relay:a", lastConnectedAt: at(2) },
+    name: "alpha",
+    relayLabel: "Test relay",
+    state: { status: "online", callerUrl: longCallerUrl, error: null },
+    inUseElsewhere: false,
+  },
+  {
+    conn: { id: "agent:beta", relayId: "relay:a" },
+    name: "beta",
+    relayLabel: "Test relay",
+    state: { status: "rejected", callerUrl: null, error: longError },
+    inUseElsewhere: false,
+  },
+  {
+    conn: { id: "agent:gamma", relayId: "relay:b", lastConnectedAt: at(90) },
+    name: longAgentName,
+    relayLabel: relays[1].label,
+    state: null,
+    inUseElsewhere: false,
+  },
+  {
+    conn: { id: "agent:delta", relayId: "relay:a" },
+    name: "delta",
+    relayLabel: "Test relay",
+    state: null,
+    inUseElsewhere: true,
+  },
+];
+/** The AgentPanel specimen groups (#442): each is relays + agents, rendered at three widths. */
+export const agentGroups = {
+  none: {
+    relays: [] as typeof relays,
+    agents: [
+      {
+        ...panelAgents[3],
+        conn: { id: "agent:seed" },
+        relayLabel: "Relay missing",
+        inUseElsewhere: false,
+      },
+    ],
+  },
+  empty: { relays: [relays[0]], agents: [] as PanelAgent[] },
+  several: { relays, agents: [panelAgents[0], panelAgents[2], panelAgents[3]] },
+  errors: {
+    relays: [relays[0]],
+    agents: [
+      panelAgents[1],
+      {
+        ...panelAgents[1],
+        conn: { id: "agent:eps", relayId: "relay:a" },
+        name: "epsilon",
+        state: { status: "error" as const, callerUrl: null, error: "relay bootstrap failed: 502" },
+      },
+    ],
+  },
+};
+export const agentWidths = [
+  ["20rem", "Rail 20rem"],
+  ["18rem", "Rail 18rem"],
+  ["16rem", "Narrow 16rem"],
+] as const;
 export const longDraftItems = [
   { id: "ld1", label: longLabel },
   { id: "ld2", label: "Short" },
@@ -395,6 +468,12 @@ function fxLongLayers(): Layer[] {
 
 /** Component tokens listed in the Tokens section (names only; values are read from the page). */
 export const componentTokens = [
+  "--agent-panel-gap",
+  "--agent-panel-row-pad",
+  "--agent-panel-row-gap",
+  "--agent-panel-dot-size",
+  "--agent-panel-name-size",
+  "--agent-panel-meta-size",
   "--toolbar-bg",
   "--toolbar-border",
   "--toolbar-gap",
@@ -456,6 +535,7 @@ export const toolbarActions = headerActions(
     onexport: nop,
     onexportmd: nop,
     onexplorer: nop,
+    onopenagents: nop,
     onopenanother: nop,
   },
   { shell: new ShellState({ wideEnabled: true }), comments: "mixed", saving: false, dirty: true }

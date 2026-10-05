@@ -5,7 +5,12 @@
  */
 export interface AgentConnection {
   id: string;
+  /** Host-fixed display name (rename edits it). */
   label?: string;
+  /** Fixed at creation (srs-web#442); absent only before `adoptRelay` binds a pre-library entry. */
+  relayId?: string;
+  /** ISO 8601, updated each time a session reaches "online" (every reconnect). */
+  lastConnectedAt?: string;
 }
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -49,6 +54,16 @@ export function createConnectionStore(getStorage: () => Store = () => localStora
     return first;
   }
 
+  function patch(
+    self: { list(): AgentConnection[] },
+    id: string,
+    f: (c: AgentConnection) => AgentConnection
+  ) {
+    cache = self.list().map((c) => (c.id === id ? f(c) : c));
+    save();
+    return cache;
+  }
+
   return {
     /** The connections; first run seeds one, migrating the pre-#358 connection into it. */
     list(): AgentConnection[] {
@@ -66,11 +81,38 @@ export function createConnectionStore(getStorage: () => Store = () => localStora
       return cache;
     },
     /** Add a connection; returns the list as displayed. */
-    add(label?: string): AgentConnection[] {
+    add(label?: string, relayId?: string): AgentConnection[] {
       const l = label?.trim();
-      cache = [...this.list(), { id: `agent:${crypto.randomUUID()}`, ...(l ? { label: l } : {}) }];
+      cache = [
+        ...this.list(),
+        {
+          id: `agent:${crypto.randomUUID()}`,
+          ...(l ? { label: l } : {}),
+          ...(relayId ? { relayId } : {}),
+        },
+      ];
       save();
       return cache;
+    },
+    /** An empty label clears it. */
+    rename(id: string, label: string): AgentConnection[] {
+      const l = label.trim();
+      return patch(this, id, (c) => ({ ...c, label: l || undefined }));
+    },
+    touch(id: string, at = new Date().toISOString()): AgentConnection[] {
+      return patch(this, id, (c) => ({ ...c, lastConnectedAt: at }));
+    },
+    /** Bind every entry that has no relay to this one. */
+    adoptRelay(defaultRelayId: string): AgentConnection[] {
+      const l = this.list();
+      if (l.every((c) => c.relayId)) return l;
+      cache = l.map((c) => (c.relayId ? c : { ...c, relayId: defaultRelayId }));
+      save();
+      return cache;
+    },
+    /** Agents on a relay. */
+    count(relayId: string): number {
+      return this.list().filter((c) => c.relayId === relayId).length;
     },
     remove(id: string): AgentConnection[] {
       cache = this.list().filter((c) => c.id !== id);

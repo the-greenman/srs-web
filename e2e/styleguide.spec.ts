@@ -11,8 +11,8 @@ test.describe("Styleguide", () => {
     // poll: the styleguide is a lazy chunk, so the first count can race the mount
     await expect.poll(() => page.locator("section h2").count()).toBeGreaterThanOrEqual(11);
     await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
-    // (the rejected McpConnection specimen carries its own role="alert"; anything else is the gate)
-    await expect(page.locator('[role="alert"]:not(.mcp-conn__error):not([data-specimen])')).toHaveCount(0);
+    // (the AgentPanel specimens' inline error Notices are role="alert"; anything else is the gate)
+    await expect(page.locator('[role="alert"]:not(.agent-panel .notice):not([data-specimen])')).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBeUndefined();
     const bg = () =>
       page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--color-bg"));
@@ -318,4 +318,25 @@ test.describe("Styleguide notices", () => {
     await page.clock.runFor(5000);
     await expect(page.locator(".toast-host .toast")).toHaveCount(0);
   });
+
+  // ── Agent library specimens (srs-web#442) ──────────────────────────────────────────────────
+  for (const width of [1280, 390]) {
+    test(`agent library specimens render at every width without overflow or headings: ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/styleguide");
+      await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+      for (const g of ["none", "empty", "several", "errors"]) {
+        await expect(page.getByTestId(`sg-agent-${g}`).getByTestId("sg-agent-frame")).toHaveCount(3);
+      }
+      await expect(page.getByTestId("sg-agent-none").getByTestId("agent-panel-empty").first()).toBeVisible();
+      await expect(page.getByTestId("sg-agent-errors").getByTestId("mcp-connection").first()).toBeVisible();
+      await expect(page.locator(".agent-panel h1, .agent-panel h2, .agent-panel h3, .agent-panel h4, .agent-panel h5, .agent-panel h6, .agent-panel details")).toHaveCount(0);
+      const overflowing = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>('[data-testid="sg-agent-frame"]')]
+          .filter((f) => f.scrollWidth > f.clientWidth)
+          .map((f) => f.dataset.caption)
+      );
+      expect(overflowing).toEqual([]);
+    });
+  }
 });

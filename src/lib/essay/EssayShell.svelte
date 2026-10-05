@@ -477,6 +477,14 @@
   }
   const createEssay = () => openNew(() => newEssay(repo, "Untitled essay"));
   const copyDocument = () => openNew(() => copyEssay(repo, model!));
+  let agentsOpen = $state(true);
+  /** Go > Agents…: open the inspector (a drawer when narrow), expand the Agents panel, focus its first control. */
+  async function openAgents() {
+    shell.inspectorOpen = true;
+    agentsOpen = true;
+    await tick();
+    requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="agent-panel"] button, [data-testid="agent-panel"] input')?.focus());
+  }
   let helpOpen = $state(false);
   const helpId = "essay-md-help";
   let toolbarEl = $state<HTMLElement>();
@@ -494,6 +502,7 @@
         onexport: onExport,
         onexportmd: model ? exportMarkdown : undefined,
         onexplorer: onOpenExplorer,
+        onopenagents: agentPanel ? openAgents : undefined,
         onopenanother: onOpenAnother,
       },
       { shell, comments: summary(openThreads, shownIds), saving, dirty: documentDirty, help: { id: helpId, open: helpOpen } },
@@ -685,7 +694,7 @@
 <AppShell {shell} main={mainPane} inspector={model || agentPanel ? inspectorPane : undefined} inspectorLabel="Panels" />
 
 {#snippet agents()}
-  <Panel title="Agents" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey="essay.agents" collapseWhen={NARROW}>
+  <Panel title="Agents" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey="essay.agents" collapseWhen={NARROW} bind:open={agentsOpen}>
     {#snippet actions()}{#if agentStatus}<AgentPresence status={agentStatus} />{/if}{/snippet}
     {#if agentStatus}
       <AgentFeed

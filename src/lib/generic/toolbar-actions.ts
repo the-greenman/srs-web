@@ -4,7 +4,7 @@
  * shell-actions.ts (one definition), and no shell imports another's registry.
  */
 import type { ToolbarAction } from "../components/menu-action.js";
-import { wideAction } from "../components/shell-actions.js";
+import { agentsAction, wideAction } from "../components/shell-actions.js";
 import type { ShellState } from "../shell-context.svelte.js";
 
 export interface GenericHandlers {
@@ -12,6 +12,8 @@ export interface GenericHandlers {
   onsave?: () => void;
   onexport: () => void;
   onopenanother: () => void;
+  /** Absent when the shell cannot open the agent library. */
+  onopenagents?: () => void;
   /** Absent unless the open composition has a blueprint editor to preview. */
   onpreview?: () => void;
 }
@@ -49,6 +51,7 @@ export function genericActions(
       testid: "full-preview-toggle",
     },
     wideAction(s.shell),
+    !!h.onopenagents && agentsAction(h.onopenagents),
     {
       id: "other",
       group: "go",

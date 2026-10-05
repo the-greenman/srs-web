@@ -25,6 +25,15 @@ describe("headerActions (srs-web#383)", () => {
     ]);
   });
 
+  it("adds Go > Agents… only when onopenagents exists", () => {
+    const go = (h: object) =>
+      headerActions({ ...base, ...h }, state)
+        .filter((x) => x.group === "go")
+        .map((x) => x.id);
+    expect(go({})).toEqual(["other"]);
+    expect(go({ onopenagents: noop })).toEqual(["agents", "other"]);
+  });
+
   it("adds copy, save and explorer only when their handler exists", () => {
     const ids = headerActions({ ...base, oncopy: noop, onsave: noop, onexplorer: noop }, state).map(
       (a) => a.id

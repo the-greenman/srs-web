@@ -20,6 +20,17 @@ export const BASE_GROUPS: { id: string; label: string; icon: IconComponent }[] =
 export const wideAction = (shell: ShellState): ToolbarAction | undefined =>
   shell.wideEnabled ? wide(shell) : undefined;
 
+/** Go > Agents…: open the agent library (the shell decides where it lives; no relay needed). */
+export const agentsAction = (run: () => void): ToolbarAction => ({
+  id: "agents",
+  group: "go",
+  kind: "action",
+  label: "Agents…",
+  testid: "toolbar-agents",
+  enabled: true,
+  run,
+});
+
 const wide = (shell: ShellState): ToolbarAction => ({
   id: "wide",
   group: "view",

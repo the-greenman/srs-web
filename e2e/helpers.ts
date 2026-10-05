@@ -51,19 +51,33 @@ export async function acceptMigration(page: Page, ...ids: string[]): Promise<voi
   await expect(prompt).not.toBeVisible();
 }
 
-/** One relay channel per agent, each opened from the Agents panel; returns the MCP helpers. */
-export async function connectAgents(page: Page, essayPath: string, count: number) {
-  let minted = 0;
-  await page.route("https://relay.test/v1/channels", (route) => {
-    const k = ++minted;
+/**
+ * Mock a relay's channel bootstrap (POST https://<host>/v1/channels). Each call mints c<k>/CALLER<k>/EXEC<k>
+ * for a per-call counter k, or the fixed c/CALLER/EXEC when `fixed` (the single-agent specs). `refuse`
+ * answers 400 invalid_origin instead. The executor WebSocket handlers differ per spec and stay local.
+ */
+export async function routeRelayChannels(
+  page: Page,
+  o: { host?: string; fixed?: boolean; refuse?: boolean } = {}
+): Promise<void> {
+  const host = o.host ?? "relay.test";
+  let k = 0;
+  await page.route(`https://${host}/v1/channels`, (route) => {
+    if (o.refuse) return route.fulfill({ status: 400, json: { error: "invalid_origin" } });
+    const n = o.fixed ? "" : String(++k);
     return route.fulfill({
       json: {
-        channel: `c${k}`,
-        callerUrl: `https://relay.test/v1/channels/c${k}/call/CALLER${k}`,
-        executorUrl: `wss://relay.test/v1/channels/c${k}/executor/EXEC${k}`,
+        channel: `c${n}`,
+        callerUrl: `https://${host}/v1/channels/c${n}/call/CALLER${n}`,
+        executorUrl: `wss://${host}/v1/channels/c${n}/executor/EXEC${n}`,
       },
     });
   });
+}
+
+/** One relay channel per agent, each opened from the Agents panel; returns the MCP helpers. */
+export async function connectAgents(page: Page, essayPath: string, count: number) {
+  await routeRelayChannels(page);
   const sockets = new Map<number, { send: (f: unknown) => void; url: string }>();
   const replies = new Map<string, (r: { status: number; body?: string }) => void>();
   await page.routeWebSocket(/relay\.test.*executor/, (ws) => {
