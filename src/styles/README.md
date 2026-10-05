@@ -58,6 +58,7 @@ src/styles/
   components/
     button.css         .btn          actions
     tag.css            .tag          lifecycle status vocabulary
+    srs-mark.css       .srs-mark     the SRS mark (SrsMark.svelte); painted by --srs-mark-ink|paper|line
     nav.css            .nav          dark navigation rail (.nav__scroll is its one scroller)
     inspector.css      .inspector    right rail + .meta key/value list
     shell.css          .drawer .resize-handle  frame parts (#424): the off-canvas Drawer, the column resizer, trigger badge

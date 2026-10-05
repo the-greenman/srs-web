@@ -1,0 +1,31 @@
+/* ============================================================================
+   component: srs-mark (.srs-mark): the SRS mark (SrsMark.svelte, srs-web#462).
+   Six shapes painted in order: paper disc, ink half, S line, paper seed, ink seed, rim.
+   Paint comes only from the --srs-mark-* component tokens (tokens-components.css), so a skin
+   re-points the semantic tokens they default to and the mark follows.
+   ========================================================================== */
+
+.srs-mark {
+  flex: none;
+  display: block;
+}
+
+.srs-mark__paper {
+  fill: var(--srs-mark-paper);
+}
+
+.srs-mark__ink {
+  fill: var(--srs-mark-ink);
+}
+
+.srs-mark__line {
+  fill: none;
+  stroke: var(--srs-mark-line);
+  stroke-width: 1;
+}
+
+.srs-mark__rim {
+  fill: none;
+  stroke: var(--srs-mark-ink);
+  stroke-width: 1.25;
+}

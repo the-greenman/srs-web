@@ -197,6 +197,31 @@ test.describe("Styleguide", () => {
     }
   }
 
+  // ── SRS mark (srs-web#462): painted by --srs-mark-* tokens, so the demo theme reskins it ───
+  test("the SRS mark is drawn at three sizes and the demo theme reskins every paint", async ({ page }) => {
+    await page.goto("/styleguide");
+    await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+    const marks = page.getByTestId("sg-srs-mark").locator("svg.srs-mark");
+    await expect(marks).toHaveCount(3);
+    expect(await marks.evaluateAll((els) => els.map((e) => e.getAttribute("width")))).toEqual(["16", "24", "96"]);
+    const paints = () =>
+      marks.last().evaluate((svg) => {
+        const cs = (sel: string, prop: "fill" | "stroke") =>
+          getComputedStyle(svg.querySelector(sel) as Element)[prop];
+        return [
+          cs(".srs-mark__paper", "fill"),
+          cs(".srs-mark__ink", "fill"),
+          cs(".srs-mark__line", "stroke"),
+          cs(".srs-mark__rim", "stroke"),
+        ];
+      });
+    const before = await paints();
+    await page.getByLabel("Theme").selectOption("Demo");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "demo");
+    const after = await paints();
+    before.forEach((colour, i) => expect(after[i], `paint ${i}`).not.toBe(colour));
+  });
+
   // ── Demo theme: no element paints a default palette colour (srs-web#421) ──────────────────
   test("under the demo theme no element paints a default palette colour", async ({ page }) => {
     await page.goto("/styleguide");
