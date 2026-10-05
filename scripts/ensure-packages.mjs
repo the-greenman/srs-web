@@ -18,10 +18,11 @@ const lock = JSON.parse(readFileSync(join(root, "packages.lock.json"), "utf8"));
 mkdirSync(dir, { recursive: true });
 for (const { packageId, name, version, url, sha256 } of lock) {
   const file = join(dir, `${packageId}.srspkg`);
-  let bytes;
-  if (existsSync(file)) {
-    bytes = readFileSync(file);
-  } else {
+  const sha = (b) => createHash("sha256").update(b).digest("hex");
+  // The cache is keyed by packageId, so a lock bump leaves a stale file: re-download on mismatch.
+  let bytes = existsSync(file) ? readFileSync(file) : null;
+  const cached = bytes !== null && sha(bytes) === sha256;
+  if (!cached) {
     console.log(`Downloading ${name} ${version} from ${url}`);
     const res = await fetch(url, { redirect: "follow" });
     if (!res.ok) {
@@ -30,11 +31,11 @@ for (const { packageId, name, version, url, sha256 } of lock) {
     }
     bytes = Buffer.from(await res.arrayBuffer());
   }
-  const actual = createHash("sha256").update(bytes).digest("hex");
+  const actual = sha(bytes);
   if (actual !== sha256) {
     console.error(`sha256 mismatch for ${name} ${version}: expected ${sha256}, got ${actual}`);
     process.exit(1);
   }
-  if (!existsSync(file)) writeFileSync(file, bytes);
+  if (!cached) writeFileSync(file, bytes);
 }
 console.log(`package bundles ready at ${dir}`);
