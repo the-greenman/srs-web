@@ -1,8 +1,8 @@
 <!--
   Disclosure — a ghost small Button with a Lucide chevron that shows or hides a region
   (`aria-expanded`, `aria-controls`). Used for the AgentPanel's "Connect an agent" and "Add a relay".
-  `Panel` stays a native <details>; this is for inline sections inside a panel. `testid` goes on the
-  button; the body is `hidden` when closed (still in the DOM). Story: #442
+  `Panel` stays a native details element; this is for inline sections inside a panel. `testid` goes on the
+  button; the body is not rendered while closed. Story: #442
 -->
 <script lang="ts">
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -21,8 +21,8 @@
 </script>
 
 <div class="disclosure" data-part="disclosure">
-  <Button size="sm" variant="ghost" aria-expanded={open} aria-controls={id} data-testid={testid} onclick={() => (open = !open)}>
+  <Button size="sm" variant="ghost" aria-expanded={open} aria-controls={open ? id : undefined} data-testid={testid} onclick={() => (open = !open)}>
     {#if open}<ChevronDown size={14} aria-hidden="true" />{:else}<ChevronRight size={14} aria-hidden="true" />{/if}{label}
   </Button>
-  <div {id} class="disclosure__body" data-part="body" hidden={!open}>{@render children?.()}</div>
+  {#if open}<div {id} class="disclosure__body" data-part="body">{@render children?.()}</div>{/if}
 </div>

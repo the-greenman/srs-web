@@ -2,7 +2,7 @@
   AgentPanel — the agent library in one place (#442): saved agents as rows (ActorMark, name, relay,
   status dot, Connect/Disconnect, a ⋯ menu), the relay library as rows, and the two add forms behind
   Disclosures. Presentational: App passes the data and owns every handler, storage and host; errors
-  from add/edit/remove come back as text and render inline (ADR-020 j). No headings, no <details>.
+  from add/edit/remove come back as text and render inline (ADR-020 j). No headings, no native details element.
   Never a store import. With no relay the whole panel is "No relay · Add a relay". Test ids of the
   pre-#442 dock are kept on the redesigned elements. Wraps .agent-panel (agent-panel.css); tokens
   `--agent-panel-*`; parts `agent relay name meta dot status actions`.

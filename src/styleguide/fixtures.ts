@@ -387,6 +387,46 @@ export const panelAgents: PanelAgent[] = [
     inUseElsewhere: true,
   },
 ];
+/** The AgentPanel specimen groups (#442): each is relays + agents, rendered at three widths. */
+export const agentGroups = {
+  none: {
+    relays: [] as typeof relays,
+    agents: [
+      {
+        ...panelAgents[3],
+        conn: { id: "agent:seed" },
+        relayLabel: "Relay missing",
+        inUseElsewhere: false,
+      },
+    ],
+  },
+  empty: { relays: [relays[0]], agents: [] as PanelAgent[] },
+  several: { relays, agents: [panelAgents[0], panelAgents[2], panelAgents[3]] },
+  errors: {
+    relays: [relays[0]],
+    agents: [
+      panelAgents[1],
+      {
+        ...panelAgents[1],
+        conn: { id: "agent:eps", relayId: "relay:a" },
+        name: "epsilon",
+        state: { status: "error" as const, callerUrl: null, error: "relay bootstrap failed: 502" },
+      },
+    ],
+  },
+  forms: {
+    relays,
+    agents: [
+      { ...panelAgents[2], conn: { id: "agent:g1", relayId: "relay:b" } },
+      { ...panelAgents[2], conn: { id: "agent:g2", relayId: "relay:b" }, name: "zeta" },
+    ],
+  },
+};
+export const agentWidths = [
+  ["20rem", "Rail 20rem"],
+  ["18rem", "Rail 18rem"],
+  ["16rem", "Narrow 16rem"],
+] as const;
 export const longDraftItems = [
   { id: "ld1", label: longLabel },
   { id: "ld2", label: "Short" },
@@ -435,6 +475,12 @@ function fxLongLayers(): Layer[] {
 
 /** Component tokens listed in the Tokens section (names only; values are read from the page). */
 export const componentTokens = [
+  "--agent-panel-gap",
+  "--agent-panel-row-pad",
+  "--agent-panel-row-gap",
+  "--agent-panel-dot-size",
+  "--agent-panel-name-size",
+  "--agent-panel-meta-size",
   "--toolbar-bg",
   "--toolbar-border",
   "--toolbar-gap",

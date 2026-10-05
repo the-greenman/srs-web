@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import "./styles/themes/demo.css";
-  import { onMount, type Snippet } from "svelte";
+  import { onMount, tick, type Snippet } from "svelte";
   import {
     ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
@@ -35,10 +35,45 @@
     ["annotations", "Annotations and comments"],
     ["paragraph", "Paragraph"],
     ["panels", "Panels and trays"],
+    ["agents", "Agent library"],
     ["shell", "Page frame"],
     ["notices", "Notices"],
     ["forms", "Form controls"],
   ];
+
+  const agentGroupTitles: Record<string, string> = {
+    none: "No relay (a seeded agent stays hidden)",
+    empty: "One relay, no agents",
+    several: "Several relays and agents: online, saved with a long name, in use elsewhere",
+    errors: "Connection errors: rejected and failed",
+    forms: "Relay form validation error; removing a relay that has agents is blocked",
+  };
+  /**
+   * The "forms" group holds states reached by interaction (a rejected relay URL, a blocked removal), so
+   * drive the real controls once at mount, synchronously with each popover's toggle event, then reopen the
+   * Toolbar specimen's pinned menu that the opened popovers light-dismissed.
+   */
+  async function driveAgentForms() {
+    for (const root of Array.from(document.querySelectorAll<HTMLElement>('[data-testid="sg-agent-forms"] .agent-panel'))) {
+      root.querySelector<HTMLElement>('[data-testid="relay-add-open"]')?.click();
+      await tick();
+      const url = root.querySelector<HTMLInputElement>('[data-testid="relay-url"]');
+      if (url) {
+        url.value = "http://relay.example.org";
+        url.dispatchEvent(new Event("input", { bubbles: true }));
+        root.querySelector<HTMLElement>('[data-testid="relay-save"]')?.click();
+      }
+      const item = Array.from(root.querySelectorAll<HTMLElement>('[data-testid="relay-item"]')).find((i) => i.textContent?.includes("Long relay label"));
+      const surface = item?.querySelector<HTMLElement>("[popover]");
+      if (!item || !surface) continue;
+      const shown = new Promise((r) => surface.addEventListener("toggle", r, { once: true }));
+      item.querySelector<HTMLElement>('[data-testid="relay-menu"]')?.click();
+      await shown;
+      await tick();
+      item.querySelector<HTMLElement>('[data-testid="relay-menu-remove"]')?.click();
+    }
+    document.querySelector<HTMLElement>('[data-testid="sg-toolbar-frame"] [data-testid="toolbar-menu-document"]')?.click();
+  }
 
   let theme = $state("Default");
   let wasm = $state<"loading" | "ready" | string>("loading");
@@ -79,6 +114,7 @@
       () => (wasm = "ready"),
       (e) => (wasm = e instanceof Error ? e.message : String(e))
     );
+    void driveAgentForms();
     return () => delete document.documentElement.dataset.theme;
   });
 </script>
@@ -397,6 +433,26 @@
       <Frame width="var(--inspector-width)" caption="Inspector 20rem">{@render rail()}</Frame>
       <Frame width="15rem" caption="Narrow 15rem">{@render rail()}</Frame>
     </div>
+  </section>
+
+  <section id="agents">
+    <h2>Agent library</h2>
+    <p>The AgentPanel: rows, never headings. Each state at the rail widths (20rem, 18rem) and a narrow width (16rem).</p>
+    {#each Object.entries(fx.agentGroups) as [name, g] (name)}
+      <h3>{agentGroupTitles[name]}</h3>
+      <div class="sg__rails" data-testid="sg-agent-{name}">
+        {#each fx.agentWidths as [width, caption] (width)}
+          <Frame {width} {caption} testid="sg-agent-frame">
+            <AgentPanel
+              relays={g.relays} agents={g.agents} now={fx.NOW}
+              onAddRelay={name === "forms" ? () => "A relay must use https (http is allowed only for localhost)." : () => null}
+              onUpdateRelay={() => null} onRemoveRelay={() => "Forget its 2 agents first."} onSetDefault={noop}
+              onConnectNew={noop} onConnect={noop} onDisconnect={noop} onForget={noop} onRename={noop} onRotate={noop} onTakeover={noop}
+            />
+          </Frame>
+        {/each}
+      </div>
+    {/each}
   </section>
 
   <section id="shell">

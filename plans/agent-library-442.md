@@ -327,33 +327,40 @@ Do not start the next phase until the milestone gate passes.
 
 #### Tasks
 
-- [ ] **Styleguide** (`src/Styleguide.svelte`, `src/styleguide/fixtures.ts`): replace the hand-rolled agent block (~116-132) with a new `agents` section rendering `AgentPanel` with fixtures, each in a `Frame` at **20rem**, **18rem** (the rail range) and **narrow** (a `Frame` at 16rem, inside the phone tier `BREAKPOINTS.phone` = 480px) widths:
+- [x] **Styleguide** (`src/Styleguide.svelte`, `src/styleguide/fixtures.ts`): replace the hand-rolled agent block (~116-132) with a new `agents` section rendering `AgentPanel` with fixtures, each in a `Frame` at **20rem**, **18rem** (the rail range) and **narrow** (a `Frame` at 16rem, inside the phone tier `BREAKPOINTS.phone` = 480px) widths:
   1. no relay (empty state);
   2. one relay, no agents;
   3. several relays (one default, one with a long label/URL) and agents (online with caller URL, saved, in-use elsewhere, a long name);
   4. connection error (`rejected` and `error` rows, inline `Notice`);
   5. relay form with a validation error; relay remove blocked (D1 message).
   The existing essay-rail specimen's Agents `Panel` renders `AgentPanel` too. Add `sg-agent-*` testids and a `sg__tokens`-style listing of the `--agent-panel-*` tokens consistent with how other components list theirs.
-- [ ] `e2e/styleguide.spec.ts`: assert the specimens render, no horizontal overflow at 18rem and narrow (`scrollWidth <= clientWidth`), no headings inside `.agent-panel`.
-- [ ] `e2e/agent-library.spec.ts` (new), mocked relay as in `agent-channels.spec.ts` (`page.route("https://relay.test/v1/channels", ...)`, `page.routeWebSocket(/relay\.test.*executor/, ...)`); use the one extracted helper (next task). Tests, each on a **fresh profile with `VITE_MCP_RELAY_URL` empty**: set `webServer.env: { VITE_MCP_RELAY_URL: "" }` in `playwright.config.ts` (a process variable wins over every `.env*` file, so a developer's `.env.local` cannot leak in; verify by a unit-level check that the "fresh profile" test sees "No relay"):
+- [x] `e2e/styleguide.spec.ts`: assert the specimens render, no horizontal overflow at 18rem and narrow (`scrollWidth <= clientWidth`), no headings inside `.agent-panel`.
+- [x] `e2e/agent-library.spec.ts` (new), mocked relay as in `agent-channels.spec.ts` (`page.route("https://relay.test/v1/channels", ...)`, `page.routeWebSocket(/relay\.test.*executor/, ...)`); use the one extracted helper (next task). Tests, each on a **fresh profile with `VITE_MCP_RELAY_URL` empty**: set `webServer.env: { VITE_MCP_RELAY_URL: "" }` in `playwright.config.ts` (a process variable wins over every `.env*` file, so a developer's `.env.local` cannot leak in; verify by a unit-level check that the "fresh profile" test sees "No relay"):
   1. fresh profile, open `essay.srsj`: the Agents panel is visible with "No relay" and "Add a relay";
   2. add `https://relay.test` labelled "Test relay": appears as default; **reload** (`page.reload`, reopen the fixture): still present; `http://relay.test` is rejected with the inline message;
   3. connect an agent through it (mocked relay): status "Connected", caller URL shown; rename it; Disconnect; Forget with confirmation toast;
   4. two relays (`relay.test`, `relay2.test`, both mocked) and two agents (one per relay): two distinct rows with their relay labels; removing a relay that has an agent shows the D1 error and the relay stays; forgetting its agent then allows removal;
   5. legacy seed: `addInitScript` setting `srs-web.mcp-relay-url` yields a relay entry (this is the documented e2e seed);
   6. Go → Agents… from the Toolbar focuses the panel at desktop and at a drawer-width viewport.
-- [ ] **Extract the relay mock once.** Add to `e2e/helpers.ts`: `export async function routeRelayChannels(page: Page, o?: { host?: string; fixed?: boolean }): Promise<void>`. It registers `page.route(\`https://${host}/v1/channels\`, ...)` returning `c${k}`/`CALLER${k}`/`EXEC${k}` for a per-call counter `k`, or `c`/`CALLER`/`EXEC` when `fixed` (the single-agent specs). Default `host` is `relay.test`. Migrate **every** inline copy: `helpers.ts:57` (`connectAgents`), `agent-channels.spec.ts:19, :154, :292`, `essay-editor.spec.ts:177`, `essay-write-guard.spec.ts:35`, `mcp-relay.spec.ts:25, :134`, `essay-comments.spec.ts:61` (re-grep `relay.test/v1/channels` first; it must return only the helper). The `routeWebSocket` handlers differ per spec and stay local. The existing test ids are unchanged, so no other spec edits.
-- [ ] **Docs:** `README.md` (agents/relay section: library, default, https rule, the env var and the `srs-web.mcp-relay-url` e2e/dev seed, that changing `VITE_MCP_RELAY_URL` later does not re-seed an existing library, per-viewer localStorage, relay fixed per agent, channel credentials per agent); `.env.example` gains a documented, empty `VITE_MCP_RELAY_URL=` line (dev does not load `.env.production`, which is why dev had no relay); `src/lib/components/README.md` rows (`AgentPanel`, `Disclosure`, `McpConnection`), `src/lib/components/index.ts`; ADR-020 gains part **(k) Agent library (#442)** (rows not headings, the `Disclosure` pattern and that `Panel` stays `<details>`, D1–D7, inline errors, tokens, the deployment story: env seeds once) following (j)'s style, and #442 (part (k)) is added to its "Amended by" line (:9); the `Notice`/toast usage noted. No new ADR: no new constraint beyond ADR-020's component API. A note under ADR-001's consequences is not needed; the plan and (k) state "client configuration, not SRS semantics".
-- [ ] Tick `plans/agent-library-442.md` checkboxes.
+- [x] **Extract the relay mock once.** Add to `e2e/helpers.ts`: `export async function routeRelayChannels(page: Page, o?: { host?: string; fixed?: boolean }): Promise<void>`. It registers `page.route(\`https://${host}/v1/channels\`, ...)` returning `c${k}`/`CALLER${k}`/`EXEC${k}` for a per-call counter `k`, or `c`/`CALLER`/`EXEC` when `fixed` (the single-agent specs). Default `host` is `relay.test`. Migrate **every** inline copy: `helpers.ts:57` (`connectAgents`), `agent-channels.spec.ts:19, :154, :292`, `essay-editor.spec.ts:177`, `essay-write-guard.spec.ts:35`, `mcp-relay.spec.ts:25, :134`, `essay-comments.spec.ts:61` (re-grep `relay.test/v1/channels` first; it must return only the helper). The `routeWebSocket` handlers differ per spec and stay local. The existing test ids are unchanged, so no other spec edits.
+- [x] **Docs:** `README.md` (agents/relay section: library, default, https rule, the env var and the `srs-web.mcp-relay-url` e2e/dev seed, that changing `VITE_MCP_RELAY_URL` later does not re-seed an existing library, per-viewer localStorage, relay fixed per agent, channel credentials per agent); `.env.example` gains a documented, empty `VITE_MCP_RELAY_URL=` line (dev does not load `.env.production`, which is why dev had no relay); `src/lib/components/README.md` rows (`AgentPanel`, `Disclosure`, `McpConnection`), `src/lib/components/index.ts`; ADR-020 gains part **(k) Agent library (#442)** (rows not headings, the `Disclosure` pattern and that `Panel` stays `<details>`, D1–D7, inline errors, tokens, the deployment story: env seeds once) following (j)'s style, and #442 (part (k)) is added to its "Amended by" line (:9); the `Notice`/toast usage noted. No new ADR: no new constraint beyond ADR-020's component API. A note under ADR-001's consequences is not needed; the plan and (k) state "client configuration, not SRS semantics".
+- [x] Tick `plans/agent-library-442.md` checkboxes.
 
 #### Acceptance Criteria
 
-- [ ] The issue's e2e list is covered by `e2e/agent-library.spec.ts`: fresh-profile visibility, add relay persists across reload, connect through it, forget, two relays + two agents distinct.
-- [ ] Styleguide has all five specimen groups at rail width and narrow; no overflow.
-- [ ] No remaining reference to `relayUrl` as a module-level constant or to `agentDock`; `rg "<details" src/lib/components/AgentPanel.svelte src/lib/components/Disclosure.svelte src/App.svelte` is empty.
-- [ ] Docs updated as listed; ADR-020 (k) present and in "Amended by".
-- [ ] `rg "relay.test/v1/channels" e2e` matches only `e2e/helpers.ts`.
-- [ ] Full gates below pass.
+- [x] The issue's e2e list is covered by `e2e/agent-library.spec.ts`: fresh-profile visibility, add relay persists across reload, connect through it, forget, two relays + two agents distinct.
+- [x] Styleguide has all five specimen groups at rail width and narrow; no overflow.
+- [x] No remaining reference to `relayUrl` as a module-level constant or to `agentDock`; `rg "<details" src/lib/components/AgentPanel.svelte src/lib/components/Disclosure.svelte src/App.svelte` is empty.
+- [x] Docs updated as listed; ADR-020 (k) present and in "Amended by".
+- [x] `rg "relay.test/v1/channels" e2e` matches only `e2e/helpers.ts`.
+- [x] Full gates below pass.
+
+#### Deviations (as built)
+
+- `routeRelayChannels` gained a `refuse` option (400 `invalid_origin`) so the ninth inline mock (the origin-refusal test in `mcp-relay.spec.ts`) migrates too. `agent-channels.spec.ts` counts bootstrap requests with a `page.on("request")` listener instead of the old closure counter, since the helper returns void.
+- Styleguide: widths are 20rem, 18rem and 16rem (`Frame` gained a `testid` prop so the existing two-frame overflow test is unaffected). The "relay form validation error" and "removal blocked" states need interaction, so `Styleguide.svelte` drives the real controls once on mount (`driveAgentForms`) and reopens the Toolbar specimen's pinned menu, which the popovers light-dismissed.
+- Phase 4 e2e live in `e2e/agent-library.spec.ts`; the styleguide assertions are an extra test in `e2e/styleguide.spec.ts`. The Go → Agents… focus tests expect the first control (the "Add a relay" disclosure button).
+- `tests/no-adhoc-notices.test.ts` no longer allowlists `McpConnection` (Phase 2); ADR-020 (j)'s guard sentence was updated to match.
 
 #### Testing
 
@@ -376,15 +383,15 @@ npm run e2e
 
 ## Final Acceptance
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm test` passes
-- [ ] `npm run build` succeeds
-- [ ] `npm run e2e` passes (or every failure reproduced on last-green `main`)
-- [ ] WASM loads and the agent write guard / actor still apply: `e2e/essay-write-guard.spec.ts` and `e2e/agent-channels.spec.ts` green against `essay.srsj`
-- [ ] A fresh dev profile with no env var shows the agent surface with "No relay · Add a relay"
-- [ ] Relay and agent libraries persist across reload; legacy `srs-web.agent-connections` entries migrate to the default relay with their ids and creds intact
-- [ ] Panel has no headings, no `<details>`, uses `ActorMark`, `Button sm`, `ActionMenu`, and `Disclosure` (Lucide chevrons with `aria-expanded`)
+- [x] `npm run typecheck` passes
+- [x] `npm run lint` passes
+- [x] `npm test` passes
+- [x] `npm run build` succeeds
+- [x] `npm run e2e` passes (or every failure reproduced on last-green `main`)
+- [x] WASM loads and the agent write guard / actor still apply: `e2e/essay-write-guard.spec.ts` and `e2e/agent-channels.spec.ts` green against `essay.srsj`
+- [x] A fresh dev profile with no env var shows the agent surface with "No relay · Add a relay"
+- [x] Relay and agent libraries persist across reload; legacy `srs-web.agent-connections` entries migrate to the default relay with their ids and creds intact
+- [x] Panel has no headings, no `<details>`, uses `ActorMark`, `Button sm`, `ActionMenu`, and `Disclosure` (Lucide chevrons with `aria-expanded`)
 
 ## Coordination Rules
 

@@ -917,7 +917,7 @@
       applyGuards();
     }}
     workingCopySaved={workingCopySaved}
-    agentPanel={agentDock}
+    agentPanel={agentLibrary}
     agentStatus={relayList.length > 0 ? agentStatus : undefined}
     onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAnother={() => {
@@ -932,7 +932,7 @@
   />
 {/if}
 
-{#snippet agentDock(ctx?: AgentPanelCtx)}
+{#snippet agentLibrary(ctx?: AgentPanelCtx)}
   <AgentPanel
     relays={relayList}
     agents={panelAgents}
@@ -957,7 +957,7 @@
   <div class="mcp-dock">
     <Panel title="Agents" persistKey="dock.agents" bind:open={dockOpen}>
       {#snippet actions()}<AgentPresence status={agentStatus} />{/snippet}
-      {@render agentDock()}
+      {#if dockOpen}{@render agentLibrary()}{/if}
     </Panel>
   </div>
 {/if}

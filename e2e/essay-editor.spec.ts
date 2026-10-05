@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { menuItem } from "./helpers";
+import { menuItem, routeRelayChannels } from "./helpers";
 import type { Page } from "@playwright/test";
 
 /**
@@ -174,15 +174,7 @@ test("write, reorder, nest, hide, draft out and back", async ({ page }) => {
 });
 
 test("an MCP-side write re-renders the essay", async ({ page }) => {
-  await page.route("https://relay.test/v1/channels", (route) =>
-    route.fulfill({
-      json: {
-        channel: "c",
-        callerUrl: "https://relay.test/v1/channels/c/call/CALLER",
-        executorUrl: "wss://relay.test/v1/channels/c/executor/EXEC",
-      },
-    })
-  );
+  await routeRelayChannels(page, { fixed: true });
   let toExecutor: (frame: unknown) => void = () => {};
   const replies = new Map<string, (r: { status: number; body?: string }) => void>();
   let executorUrl = "";

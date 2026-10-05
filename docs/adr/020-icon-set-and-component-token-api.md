@@ -6,7 +6,7 @@
 - **Supersedes:** —
 - **Superseded by:** —
 - **Amends:** [ADR-019](019-ui-theming-surface-and-live-styleguide.md) (makes its "hard-coded colours" consequence true)
-- **Amended by:** srs-web#423 (Toolbar and paragraph strip parts and tokens, action-registry rule: see "Toolbar and paragraph strip"); srs-web#424 (page frame, Drawer, Wide: see "Shell frame, Drawer, Wide", and parts (g) and (h)); srs-web#441 (notices: see part (j))
+- **Amended by:** srs-web#423 (Toolbar and paragraph strip parts and tokens, action-registry rule: see "Toolbar and paragraph strip"); srs-web#424 (page frame, Drawer, Wide: see "Shell frame, Drawer, Wide", and parts (g) and (h)); srs-web#441 (notices: see part (j)); srs-web#442 (agent library: see part (k))
 
 ## Context
 
@@ -280,9 +280,39 @@ One notice system, three shapes, one store (`src/lib/notices.svelte.ts`):
   adapter).
 - **Toolbar status keeps state** ("Unsaved changes"), never events.
 - **Guard.** `tests/no-adhoc-notices.test.ts` fails on a new or removed `role="alert"` (or dynamic
-  `role={...}`) in a Svelte file unless it is in its allowlist (agent connection line #442, modal #428,
+  `role={...}`) in a Svelte file unless it is in its allowlist (modal #428,
   form errors #426, `Notice` itself, `HoverCard`'s own role, the styleguide specimen).
 - **Parts.** `Notice`: `icon body dismiss`. `ToastHost`: `host`. `Diagnostics` (notice variant):
   `summary toggle group count`; the dismiss control is `Notice`'s `dismiss`.
 - **Tokens.** `--notice-bg|border|pad|gap|radius|warn-rule|error-bg|error-rule` and
   `--toast-bg|border|shadow|width|offset-bottom|gap`, in `tokens-components.css`.
+
+### (k) Agent library (#442)
+
+The agent and relay libraries are one presentational component, `AgentPanel`, used by the essay rail and the
+floating dock. It takes data and handlers through props from `App.svelte` (the only owner of stores, hosts and
+sessions) and never imports a store. This is client configuration, not SRS semantics (ADR-001).
+
+- **Rows, not headings.** Agents and relays are `<li>` rows (`data-part="agent" | "relay"`): a compact
+  `ActorMark`, the name (a `<span>`, truncated, full name in `title`), the relay label and "Connected 2 min
+  ago" in the muted meta size, a status dot (`aria-hidden`; the status word is visually-hidden text with
+  `data-testid="mcp-status"`), `Button size="sm"` Connect or Disconnect, and the other actions in a `⋯`
+  `ActionMenu`. No `h1`-`h6` and no `<details>` inside the panel.
+- **`Disclosure`** is the one inline show/hide pattern: a ghost small `Button` with a Lucide chevron,
+  `aria-expanded` and `aria-controls`. `Panel` stays a native `<details>`; `Disclosure` is for sections inside a
+  panel ("Connect an agent", "Add a relay").
+- **Errors are inline** (part j): add, edit and remove errors come back from App's handlers as text and render as
+  `Notice kind="error"` beside their cause; a connection error renders in the agent's `McpConnection` block.
+  Confirmations ("Relay added", "Relay removed", "Agent forgotten") are `info` toasts raised by App's handlers,
+  never by the panel.
+- **Decisions.** D1 a relay with agents cannot be removed (no cascade that destroys channel credentials). D2 an
+  agent's relay is fixed at creation (credentials are per agent per relay). D3 a relay's URL is editable only
+  while no agent uses it; its label always is. D4 `VITE_MCP_RELAY_URL` and the legacy `srs-web.mcp-relay-url`
+  key seed the library once; a later env change does not re-seed. D5 first run keeps one seeded agent, hidden
+  until a relay exists and bound by `adoptRelay` when one is added. D6 rename only while disconnected (the actor
+  name is fixed when a session opens). D7 Go → Agents… is an `onopenagents` handler (essay and generic shells
+  only: the Guides and Governance shells have a menu-less `Topbar` and rely on the always-present dock).
+- **Parts.** `AgentPanel`: `agents relays agent relay name meta dot actions`. `Disclosure`: `disclosure body`.
+- **Tokens.** `--agent-panel-gap|row-pad|row-gap|dot-size|name-size|meta-size`, in `tokens-components.css`.
+- **Specimens.** `/styleguide` renders five groups (no relay, one relay and no agents, several relays and agents,
+  connection errors, form validation and blocked removal) at 20rem, 18rem and 16rem.

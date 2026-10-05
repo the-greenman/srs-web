@@ -318,4 +318,28 @@ test.describe("Styleguide notices", () => {
     await page.clock.runFor(5000);
     await expect(page.locator(".toast-host .toast")).toHaveCount(0);
   });
+
+  // ── Agent library specimens (srs-web#442) ──────────────────────────────────────────────────
+  for (const width of [1280, 390]) {
+    test(`agent library specimens render at every width without overflow or headings: ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/styleguide");
+      await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+      for (const g of ["none", "empty", "several", "errors", "forms"]) {
+        await expect(page.getByTestId(`sg-agent-${g}`).getByTestId("sg-agent-frame")).toHaveCount(3);
+      }
+      await expect(page.getByTestId("sg-agent-none").getByTestId("agent-panel-empty").first()).toBeVisible();
+      await expect(page.getByTestId("sg-agent-errors").getByTestId("mcp-connection").first()).toBeVisible();
+      // the driven states: a relay form validation error, and a blocked relay removal
+      await expect(page.getByTestId("sg-agent-forms").getByTestId("relay-error").first()).toContainText("https");
+      await expect(page.getByTestId("sg-agent-forms").getByTestId("relay-row-error").first()).toContainText("Forget its 2 agents first.");
+      await expect(page.locator(".agent-panel h1, .agent-panel h2, .agent-panel h3, .agent-panel h4, .agent-panel h5, .agent-panel h6, .agent-panel details")).toHaveCount(0);
+      const overflowing = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>('[data-testid="sg-agent-frame"]')]
+          .filter((f) => f.scrollWidth > f.clientWidth)
+          .map((f) => f.dataset.caption)
+      );
+      expect(overflowing).toEqual([]);
+    });
+  }
 });
