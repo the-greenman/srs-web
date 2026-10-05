@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { openPackageEditor, routeRelayChannels } from "./helpers";
+import { openAdvanced, openPackageEditor, routeRelayChannels } from "./helpers";
 
 /**
  * agent-library.spec.ts — srs-web#442: relays and agents are user-managed libraries, and the agent
@@ -71,6 +71,7 @@ test("connect an agent through a relay, rename it, disconnect, forget", async ({
   // the first-run agent is bound to the relay as soon as one exists
   await page.getByTestId("mcp-library-connect").click();
   await expect(page.getByTestId("mcp-status")).toHaveText("Connected", { timeout: 15000 });
+  await openAdvanced(page);
   await expect(page.getByTestId("mcp-caller-url")).toHaveValue(
     /relay\.test\/v1\/channels\/c1\/call\/CALLER1/
   );

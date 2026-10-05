@@ -58,10 +58,36 @@ export async function acceptMigration(page: Page, ...ids: string[]): Promise<voi
  */
 export async function routeRelayChannels(
   page: Page,
-  o: { host?: string; fixed?: boolean; refuse?: boolean } = {}
-): Promise<void> {
+  o: {
+    host?: string;
+    fixed?: boolean;
+    refuse?: boolean;
+    /** Also answer POST /v1/channels/{ch}/pairing/{cred}: codes TEST1-ABCDE, TEST2-ABCDE, ... (at most nine per route). */
+    pairing?: { ttlMs?: number; status?: number };
+  } = {}
+): Promise<{ pairingRequests: string[]; pairing: { status?: number } }> {
   const host = o.host ?? "relay.test";
   let k = 0;
+  let calls = 0;
+  const handle = { pairingRequests: [] as string[], pairing: { status: o.pairing?.status } };
+  if (o.pairing)
+    await page.route(`https://${host}/v1/channels/*/pairing/*`, (route) => {
+      const url = new URL(route.request().url());
+      handle.pairingRequests.push(url.pathname);
+      if (route.request().method() !== "POST") return route.fulfill({ status: 405 });
+      if (handle.pairing.status)
+        return route.fulfill({
+          status: handle.pairing.status,
+          json: { error: "executor_origin_forbidden" },
+        });
+      return route.fulfill({
+        json: {
+          code: `TEST${++calls}-ABCDE`,
+          expiresAt: Date.now() + (o.pairing?.ttlMs ?? 600_000),
+          connectorUrl: `https://${host}/v1/channels/${url.pathname.split("/")[3]}/call`,
+        },
+      });
+    });
   await page.route(`https://${host}/v1/channels`, (route) => {
     if (o.refuse) return route.fulfill({ status: 400, json: { error: "invalid_origin" } });
     const n = o.fixed ? "" : String(++k);
@@ -73,6 +99,13 @@ export async function routeRelayChannels(
       },
     });
   });
+  return handle;
+}
+
+/** Opens every closed "Advanced: direct URL" disclosure, so the direct caller URLs are in the DOM. */
+export async function openAdvanced(page: Page): Promise<void> {
+  for (const t of await page.getByTestId("mcp-advanced-open").all())
+    if ((await t.getAttribute("aria-expanded")) === "false") await t.click();
 }
 
 /** One relay channel per agent, each opened from the Agents panel; returns the MCP helpers. */

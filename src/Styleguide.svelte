@@ -9,11 +9,12 @@
   import {
     ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
-    LayersPanel, MarkdownHelp, MarkdownText, AgentPanel, Panel, AnnotationMargin, PinnedPane, Select, Tag,
+    LayersPanel, MarkdownHelp, MarkdownText, AgentPanel, McpConnection, Panel, AnnotationMargin, PinnedPane, Select, Tag,
     TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost,
   } from "$lib/components";
   import LiveRegions from "$lib/components/LiveRegions.svelte";
   import { notify } from "$lib/notices.svelte";
+  import { pairingMinutesLeft } from "$lib/components/agent-panel";
   import ToolbarSpecimen from "./styleguide/ToolbarSpecimen.svelte";
   import ShellSpecimen from "./styleguide/ShellSpecimen.svelte";
   import Frame from "./styleguide/Frame.svelte";
@@ -46,6 +47,7 @@
     empty: "One relay, no agents",
     several: "Several relays and agents: online, saved with a long name, in use elsewhere",
     errors: "Connection errors: rejected and failed",
+    pairing: "Pairing shown: connector URL, code, expiry",
   };
   let theme = $state("Default");
   let wasm = $state<"loading" | "ready" | string>("loading");
@@ -126,6 +128,7 @@
       relays={fx.relays} agents={fx.panelAgents} now={fx.NOW}
       onAddRelay={() => null} onUpdateRelay={() => null} onRemoveRelay={() => null} onSetDefault={noop}
       onConnectNew={noop} onConnect={noop} onDisconnect={noop} onForget={noop} onRename={noop} onRotate={noop} onTakeover={noop}
+      pair={async () => fx.agentGroups.pairing.pairing.data}
     />
   </Panel>
   <Panel title="Comments">{@render gated(thread)}</Panel>
@@ -414,12 +417,17 @@
       <div class="sg__rails" data-testid="sg-agent-{name}">
         {#each fx.agentWidths as [width, caption] (width)}
           <Frame {width} {caption} testid="sg-agent-frame">
+            {#if "pairing" in g}
+              <McpConnection status="online" callerUrl={g.agents[0].state?.callerUrl} pairingView={{ ...g.pairing, minutes: pairingMinutesLeft(g.pairing.data.expiresAt, fx.NOW) }} onClosePair={noop} onRetryPair={noop} />
+            {:else}
             <AgentPanel
               relays={g.relays} agents={g.agents} now={fx.NOW}
               onAddRelay={() => null}
               onUpdateRelay={() => null} onRemoveRelay={() => null} onSetDefault={noop}
               onConnectNew={noop} onConnect={noop} onDisconnect={noop} onForget={noop} onRename={noop} onRotate={noop} onTakeover={noop}
+              pair={async () => fx.agentGroups.pairing.pairing.data}
             />
+            {/if}
           </Frame>
         {/each}
       </div>

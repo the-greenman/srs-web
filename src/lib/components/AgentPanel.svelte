@@ -14,12 +14,15 @@
   import type { Relay } from '$lib/relay-library.js';
   import ActionMenu from './ActionMenu.svelte';
   import ActorMark from './ActorMark.svelte';
-  import type { PanelAgent } from './agent-panel.js';
+  import type { PairingResponse } from '$lib/mcp/relay-protocol';
+  import type { HostState } from '$lib/mcp/relay-host.js';
+  import type { PairingView, PanelAgent } from './agent-panel.js';
   import Button from './Button.svelte';
   import Disclosure from './Disclosure.svelte';
   import Input from './Input.svelte';
   import McpConnection from './McpConnection.svelte';
   import Notice from './Notice.svelte';
+  import PairingLoader from './PairingLoader.svelte';
   import Select from './Select.svelte';
   import Tag from './Tag.svelte';
   import type { MenuAction } from './menu-action.js';
@@ -40,6 +43,7 @@
     onRename,
     onRotate,
     onTakeover,
+    pair,
   }: {
     relays: Relay[];
     agents: PanelAgent[];
@@ -58,6 +62,8 @@
     onRename: (id: string, label: string) => void;
     onRotate: (id: string) => void;
     onTakeover: (id: string) => void;
+    /** The current pairing code for an open agent; rejects when it cannot be fetched. */
+    pair: (id: string) => Promise<PairingResponse>;
   } = $props();
 
   const STATUS: Record<string, string> = {
@@ -142,8 +148,28 @@
     renamingId = null;
   }
 
+  // Pairing view (#447): one at a time, shown only while the row still has the channel it was opened on.
+  let pairingOpen = $state<{ id: string; callerUrl: string } | null>(null);
+  const pairingShown = (a: PanelAgent) =>
+    !!a.state?.callerUrl && pairingOpen?.id === a.conn.id && pairingOpen.callerUrl === a.state.callerUrl;
+  const shownId = $derived(agents.find(pairingShown)?.conn.id ?? null);
+  let wasShown: string | null = null;
+  // Closing is permanent (Done, rotate, disconnect, forget): clear the state and return focus to that row's menu.
+  $effect(() => {
+    const id = shownId;
+    if (!id && wasShown) {
+      const was = wasShown;
+      pairingOpen = null;
+      void tick().then(() => root?.querySelector<HTMLElement>(`[data-agent-id="${was}"] [data-testid="agent-menu"]`)?.focus());
+    }
+    wasShown = id;
+  });
+
   const relayMissing = (a: PanelAgent) => !relays.some((r) => r.id === a.conn.relayId);
   const agentActions = (a: PanelAgent): MenuAction[] => [
+    ...(a.state?.callerUrl
+      ? [{ id: 'pair', label: 'Pair an agent…', enabled: true, run: () => (pairingOpen = { id: a.conn.id, callerUrl: a.state?.callerUrl ?? '' }) }]
+      : []),
     ...(a.state ? [] : [{ id: 'rename', label: 'Rename', enabled: true, run: () => startRename(a) }]),
     ...(a.state ? [{ id: 'rotate', label: 'Rotate URL', enabled: true, run: () => onRotate(a.conn.id) }] : []),
     { id: 'forget', label: 'Forget', enabled: true, run: () => onForget(a.conn.id) },
@@ -194,6 +220,10 @@
   </form>
 {/snippet}
 
+{#snippet conn(a: PanelAgent, state: HostState, view: PairingView | null = null, retry?: () => void)}
+  <McpConnection status={state.status} callerUrl={state.callerUrl} error={state.error} pairingView={view} onClosePair={() => (pairingOpen = null)} onRetryPair={retry} onTakeover={() => onTakeover(a.conn.id)} />
+{/snippet}
+
 <div class="agent-panel" bind:this={root} data-testid="agent-panel">
   {#if relays.length === 0}
     <p class="agent-panel__empty" data-testid="agent-panel-empty">No relay yet.</p>
@@ -203,7 +233,7 @@
     {:else}
       <ul class="agent-panel__list" data-part="agents">
         {#each agents as a (a.conn.id)}
-          <li class="agent-panel__row" data-part="agent" data-testid={a.state ? 'mcp-agent-row' : 'mcp-library-item'}>
+          <li class="agent-panel__row" data-part="agent" data-agent-id={a.conn.id} data-testid={a.state ? 'mcp-agent-row' : 'mcp-library-item'}>
             <div class="agent-panel__line">
               <ActorMark size="sm" actor={{ kind: 'ai', id: a.conn.id, name: a.name }} />
               <div class="agent-panel__id">
@@ -240,7 +270,14 @@
             </div>
             {#if ctx && a.state}<p class="agent-panel__meta" data-testid="agent-last">{ctx.lastActivity(a.conn.id)}</p>{/if}
             {#if a.state}
-              <McpConnection status={a.state.status} callerUrl={a.state.callerUrl} error={a.state.error} onTakeover={() => onTakeover(a.conn.id)} />
+              {@const st = a.state}
+              {#if pairingShown(a)}
+                <PairingLoader pair={() => pair(a.conn.id)} {now}>
+                  {#snippet children(view, retry)}{@render conn(a, st, view, retry)}{/snippet}
+                </PairingLoader>
+              {:else}
+                {@render conn(a, a.state)}
+              {/if}
             {/if}
           </li>
         {/each}

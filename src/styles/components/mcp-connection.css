@@ -30,6 +30,19 @@
   font-size: var(--size-xs);
   text-overflow: ellipsis;
 }
+.mcp-conn__pairing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+.mcp-conn__code .input {
+  letter-spacing: 0.06em;
+}
+.mcp-conn__expiry {
+  margin: 0;
+  opacity: 0.7;
+}
 .mcp-conn__actions {
   display: flex;
   flex-wrap: wrap;
