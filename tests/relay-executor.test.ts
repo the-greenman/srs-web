@@ -49,13 +49,13 @@ const track = (sockets: FakeSocket[]) => (u: string) => {
   return s;
 };
 
-function make(handle: (t: string) => string | undefined) {
+function make(handle: (t: string) => string | undefined, sessionUnknown?: () => boolean) {
   const sockets: FakeSocket[] = [];
   const status: string[] = [];
   const onHandled = vi.fn();
   const ex = new RelayExecutor({
     executorUrl: "wss://relay.test/v1/channels/c/executor/cred",
-    session: { handle },
+    session: { handle, sessionUnknown },
     onStatus: (s) => status.push(s),
     onHandled,
     createSocket: (u) => {
@@ -86,6 +86,22 @@ describe("RelayExecutor", () => {
     expect(a.response.status).toBe(200);
     expect(text(a)).toBe('{"echo":"not even json"}');
     expect(b.response).toEqual({ status: 202, headers: {} });
+  });
+
+  it("answers 404 with the handler's body when the session is unknown; 200 otherwise; 202 for nothing", async () => {
+    let unknown = true;
+    const { sockets } = make((t) => (t === "n" ? undefined : '{"error":"not initialized"}'), () => unknown);
+    sockets[0].request("q", "a");
+    sockets[0].request("n", "b");
+    await flush();
+    unknown = false;
+    sockets[0].request("q", "c");
+    await flush();
+    const [a, b, c] = sockets[0].sent;
+    expect(a.response.status).toBe(404);
+    expect(text(a)).toBe('{"error":"not initialized"}');
+    expect(b.response.status).toBe(202);
+    expect(c.response.status).toBe(200);
   });
 
   it("serializes execution", async () => {

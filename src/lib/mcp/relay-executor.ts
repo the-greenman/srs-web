@@ -4,7 +4,7 @@
  * It forwards each opaque request body to `session.handle(text)` (the Rust/WASM
  * McpSession) and returns the raw result. Only HTTP-shaped framing lives here:
  * `undefined` (a notification/response with nothing to say) -> 202 empty body;
- * text -> 200 application/json. Requests are serialized; one executor instance
+ * text -> 200 application/json (404 when the handler says the session is unknown). Requests are serialized; one executor instance
  * is one epoch -- after `stop()` no queued request runs and no reply is sent.
  */
 import {
@@ -20,6 +20,8 @@ import {
 
 export interface FrameHandler {
   handle(text: string): string | undefined;
+  /** True when the last reply was an answer on a session that is not initialized: HTTP "unknown session" (404). */
+  sessionUnknown?(): boolean;
 }
 
 export type ExecutorStatus = "connecting" | "online" | "offline" | "replaced" | "rejected";
@@ -121,7 +123,7 @@ export class RelayExecutor {
         out === undefined
           ? { status: 202, headers: {} }
           : {
-              status: 200,
+              status: this.o.session.sessionUnknown?.() ? 404 : 200,
               headers: { "content-type": "application/json" },
               body: base64UrlEncode(enc.encode(out)),
             };

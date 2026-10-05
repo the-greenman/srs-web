@@ -21,6 +21,9 @@ const LEGACY_ID_KEY = "srs-web.relay-agent-id"; // single-agent era (#360)
 const LEGACY_CREDS_KEY = "srs-web.mcp-relay"; // pre-#358 channel credentials (also pre-#360 users, who have no id)
 /** Relay credentials key for one connection (RelayHost `storageKey`). */
 export const credsKey = (id: string) => `${LEGACY_CREDS_KEY}.${id}`;
+/** The client's last successful `initialize` for one connection (#418): opaque body, client metadata only. */
+const INIT_PREFIX = "srs-web.mcp-init.";
+export const initKey = (id: string) => `${INIT_PREFIX}${id}`;
 
 /**
  * The connection list. Loaded once and then held in memory, so a throwing storage never throws
@@ -65,6 +68,12 @@ export function createConnectionStore(getStorage: () => Store = () => localStora
     save();
     return cache;
   }
+
+  const clearInit = (id: string) => {
+    try {
+      st()?.removeItem(initKey(id));
+    } catch {}
+  };
 
   return {
     /** The connections; first run seeds one, migrating the pre-#358 connection into it. */
@@ -126,7 +135,36 @@ export function createConnectionStore(getStorage: () => Store = () => localStora
       try {
         st()?.removeItem(credsKey(id));
       } catch {}
+      clearInit(id);
       return cache;
+    },
+    saveInit(id: string, init: { body: string; initialized: boolean }): void {
+      if (!init.body) return;
+      try {
+        st()?.setItem(initKey(id), JSON.stringify(init));
+      } catch {}
+    },
+    loadInit(id: string): { body: string; initialized: boolean } | null {
+      try {
+        const v = JSON.parse(st()?.getItem(initKey(id)) ?? "null");
+        return typeof v?.body === "string" && v.body
+          ? { body: v.body, initialized: !!v.initialized }
+          : null;
+      } catch {
+        return null;
+      }
+    },
+    clearInit,
+    /** Drop stored initializes whose agent is gone (a crash between steps). */
+    sweepInits(liveIds: string[]): void {
+      try {
+        const s = st() as Storage | null;
+        if (!s || typeof s.length !== "number") return;
+        const keys = Array.from({ length: s.length }, (_, i) => s.key(i) ?? "");
+        for (const k of keys)
+          if (k.startsWith(INIT_PREFIX) && !liveIds.includes(k.slice(INIT_PREFIX.length)))
+            s.removeItem(k);
+      } catch {}
     },
   };
 }

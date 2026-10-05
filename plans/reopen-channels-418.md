@@ -157,11 +157,11 @@ npm run typecheck && npm run lint && npm test
 
 #### Tasks
 
-- [ ] `agent-connections.ts`: `initKey`, `saveInit/loadInit/clearInit`, `sweepInits`; `remove` clears; App calls `sweepInits` once at start.
-- [ ] `agent-activity.ts`: `rpcInfo`, options-object `observeSession` (update `App.svelte:419`), replay (D7), `sessionUnknown` (D8), `ObservedSession.is_initialized`.
-- [ ] `relay-executor.ts`: optional `sessionUnknown` and the 404 (D8).
-- [ ] App rotate handler: `clearInit`, delete `clientNames[id]` (D9).
-- [ ] Unit tests:
+- [x] `agent-connections.ts`: `initKey`, `saveInit/loadInit/clearInit`, `sweepInits`; `remove` clears; App calls `sweepInits` once at start.
+- [x] `agent-activity.ts`: `rpcInfo`, options-object `observeSession` (update `App.svelte:419`), replay (D7), `sessionUnknown` (D8), `ObservedSession.is_initialized`.
+- [x] `relay-executor.ts`: optional `sessionUnknown` and the 404 (D8).
+- [x] App rotate handler: `clearInit`, delete `clientNames[id]` (D9).
+- [x] Unit tests:
   - `tests/agent-activity.test.ts` (fake session with `initialized` state, spies for `onWrite`/`onClientName`):
     - `rpcInfo`: method, clientName and isError are read from one parse; a `tools/call` whose arguments contain the text `"initialize"` is not an initialize (regression for the old substring test); invalid JSON does not throw.
     - A successful `initialize` stores its body; a failed one (error member) does not; an empty body is never stored; a second successful one replaces the first (last initializer wins); `notifications/initialized` sets the flag.
@@ -172,10 +172,15 @@ npm run typecheck && npm run lint && npm test
 
 #### Acceptance Criteria
 
-- [ ] All existing executor/activity tests pass (the `observeSession` signature change updates their call sites only).
-- [ ] The replayed requests are the client's own stored bytes; the only TS-authored MCP message is the fixed paramless `notifications/initialized` notification.
-- [ ] The 404 body is byte-for-byte the engine's; a failed `initialize` still returns 200.
-- [ ] `npm run typecheck`, `npm run lint`, `npm test` pass.
+- [x] All existing executor/activity tests pass (the `observeSession` signature change updates their call sites only).
+- [x] The replayed requests are the client's own stored bytes; the only TS-authored MCP message is the fixed paramless `notifications/initialized` notification.
+- [x] The 404 body is byte-for-byte the engine's; a failed `initialize` still returns 200.
+- [x] `npm run typecheck`, `npm run lint`, `npm test` pass.
+
+#### Deviations
+
+- Per the lead decision, `onClientName(name, replayed)` takes a `replayed` flag; App fills `clientNames[id]` from a replay only when unset.
+- `sweepInits` is called at App init with `connections.list()` ids (not the `library` state, to avoid a svelte-check warning).
 
 #### Testing
 

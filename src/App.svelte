@@ -323,6 +323,7 @@
   });
   /** Saved channels (the library) and those held by another tab (Web Locks). */
   let library = $state<AgentConnection[]>(connections.list());
+  connections.sweepInits(connections.list().map((c) => c.id));
   adoptRelays();
   let inUse = $state<Set<string>>(new Set());
   const refreshInUse = () => void channelsInUseElsewhere().then((s) => (inUse = s));
@@ -426,7 +427,17 @@
     if (entry.session) {
       if (applyGuard(conn.id)) {
         applyAgentActor(entry.session, current as SrsRepository, conn);
-        void h.attach(observeSession(entry.session, conn.id, (w) => (agentWrites = pushWrite(agentWrites, w)), (n) => (clientNames = { ...clientNames, [conn.id]: n }), (id) => listRelations(current as SrsRepository, {}).find((r) => r.relationId === id)?.targetInstanceId));
+        void h.attach(observeSession(entry.session, conn.id, {
+          onWrite: (w) => (agentWrites = pushWrite(agentWrites, w)),
+          // a replayed initialize only fills a missing name; it never flips one client's name to another's
+          onClientName: (n, replayed) => { if (!replayed || !clientNames[conn.id]) clientNames = { ...clientNames, [conn.id]: n }; },
+          relationTarget: (id) => listRelations(current as SrsRepository, {}).find((r) => r.relationId === id)?.targetInstanceId,
+          initStore: {
+            load: () => connections.loadInit(conn.id),
+            save: (i) => connections.saveInit(conn.id, i),
+            clear: () => connections.clearInit(conn.id),
+          },
+        }));
       }
     } else h.detach();
   }
@@ -1047,7 +1058,13 @@
     onDisconnect={disconnectAgent}
     onForget={forgetAgent}
     onRename={renameAgent}
-    onRotate={(id) => void hosts.get(id)?.host.rotate()}
+    onRotate={(id) => {
+      // a new channel means new clients
+      connections.clearInit(id);
+      const { [id]: _gone, ...rest } = clientNames;
+      clientNames = rest;
+      void hosts.get(id)?.host.rotate();
+    }}
     onTakeover={(id) => void hosts.get(id)?.host.takeover()}
     pair={async (id) => {
       const e = hosts.get(id);

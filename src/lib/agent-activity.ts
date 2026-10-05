@@ -33,46 +33,115 @@ export const MAX_FEED = 50;
 /** The session's host-facing surface: handle a frame, drain the write summary. */
 export type ObservedSession = FrameHandler & {
   take_write_summary(): string | undefined;
+  is_initialized(): boolean;
 };
+
+/** The client's last successful `initialize` body (opaque) and whether `notifications/initialized` followed. */
+export interface Init {
+  body: string;
+  initialized: boolean;
+}
+export interface InitStore {
+  load(): Init | null;
+  save(i: Init): void;
+  clear(): void;
+}
 
 let seq = 0;
 
-/** Wrap a session so each request that wrote is reported with its agent. */
+/**
+ * The only JSON-RPC parsing in the host (ADR-001): the method, the client's name and whether the
+ * message carries an `error` member, from one parse. Never throws.
+ */
+export function rpcInfo(text: string): { method?: string; clientName?: string; isError: boolean } {
+  try {
+    const m = JSON.parse(text);
+    const n = m?.params?.clientInfo?.name;
+    return {
+      method: typeof m?.method === "string" ? m.method : undefined,
+      clientName: typeof n === "string" && n ? n : undefined,
+      isError: m != null && typeof m === "object" && "error" in m,
+    };
+  } catch {
+    return { isError: false };
+  }
+}
+
+const INITIALIZED = '{"jsonrpc":"2.0","method":"notifications/initialized"}';
+
+/**
+ * Wrap a session so each request that wrote is reported with its agent. After a reload the session
+ * is fresh and uninitialized: the client's own stored `initialize` is replayed into it (#418), so
+ * the client never notices; `sessionUnknown()` tells the executor when nothing could be replayed.
+ */
 export function observeSession(
   session: ObservedSession,
   agentId: string,
-  onWrite: (w: AgentWrite) => void,
-  /** The client's own name from its `initialize` (the engine uses it as the actor name unless the host set a label). */
-  onClientName?: (name: string) => void,
-  /** The instance a relation points at, so a link is attributed to the record it touches. */
-  relationTarget?: (relationId: string) => string | undefined
+  o: {
+    onWrite(w: AgentWrite): void;
+    /** The client's own name from its `initialize` (the engine uses it as the actor name unless the host set a label); `replayed` when it came from the stored one. */
+    onClientName?(name: string, replayed: boolean): void;
+    /** The instance a relation points at, so a link is attributed to the record it touches. */
+    relationTarget?(relationId: string): string | undefined;
+    initStore?: InitStore;
+  }
 ): FrameHandler {
+  let unknown = false;
+  /** Drain the write summary: call exactly once per handled request. */
+  const drain = (report: boolean) => {
+    const raw = session.take_write_summary();
+    if (!raw || !report) return;
+    const { tool, changed } = JSON.parse(raw) as { tool: string; changed: WriteChange[] };
+    const rel = changed.find((c) => c.target === "relation");
+    o.onWrite({
+      seq: ++seq,
+      agentId,
+      tool,
+      changed,
+      instanceId:
+        changed.find((c) => c.target === "instance")?.id ??
+        (rel ? o.relationTarget?.(rel.id) : undefined),
+      at: Date.now(),
+    });
+  };
+  /** Feed the stored initialize (and its notification) into a fresh session; replies are discarded. */
+  const replay = (init: Init) => {
+    const name = rpcInfo(init.body).clientName;
+    const reply = session.handle(init.body);
+    drain(false);
+    if (reply === undefined || rpcInfo(reply).isError || !session.is_initialized()) {
+      o.initStore?.clear();
+      return;
+    }
+    if (name) o.onClientName?.(name, true);
+    if (init.initialized) {
+      session.handle(INITIALIZED);
+      drain(false);
+    }
+  };
   return {
     handle(text) {
-      if (onClientName && text.includes('"initialize"')) {
-        try {
-          const n = JSON.parse(text)?.params?.clientInfo?.name;
-          if (typeof n === "string" && n) onClientName(n);
-        } catch {}
-      }
+      const { method, clientName } = rpcInfo(text);
+      const stored = o.initStore?.load();
+      if (method !== "initialize" && stored && !session.is_initialized()) replay(stored);
+      if (method === "initialize" && clientName) o.onClientName?.(clientName, false);
       const out = session.handle(text);
-      const raw = session.take_write_summary(); // drains: call exactly once per handled request
-      if (raw) {
-        const { tool, changed } = JSON.parse(raw) as { tool: string; changed: WriteChange[] };
-        const rel = changed.find((c) => c.target === "relation");
-        onWrite({
-          seq: ++seq,
-          agentId,
-          tool,
-          changed,
-          instanceId:
-            changed.find((c) => c.target === "instance")?.id ??
-            (rel ? relationTarget?.(rel.id) : undefined),
-          at: Date.now(),
-        });
+      drain(true);
+      unknown = out !== undefined && method !== "initialize" && !session.is_initialized();
+      if (
+        method === "initialize" &&
+        out !== undefined &&
+        !rpcInfo(out).isError &&
+        session.is_initialized()
+      ) {
+        o.initStore?.save({ body: text, initialized: false });
+      } else if (method === "notifications/initialized") {
+        const i = o.initStore?.load();
+        if (i) o.initStore?.save({ ...i, initialized: true });
       }
       return out;
     },
+    sessionUnknown: () => unknown,
   };
 }
 

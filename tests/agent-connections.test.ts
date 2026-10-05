@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { acquireChannelLock, channelsInUseElsewhere, createConnectionStore, credsKey, releaseChannelLock } from "../src/lib/agent-connections";
+import { acquireChannelLock, channelsInUseElsewhere, createConnectionStore, credsKey, initKey, releaseChannelLock } from "../src/lib/agent-connections";
 
 const mem = () => {
   const m = new Map<string, string>();
@@ -13,6 +13,58 @@ let s: ReturnType<typeof mem>;
 const store = () => createConnectionStore(() => s);
 beforeEach(() => {
   s = mem();
+});
+
+describe("stored initialize (#418)", () => {
+  it("round-trips, never stores an empty body, and remove() clears it", () => {
+    const c = store();
+    const id = c.add()[1].id;
+    c.saveInit(id, { body: "", initialized: true });
+    expect(c.loadInit(id)).toBeNull();
+    c.saveInit(id, { body: "{b}", initialized: true });
+    expect(store().loadInit(id)).toEqual({ body: "{b}", initialized: true });
+    c.clearInit(id);
+    expect(c.loadInit(id)).toBeNull();
+    c.saveInit(id, { body: "{b}", initialized: false });
+    c.remove(id);
+    expect(s.getItem(initKey(id))).toBeNull();
+  });
+  it("sweepInits removes only orphaned keys", () => {
+    const m = new Map<string, string>([
+      [initKey("live"), "1"],
+      [initKey("gone"), "2"],
+      ["other", "3"],
+    ]);
+    const st = {
+      getItem: (k: string) => m.get(k) ?? null,
+      setItem: (k: string, v: string) => void m.set(k, v),
+      removeItem: (k: string) => void m.delete(k),
+      get length() {
+        return m.size;
+      },
+      key: (i: number) => [...m.keys()][i] ?? null,
+    };
+    createConnectionStore(() => st).sweepInits(["live"]);
+    expect([...m.keys()]).toEqual([initKey("live"), "other"]);
+  });
+  it("a throwing storage does not throw", () => {
+    const bad = {
+      getItem: () => {
+        throw new Error("x");
+      },
+      setItem: () => {
+        throw new Error("x");
+      },
+      removeItem: () => {
+        throw new Error("x");
+      },
+    };
+    const c = createConnectionStore(() => bad);
+    c.saveInit("a", { body: "b", initialized: true });
+    expect(c.loadInit("a")).toBeNull();
+    c.clearInit("a");
+    c.sweepInits([]);
+  });
 });
 
 describe("agent connections", () => {
