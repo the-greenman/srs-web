@@ -24,6 +24,10 @@
   import { definitionToComposites, definitionToFields, type CompositeFormDef } from "$lib/editor/blueprint-fields.js";
   import SectionForm from "$lib/editor/SectionForm.svelte";
   import Button from "$lib/components/Button.svelte";
+  import IconButton from "$lib/components/IconButton.svelte";
+  import ChevronUp from "@lucide/svelte/icons/chevron-up";
+  import ChevronDown from "@lucide/svelte/icons/chevron-down";
+  import X from "@lucide/svelte/icons/x";
   import PreviewPane from "$lib/components/PreviewPane.svelte";
   import {
     getRecord,
@@ -414,12 +418,12 @@
             <span class="bp-editor__block-type">{blockTypeLabel(item)}</span>
           </button>
           <span class="bp-editor__block-controls">
-            <button type="button" class="bp-editor__icon-btn" data-testid="bp-block-up" title="Move up"
-              disabled={disabled || index === 0} onclick={() => moveUp(list, index)}>↑</button>
-            <button type="button" class="bp-editor__icon-btn" data-testid="bp-block-down" title="Move down"
-              disabled={disabled || index === list.length - 1} onclick={() => moveDown(list, index)}>↓</button>
-            <button type="button" class="bp-editor__icon-btn bp-editor__icon-btn--danger" data-testid="bp-block-remove"
-              title="Remove" disabled={disabled} onclick={() => removeBlock(item.instanceId, hasParent)}>✕</button>
+            <IconButton icon={ChevronUp} label="Move up" size="sm" data-testid="bp-block-up"
+              disabled={disabled || index === 0} onclick={() => moveUp(list, index)} />
+            <IconButton icon={ChevronDown} label="Move down" size="sm" data-testid="bp-block-down"
+              disabled={disabled || index === list.length - 1} onclick={() => moveDown(list, index)} />
+            <IconButton icon={X} label="Remove" size="sm" data-testid="bp-block-remove"
+              disabled={disabled} onclick={() => removeBlock(item.instanceId, hasParent)} />
           </span>
         </header>
         {#if open && record}
@@ -514,7 +518,7 @@
   }
   .bp-editor__empty {
     padding: 1rem;
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     font-size: 0.9rem;
   }
   .bp-editor__toggle {
@@ -534,7 +538,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--color-muted, #666);
+    color: var(--color-muted);
     font-size: 0.85rem;
   }
   .bp-editor__inline-preview {
@@ -543,7 +547,7 @@
     max-height: 12rem;
     overflow: hidden;
     border: none;
-    background: #fff;
+    background: var(--color-page);
     cursor: pointer;
     padding: 0;
     border-radius: 0 0 6px 6px;
@@ -559,14 +563,14 @@
     flex-direction: column;
     gap: 0.4rem;
     padding: 0.5rem 0.5rem 0.5rem 1.25rem;
-    border-top: 1px solid var(--color-border, #e0e0e0);
+    border-top: 1px solid var(--color-line);
   }
   .bp-editor__root {
-    border-bottom: 2px solid var(--color-border, #ddd);
+    border-bottom: 2px solid var(--color-line);
     padding-bottom: 0.5rem;
   }
   .bp-editor__block {
-    border: 1px solid var(--color-border, #e0e0e0);
+    border: 1px solid var(--color-line);
     border-radius: 6px;
   }
   .bp-editor__block-header {
@@ -574,38 +578,19 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.4rem 0.75rem;
-    background: var(--color-surface-1, #f7f7f7);
-    border-bottom: 1px solid var(--color-border, #e0e0e0);
+    background: var(--color-line-soft);
+    border-bottom: 1px solid var(--color-line);
     border-radius: 6px 6px 0 0;
   }
   .bp-editor__block-type {
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
   }
   .bp-editor__block-controls {
     display: flex;
     gap: 0.2rem;
-  }
-  .bp-editor__icon-btn {
-    font-size: 0.8rem;
-    line-height: 1;
-    width: 1.6rem;
-    height: 1.6rem;
-    border: 1px solid var(--color-border, #ddd);
-    border-radius: 4px;
-    background: transparent;
-    cursor: pointer;
-    color: var(--color-muted, #666);
-  }
-  .bp-editor__icon-btn:disabled {
-    opacity: 0.35;
-    cursor: default;
-  }
-  .bp-editor__icon-btn--danger {
-    color: #b91c1c;
-    border-color: #fca5a5;
   }
   .bp-editor__add-row {
     display: flex;
@@ -616,9 +601,9 @@
     list-style: none;
     margin: 0 auto;
     padding: 0.25rem;
-    border: 1px solid var(--color-border, #ddd);
+    border: 1px solid var(--color-line);
     border-radius: 6px;
-    background: #fff;
+    background: var(--color-page);
     max-width: 20rem;
   }
   .bp-editor__picker button {
@@ -632,6 +617,6 @@
     font-size: 0.85rem;
   }
   .bp-editor__picker button:hover {
-    background: var(--color-surface-hover, #f0f0f0);
+    background: var(--color-hover);
   }
 </style>
