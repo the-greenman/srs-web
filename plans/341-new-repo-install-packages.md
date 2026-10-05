@@ -110,7 +110,7 @@ If D1(a) is chosen, `create`'s input gains an optional `namespace`. That change 
 ## Phases
 
 ### Phase 0: Binding pin
-- [ ] After srs-rust PR #1266 merges and its release publishes, bump `ensure-bindings.mjs` `DEFAULT_URL` to that build. Run the full unit suite and e2e on the bump before building on it.
+- [x] After srs-rust PR #1266 merges and its release publishes, bump `ensure-bindings.mjs` `DEFAULT_URL` to that build.  **Done: build.468.** Run the full unit suite and e2e on the bump before building on it.
 
 ### Phase 1: Pinned bundles (#339)
 - [x] `packages.lock.json`: `[{packageId, name, version, url, sha256}]` for essay.
