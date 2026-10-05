@@ -603,7 +603,7 @@
       <p class="generic-muted">{records.length} record{records.length === 1 ? "" : "s"}</p>
       <div class="generic-records">
         {#each records as record (record.instanceId)}
-          <button class="generic-record-row" onclick={() => openRecord(record.instanceId)}>
+          <button class="generic-record-row" data-testid="record-row" onclick={() => openRecord(record.instanceId)}>
             <strong>{record.label || record.instanceId.slice(0, 8)}</strong>
             <span>{record.typeNamespace}/{record.typeName}{record.lifecycleState ? ` · ${record.lifecycleState}` : ""}</span>
           </button>

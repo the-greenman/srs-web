@@ -1409,21 +1409,33 @@ export interface TypeSummary {
   sourcePackage?: string;
 }
 
-/**
- * List type definitions from the compiled package. Used to resolve the current
- * version of a type UUID (e.g. blueprint `$ref`s carry no version).
- */
 /** The type a type extends (`extendsTypeId`, ext:type-inheritance), or null. */
 export function getTypeExtends(repo: SrsRepository, typeId: string): string | null {
   const type = repo.get_type(typeId) as { extendsTypeId?: string | null } | null;
   return type?.extendsTypeId ?? null;
 }
 
+/**
+ * List type definitions from the compiled package. Used to resolve the current
+ * version of a type UUID (e.g. blueprint `$ref`s carry no version).
+ *
+ * The package can carry more than one stored version of the same type id (an
+ * older version kept so records still bound to it resolve correctly); this
+ * wrapper collapses those to one `TypeSummary` per id — the highest `version`
+ * — so every caller sees the one-per-lineage shape its docs already promise
+ * (srs-web#438: a duplicate id otherwise breaks any `id`-keyed list of types).
+ */
 export function listTypes(
   repo: SrsRepository,
   filter: Record<string, unknown> = {}
 ): TypeSummary[] {
-  return repo.list_types(JSON.stringify(filter)) as TypeSummary[];
+  const raw = repo.list_types(JSON.stringify(filter)) as TypeSummary[];
+  const byId = new Map<string, TypeSummary>();
+  for (const type of raw) {
+    const current = byId.get(type.id);
+    if (!current || type.version > current.version) byId.set(type.id, type);
+  }
+  return [...byId.values()];
 }
 
 /** A package boundary installed in the loaded repository. */

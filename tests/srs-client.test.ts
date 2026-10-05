@@ -43,6 +43,7 @@ import {
   listRecords,
   listRelations,
   listTerms,
+  listTypes,
   moveContainerMemberRelative,
   repositoryNavigation,
   resolveContainerView,
@@ -275,6 +276,58 @@ describe("typeSchema", () => {
       },
     });
     expect(() => typeSchema(repo, "nonexistent-type")).toThrow("type not found");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// listTypes (srs-web#438: a package can carry more than one stored version of
+// the same type id — list_types must still return one TypeSummary per id)
+// ---------------------------------------------------------------------------
+
+describe("listTypes", () => {
+  it("passes the filter through to repo.list_types as JSON", () => {
+    const spy = vi.fn().mockReturnValue([]);
+    const repo = mockRepo({ list_types: spy });
+
+    listTypes(repo, { namespace: "com.example" });
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(JSON.stringify({ namespace: "com.example" }));
+  });
+
+  it("collapses multiple stored versions of the same type id to the highest version", () => {
+    const repo = mockRepo({
+      list_types: () => [
+        { id: "doc-state", namespace: "com.mudemocracy.essay", name: "document-state", version: 1 },
+        { id: "doc-state", namespace: "com.mudemocracy.essay", name: "document-state", version: 2 },
+        { id: "essay", namespace: "com.mudemocracy.essay", name: "essay", version: 1 },
+      ],
+    });
+
+    const result = listTypes(repo);
+
+    expect(result).toHaveLength(2);
+    const docState = result.find((t) => t.id === "doc-state");
+    expect(docState?.version).toBe(2);
+  });
+
+  it("returns one entry per id regardless of input order (highest version always wins)", () => {
+    const repo = mockRepo({
+      list_types: () => [
+        { id: "t1", namespace: "com.example", name: "thing", version: 3 },
+        { id: "t1", namespace: "com.example", name: "thing", version: 1 },
+      ],
+    });
+
+    const result = listTypes(repo);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].version).toBe(3);
+  });
+
+  it("returns an empty array when the repo has no types", () => {
+    const repo = mockRepo({ list_types: () => [] });
+    expect(listTypes(repo)).toEqual([]);
   });
 });
 
