@@ -85,11 +85,27 @@ async function openPair(props: Record<string, unknown>) {
   return r;
 }
 
+it("shows no connection box until a view is opened; Direct URL replaces pairing, Done returns focus to the menu", async () => {
+  const r = render(AgentPanel, { ...base, agents: [agent({ state: online() })], pair: async () => pairing(600_000) });
+  expect(r.queryByTestId("mcp-connection")).toBeNull();
+  await fireEvent.click(r.getByTestId("agent-menu"));
+  await fireEvent.click(r.getByTestId("agent-pair"));
+  await r.findByTestId("pair-code");
+  await fireEvent.click(r.getByTestId("agent-menu"));
+  await fireEvent.click(r.getByTestId("agent-direct"));
+  await waitFor(() => expect(r.queryByTestId("pair-code")).toBeNull());
+  await waitFor(() => expect(document.activeElement).toBe(r.getByTestId("mcp-caller-url")));
+  await fireEvent.click(r.getByTestId("direct-close"));
+  await waitFor(() => expect(r.queryByTestId("mcp-connection")).toBeNull());
+  await waitFor(() => expect(document.activeElement).toBe(r.getByTestId("agent-menu")));
+});
+
 it("offers Pair an agent only for an open agent with a caller URL", async () => {
   for (const [state, want] of [[online(), true], [null, false], [online(null), false]] as const) {
     const r = render(AgentPanel, { ...base, agents: [agent({ state })] });
     await fireEvent.click(r.getByTestId("agent-menu"));
     expect(!!r.queryByTestId("agent-pair")).toBe(want);
+    expect(!!r.queryByTestId("agent-direct")).toBe(want);
     r.unmount();
   }
 });
@@ -136,5 +152,5 @@ it("opening on another agent closes the first", async () => {
   await fireEvent.click(menus[1]);
   await fireEvent.click(r.getByTestId("agent-pair"));
   await waitFor(() => expect(r.getAllByTestId("pair-code")).toHaveLength(1));
-  expect(r.getAllByTestId("mcp-connection")[1].querySelector('[data-testid="pair-code"]')).toBeTruthy();
+  expect(r.getByTestId("mcp-connection").querySelector('[data-testid="pair-code"]')).toBeTruthy();
 });

@@ -103,10 +103,11 @@ export async function routeRelayChannels(
   return handle;
 }
 
-/** Opens every closed "Advanced: direct URL" disclosure, so the direct caller URLs are in the DOM. */
-export async function openAdvanced(page: Page): Promise<void> {
-  for (const t of await page.getByTestId("mcp-advanced-open").all())
-    if ((await t.getAttribute("aria-expanded")) === "false") await t.click();
+/** Opens the n-th connected agent's "Direct URL…" view (one view at a time) and returns the URL. */
+export async function openDirectUrl(page: Page, row = 0): Promise<string> {
+  await page.getByTestId("mcp-agent-row").nth(row).getByTestId("agent-menu").click();
+  await page.getByTestId("agent-direct").click();
+  return page.getByTestId("mcp-caller-url").inputValue();
 }
 
 /** One relay channel per agent, each opened from the Agents panel; returns the MCP helpers. */

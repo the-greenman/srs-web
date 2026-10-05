@@ -419,7 +419,7 @@
         {#each fx.agentWidths as [width, caption] (width)}
           <Frame {width} {caption} testid="sg-agent-frame">
             {#if "pairing" in g}
-              <McpConnection status="online" callerUrl={g.agents[0].state?.callerUrl} pairingView={{ ...g.pairing, minutes: pairingMinutesLeft(g.pairing.data.expiresAt, fx.NOW) }} onClosePair={noop} onRetryPair={noop} />
+              <McpConnection status="online" pairingView={{ ...g.pairing, minutes: pairingMinutesLeft(g.pairing.data.expiresAt, fx.NOW) }} onClosePair={noop} onRetryPair={noop} />
             {:else}
             <AgentPanel
               relays={g.relays} agents={g.agents} now={fx.NOW}

@@ -12,15 +12,13 @@ beforeEach(() => copyText.mockClear());
 const data = { code: "K7QPM-2XD4R", expiresAt: 0, connectorUrl: "https://relay.test/v1/channels/c1/call" };
 const view = (o = {}) => ({ data, error: null, minutes: 10, ...o });
 
-it("keeps the direct URL and takeover for a refused channel, with the error as a Notice", async () => {
+it("keeps the direct URL, takeover for a refused channel, with the error as a Notice", async () => {
   const { getByTestId, getByRole, queryByTestId } = render(McpConnection, {
     status: "rejected",
     callerUrl: "https://relay.test/c",
     error: "relay bootstrap failed: 500",
     onTakeover: () => {},
   });
-  expect(queryByTestId("mcp-caller-url")).toBeNull();
-  await fireEvent.click(getByTestId("mcp-advanced-open"));
   expect((getByTestId("mcp-caller-url") as HTMLInputElement).value).toBe("https://relay.test/c");
   expect(getByRole("alert").textContent).toContain("relay bootstrap failed");
   expect(getByTestId("mcp-takeover")).toBeTruthy();
@@ -29,19 +27,17 @@ it("renders nothing for an online agent with no caller URL", () => {
   const { queryByTestId } = render(McpConnection, { status: "online" });
   expect(queryByTestId("mcp-connection")).toBeNull();
 });
-it("hides the direct URL and its warning under Advanced until opened", async () => {
-  const { getByTestId, queryByTestId, getByText } = render(McpConnection, { status: "online", callerUrl: "https://relay.test/c/X" });
-  const toggle = getByTestId("mcp-advanced-open");
-  expect(toggle.getAttribute("aria-expanded")).toBe("false");
-  expect(queryByTestId("mcp-caller-url")).toBeNull();
-  await fireEvent.click(toggle);
-  expect(toggle.getAttribute("aria-expanded")).toBe("true");
+it("shows the direct URL, its warning and Done only when given a callerUrl", async () => {
+  const onClosePair = vi.fn();
+  const { getByTestId, getByText } = render(McpConnection, { status: "online", callerUrl: "https://relay.test/c/X", onClosePair });
   getByText(/Anyone with this URL can read and write this document/);
   await fireEvent.click(getByTestId("mcp-caller-url-copy"));
   expect(copyText).toHaveBeenCalledWith("https://relay.test/c/X");
+  await fireEvent.click(getByTestId("direct-close"));
+  expect(onClosePair).toHaveBeenCalledOnce();
 });
 it("shows the pairing view: URL, code, copy buttons, plain-text countdown, security line", async () => {
-  const { getByLabelText, getByRole, getByTestId } = render(McpConnection, { status: "online", callerUrl: "https://relay.test/c/X", pairingView: view() });
+  const { getByLabelText, getByRole, getByTestId } = render(McpConnection, { status: "online", pairingView: view() });
   expect((getByLabelText("Connector URL") as HTMLInputElement).value).toBe(data.connectorUrl);
   expect((getByLabelText("Pairing code") as HTMLInputElement).value).toBe("K7QPM-2XD4R");
   await fireEvent.click(getByRole("button", { name: "Copy connector URL" }));

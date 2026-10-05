@@ -147,11 +147,11 @@
     renamingId = null;
   }
 
-  // Pairing view (#447): one at a time, shown only while the row still has the channel it was opened on.
-  let pairingOpen = $state<{ id: string; callerUrl: string } | null>(null);
-  const pairingShown = (a: PanelAgent) =>
-    !!a.state?.callerUrl && pairingOpen?.id === a.conn.id && pairingOpen.callerUrl === a.state.callerUrl;
-  const shownId = $derived(agents.find(pairingShown)?.conn.id ?? null);
+  // Pairing / direct-URL view (#447, #456): one at a time, shown only while the row still has the channel it was opened on.
+  let viewOpen = $state<{ id: string; callerUrl: string; kind: 'pair' | 'direct' } | null>(null);
+  const viewShown = (a: PanelAgent, kind: 'pair' | 'direct') =>
+    !!a.state?.callerUrl && viewOpen?.kind === kind && viewOpen.id === a.conn.id && viewOpen.callerUrl === a.state.callerUrl;
+  const shownId = $derived(agents.find((a) => viewShown(a, 'pair') || viewShown(a, 'direct'))?.conn.id ?? null);
   let liveView = $state<PairingView>();
   let liveRetry = $state<() => void>();
   const rowEl = (id: string) => root?.querySelector<HTMLElement>(`[data-agent-id="${id}"]`);
@@ -161,7 +161,7 @@
     const id = shownId;
     if (!id && wasShown) {
       const was = wasShown;
-      pairingOpen = null;
+      viewOpen = null;
       liveView = undefined;
       // The row may be gone (forgotten): fall back to the panel's first menu, else the panel itself.
       void tick().then(() => {
@@ -171,11 +171,21 @@
     }
     wasShown = id;
   });
+  // Opening the direct URL puts focus on its field (pairing focuses via PairingLoader).
+  $effect(() => {
+    if (viewOpen?.kind === 'direct')
+      void tick().then(() => root?.querySelector<HTMLElement>('[data-testid="mcp-caller-url"]')?.focus());
+  });
 
   const relayMissing = (a: PanelAgent) => !relays.some((r) => r.id === a.conn.relayId);
   const agentActions = (a: PanelAgent): MenuAction[] => [
     ...(a.state?.callerUrl
-      ? [{ id: 'pair', label: 'Pair an agent…', enabled: true, run: () => (pairingOpen = { id: a.conn.id, callerUrl: a.state?.callerUrl ?? '' }) }]
+      ? (['pair', 'direct'] as const).map((kind) => ({
+          id: kind,
+          label: kind === 'pair' ? 'Pair an agent…' : 'Direct URL…',
+          enabled: true,
+          run: () => (viewOpen = { id: a.conn.id, callerUrl: a.state?.callerUrl ?? '', kind }),
+        }))
       : []),
     ...(a.state ? [] : [{ id: 'rename', label: 'Rename', enabled: true, run: () => startRename(a) }]),
     ...(a.state ? [{ id: 'rotate', label: 'Rotate URL', enabled: true, run: () => onRotate(a.conn.id) }] : []),
@@ -273,15 +283,15 @@
             </div>
             {#if ctx && a.state}<p class="agent-panel__meta" data-testid="agent-last">{ctx.lastActivity(a.conn.id)}</p>{/if}
             {#if a.state}
-              {#if pairingShown(a)}
+              {#if viewShown(a, 'pair')}
                 <PairingLoader pair={() => pair(a.conn.id)} {now} scope={() => rowEl(a.conn.id)} bind:view={liveView} bind:retry={liveRetry} />
               {/if}
               <McpConnection
                 status={a.state.status}
-                callerUrl={a.state.callerUrl}
+                callerUrl={viewShown(a, 'direct') ? a.state.callerUrl : null}
                 error={a.state.error}
-                pairingView={pairingShown(a) ? (liveView ?? { data: null, error: null, minutes: 0 }) : null}
-                onClosePair={() => (pairingOpen = null)}
+                pairingView={viewShown(a, 'pair') ? (liveView ?? { data: null, error: null, minutes: 0 }) : null}
+                onClosePair={() => (viewOpen = null)}
                 onRetryPair={() => liveRetry?.()}
                 onTakeover={() => onTakeover(a.conn.id)}
               />

@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { openAdvanced, openPackageEditor, routeRelayChannels } from "./helpers";
+import { openDirectUrl, openPackageEditor, routeRelayChannels } from "./helpers";
 
 /**
  * agent-library.spec.ts — srs-web#442: relays and agents are user-managed libraries, and the agent
@@ -71,10 +71,7 @@ test("connect an agent through a relay, rename it, disconnect, forget", async ({
   // the first-run agent is bound to the relay as soon as one exists
   await page.getByTestId("mcp-library-connect").click();
   await expect(page.getByTestId("mcp-status")).toHaveText("Connected", { timeout: 15000 });
-  await openAdvanced(page);
-  await expect(page.getByTestId("mcp-caller-url")).toHaveValue(
-    /relay\.test\/v1\/channels\/c1\/call\/CALLER1/
-  );
+  expect(await openDirectUrl(page)).toMatch(/relay\.test\/v1\/channels\/c1\/call\/CALLER1/);
   await page.getByTestId("mcp-disconnect").click();
   const row = page.getByTestId("mcp-library-item");
   await row.getByTestId("agent-menu").click();
@@ -246,10 +243,13 @@ test.describe("Pair an agent", () => {
     await expect(page.getByRole("button", { name: /new code/i })).toHaveCount(0);
   });
 
-  test("the direct URL is under Advanced, closed by default", async ({ page }) => {
+  test("the direct URL is in the agent menu, replacing the pairing view", async ({ page }) => {
     await pairing(page);
     await expect(page.getByTestId("mcp-caller-url")).toHaveCount(0);
-    await page.getByTestId("mcp-advanced-open").click();
+    await page.getByTestId("agent-menu").click();
+    await page.getByTestId("agent-direct").click();
+    await expect(page.getByTestId("pair-code")).toHaveCount(0);
+    await expect(page.getByTestId("mcp-caller-url")).toBeFocused();
     await expect(page.getByTestId("mcp-caller-url")).toHaveValue(/\/call\/CALLER1$/);
     await expect(page.getByTestId("mcp-connection")).toContainText(
       "Anyone with this URL can read and write this document"

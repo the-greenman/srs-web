@@ -315,8 +315,8 @@ sessions) and never imports a store. This is client configuration, not SRS seman
 - **Parts.** `AgentPanel`: `agents relays agent relay name meta dot actions`. `Disclosure`: `disclosure body`.
 - **Tokens.** `--agent-panel-gap|row-pad|row-gap|dot-size|name-size|meta-size`, in `tokens-components.css`.
 - **Pairing (#447).** "Pair an agent…" in an open agent's `⋯` menu shows the connector URL, the pairing code and a
-  minute-granular expiry in `McpConnection` (parts `pairing`, `advanced`); the raw capability URL moves under an
-  "Advanced: direct URL" `Disclosure`. `PairingLoader` owns the fetch, the refresh timer and the announcement, so
+  minute-granular expiry in `McpConnection` (parts `pairing`, `direct`); the raw capability URL is a second `⋯` item,
+  "Direct URL…", opening in the same slot (one view at a time, #456). `PairingLoader` owns the fetch, the refresh timer and the announcement, so
   `McpConnection` stays presentational. A pairing error is location-bound (part j): an inline `Notice` beside the
   kept code, never a toast. A refreshed code is announced through `notify` (polite `LiveRegions`); that is also a
   visible 4 s toast, accepted. No new tokens.

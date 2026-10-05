@@ -1,15 +1,14 @@
 <!--
   McpConnection — the per-agent detail block under an AgentPanel row: the pairing view (connector URL,
-  pairing code, expiry; fed by PairingLoader), the direct caller URL under Advanced, takeover for a
+  pairing code, expiry; fed by PairingLoader), the direct caller URL (only while its view is open, #456), takeover for a
   refused/replaced channel, the connection error (inline Notice, ADR-020 j) and notes. Identity,
   status word and Disconnect/Rotate live on the row (AgentPanel). Presentation only: the host decides
   state, the loader owns the pairing timers. Wraps .mcp-conn* (src/styles/components/mcp-connection.css);
-  parts `pairing advanced`. srs-web#307, #442, #447
+  parts `pairing direct`. srs-web#307, #442, #447
 -->
 <script lang="ts">
   import Button from './Button.svelte';
   import CopyField from './CopyField.svelte';
-  import Disclosure from './Disclosure.svelte';
   import Notice from './Notice.svelte';
   import type { PairingView } from './agent-panel.js';
   export type McpConnectionStatus = 'idle' | 'connecting' | 'online' | 'offline' | 'replaced' | 'rejected' | 'error';
@@ -55,11 +54,10 @@
     </div>
   {/if}
   {#if callerUrl}
-    <div data-part="advanced">
-      <Disclosure label="Advanced: direct URL" testid="mcp-advanced-open">
-        <CopyField value={callerUrl} label="Direct URL" buttonLabel="Copy direct URL" testid="mcp-caller-url" />
-        <p class="mcp-conn__note">Anyone with this URL can read and write this document while this tab is connected. MCP changes are unsaved until you Save or Export.</p>
-      </Disclosure>
+    <div class="mcp-conn__pairing" data-part="direct">
+      <CopyField value={callerUrl} label="Direct URL" buttonLabel="Copy direct URL" testid="mcp-caller-url" />
+      <p class="mcp-conn__note">Anyone with this URL can read and write this document while this tab is connected. MCP changes are unsaved until you Save or Export.</p>
+      <div class="mcp-conn__actions"><Button size="sm" variant="ghost" onclick={onClosePair} data-testid="direct-close">Done</Button></div>
     </div>
   {/if}
   {#if status === 'rejected' || status === 'replaced'}

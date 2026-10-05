@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openAdvanced, routeRelayChannels } from "./helpers";
+import { openDirectUrl, routeRelayChannels } from "./helpers";
 
 /**
  * mcp-relay.spec.ts — srs-web#307: the browser hosts the WASM MCP session behind
@@ -74,8 +74,7 @@ test("MCP caller drives the browser session through the relay", async ({ page })
 
   await page.getByTestId("mcp-library-connect").first().click();
   await expect(page.getByTestId("mcp-status")).toHaveText("Connected", { timeout: 15000 });
-  await openAdvanced(page);
-  await expect(page.getByTestId("mcp-caller-url")).toHaveValue(/\/call\/CALLER$/);
+  expect(await openDirectUrl(page)).toMatch(/\/call\/CALLER$/);
   await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
 
   const init = await call({
