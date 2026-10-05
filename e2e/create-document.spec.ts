@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Download, type Page, expect, test } from "@playwright/test";
-import { openNavDrawer, openPackageEditor, navItem } from "./helpers.js";
+import { openNavDrawer, openPackageEditor, navItem, newRecord, exportItem, openAnother } from "./helpers.js";
 
 /**
  * create-document.spec.ts — "Create new governance document" onboarding (#141).
@@ -87,7 +87,7 @@ test.describe("New repository (#141, #341)", () => {
     await expect(page.getByTestId("save-to-modal")).toHaveCount(0);
 
     // Re-import the saved archive.
-    await page.getByRole("button", { name: "Open another file" }).click();
+    await openAnother(page);
     const tmpPath = path.join(__dirname, "fixtures", "_create_saved_tmp.srs");
     const fs = await import("node:fs/promises");
     await fs.writeFile(tmpPath, bytes);
@@ -107,7 +107,7 @@ test.describe("New repository (#141, #341)", () => {
     await expect(navItem(page, /Decision/)).toBeVisible({ timeout: 5000 });
 
     // Capture the first decision through the UI — the scaffold pre-creates none.
-    await page.getByRole("button", { name: "New Decision" }).click();
+    await newRecord(page);
     await page
       .locator(".field")
       .filter({ hasText: "Title" })
@@ -128,13 +128,13 @@ test.describe("New repository (#141, #341)", () => {
     // Export the mutated document
     const [download] = await Promise.all([
       page.waitForEvent("download"),
-      page.getByRole("button", { name: "Download .srsj" }).click(),
+      exportItem(page, "srsj"),
     ]);
     const exportedText = await downloadText(download);
     expect(exportedText).toContain("First Decision");
 
     // Re-import through the open flow
-    await page.getByRole("button", { name: "Open another file" }).click();
+    await openAnother(page);
     await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 5000 });
     const tmpPath = path.join(__dirname, "fixtures", "_create_roundtrip_tmp.srsj");
     const fs = await import("node:fs/promises");

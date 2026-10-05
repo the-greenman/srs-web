@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor, navItem } from "./helpers.js";
+import { openPackageEditor, navItem, newRecord } from "./helpers.js";
 
 /**
  * lifecycle.spec.ts — end-to-end tests for B11 lifecycle transitions and
@@ -81,7 +81,7 @@ test.describe("Lifecycle transitions (B11)", () => {
   test("Draft record shows only → propose transition", async ({ page }) => {
     // Navigate to Articles and create a new draft article
     await navItem(page, /Articles/).click();
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Draft Article for Lifecycle Test");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Test body");
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
@@ -113,7 +113,7 @@ test.describe("Lifecycle transitions (B11)", () => {
   test("Clicking → propose changes available transitions to proposed-state transitions", async ({ page }) => {
     // Navigate to Articles and create a draft article
     await navItem(page, /Articles/).click();
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Transition Test Article");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Body");
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
@@ -222,7 +222,7 @@ test.describe("Lifecycle transitions (B11)", () => {
   test("Terminal state 'closed' shows no transition buttons", async ({ page }) => {
     // Create a new article (starts in lifecycle state "draft")
     await navItem(page, /Articles/).click();
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("To Be Closed");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Terminal test");
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");

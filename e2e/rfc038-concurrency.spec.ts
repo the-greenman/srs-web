@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
-import { openPackageEditor, navItem } from "./helpers.js";
+import { openPackageEditor, navItem, newRecord } from "./helpers.js";
 
 /**
  * rfc038-concurrency.spec.ts — the srs#291 two-writer property, in E2E terms.
@@ -193,7 +193,7 @@ async function saveAndCaptureCommit(page: Page): Promise<CommitCall> {
 async function createArticle(page: Page, title: string): Promise<void> {
   // The "New <section>" action only exists once a section is active.
   await navItem(page, /Articles/).click();
-  await page.locator("button.topbar__new").click();
+  await newRecord(page);
   await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill(title);
   await page
     .locator(".field")

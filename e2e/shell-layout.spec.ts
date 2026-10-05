@@ -69,22 +69,6 @@ test.describe("independent scroll", () => {
   });
 });
 
-test.describe("Wide", () => {
-  test("a stored Wide never changes a shell without the toggle (Governance stays 820px, compact)", async ({
-    page,
-  }) => {
-    await page.addInitScript(() => localStorage.setItem("srs-web.margin", "expanded"));
-    await page.setViewportSize({ width: 1920, height: 1000 });
-    await openGovernance(page);
-    await expect(page.locator(".app")).toHaveAttribute("data-margin", "compact");
-    const w = await page
-      .locator(".canvas")
-      .first()
-      .evaluate((el) => el.getBoundingClientRect().width);
-    expect(Math.round(w)).toBe(820);
-  });
-});
-
 test.describe("resizable columns", () => {
   test.use({ viewport: { width: 1440, height: 900 } });
   const width = (page: Page, sel: string) =>
@@ -168,7 +152,7 @@ test.describe("drawers at 375px", () => {
     await expect(page.getByTestId("nav-trigger")).toBeFocused();
   });
 
-  test("Governance: both triggers sit inside the viewport (the old Topbar buttons wrap, they are not clipped)", async ({
+  test("Governance: both triggers sit inside the viewport", async ({
     page,
   }) => {
     await load(page, "gallery.srsj");
@@ -178,6 +162,16 @@ test.describe("drawers at 375px", () => {
       expect(box.x, id).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width, id).toBeLessThanOrEqual(375);
     }
+  });
+
+  test("Governance: the bar is one row, with no more than the Save primary", async ({ page }) => {
+    await load(page, "gallery.srsj");
+    await openEditor(page, "governance");
+    const bar = page.getByTestId("toolbar");
+    expect((await bar.boundingBox())!.height).toBeLessThan(72);
+    // A local file is not writable here: no Save, and the reason shows under the bar. Never more than one primary.
+    expect(await bar.locator('[data-part="primary"]').count()).toBeLessThanOrEqual(1);
+    await expect(page.getByTestId("readonly-reason")).toBeVisible();
   });
 
   test("Governance migrations view renders exactly one nav-trigger", async ({ page }) => {
@@ -345,6 +339,14 @@ test.describe("Generic on the frame", () => {
     expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(
       true
     );
+  });
+
+  test("Wide in Governance sets data-margin and persists across a reload", async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1000 });
+    await openGovernance(page);
+    await setWide(page, true);
+    await openGovernanceAfterReload(page);
+    await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
   });
 
   test("Wide is one switch across editors: Essay -> Generic -> Essay keeps it; Generic widens past 46rem", async ({

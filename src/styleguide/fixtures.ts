@@ -570,6 +570,12 @@ export const stripText = {
 /** The shell specimen (#424): a nav of two groups with a count, an inspector of two panels, a badge. */
 export const shellFixture = {
   repo: "Small democracy",
+  /** A long breadcrumb: the document bar's title slot, ellipsised beside the single Save primary (#463). */
+  crumb: [
+    { label: "Small democracy" },
+    { label: "Articles", onclick: nop },
+    { label: "How a decision is reopened after the review period closes" },
+  ],
   navGroups: [
     {
       label: "Sections",

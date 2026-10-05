@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor, navItem } from "./helpers.js";
+import { openPackageEditor, navItem, newRecord, openMenu, closeMenus } from "./helpers.js";
 
 /**
  * record-edit.spec.ts — end-to-end tests for B9 record create/update/delete.
@@ -41,15 +41,16 @@ test.describe("Record edit forms (B9)", () => {
   // Quarantined (#173): the "New Article" topbar button no longer exists —
   // RecordForm/topbar was redesigned. Rewrite against the current flow.
   test.fixme('"New Article" button is visible after loading', async ({ page }) => {
-    await expect(page.locator("button.topbar__new")).toBeVisible();
-    await expect(page.locator("button.topbar__new")).toContainText("New Article");
+    await openMenu(page, "Document");
+    await expect(page.getByTestId("governance-new-record")).toContainText("New Article");
+    await closeMenus(page);
   });
 
   // --------------------------------------------------------------------------
   // Test 2: Clicking "New Article" shows the form
   // --------------------------------------------------------------------------
   test("Clicking 'New Article' shows a form with Title field", async ({ page }) => {
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
 
     // Form should show a Title field
     await expect(
@@ -64,7 +65,7 @@ test.describe("Record edit forms (B9)", () => {
   // Test 3: Cancel returns to list
   // --------------------------------------------------------------------------
   test("Cancel returns to the record list", async ({ page }) => {
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
 
     // Verify form is shown
     await expect(
@@ -82,7 +83,7 @@ test.describe("Record edit forms (B9)", () => {
   // Test 4: Create article successfully
   // --------------------------------------------------------------------------
   test("Create article successfully — appears in list", async ({ page }) => {
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
 
     // Fill Title
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Test Article E2E");
@@ -117,7 +118,7 @@ test.describe("Record edit forms (B9)", () => {
     await expect(page.getByRole("heading", { name: "Decision Log", level: 2 })).toBeVisible();
 
     // New Decision opens the DecisionFlow mode chooser (B12)
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
 
     // Select Quick Capture mode
     await page.getByRole("button", { name: "Quick Capture" }).click();
@@ -151,7 +152,7 @@ test.describe("Record edit forms (B9)", () => {
   // --------------------------------------------------------------------------
   test("Edit existing record — updated title appears in list", async ({ page }) => {
     // Create a new draft article to edit (gallery articles are all active and guarded)
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("To Be Edited");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Original body");
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
@@ -203,7 +204,7 @@ test.describe("Record edit forms (B9)", () => {
     const initialCount = await page.locator(".record-list__item").count();
 
     // Create a new article (no relations, so deletable)
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("To Be Deleted");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Delete me");
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
@@ -230,7 +231,7 @@ test.describe("Record edit forms (B9)", () => {
     await navItem(page, /Roles/).click();
     await expect(page.getByRole("heading", { name: "Roles", level: 2 })).toBeVisible();
 
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
 
     // Fill Title
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Test Role E2E");

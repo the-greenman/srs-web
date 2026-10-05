@@ -262,3 +262,13 @@ export async function commentsState(page: Page): Promise<string | null> {
   await closeMenus(page);
   return v;
 }
+
+/** Governance: Document > "New {label}" (opens the menu, clicks, closes it). */
+export const newRecord = (page: Page) => menuItem(page, "Document", "governance-new-record");
+
+/** Document > Export .srs / .srsj, for use inside `Promise.all([waitForEvent("download"), …])`. */
+export const exportItem = (page: Page, kind: "srs" | "srsj") =>
+  menuItem(page, "Document", kind === "srs" ? "toolbar-export" : "toolbar-export-srsj");
+
+/** Go > Open another. */
+export const openAnother = (page: Page) => menuItem(page, "Go", "toolbar-other");

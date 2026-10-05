@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
-import { openPackageEditor, navItem } from "./helpers.js";
+import { openPackageEditor, navItem, newRecord, openMenu, closeMenus } from "./helpers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // srs-web#312: richer fixtures reused through the same pending-write-controllable Dropbox
@@ -310,7 +310,7 @@ test.describe("Cloud storage sources", () => {
     // exposing the Edit/Delete controls that must also respect the saving guard.
     // The default section is Articles; fill its required fields (Title, Article
     // Text, Status) so the native-required submit actually succeeds.
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Pending Save Article");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Body text");
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
@@ -330,7 +330,9 @@ test.describe("Cloud storage sources", () => {
       () => Boolean((window as any).__PENDING_WRITE_STARTED__)
     )).toBe(true);
 
-    await expect(page.locator("button.topbar__new")).toBeDisabled();
+    await openMenu(page, "Document");
+    await expect(page.getByTestId("governance-new-record")).toBeDisabled();
+    await closeMenus(page);
     // srs-web#312: restored/broadened beyond just the "New" button — Edit and Delete
     // (both direct entry points into persistWorkingCopy()) must also be blocked.
     await expect(editBtn).toBeDisabled();
@@ -341,7 +343,9 @@ test.describe("Cloud storage sources", () => {
       (window as any).__RESOLVE_PENDING_WRITE__();
     });
     await expect(page.getByTestId("save-status")).toContainText("Saved.");
-    await expect(page.locator("button.topbar__new")).toBeEnabled();
+    await openMenu(page, "Document");
+    await expect(page.getByTestId("governance-new-record")).toBeEnabled();
+    await closeMenus(page);
     await expect(editBtn).toBeEnabled();
     await expect(deleteBtn).toBeEnabled();
   });

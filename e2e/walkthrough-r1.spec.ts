@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Download, type Page, expect, test } from "@playwright/test";
-import { openPackageEditor, navItem } from "./helpers.js";
+import { openPackageEditor, navItem, newRecord, exportItem } from "./helpers.js";
 
 /**
  * walkthrough-r1.spec.ts — Release verification: Decision Log R1 "safe to try"
@@ -61,7 +61,7 @@ async function fillField(page: Page, label: string, value: string): Promise<void
 }
 
 async function createDecision(page: Page, title: string, statement: string): Promise<void> {
-  await page.locator("button.topbar__new").click();
+  await newRecord(page);
   await expect(page.getByTestId("record-form")).toBeVisible({ timeout: 3000 });
   // srs-web#176 (delivered): each field shows its description as inline help.
   await expect(page.locator('[data-testid="record-form"] .field__help').first()).toBeVisible();
@@ -116,7 +116,7 @@ test.describe("R1 release walkthrough (#54)", () => {
       await navItem(page, /Decision/).click();
       await expect(page.getByTestId("decision-log-view")).toBeVisible({ timeout: 5000 });
 
-      await page.locator("button.topbar__new").click();
+      await newRecord(page);
       await expect(page.getByTestId("record-form")).toBeVisible({ timeout: 3000 });
       // Submit with required fields empty — the form must not save.
       await page.locator("button[type=submit]").click();
@@ -267,7 +267,7 @@ test.describe("R1 release walkthrough (#54)", () => {
     await test.step("exported .srsj round-trips through the CLI", async () => {
       const [download] = await Promise.all([
         page.waitForEvent("download"),
-        page.getByRole("button", { name: "Download .srsj" }).click(),
+        exportItem(page, "srsj"),
       ]);
       const exported = await downloadText(download);
       expect(JSON.parse(exported)).toHaveProperty("srsj", "2");

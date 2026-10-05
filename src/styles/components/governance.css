@@ -1,0 +1,247 @@
+/* ============================================================================
+   component: governance shell — the section list, record cards and inspector bits
+   ----------------------------------------------------------------------------
+   Moved out of GovernanceShell.svelte (#463): the shell carries no scoped style. Colours are
+   semantic tokens only. Selectors are the shell's own classes (no ancestor), so keep them unique.
+   ========================================================================== */
+
+/* ---- Section heading ---- */
+.section-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-heading__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.section-heading__count {
+  font-size: 0.8125rem;
+  opacity: 0.5;
+}
+
+/* ---- Record list ---- */
+.record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.record-list__item {
+  cursor: pointer;
+  border-radius: 2px;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color 0.1s;
+}
+
+.record-list__item--selected {
+  outline-color: currentColor;
+}
+
+.governance-empty-state {
+  opacity: 0.5;
+  font-size: 0.875rem;
+}
+
+/* ---- Inspector KV ---- */
+.inspector__kv {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  padding: 0.2rem 0;
+}
+
+.inspector__kv--meta {
+  margin-top: 0.25rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  padding-top: 0.4rem;
+}
+
+.inspector__k {
+  opacity: 0.55;
+}
+
+.inspector__v {
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inspector__v--mono {
+  font-family: monospace;
+  font-size: 0.6875rem;
+}
+
+/* ---- Inspector record actions ---- */
+.inspector__record-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.inspector__btn {
+  font-size: 0.75rem;
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.inspector__btn:hover {
+  opacity: 1;
+}
+
+.inspector__btn--danger {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+/* ---- Inspector lifecycle transition buttons ---- */
+.inspector__transitions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.inspector__btn--transition {
+  font-size: 0.6875rem;
+  opacity: 0.65;
+}
+
+.inspector__btn--confirm {
+  opacity: 1;
+  color: var(--color-error);
+  border-color: currentColor;
+}
+
+/* ---- Inspector decision relations ---- */
+.inspector__empty {
+  font-size: 0.75rem;
+  opacity: 0.5;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.inspector__relations {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.inspector__relation-item {
+  display: flex;
+  gap: 0.35rem;
+  align-items: baseline;
+  font-size: 0.75rem;
+  padding: 0.2rem 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.inspector__relation-type {
+  font-style: italic;
+  opacity: 0.65;
+  min-width: 5rem;
+}
+
+.inspector__relation-dir {
+  opacity: 0.45;
+}
+
+.inspector__relation-peer {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 8rem;
+}
+
+.inspector__relation-peer--link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 2px;
+}
+
+.inspector__relation-peer--link:hover {
+  text-decoration-color: currentColor;
+}
+
+.inspector__relation-delete {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.7rem;
+  opacity: 0.4;
+  padding: 0 0.15rem;
+  line-height: 1;
+  color: var(--color-error);
+  flex-shrink: 0;
+}
+.inspector__relation-delete:hover {
+  opacity: 1;
+}
+
+/* ---- Nav footer ---- */
+.nav__footer-stat {
+  font-size: 0.6875rem;
+  opacity: 0.4;
+  padding: 0.5rem 0;
+}
+
+/* ---- Inspector tag editor ---- */
+.inspector__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 0.5rem;
+  min-height: 1.5rem;
+}
+
+.inspector__tag-add {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.inspector__tag-input {
+  flex: 1;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--color-line);
+  border-radius: 3px;
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  min-width: 0;
+}
+
+.inspector__tag-input:focus {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.inspector__export-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
