@@ -72,6 +72,7 @@
     error: 'Connection failed',
   };
 
+  const uid = $props.id();
   let root = $state<HTMLElement>();
   let connectOpen = $state(false);
   let relayFormOpen = $state(false);
@@ -94,6 +95,15 @@
   const editing = $derived(relays.find((r) => r.id === editingId));
   const editingUsed = $derived(editing ? agents.filter((a) => a.conn.relayId === editing.id).length : 0);
   let rowError = $state<{ id: string; text: string } | null>(null);
+  // A stale remove error goes when the lists change; an edit of a relay that vanished is abandoned.
+  $effect(() => {
+    void relays;
+    void agents;
+    rowError = null;
+  });
+  $effect(() => {
+    if (editingId && !relays.some((r) => r.id === editingId)) resetForm();
+  });
 
   function startEdit(r: Relay) {
     editingId = r.id;
@@ -152,6 +162,7 @@
       },
     },
   ];
+  // The label/URL and removal checks here are hints: the store re-checks usage and refuses.
   const countOn = (id: string) => agents.filter((a) => a.conn.relayId === id).length;
 </script>
 
@@ -170,12 +181,12 @@
       inputmode="url"
       placeholder="https://relay.example.com"
       aria-label="Relay URL"
-      aria-describedby={formError ? 'relay-form-error' : undefined}
+      aria-describedby={formError ? `${uid}-error` : undefined}
       disabled={!!editingUsed}
       data-testid="relay-url"
     />
     {#if editingUsed}<p class="agent-panel__meta">The URL is fixed while {editingUsed} agent{editingUsed === 1 ? '' : 's'} use this relay.</p>{/if}
-    {#if formError}<Notice kind="error" id="relay-form-error" testid="relay-error">{formError}</Notice>{/if}
+    {#if formError}<Notice kind="error" id="{uid}-error" testid="relay-error">{formError}</Notice>{/if}
     <div class="agent-panel__actions">
       <Button size="sm" variant="secondary" type="submit" data-testid="relay-save">{editing ? 'Save' : 'Add relay'}</Button>
       {#if editing}<Button size="sm" variant="ghost" type="button" onclick={resetForm}>Cancel</Button>{/if}

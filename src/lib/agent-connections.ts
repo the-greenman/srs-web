@@ -9,7 +9,7 @@ export interface AgentConnection {
   label?: string;
   /** Fixed at creation (srs-web#442); absent only before `adoptRelay` binds a pre-library entry. */
   relayId?: string;
-  /** ISO 8601, set when a session first reaches "online". */
+  /** ISO 8601, updated each time a session reaches "online" (every reconnect). */
   lastConnectedAt?: string;
 }
 

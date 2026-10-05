@@ -414,13 +414,6 @@ export const agentGroups = {
       },
     ],
   },
-  forms: {
-    relays,
-    agents: [
-      { ...panelAgents[2], conn: { id: "agent:g1", relayId: "relay:b" } },
-      { ...panelAgents[2], conn: { id: "agent:g2", relayId: "relay:b" }, name: "zeta" },
-    ],
-  },
 };
 export const agentWidths = [
   ["20rem", "Rail 20rem"],

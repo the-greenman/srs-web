@@ -19,17 +19,43 @@ describe("validateRelayUrl", () => {
   it.each(["https://relay.test", "http://localhost:8787", "http://127.0.0.1:8787"])("accepts %s", (u) => {
     expect(validateRelayUrl(u).ok).toBe(true);
   });
-  it.each(["http://relay.test", "ftp://x", "javascript:alert(1)", "https://u:p@x", "", "garbage", "https://x.test/#h"])(
+  it.each(["http://relay.test", "ftp://x", "javascript:alert(1)", "https://u:p@x", "", "garbage", "https://x.test/#h", "https://relay.test/v1", "https://relay.test/?a=1"])(
     "rejects %s",
     (u) => expect(validateRelayUrl(u).ok).toBe(false)
   );
+  it("refuses a path or query with a clear error instead of truncating", () => {
+    const r = validateRelayUrl("https://relay.test/v1");
+    expect(r.ok).toBe(false);
+    expect(!r.ok && r.error).toContain("no path or query");
+  });
   it("normalises to the origin", () => {
     expect(validateRelayUrl("https://relay.test/")).toEqual({ ok: true, url: "https://relay.test" });
-    expect(validateRelayUrl(" https://relay.test/v1 ")).toEqual({ ok: true, url: "https://relay.test" });
+    expect(validateRelayUrl(" https://relay.test ")).toEqual({ ok: true, url: "https://relay.test" });
   });
 });
 
 describe("relay store", () => {
+  it("applies the same normalisation to a stored library as to a committed one", () => {
+    s.setItem(
+      "srs-web.relays",
+      JSON.stringify({
+        relays: [
+          { id: "relay:1", url: "https://a.test/", label: 7, isDefault: true },
+          { id: "relay:2", url: "https://b.test", label: "B", isDefault: true },
+          { id: "relay:3", url: "http://insecure.test", label: "bad" },
+          { id: "relay:1", url: "https://dup.test" },
+        ],
+      })
+    );
+    expect(store({ env: "https://env.test" }).list()).toEqual([
+      { id: "relay:1", url: "https://a.test", label: "a.test", isDefault: true },
+      { id: "relay:2", url: "https://b.test", label: "B", isDefault: false },
+    ]);
+  });
+  it("makes the first relay the default when a stored list has none", () => {
+    s.setItem("srs-web.relays", JSON.stringify({ relays: [{ id: "r", url: "https://a.test", label: "A" }] }));
+    expect(store().list()[0].isDefault).toBe(true);
+  });
   it("rejects duplicates and labels default to the host", () => {
     const r = store();
     expect("relays" in r.add("", "https://relay.test") && r.list()[0].label).toBe("relay.test");

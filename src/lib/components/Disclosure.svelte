@@ -17,7 +17,7 @@
     children,
   }: { label: string; open?: boolean; testid?: string; children?: Snippet } = $props();
 
-  const id = `disclosure-${Math.random().toString(36).slice(2, 8)}`;
+  const id = $props.id();
 </script>
 
 <div class="disclosure" data-part="disclosure">

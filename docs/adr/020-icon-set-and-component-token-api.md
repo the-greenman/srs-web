@@ -314,5 +314,5 @@ sessions) and never imports a store. This is client configuration, not SRS seman
   only: the Guides and Governance shells have a menu-less `Topbar` and rely on the always-present dock).
 - **Parts.** `AgentPanel`: `agents relays agent relay name meta dot actions`. `Disclosure`: `disclosure body`.
 - **Tokens.** `--agent-panel-gap|row-pad|row-gap|dot-size|name-size|meta-size`, in `tokens-components.css`.
-- **Specimens.** `/styleguide` renders five groups (no relay, one relay and no agents, several relays and agents,
-  connection errors, form validation and blocked removal) at 20rem, 18rem and 16rem.
+- **Specimens.** `/styleguide` renders four groups (no relay, one relay and no agents, several relays and agents,
+  connection errors) at 20rem, 18rem and 16rem.

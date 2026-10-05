@@ -322,7 +322,6 @@
   adoptRelays();
   let inUse = $state<Set<string>>(new Set());
   const refreshInUse = () => void channelsInUseElsewhere().then((s) => (inUse = s));
-  /** The 15 s clock for "Connected 2 min ago" (EssayShell keeps its own). */
   /** The floating dock starts open only once a relay exists: with none it would sit over the page's own controls. */
   let dockOpen = $state(relays.list().length > 0);
   /** Go > Agents…: expand the dock and focus its first control. */
@@ -331,6 +330,7 @@
     await tick();
     document.querySelector<HTMLElement>('.mcp-dock [data-testid="agent-panel"] button, .mcp-dock [data-testid="agent-panel"] input')?.focus();
   }
+  /** The 15 s clock for "Connected 2 min ago" (EssayShell keeps its own). */
   let agentNow = $state(Date.now());
   $effect(() => {
     const t = setInterval(() => (agentNow = Date.now()), 15000);

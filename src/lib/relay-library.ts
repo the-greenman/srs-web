@@ -19,7 +19,7 @@ const KEY = "srs-web.relays";
 const LEGACY_URL_KEY = "srs-web.mcp-relay-url";
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
-/** https only (http for localhost); stored as the bare origin, which is what `bootstrapChannel` expects. */
+/** https only (http for localhost); a bare origin (that is what `bootstrapChannel` expects), so a path or query is refused, never truncated. */
 export function validateRelayUrl(
   input: string
 ): { ok: true; url: string } | { ok: false; error: string } {
@@ -33,6 +33,12 @@ export function validateRelayUrl(
     return { ok: false, error: "A relay must use https (http is allowed only for localhost)." };
   if (u.username || u.password)
     return { ok: false, error: "A relay URL cannot contain credentials." };
+  if (u.pathname !== "/" || u.search)
+    return {
+      ok: false,
+      error:
+        "A relay URL must be just an origin, like https://relay.example.com (no path or query).",
+    };
   if (u.hash) return { ok: false, error: "A relay URL cannot contain a fragment." };
   return { ok: true, url: u.origin };
 }
@@ -43,7 +49,7 @@ export function createRelayStore(
   getStorage: () => Store = () => localStorage,
   opts: { env?: string; legacy?: () => string | null; usedBy?: (relayId: string) => number } = {}
 ) {
-  let cache: { relays: Relay[]; seeded: boolean } | null = null;
+  let cache: Relay[] | null = null;
   const usedBy = (id: string) => opts.usedBy?.(id) ?? 0;
   const st = (): Store | null => {
     try {
@@ -54,7 +60,7 @@ export function createRelayStore(
   };
   const save = () => {
     try {
-      st()?.setItem(KEY, JSON.stringify({ v: 1, ...cache }));
+      st()?.setItem(KEY, JSON.stringify({ relays: cache }));
     } catch {}
   };
   const legacy = () => {
@@ -71,53 +77,62 @@ export function createRelayStore(
     isDefault,
   });
 
-  function load() {
+  /** The one invariant gate, for stored and new lists alike: valid origins, string labels, exactly one default. */
+  function normalise(raw: unknown[]): Relay[] {
+    const out: Relay[] = [];
+    for (const r of raw as Partial<Relay>[]) {
+      const v = typeof r?.url === "string" ? validateRelayUrl(r.url) : null;
+      if (typeof r?.id !== "string" || !v?.ok || out.some((o) => o.id === r.id || o.url === v.url))
+        continue;
+      out.push({
+        id: r.id,
+        url: v.url,
+        label: cleanLabel(typeof r.label === "string" ? r.label : "", v.url),
+        isDefault: !!r.isDefault,
+      });
+    }
+    const first = out.findIndex((r) => r.isDefault);
+    return out.map((r, i) => ({ ...r, isDefault: i === (first < 0 ? 0 : first) }));
+  }
+
+  function load(): Relay[] {
     if (cache) return cache;
     try {
+      // A stored library (even an empty one) means the seeds were already applied: they never return.
       const v = JSON.parse(st()?.getItem(KEY) ?? "null");
       if (v && Array.isArray(v.relays)) {
-        cache = {
-          relays: v.relays.filter(
-            (r: Relay) => typeof r?.id === "string" && typeof r.url === "string"
-          ),
-          seeded: !!v.seeded,
-        };
+        cache = normalise(v.relays);
         return cache;
       }
     } catch {}
-    const relays: Relay[] = [];
+    const seeds: Relay[] = [];
     for (const seed of [opts.env, legacy()]) {
       const v = seed ? validateRelayUrl(seed) : null;
-      if (v?.ok && !relays.some((r) => r.url === v.url))
-        relays.push(newRelay("", v.url, relays.length === 0));
+      if (v?.ok) seeds.push(newRelay("", v.url, seeds.length === 0));
     }
-    cache = { relays, seeded: true };
+    cache = normalise(seeds);
     save();
     return cache;
   }
-  /** Commit a new list, keeping exactly one default while non-empty. */
+  /** Commit a new list through the same gate as a loaded one. */
   function commit(next: Relay[]): Relay[] {
-    const relays =
-      next.length && !next.some((r) => r.isDefault)
-        ? next.map((r, i) => ({ ...r, isDefault: i === 0 }))
-        : next;
-    cache = { relays, seeded: true };
+    cache = normalise(next);
     save();
-    return relays;
+    return cache;
   }
 
   return {
-    list: (): Relay[] => load().relays,
-    get: (id: string | undefined): Relay | undefined => load().relays.find((r) => r.id === id),
+    list: (): Relay[] => load(),
+    get: (id: string | undefined): Relay | undefined => load().find((r) => r.id === id),
     add(label: string, url: string): Result {
       const v = validateRelayUrl(url);
       if (!v.ok) return { error: v.error };
-      const l = load().relays;
+      const l = load();
       if (l.some((r) => r.url === v.url)) return { error: "That relay is already in the library." };
       return { relays: commit([...l, newRelay(label, v.url, l.length === 0)]) };
     },
     update(id: string, patch: { label?: string; url?: string }): Result {
-      const l = load().relays;
+      const l = load();
       const cur = l.find((r) => r.id === id);
       if (!cur) return { error: "That relay no longer exists." };
       let url = cur.url;
@@ -136,11 +151,11 @@ export function createRelayStore(
       return { relays: commit(l.map((r) => (r.id === id ? { ...r, label, url } : r))) };
     },
     setDefault: (id: string): Relay[] =>
-      commit(load().relays.map((r) => ({ ...r, isDefault: r.id === id }))),
+      commit(load().map((r) => ({ ...r, isDefault: r.id === id }))),
     remove(id: string): Result {
       const n = usedBy(id);
       if (n > 0) return { error: `Forget its ${n} agent${n === 1 ? "" : "s"} first.` };
-      const rest = load().relays.filter((r) => r.id !== id);
+      const rest = load().filter((r) => r.id !== id);
       // the default was removed: commit promotes the first remaining
       return { relays: commit(rest) };
     },
