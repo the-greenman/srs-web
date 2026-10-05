@@ -35,7 +35,8 @@
   import { acquireChannelLock, releaseChannelLock, channelsInUseElsewhere, connections, credsKey, type AgentConnection } from "$lib/agent-connections.js";
   import { relays } from "$lib/relay-library.js";
   import { observeSession, pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
-  import { listRelations, listTypes, type AgentWriteGuard, type McpSession, type SrsRepository } from "$lib/srs-client.js";
+  import { reopenSaved } from "$lib/reopen.js";
+  import { listRelations, listTypes, repositoryId, type AgentWriteGuard, type McpSession, type SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
@@ -322,6 +323,7 @@
   });
   /** Saved channels (the library) and those held by another tab (Web Locks). */
   let library = $state<AgentConnection[]>(connections.list());
+  connections.sweepInits(connections.list().map((c) => c.id));
   adoptRelays();
   let inUse = $state<Set<string>>(new Set());
   const refreshInUse = () => void channelsInUseElsewhere().then((s) => (inUse = s));
@@ -349,7 +351,13 @@
     }))
   );
   const hosts = new Map<string, { host: RelayHost; session: McpSession | null }>();
+  // Reopen after a reload (#418): ids mid-open (a Connect click must not duplicate them), and ids
+  // allowed exactly one automatic takeover if the relay still holds the dead page's socket.
+  const opening = new Set<string>();
+  const autoTakeover = new Set<string>();
   const setAgentState = (id: string, state: HostState) => {
+    if (state.status === "online") autoTakeover.delete(id);
+    else if (state.status === "rejected" && autoTakeover.delete(id)) void hosts.get(id)?.host.takeover();
     if (state.status === "online" && agents.find((a) => a.conn.id === id)?.state.status !== "online")
       library = [...connections.touch(id)];
     agents = agents.map((a) => (a.conn.id === id ? { ...a, state } : a));
@@ -419,18 +427,39 @@
     if (entry.session) {
       if (applyGuard(conn.id)) {
         applyAgentActor(entry.session, current as SrsRepository, conn);
-        void h.attach(observeSession(entry.session, conn.id, (w) => (agentWrites = pushWrite(agentWrites, w)), (n) => (clientNames = { ...clientNames, [conn.id]: n }), (id) => listRelations(current as SrsRepository, {}).find((r) => r.relationId === id)?.targetInstanceId));
+        void h.attach(observeSession(entry.session, conn.id, {
+          onWrite: (w) => (agentWrites = pushWrite(agentWrites, w)),
+          // a replayed initialize only fills a missing name; it never flips one client's name to another's
+          onClientName: (n, replayed) => { if (!replayed || !clientNames[conn.id]) clientNames = { ...clientNames, [conn.id]: n }; },
+          relationTarget: (id) => listRelations(current as SrsRepository, {}).find((r) => r.relationId === id)?.targetInstanceId,
+          initStore: {
+            load: () => connections.loadInit(conn.id),
+            save: (i) => connections.saveInit(conn.id, i),
+            clear: () => connections.clearInit(conn.id),
+          },
+        }));
       }
     } else h.detach();
   }
 
   /** Open a saved channel in this tab, only if no other tab holds it. */
-  async function openChannel(conn: AgentConnection) {
-    if (agents.some((a) => a.conn.id === conn.id)) return;
-    if (!relays.get(conn.relayId)) return; // unbound or relay missing: cannot connect
-    if (!(await acquireChannelLock(conn.id))) return refreshInUse();
-    agents = [...agents, { conn, state: { status: "idle", callerUrl: null, error: null } }];
-    openAgentSession(conn, repo);
+  async function openChannel(conn: AgentConnection, reopening = false): Promise<boolean> {
+    if (agents.some((a) => a.conn.id === conn.id) || opening.has(conn.id)) return true;
+    if (!relays.get(conn.relayId)) return true; // unbound or relay missing: cannot connect
+    opening.add(conn.id);
+    try {
+      if (!(await acquireChannelLock(conn.id))) {
+        refreshInUse();
+        return false;
+      }
+      agents = [...agents, { conn, state: { status: "idle", callerUrl: null, error: null } }];
+      if (repo) library = [...connections.setReopen(conn.id, repositoryId(repo))];
+      if (reopening) autoTakeover.add(conn.id); // only a reopen that really opened may take over
+      openAgentSession(conn, repo);
+      return true;
+    } finally {
+      opening.delete(conn.id);
+    }
   }
   function connectAgent(label: string | undefined, relayId: string) {
     library = [...connections.add(label, relayId)];
@@ -441,13 +470,16 @@
     library = [...connections.rename(id, label)];
   }
   /** Detach in this tab; the channel and its credentials stay in the library. */
-  function disconnectAgent(id: string) {
+  async function disconnectAgent(id: string) {
     const h = hosts.get(id);
     h?.host.detach();
     h?.session?.free();
+    library = [...connections.setReopen(id, null)];
     hosts.delete(id);
-    releaseChannelLock(id);
+    autoTakeover.delete(id);
+    const released = releaseChannelLock(id);
     agents = agents.filter((a) => a.conn.id !== id);
+    await released; // the in-use query must not still see our own lock
     refreshInUse();
   }
   function forgetAgent(id: string) {
@@ -460,7 +492,32 @@
     const current = repo;
     untrack(() => {
       agentWrites = []; // a new repository: earlier writes name instances that are gone
-      for (const { conn } of agents) openAgentSession(conn, current);
+      const rid = current && agents.length ? repositoryId(current) : null;
+      for (const { conn } of agents) {
+        openAgentSession(conn, current);
+        if (rid) library = [...connections.setReopen(conn.id, rid)];
+      }
+    });
+  });
+
+  // Once per page load, the first repository reopens the agents that were open on it. After a tick,
+  // so the shell has declared its write guard before any agent can write.
+  let reopened = false;
+  $effect(() => {
+    const r = repo;
+    if (!r || reopened) return;
+    reopened = true;
+    void tick().then(() => {
+      if (repo !== r) {
+        reopened = false; // the repo effect reruns for the new repository
+        return;
+      }
+      void reopenSaved(
+        library,
+        repositoryId(r),
+        (c) => openChannel(c, true),
+        { stillValid: () => repo === r }
+      );
     });
   });
 
@@ -1002,7 +1059,13 @@
     onDisconnect={disconnectAgent}
     onForget={forgetAgent}
     onRename={renameAgent}
-    onRotate={(id) => void hosts.get(id)?.host.rotate()}
+    onRotate={(id) => {
+      // a new channel means new clients
+      connections.clearInit(id);
+      const { [id]: _gone, ...rest } = clientNames;
+      clientNames = rest;
+      void hosts.get(id)?.host.rotate();
+    }}
     onTakeover={(id) => void hosts.get(id)?.host.takeover()}
     pair={async (id) => {
       const e = hosts.get(id);

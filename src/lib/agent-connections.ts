@@ -11,6 +11,8 @@ export interface AgentConnection {
   relayId?: string;
   /** ISO 8601, updated each time a session reaches "online" (every reconnect). */
   lastConnectedAt?: string;
+  /** The repositoryId this agent was connected on (#418); reopened on load when that repository opens. Absent = never. */
+  reopen?: string;
 }
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -19,6 +21,9 @@ const LEGACY_ID_KEY = "srs-web.relay-agent-id"; // single-agent era (#360)
 const LEGACY_CREDS_KEY = "srs-web.mcp-relay"; // pre-#358 channel credentials (also pre-#360 users, who have no id)
 /** Relay credentials key for one connection (RelayHost `storageKey`). */
 export const credsKey = (id: string) => `${LEGACY_CREDS_KEY}.${id}`;
+/** The client's last successful `initialize` for one connection (#418): opaque body, client metadata only. */
+const INIT_PREFIX = "srs-web.mcp-init.";
+export const initKey = (id: string) => `${INIT_PREFIX}${id}`;
 
 /**
  * The connection list. Loaded once and then held in memory, so a throwing storage never throws
@@ -64,6 +69,12 @@ export function createConnectionStore(getStorage: () => Store = () => localStora
     return cache;
   }
 
+  const clearInit = (id: string) => {
+    try {
+      st()?.removeItem(initKey(id));
+    } catch {}
+  };
+
   return {
     /** The connections; first run seeds one, migrating the pre-#358 connection into it. */
     list(): AgentConnection[] {
@@ -99,6 +110,10 @@ export function createConnectionStore(getStorage: () => Store = () => localStora
       const l = label.trim();
       return patch(this, id, (c) => ({ ...c, label: l || undefined }));
     },
+    /** Remember (a repository id) or forget (null) that this agent was open. */
+    setReopen(id: string, repositoryId: string | null): AgentConnection[] {
+      return patch(this, id, (c) => ({ ...c, reopen: repositoryId ?? undefined }));
+    },
     touch(id: string, at = new Date().toISOString()): AgentConnection[] {
       return patch(this, id, (c) => ({ ...c, lastConnectedAt: at }));
     },
@@ -120,7 +135,36 @@ export function createConnectionStore(getStorage: () => Store = () => localStora
       try {
         st()?.removeItem(credsKey(id));
       } catch {}
+      clearInit(id);
       return cache;
+    },
+    saveInit(id: string, init: { body: string; initialized: boolean }): void {
+      if (!init.body) return;
+      try {
+        st()?.setItem(initKey(id), JSON.stringify(init));
+      } catch {}
+    },
+    loadInit(id: string): { body: string; initialized: boolean } | null {
+      try {
+        const v = JSON.parse(st()?.getItem(initKey(id)) ?? "null");
+        return typeof v?.body === "string" && v.body
+          ? { body: v.body, initialized: !!v.initialized }
+          : null;
+      } catch {
+        return null;
+      }
+    },
+    clearInit,
+    /** Drop stored initializes whose agent is gone (a crash between steps). */
+    sweepInits(liveIds: string[]): void {
+      try {
+        const s = st() as Storage | null;
+        if (!s || typeof s.length !== "number") return;
+        const keys = Array.from({ length: s.length }, (_, i) => s.key(i) ?? "");
+        for (const k of keys)
+          if (k.startsWith(INIT_PREFIX) && !liveIds.includes(k.slice(INIT_PREFIX.length)))
+            s.removeItem(k);
+      } catch {}
     },
   };
 }
@@ -132,18 +176,19 @@ export const connections = createConnectionStore();
  * Without `navigator.locks` everything degrades to "free": the relay's 409 stays the backstop.
  */
 const lockName = (id: string) => `srs-web.channel.${id}`;
-const releasers = new Map<string, () => void>();
+const releasers = new Map<string, { release: () => void; released: () => Promise<unknown> }>();
 
 /** Take the channel's lock for this tab. False when another tab holds it. */
 export function acquireChannelLock(id: string): Promise<boolean> {
   const locks = globalThis.navigator?.locks;
   if (!locks || releasers.has(id)) return Promise.resolve(true);
   return new Promise((resolve) => {
-    locks
+    let released: Promise<unknown> = Promise.resolve();
+    released = locks
       .request(lockName(id), { ifAvailable: true }, (lock) => {
         if (!lock) return void resolve(false);
         return new Promise<void>((release) => {
-          releasers.set(id, release);
+          releasers.set(id, { release, released: () => released });
           resolve(true);
         });
       })
@@ -151,9 +196,12 @@ export function acquireChannelLock(id: string): Promise<boolean> {
   });
 }
 
-export function releaseChannelLock(id: string): void {
-  releasers.get(id)?.();
+/** Resolves once the browser has actually released the lock (the request promise settles after the callback does). */
+export async function releaseChannelLock(id: string): Promise<void> {
+  const r = releasers.get(id);
   releasers.delete(id);
+  r?.release();
+  await r?.released();
 }
 
 /** Ids of channels held by another tab (our own locks are excluded). */
