@@ -16,7 +16,7 @@ export interface AgentConnection {
 }
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-const LIST_KEY = "srs-web.agent-connections";
+export const LIST_KEY = "srs-web.agent-connections";
 const LEGACY_ID_KEY = "srs-web.relay-agent-id"; // single-agent era (#360)
 const LEGACY_CREDS_KEY = "srs-web.mcp-relay"; // pre-#358 channel credentials (also pre-#360 users, who have no id)
 /** Relay credentials key for one connection (RelayHost `storageKey`). */
@@ -76,6 +76,12 @@ export function createConnectionStore(getStorage: () => Store = () => localStora
   };
 
   return {
+    /** Another tab rewrote storage (`storage` event key): drop the cache so the next list() re-reads. True if it was ours. */
+    reload(key: string | null): boolean {
+      if (key !== null && key !== LIST_KEY) return false;
+      cache = null;
+      return true;
+    },
     /** The connections; first run seeds one, migrating the pre-#358 connection into it. */
     list(): AgentConnection[] {
       if (cache) return cache;

@@ -15,7 +15,7 @@ export interface Relay {
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 type Result = { relays: Relay[] } | { error: string };
-const KEY = "srs-web.relays";
+export const KEY = "srs-web.relays";
 const LEGACY_URL_KEY = "srs-web.mcp-relay-url";
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
@@ -122,6 +122,12 @@ export function createRelayStore(
   }
 
   return {
+    /** As the connection store's `reload`: another tab rewrote the relay list. */
+    reload(key: string | null): boolean {
+      if (key !== null && key !== KEY) return false;
+      cache = null;
+      return true;
+    },
     list: (): Relay[] => load(),
     get: (id: string | undefined): Relay | undefined => load().find((r) => r.id === id),
     add(label: string, url: string): Result {

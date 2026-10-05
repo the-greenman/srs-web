@@ -7,6 +7,8 @@ export interface MenuAction {
   icon?: IconComponent;
   run: () => void;
   enabled: boolean;
+  /** Why a disabled row is disabled (title). */
+  reason?: string;
   /** Present = a checkable row (`menuitemcheckbox`, aria-checked); "mixed" = partly on. */
   checked?: boolean | "mixed";
 }

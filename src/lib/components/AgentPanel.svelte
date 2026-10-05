@@ -189,7 +189,7 @@
       : []),
     ...(a.state ? [] : [{ id: 'rename', label: 'Rename', enabled: true, run: () => startRename(a) }]),
     ...(a.state ? [{ id: 'rotate', label: 'Rotate URL', enabled: true, run: () => onRotate(a.conn.id) }] : []),
-    { id: 'forget', label: 'Forget', enabled: true, run: () => onForget(a.conn.id) },
+    { id: 'forget', label: 'Forget', enabled: !a.inUseElsewhere, reason: 'In use in another tab', run: () => onForget(a.conn.id) },
   ];
   const itemTestid = (a: MenuAction) => ({ forget: 'mcp-library-forget', rotate: 'mcp-rotate' })[a.id] ?? `agent-${a.id}`;
   const relayActions = (r: Relay): MenuAction[] => [

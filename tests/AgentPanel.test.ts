@@ -154,3 +154,14 @@ it("opening on another agent closes the first", async () => {
   await waitFor(() => expect(r.getAllByTestId("pair-code")).toHaveLength(1));
   expect(r.getByTestId("mcp-connection").querySelector('[data-testid="pair-code"]')).toBeTruthy();
 });
+
+it("Forget is disabled with a reason while the channel is in use in another tab (#395)", async () => {
+  for (const [inUseElsewhere, want] of [[true, true], [false, false]] as const) {
+    const r = render(AgentPanel, { ...base, agents: [agent({ inUseElsewhere })] });
+    await fireEvent.click(r.getByTestId("agent-menu"));
+    const f = r.getByTestId("mcp-library-forget") as HTMLButtonElement;
+    expect(f.disabled).toBe(want);
+    expect(f.title).toBe(want ? "In use in another tab" : "");
+    r.unmount();
+  }
+});
