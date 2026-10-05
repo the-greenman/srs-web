@@ -136,6 +136,8 @@ export interface SrsRepository {
   copy_container(source_id: string, input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in updateContainer()
   update_container(container_id: string, patch_json: string): any;
+  /** RFC-026 slice (`.srs` ZIP bytes) of one container; refusals throw the service error (ADR-051). */
+  export_slice(container_id: string): Uint8Array;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in forkRecord()
   fork_record(container_id: string, instance_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainerOutline()
@@ -1177,6 +1179,8 @@ export interface Container {
   identityInstanceId?: string;
   /** RFC-043: ordered outline of members; `depth` omitted means 0. */
   memberInstanceIds?: ContainerEntry[];
+  /** RFC-034: declared child containers (a slice carries them with their members). */
+  childContainerIds?: string[];
 }
 
 /** One entry of a container's ordered member outline (RFC-043). */
@@ -2191,6 +2195,7 @@ export interface CreateContainerInput {
   anchorInstanceId?: string;
   identityInstanceId?: string;
   memberInstanceIds?: ContainerEntry[];
+  childContainerIds?: string[];
 }
 
 /**
@@ -2223,11 +2228,16 @@ export function copyContainer(
 export function updateContainer(
   repo: SrsRepository,
   containerId: string,
-  patch: { title?: string; description?: string; tags?: string[] }
+  patch: { title?: string; description?: string; tags?: string[]; childContainerIds?: string[] }
 ): Container {
   return wasm<{ container: Container }>(() =>
     repo.update_container(containerId, JSON.stringify(patch))
   ).container;
+}
+
+/** Export one container as an RFC-026 slice (`.srs` bytes); the core service decides closure and refusals. */
+export function exportSlice(repo: SrsRepository, containerId: string): Uint8Array<ArrayBuffer> {
+  return wasm<Uint8Array<ArrayBuffer>>(() => repo.export_slice(containerId));
 }
 
 /** Fork `instanceId` and its nested children inside `containerId` only ("make local copy"). */
