@@ -6,7 +6,7 @@ import CircleQuestionMark from "@lucide/svelte/icons/circle-question-mark";
  */
 import type { IconComponent } from "../components/icon.js";
 import type { ToolbarAction } from "../components/menu-action.js";
-import { BASE_GROUPS, wideAction } from "../components/shell-actions.js";
+import { BASE_GROUPS, agentsAction, wideAction } from "../components/shell-actions.js";
 import type { ShellState } from "../shell-context.svelte.js";
 
 export type HeaderGroup = "document" | "view" | "go" | "help";
@@ -32,6 +32,8 @@ export interface HeaderHandlers {
   /** Download the visible essay text as markdown. Absent while no essay is open. */
   onexportmd?: () => void;
   onexplorer?: () => void;
+  /** Absent when the shell has no agent panel to open. */
+  onopenagents?: () => void;
   onopenanother: () => void;
 }
 
@@ -121,6 +123,7 @@ export function headerActions(
       run: h.onexplorer,
       enabled: true,
     },
+    !!h.onopenagents && (agentsAction(h.onopenagents) as HeaderAction),
     {
       id: "other",
       group: "go",

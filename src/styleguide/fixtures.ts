@@ -496,6 +496,7 @@ export const toolbarActions = headerActions(
     onexport: nop,
     onexportmd: nop,
     onexplorer: nop,
+    onopenagents: nop,
     onopenanother: nop,
   },
   { shell: new ShellState({ wideEnabled: true }), comments: "mixed", saving: false, dirty: true }

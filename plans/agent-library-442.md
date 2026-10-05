@@ -279,17 +279,24 @@ Do not start the next phase until the milestone gate passes.
 
 #### Tasks
 
-- [ ] `agentsAction(run: () => void): ToolbarAction` in `src/lib/components/shell-actions.ts` (next to `wideAction`): `{ id: "agents", group: "go", kind: "action", label: "Agents…", testid: "toolbar-agents", enabled: true, run }`. Add `onopenagents: () => void` to `HeaderHandlers` (`src/lib/essay/header-actions.ts`, the `go` group beside `onexplorer`/`onopenanother`, ~116-130) and to `GenericHandlers` (`src/lib/generic/toolbar-actions.ts`, `go` group, ~54). No shared module store (D7).
-- [ ] Only `GenericSrsShell` (`<Toolbar>` at :510) and `EssayShell` (:515) mount a `Toolbar`; `GuidesShell` (:588) and `GovernanceShell` (:994, :1111) use a menu-less `Topbar` and get no Go menu. They rely on the always-present dock: add an e2e check that the dock is visible and operable at 390px in one Topbar shell (Guides).
-- [ ] Reaction, essay shell: `onopenagents` sets `shell.inspectorOpen = true` (the existing `ShellState` field, `shell-context.svelte.ts:18`; a no-op above the inspector breakpoint where the rail is inline) and a local `agentsOpen = $state(true)` bound to the Agents `Panel` (`open = $bindable`, `Panel.svelte:15`), then focuses the panel's first control after `tick()`. Generic shell: it does not host the panel (the dock is App-level), so App passes it an `onOpenAgents` prop (like the existing `onOpenAnother`, `GenericSrsShell.svelte:76,90,426`); add `onopenagents` to `GenericHandlers` (`toolbar-actions.ts:10`) as well as `HeaderHandlers`, and update the genericActions fixtures/tests that construct it: App sets a `dockOpen = $state(true)` bound to the dock `Panel` and focuses its first control. Closing the drawer returns focus to the trigger (existing Drawer behaviour).
-- [ ] `ToolbarSpecimen`/toolbar docs: add the action to `fx.toolbarActions` (`src/styleguide/fixtures.ts`, which also gets `onopenagents: nop` next to `onagent` at :452) so the styleguide shows it; `src/lib/components/README.md` Toolbar section mentions the Go group entry and the Topbar-shell note.
+- [x] `agentsAction(run: () => void): ToolbarAction` in `src/lib/components/shell-actions.ts` (next to `wideAction`): `{ id: "agents", group: "go", kind: "action", label: "Agents…", testid: "toolbar-agents", enabled: true, run }`. Add `onopenagents: () => void` to `HeaderHandlers` (`src/lib/essay/header-actions.ts`, the `go` group beside `onexplorer`/`onopenanother`, ~116-130) and to `GenericHandlers` (`src/lib/generic/toolbar-actions.ts`, `go` group, ~54). No shared module store (D7).
+- [x] Only `GenericSrsShell` (`<Toolbar>` at :510) and `EssayShell` (:515) mount a `Toolbar`; `GuidesShell` (:588) and `GovernanceShell` (:994, :1111) use a menu-less `Topbar` and get no Go menu. They rely on the always-present dock: add an e2e check that the dock is visible and operable at 390px in one Topbar shell (Guides).
+- [x] Reaction, essay shell: `onopenagents` sets `shell.inspectorOpen = true` (the existing `ShellState` field, `shell-context.svelte.ts:18`; a no-op above the inspector breakpoint where the rail is inline) and a local `agentsOpen = $state(true)` bound to the Agents `Panel` (`open = $bindable`, `Panel.svelte:15`), then focuses the panel's first control after `tick()`. Generic shell: it does not host the panel (the dock is App-level), so App passes it an `onOpenAgents` prop (like the existing `onOpenAnother`, `GenericSrsShell.svelte:76,90,426`); add `onopenagents` to `GenericHandlers` (`toolbar-actions.ts:10`) as well as `HeaderHandlers`, and update the genericActions fixtures/tests that construct it: App sets a `dockOpen = $state(true)` bound to the dock `Panel` and focuses its first control. Closing the drawer returns focus to the trigger (existing Drawer behaviour).
+- [x] `ToolbarSpecimen`/toolbar docs: add the action to `fx.toolbarActions` (`src/styleguide/fixtures.ts`, which also gets `onopenagents: nop` next to `onagent` at :452) so the styleguide shows it; `src/lib/components/README.md` Toolbar section mentions the Go group entry and the Topbar-shell note.
 
 #### Acceptance Criteria
 
-- [ ] In the essay editor and the generic explorer, Go → Agents… exists and focuses the panel, with no relay configured.
-- [ ] At drawer widths (Playwright viewport 1000px wide: below `BREAKPOINTS.wide` (1100, `DRAWER_INSPECTOR`) where the inspector is a drawer) the action opens the inspector drawer showing the Agents panel.
-- [ ] In the narrow tier the action appears in the overflow menu under the Go section.
-- [ ] `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` pass; `e2e/essay-toolbar.spec.ts` and `e2e/shell-layout.spec.ts` pass.
+- [x] In the essay editor and the generic explorer, Go → Agents… exists and focuses the panel, with no relay configured.
+- [x] At drawer widths (Playwright viewport 1000px wide: below `BREAKPOINTS.wide` (1100, `DRAWER_INSPECTOR`) where the inspector is a drawer) the action opens the inspector drawer showing the Agents panel.
+- [x] In the narrow tier the action appears in the overflow menu under the Go section.
+- [x] `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` pass; `e2e/essay-toolbar.spec.ts` and `e2e/shell-layout.spec.ts` pass.
+
+#### Deviations (as built)
+
+- `onopenagents` is optional in `HeaderHandlers` and `GenericHandlers` (like `onexplorer`): the action is offered only when the shell can open the library. `GenericSrsShell` takes an optional `onOpenAgents` prop; App passes `openDock`. The essay shell passes it only when it has an `agentPanel`.
+- "Focus the panel" focuses the first control in DOM order: the "Add a relay" Disclosure button when no relay exists.
+- The Phase 3 e2e live in `e2e/agent-library.spec.ts` (created here, extended in Phase 4); the Guides check expands the collapsed dock first (the dock starts collapsed with no relay, see Phase 2).
+- `playwright.config.ts` `webServer.env: { VITE_MCP_RELAY_URL: "" }` was added here, since the new spec needs it.
 
 #### Testing
 

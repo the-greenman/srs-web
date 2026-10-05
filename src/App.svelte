@@ -49,7 +49,7 @@
   import AgentPanel from "$lib/components/AgentPanel.svelte";
   import type { PanelAgent } from "$lib/components/agent-panel.js";
   import { RelayHost, type HostState } from "$lib/mcp/relay-host.js";
-  import { untrack } from "svelte";
+  import { tick, untrack } from "svelte";
   import { notify, pinNotice, resetNotices, toUiDiagnostic, unpinNotice, type NoticeKind } from "$lib/notices.svelte.js";
   import { slugifyFilename } from "$lib/slug.js";
   import {
@@ -325,6 +325,12 @@
   /** The 15 s clock for "Connected 2 min ago" (EssayShell keeps its own). */
   /** The floating dock starts open only once a relay exists: with none it would sit over the page's own controls. */
   let dockOpen = $state(relays.list().length > 0);
+  /** Go > Agents…: expand the dock and focus its first control. */
+  async function openDock() {
+    dockOpen = true;
+    await tick();
+    document.querySelector<HTMLElement>('.mcp-dock [data-testid="agent-panel"] button, .mcp-dock [data-testid="agent-panel"] input')?.focus();
+  }
   let agentNow = $state(Date.now());
   $effect(() => {
     const t = setInterval(() => (agentNow = Date.now()), 15000);
@@ -876,6 +882,7 @@
     documentDirty={documentDirty}
     documentRevision={documentRevision}
     onOpenEditor={(id) => { editorMode = id; }}
+    onOpenAgents={openDock}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;
