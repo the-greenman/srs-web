@@ -193,7 +193,7 @@ test.describe("Gallery fixture — real records render", () => {
   });
 
   // Quarantined (#173): .topbar__repo was replaced by the Breadcrumb component
-  // (.topbar__crumb-*). Rewrite against the current breadcrumb.
+  // (.breadcrumb__*). Rewrite against the current breadcrumb.
   test.fixme("repo filename shown in topbar", async ({ page }) => {
     await expect(page.locator(".topbar__repo")).toContainText("gallery");
   });

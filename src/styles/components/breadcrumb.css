@@ -1,0 +1,47 @@
+/* Breadcrumb: a labelled nav with an ordered list. Lives in the Toolbar title slot (or any bar). */
+.breadcrumb {
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.breadcrumb ol {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.breadcrumb li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.breadcrumb__sep {
+  opacity: 0.5;
+}
+/* The current item shortens in a one-row bar. */
+.breadcrumb__current {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text);
+}
+.breadcrumb__link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+.breadcrumb__link:hover {
+  text-decoration: underline;
+}

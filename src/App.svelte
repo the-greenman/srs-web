@@ -1049,6 +1049,7 @@
     agentPanel={agentLibrary}
     agentStatus={relayList.length > 0 ? agentStatus : undefined}
     onOpenExplorer={() => { editorMode = "generic"; }}
+    onOpenAgents={activeEditor!.hostsAgentPanel ? undefined : openDock}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;
