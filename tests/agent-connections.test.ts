@@ -16,6 +16,32 @@ beforeEach(() => {
 });
 
 describe("agent connections", () => {
+  it("setReopen sets and clears the repository id, persisting, touching only that entry", () => {
+    const c = store();
+    const [first] = c.list();
+    const second = c.add()[1];
+    expect(c.setReopen(second.id, "repo-1")[1].reopen).toBe("repo-1");
+    expect(store().list()[1].reopen).toBe("repo-1");
+    expect(store().list()[0]).toEqual(first);
+    c.setReopen(second.id, null);
+    expect("reopen" in JSON.parse(s.getItem("srs-web.agent-connections") as string)[1]).toBe(false);
+  });
+  it("setReopen does not throw on a throwing storage", () => {
+    const bad = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error("full");
+      },
+      removeItem: () => {},
+    };
+    const c = createConnectionStore(() => bad);
+    const [first] = c.list();
+    expect(c.setReopen(first.id, "r")[0].reopen).toBe("r");
+  });
+  it("an old list loads as never-reopen", () => {
+    s.setItem("srs-web.agent-connections", JSON.stringify([{ id: "agent:x" }, { id: "agent:y", reopen: true }]));
+    expect(store().list()[0].reopen).toBeUndefined();
+  });
   it("seeds one connection and keeps its id across reloads", () => {
     const a = store().list();
     expect(a).toHaveLength(1);

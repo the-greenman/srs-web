@@ -11,6 +11,8 @@ export interface AgentConnection {
   relayId?: string;
   /** ISO 8601, updated each time a session reaches "online" (every reconnect). */
   lastConnectedAt?: string;
+  /** The repositoryId this agent was connected on (#418); reopened on load when that repository opens. Absent = never. */
+  reopen?: string;
 }
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -98,6 +100,10 @@ export function createConnectionStore(getStorage: () => Store = () => localStora
     rename(id: string, label: string): AgentConnection[] {
       const l = label.trim();
       return patch(this, id, (c) => ({ ...c, label: l || undefined }));
+    },
+    /** Remember (a repository id) or forget (null) that this agent was open. */
+    setReopen(id: string, repositoryId: string | null): AgentConnection[] {
+      return patch(this, id, (c) => ({ ...c, reopen: repositoryId ?? undefined }));
     },
     touch(id: string, at = new Date().toISOString()): AgentConnection[] {
       return patch(this, id, (c) => ({ ...c, lastConnectedAt: at }));

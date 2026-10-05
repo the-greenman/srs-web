@@ -117,20 +117,24 @@ $effect(() => {
 
 #### Tasks
 
-- [ ] `agent-connections.ts`: `reopen?: string`, `setReopen`, `sweepInits` stub call site (the sweep itself lands in Phase 2 with the init helpers).
-- [ ] `src/lib/reopen.ts` and `App.svelte`: `opening` guard, `openChannel` returns boolean + `setReopen`, `disconnectAgent` clears, repo-change effect refreshes the flag, `tick()`-gated one-shot reopen effect, `autoTakeover` in `setAgentState` (D1-D6).
-- [ ] Unit tests:
+- [x] `agent-connections.ts`: `reopen?: string`, `setReopen`, `sweepInits` stub call site (the sweep itself lands in Phase 2 with the init helpers).
+- [x] `src/lib/reopen.ts` and `App.svelte`: `opening` guard, `openChannel` returns boolean + `setReopen`, `disconnectAgent` clears, repo-change effect refreshes the flag, `tick()`-gated one-shot reopen effect, `autoTakeover` in `setAgentState` (D1-D6).
+- [x] Unit tests:
   - `tests/agent-connections.test.ts`: `setReopen` sets (a repo id) and clears (key absent), survives a store reload, leaves other entries untouched, a throwing storage does not throw, an old list (and a legacy `reopen: true`) loads as never-reopen.
   - `tests/reopen.test.ts` (fake timers): reopens only entries whose `reopen` equals `repoId`, in order; an entry with a different id or none is skipped; an entry whose relay is missing is skipped (the `open` callback is where that check lives, so assert `open` is called and its `true` result ends it); `open` returning false retries exactly once after 1000 ms and not again; `stillValid() === false` cancels the retry; running `reopenSaved` is the caller's once-per-load responsibility, asserted by the App effect's `reopened` guard in e2e.
 
 #### Acceptance Criteria
 
-- [ ] Connect, reload, open the same repo: the agent shows Connected without a click, same `callerUrl`/channel (no second `POST /v1/channels`).
-- [ ] Open a different repository after the reload: the agent is not reopened.
-- [ ] An agent disconnected before reload is not reopened; a forgotten agent is gone.
-- [ ] A Connect click while a reopen is in flight yields one row and one executor socket.
-- [ ] Before a repo is open, nothing connects. A later repo change does not open a second session for an open agent.
-- [ ] `npm run typecheck`, `npm run lint`, `npm test` pass.
+- [x] Connect, reload, open the same repo: the agent shows Connected without a click, same `callerUrl`/channel (no second `POST /v1/channels`).
+- [x] Open a different repository after the reload: the agent is not reopened.
+- [x] An agent disconnected before reload is not reopened; a forgotten agent is gone.
+- [x] A Connect click while a reopen is in flight yields one row and one executor socket.
+- [x] Before a repo is open, nothing connects. A later repo change does not open a second session for an open agent.
+- [x] `npm run typecheck`, `npm run lint`, `npm test` pass.
+
+#### Deviations
+
+- `e2e/agent-channels.spec.ts` "reload keeps ids and URLs" asserted nothing auto-connects after a reload and clicked Connect; updated to expect the automatic reopen (its two reconnect clicks removed).
 
 #### Testing
 

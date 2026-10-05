@@ -214,9 +214,7 @@ test("reload keeps ids and URLs; a typed label is the author; repo change keeps 
   // reload: same ids and caller URLs (no new channels minted)
   const mintedBefore = minted;
   await open();
-  await expect(page.getByTestId("mcp-status")).toHaveCount(0); // nothing auto-connects
-  await page.getByTestId("mcp-library-connect").first().click();
-  await page.getByTestId("mcp-library-connect").first().click();
+  // agents open on this repository reopen themselves (#418)
   await expect(page.getByTestId("mcp-status")).toHaveText(["Connected", "Connected"], {
     timeout: 15000,
   });
@@ -265,10 +263,8 @@ test("reload keeps ids and URLs; a typed label is the author; repo change keeps 
     page.locator(".essay-shell__page .block-stack__item").nth(1).getByTestId("actor-name")
   ).toHaveText(["alpha", "Labelled"]);
 
-  // repo change: reopen the document (reload); reconnect both from the library
+  // repo change: reopen the document (reload); both reopen
   await open();
-  await page.getByTestId("mcp-library-connect").first().click();
-  await page.getByTestId("mcp-library-connect").first().click();
   await expect(page.getByTestId("mcp-status")).toHaveText(["Connected", "Connected"], {
     timeout: 15000,
   });

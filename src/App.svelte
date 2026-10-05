@@ -35,7 +35,8 @@
   import { acquireChannelLock, releaseChannelLock, channelsInUseElsewhere, connections, credsKey, type AgentConnection } from "$lib/agent-connections.js";
   import { relays } from "$lib/relay-library.js";
   import { observeSession, pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
-  import { listRelations, listTypes, type AgentWriteGuard, type McpSession, type SrsRepository } from "$lib/srs-client.js";
+  import { reopenSaved } from "$lib/reopen.js";
+  import { listRelations, listTypes, repositoryId, type AgentWriteGuard, type McpSession, type SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
@@ -349,7 +350,13 @@
     }))
   );
   const hosts = new Map<string, { host: RelayHost; session: McpSession | null }>();
+  // Reopen after a reload (#418): ids mid-open (a Connect click must not duplicate them), and ids
+  // allowed exactly one automatic takeover if the relay still holds the dead page's socket.
+  const opening = new Set<string>();
+  const autoTakeover = new Set<string>();
   const setAgentState = (id: string, state: HostState) => {
+    if (state.status === "online") autoTakeover.delete(id);
+    else if (state.status === "rejected" && autoTakeover.delete(id)) void hosts.get(id)?.host.takeover();
     if (state.status === "online" && agents.find((a) => a.conn.id === id)?.state.status !== "online")
       library = [...connections.touch(id)];
     agents = agents.map((a) => (a.conn.id === id ? { ...a, state } : a));
@@ -425,12 +432,22 @@
   }
 
   /** Open a saved channel in this tab, only if no other tab holds it. */
-  async function openChannel(conn: AgentConnection) {
-    if (agents.some((a) => a.conn.id === conn.id)) return;
-    if (!relays.get(conn.relayId)) return; // unbound or relay missing: cannot connect
-    if (!(await acquireChannelLock(conn.id))) return refreshInUse();
-    agents = [...agents, { conn, state: { status: "idle", callerUrl: null, error: null } }];
-    openAgentSession(conn, repo);
+  async function openChannel(conn: AgentConnection): Promise<boolean> {
+    if (agents.some((a) => a.conn.id === conn.id) || opening.has(conn.id)) return true;
+    if (!relays.get(conn.relayId)) return true; // unbound or relay missing: cannot connect
+    opening.add(conn.id);
+    try {
+      if (!(await acquireChannelLock(conn.id))) {
+        refreshInUse();
+        return false;
+      }
+      agents = [...agents, { conn, state: { status: "idle", callerUrl: null, error: null } }];
+      if (repo) library = [...connections.setReopen(conn.id, repositoryId(repo))];
+      openAgentSession(conn, repo);
+      return true;
+    } finally {
+      opening.delete(conn.id);
+    }
   }
   function connectAgent(label: string | undefined, relayId: string) {
     library = [...connections.add(label, relayId)];
@@ -445,6 +462,7 @@
     const h = hosts.get(id);
     h?.host.detach();
     h?.session?.free();
+    library = [...connections.setReopen(id, null)];
     hosts.delete(id);
     releaseChannelLock(id);
     agents = agents.filter((a) => a.conn.id !== id);
@@ -460,7 +478,34 @@
     const current = repo;
     untrack(() => {
       agentWrites = []; // a new repository: earlier writes name instances that are gone
-      for (const { conn } of agents) openAgentSession(conn, current);
+      const rid = current && agents.length ? repositoryId(current) : null;
+      for (const { conn } of agents) {
+        openAgentSession(conn, current);
+        if (rid) library = [...connections.setReopen(conn.id, rid)];
+      }
+    });
+  });
+
+  // Once per page load, the first repository reopens the agents that were open on it. After a tick,
+  // so the shell has declared its write guard before any agent can write.
+  let reopened = false;
+  $effect(() => {
+    const r = repo;
+    if (!r || reopened) return;
+    reopened = true;
+    void tick().then(() => {
+      if (repo !== r) return;
+      void reopenSaved(
+        library,
+        repositoryId(r),
+        async (c) => {
+          autoTakeover.add(c.id);
+          const ok = await openChannel(c);
+          if (!ok) autoTakeover.delete(c.id);
+          return ok;
+        },
+        { stillValid: () => repo === r }
+      );
     });
   });
 
