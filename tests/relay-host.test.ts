@@ -67,6 +67,12 @@ describe("RelayHost.pair", () => {
   it("rejects before any channel exists", async () => {
     await expect(setup().host.pair()).rejects.toThrow("No channel yet");
   });
+  it("rejects after detach (no session)", async () => {
+    const { host } = setup();
+    await host.attach(session);
+    host.detach();
+    await expect(host.pair()).rejects.toThrow("No channel yet");
+  });
   it("uses the attached channel's credential", async () => {
     const { host, urls, release } = setup();
     await host.attach(session);

@@ -66,6 +66,7 @@ export async function routeRelayChannels(
     pairing?: { ttlMs?: number; status?: number };
   } = {}
 ): Promise<{ pairingRequests: string[]; pairing: { status?: number } }> {
+  // The returned handle is live: tests mutate `pairing.status` (e.g. back to undefined) to change the answer, and read `pairingRequests`.
   const host = o.host ?? "relay.test";
   let k = 0;
   let calls = 0;

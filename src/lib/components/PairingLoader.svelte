@@ -2,7 +2,7 @@
   PairingLoader — owns the pairing data path for one open agent row: fetches on mount, refreshes at
   `expiresAt` (never faster than REFRESH_MIN_MS between calls), keeps the previous code visible when
   a refresh fails, announces a changed code through `notify`, and focuses the code on open.
-  Headless: the `children` snippet renders the view. Unmount (rotate, disconnect, forget, Done)
+  Headless: renders nothing, publishes the view and retry through bindable props. Unmount (rotate, disconnect, forget, Done)
   clears the timer and drops any in-flight result. srs-web#447
 -->
 <script module lang="ts">
@@ -11,13 +11,26 @@
 </script>
 
 <script lang="ts">
-  import { type Snippet, tick, untrack } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import { notify } from '$lib/notices.svelte.js';
   import type { PairingResponse } from '$lib/mcp/relay-protocol';
   import { StalePairing } from '$lib/mcp/relay-host.js';
   import { type PairingView, pairingMinutesLeft } from './agent-panel.js';
 
-  let { pair, now, children }: { pair: () => Promise<PairingResponse>; now: number; children: Snippet<[PairingView, () => void]> } = $props();
+  let {
+    pair,
+    now,
+    scope,
+    view = $bindable(),
+    retry = $bindable(),
+  }: {
+    pair: () => Promise<PairingResponse>;
+    now: number;
+    /** The element holding the pairing UI; focus lookups stay inside it. */
+    scope: () => HTMLElement | null | undefined;
+    view?: PairingView;
+    retry?: () => void;
+  } = $props();
 
   let data = $state<PairingResponse | null>(null);
   let error = $state<string | null>(null);
@@ -30,10 +43,10 @@
 
   const focusCode = () =>
     tick().then(() => {
-      const code = document.querySelector<HTMLElement>('[data-testid="pair-code"]');
-      const active = document.activeElement;
-      if (code && (!active || active === document.body || active.matches('[data-testid="pair-close"]'))) code.focus();
-      else if (!code) document.querySelector<HTMLElement>('[data-testid="pair-close"]')?.focus();
+      const host = scope();
+      const code = host?.querySelector<HTMLElement>('[data-testid="pair-code"]');
+      if (code && (!host?.contains(document.activeElement) || document.activeElement?.matches('[data-testid="pair-close"]'))) code.focus();
+      else if (!code) host?.querySelector<HTMLElement>('[data-testid="pair-close"]')?.focus();
     });
 
   async function run() {
@@ -66,19 +79,19 @@
 
   $effect(() => {
     void settled;
-    if (!settled) return;
+    if (!settled || (error && !data)) return; // no code held: wait for the Retry button
     clearTimeout(timer);
     const due = Math.max((data?.expiresAt ?? 0) - Date.now(), lastCall + REFRESH_MIN_MS - Date.now());
     timer = setTimeout(run, due);
   });
 
   // Retry is a delay, not a drop: still bounded by REFRESH_MIN_MS.
-  function retry() {
+  retry = () => {
     clearTimeout(timer);
     timer = setTimeout(run, Math.max(0, lastCall + REFRESH_MIN_MS - Date.now()));
-  }
+  };
 
-  const view = $derived<PairingView>({ data, error, minutes: data ? pairingMinutesLeft(data.expiresAt, now) : 0 });
+  $effect(() => {
+    view = { data, error, minutes: data ? pairingMinutesLeft(data.expiresAt, now) : 0 };
+  });
 </script>
-
-{@render children(view, retry)}

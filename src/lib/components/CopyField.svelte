@@ -13,11 +13,14 @@
   let { value, label, buttonLabel, testid }: { value: string; label: string; buttonLabel: string; testid: string } = $props();
 
   let copied = $state(false);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  $effect(() => () => clearTimeout(timer));
   async function copy() {
     // false (unavailable or denied): the value stays selectable in the field
     if (!(await copyText(value))) return;
     copied = true;
-    setTimeout(() => (copied = false), 1500);
+    clearTimeout(timer);
+    timer = setTimeout(() => (copied = false), 1500);
   }
 </script>
 

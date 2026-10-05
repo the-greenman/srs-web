@@ -92,7 +92,7 @@ export class RelayHost {
   async pair(): Promise<PairingResponse> {
     const creds = this.#creds;
     const seq = this.#seq;
-    if (!creds) throw new Error("No channel yet: connect the agent first.");
+    if (!creds || !this.#session) throw new Error("No channel yet: connect the agent first.");
     const r = await requestPairing(this.o.relayUrl, creds, this.o.fetchImpl);
     if (seq !== this.#seq || this.#creds !== creds) throw new StalePairing();
     return r;

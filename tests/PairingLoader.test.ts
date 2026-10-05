@@ -15,7 +15,7 @@ const mount = (pair: () => Promise<ReturnType<typeof res>>, now = T0) => {
   host = r.container;
   return r;
 };
-const shown = () => host.textContent;
+const shown = () => host.querySelector('[data-testid="host"] p')?.textContent;
 const tick = async (ms: number) => {
   await vi.advanceTimersByTimeAsync(ms);
   flushSync();
@@ -108,5 +108,17 @@ describe("PairingLoader", () => {
     await rerender({ now: T0 + 15_000 });
     await tick(0);
     expect(pair).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not auto-retry a failure while no code is held; Retry does", async () => {
+    const pair = vi.fn().mockRejectedValueOnce(new Error("pairing failed: 500")).mockResolvedValue(res("AAAAA-AAAAA", T0 + 600_000));
+    const { getByTestId } = mount(pair);
+    await tick(60_000);
+    expect(pair).toHaveBeenCalledTimes(1);
+    expect(shown()).toBe("-|pairing failed: 500|0");
+    getByTestId("retry").click();
+    await tick(REFRESH_MIN_MS);
+    expect(pair).toHaveBeenCalledTimes(2);
+    expect(shown()).toBe("AAAAA-AAAAA||10");
   });
 });

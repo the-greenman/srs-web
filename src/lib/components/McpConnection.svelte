@@ -31,8 +31,6 @@
     onClosePair?: () => void;
     onRetryPair?: () => void;
   } = $props();
-
-  let advancedOpen = $state(false);
 </script>
 
 {#if error || callerUrl || pairingView || status === 'rejected' || status === 'replaced'}
@@ -43,7 +41,7 @@
       <p class="mcp-conn__note" data-testid="pair-help">Paste the connector URL into any MCP client. It will ask for this code.</p>
       {#if pairingView.data}
         <CopyField value={pairingView.data.connectorUrl} label="Connector URL" buttonLabel="Copy connector URL" testid="pair-url" />
-        <div class="mcp-conn__code"><CopyField value={pairingView.data.code} label="Pairing code" buttonLabel="Copy pairing code" testid="pair-code" /></div>
+        <CopyField value={pairingView.data.code} label="Pairing code" buttonLabel="Copy pairing code" testid="pair-code" />
         <p class="mcp-conn__expiry" data-testid="pair-countdown">{pairingView.minutes === 0 ? 'Refreshing…' : `Expires in about ${pairingView.minutes} min`}</p>
         <p class="mcp-conn__note" data-testid="pair-security">Anyone with this code can connect to this document until it refreshes. Changes stay unsaved until you Save or Export.</p>
       {:else if !pairingView.error}
@@ -58,7 +56,7 @@
   {/if}
   {#if callerUrl}
     <div data-part="advanced">
-      <Disclosure label="Advanced: direct URL" bind:open={advancedOpen} testid="mcp-advanced-open">
+      <Disclosure label="Advanced: direct URL" testid="mcp-advanced-open">
         <CopyField value={callerUrl} label="Direct URL" buttonLabel="Copy direct URL" testid="mcp-caller-url" />
         <p class="mcp-conn__note">Anyone with this URL can read and write this document while this tab is connected. MCP changes are unsaved until you Save or Export.</p>
       </Disclosure>

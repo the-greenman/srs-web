@@ -36,9 +36,6 @@
   gap: var(--space-sm);
   min-width: 0;
 }
-.mcp-conn__code .input {
-  letter-spacing: 0.06em;
-}
 .mcp-conn__expiry {
   margin: 0;
   opacity: 0.7;
