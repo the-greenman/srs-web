@@ -507,6 +507,18 @@
       <Button>Google Drive</Button>
       {#snippet actions()}<Button size="sm">Cancel</Button>{/snippet}
     </Modal>
+    <Modal inline title="Save to GitHub" testid="sg-modal-branch">
+      <p>Committing to <strong>owner/repo</strong>.</p>
+      <fieldset>
+        <label class="checkbox"><input type="radio" name="sg-branch" checked /><span>Commit to <code>main</code></span></label>
+        <label class="checkbox"><input type="radio" name="sg-branch" /><span>Create a new branch</span></label>
+      </fieldset>
+      <Input placeholder="Commit message (optional)" aria-label="Commit message" />
+      {#snippet actions()}
+        <Button size="sm">Cancel</Button>
+        <Button size="sm" variant="primary">Save</Button>
+      {/snippet}
+    </Modal>
   </section>
 </main>
 <LiveRegions />

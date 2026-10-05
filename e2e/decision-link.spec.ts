@@ -95,7 +95,7 @@ test.describe("Decision link picker (srs-web#106)", () => {
     await page.getByTestId("link-confirm").click();
 
     // Modal should close
-    await expect(page.locator(".modal-overlay")).not.toBeVisible({ timeout: 3000 });
+    await expect(page.locator("dialog.modal")).not.toBeVisible({ timeout: 3000 });
 
     // Relations list should now show at least one relation item
     await expect(page.getByTestId("decision-relations-list")).toBeVisible({ timeout: 3000 });
@@ -117,7 +117,7 @@ test.describe("Decision link picker (srs-web#106)", () => {
     await page.getByTestId("link-relation-type").selectOption("precedes");
     await page.getByTestId("link-decision-item").first().click();
     await page.getByTestId("link-confirm").click();
-    await expect(page.locator(".modal-overlay")).not.toBeVisible({ timeout: 3000 });
+    await expect(page.locator("dialog.modal")).not.toBeVisible({ timeout: 3000 });
 
     // Confirm the new relation appeared (count went up by 1)
     await expect(page.getByTestId("relation-item")).toHaveCount(initialCount + 1, {

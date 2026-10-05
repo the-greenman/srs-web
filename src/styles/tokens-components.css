@@ -17,6 +17,7 @@
   --btn-primary-bg: var(--color-text-strong);
   --btn-primary-fg: var(--color-on-dark);
   --btn-primary-hover-bg: var(--color-muted-strong);
+  --btn-danger-fg: var(--color-error);
   --btn-sm-padding: 4px 10px;
   --btn-sm-size: var(--size-sm);
 

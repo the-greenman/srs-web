@@ -70,6 +70,15 @@
   font-weight: 400;
 }
 
+/* Danger — destructive intent: outlined in the error colour */
+.btn--danger {
+  --btn-fg: var(--btn-danger-fg);
+  --btn-border: var(--btn-danger-fg);
+  --btn-hover-border: var(--btn-danger-fg);
+  --btn-hover-fg: var(--btn-danger-fg);
+  font-weight: 400;
+}
+
 /* Ghost — low-contrast, tertiary */
 .btn--ghost {
   --btn-fg: var(--color-muted);
