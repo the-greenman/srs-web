@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem, newRecord, openMenu, closeMenus } from "./helpers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // srs-web#312: richer fixtures reused through the same pending-write-controllable Dropbox
@@ -310,7 +310,7 @@ test.describe("Cloud storage sources", () => {
     // exposing the Edit/Delete controls that must also respect the saving guard.
     // The default section is Articles; fill its required fields (Title, Article
     // Text, Status) so the native-required submit actually succeeds.
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Pending Save Article");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Body text");
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
@@ -330,7 +330,9 @@ test.describe("Cloud storage sources", () => {
       () => Boolean((window as any).__PENDING_WRITE_STARTED__)
     )).toBe(true);
 
-    await expect(page.locator("button.topbar__new")).toBeDisabled();
+    await openMenu(page, "Document");
+    await expect(page.getByTestId("governance-new-record")).toBeDisabled();
+    await closeMenus(page);
     // srs-web#312: restored/broadened beyond just the "New" button — Edit and Delete
     // (both direct entry points into persistWorkingCopy()) must also be blocked.
     await expect(editBtn).toBeDisabled();
@@ -341,7 +343,9 @@ test.describe("Cloud storage sources", () => {
       (window as any).__RESOLVE_PENDING_WRITE__();
     });
     await expect(page.getByTestId("save-status")).toContainText("Saved.");
-    await expect(page.locator("button.topbar__new")).toBeEnabled();
+    await openMenu(page, "Document");
+    await expect(page.getByTestId("governance-new-record")).toBeEnabled();
+    await closeMenus(page);
     await expect(editBtn).toBeEnabled();
     await expect(deleteBtn).toBeEnabled();
   });
@@ -360,7 +364,7 @@ test.describe("Cloud storage sources", () => {
     await page.getByRole("button", { name: /dropbox-sample\.srsj/ }).click();
     await openPackageEditor(page, "governance");
 
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByTestId("decision-summary-card").first()).toBeVisible({ timeout: 5000 });
     await page.getByTestId("decision-summary-card").first().click();
 
@@ -618,7 +622,7 @@ test.describe("Cloud storage sources", () => {
     await page.getByRole("button", { name: /Open as SRS repository/ }).click();
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 10000 });
+    await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 10000 });
     await expect(page.getByText(/records in this repository\./)).toBeVisible();
     await expect(page.locator('[role="alert"]')).toHaveCount(0);
   });
@@ -631,7 +635,7 @@ test.describe("Cloud storage sources", () => {
     await browseToGovernanceDir(page);
     await page.getByRole("button", { name: /Open as SRS repository/ }).click();
     await openPackageEditor(page, "governance");
-    await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 10000 });
+    await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 10000 });
 
     // No edits — save immediately. This exercises load_tree() -> export_tree() end to
     // end against real WASM, proving the "untouched files are byte-identical" guarantee
@@ -656,7 +660,7 @@ test.describe("Cloud storage sources", () => {
     await browseToGovernanceDir(page);
     await page.getByRole("button", { name: /Open as SRS repository/ }).click();
     await openPackageEditor(page, "governance");
-    await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 10000 });
+    await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 10000 });
 
     await page.getByTestId("save-document").click();
     await page.getByTestId("git-save-confirm").click();
@@ -777,7 +781,7 @@ test.describe("Cloud storage sources", () => {
     await openPackageEditor(page, "governance");
 
     // Routes through openTree → the exploded tree loads into the editor.
-    await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 10000 });
+    await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 10000 });
     await expect(page.locator('[role="alert"]')).toHaveCount(0);
   });
 });

@@ -1,13 +1,13 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem, newRecord, exportItem, openAnother, openMenu, closeMenus } from "./helpers.js";
 
 /**
  * export-import.spec.ts — B10 export/import round-trip tests.
  *
  * Tests:
- * 1. "Download .srsj" button is visible after loading
+ * 1. The Document menu's "Export .srsj" item is visible after loading
  * 2. Clicking it triggers a browser download (intercepted via download event)
  * 3. The downloaded filename reflects the repo name
  * 4. After a mutation (create record), the downloaded file is valid JSON
@@ -27,17 +27,19 @@ test.describe("Export / Import round-trip (B10)", () => {
 
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
   });
 
-  test("Download .srsj button is visible after loading", async ({ page }) => {
-    await expect(page.getByRole("button", { name: "Download .srsj" })).toBeVisible();
+  test("the Document menu offers Export .srsj after loading", async ({ page }) => {
+    await openMenu(page, "Document");
+    await expect(page.getByTestId("toolbar-export-srsj")).toBeVisible();
+    await closeMenus(page);
   });
 
-  test("clicking Download .srsj triggers a file download", async ({ page }) => {
+  test("choosing Export .srsj triggers a file download", async ({ page }) => {
     const [download] = await Promise.all([
       page.waitForEvent("download"),
-      page.getByRole("button", { name: "Download .srsj" }).click(),
+      exportItem(page, "srsj"),
     ]);
 
     // Filename must be <repoName>.srsj
@@ -48,7 +50,7 @@ test.describe("Export / Import round-trip (B10)", () => {
   test("downloaded file is valid JSON with srsj envelope", async ({ page }) => {
     const [download] = await Promise.all([
       page.waitForEvent("download"),
-      page.getByRole("button", { name: "Download .srsj" }).click(),
+      exportItem(page, "srsj"),
     ]);
 
     const stream = await download.createReadStream();
@@ -67,7 +69,7 @@ test.describe("Export / Import round-trip (B10)", () => {
   test("exported file contains all original records", async ({ page }) => {
     const [download] = await Promise.all([
       page.waitForEvent("download"),
-      page.getByRole("button", { name: "Download .srsj" }).click(),
+      exportItem(page, "srsj"),
     ]);
 
     const stream = await download.createReadStream();
@@ -89,11 +91,11 @@ test.describe("Export / Import round-trip (B10)", () => {
 
   test("mutation survives export → re-import round-trip", async ({ page }) => {
     // Create a new article
-    await page.getByRole("button", { name: "New Article" }).click();
+    await newRecord(page);
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Round-Trip Test Article");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("This record was created to test the export round-trip.");
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
-    await page.getByRole("button", { name: "Save" }).click();
+    await page.getByTestId("record-form").getByRole("button", { name: "Save" }).click();
 
     // After save, the new record is auto-selected and the reading view opens.
     await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 5000 });
@@ -106,7 +108,7 @@ test.describe("Export / Import round-trip (B10)", () => {
     // Download the mutated repo
     const [download] = await Promise.all([
       page.waitForEvent("download"),
-      page.getByRole("button", { name: "Download .srsj" }).click(),
+      exportItem(page, "srsj"),
     ]);
 
     const stream = await download.createReadStream();
@@ -120,7 +122,7 @@ test.describe("Export / Import round-trip (B10)", () => {
     expect(exportedText).toContain("Round-Trip Test Article");
 
     // Re-import: click "Open another file", choose governance again, re-upload
-    await page.getByRole("button", { name: "Open another file" }).click();
+    await openAnother(page);
     await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
     // Write the exported content to a temp file and re-upload
@@ -131,11 +133,11 @@ test.describe("Export / Import round-trip (B10)", () => {
       const fileInput2 = page.locator('input[type="file"]#srsj-file');
       await fileInput2.setInputFiles(tmpPath);
       await openPackageEditor(page, "governance");
-      await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+      await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
 
       // The new record must still be present after re-import — navigate to Articles
       // explicitly since the default active section on load is not guaranteed.
-      await page.getByRole("link", { name: /Articles/ }).click();
+      await navItem(page, /Articles/).click();
       await expect(page.locator("text=Round-Trip Test Article")).toBeVisible({ timeout: 5000 });
     } finally {
       await fs.rm(tmpPath, { force: true });

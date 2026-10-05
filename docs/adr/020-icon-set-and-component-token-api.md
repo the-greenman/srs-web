@@ -154,7 +154,7 @@ set per element as `--actor-hue` and consumed by the single `.hue-pill` rule set
 `data-margin="expanded"`, from 721px up). The essay page grows by the difference, so the margin never
 crosses the page edge or the inspector, and the text column widens with Wide (owner D5, 2026-10-04:
 Wide widens the content cap, `--content-max` 46rem to `--content-max-wide` 80rem, and the margin
-column together). `data-margin` on `.app` is the one mechanism and the one carrier: its setter is
+column together; `--content-max` is the one cap for all four shells, `--canvas-max` is gone). `data-margin` on `.app` is the one mechanism and the one carrier: its setter is
 `src/lib/wide.ts` (`saveWide`, storage key `srs-web.margin` kept so existing viewers keep their
 setting), driven by View > Wide. Other tokens: `--margin-mark-size`, `--margin-row-gap`,
 `--margin-label-lines`. The essay page reads `--content-max` itself (a custom property that aliased it on `:root` would not see the shell's Wide override).
@@ -175,8 +175,6 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
 - Follow-ups:
   - Consolidating the five `@media` widths (`phone`, `form`, `compact`, `rail`, `wide`) into fewer;
     today they are only named and guarded (#424 removed `genericNarrow` and `genericStack`).
-  - Unlayered scoped `<style>` blocks in the Guides and Governance shells beat every layer and still
-    carry raw colours: #424 PR-B retires them (the Generic shell's is gone in PR-A).
   - One-off buttons in the modals, `DecisionLogView`, `SourceChooser`, `BlueprintDocumentEditor` and
     the `SectionForm` table editor.
 
@@ -190,7 +188,8 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
   with a section per group) are chosen from `BREAKPOINTS` (`RAIL`, `NARROW`, `tierOf`), and only the active
   tier's DOM exists, so no action is rendered twice. A group with one action is an icon button, not a menu
   (the Help icon keeps its native `popovertarget`). The narrow overflow is the toolbar's own; a shell's nav
-  hamburger goes in the `lead` slot (#424).
+  hamburger goes in the `lead` slot (#424). A `Breadcrumb` (`nav`/`ol`, parts as `breadcrumb__sep|current|link`) is
+  `titleSlot` content: the Governance and Guides bars put it there, the current item ellipsising in the one-row bar.
 - **Checkable rows** keep a View-style menu open on toggle (wide tiers) so the reader sees the state change;
   the narrow overflow closes. `Popover` keyboard handling covers `menuitem` and `menuitemcheckbox` rows with
   Arrow, Home and End. State is never duplicated: View > Comments reads and drives `thread-visibility.ts`,
@@ -218,7 +217,7 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
 - **Parts.** `AppShell`: `nav main inspector` (the `.app__*` classes). `Drawer`: `scrim` (the dialog, the
   backdrop hit area), `panel`. `ResizeHandle`: `grip`.
 - **Tokens.** `--nav-width`, `--inspector-width`, `--content-max` (46rem), `--content-max-wide` (80rem),
-  `--canvas-max` (820px, Governance and Guides until their conversion), and in `tokens-components.css`
+  (the one content cap for all four shells; `--canvas-max` and `--topbar-height` are removed), and in `tokens-components.css`
   `--shell-nav-min|max`, `--shell-inspector-min|max`, `--shell-resize-hit`, `--shell-drawer-width`,
   `--shell-drawer-bg`, `--shell-drawer-bg-dark`, `--shell-drawer-motion`, `--shell-scrim`,
   `--shell-badge-bg|fg`, `--resize-handle-active`.
@@ -231,9 +230,9 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
   Escape and a backdrop click close it, focus returns to the trigger. It is the only `showModal` user;
   the `GitSaveModal` and `SuccessorModal` z-index modals stay with #428 and a drawer must be closed
   before one opens (`ShellState.navOpen` / `inspectorOpen`).
-- **Wide.** One persisted per-viewer switch shared by all editors: `data-margin` on `.app` (the one carrier; set to `expanded` only when `wideEnabled` and Wide is on, else `compact`) widens the content cap and the margin column. Only a shell with the capability
-  (`ShellState.wideEnabled`, the `wide` prop) shows the action and honours it; a stored Wide never
-  changes a shell without the toggle.
+- **Wide.** One persisted per-viewer switch shared by all editors: `data-margin` on `.app` (the one carrier; set to `expanded` only when `wideEnabled` and Wide is on, else `compact`) widens the content cap and the margin column. Every shell (Essay, Generic, Governance, Guides) has the capability
+  (`ShellState.wideEnabled`) and shows the action; a shell without it would ignore a stored Wide. Forms carry no
+  max-width of their own: the container (`.canvas`, the essay page, the generic page) caps the width.
 
 ### (j) Notices (#441)
 
@@ -269,7 +268,7 @@ One notice system, three shapes, one store (`src/lib/notices.svelte.ts`):
   location); location-bound errors (an export beside its button, a form, a picker) stay inline.
 - **Pinned notices.** `pinNotice` / `unpinNotice`; `Main`'s `NoticeRegion` renders them directly below the
   bar and above the scroller. `Main` takes a `bar` snippet and renders bar, notice region, children in real
-  DOM order (no CSS `order`); shells pass their Toolbar or Topbar as `bar`. `resetNotices()` runs first on
+  DOM order (no CSS `order`); shells pass their Toolbar as `bar`. `resetNotices()` runs first on
   every document load (toasts, timers, diagnostics dismissals); pinned notices are replaced or unpinned by
   the load path.
 - **Dismissal** of a diagnostics notice is per session and per `documentKey`, and re-shows when the
@@ -310,8 +309,8 @@ sessions) and never imports a store. This is client configuration, not SRS seman
   while no agent uses it; its label always is. D4 `VITE_MCP_RELAY_URL` and the legacy `srs-web.mcp-relay-url`
   key seed the library once; a later env change does not re-seed. D5 first run keeps one seeded agent, hidden
   until a relay exists and bound by `adoptRelay` when one is added. D6 rename only while disconnected (the actor
-  name is fixed when a session opens). D7 Go → Agents… is an `onopenagents` handler (essay and generic shells
-  only: the Guides and Governance shells have a menu-less `Topbar` and rely on the always-present dock).
+  name is fixed when a session opens). D7 Go → Agents… is an `onopenagents` handler in every shell (`onOpenAgents` is in the
+  editor-shell contract): the essay hosts its own panel, the other shells open the floating dock, which is the placement when a shell has no rail.
 - **Parts.** `AgentPanel`: `agents relays agent relay name meta dot actions`. `Disclosure`: `disclosure body`.
 - **Tokens.** `--agent-panel-gap|row-pad|row-gap|dot-size|name-size|meta-size`, in `tokens-components.css`.
 - **Pairing (#447).** "Pair an agent…" in an open agent's `⋯` menu shows the connector URL, the pairing code and a

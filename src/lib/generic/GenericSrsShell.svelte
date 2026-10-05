@@ -648,7 +648,6 @@
           fields={editFormDef.fields}
           composites={editFormDef.composites}
           record={selectedRecord}
-          wide
           onSave={saveEdit}
           onCancel={() => { editing = false; editError = null; }}
           saving={editSaving}

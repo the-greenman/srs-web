@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem, openAnother } from "./helpers.js";
 
 /**
  * editor-mode.spec.ts — generic-first shell selection tests (C7, updated for srs-web#322).
@@ -50,7 +50,7 @@ test.describe("Editor mode selection", () => {
 
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
     await expect(page.getByTestId("generic-srs-shell")).not.toBeVisible();
   });
 
@@ -72,7 +72,7 @@ test.describe("Editor mode selection", () => {
     await openPackageEditor(page, "guides");
     await expect(page.getByTestId("guides-shell")).toBeVisible({ timeout: 5000 });
 
-    await page.getByRole("button", { name: "Open another file" }).click();
+    await openAnother(page);
     await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 3000 });
   });
 });

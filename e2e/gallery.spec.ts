@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * gallery.spec.ts — end-to-end tests using the governance gallery fixture.
@@ -32,7 +32,7 @@ test.describe("Gallery fixture — real records render", () => {
     await openPackageEditor(page, "governance");
 
     // Wait for loaded state
-    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
   });
 
   test("Articles section renders cards, not empty state", async ({ page }) => {
@@ -43,7 +43,7 @@ test.describe("Gallery fixture — real records render", () => {
     await expect(page.locator(".record-list__item").first()).toBeVisible();
 
     // Empty state message must NOT be shown
-    await expect(page.locator(".empty-state")).not.toBeVisible();
+    await expect(page.locator(".governance-empty-state")).not.toBeVisible();
   });
 
   test("Articles list rows show view-driven columns from the DocumentView spec (#94)", async ({ page }) => {
@@ -57,7 +57,7 @@ test.describe("Gallery fixture — real records render", () => {
   });
 
   test("Roles list rows show view-driven columns (Role Holder, Authority, Status) (#94)", async ({ page }) => {
-    await page.getByRole("link", { name: /Roles/ }).click();
+    await navItem(page, /Roles/).click();
     await expect(page.getByRole("heading", { name: "Roles", level: 2 })).toBeVisible();
     const firstCard = page.locator(".record-list__item").first().locator(".card");
     await expect(firstCard).toBeVisible();
@@ -69,12 +69,12 @@ test.describe("Gallery fixture — real records render", () => {
 
   test("Articles section shows count badge matching record count", async ({ page }) => {
     // The nav item for Articles includes a count; gallery has 6 articles
-    const articlesNav = page.getByRole("link", { name: /Articles/ });
+    const articlesNav = navItem(page, /Articles/);
     await expect(articlesNav).toContainText("6");
   });
 
   test("Decision Log section renders cards, not empty state", async ({ page }) => {
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByRole("heading", { name: "Decision Log", level: 2 })).toBeVisible();
 
     // gallery.srsj has 7 decisions — DecisionLogView renders them as summary card rows
@@ -83,7 +83,7 @@ test.describe("Gallery fixture — real records render", () => {
   });
 
   test("Decision Log shows DecisionSummaryCard rows with decision content", async ({ page }) => {
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByTestId("decision-log-view")).toBeVisible();
 
     // gallery.srsj has 9 decisions total; 7 visible by default (superseded/abandoned hidden)
@@ -97,42 +97,42 @@ test.describe("Gallery fixture — real records render", () => {
   });
 
   test("clicking a DecisionSummaryCard row opens the reading view", async ({ page }) => {
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await navItem(page, /Decision Log/).click();
     await page.getByTestId("decision-summary-card").first().click();
     await expect(page.getByTestId("record-reading")).toBeVisible();
   });
 
   test("Decision Log nav item shows count badge", async ({ page }) => {
-    const decisionsNav = page.getByRole("link", { name: /Decision Log/ });
+    const decisionsNav = navItem(page, /Decision Log/);
     await expect(decisionsNav).toContainText("9");
   });
 
   test("Roles section renders cards, not empty state", async ({ page }) => {
-    await page.getByRole("link", { name: /Roles/ }).click();
+    await navItem(page, /Roles/).click();
     await expect(page.getByRole("heading", { name: "Roles", level: 2 })).toBeVisible();
 
     // gallery.srsj has 3 roles
     await expect(page.locator(".record-list__item").first()).toBeVisible();
-    await expect(page.locator(".empty-state")).not.toBeVisible();
+    await expect(page.locator(".governance-empty-state")).not.toBeVisible();
   });
 
   test("Exercises section renders cards, not empty state", async ({ page }) => {
-    await page.getByRole("link", { name: /Exercises/ }).click();
+    await navItem(page, /Exercises/).click();
     await expect(page.getByRole("heading", { name: "Exercises", level: 2 })).toBeVisible();
 
     // gallery.srsj has 2 exercises
     await expect(page.locator(".record-list__item").first()).toBeVisible();
-    await expect(page.locator(".empty-state")).not.toBeVisible();
+    await expect(page.locator(".governance-empty-state")).not.toBeVisible();
   });
 
   test("Exercises section shows count badge matching record count", async ({ page }) => {
     // The nav item for Exercises includes a count; gallery has 2 exercises
-    const exercisesNav = page.getByRole("link", { name: /Exercises/ });
+    const exercisesNav = navItem(page, /Exercises/);
     await expect(exercisesNav).toContainText("2");
   });
 
   test("selecting an exercise shows its fields in the reading view (RecordView fallback)", async ({ page }) => {
-    await page.getByRole("link", { name: /Exercises/ }).click();
+    await navItem(page, /Exercises/).click();
     await page.locator(".record-list__item").first().click();
 
     // RecordView derives label from type schema displayLabel → JSON Schema title
@@ -158,7 +158,7 @@ test.describe("Gallery fixture — real records render", () => {
   });
 
   test("selecting a decision shows its fields in the reading view", async ({ page }) => {
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await navItem(page, /Decision Log/).click();
     await page.getByTestId("decision-summary-card").first().click();
 
     // Reading view must contain decision-specific field labels
@@ -169,7 +169,7 @@ test.describe("Gallery fixture — real records render", () => {
   });
 
   test("selecting a role shows its fields in the reading view", async ({ page }) => {
-    await page.getByRole("link", { name: /Roles/ }).click();
+    await navItem(page, /Roles/).click();
     await page.locator(".record-list__item").first().click();
 
     // Reading view must contain role-specific field labels
@@ -193,7 +193,7 @@ test.describe("Gallery fixture — real records render", () => {
   });
 
   // Quarantined (#173): .topbar__repo was replaced by the Breadcrumb component
-  // (.topbar__crumb-*). Rewrite against the current breadcrumb.
+  // (.breadcrumb__*). Rewrite against the current breadcrumb.
   test.fixme("repo filename shown in topbar", async ({ page }) => {
     await expect(page.locator(".topbar__repo")).toContainText("gallery");
   });
@@ -209,8 +209,8 @@ test.describe("Decision Log — sort and filter controls", () => {
 
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(navItem(page, /Decision Log/)).toBeVisible({ timeout: 5000 });
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByTestId("decision-log-view")).toBeVisible();
   });
 
@@ -311,8 +311,8 @@ test.describe("Decision Log — export buttons", () => {
 
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(navItem(page, /Decision Log/)).toBeVisible({ timeout: 5000 });
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByTestId("decision-log-view")).toBeVisible();
   });
 
@@ -373,8 +373,8 @@ test.describe("url valueType — external links render as anchors (#256)", () =>
 
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(navItem(page, /Decision Log/)).toBeVisible({ timeout: 5000 });
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByTestId("decision-log-view")).toBeVisible();
   });
 
@@ -419,8 +419,8 @@ test.describe("Decision Log — hide superseded/abandoned toggle", () => {
 
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(navItem(page, /Decision Log/)).toBeVisible({ timeout: 5000 });
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByTestId("decision-log-view")).toBeVisible();
   });
 

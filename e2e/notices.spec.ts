@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { openInspectorDrawer, openPackageEditor } from "./helpers.js";
+import { openInspectorDrawer, openPackageEditor, navItem, newRecord } from "./helpers.js";
 
 /**
  * notices.spec.ts — srs-web#441: one notice system (toast, Notice, grouped Diagnostics).
@@ -280,8 +280,8 @@ async function openFolderAndEdit(page: Page) {
   await page.getByTestId("source-local-folder").click();
   await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
   await openPackageEditor(page, "governance");
-  await page.getByRole("link", { name: /Articles/ }).click();
-  await page.locator("button.topbar__new").click();
+  await navItem(page, /Articles/).click();
+  await newRecord(page);
   await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Toast article");
   await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Body.");
   await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");

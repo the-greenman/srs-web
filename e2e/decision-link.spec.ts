@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * decision-link.spec.ts — e2e tests for the decision link picker (srs-web#106).
@@ -27,10 +27,10 @@ test.describe("Decision link picker (srs-web#106)", () => {
     await openPackageEditor(page, "governance");
 
     // Wait for loaded state — nav shows Decision Log link
-    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Decision Log/)).toBeVisible({ timeout: 5000 });
 
     // Navigate to the Decision Log section
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await navItem(page, /Decision Log/).click();
 
     // Wait for decision list to render (gallery has 9 decisions)
     await expect(page.getByTestId("decision-summary-card").first()).toBeVisible({ timeout: 5000 });
@@ -175,8 +175,8 @@ test.describe("Decision link labels and navigation (#201, #202)", () => {
       .setInputFiles(path.join(__dirname, "fixtures", "gallery.srsj"));
 
     await openPackageEditor(page, "governance");
-    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(navItem(page, /Decision Log/)).toBeVisible({ timeout: 5000 });
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByTestId("decision-summary-card").first()).toBeVisible({ timeout: 5000 });
 
     // Select the "Mounting system" decision (evidences → article "Care of the building")

@@ -56,8 +56,7 @@ test.describe("Guides HTML preview (Phase C)", () => {
     await page.setViewportSize({ width: 800, height: 900 });
     // Below 1100px the inspector is a closed drawer: its contents are not visible.
     await expect(page.getByTestId("guides-preview-pane")).not.toBeVisible();
-    // The shell's trigger is the one button for it (Guides' own toggle stays hidden).
-    await expect(page.getByTestId("guides-preview-toggle")).toBeHidden();
+    // The shell's trigger is the one button for it.
     await expect(page.getByTestId("inspector-trigger")).toHaveCount(1);
     await page.getByTestId("inspector-trigger").click();
     await expect(page.getByTestId("guides-preview-pane")).toBeVisible();

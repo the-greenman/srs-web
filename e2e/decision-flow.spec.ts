@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem, newRecord } from "./helpers.js";
 
 /**
  * decision-flow.spec.ts — end-to-end tests for decision create via generic RecordForm.
@@ -23,11 +23,11 @@ test.describe("Decision create (generic RecordForm, srs-web#103)", () => {
     await openPackageEditor(page, "governance");
 
     // Wait for loaded state — nav shows Decision Log link
-    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Decision Log/)).toBeVisible({ timeout: 5000 });
   });
 
   async function goToDecisions(page: import("@playwright/test").Page) {
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByTestId("decision-log-view")).toBeVisible({ timeout: 5000 });
   }
 
@@ -37,7 +37,7 @@ test.describe("Decision create (generic RecordForm, srs-web#103)", () => {
   test("New button opens generic RecordForm", async ({ page }) => {
     await goToDecisions(page);
 
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
 
     await expect(page.getByTestId("record-form")).toBeVisible({ timeout: 3000 });
   });
@@ -48,7 +48,7 @@ test.describe("Decision create (generic RecordForm, srs-web#103)", () => {
   test("RecordForm create saves decision and shows it in the list", async ({ page }) => {
     await goToDecisions(page);
 
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
     await expect(page.getByTestId("record-form")).toBeVisible({ timeout: 3000 });
 
     // Fill both required fields (Title + Decision Statement) — the form
@@ -83,7 +83,7 @@ test.describe("Decision create (generic RecordForm, srs-web#103)", () => {
   test("Cancel from RecordForm returns to decision log list", async ({ page }) => {
     await goToDecisions(page);
 
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
     await expect(page.getByTestId("record-form")).toBeVisible({ timeout: 3000 });
 
     await page.getByRole("button", { name: "Cancel" }).click();

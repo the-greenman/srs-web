@@ -222,11 +222,19 @@ export async function connectAgents(page: Page, essayPath: string, count: number
 /** Open menus and popovers; the toast host is a popover too, and is not a menu. */
 export const openMenus = (page: Page) => page.locator(":popover-open:not(.toast-host)");
 
-/** Open a Toolbar group menu (wide tiers); a no-op when it is already open. */
+/** A Governance/Guides nav item by text. Role-agnostic (an `<a>` or a `<button>`), in the nav column or its drawer. */
+export const navItem = (page: Page, name: string | RegExp) =>
+  page.locator(".app__nav, [data-testid=shell-drawer-nav]").locator(".nav__item").filter({ hasText: name });
+
+/**
+ * Open a Toolbar group menu (wide tiers); a no-op when it is already open. At the narrow tier
+ * (<= 480) the group buttons do not exist and the one `header-menu` overflow holds every item.
+ */
 export async function openMenu(page: Page, group: "Document" | "View" | "Go"): Promise<void> {
   // Read the real popover state: aria-expanded follows the toggle event a tick later.
   if ((await openMenus(page).count()) === 0) {
-    await page.getByRole("button", { name: group, exact: true }).click();
+    const g = page.getByRole("button", { name: group, exact: true });
+    await ((await g.count()) > 0 ? g : page.getByTestId("header-menu")).click();
   }
 }
 
@@ -253,4 +261,23 @@ export async function commentsState(page: Page): Promise<string | null> {
   const v = await page.getByTestId("comment-mode").getAttribute("aria-checked");
   await closeMenus(page);
   return v;
+}
+
+/** Governance: Document > "New {label}" (opens the menu, clicks, closes it). */
+export const newRecord = (page: Page) => menuItem(page, "Document", "governance-new-record");
+
+/** Document > Export .srs / .srsj, for use inside `Promise.all([waitForEvent("download"), …])`. */
+export const exportItem = (page: Page, kind: "srs" | "srsj") =>
+  menuItem(page, "Document", kind === "srs" ? "toolbar-export" : "toolbar-export-srsj");
+
+/** Go > Open another. */
+export const openAnother = (page: Page) => menuItem(page, "Go", "toolbar-other");
+
+/** Set View > Wide to `on` (a no-op when it already is) and wait for the shell's `data-margin` carrier. */
+export async function setWide(page: Page, on: boolean): Promise<void> {
+  await openMenu(page, "View");
+  const item = page.getByTestId("margin-variant");
+  if ((await item.getAttribute("aria-checked")) !== String(on)) await item.click();
+  await closeMenus(page);
+  await expect(page.locator(".app")).toHaveAttribute("data-margin", on ? "expanded" : "compact");
 }

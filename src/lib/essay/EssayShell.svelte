@@ -94,6 +94,7 @@
   }: {
     // Common EditorShellProps this shell does not use (kept so every shell takes one prop set).
     documentProvider?: string;
+    onOpenAgents?: () => void;
     onExportSrsj?: () => void;
     readOnlyReason?: string | null;
     repo: SrsRepository;

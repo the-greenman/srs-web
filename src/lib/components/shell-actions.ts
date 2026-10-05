@@ -31,6 +31,82 @@ export const agentsAction = (run: () => void): ToolbarAction => ({
   run,
 });
 
+/** Document > Save, the bar's one primary. `enabled` is the shell's own rule (Essay and Generic gate on dirty; Governance and Guides only on not saving). */
+export const saveAction = (
+  run: () => void,
+  s: { saving: boolean; enabled: boolean }
+): ToolbarAction => ({
+  id: "save",
+  group: "document",
+  kind: "primary",
+  label: s.saving ? "Saving…" : "Save",
+  run,
+  enabled: s.enabled,
+  testid: "save-document",
+});
+
+/** Go > Open another (`toolbar-other`). */
+export const openAnotherAction = (run: () => void): ToolbarAction => ({
+  id: "other",
+  group: "go",
+  kind: "action",
+  label: "Open another",
+  run,
+  enabled: true,
+});
+
+/** Document > Export .srs, and Export .srsj when a handler is given. */
+export const exportActions = (h: {
+  onexport: () => void;
+  onexportsrsj?: () => void;
+}): ToolbarAction[] => [
+  {
+    id: "export",
+    group: "document",
+    kind: "action",
+    label: "Export .srs",
+    run: h.onexport,
+    enabled: true,
+  },
+  ...(h.onexportsrsj
+    ? [
+        {
+          id: "export-srsj",
+          group: "document",
+          kind: "action",
+          label: "Export .srsj",
+          run: h.onexportsrsj,
+          enabled: true,
+        } as ToolbarAction,
+      ]
+    : []),
+];
+
+export interface CommonHandlers {
+  /** Absent while the document cannot be saved (read-only): no Save is offered. */
+  onsave?: () => void;
+  onexport: () => void;
+  onexportsrsj?: () => void;
+  /** Absent when the shell cannot open the agent library. */
+  onopenagents?: () => void;
+  onopenanother: () => void;
+}
+
+/** Governance's and Guides' shared registry: Save, the exports, Wide, Agents…, Open another. */
+export function commonActions(
+  h: CommonHandlers,
+  s: { shell: ShellState; saving: boolean }
+): ToolbarAction[] {
+  const all: (ToolbarAction | undefined)[] = [
+    h.onsave ? saveAction(h.onsave, { saving: s.saving, enabled: !s.saving }) : undefined,
+    ...exportActions(h),
+    wideAction(s.shell),
+    h.onopenagents ? agentsAction(h.onopenagents) : undefined,
+    openAnotherAction(h.onopenanother),
+  ];
+  return all.filter((a): a is ToolbarAction => !!a);
+}
+
 const wide = (shell: ShellState): ToolbarAction => ({
   id: "wide",
   group: "view",

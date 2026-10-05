@@ -4,7 +4,12 @@
  * shell-actions.ts (one definition), and no shell imports another's registry.
  */
 import type { ToolbarAction } from "../components/menu-action.js";
-import { agentsAction, wideAction } from "../components/shell-actions.js";
+import {
+  agentsAction,
+  openAnotherAction,
+  saveAction,
+  wideAction,
+} from "../components/shell-actions.js";
 import type { ShellState } from "../shell-context.svelte.js";
 
 export interface GenericHandlers {
@@ -23,15 +28,7 @@ export function genericActions(
   s: { shell: ShellState; saving: boolean; dirty: boolean; fullPreview: boolean }
 ): ToolbarAction[] {
   const all: (ToolbarAction | false | undefined)[] = [
-    !!h.onsave && {
-      id: "save",
-      group: "document",
-      kind: "primary",
-      label: s.saving ? "Saving…" : "Save",
-      run: h.onsave,
-      enabled: !s.saving && s.dirty,
-      testid: "save-document",
-    },
+    !!h.onsave && saveAction(h.onsave, { saving: s.saving, enabled: !s.saving && s.dirty }),
     {
       id: "export",
       group: "document",
@@ -52,14 +49,7 @@ export function genericActions(
     },
     wideAction(s.shell),
     !!h.onopenagents && agentsAction(h.onopenagents),
-    {
-      id: "other",
-      group: "go",
-      kind: "action",
-      label: "Open another",
-      run: h.onopenanother,
-      enabled: true,
-    },
+    openAnotherAction(h.onopenanother),
   ];
   return all.filter((a): a is ToolbarAction => !!a);
 }

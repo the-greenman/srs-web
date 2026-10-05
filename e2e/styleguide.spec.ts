@@ -144,6 +144,7 @@ test.describe("Styleguide", () => {
         await expect(shells.nth(s).getByTestId("nav-trigger")).toBeVisible();
         await expect(shells.nth(s).getByTestId("inspector-trigger")).toBeVisible();
         await expect(shells.nth(s).getByTestId("inspector-badge")).toHaveText("3");
+        await expect(shells.nth(s).getByRole("navigation", { name: "Breadcrumb" })).toBeVisible();
       }
       await expect(shells.nth(1).locator(".nav")).toBeVisible();
       await expect(shells.nth(2).locator(".inspector")).toBeVisible();

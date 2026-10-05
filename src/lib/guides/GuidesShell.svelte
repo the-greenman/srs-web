@@ -46,7 +46,11 @@
   import NavItem from "$lib/components/NavItem.svelte";
   import Main from "$lib/components/Main.svelte";
   import Notice from "$lib/components/Notice.svelte";
-  import Topbar from "$lib/components/Topbar.svelte";
+  import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
+  import NavTrigger from "$lib/components/NavTrigger.svelte";
+  import Toolbar from "$lib/components/Toolbar.svelte";
+  import { BASE_GROUPS, commonActions } from "$lib/components/shell-actions.js";
+  import { ShellState } from "$lib/shell-context.svelte.js";
   import Workspace from "$lib/components/Workspace.svelte";
   import Panel from "$lib/components/Panel.svelte";
   import Inspector from "$lib/components/Inspector.svelte";
@@ -55,6 +59,7 @@
   import { PREVIEW_THEMES, THEME_DEFAULT } from "$lib/guides/preview-themes.js";
   import { downloadDocument } from "$lib/storage/index.js";
   import { slugifyFilename } from "$lib/slug.js";
+  import { printHtml } from "$lib/guides/print-html.js";
   import type { BreadcrumbItem } from "$lib/types.js";
   import InstanceNotes from "$lib/InstanceNotes.svelte";
 
@@ -84,6 +89,8 @@
     /** Changes after mount invalidate derived browser projections of the repository. */
     documentRevision?: number;
     onOpenAnother: () => void;
+    /** Go > Agents…: open the agent library. */
+    onOpenAgents?: () => void;
     /** Part of the common EditorShellProps; unused by this shell. */
     onOpenExplorer?: () => void;
   }
@@ -99,7 +106,22 @@
     documentDirty = false,
     documentRevision = 0,
     onOpenAnother,
+    onOpenAgents,
   }: Props = $props();
+
+  const shell = new ShellState({ wideEnabled: true });
+  const barActions = $derived(
+    commonActions(
+      {
+        onsave: onSave ? () => void onSave() : undefined,
+        onexport: onExport,
+        onexportsrsj: onExportSrsj,
+        onopenanother: onOpenAnother,
+        onopenagents: onOpenAgents,
+      },
+      { shell, saving },
+    ),
+  );
 
   // ---------------------------------------------------------------------------
   // State
@@ -153,9 +175,6 @@
   let warnCount = $state(0);
   /** Count of validation errors from `repo.validate()`. Non-zero suppresses the warning banner. */
   let errorCount = $state(0);
-
-  /** Whether the preview inspector is force-shown on narrow screens. */
-  let previewOpen = $state(false);
 
   /** HTML preview of the selected guide (rendered via renderDocumentView "html"). */
   let previewHtml = $state<string | null>(null);
@@ -529,9 +548,7 @@
     if (!previewHtml) return;
     const win = window.open("", "_blank");
     if (!win) return;
-    win.document.write(
-      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Guide</title><style>${selectedThemeCss}</style><style>@media print { body { margin: 0; } }</style></head><body>${previewHtml}</body></html>`
-    );
+    win.document.write(printHtml(selectedThemeCss, previewHtml));
     win.document.close();
     win.focus();
     win.print();
@@ -540,29 +557,24 @@
 </script>
 
 <div data-testid="guides-shell">
-  <AppShell>
+  <AppShell {shell} navLabel="Guides navigation" inspectorLabel="Guide">
     {#snippet nav()}
       <Nav repo={repoName} eyebrow="srs · guides">
         {#snippet children()}
           <NavGroup label="Guides">
             <div data-testid="guides-guide-list">
               {#each guides as guide (guide.instanceId)}
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div
-                  data-testid="guides-guide-item"
+                <NavItem
+                  testid="guides-guide-item"
+                  label={guide.displayLabel ?? "Untitled Guide"}
+                  active={guide.instanceId === selectedGuideId}
                   onclick={() => {
                     selectedGuideId = guide.instanceId;
                     cancelForm();
                     refreshSections();
                     refreshPreview();
                   }}
-                >
-                  <NavItem
-                    label={guide.displayLabel ?? "Untitled Guide"}
-                    active={guide.instanceId === selectedGuideId}
-                  />
-                </div>
+                />
               {/each}
               {#if guides.length === 0}
                 <p class="guides-nav__empty">No guides yet</p>
@@ -585,43 +597,18 @@
     {#snippet main()}
       <Main>
         {#snippet bar()}
-          <Topbar>
-            {#snippet crumb()}
-              <Breadcrumb items={guideCrumbItems()} />
+          <Toolbar title={repoName} actions={barActions} groups={BASE_GROUPS}>
+            {#snippet lead()}<NavTrigger />{/snippet}
+            {#snippet titleSlot()}<Breadcrumb items={guideCrumbItems()} />{/snippet}
+            {#snippet status()}
+              {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
             {/snippet}
-            {#snippet actions()}
-              {#if onSave}
-                <Button
-                  variant="ghost"
-                  data-testid="save-document"
-                  onclick={onSave}
-                  disabled={saving}
-                >{saving ? "Saving…" : "Save"}</Button>
-              {:else if readOnlyReason}
-                <span class="guides-save-message" data-testid="readonly-reason">{readOnlyReason}</span>
-              {/if}
-              {#if documentDirty}
-                <span class="guides-save-message" data-testid="document-dirty-status">Unsaved changes</span>
-              {/if}
-              <Button
-                variant="ghost"
-                data-testid="guides-export-btn"
-                onclick={onExport}
-              >Export .srs</Button>
-              {#if onExportSrsj}
-                <Button variant="ghost" onclick={onExportSrsj}>Export .srsj</Button>
-              {/if}
-              <Button variant="ghost" onclick={onOpenAnother}>Open another file</Button>
-              <Button
-                variant="ghost"
-                class="guides-preview-toggle"
-                data-testid="guides-preview-toggle"
-                onclick={() => { previewOpen = !previewOpen; }}
-                title={previewOpen ? "Hide preview" : "Show preview"}
-              >{previewOpen ? "Hide preview" : "Preview"}</Button>
-            {/snippet}
-          </Topbar>
+            {#snippet trail()}<InspectorTrigger />{/snippet}
+          </Toolbar>
         {/snippet}
+
+        <!-- The reason is a sentence: a line under the bar rather than in the one-row bar. -->
+        {#if !onSave && readOnlyReason}<Notice kind="info" testid="readonly-reason">{readOnlyReason}</Notice>{/if}
 
         {#if warnCount > 0 && errorCount === 0}
           <Notice kind="warning" testid="size-warning">
@@ -633,7 +620,7 @@
           <Notice kind="error" testid="guides-error">{schemaError}</Notice>
         {/if}
 
-        <Workspace wide>
+        <Workspace>
           {#if formMode !== null && activeSectionDescriptor !== null}
             <div class="guides-form-panel">
               <SectionForm
@@ -641,7 +628,6 @@
                 fields={activeSectionDescriptor.fields}
                 composites={activeSectionDescriptor.composites}
                 record={editingRecord}
-                wide
                 onSave={handleSave}
                 onCancel={cancelForm}
                 saving={formSaving}
@@ -653,7 +639,6 @@
               <RecordForm
                 schema={activeFormDef}
                 record={editingRecord}
-                wide
                 onSave={handleSave}
                 onCancel={cancelForm}
                 saving={formSaving}
@@ -779,7 +764,7 @@
     {/snippet}
 
     {#snippet inspector()}
-      <Inspector label="Guide" open={previewOpen}>
+      <Inspector label="Guide">
         {#if availableViews.length > 1}
           <Panel title="View" collapsible={false} class="inspector__section">
             <ViewPicker
@@ -829,223 +814,3 @@
     {/snippet}
   </AppShell>
 </div>
-
-<style>
-  /* Scoped styles for elements not covered by the shared design system tokens */
-
-  .guides-nav__empty {
-    padding: 0.5rem 1rem;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.45);
-    font-style: italic;
-    margin: 0;
-  }
-
-  .guides-form-panel {
-    padding: 1rem;
-  }
-
-  .guides-detail {
-    padding: 1.25rem 1.5rem;
-  }
-
-  .guides-detail__header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .guides-detail__title {
-    flex: 1;
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin: 0;
-  }
-
-  .guides-section-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--color-border, #eee);
-  }
-
-  .guides-body-bar {
-    margin-bottom: 0;
-  }
-
-  .guides-body-row {
-    margin-bottom: 1.25rem;
-  }
-
-  .guides-body-item {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-    padding: 0.5rem 0.25rem;
-    cursor: pointer;
-    border-radius: 4px;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .guides-body-item:hover {
-    background: var(--color-surface-hover, #f5f5f5);
-  }
-
-  .guides-section-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-muted, #888);
-  }
-
-  .guides-section-picker-wrap {
-    position: relative;
-  }
-
-  .guides-section-picker {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 4px);
-    background: white;
-    border: 1px solid var(--color-border, #ddd);
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    z-index: 10;
-    min-width: 180px;
-    overflow: hidden;
-  }
-
-  .guides-section-type-btn {
-    display: block;
-    width: 100%;
-    text-align: left;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-  }
-
-  .guides-section-type-btn:hover {
-    background: var(--color-surface-hover, #f5f5f5);
-  }
-
-  .guides-section-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .guides-section-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    border-bottom: 1px solid var(--color-border, #eee);
-  }
-
-  .guides-section-item {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-    padding: 0.5rem 0.25rem;
-    cursor: pointer;
-    border-radius: 4px;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .guides-section-item:hover {
-    background: var(--color-surface-hover, #f5f5f5);
-  }
-
-  .guides-section-controls {
-    display: flex;
-    gap: 0.2rem;
-    flex-shrink: 0;
-  }
-
-  .guides-icon-btn {
-    font-size: 0.8rem;
-    line-height: 1;
-    width: 1.6rem;
-    height: 1.6rem;
-    border: 1px solid var(--color-border, #ddd);
-    border-radius: 4px;
-    background: transparent;
-    cursor: pointer;
-    color: var(--color-muted, #666);
-  }
-
-  .guides-icon-btn:disabled {
-    opacity: 0.35;
-    cursor: default;
-  }
-
-  .guides-icon-btn:not(:disabled):hover {
-    background: var(--color-surface-hover, #f0f0f0);
-  }
-
-  .guides-icon-btn--danger {
-    color: #b91c1c;
-    border-color: #fca5a5;
-  }
-
-  .guides-section-type {
-    font-size: 0.7rem;
-    color: var(--color-muted, #888);
-    background: var(--color-surface-1, #f0f0f0);
-    border-radius: 3px;
-    padding: 0.1rem 0.4rem;
-    flex-shrink: 0;
-  }
-
-  .guides-section-heading {
-    font-size: 0.9rem;
-  }
-
-  .guides-section-empty {
-    padding: 0.5rem 0;
-    font-size: 0.8rem;
-    color: var(--color-muted, #aaa);
-    font-style: italic;
-  }
-
-  .guides-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--color-muted, #aaa);
-    font-size: 0.9rem;
-    padding: 2rem;
-  }
-
-  .guides-theme-select {
-    width: 100%;
-    font-size: 0.85rem;
-    padding: 0.3rem 0.5rem;
-    border: 1px solid var(--color-border, #ddd);
-    border-radius: 4px;
-    background: var(--color-surface-0, #fff);
-    color: var(--color-text, #111);
-    cursor: pointer;
-  }
-
-  /* The shell's InspectorTrigger replaces this toggle in every mode (it opens the inspector drawer at
-     <= 1100px), so Guides never shows two buttons for one inspector. The element stays until PR-B
-     Phase 8 deletes it with previewOpen. */
-  :global(.guides-preview-toggle) {
-    display: none;
-  }
-
-  .guides-save-message {
-    font-size: 0.7rem;
-    opacity: 0.75;
-    max-width: 22rem;
-  }
-</style>

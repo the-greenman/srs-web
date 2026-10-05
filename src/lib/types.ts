@@ -32,7 +32,7 @@ export interface Diagnostic {
   where?: string;
 }
 
-/** One level in a Topbar breadcrumb trail. */
+/** One level in a Breadcrumb trail. */
 export interface BreadcrumbItem {
   label: string;
   /** Tooltip shown on hover (e.g. "Opened from local"). */

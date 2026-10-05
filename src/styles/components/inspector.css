@@ -33,21 +33,6 @@
   margin-top: var(--space-md);
 }
 
-/* Force-show on narrow screens (toggle via JS) */
-/* bp: wide */
-@media (max-width: 1100px) {
-  .inspector--open {
-    display: flex !important;
-    position: fixed;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: var(--inspector-width);
-    z-index: var(--z-dock);
-    box-shadow: -4px 0 16px color-mix(in srgb, var(--color-text-strong) 12%, transparent);
-  }
-}
-
 /* Section header: Inspector sections are static Panels (class inspector__section) with the inspector's heavier rule. */
 .inspector__section > .panel__head {
   margin-bottom: var(--space-sm);

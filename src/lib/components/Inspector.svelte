@@ -1,10 +1,8 @@
 <!--
   Inspector — the right rail container holding stacked Panels (class inspector__section).
-  Inside an AppShell it carries a ResizeHandle on its left edge, and
-  supports an `open` prop to override the responsive hide rule (used by
-  GuidesShell's narrow-screen toggle).
+  Inside an AppShell it carries a ResizeHandle on its left edge.
   B4 read-only viewer: https://github.com/the-greenman/srs-web/issues/3
-  srs-web#39: resizable + narrow-screen toggle
+  srs-web#39: resizable
 -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
@@ -13,12 +11,9 @@
 
   let {
     label = 'Inspector',
-    open = false,
     children,
   }: {
     label?: string;
-    /** Force-show on narrow screens (overrides the responsive hide). */
-    open?: boolean;
     children?: Snippet;
   } = $props();
 
@@ -28,7 +23,6 @@
 
 <aside
   class="inspector app__inspector"
-  class:inspector--open={open}
   id="inspector-{uid}"
   aria-label={label}
 >

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem, newRecord } from "./helpers.js";
 
 /**
  * rfc038-concurrency.spec.ts — the srs#291 two-writer property, in E2E terms.
@@ -174,7 +174,7 @@ async function openExplodedTree(page: Page): Promise<void> {
   await page.getByRole("button", { name: /Open as SRS repository/ }).click();
   await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
   await openPackageEditor(page, "governance");
-  await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 15000 });
+  await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 15000 });
 }
 
 async function saveAndCaptureCommit(page: Page): Promise<CommitCall> {
@@ -192,8 +192,8 @@ async function saveAndCaptureCommit(page: Page): Promise<CommitCall> {
 
 async function createArticle(page: Page, title: string): Promise<void> {
   // The "New <section>" action only exists once a section is active.
-  await page.getByRole("link", { name: /Articles/ }).click();
-  await page.locator("button.topbar__new").click();
+  await navItem(page, /Articles/).click();
+  await newRecord(page);
   await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill(title);
   await page
     .locator(".field")
@@ -274,7 +274,7 @@ test.describe("RFC-038 two-writer concurrency (srs#291)", () => {
     await installTreeProvider(page, merged);
     await page.goto("/");
     await openExplodedTree(page);
-    await page.getByRole("link", { name: /Articles/ }).click();
+    await navItem(page, /Articles/).click();
     await expect(page.getByText("Writer A Article")).toBeVisible({ timeout: 10000 });
     await expect(page.getByText("Writer B Article")).toBeVisible();
     await context.close();
@@ -293,7 +293,7 @@ test.describe("RFC-038 two-writer concurrency (srs#291)", () => {
       await page.goto("/");
       await openExplodedTree(page);
 
-      await page.getByRole("link", { name: /Decision Log/ }).click();
+      await navItem(page, /Decision Log/).click();
       await page.getByTestId("decision-summary-card").nth(sourceIndex).click();
       await page.getByTestId("add-relation-btn").click();
       await expect(page.getByRole("heading", { name: "Link to another decision" })).toBeVisible({

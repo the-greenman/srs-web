@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, exportItem, openAnother } from "./helpers.js";
 
 /**
  * guides-editor.spec.ts — C8: blueprint-schema-driven guides renderer.
@@ -255,7 +255,7 @@ test.describe("Guides editor (C8)", () => {
 
     // Export .srsj (legacy text format) for round-trip — capture the download.
     const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Export .srsj" }).click();
+    await exportItem(page, "srsj");
     const download = await downloadPromise;
 
     // Read the downloaded .srsj content.
@@ -274,7 +274,7 @@ test.describe("Guides editor (C8)", () => {
     expect(exportedRepo).toBeTruthy();
 
     // Reload by navigating back to the generic file picker and re-uploading the export.
-    await page.getByRole("button", { name: "Open another file" }).click();
+    await openAnother(page);
     await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 3000 });
 
     // Write exported content to a temp file and upload it.
