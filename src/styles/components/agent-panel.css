@@ -89,3 +89,10 @@
 .agent-panel__dot--offline {
   background: repeating-linear-gradient(45deg, var(--color-text) 0 2px, transparent 2px 4px);
 }
+/* Form inputs follow the panel scale, like the comment composer (comments.css). */
+.agent-panel .input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  font-size: var(--agent-panel-name-size);
+}

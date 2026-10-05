@@ -41,7 +41,7 @@ test("fresh profile: the Agents panel is present with 'No relay' and 'Add a rela
 }) => {
   await load(page, ESSAY);
   await expect(panel(page)).toBeVisible();
-  await expect(page.getByTestId("agent-panel-empty")).toHaveText("No relay · Add a relay");
+  await expect(page.getByTestId("agent-panel-empty")).toHaveText("No relay yet.");
   await expect(page.getByTestId("relay-add-open")).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByTestId("mcp-library-item")).toHaveCount(0); // the seeded agent is hidden
 });
@@ -144,7 +144,7 @@ test.describe("Go > Agents…", () => {
     await load(page, ESSAY);
     await page.getByRole("button", { name: "Go", exact: true }).click();
     await page.getByTestId("toolbar-agents").click();
-    await expect(page.getByTestId("agent-panel-empty")).toHaveText("No relay · Add a relay");
+    await expect(page.getByTestId("agent-panel-empty")).toHaveText("No relay yet.");
     await expect(page.getByTestId("relay-add-open")).toBeFocused(); // the first control
   });
 

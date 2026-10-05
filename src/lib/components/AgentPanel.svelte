@@ -3,7 +3,7 @@
   status dot, Connect/Disconnect, a ⋯ menu), the relay library as rows, and the two add forms behind
   Disclosures. Presentational: App passes the data and owns every handler, storage and host; errors
   from add/edit/remove come back as text and render inline (ADR-020 j). No headings, no native details element.
-  Never a store import. With no relay the whole panel is "No relay · Add a relay". Test ids of the
+  Never a store import. With no relay the whole panel is "No relay yet.". Test ids of the
   pre-#442 dock are kept on the redesigned elements. Wraps .agent-panel (agent-panel.css); tokens
   `--agent-panel-*`; parts `agent relay name meta dot status actions`.
 -->
@@ -196,7 +196,7 @@
 
 <div class="agent-panel" bind:this={root} data-testid="agent-panel">
   {#if relays.length === 0}
-    <p class="agent-panel__empty" data-testid="agent-panel-empty">No relay · Add a relay</p>
+    <p class="agent-panel__empty" data-testid="agent-panel-empty">No relay yet.</p>
   {:else}
     {#if agents.length === 0}
       <p class="agent-panel__meta">No agents yet.</p>

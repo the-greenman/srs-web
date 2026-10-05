@@ -31,9 +31,9 @@ const agent = (o: Partial<PanelAgent> = {}): PanelAgent => ({
   ...o,
 });
 
-it("with no relay: only 'No relay · Add a relay' and the open add form; a seeded agent is hidden", () => {
+it("with no relay: only 'No relay yet.' and the open add form; a seeded agent is hidden", () => {
   const { getByTestId, queryByTestId, container } = render(AgentPanel, { ...base, relays: [], agents: [agent({ conn: { id: "agent:a" } })] });
-  expect(getByTestId("agent-panel-empty").textContent).toBe("No relay · Add a relay");
+  expect(getByTestId("agent-panel-empty").textContent).toBe("No relay yet.");
   expect(queryByTestId("mcp-library-item")).toBeNull();
   expect(queryByTestId("mcp-connect-open")).toBeNull();
   expect(getByTestId("relay-add-open").getAttribute("aria-expanded")).toBe("true");
