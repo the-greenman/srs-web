@@ -1,5 +1,6 @@
 <!-- AttachmentLinkPanel.svelte — show and link attachments for a selected record (srs-web#99) -->
 <script lang="ts">
+  import Notice from './Notice.svelte';
   import ArrowDown from "@lucide/svelte/icons/arrow-down";
   import Check from "@lucide/svelte/icons/check";
   import Button from "./Button.svelte";
@@ -92,7 +93,7 @@
 
 <div class="link-panel" data-testid="attachment-link-panel">
   {#if error}
-    <p class="link-panel__error" role="alert">{error}</p>
+    <Notice kind="error">{error}</Notice>
   {/if}
 
   {#if linked.length === 0}
@@ -147,11 +148,6 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-  }
-  .link-panel__error {
-    color: var(--color-error);
-    font-size: 0.8em;
-    margin: 0;
   }
   .link-panel__empty {
     color: var(--color-muted);

@@ -57,7 +57,11 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `SaveBar` | `dirtyCount` + action children | `.save-bar` | B9 [#5](https://github.com/the-greenman/srs-web/issues/5) |
 | `Tag` | `status` `onDark?` | `.tag` | B11 [#7](https://github.com/the-greenman/srs-web/issues/7) |
 | `Button` | `variant` `size?` (`md` \| `sm`; `sm` for rails, trays, panels: wraps its label) `onDark?` `active?` | `.btn` | B1 [#2](https://github.com/the-greenman/srs-web/issues/2), B10 [#6](https://github.com/the-greenman/srs-web/issues/6) |
-| `Diagnostics` | `diagnostics` | `.diag*` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3), B13 [#9](https://github.com/the-greenman/srs-web/issues/9) |
+| `Diagnostics` | `diagnostics` `variant?` (`panel` \| `notice`) `documentKey?` `testid?` `expanded?` (grouped by identical message; the notice variant is collapsible and dismissible per document) | `.diag*` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3), B13 [#9](https://github.com/the-greenman/srs-web/issues/9), #441 |
+| `Notice` | `kind?` (`info` \| `success` \| `warning` \| `error`) `onDismiss?` `testid?` (error is `role=alert`, the rest `role=status`) | `.notice` | #441, ADR-020 (j) |
+| `Toast` | `kind?` `text` `testid?` `onDismiss?` (one toast row; the text is aria-hidden) | `.toast` | #441 |
+| `ToastHost` | none (reads the notice store; mounted once by `Main`) | `.toast-host` | #441, ADR-020 (j) |
+| `NoticeRegion` | none (renders the pinned notices; `Main` places it below the bar) | `.notice`, `.diag*` | #441 |
 | `Lifecycle` | `status` `transitions` `onTransition` | `.lifecycle` | B11 [#7](https://github.com/the-greenman/srs-web/issues/7) |
 | `Block` | `id` `title?` `body?` `hidden?` `handle` `margin?` (one right-margin snippet) `onzoom?` `onpull?` `oncopylink?` + callbacks (hover tools + ellipsis menu both render `paragraphActions`) | `.block` | srs-web [#328](https://github.com/the-greenman/srs-web/issues/328) |
 | `InlineText` | `value` `placeholder?` `label` `oncommit` `as?` `editing?` (bindable) | `.inline-text` | srs-web [#363](https://github.com/the-greenman/srs-web/issues/363) |

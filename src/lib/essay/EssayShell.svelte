@@ -39,8 +39,8 @@
   import { ShellState } from "$lib/shell-context.svelte.js";
   import ArrowLeft from "@lucide/svelte/icons/arrow-left";
   import LinkIcon from "@lucide/svelte/icons/link";
-  import X from "@lucide/svelte/icons/x";
-  import IconButton from "$lib/components/IconButton.svelte";
+  import Notice from "$lib/components/Notice.svelte";
+  import { notify } from "$lib/notices.svelte.js";
   import Input from "$lib/components/Input.svelte";
   import Select from "$lib/components/Select.svelte";
   import { NARROW } from "$lib/breakpoints";
@@ -83,7 +83,6 @@
     onExport,
     onSave,
     saving = false,
-    saveMessage = null,
     documentDirty = false,
     documentRevision = 0,
     onOpenAnother,
@@ -101,7 +100,6 @@
     onExport: () => void;
     onSave?: () => void;
     saving?: boolean;
-    saveMessage?: string | null;
     documentDirty?: boolean;
     /** Bumped by App on every in-place mutation, including MCP/agent writes. */
     documentRevision?: number;
@@ -350,7 +348,7 @@
     try {
       await navigator.clipboard.writeText(url);
       linkFallback = null;
-      notice = "Link copied";
+      notify({ kind: "success", key: "copy-link", text: "Link copied", testid: "address-notice" });
     } catch {
       linkFallback = url;
     }
@@ -359,6 +357,7 @@
   function exportMarkdown() {
     try {
       downloadText(essayMarkdown(repo, model!), "text/markdown", `${model!.title}.md`);
+      notify({ kind: "success", key: "export", text: "Exported" });
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     }
@@ -378,7 +377,7 @@
     try {
       await navigator.clipboard.writeText(text);
       linkFallback = null;
-      notice = "Copied";
+      notify({ kind: "success", key: "copy-agent", text: "Copied for agent", testid: "address-notice" });
     } catch {
       error = "Could not copy to the clipboard.";
     }
@@ -512,6 +511,7 @@
 
 {#snippet mainPane()}
     <Main>
+  {#snippet bar()}
   <Toolbar
     title={model?.title ?? repoName}
     actions={barActions}
@@ -538,22 +538,20 @@
     {#snippet trail()}<InspectorTrigger />{/snippet}
     {#snippet status()}
       {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
-      {#if saveMessage}<span role="status">{saveMessage}</span>{/if}
     {/snippet}
   </Toolbar>
+  {/snippet}
   <MarkdownHelp id={helpId} anchor={toolbarEl} bind:open={helpOpen} />
 
   {#if notice}
-    <p class="essay-shell__status" role="status" data-testid="address-notice">
-      {notice} <IconButton size="sm" icon={X} label="Dismiss" onclick={() => (notice = null)} />
-    </p>
+    <Notice kind="info" testid="address-notice" onDismiss={() => (notice = null)}>{notice}</Notice>
   {/if}
   {#if linkFallback}
-    <p class="essay-shell__status" role="status">
+    <Notice kind="info">
       Copy this link: <Input readonly aria-label="Link" data-testid="link-fallback" value={linkFallback} onfocus={(e) => e.currentTarget.select()} />
-    </p>
+    </Notice>
   {/if}
-  {#if error}<p class="essay-shell__error" role="alert" data-testid="essay-error">{error}</p>{/if}
+  {#if error}<Notice kind="error" testid="essay-error">{error}</Notice>{/if}
 
 
   <div class="workspace workspace--flush essay-shell">

@@ -170,10 +170,13 @@ export async function connectAgents(page: Page, essayPath: string, count: number
   return { rpc, tool, comment, attach, relate };
 }
 
+/** Open menus and popovers; the toast host is a popover too, and is not a menu. */
+export const openMenus = (page: Page) => page.locator(":popover-open:not(.toast-host)");
+
 /** Open a Toolbar group menu (wide tiers); a no-op when it is already open. */
 export async function openMenu(page: Page, group: "Document" | "View" | "Go"): Promise<void> {
   // Read the real popover state: aria-expanded follows the toggle event a tick later.
-  if ((await page.locator(":popover-open").count()) === 0) {
+  if ((await openMenus(page).count()) === 0) {
     await page.getByRole("button", { name: group, exact: true }).click();
   }
 }
@@ -181,7 +184,7 @@ export async function openMenu(page: Page, group: "Document" | "View" | "Go"): P
 /** Escape, then wait until no popover is open (the toggle event lands a tick after the key). */
 export async function closeMenus(page: Page): Promise<void> {
   await page.keyboard.press("Escape");
-  await expect(page.locator(":popover-open")).toHaveCount(0);
+  await expect(openMenus(page)).toHaveCount(0);
 }
 
 /** Open a group menu, click one item, and close the menu again (View stays open on toggle). */
@@ -192,7 +195,7 @@ export async function menuItem(
 ): Promise<void> {
   await openMenu(page, group);
   await page.getByTestId(testid).click();
-  if ((await page.locator(":popover-open").count()) > 0) await closeMenus(page);
+  if ((await openMenus(page).count()) > 0) await closeMenus(page);
 }
 
 /** The Comments toggle's aria-checked ("true" | "false" | "mixed"), read through the View menu. */

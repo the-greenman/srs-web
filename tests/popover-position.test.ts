@@ -74,3 +74,28 @@ describe("placeNextTo", () => {
     });
   });
 });
+
+import { placeBottomCentre } from "../src/lib/components/popover-position";
+
+describe("placeBottomCentre", () => {
+  const frame = { top: 0, left: 100, right: 500, bottom: 600 };
+  it("centres on the frame, its bottom edge on the frame bottom", () => {
+    expect(placeBottomCentre(frame, { width: 200, height: 40 }, { width: 800, height: 700 })).toEqual({
+      top: 560,
+      left: 200,
+    });
+  });
+  it("takes the bottom edge from the visual viewport when it is higher (mobile keyboard)", () => {
+    const r = placeBottomCentre(frame, { width: 200, height: 40 }, { width: 800, height: 300, offsetTop: 50 });
+    expect(r.top).toBe(350 - 40);
+  });
+  it("clamps into the viewport width", () => {
+    const r = placeBottomCentre({ top: 0, left: 0, right: 100, bottom: 600 }, { width: 300, height: 40 }, { width: 360, height: 700 });
+    expect(r.left).toBe(4);
+    const r2 = placeBottomCentre({ top: 0, left: 300, right: 700, bottom: 600 }, { width: 300, height: 40 }, { width: 360, height: 700 });
+    expect(r2.left).toBe(360 - 300 - 4);
+  });
+  it("lifts by the offset", () => {
+    expect(placeBottomCentre(frame, { width: 200, height: 40 }, { width: 800, height: 700 }, 16).top).toBe(544);
+  });
+});

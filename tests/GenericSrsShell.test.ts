@@ -3,6 +3,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import GenericSrsShell from "../src/lib/generic/GenericSrsShell.svelte";
+import { resetNotices } from "../src/lib/notices.svelte.js";
 
 const mocks = vi.hoisted(() => ({
   // "1fcad6a2-…" is DECISION_TYPE_ID from governance/type-registry.ts, inlined (not
@@ -91,6 +92,7 @@ vi.mock("../src/lib/srs-client.js", () => mocks);
 // exercise the desktop frame, so stub a wide viewport (#424).
 const store = new Map<string, string>();
 beforeEach(() => {
+  resetNotices();
   store.clear();
   vi.stubGlobal("localStorage", {
     getItem: (k: string) => store.get(k) ?? null,
@@ -361,5 +363,64 @@ describe("GenericSrsShell at drawer width", () => {
     await fireEvent.click(screen.getByRole("button", { name: /First com\.example\/note/ }));
     await waitFor(() => expect(drawer.open).toBe(true));
     expect(drawer.textContent).toContain("Edit fields");
+  });
+});
+
+describe("GenericSrsShell diagnostics notices (#441)", () => {
+  const R23 = "[R23] computed heading level 7 exceeds 6 for format 'html'; clamped to 6";
+  const views = ["composition-1", "composition-2"].map((id, i) => ({
+    id,
+    namespace: "com.example",
+    name: `reader${i + 1}`,
+    version: 1,
+    description: "",
+  }));
+  const mount = () =>
+    render(GenericSrsShell, {
+      props: { repo: {} as never, repoName: "Example repository", onExport: vi.fn(), onOpenAnother: vi.fn() },
+    });
+  const renderWith = (diagnostics: string[]) =>
+    mocks.renderDocumentView.mockReturnValue({ rendered: "<h1>x</h1>", diagnostics, projection: null });
+  beforeEach(() => {
+    mocks.listDocumentViews.mockReturnValue(views);
+  });
+  const restore = () => {
+    renderWith([]);
+  };
+
+  it("groups three identical warnings into one collapsed line with a count", async () => {
+    renderWith([R23, R23, R23]);
+    const { container } = mount();
+    await screen.findByText(/3 warnings/);
+    expect(container.querySelectorAll('[data-part="group"]')).toHaveLength(1);
+    expect(container.querySelector('[data-part="count"]')?.textContent).toBe("x3");
+    expect((container.querySelector(".diag-list") as HTMLElement).hidden).toBe(true);
+    await fireEvent.click(screen.getByRole("button", { name: "Show diagnostics" }));
+    expect((container.querySelector(".diag-list") as HTMLElement).hidden).toBe(false);
+    expect(container.querySelector(".diag__msg")?.textContent).toContain(R23);
+    restore();
+  });
+
+  it("dismiss hides it for that composition only; another composition still shows its own", async () => {
+    renderWith([R23, R23]);
+    mount();
+    await fireEvent.click(await screen.findByRole("button", { name: "Dismiss" }));
+    expect(screen.queryByText(/2 warnings/)).toBeNull();
+    await fireEvent.click(screen.getByRole("button", { name: /reader2/ }));
+    expect(await screen.findByText(/2 warnings/)).toBeTruthy();
+    await fireEvent.click(screen.getByRole("button", { name: /reader1/ }));
+    await waitFor(() => expect(screen.queryByText(/2 warnings/)).toBeNull());
+    restore();
+  });
+
+  it("a thrown render shows an error Notice, not a diagnostics list", async () => {
+    mocks.renderDocumentView.mockImplementation(() => {
+      throw new Error("engine exploded");
+    });
+    const { container } = mount();
+    await waitFor(() => expect(container.querySelector('[role="alert"]')?.textContent).toContain("engine exploded"));
+    expect(container.querySelector(".diag-notice")).toBeNull();
+    mocks.renderDocumentView.mockReset();
+    restore();
   });
 });

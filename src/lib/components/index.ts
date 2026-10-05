@@ -58,6 +58,10 @@ export { default as TagChip } from "./TagChip.svelte";
 export { default as Button } from "./Button.svelte";
 export { default as IconButton } from "./IconButton.svelte";
 export { default as Diagnostics } from "./Diagnostics.svelte";
+export { default as Notice } from "./Notice.svelte";
+export { default as NoticeRegion } from "./NoticeRegion.svelte";
+export { default as Toast } from "./Toast.svelte";
+export { default as ToastHost } from "./ToastHost.svelte";
 export { default as Lifecycle } from "./Lifecycle.svelte";
 
 // Shared types

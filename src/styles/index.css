@@ -56,6 +56,8 @@
 @import url("./components/log-table.css") layer(components);
 @import url("./components/field.css") layer(components);
 @import url("./components/diagnostics.css") layer(components);
+@import url("./components/notice.css") layer(components);
+@import url("./components/toast.css") layer(components);
 @import url("./components/lifecycle.css") layer(components);
 @import url("./components/mcp-connection.css") layer(components);
 @import url("./components/block.css") layer(components);

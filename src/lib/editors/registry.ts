@@ -30,7 +30,6 @@ export interface EditorShellProps {
   onExportSrsj?: () => void;
   onSave?: () => Promise<void>;
   saving?: boolean;
-  saveMessage?: string | null;
   documentDirty?: boolean;
   documentRevision?: number;
   onDocumentMutation?: () => boolean;

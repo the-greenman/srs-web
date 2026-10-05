@@ -36,7 +36,7 @@ test.describe("Blueprint↔view discovery (srs-web#43)", () => {
   test("guides shell loads without a schema error (blueprint discovered)", async ({ page }) => {
     // If the blueprint is NOT discovered, a schema error banner appears.
     // Its absence confirms discovery succeeded.
-    await expect(page.locator(".guides-error[role='alert']")).not.toBeVisible();
+    await expect(page.getByTestId("guides-error")).not.toBeVisible();
   });
 
   test("preview pane renders after selecting a guide (view discovered)", async ({ page }) => {

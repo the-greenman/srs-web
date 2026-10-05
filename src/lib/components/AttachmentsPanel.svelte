@@ -1,5 +1,6 @@
 <!-- AttachmentsPanel.svelte — list repo attachments and upload new files (srs-web#99) -->
 <script lang="ts">
+  import Notice from './Notice.svelte';
   import ArrowDown from "@lucide/svelte/icons/arrow-down";
   import Button from "./Button.svelte";
   import IconButton from "./IconButton.svelte";
@@ -184,7 +185,7 @@
 
 <div class="attachments-panel" data-testid="attachments-panel">
   {#if error}
-    <p class="attachments-panel__error" role="alert">{error}</p>
+    <Notice kind="error">{error}</Notice>
   {/if}
   {#if result.entries.length === 0}
     <p class="attachments-panel__empty">No attachments yet.</p>
@@ -257,11 +258,6 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-  }
-  .attachments-panel__error {
-    color: var(--color-error);
-    font-size: 0.8em;
-    margin: 0;
   }
   .attachments-panel__empty {
     color: var(--color-muted);

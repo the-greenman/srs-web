@@ -6,7 +6,7 @@
 - **Supersedes:** —
 - **Superseded by:** —
 - **Amends:** [ADR-019](019-ui-theming-surface-and-live-styleguide.md) (makes its "hard-coded colours" consequence true)
-- **Amended by:** srs-web#423 (Toolbar and paragraph strip parts and tokens, action-registry rule: see "Toolbar and paragraph strip"); srs-web#424 (page frame, Drawer, Wide: see "Shell frame, Drawer, Wide", and parts (g) and (h))
+- **Amended by:** srs-web#423 (Toolbar and paragraph strip parts and tokens, action-registry rule: see "Toolbar and paragraph strip"); srs-web#424 (page frame, Drawer, Wide: see "Shell frame, Drawer, Wide", and parts (g) and (h)); srs-web#441 (notices: see part (j))
 
 ## Context
 
@@ -86,6 +86,9 @@ appended below as components gain parts.
 | `ActorMark` | `mark` |
 | `ActorStack` | `more` |
 | `AnnotationMargin` | `overflow`, `row`, `mark`, `label`, `more` |
+| `Notice` | `icon`, `body`, `dismiss` |
+| `ToastHost` | `host` |
+| `Diagnostics` (notice variant) | `summary`, `toggle`, `group`, `count` |
 
 ### (d) One breakpoint source
 
@@ -232,3 +235,54 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
   (`ShellState.wideEnabled`, the `wide` prop) shows the action and honours it; a stored Wide never
   changes a shell without the toggle.
 
+### (j) Notices (#441)
+
+One notice system, three shapes, one store (`src/lib/notices.svelte.ts`):
+
+- **Toast = an event** ("Link copied", a save result). **Notice = persistent state** (an error beside its
+  cause, a read-only note, a size warning). **Diagnostics = the engine's findings**, grouped by identical
+  message with a count, built on `Notice`. `Toast` is one row; `ToastHost` is the host; `NoticeRegion`
+  renders pinned document notices (today the catalog diagnostics).
+- **Roles.** `Main` always renders `LiveRegions`: two visually-hidden regions outside the popover, a plain
+  `aria-live="polite"` div for non-error toasts and an `aria-live="assertive" aria-atomic="true"` div for
+  sticky errors. The assertive region has **no** `role="alert"`: an empty always-present alert node would
+  break every "no alert on this path" assertion. The text is written into the already-rendered node and
+  cleared when the toast goes. The visual toast text is `aria-hidden` (never the row: it holds the
+  focusable close button), so a toast is heard once. Inline `Notice`: `role="alert"` for `error`,
+  `role="status"` for the rest. The grouped Diagnostics notice is always a status (kind `warning` or `info`),
+  never an alert; errors read strong through their own rows.
+- **Strength.** Errors are sticky (no timer) and strong (error rule and fill, medium weight); everything
+  else is quiet and auto-dismisses (`TOAST_MS`, 4000 ms by default).
+- **Anchoring.** `ToastHost` is a native `popover="manual"` (part e): top layer, out of flow, so it never
+  shifts layout and needs no `z-index`. It is placed bottom-centre of its own `.app__main` by the pure
+  `placeBottomCentre` (the bottom edge comes from `visualViewport`, so it clears a mobile keyboard);
+  `--toast-offset-bottom` lifts it clear of the agent dock.
+- **Re-stack.** A new toast, and a drawer opening (`ShellState.navOpen` / `inspectorOpen`), do
+  `hidePopover()` then `showPopover()`, so the host re-enters the top layer above the modal Drawer and its
+  scrim. The live regions are outside the popover, so nothing is re-announced. **Limitation:** while a modal
+  drawer is open the toast is painted above the scrim but inert (the dialog makes everything outside it
+  inert), so its close button cannot be clicked; a sticky error stays until the drawer closes and it is
+  dismissed, or the next save replaces it. (Hit-testing cannot see an inert element; the e2e checks pixels.)
+- **One save key.** Every save result (App's, and Governance's local recovery copy) uses `key: "save"` and
+  testid `save-status`, so a later result replaces an earlier one: the next save, success included,
+  replaces a sticky save-failure toast. A save failure is the one error that is a toast (it has no
+  location); location-bound errors (an export beside its button, a form, a picker) stay inline.
+- **Pinned notices.** `pinNotice` / `unpinNotice`; `Main`'s `NoticeRegion` renders them directly below the
+  bar and above the scroller. `Main` takes a `bar` snippet and renders bar, notice region, children in real
+  DOM order (no CSS `order`); shells pass their Toolbar or Topbar as `bar`. `resetNotices()` runs first on
+  every document load (toasts, timers, diagnostics dismissals); pinned notices are replaced or unpinned by
+  the load path.
+- **Dismissal** of a diagnostics notice is per session and per `documentKey`, and re-shows when the
+  diagnostics content changes (D3).
+- **Grouping** keys on the exact (trimmed) message and severity until the engine exposes a structured
+  `code` (srs-rust#1264); `groupDiagnostics` is the one function that changes then. The engine's string
+  arrays (render, find, navigation) have no severity and are shown as warnings (`toUiDiagnostic`, the one
+  adapter).
+- **Toolbar status keeps state** ("Unsaved changes"), never events.
+- **Guard.** `tests/no-adhoc-notices.test.ts` fails on a new or removed `role="alert"` (or dynamic
+  `role={...}`) in a Svelte file unless it is in its allowlist (agent connection line #442, modal #428,
+  form errors #426, `Notice` itself, `HoverCard`'s own role, the styleguide specimen).
+- **Parts.** `Notice`: `icon body dismiss`. `ToastHost`: `host`. `Diagnostics` (notice variant):
+  `summary toggle group count`; the dismiss control is `Notice`'s `dismiss`.
+- **Tokens.** `--notice-bg|border|pad|gap|radius|warn-rule|error-bg|error-rule` and
+  `--toast-bg|border|shadow|width|offset-bottom|gap`, in `tokens-components.css`.

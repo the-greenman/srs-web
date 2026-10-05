@@ -11,6 +11,7 @@
   renders the resulting structure and forwards form input.
 -->
 <script lang="ts">
+  import Notice from '$lib/components/Notice.svelte';
   import {
     blueprintForComposition,
     childTypes,
@@ -378,10 +379,10 @@
 
 <div class="bp-editor" data-testid="blueprint-document-editor">
   {#if error}
-    <p class="bp-editor__error" role="alert">{error}</p>
+    <Notice kind="error">{error}</Notice>
   {:else if doc}
     {#if opError}
-      <p class="bp-editor__error" role="alert" data-testid="bp-editor-error">{opError}</p>
+      <Notice kind="error" testid="bp-editor-error">{opError}</Notice>
     {/if}
 
     {#snippet picker(at: number)}
@@ -510,13 +511,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-  }
-  .bp-editor__error {
-    padding: 0.5rem 0.75rem;
-    background: #fef2f2;
-    color: #b91c1c;
-    border-left: 3px solid #fca5a5;
-    font-size: 0.85rem;
   }
   .bp-editor__empty {
     padding: 1rem;

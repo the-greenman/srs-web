@@ -48,6 +48,9 @@
   import Inspector from "$lib/components/Inspector.svelte";
   import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
   import Main from "$lib/components/Main.svelte";
+  import Notice from "$lib/components/Notice.svelte";
+  import Diagnostics from "$lib/components/Diagnostics.svelte";
+  import { diagnosticsFromStrings } from "$lib/notices.svelte.js";
   import Nav from "$lib/components/Nav.svelte";
   import NavTrigger from "$lib/components/NavTrigger.svelte";
   import Toolbar from "$lib/components/Toolbar.svelte";
@@ -66,7 +69,6 @@
     /** Why `onSave` is undefined, shown where the Save button would be. Null when writable or unknown. */
     readOnlyReason?: string | null;
     saving?: boolean;
-    saveMessage?: string | null;
     /** App-owned dirty state, shared with non-UI repository writers. */
     documentDirty?: boolean;
     /** Changes after mount invalidate derived browser projections of the repository. */
@@ -83,7 +85,6 @@
     onSave,
     readOnlyReason = null,
     saving = false,
-    saveMessage = null,
     documentDirty = false,
     documentRevision = 0,
     onOpenAnother,
@@ -106,6 +107,8 @@
   let selectedContainerId = $state<string | null>(null);
   let selectedRecord = $state<SrsRecord | null>(null);
   let renderedDocument = $state<string | null>(null);
+  /** The engine's findings for the rendered composition (grouped) and a thrown failure (strong, inline). */
+  let documentDiagnostics = $state<string[]>([]);
   let documentError = $state<string | null>(null);
   let loadingDocument = $state(false);
   let search = $state("");
@@ -114,6 +117,7 @@
   let expandedMembers = $state<Record<string, ResolvedMember[]>>({});
   let records = $state<DiscoveryHit[]>([]);
   let recordDiagnostics = $state<string[]>([]);
+  let recordError = $state<string | null>(null);
   let editFormDef = $state<{ label: string; fields: FieldFormDef[]; composites: CompositeFormDef[] } | null>(null);
   let activeBlueprint = $state<BlueprintSummary | null>(null);
   let documentRenderRevision = $state(0);
@@ -177,12 +181,13 @@
   function renderPreview(compositionId: string): void {
     loadingDocument = true;
     documentError = null;
+    documentDiagnostics = [];
     try {
       const composition = compositions.find((c) => c.id === compositionId);
       const containerId = composition ? containerForComposition(repo, composition) : null;
       const result = renderDocumentView(repo, compositionId, "html", containerId);
       renderedDocument = result.rendered;
-      if (result.diagnostics.length > 0) documentError = result.diagnostics.join(" ");
+      documentDiagnostics = result.diagnostics;
     } catch (error: unknown) {
       renderedDocument = null;
       documentError = message(error);
@@ -214,7 +219,7 @@
         expandedMembers[containerId] = resolveContainerView(repo, containerId).members;
         next.add(containerId);
       } catch (error: unknown) {
-        recordDiagnostics = [message(error)];
+        recordError = message(error);
       }
     }
     expandedContainerIds = next;
@@ -230,9 +235,11 @@
       });
       records = result.hits;
       recordDiagnostics = result.diagnostics;
+      recordError = null;
     } catch (error: unknown) {
       records = [];
-      recordDiagnostics = [message(error)];
+      recordDiagnostics = [];
+      recordError = message(error);
     }
   }
 
@@ -264,7 +271,7 @@
       selectedRecord = getRecord(repo, instanceId);
       showInspector();
     } catch (error: unknown) {
-      recordDiagnostics = [message(error)];
+      recordError = message(error);
     }
   }
 
@@ -499,16 +506,17 @@
 
 {#snippet mainPane()}
   <Main>
+    {#snippet bar()}
     <Toolbar title={repoName} actions={barActions} groups={BASE_GROUPS}>
       {#snippet lead()}<NavTrigger />{/snippet}
       {#snippet trail()}<InspectorTrigger />{/snippet}
       {#snippet status()}
         {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
-        {#if saveMessage}<span role="status">{saveMessage}</span>{/if}
       {/snippet}
     </Toolbar>
+    {/snippet}
     <!-- The reason is a sentence: a line under the bar (wraps on a phone) rather than in the one-row bar. -->
-    {#if !onSave && readOnlyReason}<p class="generic-readonly" data-testid="read-only-note" role="status">{readOnlyReason}</p>{/if}
+    {#if !onSave && readOnlyReason}<Notice kind="info" testid="read-only-note">{readOnlyReason}</Notice>{/if}
     <div class="workspace">
       <div class="generic-page">
     {#if surface === "document"}
@@ -516,7 +524,8 @@
         <p>Document</p>
         <h1>{activeComposition?.name ?? "Composition"}</h1>
       </header>
-      {#if documentError}<p class="generic-notice">{documentError}</p>{/if}
+      {#if documentError}<Notice kind="error">{documentError}</Notice>{/if}
+      <Diagnostics variant="notice" testid="document-diagnostics" diagnostics={diagnosticsFromStrings(documentDiagnostics)} documentKey={`${repoName}:${selectedCompositionId}`} />
       {#if activeBlueprint && activeComposition}
         <div class="document-editor-panel document-editor-panel--full" data-testid="document-editor-panel">
           <BlueprintDocumentEditor
@@ -585,7 +594,8 @@
         </select>
         {#if surface === "structure"}<button onclick={openRecords}>Search all records</button>{/if}
       </div>
-      {#if recordDiagnostics.length > 0}<p class="generic-notice">{recordDiagnostics.join(" ")}</p>{/if}
+      {#if recordError}<Notice kind="error">{recordError}</Notice>{/if}
+      <Diagnostics variant="notice" testid="record-diagnostics" diagnostics={diagnosticsFromStrings(recordDiagnostics)} documentKey={`${repoName}:records:${surface === "records" ? "" : selectedContainerId}`} />
       <p class="generic-muted">{records.length} record{records.length === 1 ? "" : "s"}</p>
       <div class="generic-records">
         {#each records as record (record.instanceId)}
@@ -622,7 +632,7 @@
           <h2>{selectedRecord.displayLabel ?? selectedRecord.instanceId}</h2>
           <span>{selectedRecord.typeNamespace}/{selectedRecord.typeName}</span>
           <button class="generic-edit" disabled={saving} onclick={beginEdit}>Edit fields</button>
-          {#if editError}<p class="generic-notice">{editError}</p>{/if}
+          {#if editError}<Notice kind="error" testid="generic-edit-error">{editError}</Notice>{/if}
         </header>
         {#each Object.entries(selectedRecord.fieldValues) as [name, value] (name)}
           <div class="generic-field"><strong>{name}</strong><FieldValueView {value} /></div>

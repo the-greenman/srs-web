@@ -2,6 +2,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import GovernanceShell from "../src/lib/governance/GovernanceShell.svelte";
+import { notify, resetNotices } from "../src/lib/notices.svelte.js";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 
 // The shell frame turns the inspector into a closed drawer at <= 1100px (happy-dom is 1024 wide): these
@@ -223,7 +224,7 @@ describe("GovernanceShell — size warning banner", () => {
     });
     // Wait for mount to complete then check the banner by its specific class
     await screen.findByRole("button", { name: /Open another file/i });
-    const banner = container.querySelector(".size-warning-banner");
+    const banner = container.querySelector('[data-testid="size-warning"]');
     expect(banner).not.toBeNull();
     expect(banner!.textContent).toContain("1 size warning");
   });
@@ -248,7 +249,7 @@ describe("GovernanceShell — size warning banner", () => {
       },
     });
     await screen.findByRole("button", { name: /Open another file/i });
-    expect(container.querySelector(".size-warning-banner")).toBeNull();
+    expect(container.querySelector('[data-testid="size-warning"]')).toBeNull();
   });
 
   it("shows plural form for multiple warnings", async () => {
@@ -271,7 +272,7 @@ describe("GovernanceShell — size warning banner", () => {
       },
     });
     await screen.findByRole("button", { name: /Open another file/i });
-    const banner = container.querySelector(".size-warning-banner");
+    const banner = container.querySelector('[data-testid="size-warning"]');
     expect(banner).not.toBeNull();
     expect(banner!.textContent).toContain("2 size warnings");
   });
@@ -435,6 +436,8 @@ describe("GovernanceShell — Repository nav group", () => {
 // srs-web#312 — document-mutation save-state gaps from PR #311
 // -----------------------------------------------------------------------------
 
+beforeEach(resetNotices);
+
 describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)", () => {
   const createdRecord = {
     instanceId: "rec-001",
@@ -482,8 +485,10 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
     const failureMessage = await screen.findByTestId("local-save-failed");
     expect(failureMessage.textContent).toContain("could not be saved");
 
-    const savedIndicator = screen.getByText("Saved");
-    expect(savedIndicator.classList.contains("topbar__save-indicator--visible")).toBe(false);
+    // the same "recovery" key: the failure toast replaced any "Recovery copy saved" toast
+    expect(screen.queryByTestId("recovery-status")).toBeNull();
+    expect(failureMessage.getAttribute("role")).toBeNull(); // heard once, from the assertive live region
+    expect(screen.getByTestId("live-assertive").textContent).toContain("could not be saved");
   });
 
   it("shows local-save-failed when a deferred recovery-copy write fails (srs-web#353)", async () => {
@@ -517,9 +522,26 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
     await createRecordViaNewFlow();
 
     expect(onDocumentMutation).toHaveBeenCalled();
-    const savedIndicator = await screen.findByText("Saved");
-    expect(savedIndicator.classList.contains("topbar__save-indicator--visible")).toBe(true);
+    const saved = await screen.findByTestId("recovery-status");
+    expect(saved.textContent).toContain("Recovery copy saved");
     expect(screen.queryByTestId("local-save-failed")).toBeNull();
+  });
+
+  it("an autosave never replaces a document-save error toast (separate keys)", async () => {
+    notify({ kind: "error", key: "save", testid: "save-status", text: "Save failed: nope" });
+    render(GovernanceShell, {
+      props: {
+        repo: repoWithCreatableRecord(),
+        repoName: "test.srsj",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+        onDocumentMutation: vi.fn(() => true),
+      },
+    });
+    await createRecordViaNewFlow();
+    expect((await screen.findByTestId("recovery-status")).textContent).toContain("Recovery copy saved");
+    expect(screen.getByTestId("save-status").textContent).toContain("Save failed");
   });
 
   it("defaults onDocumentMutation to a no-op success so callers that don't care can omit it", async () => {
@@ -535,8 +557,7 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
       },
     });
     await createRecordViaNewFlow();
-    const savedIndicator = await screen.findByText("Saved");
-    expect(savedIndicator.classList.contains("topbar__save-indicator--visible")).toBe(true);
+    expect((await screen.findByTestId("recovery-status")).textContent).toContain("Recovery copy saved");
   });
 });
 

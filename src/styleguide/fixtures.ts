@@ -8,7 +8,7 @@ import type { MenuAction } from "$lib/components/menu-action";
 import { headerActions } from "$lib/essay/header-actions";
 import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor } from "$lib/srs-client";
-import type { Status } from "$lib/types";
+import type { Diagnostic, Status } from "$lib/types";
 
 export const NOW = Date.parse("2026-10-04T12:00:00Z");
 
@@ -497,3 +497,13 @@ export const shellFixture = {
   badge: 3,
   mainLine: "The main column holds one line here; the bar above carries both drawer triggers.",
 };
+
+/** Diagnostics for the notices specimens: a repeated message so a count shows. */
+export const noticeDiagnostics: Diagnostic[] = [
+  ...Array.from({ length: 3 }, () => ({
+    severity: "warn" as const,
+    message: "[R23] computed heading level 7 exceeds 6 for format 'html'; clamped to 6",
+  })),
+  { severity: "warn", message: "[section:essay] container not found; rendering section as empty" },
+  { severity: "error", message: "view dispatch failed for type governance/decision_log" },
+];

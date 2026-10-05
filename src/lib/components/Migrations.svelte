@@ -6,6 +6,7 @@
   ADR-014: surfaced via the "Repository" NavGroup in GovernanceShell.
 -->
 <script lang="ts">
+  import Notice from './Notice.svelte';
   import { onMount } from 'svelte';
   import {
     availableMigrations,
@@ -71,7 +72,7 @@
   {#if loading}
     <p class="migrations__loading">Loading migrations…</p>
   {:else if loadError}
-    <p class="migrations__error" role="alert">{loadError}</p>
+    <Notice kind="error">{loadError}</Notice>
   {:else if migrations.length === 0}
     <p class="migrations__empty">No migrations available.</p>
   {:else}
@@ -100,11 +101,11 @@
         {#if applyResults.has(m.id)}
           {@const r = applyResults.get(m.id)!}
           {#if r.ok}
-            <div class="migration-result migration-result--ok" role="status">
+            <Notice kind="success">
               Applied. <pre class="migration-result__payload">{JSON.stringify(r.result.payload, null, 2)}</pre>
-            </div>
+            </Notice>
           {:else}
-            <p class="migration-result migration-result--error" role="alert">Error: {r.error}</p>
+            <Notice kind="error">Error: {r.error}</Notice>
           {/if}
         {/if}
       </div>
@@ -130,9 +131,6 @@
     font-style: italic;
   }
 
-  .migrations__error {
-    color: var(--color-error);
-  }
 
   .migration-row {
     display: grid;
@@ -198,19 +196,8 @@
     cursor: not-allowed;
   }
 
-  .migration-result {
+  .migration-row > :global(.notice) {
     grid-column: 1 / -1;
-    font-size: 0.875rem;
-    padding: 0.4rem 0;
-  }
-
-  .migration-result--ok {
-    color: var(--color-success);
-  }
-
-  .migration-result--error {
-    color: var(--color-error);
-    margin: 0;
   }
 
   .migration-result__payload {

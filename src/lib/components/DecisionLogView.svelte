@@ -3,6 +3,7 @@
   B12 decision log / summary card: https://github.com/the-greenman/srs-web/issues/56
 -->
 <script lang="ts">
+  import Notice from './Notice.svelte';
   import type { SrsRecord, SrsRepository } from "$lib/srs-client.js";
   import { listDocumentViews, renderDocumentView } from "$lib/srs-client.js";
   import { downloadText, wrapLogHtml } from "$lib/governance/decision-export-utils.js";
@@ -140,7 +141,7 @@
         </div>
       {/if}
       {#if exportError}
-        <p class="controls-bar__export-error" role="alert" data-testid="log-export-error">{exportError}</p>
+        <Notice kind="error" testid="log-export-error">{exportError}</Notice>
       {/if}
     </div>
     <LogTable columns={["Decision", "Status", "Date"]}>
@@ -255,11 +256,4 @@
     background: var(--color-line-soft);
   }
 
-  .controls-bar__export-error {
-    width: 100%;
-    font-size: 0.75rem;
-    color: var(--color-error);
-    margin: 0;
-    padding: 0 var(--space-md);
-  }
 </style>
