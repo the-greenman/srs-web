@@ -32,6 +32,7 @@
   } from "$lib/srs-client.js";
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
   import { acquireChannelLock, releaseChannelLock, channelsInUseElsewhere, connections, credsKey, type AgentConnection } from "$lib/agent-connections.js";
+  import { relays } from "$lib/relay-library.js";
   import { observeSession, pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
   import { listRelations, listTypes, type AgentWriteGuard, type McpSession, type SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
@@ -282,16 +283,26 @@
   // a storage provider — persistence stays an explicit Save/Export.
   // ---------------------------------------------------------------------------
 
-  // `localStorage["srs-web.mcp-relay-url"]` is a runtime override for dev/e2e.
-  const relayUrl =
-    import.meta.env.VITE_MCP_RELAY_URL ||
-    (() => {
-      try {
-        return localStorage.getItem("srs-web.mcp-relay-url") ?? "";
-      } catch {
-        return "";
-      }
-    })();
+  // Relays are a user-managed library (srs-web#442, relay-library.ts); each agent is bound to one.
+  let relayList = $state(relays.list());
+  /** Bind agents that predate the library to the default relay (called after every relay change). */
+  function adoptRelays() {
+    const d = relayList.find((r) => r.isDefault);
+    if (d) library = [...connections.adoptRelay(d.id)];
+  }
+  const relayError = (r: { relays: typeof relayList } | { error: string }): string | null => {
+    if ("error" in r) return r.error;
+    relayList = r.relays;
+    adoptRelays();
+    return null;
+  };
+  const addRelay = (label: string, url: string) => relayError(relays.add(label, url));
+  const updateRelay = (id: string, patch: { label?: string; url?: string }) => relayError(relays.update(id, patch));
+  const removeRelay = (id: string) => relayError(relays.remove(id));
+  function setDefaultRelay(id: string) {
+    relayList = relays.setDefault(id);
+  }
+  void [addRelay, updateRelay, removeRelay, setDefaultRelay, renameAgent]; // TEMP phase 1: wired to AgentPanel in phase 2
   // One relay channel + MCP session per agent connection (srs-web#358), each with its own
   // host-minted actor id. `agents` is the reactive view; hosts/sessions are managed here only.
   type Agent = { conn: AgentConnection; state: HostState };
@@ -310,17 +321,21 @@
   });
   /** Saved channels (the library) and those held by another tab (Web Locks). */
   let library = $state<AgentConnection[]>(connections.list());
+  adoptRelays();
   let inUse = $state<Set<string>>(new Set());
   const refreshInUse = () => void channelsInUseElsewhere().then((s) => (inUse = s));
   const hosts = new Map<string, { host: RelayHost; session: McpSession | null }>();
-  const setAgentState = (id: string, state: HostState) =>
-    (agents = agents.map((a) => (a.conn.id === id ? { ...a, state } : a)));
+  const setAgentState = (id: string, state: HostState) => {
+    if (state.status === "online" && agents.find((a) => a.conn.id === id)?.state.status !== "online")
+      library = [...connections.touch(id)];
+    agents = agents.map((a) => (a.conn.id === id ? { ...a, state } : a));
+  };
   function hostFor(conn: AgentConnection): RelayHost {
     let h = hosts.get(conn.id);
     if (!h) {
       h = {
         host: new RelayHost({
-          relayUrl,
+          relayUrl: relays.get(conn.relayId)?.url ?? "",
           storageKey: credsKey(conn.id),
           onHandled: () => void syncDocument(),
           onChange: (s) => setAgentState(conn.id, s),
@@ -388,13 +403,18 @@
   /** Open a saved channel in this tab, only if no other tab holds it. */
   async function openChannel(conn: AgentConnection) {
     if (agents.some((a) => a.conn.id === conn.id)) return;
+    if (!relays.get(conn.relayId)) return; // unbound or relay missing: cannot connect
     if (!(await acquireChannelLock(conn.id))) return refreshInUse();
     agents = [...agents, { conn, state: { status: "idle", callerUrl: null, error: null } }];
     openAgentSession(conn, repo);
   }
-  function connectAgent(label?: string) {
-    library = [...connections.add(label)];
+  function connectAgent(label: string | undefined, relayId: string) {
+    library = [...connections.add(label, relayId)];
     void openChannel(library[library.length - 1]);
+  }
+  /** Disconnected agents only: the actor name is fixed when a session opens. */
+  function renameAgent(id: string, label: string) {
+    library = [...connections.rename(id, label)];
   }
   /** Detach in this tab; the channel and its credentials stay in the library. */
   function disconnectAgent(id: string) {
@@ -413,7 +433,6 @@
 
   $effect(() => {
     const current = repo;
-    if (!relayUrl) return;
     untrack(() => {
       agentWrites = []; // a new repository: earlier writes name instances that are gone
       for (const { conn } of agents) openAgentSession(conn, current);
@@ -421,7 +440,7 @@
   });
 
   $effect(() => {
-    if (!relayUrl) return;
+    if (library.length === 0) return;
     refreshInUse();
     window.addEventListener("focus", refreshInUse);
     document.addEventListener("visibilitychange", refreshInUse);
@@ -875,8 +894,8 @@
       applyGuards();
     }}
     workingCopySaved={workingCopySaved}
-    agentPanel={relayUrl ? agentDock : undefined}
-    agentStatus={relayUrl ? agentStatus : undefined}
+    agentPanel={relayList.length > 0 ? agentDock : undefined}
+    agentStatus={relayList.length > 0 ? agentStatus : undefined}
     onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAnother={() => {
       clearWorkingCopy();
@@ -916,7 +935,7 @@
   {/each}
   <details>
   <summary data-testid="mcp-connect-open">Connect an agent</summary>
-  <form onsubmit={(e) => { e.preventDefault(); connectAgent(newAgentLabel); newAgentLabel = ""; }}>
+  <form onsubmit={(e) => { e.preventDefault(); connectAgent(newAgentLabel, (relayList.find((r) => r.isDefault) ?? relayList[0]).id); newAgentLabel = ""; }}>
     <div class="mcp-conn__url">
       <Input bind:value={newAgentLabel} placeholder="Agent label (optional)" aria-label="Agent label" data-testid="mcp-agent-label" />
       <Button size="sm" variant="secondary" type="submit" data-testid="mcp-connect-agent">Connect</Button>
@@ -927,7 +946,7 @@
 {/snippet}
 
 <!-- Shells that render `agentPanel` (the essay rail) own its placement; the rest get the floating dock. -->
-{#if relayUrl && repo && !activeEditor?.hostsAgentPanel}
+{#if relayList.length > 0 && repo && !activeEditor?.hostsAgentPanel}
   <div class="mcp-dock">
     <Panel title="Agents" persistKey="dock.agents">
       {#snippet actions()}<AgentPresence status={agentStatus} />{/snippet}

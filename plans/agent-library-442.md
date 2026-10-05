@@ -152,23 +152,28 @@ function adoptRelays(): void;                                                // 
 
 #### Tasks
 
-- [ ] `src/lib/relay-library.ts`: `validateRelayUrl`, `createRelayStore`, `relays` singleton wired to `import.meta.env.VITE_MCP_RELAY_URL` and the legacy key.
-- [ ] `agent-connections.ts`: `relayId`, `lastConnectedAt`, `add(label, relayId)`, `rename`, `touch`, `adoptRelay`, `count(relayId)`; D5 first run.
-- [ ] `App.svelte`: delete the `relayUrl` const; `hostFor` uses the agent's relay; `connectAgent(label, relayId)`; `renameAgent`; call `touch` when a host first reports `online`; call `adoptRelay(default)` on relay changes; relay mutation handlers (`addRelay`, `updateRelay`, `removeRelay`, `setDefaultRelay`) as thin wrappers over the store that keep a reactive `relayList = $state(relays.list())`. Still render the existing `agentDock` snippet for now, gated on `relayList.length > 0`.
-- [ ] `tests/relay-library.test.ts`, extend `tests/agent-connections.test.ts`, new `tests/relay-host.test.ts` (list below).
-- [ ] Run the full e2e once after wiring; the legacy-key seed still yields a relay and D5 keeps the seeded agent, so existing agent specs stay green unchanged.
+- [x] `src/lib/relay-library.ts`: `validateRelayUrl`, `createRelayStore`, `relays` singleton wired to `import.meta.env.VITE_MCP_RELAY_URL` and the legacy key.
+- [x] `agent-connections.ts`: `relayId`, `lastConnectedAt`, `add(label, relayId)`, `rename`, `touch`, `adoptRelay`, `count(relayId)`; D5 first run.
+- [x] `App.svelte`: delete the `relayUrl` const; `hostFor` uses the agent's relay; `connectAgent(label, relayId)`; `renameAgent`; call `touch` when a host first reports `online`; call `adoptRelay(default)` on relay changes; relay mutation handlers (`addRelay`, `updateRelay`, `removeRelay`, `setDefaultRelay`) as thin wrappers over the store that keep a reactive `relayList = $state(relays.list())`. Still render the existing `agentDock` snippet for now, gated on `relayList.length > 0`.
+- [x] `tests/relay-library.test.ts`, extend `tests/agent-connections.test.ts`, new `tests/relay-host.test.ts` (list below).
+- [x] Run the full e2e once after wiring; the legacy-key seed still yields a relay and D5 keeps the seeded agent, so existing agent specs stay green unchanged.
 
 #### Acceptance Criteria
 
-- [ ] Vitest: URL validation accepts `https://relay.test`, `http://localhost:8787`, `http://127.0.0.1:8787`; rejects `http://relay.test`, `ftp://x`, `javascript:alert(1)`, `https://u:p@x`, empty, garbage; normalises `https://relay.test/` and `https://relay.test/v1` to the origin; rejects duplicates.
-- [ ] Vitest: seeding from env and from the legacy key, once only (removing a seeded relay and reloading does not resurrect it; a changed env value on a later load does not re-seed); invalid seed skipped; legacy key not modified.
-- [ ] Vitest: one default invariant across add / remove-default / set-default; `remove` while `usedBy(id) > 0` returns an error and changes nothing; `update` of `url` while used errors, label still allowed.
-- [ ] Vitest: agent migration: entries without `relayId` get the default via `adoptRelay`.
-- [ ] Vitest (`tests/relay-host.test.ts`, new; no RelayHost test exists today): `RelayHost` with creds stored for `https://a.test` and `relayUrl: "https://b.test"` ignores them and bootstraps a fresh channel; same URL reuses them.
-- [ ] Vitest: seeded entry with no relay stays unbound until a relay is added, then `adoptRelay` binds it.
-- [ ] Vitest: a throwing storage never throws and never mints a fresh id mid-session (existing pattern, now also for relays).
-- [ ] Vitest: first run keeps today's seed (one entry, with or without legacy keys); `rename`, `touch`, `count` behave as typed.
-- [ ] `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` pass; `e2e/agent-channels.spec.ts` and `e2e/mcp-relay.spec.ts` still pass.
+- [x] Vitest: URL validation accepts `https://relay.test`, `http://localhost:8787`, `http://127.0.0.1:8787`; rejects `http://relay.test`, `ftp://x`, `javascript:alert(1)`, `https://u:p@x`, empty, garbage; normalises `https://relay.test/` and `https://relay.test/v1` to the origin; rejects duplicates.
+- [x] Vitest: seeding from env and from the legacy key, once only (removing a seeded relay and reloading does not resurrect it; a changed env value on a later load does not re-seed); invalid seed skipped; legacy key not modified.
+- [x] Vitest: one default invariant across add / remove-default / set-default; `remove` while `usedBy(id) > 0` returns an error and changes nothing; `update` of `url` while used errors, label still allowed.
+- [x] Vitest: agent migration: entries without `relayId` get the default via `adoptRelay`.
+- [x] Vitest (`tests/relay-host.test.ts`, new; no RelayHost test exists today): `RelayHost` with creds stored for `https://a.test` and `relayUrl: "https://b.test"` ignores them and bootstraps a fresh channel; same URL reuses them.
+- [x] Vitest: seeded entry with no relay stays unbound until a relay is added, then `adoptRelay` binds it.
+- [x] Vitest: a throwing storage never throws and never mints a fresh id mid-session (existing pattern, now also for relays).
+- [x] Vitest: first run keeps today's seed (one entry, with or without legacy keys); `rename`, `touch`, `count` behave as typed.
+- [x] `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` pass; `e2e/agent-channels.spec.ts` and `e2e/mcp-relay.spec.ts` still pass.
+
+#### Deviations (as built)
+
+- `e2e/agent-channels.spec.ts` "reload keeps ids" compared the raw `srs-web.agent-connections` string; `lastConnectedAt` legitimately changes on reconnect, so the snapshot now compares agent ids only.
+- Until Phase 2 wires the relay handlers to `AgentPanel`, App holds a `void [...]` line (marked TEMP) so typecheck passes.
 
 #### Testing
 

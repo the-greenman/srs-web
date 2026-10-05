@@ -215,7 +215,12 @@ test("reload keeps ids and URLs; a typed label is the author; repo change keeps 
   await page.getByTestId("mcp-connect-agent").click();
   await expect(page.getByTestId("mcp-status")).toHaveText(["Connected", "Connected"]);
   const snapshot = async () => ({
-    ids: await page.evaluate(() => localStorage.getItem("srs-web.agent-connections")),
+    // ids only: lastConnectedAt (#442) legitimately changes on reconnect
+    ids: await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("srs-web.agent-connections") ?? "[]").map(
+        (c: { id: string }) => c.id
+      )
+    ),
     urls: await page
       .getByTestId("mcp-caller-url")
       .evaluateAll((e) => e.map((i) => (i as HTMLInputElement).value)),
