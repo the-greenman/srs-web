@@ -34,3 +34,6 @@ playwright-report/
 
 # transient e2e round-trip artifacts
 e2e/fixtures/_*.srsj
+
+# pinned package bundles — fetched by scripts/ensure-packages.mjs
+src/lib/packages/*.srspkg

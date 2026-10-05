@@ -4,8 +4,9 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/ensure-bindings.mjs && node scripts/ensure-packages.mjs",
     "dev": "vite",
-    "prebuild": "node scripts/ensure-bindings.mjs",
+    "prebuild": "node scripts/ensure-bindings.mjs && node scripts/ensure-packages.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
@@ -14,10 +15,12 @@
     "format": "biome format --write src/",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
-    "fetch-bindings": "node scripts/ensure-bindings.mjs --force",
+    "fetch-bindings": "node scripts/ensure-bindings.mjs --force && node scripts/ensure-packages.mjs",
     "predeploy": "npm run fetch-bindings",
     "deploy": "vite build && wrangler deploy",
-    "deploy:preview": "vite build --mode preview && wrangler deploy --env preview"
+    "deploy:preview": "vite build --mode preview && wrangler deploy --env preview",
+    "pretest": "node scripts/ensure-packages.mjs",
+    "pree2e": "node scripts/ensure-packages.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

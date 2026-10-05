@@ -9,6 +9,7 @@
  *   wasm-pack build crates/srs-bindings --target web --out-dir ../../srs-web/src/lib/srs_bindings
  */
 
+import { bundledPackage } from "./packages/bundles.js";
 // Empty governance document seed, shipped inside srs-bindings-web.tar.gz
 // (srs-rust#381) and refreshed by scripts/ensure-bindings.mjs alongside the WASM,
 // so the seed can never drift from the engine that scaffolds it.
@@ -155,6 +156,8 @@ export interface SrsRepository {
   list_packages(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in checkPackageRequirements()
   check_package_requirements(input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in installPackageBundle()
+  install_package_bundle(bundle_json: string, options_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listRelationTypes()
   list_relation_types(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listBlueprints()
@@ -215,6 +218,8 @@ export interface SrsRepositoryConstructor {
   /** Load a repository from an exploded file tree (ADR-038). `files` maps
    * repo-relative forward-slash paths to their `Uint8Array` contents. */
   load_tree(files: Record<string, Uint8Array>): SrsRepository;
+  /** A blank repository from `{title}`; the core derives the namespace. */
+  create(input_json: string): SrsRepository;
 }
 
 /**
@@ -548,6 +553,16 @@ function requireWasm(): SrsRepositoryConstructor {
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
+
+/**
+ * A new blank repository (no packages, no records). ADR-001: sends only the title; the core
+ * derives the namespace and scaffolds the root container and identity.
+ */
+export function createBlankRepository(title: string): SrsRepository {
+  const trimmed = title.trim();
+  if (trimmed === "") throw new Error("A document name is required");
+  return requireWasm().create(JSON.stringify({ title: trimmed }));
+}
 
 /**
  * Load a repository from a `.srsj` JSON string.
@@ -1500,6 +1515,60 @@ export function checkPackageRequirements(
   const result = repo.check_package_requirements(JSON.stringify({ packageDependencies: requires }));
   if (!Array.isArray(result?.dependencies)) throw new Error("malformed requirement check result");
   return result.dependencies as RequirementOutcome[];
+}
+
+/** The core's RFC-044 code for a requirement with no installed candidate (the only installable one). */
+export const REQUIREMENT_MISSING = "missing";
+
+/** `package install` payload (srs-cli schema package-install.json), the fields presented. */
+export interface InstallPackageResult {
+  packageId: string;
+  namespace: string;
+  name: string;
+  version: string;
+  installed: number;
+  skippedIdentical: number;
+  conflicts: unknown[];
+  notes: string[];
+}
+
+/**
+ * Install a `.srspkg` bundle into the repository. The core decides conflicts and
+ * idempotence; a conflicting install throws (nothing is silently duplicated).
+ */
+export function installPackageBundle(
+  repo: SrsRepository,
+  bundleText: string
+): InstallPackageResult {
+  const result = repo.install_package_bundle(bundleText, "{}") as InstallPackageResult;
+  if (result.conflicts?.length) {
+    throw new Error(
+      `Could not install ${result.name} ${result.version}: ${result.conflicts.length} conflicting definition(s)${
+        result.notes?.length ? ` (${result.notes.join("; ")})` : ""
+      }`
+    );
+  }
+  return result;
+}
+
+/**
+ * Install the pinned bundles for `packageIds`, in order. Each bundle's own requirements are
+ * checked by the core first (`check_package_requirements` takes the bundle text), so an
+ * unsatisfied dependency throws before that bundle writes anything. A re-install of an
+ * identical bundle is a core no-op. Earlier bundles stay installed if a later one throws.
+ */
+export function installBundles(repo: SrsRepository, packageIds: string[]): InstallPackageResult[] {
+  return [...new Set(packageIds)].map((packageId) => {
+    const text = bundledPackage(packageId);
+    if (!text) throw new Error(`No bundled package ${packageId}`);
+    const check = repo.check_package_requirements(text);
+    if (!Array.isArray(check?.dependencies)) throw new Error("malformed requirement check result");
+    const unmet = (check.dependencies as RequirementOutcome[]).find((o) => !o.satisfied);
+    if (unmet) {
+      throw new Error(`${packageId} needs ${unmet.name} ${unmet.version}`);
+    }
+    return installPackageBundle(repo, text);
+  });
 }
 
 // --- listBlueprints --------------------------------------------------------

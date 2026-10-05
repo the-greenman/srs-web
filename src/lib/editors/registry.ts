@@ -5,12 +5,17 @@ import { ESSAY_TYPE_ID } from "$lib/essay/type-registry.js";
 import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
 import { DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
 import GuidesShell from "$lib/guides/GuidesShell.svelte";
+import { bundledPackage } from "$lib/packages/bundles.js";
 import {
   type AgentWriteGuard,
   type PackageRequirement,
+  REQUIREMENT_MISSING,
+  type RequirementOutcome,
   type SrsRepository,
   type TypeSummary,
   checkPackageRequirements,
+  createGovernanceDocument,
+  installBundles,
 } from "$lib/srs-client.js";
 /**
  * The one editor registry (srs-web#338).
@@ -63,6 +68,11 @@ export interface EditorDefinition {
   entryTypeId: string;
   requires: PackageRequirement[];
   create?: (repo: SrsRepository) => void | Promise<void>;
+  /**
+   * A new repository built for this editor instead of a blank one. Transitional: only governance
+   * has one, until its package is installable (srs#390) and this field is removed.
+   */
+  seed?: (title: string) => SrsRepository;
   component: Component<EditorShellProps>;
   /** The shell renders `agentPanel` in its own layout, so App hides the floating agent dock. */
   hostsAgentPanel?: boolean;
@@ -83,6 +93,7 @@ export const EDITORS: EditorDefinition[] = [
         version: "1.0.0",
       },
     ],
+    seed: (title) => createGovernanceDocument(title).repo,
     component: GovernanceShell,
   },
   {
@@ -119,9 +130,11 @@ export const EDITORS: EditorDefinition[] = [
 export interface UnmetRequirement {
   requirement?: PackageRequirement;
   reason: string;
+  /** Present only when every unsatisfied requirement is missing and has a pinned bundle (Install offers these). */
+  install?: PackageRequirement[];
 }
 
-/** An editor whose entry type is present; `unmet` = why it cannot be opened (null = usable). */
+/** An editor that is offered; `unmet` = why it cannot be opened (null = usable). */
 export interface OfferedEditor {
   editor: EditorDefinition;
   unmet: UnmetRequirement | null;
@@ -134,32 +147,79 @@ function unmetReason(req: PackageRequirement, have: (string | null)[] | undefine
 }
 
 /**
+ * The unsatisfied requirements, when every one is installable: the core says it is `missing`
+ * (R1; an outdated or incompatible package is never installed over) and a bundle is pinned.
+ * Undefined when nothing is unsatisfied or any one is not installable.
+ */
+export function installableRequirements(
+  outcomes: (RequirementOutcome | undefined)[],
+  requires: PackageRequirement[]
+): PackageRequirement[] | undefined {
+  const unsatisfied = requires.filter((_, n) => !outcomes[n]?.satisfied);
+  const installable = unsatisfied.every(
+    (req) =>
+      outcomes[requires.indexOf(req)]?.reason === REQUIREMENT_MISSING &&
+      bundledPackage(req.packageId)
+  );
+  return unsatisfied.length > 0 && installable ? unsatisfied : undefined;
+}
+
+/**
  * The one availability computation (srs-web#399): App's shell selection and the picker both consume it.
- * Entry type present = offered; an unmet `requires` (RFC-044, decided by the core) = offered but unusable.
+ * Entry type present = offered; an entry type that is absent is offered only when Install can supply it.
+ * An unmet `requires` (RFC-044, decided by the core) = offered but unusable.
  * Fails closed: if the check throws or returns nonsense, every editor with requirements is unmet.
  */
 export function availableEditors(repo: SrsRepository, types: TypeSummary[]): OfferedEditor[] {
   const ids = new Set(types.map((type) => type.id));
-  return EDITORS.filter((editor) => ids.has(editor.entryTypeId)).map((editor) => {
-    if (editor.requires.length === 0) return { editor, unmet: null };
-    let outcomes: ReturnType<typeof checkPackageRequirements>;
+  const offered: OfferedEditor[] = [];
+  for (const editor of EDITORS) {
+    const present = ids.has(editor.entryTypeId);
+    if (editor.requires.length === 0) {
+      if (present) offered.push({ editor, unmet: null });
+      continue;
+    }
+    let outcomes: RequirementOutcome[];
     try {
       outcomes = checkPackageRequirements(repo, editor.requires);
     } catch {
-      return { editor, unmet: { reason: "Could not check package requirements" } };
+      if (present) {
+        offered.push({ editor, unmet: { reason: "Could not check package requirements" } });
+      }
+      continue;
     }
     const i = editor.requires.findIndex((_, n) => !outcomes[n]?.satisfied);
-    return {
+    if (i < 0) {
+      if (present) offered.push({ editor, unmet: null });
+      continue;
+    }
+    const install = installableRequirements(outcomes, editor.requires);
+    if (!present && !install) continue;
+    offered.push({
       editor,
-      unmet:
-        i < 0
-          ? null
-          : {
-              requirement: editor.requires[i],
-              reason: unmetReason(editor.requires[i], outcomes[i]?.candidateVersions),
-            },
-    };
-  });
+      unmet: {
+        requirement: editor.requires[i],
+        reason: unmetReason(editor.requires[i], outcomes[i]?.candidateVersions),
+        install,
+      },
+    });
+  }
+  return offered;
+}
+
+/** Install the bundles an offered editor needs (its `unmet.install`), in order; the core checks each. */
+export function installEditor(repo: SrsRepository, offered: OfferedEditor): void {
+  installBundles(
+    repo,
+    (offered.unmet?.install ?? []).map((req) => req.packageId)
+  );
+}
+
+/** The editors a new repository can be created for: a `seed`, or every requirement bundled. */
+export function creatableEditors(): EditorDefinition[] {
+  return EDITORS.filter(
+    (e) => e.seed || (e.requires.length > 0 && e.requires.every((r) => bundledPackage(r.packageId)))
+  );
 }
 
 /** The one shell gate: the editor App may render for `mode`, or null (generic shell) if it is absent or unmet. */

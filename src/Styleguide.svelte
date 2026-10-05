@@ -7,7 +7,7 @@
   import "./styles/themes/demo.css";
   import { onMount, type Snippet } from "svelte";
   import {
-    ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button,
+    ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, MarkdownHelp, MarkdownText, AgentPanel, McpConnection, Panel, AnnotationMargin, PinnedPane, Select, Tag,
     TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost,
@@ -40,6 +40,7 @@
     ["shell", "Page frame"],
     ["notices", "Notices"],
     ["forms", "Form controls"],
+    ["dialogs", "Dialogs"],
   ];
 
   const agentGroupTitles: Record<string, string> = {
@@ -491,6 +492,21 @@
       <Field label="Textarea" id="sg-area" typeHint="text" required><Textarea id="sg-area" bind:value={area} /></Field>
       <Field label="Invalid" id="sg-bad" error="This value is not allowed"><Input id="sg-bad" value="oops" /></Field>
     </div>
+    <div class="sg__row" data-testid="sg-checkbox">
+      <Checkbox checked>Checked</Checkbox>
+      <Checkbox>Unchecked</Checkbox>
+    </div>
+  </section>
+
+  <section id="dialogs">
+    <h2>Dialogs</h2>
+    <Modal inline title="Save to…" testid="sg-modal">
+      <p>This repository is not saved yet. Choose where to keep it.</p>
+      <Button variant="primary">To this device</Button>
+      <Button>Dropbox</Button>
+      <Button>Google Drive</Button>
+      {#snippet actions()}<Button size="sm">Cancel</Button>{/snippet}
+    </Modal>
   </section>
 </main>
 <LiveRegions />
