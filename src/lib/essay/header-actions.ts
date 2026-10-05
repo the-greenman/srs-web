@@ -6,7 +6,13 @@ import CircleQuestionMark from "@lucide/svelte/icons/circle-question-mark";
  */
 import type { IconComponent } from "../components/icon.js";
 import type { ToolbarAction } from "../components/menu-action.js";
-import { BASE_GROUPS, agentsAction, wideAction } from "../components/shell-actions.js";
+import {
+  BASE_GROUPS,
+  agentsAction,
+  openAnotherAction,
+  saveAction,
+  wideAction,
+} from "../components/shell-actions.js";
 import type { ShellState } from "../shell-context.svelte.js";
 
 export type HeaderGroup = "document" | "view" | "go" | "help";
@@ -53,15 +59,8 @@ export function headerActions(
   }
 ): HeaderAction[] {
   const all: (HeaderAction | false | undefined)[] = [
-    !!h.onsave && {
-      id: "save",
-      group: "document",
-      kind: "primary",
-      label: s.saving ? "Saving…" : "Save",
-      run: h.onsave,
-      enabled: !s.saving && s.dirty,
-      testid: "save-document",
-    },
+    !!h.onsave &&
+      (saveAction(h.onsave, { saving: s.saving, enabled: !s.saving && s.dirty }) as HeaderAction),
     {
       id: "new",
       group: "document",
@@ -135,14 +134,7 @@ export function headerActions(
       enabled: true,
     },
     !!h.onopenagents && (agentsAction(h.onopenagents) as HeaderAction),
-    {
-      id: "other",
-      group: "go",
-      kind: "action",
-      label: "Open another",
-      run: h.onopenanother,
-      enabled: true,
-    },
+    openAnotherAction(h.onopenanother) as HeaderAction,
     {
       id: "help",
       group: "help",
