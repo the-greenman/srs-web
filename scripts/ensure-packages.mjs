@@ -32,7 +32,9 @@ for (const { packageId, name, version, url, sha256 } of lock) {
   }
   const actual = createHash("sha256").update(bytes).digest("hex");
   if (actual !== sha256) {
-    console.error(`sha256 mismatch for ${name} ${version}: expected ${sha256}, got ${actual}`);
+    console.error(
+      `sha256 mismatch for ${name} ${version}: expected ${sha256}, got ${actual}. If packages.lock.json was just bumped, delete ${file} to re-download.`
+    );
     process.exit(1);
   }
   if (!existsSync(file)) writeFileSync(file, bytes);

@@ -635,3 +635,20 @@ export function essaySnapshot(
   const bundleId = refreshBundle(repo, m);
   return { bundleId, bytes: exportSlice(repo, bundleId) };
 }
+
+/**
+ * Export references (srs-web#278): refresh the bundle, then the core render of the package's
+ * `essay-references` composition for the bundle container (its sections filter the bundle's members
+ * by type). The markdown export stays content only; this is the separate referenced-material export.
+ */
+export function essayReferences(repo: SrsRepository, m: EssayModel): string {
+  const view = listDocumentViews(repo, {
+    namespace: "com.mudemocracy.essay",
+    name: "essay-references",
+  })[0];
+  if (!view)
+    throw new Error(
+      "This repository's essay package has no references composition (needs essay 1.6.0)."
+    );
+  return renderDocumentView(repo, view.id, "markdown", refreshBundle(repo, m)).rendered;
+}

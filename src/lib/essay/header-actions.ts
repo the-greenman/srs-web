@@ -39,6 +39,7 @@ export interface HeaderHandlers {
   onexportmd?: () => void;
   /** Download the essay's snapshot (.srs slice). Absent while no essay is open or its package cannot bundle. */
   onsnapshot?: () => void;
+  onreferences?: () => void;
   onexplorer?: () => void;
   /** Absent when the shell has no agent panel to open. */
   onopenagents?: () => void;
@@ -104,6 +105,15 @@ export function headerActions(
       run: h.onexportmd,
       enabled: true,
       testid: "export-markdown",
+    },
+    !!h.onreferences && {
+      id: "export-references",
+      group: "document",
+      kind: "action",
+      label: "Export references (.md)",
+      run: h.onreferences,
+      enabled: true,
+      testid: "export-references",
     },
     !!h.onsnapshot && {
       id: "export-snapshot",
