@@ -21,4 +21,16 @@ describe("pinned package bundles", () => {
     expect(run.status).not.toBe(0);
     expect(run.stderr.toString()).toContain("sha256 mismatch");
   });
+
+  it("ensure-bindings refuses a tarball whose sha256 differs", () => {
+    const run = spawnSync("node", ["scripts/ensure-bindings.mjs", "--force"], {
+      env: {
+        ...process.env,
+        SRS_BINDINGS_URL: "data:application/gzip;base64,dGFtcGVyZWQ=",
+        SRS_BINDINGS_SHA256: "0".repeat(64),
+      },
+    });
+    expect(run.status).not.toBe(0);
+    expect(run.stderr.toString()).toContain("sha256 mismatch");
+  });
 });
