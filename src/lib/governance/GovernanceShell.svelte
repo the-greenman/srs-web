@@ -928,11 +928,12 @@
       {#snippet children()}
         <NavGroup label="Governance">
           {#each containers as container (container.navKey)}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div
-              onclick={(e) => {
-                e.preventDefault();
+            <NavItem
+              label={container.title}
+              id={container.icon}
+              count={containerRecords[container.containerId]?.length ?? 0}
+              active={activeNavKey === container.navKey}
+              onclick={() => {
                 activeView = "governance";
                 activeContainerId = container.containerId;
                 activeNavKey = container.navKey;
@@ -942,22 +943,15 @@
                 formError = null;
                 showLinkPicker = false;
               }}
-            >
-              <NavItem
-                label={container.title}
-                id={container.icon}
-                count={containerRecords[container.containerId]?.length ?? 0}
-                active={activeNavKey === container.navKey}
-                href="#"
-              />
-            </div>
+            />
           {/each}
         </NavGroup>
         <NavGroup label="Repository">
           {#snippet children()}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div
+            <NavItem
+              label="Migrations"
+              id="M"
+              active={activeView === "migrations"}
               onclick={() => {
                 activeView = "migrations";
                 activeContainerId = null;
@@ -968,14 +962,7 @@
                 formError = null;
                 showLinkPicker = false;
               }}
-            >
-              <NavItem
-                label="Migrations"
-                id="M"
-                active={activeView === "migrations"}
-                href="#"
-              />
-            </div>
+            />
           {/snippet}
         </NavGroup>
       {/snippet}

@@ -547,22 +547,17 @@
           <NavGroup label="Guides">
             <div data-testid="guides-guide-list">
               {#each guides as guide (guide.instanceId)}
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div
-                  data-testid="guides-guide-item"
+                <NavItem
+                  testid="guides-guide-item"
+                  label={guide.displayLabel ?? "Untitled Guide"}
+                  active={guide.instanceId === selectedGuideId}
                   onclick={() => {
                     selectedGuideId = guide.instanceId;
                     cancelForm();
                     refreshSections();
                     refreshPreview();
                   }}
-                >
-                  <NavItem
-                    label={guide.displayLabel ?? "Untitled Guide"}
-                    active={guide.instanceId === selectedGuideId}
-                  />
-                </div>
+                />
               {/each}
               {#if guides.length === 0}
                 <p class="guides-nav__empty">No guides yet</p>

@@ -83,11 +83,18 @@
   display: flex;
   align-items: baseline;
   gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
   padding: 7px var(--space-md);
+  border: 0;
   border-left: 2px solid transparent;
+  background: none;
   color: color-mix(in srgb, var(--color-on-dark) 70%, transparent);
+  font: inherit;
   font-size: var(--size-sm);
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
 }
 .nav__item:hover {
   color: var(--color-on-dark);
