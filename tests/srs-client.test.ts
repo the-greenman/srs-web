@@ -14,6 +14,7 @@ import type { SrsRepository } from "../src/lib/srs-client.js";
 import {
   createBlankRepository,
   initWasm,
+  installBundles,
   installPackageBundle,
   type AddAttachmentInput,
   type AllowedLifecycleTransitionsResult,
@@ -1821,5 +1822,30 @@ describe("installPackageBundle", () => {
   it("throws on conflicts, with the core's notes", () => {
     const spy = vi.fn().mockReturnValue({ name: "essay", version: "1.5.0", conflicts: [{}], notes: ["n1"] });
     expect(() => installPackageBundle(mockRepo({ install_package_bundle: spy }), "B")).toThrow(/conflicting.*n1/);
+  });
+});
+
+describe("installBundles", () => {
+  const ESSAY = "5b14a4d4-ec08-4e5b-be75-c183aec90c40";
+  const ok = { name: "essay", version: "1.5.0", conflicts: [], notes: [] };
+
+  it("throws for a package with no pinned bundle, before any write", () => {
+    const install = vi.fn();
+    expect(() => installBundles(mockRepo({ install_package_bundle: install }), ["no-such-package"])).toThrow(/No bundled package/);
+    expect(install).not.toHaveBeenCalled();
+  });
+
+  it("throws on an unsatisfied bundle dependency before installing it", () => {
+    const install = vi.fn();
+    const check = vi.fn().mockReturnValue({ dependencies: [{ name: "core", version: "2.0.0", satisfied: false, reason: "missing" }] });
+    expect(() => installBundles(mockRepo({ check_package_requirements: check, install_package_bundle: install }), [ESSAY])).toThrow(/needs core 2.0.0/);
+    expect(install).not.toHaveBeenCalled();
+  });
+
+  it("installs each package once, however often it is required", () => {
+    const install = vi.fn().mockReturnValue(ok);
+    const check = vi.fn().mockReturnValue({ dependencies: [] });
+    installBundles(mockRepo({ check_package_requirements: check, install_package_bundle: install }), [ESSAY, ESSAY]);
+    expect(install).toHaveBeenCalledTimes(1);
   });
 });

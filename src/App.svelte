@@ -578,7 +578,7 @@
    */
   async function installEditor(id: string): Promise<void> {
     const offered = offeredEditors.find((o) => o.editor.id === id);
-    if (!repo || !offered?.unmet?.install) return;
+    if (!repo || !offered?.unmet?.install) throw new Error("Nothing to install for this editor.");
     try {
       installEditorPackages(repo, offered);
     } finally {
