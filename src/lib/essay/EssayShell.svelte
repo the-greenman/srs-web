@@ -66,7 +66,7 @@
     setTitle,
     transfer,
   } from "./essay-document.js";
-  import { essayMarkdown, essaySnapshot, essayWriteGuard } from "./essay-document.js";
+  import { essayMarkdown, essayReferences, essaySnapshot, essayWriteGuard } from "./essay-document.js";
   import { downloadText, triggerDownload } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { formatAddress, parseAddress } from "./address.js";
@@ -363,6 +363,18 @@
     }
   }
 
+  /** Export references (srs-web#278): the material the essay refers to, as markdown, from the bundle. */
+  function exportReferences() {
+    try {
+      downloadText(essayReferences(repo, model!), "text/markdown", `${model!.title} (references).md`);
+      notify({ kind: "success", key: "export", text: "References exported" });
+    } catch (e) {
+      error = msg(e);
+    } finally {
+      reload(); // the bundle may be new: model, write guard and handoff learn it
+    }
+  }
+
   /** Export snapshot (srs-web#417): refresh the bundle, then the core's slice of it as a `.srs`. */
   function exportSnapshot() {
     try {
@@ -515,6 +527,7 @@
         onexport: onExport,
         onexportmd: model ? exportMarkdown : undefined,
         onsnapshot: model?.canSnapshot ? exportSnapshot : undefined,
+        onreferences: model?.canSnapshot ? exportReferences : undefined,
         onexplorer: onOpenExplorer,
         onopenagents: agentPanel ? openAgents : undefined,
         onopenanother: onOpenAnother,
