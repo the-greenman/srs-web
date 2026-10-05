@@ -68,6 +68,12 @@
   --actor-mark-notch: 0.4rem;
   --actor-stack-overlap: -0.3rem;
 
+  /* SrsMark (srs-web#462): ink half and rim, paper half and seed, the S line. Defaults are the semantic
+     tokens whose default-theme values are the owner's reference colours, so a skin reskins the mark. */
+  --srs-mark-ink: var(--color-text-strong);
+  --srs-mark-paper: var(--color-surface);
+  --srs-mark-line: var(--color-line);
+
   /* AnnotationMargin: the margin is a grid column of the block; the shell's data-margin picks the width. */
   --margin-width-compact: 2.5rem;
   --margin-width-wide: 11rem;

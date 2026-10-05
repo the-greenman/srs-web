@@ -533,6 +533,9 @@ export const componentTokens = [
   "--comment-thread-max",
   "--comment-clamp-lines",
   "--comment-composer-max",
+  "--srs-mark-ink",
+  "--srs-mark-paper",
+  "--srs-mark-line",
 ];
 
 /** The essay header registry with no-op handlers: Save enabled, Comments `mixed`, Margin notes off. */

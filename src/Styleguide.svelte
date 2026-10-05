@@ -10,7 +10,7 @@
     ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, MarkdownHelp, MarkdownText, AgentPanel, McpConnection, Panel, AnnotationMargin, PinnedPane, Select, Tag,
-    TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost,
+    TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost, SrsMark,
   } from "$lib/components";
   import LiveRegions from "$lib/components/LiveRegions.svelte";
   import { notify } from "$lib/notices.svelte";
@@ -33,6 +33,7 @@
     ["toolbar", "Toolbar"],
     ["chips", "Chips and badges"],
     ["actors", "Actors"],
+    ["srs-mark", "SRS mark"],
     ["annotations", "Annotations and comments"],
     ["paragraph", "Paragraph"],
     ["panels", "Panels and trays"],
@@ -294,6 +295,20 @@
       <ActorStack actors={[fx.human, ...fx.agents.slice(0, 2)]} />
       <ActorStack actors={fx.manyActors} />
       <ActorStack actors={[fx.unattributed, fx.agents[0]]} />
+    </div>
+  </section>
+
+  <section id="srs-mark">
+    <h2>SRS mark</h2>
+    <p class="sg__note">The upright S: an ink half and a paper half split by an S line, a seed of the opposite colour in each, an ink rim.
+      Decorative, always beside a text label. Colours are --srs-mark-ink, --srs-mark-paper and --srs-mark-line; the Theme switcher reskins it.</p>
+    <div class="sg__row sg__marks" data-testid="sg-srs-mark">
+      {#each [[16, "16px: the picker size"], [24, "24px"], [96, "96px"]] as const as [size, caption]}
+        <figure class="sg__figure">
+          <figcaption>{caption}</figcaption>
+          <SrsMark {size} />
+        </figure>
+      {/each}
     </div>
   </section>
 
