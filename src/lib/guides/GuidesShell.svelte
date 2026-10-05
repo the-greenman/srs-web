@@ -654,6 +654,7 @@
                   <h2 class="guides-detail__title">{selectedGuide.displayLabel ?? "Untitled Guide"}</h2>
                   <Button
                     variant="ghost"
+                    size="sm"
                     data-testid="guides-export-guide-json"
                     onclick={handleExportGuideJson}
                     title="Export this guide as a JSON document-view projection"
@@ -681,6 +682,7 @@
                   <div class="guides-section-controls">
                     <Button
                       variant="ghost"
+                    size="sm"
                       data-testid="guides-edit-guide"
                       onclick={() => openEditGuide(selectedGuide)}
                     >Edit</Button>
@@ -692,6 +694,7 @@
                   <div class="guides-section-picker-wrap">
                     <Button
                       variant="ghost"
+                    size="sm"
                       data-testid="guides-add-section"
                       onclick={() => { sectionPickerOpen = !sectionPickerOpen; }}
                     >+ Add Section</Button>
@@ -808,7 +811,7 @@
             {/each}
           </select>
         </Panel>
-        <Panel title="Preview" collapsible={false} grow class="inspector__section guides-preview">
+        <Panel title="Preview" collapsible={false} grow class="inspector__section">
           <PreviewPane html={previewHtml} loading={previewLoading} themeCss={selectedThemeCss} />
         </Panel>
       </Inspector>

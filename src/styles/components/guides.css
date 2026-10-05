@@ -208,8 +208,3 @@
   color: var(--color-text);
   cursor: pointer;
 }
-
-/* The grow panel cancels its top margin; the Preview heading still needs the inspector section gap. */
-.inspector__section.panel--grow.guides-preview {
-  margin-top: var(--space-md) !important;
-}
