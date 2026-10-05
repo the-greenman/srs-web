@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { acquireChannelLock, channelsInUseElsewhere, createConnectionStore, credsKey, initKey, releaseChannelLock } from "../src/lib/agent-connections";
+import { LIST_KEY, acquireChannelLock, channelsInUseElsewhere, createConnectionStore, credsKey, initKey, releaseChannelLock } from "../src/lib/agent-connections";
 
 const mem = () => {
   const m = new Map<string, string>();
@@ -222,5 +222,19 @@ describe("relay binding (#442)", () => {
     const l = c.adoptRelay("relay:default");
     expect(l.map((x) => x.relayId)).toEqual(["relay:default", "relay:own"]);
     expect(c.count("relay:default")).toBe(1);
+  });
+});
+
+describe("cross-tab refresh (#394)", () => {
+  it("reload() on the list key re-reads storage; other keys are ignored", () => {
+    const a = store();
+    a.add("one");
+    const other = store(); // another tab
+    other.add("two");
+    expect(a.list()).toHaveLength(2); // stale cache: its own add only
+    expect(a.reload("srs-web.something-else")).toBe(false);
+    expect(a.list().map((c) => c.label)).toEqual([undefined, "one"]);
+    expect(a.reload(LIST_KEY)).toBe(true);
+    expect(a.list().map((c) => c.label)).toEqual([undefined, "one", "two"]);
   });
 });

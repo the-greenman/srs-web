@@ -482,7 +482,12 @@
     await released; // the in-use query must not still see our own lock
     refreshInUse();
   }
-  function forgetAgent(id: string) {
+  async function forgetAgent(id: string) {
+    // Defence in depth: the menu disables Forget, but the in-use set can be stale. Ask the locks now.
+    if ((await channelsInUseElsewhere()).has(id)) {
+      refreshInUse();
+      return;
+    }
     disconnectAgent(id);
     library = [...connections.remove(id)];
     notify({ kind: "info", key: "agents", text: "Agent forgotten" });
@@ -519,6 +524,18 @@
         { stillValid: () => repo === r }
       );
     });
+  });
+
+  // Another tab changed the stored lists: re-read what is displayed. Never touches open agents
+  // (`agents`/`hosts` are separate state), and `storage` never fires in the tab that wrote.
+  $effect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.storageArea !== localStorage) return;
+      if (relays.reload(e.key)) relayList = relays.list();
+      if (connections.reload(e.key)) library = [...connections.list()];
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   });
 
   $effect(() => {

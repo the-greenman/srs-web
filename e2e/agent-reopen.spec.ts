@@ -298,3 +298,32 @@ test("Rotate and Forget discard the stored initialize", async ({ page }) => {
   await page.getByTestId("mcp-library-forget").click();
   await expect.poll(() => storedInits(page)).toHaveLength(0);
 });
+
+test("another tab's new agent appears without a reload (#394)", async ({ page, context }) => {
+  await setup(page);
+  await essayOpen(page);
+  const second = await context.newPage();
+  await routeRelayChannels(second, { fixed: true });
+  await essayOpen(second);
+  await expect(second.getByTestId("mcp-library-item")).toHaveCount(1);
+  await page.getByTestId("mcp-connect-open").click();
+  await page.getByTestId("mcp-agent-label").fill("Scribe");
+  await page.getByTestId("mcp-connect-agent").click();
+  await expect(second.getByTestId("mcp-library-item")).toHaveCount(2);
+  await expect(second.getByTestId("agent-panel")).toContainText("Scribe");
+});
+
+test("Forget is disabled while another tab holds the channel (#395)", async ({ page, context }) => {
+  await setup(page);
+  await essayOpen(page);
+  await connect(page);
+  const second = await context.newPage();
+  await mockExecutor(second);
+  await routeRelayChannels(second, { fixed: true });
+  await essayOpen(second);
+  await expect(second.getByTestId("mcp-in-use")).toBeVisible();
+  await second.getByTestId("agent-menu").first().click();
+  const forget = second.getByTestId("mcp-library-forget");
+  await expect(forget).toBeDisabled();
+  await expect(forget).toHaveAttribute("title", "In use in another tab");
+});

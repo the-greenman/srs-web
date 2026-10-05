@@ -105,3 +105,16 @@ describe("relay store", () => {
     expect("relays" in r.add("x", "https://x.test")).toBe(true);
   });
 });
+
+it("reload() on the relays key re-reads storage; other keys are ignored (#394)", async () => {
+  const { createRelayStore, KEY } = await import("../src/lib/relay-library");
+  const m = new Map<string, string>();
+  const s = { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k) };
+  const a = createRelayStore(() => s);
+  a.add("A", "https://a.test");
+  createRelayStore(() => s).add("B", "https://b.test");
+  expect(a.reload("x")).toBe(false);
+  expect(a.list()).toHaveLength(1);
+  expect(a.reload(KEY)).toBe(true);
+  expect(a.list()).toHaveLength(2);
+});
