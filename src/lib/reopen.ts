@@ -11,9 +11,10 @@ export async function reopenSaved(
   open: (c: AgentConnection) => Promise<boolean>,
   o: { retryMs?: number; stillValid?: () => boolean } = {}
 ): Promise<void> {
+  const valid = () => o.stillValid?.() !== false;
   for (const c of library) {
+    if (!valid()) return;
     if (c.reopen !== repoId) continue;
-    if (!(await open(c)) && o.stillValid?.() !== false)
-      setTimeout(() => void open(c), o.retryMs ?? 1000);
+    if (!(await open(c)) && valid()) setTimeout(() => valid() && void open(c), o.retryMs ?? 1000);
   }
 }

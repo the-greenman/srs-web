@@ -122,8 +122,10 @@ export function observeSession(
   return {
     handle(text) {
       const { method, clientName } = rpcInfo(text);
-      const stored = o.initStore?.load();
-      if (method !== "initialize" && stored && !session.is_initialized()) replay(stored);
+      // ponytail: one message per body; a JSON-RPC batch has no method here, so it is never stored or replayed
+      const stored =
+        method !== "initialize" && !session.is_initialized() ? o.initStore?.load() : null;
+      if (stored) replay(stored);
       if (method === "initialize" && clientName) o.onClientName?.(clientName, false);
       const out = session.handle(text);
       drain(true);

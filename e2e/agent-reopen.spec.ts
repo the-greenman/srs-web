@@ -137,6 +137,26 @@ test("a second tab does not open a channel the first holds", async ({ page, cont
   expect(ex.sockets).toHaveLength(1);
 });
 
+test("a reopen skipped for a held lock never arms a takeover for a later manual Connect", async ({ page, context }) => {
+  await setup(page);
+  await essayOpen(page);
+  await connect(page);
+  const second = await context.newPage();
+  const ex2 = await mockExecutor(second);
+  await routeRelayChannels(second, { fixed: true });
+  await essayOpen(second);
+  await expect(second.getByTestId("mcp-in-use")).toBeVisible();
+  await second.waitForTimeout(2500); // reopen and its one retry both skipped
+  await page.getByTestId("mcp-disconnect").first().click();
+  await second.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(second.getByTestId("mcp-library-connect")).toBeEnabled();
+  ex2.refuse.next = true;
+  await second.getByTestId("mcp-library-connect").first().click();
+  await expect(second.getByTestId("mcp-status")).toHaveText("Connection refused", { timeout: 15000 });
+  await second.waitForTimeout(1500);
+  expect(ex2.sockets).toHaveLength(1); // no automatic takeover
+});
+
 test("a disconnected agent is not reopened by a reload", async ({ page }) => {
   const ex = await setup(page);
   await essayOpen(page);
@@ -268,9 +288,10 @@ test("Rotate and Forget discard the stored initialize", async ({ page }) => {
   await ex.init();
   expect(await storedInits(page)).toHaveLength(1);
   await page.getByTestId("agent-menu").first().click();
+  const before = ex.sockets.length;
   await page.getByTestId("mcp-rotate").click();
   await expect.poll(() => storedInits(page)).toHaveLength(0);
-  await expect(status(page)).toHaveText("Connected", { timeout: 15000 });
+  await expect.poll(() => ex.sockets.length).toBeGreaterThan(before); // the rotated channel's socket
   await ex.init();
   expect(await storedInits(page)).toHaveLength(1);
   await page.getByTestId("agent-menu").first().click();

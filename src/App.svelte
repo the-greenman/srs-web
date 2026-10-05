@@ -443,7 +443,7 @@
   }
 
   /** Open a saved channel in this tab, only if no other tab holds it. */
-  async function openChannel(conn: AgentConnection): Promise<boolean> {
+  async function openChannel(conn: AgentConnection, reopening = false): Promise<boolean> {
     if (agents.some((a) => a.conn.id === conn.id) || opening.has(conn.id)) return true;
     if (!relays.get(conn.relayId)) return true; // unbound or relay missing: cannot connect
     opening.add(conn.id);
@@ -454,6 +454,7 @@
       }
       agents = [...agents, { conn, state: { status: "idle", callerUrl: null, error: null } }];
       if (repo) library = [...connections.setReopen(conn.id, repositoryId(repo))];
+      if (reopening) autoTakeover.add(conn.id); // only a reopen that really opened may take over
       openAgentSession(conn, repo);
       return true;
     } finally {
@@ -475,6 +476,7 @@
     h?.session?.free();
     library = [...connections.setReopen(id, null)];
     hosts.delete(id);
+    autoTakeover.delete(id);
     const released = releaseChannelLock(id);
     agents = agents.filter((a) => a.conn.id !== id);
     await released; // the in-use query must not still see our own lock
@@ -506,16 +508,14 @@
     if (!r || reopened) return;
     reopened = true;
     void tick().then(() => {
-      if (repo !== r) return;
+      if (repo !== r) {
+        reopened = false; // the repo effect reruns for the new repository
+        return;
+      }
       void reopenSaved(
         library,
         repositoryId(r),
-        async (c) => {
-          autoTakeover.add(c.id);
-          const ok = await openChannel(c);
-          if (!ok) autoTakeover.delete(c.id);
-          return ok;
-        },
+        (c) => openChannel(c, true),
         { stillValid: () => repo === r }
       );
     });

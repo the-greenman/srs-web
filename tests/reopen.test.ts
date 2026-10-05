@@ -33,9 +33,29 @@ it("retries a held lock exactly once after the delay", async () => {
   expect(open).toHaveBeenCalledTimes(2);
 });
 
-it("stillValid() === false cancels the retry", async () => {
+it("a repo change between schedule and fire cancels the retry; and stops the loop", async () => {
+  let valid = true;
   const open = vi.fn(async () => false);
-  await reopenSaved([lib[0]], "R", open, { stillValid: () => false });
+  await reopenSaved([lib[0]], "R", open, { stillValid: () => valid });
+  valid = false;
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(open).toHaveBeenCalledTimes(1);
+  const open2 = vi.fn(async () => {
+    valid = false;
+    return true;
+  });
+  valid = true;
+  await reopenSaved(lib, "R", open2, { stillValid: () => valid });
+  expect(open2).toHaveBeenCalledTimes(1); // "e" is not opened after the repo changed
+});
+
+it("stillValid() === false cancels the retry", async () => {
+  let valid = true;
+  const open = vi.fn(async () => {
+    valid = false;
+    return false;
+  });
+  await reopenSaved([lib[0]], "R", open, { stillValid: () => valid });
   await vi.advanceTimersByTimeAsync(5000);
   expect(open).toHaveBeenCalledTimes(1);
 });
