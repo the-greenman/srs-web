@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * validate-on-save.spec.ts — B13: diagnostics refresh after every mutation.
@@ -30,7 +30,7 @@ test.describe("Validate on save (B13)", () => {
     await openPackageEditor(page, "governance");
 
     // Wait for loaded state — nav shows Articles link
-    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
   });
 
   // --------------------------------------------------------------------------

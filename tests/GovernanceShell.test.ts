@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import GovernanceShell from "../src/lib/governance/GovernanceShell.svelte";
 import { notify, resetNotices } from "../src/lib/notices.svelte.js";
@@ -14,6 +14,15 @@ beforeEach(() => {
     removeEventListener: () => {},
   }));
 });
+
+/** A nav item by text, whichever element it is (role-agnostic: it was a link, it is a button). */
+async function navItem(name: RegExp): Promise<HTMLElement> {
+  return waitFor(() => {
+    const el = [...document.querySelectorAll<HTMLElement>(".nav__item")].find((e) => name.test(e.textContent ?? ""));
+    if (!el) throw new Error(`no nav item ${name}`);
+    return el;
+  });
+}
 
 function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
   const base: SrsRepository = {
@@ -409,9 +418,9 @@ describe("GovernanceShell — sections sharing one container", () => {
     });
     await screen.findByRole("button", { name: /Open another file/i });
     // All three sections must be present — the shared containerId must not collapse them.
-    expect(await screen.findByRole("link", { name: /Guide A/i })).toBeDefined();
-    expect(await screen.findByRole("link", { name: /Guide B/i })).toBeDefined();
-    expect(await screen.findByRole("link", { name: /Decision Log/i })).toBeDefined();
+    expect(await navItem(/Guide A/i)).toBeDefined();
+    expect(await navItem(/Guide B/i)).toBeDefined();
+    expect(await navItem(/Decision Log/i)).toBeDefined();
   });
 });
 
@@ -427,7 +436,7 @@ describe("GovernanceShell — Repository nav group", () => {
         onOpenAnother: vi.fn(),
       },
     });
-    const item = await screen.findByRole("link", { name: /Migrations/i });
+    const item = await navItem(/Migrations/i);
     expect(item).toBeDefined();
   });
 });

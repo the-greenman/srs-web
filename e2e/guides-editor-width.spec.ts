@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * guides-editor-width.spec.ts — flexible-width editor forms in the guides shell.
@@ -85,7 +85,7 @@ test.describe("Guides editor flexible width", () => {
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(GALLERY_PATH);
     await openPackageEditor(page, "governance");
-    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
 
     await page.locator("button.topbar__new").click();
 

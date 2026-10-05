@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Download, type Page, expect, test } from "@playwright/test";
-import { openNavDrawer, openPackageEditor } from "./helpers.js";
+import { openNavDrawer, openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * create-document.spec.ts — "Create new governance document" onboarding (#141).
@@ -73,7 +73,7 @@ test.describe("New repository (#141, #341)", () => {
     await create(page, "My Test Org", "governance");
 
     // The chosen editor opens directly, with nothing saved.
-    await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Decision/)).toBeVisible({ timeout: 5000 });
     expect(downloaded).toBe(false);
     // No validation errors surfaced for the fresh document
     await expect(page.locator('[role="alert"]')).toHaveCount(0);
@@ -95,7 +95,7 @@ test.describe("New repository (#141, #341)", () => {
       await page.locator('input[type="file"]#srsj-file').setInputFiles(tmpPath);
       await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
       await openPackageEditor(page, "governance");
-      await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
+      await expect(navItem(page, /Decision/)).toBeVisible({ timeout: 5000 });
     } finally {
       await fs.rm(tmpPath, { force: true });
     }
@@ -104,7 +104,7 @@ test.describe("New repository (#141, #341)", () => {
   test("create → first decision → export → re-import keeps the decision", async ({ page }) => {
     await openGovernancePicker(page);
     await create(page, "Round Trip Org", "governance");
-    await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Decision/)).toBeVisible({ timeout: 5000 });
 
     // Capture the first decision through the UI — the scaffold pre-creates none.
     await page.getByRole("button", { name: "New Decision" }).click();
@@ -143,7 +143,7 @@ test.describe("New repository (#141, #341)", () => {
       await page.locator('input[type="file"]#srsj-file').setInputFiles(tmpPath);
       await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
       await openPackageEditor(page, "governance");
-      await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
+      await expect(navItem(page, /Decision/)).toBeVisible({ timeout: 5000 });
       await expect(page.locator("text=First Decision").first()).toBeVisible({ timeout: 5000 });
     } finally {
       await fs.rm(tmpPath, { force: true });
@@ -199,7 +199,7 @@ test.describe("New repository (#141, #341)", () => {
 
     await openGovernancePicker(page);
     await create(page, "Cloud Org", "governance");
-    await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 10000 });
+    await expect(navItem(page, /Decision/)).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: /^Save$/ }).click();
     await page.getByTestId("save-to-dropbox").click();
     await expect(page.getByTestId("save-to-modal")).toHaveCount(0);

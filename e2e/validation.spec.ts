@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * validation.spec.ts — inspector/validation panel tests.
@@ -26,7 +26,7 @@ test.describe("Validation inspector", () => {
     await openPackageEditor(page, "governance");
 
     // Wait for loaded state — use the nav link as the signal
-    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
   });
 
   test("shows Validation inspector section after loading", async ({ page }) => {

@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * record-edit.spec.ts — end-to-end tests for B9 record create/update/delete.
@@ -32,7 +32,7 @@ test.describe("Record edit forms (B9)", () => {
     await openPackageEditor(page, "governance");
 
     // Wait for loaded state — nav shows Articles link
-    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
   });
 
   // --------------------------------------------------------------------------
@@ -113,7 +113,7 @@ test.describe("Record edit forms (B9)", () => {
   // decision RecordForm (#103). Rewrite against the current create flow.
   test.fixme("Create decision successfully — appears in list", async ({ page }) => {
     // Navigate to Decision Log
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByRole("heading", { name: "Decision Log", level: 2 })).toBeVisible();
 
     // New Decision opens the DecisionFlow mode chooser (B12)
@@ -227,7 +227,7 @@ test.describe("Record edit forms (B9)", () => {
   // --------------------------------------------------------------------------
   test("Create role successfully — appears in list", async ({ page }) => {
     // Navigate to Roles
-    await page.getByRole("link", { name: /Roles/ }).click();
+    await navItem(page, /Roles/).click();
     await expect(page.getByRole("heading", { name: "Roles", level: 2 })).toBeVisible();
 
     await page.locator("button.topbar__new").click();

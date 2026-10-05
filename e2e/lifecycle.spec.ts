@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * lifecycle.spec.ts — end-to-end tests for B11 lifecycle transitions and
@@ -33,7 +33,7 @@ test.describe("Lifecycle transitions (B11)", () => {
     await openPackageEditor(page, "governance");
 
     // Wait for loaded state — nav shows Articles link
-    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
   });
 
   // --------------------------------------------------------------------------
@@ -80,7 +80,7 @@ test.describe("Lifecycle transitions (B11)", () => {
   // --------------------------------------------------------------------------
   test("Draft record shows only → propose transition", async ({ page }) => {
     // Navigate to Articles and create a new draft article
-    await page.getByRole("link", { name: /Articles/ }).click();
+    await navItem(page, /Articles/).click();
     await page.locator("button.topbar__new").click();
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Draft Article for Lifecycle Test");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Test body");
@@ -112,7 +112,7 @@ test.describe("Lifecycle transitions (B11)", () => {
   // --------------------------------------------------------------------------
   test("Clicking → propose changes available transitions to proposed-state transitions", async ({ page }) => {
     // Navigate to Articles and create a draft article
-    await page.getByRole("link", { name: /Articles/ }).click();
+    await navItem(page, /Articles/).click();
     await page.locator("button.topbar__new").click();
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Transition Test Article");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Body");
@@ -141,7 +141,7 @@ test.describe("Lifecycle transitions (B11)", () => {
   // --------------------------------------------------------------------------
   test("Clicking Edit on a closed record shows the successor modal", async ({ page }) => {
     // Navigate to Articles and select the closed record
-    await page.getByRole("link", { name: /Articles/ }).click();
+    await navItem(page, /Articles/).click();
     await page.locator(".record-list__item").filter({ hasText: "How we make decisions" }).click();
 
     // Inspector should be visible with Edit button
@@ -166,7 +166,7 @@ test.describe("Lifecycle transitions (B11)", () => {
   // --------------------------------------------------------------------------
   test("Cancelling the successor modal dismisses it", async ({ page }) => {
     // Select the closed article
-    await page.getByRole("link", { name: /Articles/ }).click();
+    await navItem(page, /Articles/).click();
     await page.locator(".record-list__item").filter({ hasText: "How we make decisions" }).click();
 
     // Click Edit to trigger the modal
@@ -188,7 +188,7 @@ test.describe("Lifecycle transitions (B11)", () => {
   // --------------------------------------------------------------------------
   test("Creating a successor increases article count by 1 with a draft record", async ({ page }) => {
     // Navigate to Articles
-    await page.getByRole("link", { name: /Articles/ }).click();
+    await navItem(page, /Articles/).click();
 
     // Initial article count (gallery has 6)
     const initialCount = await page.locator(".record-list__item").count();
@@ -221,7 +221,7 @@ test.describe("Lifecycle transitions (B11)", () => {
   // --------------------------------------------------------------------------
   test("Terminal state 'closed' shows no transition buttons", async ({ page }) => {
     // Create a new article (starts in lifecycle state "draft")
-    await page.getByRole("link", { name: /Articles/ }).click();
+    await navItem(page, /Articles/).click();
     await page.locator("button.topbar__new").click();
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("To Be Closed");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Terminal test");
@@ -265,7 +265,7 @@ test.describe("Final-state transition confirmation (#203)", () => {
       .setInputFiles(path.join(__dirname, "fixtures", "gallery.srsj"));
 
     await openPackageEditor(page, "governance");
-    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
     // Select a ratified (non-final) article
     await page.locator(".record-list__item").filter({ hasText: "What this is" }).click();
     await expect(page.locator(".inspector__transitions")).toBeVisible({ timeout: 3000 });

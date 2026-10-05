@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem } from "./helpers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // srs-web#312: richer fixtures reused through the same pending-write-controllable Dropbox
@@ -360,7 +360,7 @@ test.describe("Cloud storage sources", () => {
     await page.getByRole("button", { name: /dropbox-sample\.srsj/ }).click();
     await openPackageEditor(page, "governance");
 
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByTestId("decision-summary-card").first()).toBeVisible({ timeout: 5000 });
     await page.getByTestId("decision-summary-card").first().click();
 
@@ -618,7 +618,7 @@ test.describe("Cloud storage sources", () => {
     await page.getByRole("button", { name: /Open as SRS repository/ }).click();
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 10000 });
+    await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 10000 });
     await expect(page.getByText(/records in this repository\./)).toBeVisible();
     await expect(page.locator('[role="alert"]')).toHaveCount(0);
   });
@@ -631,7 +631,7 @@ test.describe("Cloud storage sources", () => {
     await browseToGovernanceDir(page);
     await page.getByRole("button", { name: /Open as SRS repository/ }).click();
     await openPackageEditor(page, "governance");
-    await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 10000 });
+    await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 10000 });
 
     // No edits — save immediately. This exercises load_tree() -> export_tree() end to
     // end against real WASM, proving the "untouched files are byte-identical" guarantee
@@ -656,7 +656,7 @@ test.describe("Cloud storage sources", () => {
     await browseToGovernanceDir(page);
     await page.getByRole("button", { name: /Open as SRS repository/ }).click();
     await openPackageEditor(page, "governance");
-    await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 10000 });
+    await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 10000 });
 
     await page.getByTestId("save-document").click();
     await page.getByTestId("git-save-confirm").click();
@@ -777,7 +777,7 @@ test.describe("Cloud storage sources", () => {
     await openPackageEditor(page, "governance");
 
     // Routes through openTree → the exploded tree loads into the editor.
-    await expect(page.getByRole("link", { name: /Migrations/ })).toBeVisible({ timeout: 10000 });
+    await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 10000 });
     await expect(page.locator('[role="alert"]')).toHaveCount(0);
   });
 });

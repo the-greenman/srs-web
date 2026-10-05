@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { openInspectorDrawer, openNavDrawer, openPackageEditor, openMenus } from "./helpers.js";
+import { openInspectorDrawer, openNavDrawer, openPackageEditor, openMenus, navItem } from "./helpers.js";
 
 /**
  * shell-layout.spec.ts — the shared page frame (#424): the window never scrolls, each column scrolls
@@ -21,7 +21,7 @@ async function load(page: Page, name: string) {
 async function openGovernance(page: Page) {
   await load(page, "gallery.srsj");
   await openPackageEditor(page, "governance");
-  await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+  await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
 }
 
 // The package picker is in the nav; at phone width that is the drawer.
@@ -162,7 +162,7 @@ test.describe("drawers at 375px", () => {
     await page.getByTestId("nav-trigger").click();
     const drawer = page.getByTestId("shell-drawer-nav");
     await expect(drawer).toBeVisible();
-    await drawer.getByRole("link", { name: /Decision Log/ }).click();
+    await drawer.locator(".nav__item").filter({ hasText: /Decision Log/ }).click();
     await expect(drawer).toBeHidden();
     await expect(page.getByRole("heading", { name: "Decision Log", level: 2 })).toBeVisible();
     await expect(page.getByTestId("nav-trigger")).toBeFocused();

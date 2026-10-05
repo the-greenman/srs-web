@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * export-import.spec.ts — B10 export/import round-trip tests.
@@ -27,7 +27,7 @@ test.describe("Export / Import round-trip (B10)", () => {
 
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
   });
 
   test("Download .srsj button is visible after loading", async ({ page }) => {
@@ -131,11 +131,11 @@ test.describe("Export / Import round-trip (B10)", () => {
       const fileInput2 = page.locator('input[type="file"]#srsj-file');
       await fileInput2.setInputFiles(tmpPath);
       await openPackageEditor(page, "governance");
-      await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+      await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
 
       // The new record must still be present after re-import — navigate to Articles
       // explicitly since the default active section on load is not guaranteed.
-      await page.getByRole("link", { name: /Articles/ }).click();
+      await navItem(page, /Articles/).click();
       await expect(page.locator("text=Round-Trip Test Article")).toBeVisible({ timeout: 5000 });
     } finally {
       await fs.rm(tmpPath, { force: true });

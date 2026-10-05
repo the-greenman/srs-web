@@ -222,11 +222,19 @@ export async function connectAgents(page: Page, essayPath: string, count: number
 /** Open menus and popovers; the toast host is a popover too, and is not a menu. */
 export const openMenus = (page: Page) => page.locator(":popover-open:not(.toast-host)");
 
-/** Open a Toolbar group menu (wide tiers); a no-op when it is already open. */
+/** A Governance/Guides nav item by text. Role-agnostic (an `<a>` or a `<button>`), in the nav column or its drawer. */
+export const navItem = (page: Page, name: string | RegExp) =>
+  page.locator(".app__nav, [data-testid=shell-drawer-nav]").locator(".nav__item").filter({ hasText: name });
+
+/**
+ * Open a Toolbar group menu (wide tiers); a no-op when it is already open. At the narrow tier
+ * (<= 480) the group buttons do not exist and the one `header-menu` overflow holds every item.
+ */
 export async function openMenu(page: Page, group: "Document" | "View" | "Go"): Promise<void> {
   // Read the real popover state: aria-expanded follows the toggle event a tick later.
   if ((await openMenus(page).count()) === 0) {
-    await page.getByRole("button", { name: group, exact: true }).click();
+    const g = page.getByRole("button", { name: group, exact: true });
+    await ((await g.count()) > 0 ? g : page.getByTestId("header-menu")).click();
   }
 }
 

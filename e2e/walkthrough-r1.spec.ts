@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Download, type Page, expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * walkthrough-r1.spec.ts — Release verification: Decision Log R1 "safe to try"
@@ -100,7 +100,7 @@ test.describe("R1 release walkthrough (#54)", () => {
       await page.getByTestId("create-repository").click();
 
       // The chosen editor opens directly.
-      await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
+      await expect(navItem(page, /Decision/)).toBeVisible({ timeout: 5000 });
       await expect(
         page
           .locator(".panel__head")
@@ -113,7 +113,7 @@ test.describe("R1 release walkthrough (#54)", () => {
     // 2. Record decisions via the form (#45); required fields enforced.
     // ------------------------------------------------------------------
     await test.step("required fields are enforced (negative case)", async () => {
-      await page.getByRole("link", { name: /Decision/ }).click();
+      await navItem(page, /Decision/).click();
       await expect(page.getByTestId("decision-log-view")).toBeVisible({ timeout: 5000 });
 
       await page.locator("button.topbar__new").click();
@@ -254,8 +254,8 @@ test.describe("R1 release walkthrough (#54)", () => {
 
       await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
       await openPackageEditor(page, "governance");
-      await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
-      await page.getByRole("link", { name: /Decision/ }).click();
+      await expect(navItem(page, /Decision/)).toBeVisible({ timeout: 5000 });
+      await navItem(page, /Decision/).click();
       await expect(page.getByTestId("decision-summary-card")).toHaveCount(2);
       await expect(page.getByTestId("decision-log-view")).toContainText("Meeting cadence");
       await expect(page.getByTestId("decision-log-view")).toContainText("Budget review");
