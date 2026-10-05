@@ -137,6 +137,7 @@ test("two agents: distinct authors and ids, guard on both, disconnect leaves the
   await expect(page.getByTestId("mcp-status")).toHaveCount(1);
   // disconnect keeps the entry; forget removes it
   await expect(page.getByTestId("mcp-library-item")).toHaveCount(1);
+  await page.getByTestId("mcp-library-item").getByTestId("agent-menu").click(); // Forget lives in the row's ⋯ menu
   await page.getByTestId("mcp-library-forget").click();
   await expect(page.getByTestId("mcp-library-item")).toHaveCount(0);
   await comment(2, "beta again");

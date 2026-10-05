@@ -9,7 +9,7 @@
   import {
     ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
-    LayersPanel, MarkdownHelp, MarkdownText, McpConnection, Panel, AnnotationMargin, PinnedPane, Select, Tag,
+    LayersPanel, MarkdownHelp, MarkdownText, AgentPanel, Panel, AnnotationMargin, PinnedPane, Select, Tag,
     TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost,
   } from "$lib/components";
   import LiveRegions from "$lib/components/LiveRegions.svelte";
@@ -115,22 +115,11 @@
   {@render gated(pinnedPane)}
   <Panel title="Agents">
     <AgentFeed status={fx.agentStatus} now={fx.NOW} paragraphLabel={fx.paragraphLabel} onselect={noop} />
-    <div class="mcp-agents">
-      <McpConnection
-        status="online" callerUrl={fx.longCallerUrl} repositoryName={fx.longRepoName}
-        actor={fx.agents[0]} lastActivity="titled ¶ Opening · 2 min ago"
-        onDisconnect={noop} onRotate={noop} onTakeover={noop}
-      />
-      <McpConnection
-        status="rejected" error={fx.longError} repositoryName={fx.longRepoName}
-        agentName={fx.longAgentName} onDisconnect={noop} onTakeover={noop}
-      />
-      <div class="mcp-conn__actions" data-testid="mcp-library-item">
-        <strong>{fx.longAgentName}</strong>
-        <Button size="sm" variant="secondary" onclick={noop}>Connect</Button>
-        <Button size="sm" variant="ghost" onclick={noop}>Forget</Button>
-      </div>
-    </div>
+    <AgentPanel
+      relays={fx.relays} agents={fx.panelAgents} now={fx.NOW}
+      onAddRelay={() => null} onUpdateRelay={() => null} onRemoveRelay={() => null} onSetDefault={noop}
+      onConnectNew={noop} onConnect={noop} onDisconnect={noop} onForget={noop} onRename={noop} onRotate={noop} onTakeover={noop}
+    />
   </Panel>
   <Panel title="Comments">{@render gated(thread)}</Panel>
 {/snippet}

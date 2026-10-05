@@ -3,13 +3,18 @@ import { render } from "@testing-library/svelte";
 import { expect, it } from "vitest";
 import McpConnection from "../src/lib/components/McpConnection.svelte";
 
-it("shows the agent as an ActorChip with its last activity in the one row", () => {
-  const { getByTestId, queryByTestId } = render(McpConnection, {
-    status: "online",
-    actor: { kind: "ai", id: "agent:a", name: "alpha" },
-    lastActivity: "titled ¶ Opening · 2 min ago",
+it("shows the caller URL and takeover for a refused channel, with the error as a Notice", () => {
+  const { getByTestId, getByRole } = render(McpConnection, {
+    status: "rejected",
+    callerUrl: "https://relay.test/c",
+    error: "relay bootstrap failed: 500",
+    onTakeover: () => {},
   });
-  expect(getByTestId("actor-name").textContent).toBe("alpha");
-  expect(getByTestId("agent-last").textContent).toBe("titled ¶ Opening · 2 min ago");
-  expect(queryByTestId("mcp-agent-name")).toBeNull();
+  expect((getByTestId("mcp-caller-url") as HTMLInputElement).value).toBe("https://relay.test/c");
+  expect(getByRole("alert").textContent).toContain("relay bootstrap failed");
+  expect(getByTestId("mcp-takeover")).toBeTruthy();
+});
+it("renders nothing for an online agent with no caller URL", () => {
+  const { queryByTestId } = render(McpConnection, { status: "online" });
+  expect(queryByTestId("mcp-connection")).toBeNull();
 });

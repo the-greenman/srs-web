@@ -11,8 +11,8 @@ test.describe("Styleguide", () => {
     // poll: the styleguide is a lazy chunk, so the first count can race the mount
     await expect.poll(() => page.locator("section h2").count()).toBeGreaterThanOrEqual(11);
     await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
-    // (the rejected McpConnection specimen carries its own role="alert"; anything else is the gate)
-    await expect(page.locator('[role="alert"]:not(.mcp-conn__error):not([data-specimen])')).toHaveCount(0);
+    // (the AgentPanel specimens' inline error Notices are role="alert"; anything else is the gate)
+    await expect(page.locator('[role="alert"]:not(.agent-panel .notice):not([data-specimen])')).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBeUndefined();
     const bg = () =>
       page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--color-bg"));
