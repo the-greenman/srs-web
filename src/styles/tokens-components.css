@@ -37,6 +37,18 @@
   --hover-card-max-width: min(36rem, 90vw);
   --hover-card-max-height: min(32rem, 70vh);
 
+  /* Modal (native <dialog>) */
+  --modal-bg: var(--color-surface-raised);
+  --modal-fg: var(--color-text);
+  --modal-border: var(--color-text-strong);
+  --modal-radius: var(--radius-md);
+  --modal-pad: var(--space-sm);
+  --modal-max-width: min(30rem, 90vw);
+  --modal-backdrop: var(--color-overlay);
+
+  /* Checkbox */
+  --checkbox-accent: var(--color-text-strong);
+
   /* Hue pills (.hue-pill: ActorChip, ActorMark, AttachmentGlyph): hsl(<hue> S L); the hue is
      --actor-hue, set per element from actorHue(actor.id). */
   --hue-pill-s: 45%;

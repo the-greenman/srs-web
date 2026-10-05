@@ -9,6 +9,8 @@
 <script lang="ts">
   import Notice from './Notice.svelte';
   import Button from "./Button.svelte";
+  import Input from "./Input.svelte";
+  import Checkbox from "./Checkbox.svelte";
   import { creatableEditors } from "$lib/editors/registry.js";
 
   interface Props {
@@ -41,8 +43,7 @@
 </script>
 
 <div class="create-panel" data-testid="create-panel">
-  <input
-    class="create-panel__name"
+  <Input
     data-testid="create-name"
     type="text"
     placeholder="Name your repository…"
@@ -56,10 +57,9 @@
   <fieldset class="create-panel__editors" disabled={busy}>
     <legend>Start with</legend>
     {#each editors as editor (editor.id)}
-      <label title={editor.description}>
-        <input type="checkbox" data-testid="create-editor-{editor.id}" value={editor.id} bind:group={chosen} />
+      <Checkbox title={editor.description} data-testid="create-editor-{editor.id}" value={editor.id} bind:group={chosen}>
         {editor.label}
-      </label>
+      </Checkbox>
     {/each}
   </fieldset>
 
@@ -83,16 +83,6 @@
     margin-top: 0.5rem;
   }
 
-  .create-panel__name {
-    min-height: 3rem;
-    padding: 0.75rem 1rem;
-    box-sizing: border-box;
-    border: 1px solid var(--color-text-strong);
-    background: var(--color-bg);
-    font-family: var(--font-sans);
-    font-size: 1rem;
-  }
-
   .create-panel__editors {
     display: flex;
     flex-wrap: wrap;
@@ -100,12 +90,10 @@
     margin: 0;
     padding: 0;
     border: 0;
-    font-family: var(--font-sans);
   }
 
   .create-panel__editors legend {
     padding: 0;
     margin-bottom: 0.25rem;
-    color: var(--color-text-muted, inherit);
   }
 </style>

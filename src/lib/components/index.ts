@@ -38,6 +38,8 @@ export { default as DecisionLogView } from "./DecisionLogView.svelte";
 export { default as Field } from "./Field.svelte";
 export { default as FieldInput } from "./FieldInput.svelte";
 export { default as Input } from "./Input.svelte";
+export { default as Checkbox } from "./Checkbox.svelte";
+export { default as Modal } from "./Modal.svelte";
 export { default as Textarea } from "./Textarea.svelte";
 export { default as Select } from "./Select.svelte";
 export { default as SaveBar } from "./SaveBar.svelte";

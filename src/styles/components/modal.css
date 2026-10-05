@@ -1,0 +1,44 @@
+/* ============================================================================
+   component: modal (.modal) — a titled dialog on the native <dialog>
+   ----------------------------------------------------------------------------
+   showModal() supplies the top layer, ::backdrop, Escape and the focus trap. `.modal--inline` is
+   the static specimen (styleguide). Parts: title, body, actions. Tokens: --modal-*.
+   ========================================================================== */
+
+.modal {
+  box-sizing: border-box;
+  width: var(--modal-max-width);
+  padding: var(--modal-pad);
+  color: var(--modal-fg);
+  background: var(--modal-bg);
+  border: 1px solid var(--modal-border);
+  border-radius: var(--modal-radius);
+}
+.modal::backdrop {
+  background: var(--modal-backdrop);
+}
+.modal--inline {
+  position: static;
+  margin: 0;
+}
+.modal [data-part="title"] {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--size-base);
+  font-weight: 600;
+}
+.modal [data-part="body"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  font-size: var(--size-sm);
+}
+.modal [data-part="body"] > p {
+  margin: 0;
+  color: var(--color-muted-strong);
+}
+.modal [data-part="actions"] {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+}
