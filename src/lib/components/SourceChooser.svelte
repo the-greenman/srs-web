@@ -375,12 +375,13 @@
           <span class="cloud-browser__scan-status">Showing what was found before the scan budget ran out.</span>
         {/if}
         {#if showScanButton}
-          <button
-            type="button"
-            class="cloud-browser__scan-btn"
+          <Button
+            size="sm"
+            variant="mono"
+            class="cloud-browser__scan-action"
             data-testid="cloud-browser-scan"
             onclick={() => startScan("explicit")}
-          >Scan for SRS</button>
+          >Scan for SRS</Button>
         {/if}
       </div>
       <div class="cloud-browser__list">
@@ -582,20 +583,8 @@
     text-transform: uppercase;
   }
 
-  .cloud-browser__scan-btn {
+  .cloud-browser__scanbar :global(.cloud-browser__scan-action) {
     margin-left: auto;
-    padding: 0.375rem 0.75rem;
-    border: 1px solid var(--color-text-strong);
-    background: var(--color-bg);
-    font-family: var(--font-mono);
-    font-size: var(--size-xs);
-    letter-spacing: var(--tracking-label);
-    text-transform: uppercase;
-    cursor: pointer;
-  }
-
-  .cloud-browser__scan-btn:hover {
-    background: var(--color-line-soft);
   }
 
   .cloud-browser__section {

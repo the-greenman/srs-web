@@ -4,6 +4,8 @@
 -->
 <script lang="ts">
   import Notice from './Notice.svelte';
+  import Button from './Button.svelte';
+  import Input from './Input.svelte';
   import type { SrsRecord, SrsRepository } from "$lib/srs-client.js";
   import { listDocumentViews, renderDocumentView } from "$lib/srs-client.js";
   import { downloadText, wrapLogHtml } from "$lib/governance/decision-export-utils.js";
@@ -93,7 +95,7 @@
     <p class="empty-state">No decisions in this repository.</p>
   {:else}
     <div class="controls-bar">
-      <input
+      <Input
         type="search"
         data-testid="search-input"
         class="controls-bar__search"
@@ -101,13 +103,13 @@
         aria-label="Search decisions"
         bind:value={searchQuery}
       />
-      <button
+      <Button
+        size="sm"
         data-testid="sort-toggle"
-        class="controls-bar__sort-btn"
         onclick={() => { sortOrder = sortOrder === "newest" ? "oldest" : "newest"; }}
       >
         {sortOrder === "newest" ? "Newest first" : "Oldest first"}
-      </button>
+      </Button>
       {#if availableTopics.length > 0}
         <div class="controls-bar__tag-filter" data-testid="topic-filter" role="group" aria-label="Filter by tag">
           <TagChip label="All" selected={topicFilter === "all"} onSelect={() => { topicFilter = "all"; }} />
@@ -116,28 +118,31 @@
           {/each}
         </div>
       {/if}
-      <button
+      <Button
+        size="sm"
+        variant="mono"
+        active={showAll}
         data-testid="show-all-toggle"
-        class="controls-bar__show-all-btn"
-        class:controls-bar__show-all-btn--active={showAll}
         aria-pressed={showAll}
         onclick={() => { showAll = !showAll; }}
       >
         {showAll ? "Hide superseded/abandoned" : "Show superseded/abandoned"}
-      </button>
+      </Button>
       {#if deliberationViewId && records.length > 0}
         <div class="controls-bar__export" data-testid="log-export-group">
           <span class="controls-bar__export-label">Export log:</span>
-          <button
+          <Button
+            size="sm"
+            variant="mono"
             data-testid="log-export-md"
-            class="controls-bar__export-btn"
             onclick={() => handleExportLog("markdown")}
-          >MD</button>
-          <button
+          >MD</Button>
+          <Button
+            size="sm"
+            variant="mono"
             data-testid="log-export-html"
-            class="controls-bar__export-btn"
             onclick={() => handleExportLog("html")}
-          >HTML</button>
+          >HTML</Button>
         </div>
       {/if}
       {#if exportError}
@@ -181,52 +186,11 @@
     align-items: center;
   }
 
-  .controls-bar__sort-btn {
-    font-size: 0.8125rem;
-    padding: 0.25rem 0.5rem;
-    border: 1px solid var(--color-muted);
-    border-radius: 4px;
-    background: var(--color-surface);
-    color: var(--color-text);
-    cursor: pointer;
-  }
-
-  .controls-bar__sort-btn:hover {
-    background: var(--color-line-soft);
-  }
-
-  .controls-bar__search {
-    font-size: 0.8125rem;
-    padding: 0.25rem 0.5rem;
-    border: 1px solid var(--color-muted);
-    border-radius: 4px;
-    background: var(--color-surface);
-    color: var(--color-text);
+  .controls-bar :global(.controls-bar__search) {
+    width: auto;
     min-width: 160px;
-  }
-
-  .controls-bar__search:focus {
-    outline: 2px solid var(--color-focus);
-    outline-offset: 1px;
-  }
-
-  .controls-bar__show-all-btn {
-    font-size: 0.8125rem;
-    padding: 0.25rem 0.5rem;
-    border: 1px solid var(--color-muted);
-    border-radius: 4px;
-    background: var(--color-surface);
-    color: var(--color-text);
-    cursor: pointer;
-  }
-
-  .controls-bar__show-all-btn:hover {
-    background: var(--color-line-soft);
-  }
-
-  .controls-bar__show-all-btn--active {
-    background: var(--color-line);
-    border-color: var(--color-muted-strong);
+    padding: 4px 8px;
+    font-size: var(--size-sm);
   }
 
   .controls-bar__export {
@@ -241,19 +205,4 @@
     color: var(--color-text);
     opacity: 0.7;
   }
-
-  .controls-bar__export-btn {
-    font-size: 0.75rem;
-    padding: 0.2rem 0.45rem;
-    border: 1px solid var(--color-muted);
-    border-radius: 4px;
-    background: var(--color-surface);
-    color: var(--color-text);
-    cursor: pointer;
-  }
-
-  .controls-bar__export-btn:hover {
-    background: var(--color-line-soft);
-  }
-
 </style>

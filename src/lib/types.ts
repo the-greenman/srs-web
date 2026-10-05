@@ -20,7 +20,7 @@ export type Status =
   | "ratified"
   | "abandoned";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "mono";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "mono" | "danger";
 
 export type DiagnosticSeverity = "error" | "warn" | "info";
 

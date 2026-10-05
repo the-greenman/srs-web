@@ -17,6 +17,9 @@
   import type { CompositeFormDef } from "$lib/editor/blueprint-fields.js";
   import Field from "$lib/components/Field.svelte";
   import Button from "$lib/components/Button.svelte";
+  import IconButton from "$lib/components/IconButton.svelte";
+  import Plus from "@lucide/svelte/icons/plus";
+  import X from "@lucide/svelte/icons/x";
   import FieldInput from "$lib/components/FieldInput.svelte";
   import SaveBar from "$lib/components/SaveBar.svelte";
 
@@ -237,20 +240,20 @@
                         </td>
                       {/each}
                       <td class="te-actions">
-                        <button type="button" class="te-btn" data-testid="te-remove-row" onclick={() => removeRow(c, i, ri)}>✕</button>
+                        <IconButton icon={X} label="Remove row" size="sm" data-testid="te-remove-row" onclick={() => removeRow(c, i, ri)} />
                       </td>
                     </tr>
                   {/each}
                 </tbody>
               </table>
               <div class="te-controls">
-                <button type="button" class="te-btn" data-testid="te-add-row" onclick={() => addRow(c, i)}>+ Row</button>
-                <button type="button" class="te-btn" data-testid="te-add-col" onclick={() => addColumn(c, i)}>+ Column</button>
-                <button type="button" class="te-btn te-btn--danger" data-testid="te-remove-table" onclick={() => removeEntry(c, i)}>Remove table</button>
+                <Button type="button" size="sm" data-testid="te-add-row" onclick={() => addRow(c, i)}><Plus size={14} aria-hidden="true" /> Row</Button>
+                <Button type="button" size="sm" data-testid="te-add-col" onclick={() => addColumn(c, i)}><Plus size={14} aria-hidden="true" /> Column</Button>
+                <Button type="button" size="sm" variant="danger" data-testid="te-remove-table" onclick={() => removeEntry(c, i)}>Remove table</Button>
               </div>
             </div>
           {/each}
-          <button type="button" class="group__add" data-testid="group-add-{c.name}" onclick={() => addEntry(c)}>+ Add table</button>
+          <Button type="button" size="sm" variant="ghost" data-testid="group-add-{c.name}" onclick={() => addEntry(c)}><Plus size={14} aria-hidden="true" /> Add table</Button>
         {:else}
           <!-- Generic composite entry rows (e.g. term/body items) -->
           {#each compositeValues[c.name] ?? [] as entry, i (i)}
@@ -266,10 +269,10 @@
                   />
                 </Field>
               {/each}
-              <button type="button" class="te-btn te-btn--danger" data-testid="group-remove-entry" onclick={() => removeEntry(c, i)}>Remove</button>
+              <Button type="button" size="sm" variant="danger" data-testid="group-remove-entry" onclick={() => removeEntry(c, i)}>Remove</Button>
             </div>
           {/each}
-          <button type="button" class="group__add" data-testid="group-add-{c.name}" onclick={() => addEntry(c)}>+ Add {c.label.toLowerCase()}</button>
+          <Button type="button" size="sm" variant="ghost" data-testid="group-add-{c.name}" onclick={() => addEntry(c)}><Plus size={14} aria-hidden="true" /> Add {c.label.toLowerCase()}</Button>
         {/if}
       </fieldset>
     {/each}
@@ -306,7 +309,7 @@
     gap: 1rem;
   }
   .group {
-    border: 1px solid var(--color-border, #ddd);
+    border: 1px solid var(--color-line);
     border-radius: 6px;
     padding: 0.75rem 1rem 1rem;
     margin: 0;
@@ -319,12 +322,12 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--color-muted, #888);
+    color: var(--color-muted);
     padding: 0 0.4rem;
   }
   .table-entry,
   .group-entry {
-    border: 1px solid var(--color-border, #eee);
+    border: 1px solid var(--color-line);
     border-radius: 4px;
     padding: 0.75rem;
     display: flex;
@@ -337,12 +340,12 @@
   }
   .te-table th,
   .te-table td {
-    border: 1px solid var(--color-border, #ddd);
+    border: 1px solid var(--color-line);
     padding: 0;
     vertical-align: top;
   }
   .te-table th {
-    background: var(--color-surface-1, #f5f5f5);
+    background: var(--color-line-soft);
   }
   .te-input {
     width: 100%;
@@ -356,7 +359,7 @@
     display: block;
   }
   .te-input:focus {
-    outline: 2px solid var(--color-focus-ring, var(--ink, #111));
+    outline: 2px solid var(--color-focus);
     outline-offset: -2px;
   }
   .te-actions {
@@ -368,29 +371,8 @@
     display: flex;
     gap: 0.4rem;
   }
-  .te-btn {
-    font-size: 0.75rem;
-    padding: 0.2rem 0.5rem;
-    border: 1px solid var(--color-border, #ddd);
-    border-radius: 4px;
-    background: transparent;
-    cursor: pointer;
-  }
-  .te-btn--danger {
-    color: #b91c1c;
-    border-color: #fca5a5;
-  }
-  .group__add {
-    align-self: flex-start;
-    font-size: 0.8rem;
-    padding: 0.3rem 0.7rem;
-    border: 1px dashed var(--color-border, #ccc);
-    border-radius: 4px;
-    background: transparent;
-    cursor: pointer;
-  }
   .form-error {
-    color: #b91c1c;
+    color: var(--color-error);
     font-size: 0.85rem;
   }
 </style>

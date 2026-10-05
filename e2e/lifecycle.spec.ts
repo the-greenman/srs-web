@@ -152,7 +152,7 @@ test.describe("Lifecycle transitions (B11)", () => {
     await editBtn.click();
 
     // The modal overlay should appear
-    await expect(page.locator(".modal-overlay")).toBeVisible({ timeout: 3000 });
+    await expect(page.locator("dialog.modal")).toBeVisible({ timeout: 3000 });
 
     // Modal should contain "Create Successor" button
     await expect(page.locator("button", { hasText: "Create Successor" })).toBeVisible();
@@ -171,13 +171,13 @@ test.describe("Lifecycle transitions (B11)", () => {
 
     // Click Edit to trigger the modal
     await page.locator("button.inspector__btn", { hasText: "Edit" }).click();
-    await expect(page.locator(".modal-overlay")).toBeVisible({ timeout: 3000 });
+    await expect(page.locator("dialog.modal")).toBeVisible({ timeout: 3000 });
 
     // Click Cancel
     await page.locator("button", { hasText: "Cancel" }).click();
 
     // Modal should be gone
-    await expect(page.locator(".modal-overlay")).not.toBeVisible();
+    await expect(page.locator("dialog.modal")).not.toBeVisible();
 
     // Inspector should still show the original record (Edit button still there)
     await expect(page.locator("button.inspector__btn", { hasText: "Edit" })).toBeVisible();
@@ -198,13 +198,13 @@ test.describe("Lifecycle transitions (B11)", () => {
 
     // Click Edit — modal appears
     await page.locator("button.inspector__btn", { hasText: "Edit" }).click();
-    await expect(page.locator(".modal-overlay")).toBeVisible({ timeout: 3000 });
+    await expect(page.locator("dialog.modal")).toBeVisible({ timeout: 3000 });
 
     // Click "Create Successor"
     await page.locator("button", { hasText: "Create Successor" }).click();
 
     // Modal should be gone
-    await expect(page.locator(".modal-overlay")).not.toBeVisible();
+    await expect(page.locator("dialog.modal")).not.toBeVisible();
 
     // The successor is auto-selected — reading view opens for the new draft.
     await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });

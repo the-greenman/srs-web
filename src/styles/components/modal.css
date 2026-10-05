@@ -42,3 +42,47 @@
   gap: var(--space-xs);
   margin-top: var(--space-sm);
 }
+
+/* Body furniture shared by form-like dialogs: a bordered option group and a scrollable pick list. */
+.modal [data-part="body"] fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: var(--space-xs);
+  border: 1px solid var(--color-line);
+}
+.modal [data-part="body"] .select,
+.modal [data-part="body"] .input {
+  padding: var(--space-xs);
+  font-size: var(--size-sm);
+}
+.modal [data-part="list"] {
+  max-height: 14rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--color-line);
+}
+.modal [data-part="list"] li + li {
+  border-top: 1px solid var(--color-line);
+}
+.modal [data-part="list"] button {
+  display: block;
+  width: 100%;
+  padding: var(--space-xs);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.modal [data-part="list"] button:hover,
+.modal [data-part="list"] button[aria-selected="true"] {
+  background: var(--color-hover);
+}
+.modal [data-part="list"] button[aria-selected="true"] {
+  font-weight: 600;
+}

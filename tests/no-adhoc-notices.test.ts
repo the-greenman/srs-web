@@ -14,7 +14,6 @@ const walk = (dir: string): string[] =>
 
 /** path -> number of `role="alert"` / `role={...}` sites. Every entry needs a reason. */
 const ALLOW: Record<string, number> = {
-  "src/lib/components/GitSaveModal.svelte": 1, // modal error (#428)
   "src/lib/editor/SectionForm.svelte": 1, // form error (#426)
   "src/lib/components/RecordForm.svelte": 1, // form error (#426)
   "src/lib/components/Notice.svelte": 1, // the component itself (role by kind)
