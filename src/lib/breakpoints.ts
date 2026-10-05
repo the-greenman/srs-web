@@ -5,10 +5,8 @@
  */
 export const BREAKPOINTS = {
   phone: 480,
-  genericNarrow: 600,
   form: 640,
   compact: 720,
-  genericStack: 900,
   rail: 960,
   wide: 1100,
 } as const;
@@ -23,3 +21,7 @@ export const RAIL = `(max-width: ${BREAKPOINTS.rail}px)`;
 export type Tier = "full" | "compact" | "narrow";
 export const tierOf = (narrow: boolean, rail: boolean): Tier =>
   narrow ? "narrow" : rail ? "compact" : "full";
+
+/** The nav is an off-canvas drawer at and below `compact`; the inspector at and below `wide` (#424). */
+export const DRAWER_NAV = `(max-width: ${BREAKPOINTS.compact}px)`;
+export const DRAWER_INSPECTOR = `(max-width: ${BREAKPOINTS.wide}px)`;

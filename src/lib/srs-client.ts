@@ -1409,6 +1409,12 @@ export interface TypeSummary {
   sourcePackage?: string;
 }
 
+/** The type a type extends (`extendsTypeId`, ext:type-inheritance), or null. */
+export function getTypeExtends(repo: SrsRepository, typeId: string): string | null {
+  const type = repo.get_type(typeId) as { extendsTypeId?: string | null } | null;
+  return type?.extendsTypeId ?? null;
+}
+
 /**
  * List type definitions from the compiled package. Used to resolve the current
  * version of a type UUID (e.g. blueprint `$ref`s carry no version).
@@ -1419,12 +1425,6 @@ export interface TypeSummary {
  * — so every caller sees the one-per-lineage shape its docs already promise
  * (srs-web#438: a duplicate id otherwise breaks any `id`-keyed list of types).
  */
-/** The type a type extends (`extendsTypeId`, ext:type-inheritance), or null. */
-export function getTypeExtends(repo: SrsRepository, typeId: string): string | null {
-  const type = repo.get_type(typeId) as { extendsTypeId?: string | null } | null;
-  return type?.extendsTypeId ?? null;
-}
-
 export function listTypes(
   repo: SrsRepository,
   filter: Record<string, unknown> = {}

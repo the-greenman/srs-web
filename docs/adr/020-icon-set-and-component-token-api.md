@@ -6,7 +6,7 @@
 - **Supersedes:** —
 - **Superseded by:** —
 - **Amends:** [ADR-019](019-ui-theming-surface-and-live-styleguide.md) (makes its "hard-coded colours" consequence true)
-- **Amended by:** srs-web#423 (Toolbar and paragraph strip parts and tokens, action-registry rule: see "Toolbar and paragraph strip")
+- **Amended by:** srs-web#423 (Toolbar and paragraph strip parts and tokens, action-registry rule: see "Toolbar and paragraph strip"); srs-web#424 (page frame, Drawer, Wide: see "Shell frame, Drawer, Wide", and parts (g) and (h)); srs-web#441 (notices: see part (j)); srs-web#442 (agent library: see part (k))
 
 ## Context
 
@@ -46,7 +46,7 @@ Lucide (`@lucide/svelte`, ISC) is the single icon set. Rules:
 
 Three tiers: **primitive** (`--paper`, `--ink`, `--black`, `--grey-N`; never read by components),
 **semantic** (`--color-*`, `--radius-*`, `--shadow-*`, `--z-*`, `--focus-ring`, `--hit-target`,
-`--rail-width`; in `tokens.css`) and **component** (`--<block>-<property>[-<state>]`, for example
+`--inspector-width`, `--content-max`; in `tokens.css`) and **component** (`--<block>-<property>[-<state>]`, for example
 `--btn-bg`, `--btn-primary-bg`, `--popover-border`, `--hue-pill-s`; in `tokens-components.css`).
 
 - Component tokens are declared on `:root` in the `tokens` layer, each defaulting to a semantic
@@ -70,7 +70,7 @@ appended below as components gain parts.
 | Component | Parts |
 |---|---|
 | `Block` | `gutter`, `handle`, `strip`, `action`, `menu`, `main`, `head`, `title`, `margin` |
-| `Toolbar` | `bar` (the root), `lead`, `title`, `status`, `primary`, `menu` (a group trigger or the lone Help icon), `overflow` (the narrow tier's one menu) |
+| `Toolbar` | `bar` (the root), `lead`, `title`, `status`, `primary`, `menu` (a group trigger or the lone Help icon), `overflow` (the narrow tier's one menu), `trail` (the shell's inspector button, last in the bar) |
 | `IconButton` | `icon-btn` |
 | `Popover` | `popover` (wrapper), `surface` |
 | `AttachmentPreview` | `kind`, `title`, `text` |
@@ -86,6 +86,9 @@ appended below as components gain parts.
 | `ActorMark` | `mark` |
 | `ActorStack` | `more` |
 | `AnnotationMargin` | `overflow`, `row`, `mark`, `label`, `more` |
+| `Notice` | `icon`, `body`, `dismiss` |
+| `ToastHost` | `host` |
+| `Diagnostics` (notice variant) | `summary`, `toggle`, `group`, `count` |
 
 ### (d) One breakpoint source
 
@@ -148,11 +151,13 @@ set per element as `--actor-hue` and consumed by the single `.hue-pill` rule set
 
 `AnnotationMargin` is a real column of the `Block` grid. The width is the token `--margin-width`
 (default `--margin-width-compact`; `--margin-width-wide` when the shell carries
-`data-margin="expanded"`, from 721px up). The essay page grows by the difference, so the text column
-keeps its width and the margin never crosses the page edge or the rail. `data-margin` is the one
-mechanism: the header action sets it today and #424's Wide toggle reuses `src/lib/margin-mode.ts`
-rather than adding a second setter. Other tokens: `--margin-mark-size`, `--margin-row-gap`,
-`--margin-label-lines`, `--essay-page-width`.
+`data-margin="expanded"`, from 721px up). The essay page grows by the difference, so the margin never
+crosses the page edge or the inspector, and the text column widens with Wide (owner D5, 2026-10-04:
+Wide widens the content cap, `--content-max` 46rem to `--content-max-wide` 80rem, and the margin
+column together). `data-margin` on `.app` is the one mechanism and the one carrier: its setter is
+`src/lib/wide.ts` (`saveWide`, storage key `srs-web.margin` kept so existing viewers keep their
+setting), driven by View > Wide. Other tokens: `--margin-mark-size`, `--margin-row-gap`,
+`--margin-label-lines`. The essay page reads `--content-max` itself (a custom property that aliased it on `:root` would not see the shell's Wide override).
 
 Kind icons are mapped once, in `src/lib/components/annotation-icons.ts` (`KIND_ICONS`, owner decision
 D3): the annotation's data key (`Annotation.icon`, the neighbour's type name) to a Lucide component,
@@ -165,13 +170,13 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
   re-points semantic tokens only; `e2e/styleguide.spec.ts` fails if any specimen still paints a
   default palette colour, and `tests/demo-theme.test.ts` fails if a semantic colour token is not
   re-pointed there.
-- Rail components are shown at 18rem and 15rem in `/styleguide`, and an e2e check fails if any of
+- Inspector components are shown at 20rem (`--inspector-width`) and 15rem in `/styleguide`, and an e2e check fails if any of
   them overflows its frame.
 - Follow-ups:
-  - Consolidating the seven `@media` widths (`phone`, `genericNarrow`, `form`, `compact`,
-    `genericStack`, `rail`, `wide`) into fewer; today they are only named and guarded.
-  - Unlayered scoped `<style>` blocks in the Guides, Governance and Generic shells beat every layer
-    and still carry raw colours: #424 (AppShell) retires them.
+  - Consolidating the five `@media` widths (`phone`, `form`, `compact`, `rail`, `wide`) into fewer;
+    today they are only named and guarded (#424 removed `genericNarrow` and `genericStack`).
+  - Unlayered scoped `<style>` blocks in the Guides and Governance shells beat every layer and still
+    carry raw colours: #424 PR-B retires them (the Generic shell's is gone in PR-A).
   - One-off buttons in the modals, `DecisionLogView`, `SourceChooser`, `BlueprintDocumentEditor` and
     the `SectionForm` table editor.
 
@@ -189,7 +194,7 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
 - **Checkable rows** keep a View-style menu open on toggle (wide tiers) so the reader sees the state change;
   the narrow overflow closes. `Popover` keyboard handling covers `menuitem` and `menuitemcheckbox` rows with
   Arrow, Home and End. State is never duplicated: View > Comments reads and drives `thread-visibility.ts`,
-  View > Margin notes drives `margin-mode.ts`.
+  View > Wide drives `wide.ts`.
 - **Paragraph strip.** `paragraphActions()` marks `primary` actions (hide, zoom, copy link). `Block` renders
   them as a small strip INSIDE the paragraph's own title row at its right end (`.block__head`, absolute,
   `right:0`; centred in a titled head, hanging from the content top in an untitled one), so it never leaves
@@ -201,3 +206,113 @@ by neighbour kind; nothing here infers SRS semantics from it. A mark's hue is th
 - **Tokens.** `--toolbar-bg`, `--toolbar-border`, `--toolbar-gap`, `--toolbar-pad`, `--toolbar-title-size`,
   `--toolbar-title-max`; the strip keeps the opaque `--block-tools-bg|border|shadow` surface (the family was
   the old tool stack's, and is not renamed).
+
+### (i) Shell frame, Drawer, Wide (#424)
+
+- **One frame.** `AppShell` is a `100dvh` grid `nav | main | inspector` that never scrolls the window:
+  the nav scrolls `.nav__scroll`, main has exactly one scroller (`.workspace`, the bar is outside it) and
+  the inspector scrolls `.inspector__body`. Nav and inspector are resizable (`ResizeHandle`, pointer and
+  keys) and persisted per viewer, globally, in `srs-web.columns` (`columns.ts`; limits and defaults are
+  tokens). The state is `ShellState` (`shell-context.svelte.ts`, read with the undefined-safe
+  `getShell()`), so a standalone bar renders no drawer triggers.
+- **Parts.** `AppShell`: `nav main inspector` (the `.app__*` classes). `Drawer`: `scrim` (the dialog, the
+  backdrop hit area), `panel`. `ResizeHandle`: `grip`.
+- **Tokens.** `--nav-width`, `--inspector-width`, `--content-max` (46rem), `--content-max-wide` (80rem),
+  `--canvas-max` (820px, Governance and Guides until their conversion), and in `tokens-components.css`
+  `--shell-nav-min|max`, `--shell-inspector-min|max`, `--shell-resize-hit`, `--shell-drawer-width`,
+  `--shell-drawer-bg`, `--shell-drawer-bg-dark`, `--shell-drawer-motion`, `--shell-scrim`,
+  `--shell-badge-bg|fg`, `--resize-handle-active`.
+- **Breakpoint roles.** `compact` (720) is the nav drawer: at and below it the nav is off-canvas, opened
+  by `NavTrigger`. `wide` (1100) is the inspector drawer, opened by `InspectorTrigger` with an activity
+  badge. `DRAWER_NAV` and `DRAWER_INSPECTOR` are built from `BREAKPOINTS`; one `matchMedia` each, read
+  synchronously. The old 480/600/720/900 per-shell collapses are gone.
+- **Drawer is a second top-layer primitive.** It is a native modal `<dialog>` (`showModal()`), because a
+  drawer is modal (focus trap, inert background) which a popover is not. Dismissal is Popover's (part e):
+  Escape and a backdrop click close it, focus returns to the trigger. It is the only `showModal` user;
+  the `GitSaveModal` and `SuccessorModal` z-index modals stay with #428 and a drawer must be closed
+  before one opens (`ShellState.navOpen` / `inspectorOpen`).
+- **Wide.** One persisted per-viewer switch shared by all editors: `data-margin` on `.app` (the one carrier; set to `expanded` only when `wideEnabled` and Wide is on, else `compact`) widens the content cap and the margin column. Only a shell with the capability
+  (`ShellState.wideEnabled`, the `wide` prop) shows the action and honours it; a stored Wide never
+  changes a shell without the toggle.
+
+### (j) Notices (#441)
+
+One notice system, three shapes, one store (`src/lib/notices.svelte.ts`):
+
+- **Toast = an event** ("Link copied", a save result). **Notice = persistent state** (an error beside its
+  cause, a read-only note, a size warning). **Diagnostics = the engine's findings**, grouped by identical
+  message with a count, built on `Notice`. `Toast` is one row; `ToastHost` is the host; `NoticeRegion`
+  renders pinned document notices (today the catalog diagnostics).
+- **Roles.** `Main` always renders `LiveRegions`: two visually-hidden regions outside the popover, a plain
+  `aria-live="polite"` div for non-error toasts and an `aria-live="assertive" aria-atomic="true"` div for
+  sticky errors. The assertive region has **no** `role="alert"`: an empty always-present alert node would
+  break every "no alert on this path" assertion. The text is written into the already-rendered node and
+  cleared when the toast goes. The visual toast text is `aria-hidden` (never the row: it holds the
+  focusable close button), so a toast is heard once. Inline `Notice`: `role="alert"` for `error`,
+  `role="status"` for the rest. The grouped Diagnostics notice is always a status (kind `warning` or `info`),
+  never an alert; errors read strong through their own rows.
+- **Strength.** Errors are sticky (no timer) and strong (error rule and fill, medium weight); everything
+  else is quiet and auto-dismisses (`TOAST_MS`, 4000 ms by default).
+- **Anchoring.** `ToastHost` is a native `popover="manual"` (part e): top layer, out of flow, so it never
+  shifts layout and needs no `z-index`. It is placed bottom-centre of its own `.app__main` by the pure
+  `placeBottomCentre` (the bottom edge comes from `visualViewport`, so it clears a mobile keyboard);
+  `--toast-offset-bottom` lifts it clear of the agent dock.
+- **Re-stack.** A new toast, and a drawer opening (`ShellState.navOpen` / `inspectorOpen`), do
+  `hidePopover()` then `showPopover()`, so the host re-enters the top layer above the modal Drawer and its
+  scrim. The live regions are outside the popover, so nothing is re-announced. **Limitation:** while a modal
+  drawer is open the toast is painted above the scrim but inert (the dialog makes everything outside it
+  inert), so its close button cannot be clicked; a sticky error stays until the drawer closes and it is
+  dismissed, or the next save replaces it. (Hit-testing cannot see an inert element; the e2e checks pixels.)
+- **One save key.** Every save result (App's, and Governance's local recovery copy) uses `key: "save"` and
+  testid `save-status`, so a later result replaces an earlier one: the next save, success included,
+  replaces a sticky save-failure toast. A save failure is the one error that is a toast (it has no
+  location); location-bound errors (an export beside its button, a form, a picker) stay inline.
+- **Pinned notices.** `pinNotice` / `unpinNotice`; `Main`'s `NoticeRegion` renders them directly below the
+  bar and above the scroller. `Main` takes a `bar` snippet and renders bar, notice region, children in real
+  DOM order (no CSS `order`); shells pass their Toolbar or Topbar as `bar`. `resetNotices()` runs first on
+  every document load (toasts, timers, diagnostics dismissals); pinned notices are replaced or unpinned by
+  the load path.
+- **Dismissal** of a diagnostics notice is per session and per `documentKey`, and re-shows when the
+  diagnostics content changes (D3).
+- **Grouping** keys on the exact (trimmed) message and severity until the engine exposes a structured
+  `code` (srs-rust#1264); `groupDiagnostics` is the one function that changes then. The engine's string
+  arrays (render, find, navigation) have no severity and are shown as warnings (`toUiDiagnostic`, the one
+  adapter).
+- **Toolbar status keeps state** ("Unsaved changes"), never events.
+- **Guard.** `tests/no-adhoc-notices.test.ts` fails on a new or removed `role="alert"` (or dynamic
+  `role={...}`) in a Svelte file unless it is in its allowlist (modal #428,
+  form errors #426, `Notice` itself, `HoverCard`'s own role, the styleguide specimen).
+- **Parts.** `Notice`: `icon body dismiss`. `ToastHost`: `host`. `Diagnostics` (notice variant):
+  `summary toggle group count`; the dismiss control is `Notice`'s `dismiss`.
+- **Tokens.** `--notice-bg|border|pad|gap|radius|warn-rule|error-bg|error-rule` and
+  `--toast-bg|border|shadow|width|offset-bottom|gap`, in `tokens-components.css`.
+
+### (k) Agent library (#442)
+
+The agent and relay libraries are one presentational component, `AgentPanel`, used by the essay rail and the
+floating dock. It takes data and handlers through props from `App.svelte` (the only owner of stores, hosts and
+sessions) and never imports a store. This is client configuration, not SRS semantics (ADR-001).
+
+- **Rows, not headings.** Agents and relays are `<li>` rows (`data-part="agent" | "relay"`): a compact
+  `ActorMark`, the name (a `<span>`, truncated, full name in `title`), the relay label and "Connected 2 min
+  ago" in the muted meta size, a status dot (`aria-hidden`; the status word is visually-hidden text with
+  `data-testid="mcp-status"`), `Button size="sm"` Connect or Disconnect, and the other actions in a `⋯`
+  `ActionMenu`. No `h1`-`h6` and no `<details>` inside the panel.
+- **`Disclosure`** is the one inline show/hide pattern: a ghost small `Button` with a Lucide chevron,
+  `aria-expanded` and `aria-controls`. `Panel` stays a native `<details>`; `Disclosure` is for sections inside a
+  panel ("Connect an agent", "Add a relay").
+- **Errors are inline** (part j): add, edit and remove errors come back from App's handlers as text and render as
+  `Notice kind="error"` beside their cause; a connection error renders in the agent's `McpConnection` block.
+  Confirmations ("Relay added", "Relay removed", "Agent forgotten") are `info` toasts raised by App's handlers,
+  never by the panel.
+- **Decisions.** D1 a relay with agents cannot be removed (no cascade that destroys channel credentials). D2 an
+  agent's relay is fixed at creation (credentials are per agent per relay). D3 a relay's URL is editable only
+  while no agent uses it; its label always is. D4 `VITE_MCP_RELAY_URL` and the legacy `srs-web.mcp-relay-url`
+  key seed the library once; a later env change does not re-seed. D5 first run keeps one seeded agent, hidden
+  until a relay exists and bound by `adoptRelay` when one is added. D6 rename only while disconnected (the actor
+  name is fixed when a session opens). D7 Go → Agents… is an `onopenagents` handler (essay and generic shells
+  only: the Guides and Governance shells have a menu-less `Topbar` and rely on the always-present dock).
+- **Parts.** `AgentPanel`: `agents relays agent relay name meta dot actions`. `Disclosure`: `disclosure body`.
+- **Tokens.** `--agent-panel-gap|row-pad|row-gap|dot-size|name-size|meta-size`, in `tokens-components.css`.
+- **Specimens.** `/styleguide` renders four groups (no relay, one relay and no agents, several relays and agents,
+  connection errors) at 20rem, 18rem and 16rem.

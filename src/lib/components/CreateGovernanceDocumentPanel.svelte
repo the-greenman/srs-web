@@ -6,6 +6,7 @@
   three-backend layout and busy/error handling.
 -->
 <script lang="ts">
+  import Notice from './Notice.svelte';
   import type { StorageProviderId, StorageProviders } from "$lib/storage/index.js";
   import { StorageError } from "$lib/storage/index.js";
   import Button from "./Button.svelte";
@@ -90,7 +91,7 @@
   </div>
 
   {#if error}
-    <p class="create-panel__error" role="alert">{error}</p>
+    <Notice kind="error">{error}</Notice>
   {/if}
 </div>
 
@@ -127,11 +128,6 @@
     box-sizing: border-box;
   }
 
-  .create-panel__error {
-    color: var(--color-error);
-    margin: 0;
-    font-size: 0.875rem;
-  }
 
   /* bp: form */
   @media (max-width: 640px) {

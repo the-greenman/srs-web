@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { connectAgents } from "./helpers";
+import { connectAgents, routeRelayChannels } from "./helpers";
 
 /**
  * essay-write-guard.spec.ts — srs-web#356: the essay editor declares the engine write guard
@@ -32,15 +32,7 @@ type Rpc = {
 const b64 = (s: string) => Buffer.from(s).toString("base64url");
 
 test("agent writes cannot change the essay text but can comment", async ({ page }) => {
-  await page.route("https://relay.test/v1/channels", (route) =>
-    route.fulfill({
-      json: {
-        channel: "c",
-        callerUrl: "https://relay.test/v1/channels/c/call/CALLER",
-        executorUrl: "wss://relay.test/v1/channels/c/executor/EXEC",
-      },
-    })
-  );
+  await routeRelayChannels(page, { fixed: true });
   let toExecutor: (frame: unknown) => void = () => {};
   const replies = new Map<string, (r: { status: number; body?: string }) => void>();
   let executorUrl = "";

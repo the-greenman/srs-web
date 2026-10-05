@@ -4,9 +4,11 @@
   relations (loadInstanceNotes); comments appear only where the comment type is installed (D4), and
   the composer is hidden entirely otherwise (no disabled UI). Marks the container
   `data-srs-instance`. `revision` is the shell's documentRevision, so an external (agent) write
-  refreshes it.
+  refreshes it. `heading` adds a "Notes" heading, only when there is something to show (a shell without its own
+  titled panel; Governance and Guides wrap this in a Panel).
 -->
 <script lang="ts">
+  import Notice from '$lib/components/Notice.svelte';
   import { onDestroy } from 'svelte';
   import { currentActor, onActorChange, saveLocalName } from '$lib/actor.js';
   import { addComment } from '$lib/comments.js';
@@ -16,7 +18,12 @@
   import AnnotationMargin from '$lib/components/AnnotationMargin.svelte';
   import CommentThread from '$lib/components/CommentThread.svelte';
 
-  let { repo, instanceId, revision = 0 }: { repo: SrsRepository; instanceId: string; revision?: number } = $props();
+  let {
+    repo,
+    instanceId,
+    revision = 0,
+    heading = false,
+  }: { repo: SrsRepository; instanceId: string; revision?: number; heading?: boolean } = $props();
 
   let written = $state(0);
   let error = $state<string | null>(null);
@@ -50,11 +57,12 @@
 </script>
 
 <section class="instance-notes" data-srs-instance={instanceId} data-testid="instance-notes">
+  {#if heading && (notes.available || notes.annotations.length)}<h3>Notes</h3>{/if}
   {#if notes.annotations.length}
     <AnnotationMargin annotations={notes.annotations} variant="expanded" max={8} />
   {/if}
   {#if notes.available}
     <CommentThread comments={notes.comments} needsName={!hasActor} onadd={comment} />
-    {#if error}<p class="instance-notes__error" role="alert">{error}</p>{/if}
+    {#if error}<Notice kind="error">{error}</Notice>{/if}
   {/if}
 </section>

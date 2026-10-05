@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { connectAgents } from "./helpers";
+import { connectAgents, openMenus } from "./helpers";
 
 /**
  * popover.spec.ts — the Popover primitive (srs-web#421, ADR-020 e). Chromium only (the pinned
@@ -120,7 +120,7 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
     if (viewport) await page.setViewportSize(viewport);
   }
   const help = (page: Page) => page.getByRole("region", { name: "Markdown cheat-sheet" });
-  const openCount = (page: Page) => page.locator(":popover-open").count();
+  const openCount = (page: Page) => openMenus(page).count();
 
   test.describe("desktop", () => {
     test("? opens, ? again closes and stays closed", async ({ page }) => {
@@ -195,7 +195,10 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
       await page.getByTestId("header-menu").click();
       await page.getByTestId("toolbar-help").click();
       await expect(help(page)).toBeVisible();
-      await page.getByRole("heading", { name: "On small democracy" }).click();
+      // Tap outside the popover. (Was the page heading: it sits under the popover, and the old test only
+      // passed because Playwright could scroll the window to move it clear. The page now scrolls in its own
+      // column and is shorter than the viewport, so tap the empty column below it.)
+      await page.mouse.click(200, phone.height - 40);
       await expect(help(page)).toBeHidden();
     });
   });

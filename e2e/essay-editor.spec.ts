@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { menuItem } from "./helpers";
+import { menuItem, routeRelayChannels } from "./helpers";
 import type { Page } from "@playwright/test";
 
 /**
@@ -174,15 +174,7 @@ test("write, reorder, nest, hide, draft out and back", async ({ page }) => {
 });
 
 test("an MCP-side write re-renders the essay", async ({ page }) => {
-  await page.route("https://relay.test/v1/channels", (route) =>
-    route.fulfill({
-      json: {
-        channel: "c",
-        callerUrl: "https://relay.test/v1/channels/c/call/CALLER",
-        executorUrl: "wss://relay.test/v1/channels/c/executor/EXEC",
-      },
-    })
-  );
+  await routeRelayChannels(page, { fixed: true });
   let toExecutor: (frame: unknown) => void = () => {};
   const replies = new Map<string, (r: { status: number; body?: string }) => void>();
   let executorUrl = "";
@@ -381,13 +373,17 @@ test("New essay creates the record, container, draft area and state", async ({ p
   await expect(page.locator('.draft-tray [data-part="row"]')).toHaveCount(1);
 });
 
-test("the page is one white scroll surface; essay and paragraph titles edit inline (srs-web#363)", async ({
+test("the main column is the one scroll surface (superseding #363: the window no longer scrolls); the page is white; essay and paragraph titles edit inline", async ({
   page,
 }) => {
   await open(page);
   await page.setViewportSize({ width: 1200, height: 360 });
-  // Only the window scrolls: the page grows past the viewport and no block scrolls inside itself.
-  expect(await page.evaluate(() => document.documentElement.scrollHeight > innerHeight)).toBe(true);
+  // #424: the window never scrolls; the main column (.workspace) is the single scroll surface for the
+  // page, and no block scrolls inside itself.
+  expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(true);
+  expect(
+    await page.locator(".app__main > .workspace").evaluate((el) => el.scrollHeight > el.clientHeight)
+  ).toBe(true);
   expect(
     await page
       .locator(".block__body")

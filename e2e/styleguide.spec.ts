@@ -11,8 +11,8 @@ test.describe("Styleguide", () => {
     // poll: the styleguide is a lazy chunk, so the first count can race the mount
     await expect.poll(() => page.locator("section h2").count()).toBeGreaterThanOrEqual(11);
     await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
-    // (the rejected McpConnection specimen carries its own role="alert"; anything else is the gate)
-    await expect(page.locator('[role="alert"]:not(.mcp-conn__error)')).toHaveCount(0);
+    // (the AgentPanel specimens' inline error Notices are role="alert"; anything else is the gate)
+    await expect(page.locator('[role="alert"]:not(.agent-panel .notice):not([data-specimen])')).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBeUndefined();
     const bg = () =>
       page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--color-bg"));
@@ -123,6 +123,39 @@ test.describe("Styleguide", () => {
       for (const n of [0, 1]) {
         await expect(page.getByTestId("sg-paragraph-state").nth(n).getByTestId("paragraph-menu")).toBeVisible();
       }
+      expect(errors).toEqual([]);
+    });
+  }
+
+  // ── Page frame specimen (srs-web#424) ──────────────────────────────────────────────────────
+  for (const theme of ["Default", "Demo"]) {
+    test(`page frame specimen shows closed, nav open and inspector open states, and Wide off/on: ${theme} theme`, async ({ page }) => {
+      const errors: string[] = [];
+      page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.setViewportSize({ width: 390, height: 900 });
+      await page.goto("/styleguide");
+      await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+      await page.getByLabel("Theme").selectOption(theme);
+      const shells = page.getByTestId("sg-shell");
+      await expect(shells).toHaveCount(3);
+      await expect(shells.evaluateAll((els) => els.map((e) => e.getAttribute("data-open")))).resolves.toEqual(["none", "nav", "inspector"]);
+      for (const s of [0, 1, 2]) {
+        await expect(shells.nth(s).getByTestId("nav-trigger")).toBeVisible();
+        await expect(shells.nth(s).getByTestId("inspector-trigger")).toBeVisible();
+        await expect(shells.nth(s).getByTestId("inspector-badge")).toHaveText("3");
+      }
+      await expect(shells.nth(1).locator(".nav")).toBeVisible();
+      await expect(shells.nth(2).locator(".inspector")).toBeVisible();
+      // each frame is a phone-width box; the toolbar inside does not overflow it
+      for (const s of [0, 1, 2]) {
+        const overflow = await shells.nth(s).evaluate((el) => el.scrollWidth > el.clientWidth);
+        expect(overflow, `frame ${s} overflows`).toBe(false);
+      }
+      // Wide: the second cap bar is wider than the first when there is room
+      await page.setViewportSize({ width: 1440, height: 900 });
+      const w = await page.getByTestId("sg-wide").locator(".sg__capbar").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().width));
+      expect(w[1]).toBeGreaterThan(w[0]);
       expect(errors).toEqual([]);
     });
   }
@@ -244,4 +277,66 @@ test.describe("Styleguide", () => {
     );
     expect(reports, "elements painting a default palette colour under the demo theme").toEqual([]);
   });
+});
+
+// ── Notices (srs-web#441) ───────────────────────────────────────────────────────────────
+test.describe("Styleguide notices", () => {
+  for (const theme of ["Default", "Demo"]) {
+    test(`every notice specimen is visible, collapsed and expanded diagnostics differ: ${theme} theme`, async ({
+      page,
+    }) => {
+      await page.goto("/styleguide");
+      await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+      await page.getByLabel("Theme").selectOption(theme);
+      for (const id of [
+        "specimen-toast-info",
+        "specimen-toast-success",
+        "specimen-toast-error",
+        "specimen-notice-info",
+        "specimen-notice-warning",
+        "specimen-notice-error",
+        "specimen-diagnostics-collapsed",
+        "specimen-diagnostics-expanded",
+        "specimen-diagnostics-panel",
+      ]) {
+        await expect(page.getByTestId(id)).toBeVisible();
+      }
+      const collapsed = page.getByTestId("specimen-diagnostics-collapsed");
+      const expanded = page.getByTestId("specimen-diagnostics-expanded");
+      await expect(collapsed.locator(".diag-list")).toBeHidden();
+      await expect(expanded.locator(".diag-list")).toBeVisible();
+      await expect(expanded.locator(".diag__count")).toHaveText("x3");
+    });
+  }
+
+  test("Fire toast raises a real toast that is gone after its time", async ({ page }) => {
+    await page.clock.install();
+    await page.goto("/styleguide");
+    await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+    await page.getByTestId("specimen-fire-toast").click();
+    await expect(page.locator(".toast-host .toast")).toHaveCount(1);
+    await page.clock.runFor(5000);
+    await expect(page.locator(".toast-host .toast")).toHaveCount(0);
+  });
+
+  // ── Agent library specimens (srs-web#442) ──────────────────────────────────────────────────
+  for (const width of [1280, 390]) {
+    test(`agent library specimens render at every width without overflow or headings: ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/styleguide");
+      await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+      for (const g of ["none", "empty", "several", "errors"]) {
+        await expect(page.getByTestId(`sg-agent-${g}`).getByTestId("sg-agent-frame")).toHaveCount(3);
+      }
+      await expect(page.getByTestId("sg-agent-none").getByTestId("agent-panel-empty").first()).toBeVisible();
+      await expect(page.getByTestId("sg-agent-errors").getByTestId("mcp-connection").first()).toBeVisible();
+      await expect(page.locator(".agent-panel h1, .agent-panel h2, .agent-panel h3, .agent-panel h4, .agent-panel h5, .agent-panel h6, .agent-panel details")).toHaveCount(0);
+      const overflowing = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>('[data-testid="sg-agent-frame"]')]
+          .filter((f) => f.scrollWidth > f.clientWidth)
+          .map((f) => f.dataset.caption)
+      );
+      expect(overflowing).toEqual([]);
+    });
+  }
 });

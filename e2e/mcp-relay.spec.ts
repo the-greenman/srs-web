@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { routeRelayChannels } from "./helpers";
 
 /**
  * mcp-relay.spec.ts — srs-web#307: the browser hosts the WASM MCP session behind
@@ -22,15 +23,7 @@ test("MCP caller drives the browser session through the relay", async ({ page })
     if (!r.url().startsWith("http://localhost") && !r.url().startsWith("data:"))
       outbound.push(`${r.method()} ${r.url()}`);
   });
-  await page.route("https://relay.test/v1/channels", (route) =>
-    route.fulfill({
-      json: {
-        channel: "c",
-        callerUrl: "https://relay.test/v1/channels/c/call/CALLER",
-        executorUrl: "wss://relay.test/v1/channels/c/executor/EXEC",
-      },
-    })
-  );
+  await routeRelayChannels(page, { fixed: true });
 
   type Frame = { requestId: string; executorGeneration: string };
   let toExecutor: (frame: unknown) => void = () => {};
@@ -131,9 +124,7 @@ test("MCP caller drives the browser session through the relay", async ({ page })
 });
 
 test("relay origin refusal on bootstrap surfaces invalid_origin", async ({ page }) => {
-  await page.route("https://relay.test/v1/channels", (route) =>
-    route.fulfill({ status: 400, json: { error: "invalid_origin" } })
-  );
+  await routeRelayChannels(page, { refuse: true });
   await page.addInitScript(() =>
     localStorage.setItem("srs-web.mcp-relay-url", "https://relay.test")
   );

@@ -62,6 +62,24 @@ export function placeNextTo(
   return card ? { top, left: clamped, width } : { top, left: clamped };
 }
 
+/**
+ * Bottom-centre of `frame` (the main column), `offset` px above its bottom edge, which is the lower of
+ * the frame and the visual viewport (so a mobile keyboard does not cover it). Centred on the frame and
+ * clamped into the viewport width. `viewport.offsetTop` is `visualViewport.offsetTop` (0 if absent).
+ */
+export function placeBottomCentre(
+  frame: Rect,
+  surface: Size,
+  viewport: Size & { offsetTop?: number },
+  offset = 0
+): { top: number; left: number } {
+  const bottom = Math.min(frame.bottom, (viewport.offsetTop ?? 0) + viewport.height);
+  const top = Math.max(EDGE, bottom - offset - surface.height);
+  const centre = (frame.left + frame.right - surface.width) / 2;
+  const left = Math.max(EDGE, Math.min(centre, viewport.width - surface.width - EDGE));
+  return { top, left };
+}
+
 /** True where CSS anchor positioning is available (guarded: happy-dom has no `CSS.supports`). */
 export function supportsAnchor(): boolean {
   try {

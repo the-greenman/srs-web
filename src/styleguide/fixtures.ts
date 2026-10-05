@@ -4,10 +4,12 @@ import type { AgentStatus, AgentWrite } from "$lib/agent-activity";
 import type { Annotation } from "$lib/annotations";
 import type { Comment } from "$lib/comments";
 import type { Layer } from "$lib/components/LayersPanel.svelte";
+import type { PanelAgent } from "$lib/components/agent-panel";
 import type { MenuAction } from "$lib/components/menu-action";
 import { headerActions } from "$lib/essay/header-actions";
+import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor } from "$lib/srs-client";
-import type { Status } from "$lib/types";
+import type { Diagnostic, Status } from "$lib/types";
 
 export const NOW = Date.parse("2026-10-04T12:00:00Z");
 
@@ -346,6 +348,78 @@ export const longRepoName = `The Limehouse Town Hall Working Group Governance Re
 export const longCallerUrl = `https://relay.example.org/v1/mcp/${LONG_WORD}/0000-1111-2222-3333-4444-5555-6666-7777/session`;
 export const longError = `Connection refused: another tab holds it, or the relay rejected this page origin (executor_origin_forbidden). ${LONG_WORD}`;
 export const longAgentName = `Scribe agent for the quarterly governance review ${LONG_WORD}`;
+export const relays = [
+  { id: "relay:a", label: "Test relay", url: "https://relay.example.org", isDefault: true },
+  {
+    id: "relay:b",
+    label: `Long relay label ${LONG_WORD}`,
+    url: `https://${LONG_WORD}.example.org`,
+    isDefault: false,
+  },
+];
+export const panelAgents: PanelAgent[] = [
+  {
+    conn: { id: "agent:alpha", relayId: "relay:a", lastConnectedAt: at(2) },
+    name: "alpha",
+    relayLabel: "Test relay",
+    state: { status: "online", callerUrl: longCallerUrl, error: null },
+    inUseElsewhere: false,
+  },
+  {
+    conn: { id: "agent:beta", relayId: "relay:a" },
+    name: "beta",
+    relayLabel: "Test relay",
+    state: { status: "rejected", callerUrl: null, error: longError },
+    inUseElsewhere: false,
+  },
+  {
+    conn: { id: "agent:gamma", relayId: "relay:b", lastConnectedAt: at(90) },
+    name: longAgentName,
+    relayLabel: relays[1].label,
+    state: null,
+    inUseElsewhere: false,
+  },
+  {
+    conn: { id: "agent:delta", relayId: "relay:a" },
+    name: "delta",
+    relayLabel: "Test relay",
+    state: null,
+    inUseElsewhere: true,
+  },
+];
+/** The AgentPanel specimen groups (#442): each is relays + agents, rendered at three widths. */
+export const agentGroups = {
+  none: {
+    relays: [] as typeof relays,
+    agents: [
+      {
+        ...panelAgents[3],
+        conn: { id: "agent:seed" },
+        relayLabel: "Relay missing",
+        inUseElsewhere: false,
+      },
+    ],
+  },
+  empty: { relays: [relays[0]], agents: [] as PanelAgent[] },
+  several: { relays, agents: [panelAgents[0], panelAgents[2], panelAgents[3]] },
+  errors: {
+    relays: [relays[0]],
+    agents: [
+      panelAgents[1],
+      {
+        ...panelAgents[1],
+        conn: { id: "agent:eps", relayId: "relay:a" },
+        name: "epsilon",
+        state: { status: "error" as const, callerUrl: null, error: "relay bootstrap failed: 502" },
+      },
+    ],
+  },
+};
+export const agentWidths = [
+  ["20rem", "Rail 20rem"],
+  ["18rem", "Rail 18rem"],
+  ["16rem", "Narrow 16rem"],
+] as const;
 export const longDraftItems = [
   { id: "ld1", label: longLabel },
   { id: "ld2", label: "Short" },
@@ -394,6 +468,12 @@ function fxLongLayers(): Layer[] {
 
 /** Component tokens listed in the Tokens section (names only; values are read from the page). */
 export const componentTokens = [
+  "--agent-panel-gap",
+  "--agent-panel-row-pad",
+  "--agent-panel-row-gap",
+  "--agent-panel-dot-size",
+  "--agent-panel-name-size",
+  "--agent-panel-meta-size",
   "--toolbar-bg",
   "--toolbar-border",
   "--toolbar-gap",
@@ -450,15 +530,15 @@ export const toolbarActions = headerActions(
     oncopy: nop,
     onagent: nop,
     onhelp: nop,
-    onvariant: nop,
     oncomments: nop,
     onsave: nop,
     onexport: nop,
     onexportmd: nop,
     onexplorer: nop,
+    onopenagents: nop,
     onopenanother: nop,
   },
-  { expanded: false, comments: "mixed", saving: false, dirty: true }
+  { shell: new ShellState({ wideEnabled: true }), comments: "mixed", saving: false, dirty: true }
 );
 
 /** Paragraph strip specimens: one-line, titled, and a long title the strip may cover the end of. */
@@ -470,3 +550,40 @@ export const stripText = {
     body: "The strip may cover the end of a long title; that is accepted.",
   },
 };
+
+/** The shell specimen (#424): a nav of two groups with a count, an inspector of two panels, a badge. */
+export const shellFixture = {
+  repo: "Small democracy",
+  navGroups: [
+    {
+      label: "Sections",
+      items: [
+        { label: "Articles", count: 12, active: true },
+        { label: "Roles", count: 4, active: false },
+      ],
+    },
+    {
+      label: "Repository",
+      items: [
+        { label: "Decision log", count: 31, active: false },
+        { label: "Migrations", count: undefined, active: false },
+      ],
+    },
+  ],
+  panels: [
+    { title: "Record", aside: 1, body: "Article 3: How a decision is reopened." },
+    { title: "Validation", aside: 0, body: "No problems found." },
+  ],
+  badge: 3,
+  mainLine: "The main column holds one line here; the bar above carries both drawer triggers.",
+};
+
+/** Diagnostics for the notices specimens: a repeated message so a count shows. */
+export const noticeDiagnostics: Diagnostic[] = [
+  ...Array.from({ length: 3 }, () => ({
+    severity: "warn" as const,
+    message: "[R23] computed heading level 7 exceeds 6 for format 'html'; clamped to 6",
+  })),
+  { severity: "warn", message: "[section:essay] container not found; rendering section as empty" },
+  { severity: "error", message: "view dispatch failed for type governance/decision_log" },
+];

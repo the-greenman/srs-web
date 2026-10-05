@@ -2,7 +2,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
-import { BREAKPOINTS, NARROW, RAIL, tierOf } from "../src/lib/breakpoints";
+import { BREAKPOINTS, DRAWER_INSPECTOR, DRAWER_NAV, NARROW, RAIL, tierOf } from "../src/lib/breakpoints";
 
 const SRC = join(__dirname, "..", "src");
 const walk = (dir: string): string[] =>
@@ -34,6 +34,8 @@ describe("breakpoints", () => {
   it("derived queries embed the BREAKPOINTS values and tierOf picks narrow, compact, full", () => {
     expect(NARROW).toContain(`${BREAKPOINTS.phone}px`);
     expect(RAIL).toContain(`${BREAKPOINTS.rail}px`);
+    expect(DRAWER_NAV).toContain(`${BREAKPOINTS.compact}px`);
+    expect(DRAWER_INSPECTOR).toContain(`${BREAKPOINTS.wide}px`);
     expect([tierOf(true, true), tierOf(false, true), tierOf(false, false)]).toEqual([
       "narrow",
       "compact",

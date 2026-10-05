@@ -9,36 +9,52 @@
      https://github.com/the-greenman/srs-web/issues/3
    ========================================================================== */
 
-/* ── App grid: navigation | workspace | inspector ─────────────────────────── */
+/* ── App grid: navigation | workspace | inspector ───────────────────────────
+   The frame is exactly the viewport and never scrolls itself: each column scrolls its own content
+   (nav: .nav__scroll, main: ONE .workspace, inspector: .inspector__body). The first height line is the one
+   allowed fallback for browsers without dvh. */
 .app {
   display: grid;
   grid-template-columns: var(--nav-width) minmax(0, 1fr) var(--inspector-width);
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.app--no-nav {
+  grid-template-columns: minmax(0, 1fr) var(--inspector-width);
+}
+.app--no-inspector {
+  grid-template-columns: var(--nav-width) minmax(0, 1fr);
+}
+.app--no-nav.app--no-inspector {
+  grid-template-columns: minmax(0, 1fr);
 }
 .app__nav {
   min-width: 0;
+  min-height: 0;
 } /* slot — styled by nav.css */
 .app__inspector {
   min-width: 0;
+  min-height: 0;
 } /* slot — styled by inspector.css */
 .app__main {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ── Topbar: breadcrumb + contextual actions ──────────────────────────────── */
 .topbar {
-  height: var(--topbar-height);
+  min-height: var(--topbar-height);
   display: flex;
   align-items: center;
   gap: var(--space-sm);
   padding: 0 var(--space-md);
+  flex: none;
   border-bottom: var(--rule);
   background: var(--color-surface);
-  position: sticky;
-  top: 0;
-  z-index: var(--z-sticky);
 }
 .topbar__crumb {
   display: flex;
@@ -75,15 +91,39 @@
   align-items: center;
   gap: 8px;
 }
+/* On a phone the buttons wrap rather than being clipped (the frame no longer scrolls sideways), so the
+   inspector trigger at the bar's end stays reachable. Desktop is unchanged. */
+/* bp: compact */
+@media (max-width: 720px) {
+  .topbar__actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+    padding: var(--space-xs) 0;
+  }
+}
+/* The inspector trigger is the last item: right-aligned on its own, flush after the actions when there are some. */
+.topbar > .shell-trigger {
+  margin-left: auto;
+}
+.topbar__actions + .shell-trigger {
+  margin-left: 0;
+}
 
 /* ── Scrolling workspace + centred reading/edit canvas ────────────────────── */
 .workspace {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--space-md);
 }
+/* A scroller whose content brings its own padding (the essay page). */
+.workspace--flush {
+  padding: 0;
+}
 .canvas {
-  max-width: var(--content-max);
+  max-width: var(--canvas-max);
   margin: 0 auto;
 }
 .canvas--wide {
@@ -115,19 +155,11 @@
   gap: 8px;
 }
 
-/* ── Responsive: collapse rails progressively ─────────────────────────────── */
-/* bp: wide */
-@media (max-width: 1100px) {
-  .app {
-    grid-template-columns: var(--nav-width) minmax(0, 1fr);
-  }
-  .app__inspector {
-    display: none;
-  }
-}
+/* Wide (owner D5): one switch widens the content cap and the margin column. The ONE carrier is .app. */
 /* bp: compact */
-@media (max-width: 720px) {
-  .app {
-    grid-template-columns: 1fr;
+@media (min-width: 721px) {
+  .app[data-margin="expanded"] {
+    --content-max: var(--content-max-wide);
+    --margin-width: var(--margin-width-wide);
   }
 }

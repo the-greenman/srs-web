@@ -43,7 +43,10 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 
 | Component | Props (key) | CSS block | Issue |
 |---|---|---|---|
-| `AppShell` | `nav` `main` `inspector?` | `.app` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
+| `AppShell` | `nav?` `main` `inspector?` `wide?` `shell?` | `.app` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3), srs-web [#424](https://github.com/the-greenman/srs-web/issues/424) |
+| `Drawer` | `open` (bindable) `side` `label` `closeOnPick?` (a modal `<dialog>`: the nav and inspector below 720 / 1100px) | `.drawer` | srs-web [#424](https://github.com/the-greenman/srs-web/issues/424) |
+| `ResizeHandle` | `kind` `value` `controls` `onchange` `oncommit` (the one column resizer, used by `Nav` and `Inspector`) | `.resize-handle` | srs-web [#424](https://github.com/the-greenman/srs-web/issues/424) |
+| `NavTrigger` / `InspectorTrigger` | none (read the shell context; render only in drawer mode; the Toolbar puts them in `lead` / `trail`, `Topbar` renders them itself) | `.shell-trigger` | srs-web [#424](https://github.com/the-greenman/srs-web/issues/424) |
 | `Main` / `Topbar` / `Workspace` | snippets, `wide?` | `.app__main` `.topbar` `.workspace` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
 | `Nav` / `NavGroup` / `NavItem` | `repo` `label` `count?` `active?` | `.nav*` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
 | `Inspector` / `Meta` | `title` `aside?` `rows` | `.inspector*` `.meta` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
@@ -54,7 +57,11 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `SaveBar` | `dirtyCount` + action children | `.save-bar` | B9 [#5](https://github.com/the-greenman/srs-web/issues/5) |
 | `Tag` | `status` `onDark?` | `.tag` | B11 [#7](https://github.com/the-greenman/srs-web/issues/7) |
 | `Button` | `variant` `size?` (`md` \| `sm`; `sm` for rails, trays, panels: wraps its label) `onDark?` `active?` | `.btn` | B1 [#2](https://github.com/the-greenman/srs-web/issues/2), B10 [#6](https://github.com/the-greenman/srs-web/issues/6) |
-| `Diagnostics` | `diagnostics` | `.diag*` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3), B13 [#9](https://github.com/the-greenman/srs-web/issues/9) |
+| `Diagnostics` | `diagnostics` `variant?` (`panel` \| `notice`) `documentKey?` `testid?` `expanded?` (grouped by identical message; the notice variant is collapsible and dismissible per document) | `.diag*` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3), B13 [#9](https://github.com/the-greenman/srs-web/issues/9), #441 |
+| `Notice` | `kind?` (`info` \| `success` \| `warning` \| `error`) `onDismiss?` `testid?` (error is `role=alert`, the rest `role=status`) | `.notice` | #441, ADR-020 (j) |
+| `Toast` | `kind?` `text` `testid?` `onDismiss?` (one toast row; the text is aria-hidden) | `.toast` | #441 |
+| `ToastHost` | none (reads the notice store; mounted once by `Main`) | `.toast-host` | #441, ADR-020 (j) |
+| `NoticeRegion` | none (renders the pinned notices; `Main` places it below the bar) | `.notice`, `.diag*` | #441 |
 | `Lifecycle` | `status` `transitions` `onTransition` | `.lifecycle` | B11 [#7](https://github.com/the-greenman/srs-web/issues/7) |
 | `Block` | `id` `title?` `body?` `hidden?` `handle` `margin?` (one right-margin snippet) `onzoom?` `onpull?` `oncopylink?` + callbacks (hover tools + ellipsis menu both render `paragraphActions`) | `.block` | srs-web [#328](https://github.com/the-greenman/srs-web/issues/328) |
 | `InlineText` | `value` `placeholder?` `label` `oncommit` `as?` `editing?` (bindable) | `.inline-text` | srs-web [#363](https://github.com/the-greenman/srs-web/issues/363) |
@@ -75,6 +82,10 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `BlockStack` | `items` `source` `ondrop` `row` snippet `nest?` | `.block-stack` | #328 |
 | `Panel` | `title` `aside?` `open?` `persistKey?` `collapsible?` `actions?` | `.panel` `.panel-rail` | srs-web [#362](https://github.com/the-greenman/srs-web/issues/362) |
 | `AttachmentGlyph` / `HoverCard` / `PinnedPane` | `kind` `title` `text?` `pinned?` `onpin?` / `open?` `anchor?` `static?` `onremove?` / `items` `onunpin` | `.glyph` `.hover-card` `.pinned` | srs-web [#329](https://github.com/the-greenman/srs-web/issues/329) |
+| `AgentPanel` | `relays` `agents` (`PanelAgent[]`, agent-panel.ts) `ctx?` `now` + `onAddRelay/onUpdateRelay/onRemoveRelay/onSetDefault/onConnectNew/onConnect/onDisconnect/onForget/onRename/onRotate/onTakeover` (the agent and relay library as rows; presentational, App owns the stores) | `.agent-panel` | srs-web [#442](https://github.com/the-greenman/srs-web/issues/442) |
+| Toolbar **Go > Agents…** | `agentsAction(run)` in `shell-actions.ts`, fed by `onopenagents` (essay and generic shells, the only two that mount a `Toolbar`). The Guides and Governance shells use a menu-less `Topbar` and rely on the always-present dock | `toolbar-agents` | #442 |
+| `Disclosure` | `label` `open?` (bindable) `testid?` (ghost `Button` + chevron + `aria-expanded`; `Panel` stays `<details>`) | `.disclosure` | #442 |
+| `McpConnection` | `status` `callerUrl?` `error?` `onTakeover?` (the per-agent detail block under an `AgentPanel` row) | `.mcp-conn` | #307, #442 |
 | `LayersPanel` | `layers` `ondrop` `onhide` `onfold` `onkey` (touch: per-row ellipsis menu via `ActionMenu`) | `.layers` | #328, [#382](https://github.com/the-greenman/srs-web/issues/382) |
 | `ActionMenu` | `actions` (`MenuAction[]` from `menu-action.ts`, `icon` is a Lucide component; `essay/paragraph-actions.ts` builds the paragraph list) `label` `testid?` `focusKey?` `placement?` (a `Popover role="menu"`) | `.action-menu` | srs-web [#382](https://github.com/the-greenman/srs-web/issues/382) |
 | `DraftTray` / `BinTray` | `items` `available?` `ondrop` `onputback` / `items` `onrestore` `onforget` | `.tray` `.draft-tray` `.bin-tray` | #328, #397 |

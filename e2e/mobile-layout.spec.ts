@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { devices, expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { openInspectorDrawer, openNavDrawer } from "./helpers.js";
 
 /** srs-web#383: phone layout of the essay editor (text width, header overflow, inline margin, thread/zoom/help). */
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
@@ -12,12 +13,8 @@ async function open(page: Page) {
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page.locator('input[type="file"]#srsj-file').setInputFiles(ESSAY);
-  await page
-    .getByTestId("package-editor-mobile-essay")
-    .or(page.getByTestId("package-editor-essay"))
-    .locator("visible=true")
-    .first()
-    .tap();
+  await openNavDrawer(page);
+  await page.getByTestId("package-editor-essay").tap();
   await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
 }
 
@@ -36,6 +33,8 @@ for (const { name, viewport } of widths) {
       await open(page);
       const box = (await page.locator(".essay-shell__page .block__render").first().boundingBox())!;
       expect(box.width / viewport.width).toBeGreaterThanOrEqual(0.85);
+      // The panels live in the closed inspector drawer: open it, then they start collapsed.
+      await openInspectorDrawer(page);
       for (const title of ["Layers", "Draft"]) {
         await expect(page.locator("details.panel", { hasText: title }).first()).not.toHaveAttribute(
           "open",
@@ -48,6 +47,7 @@ for (const { name, viewport } of widths) {
       await open(page);
       expect((await page.getByTestId("toolbar").boundingBox())!.height).toBeLessThan(72);
       await expect(page.getByTestId("comment-mode")).toBeHidden();
+      await expect(page.getByTestId("inspector-trigger")).toBeVisible(); // the rail's trigger sits in the bar
       await page.getByTestId("header-menu").tap();
       for (const id of [
         "new-document",
@@ -62,6 +62,26 @@ for (const { name, viewport } of widths) {
       }
       await page.getByTestId("comment-mode").tap();
       await expect(page.getByTestId("comment-thread").first()).toBeVisible();
+    });
+
+    test("a toast fits the phone width and does not cover the Toolbar (#441)", async ({
+      page,
+      context,
+    }) => {
+      await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+      await page.clock.install();
+      await open(page);
+      await page.getByTestId("header-menu").tap();
+      await page.clock.pauseAt(new Date(Date.now() + 1000)); // freeze: a loaded machine must not outlive the toast
+      await page.getByTestId("copy-for-agent").tap();
+      const toast = page.locator(".toast-host .toast").first();
+      await expect(toast).toBeVisible();
+      const t = (await toast.boundingBox())!;
+      const bar = (await page.getByTestId("toolbar").boundingBox())!;
+      expect(t.x).toBeGreaterThanOrEqual(0);
+      expect(t.x + t.width).toBeLessThanOrEqual(viewport.width);
+      expect(t.y).toBeGreaterThanOrEqual(bar.y + bar.height);
+      expect(t.y + t.height).toBeLessThanOrEqual(viewport.height);
     });
 
     test("margin badge sits inline in the title row", async ({ page }) => {

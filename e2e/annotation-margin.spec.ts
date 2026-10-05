@@ -31,7 +31,7 @@ test("1920 expanded: no row meets the rail or leaves the page; compact at 1280 s
 }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   await annotate(page);
-  const shell = page.locator(".essay-shell");
+  const shell = page.locator(".app");
   await expect(shell).toHaveAttribute("data-margin", "compact");
   const block = items(page).nth(1);
   await expect(block.locator('[data-part="row"]').first()).toBeVisible();
@@ -92,7 +92,7 @@ test("expanded: a one-line paragraph with 4 annotations has no vertical gap; +N 
   const id = (await items(page).nth(0).locator("[data-block-id]").getAttribute("data-block-id")) as string;
   for (let i = 1; i <= 4; i++) await attach(1, `${LONG} ${i}`, `Body ${i}`, id);
   await menuItem(page, "View", "margin-variant");
-  await expect(page.locator(".essay-shell")).toHaveAttribute("data-margin", "expanded");
+  await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
   const more = block.getByTestId("margin-more");
   await expect(more).toBeVisible();
   const shown = await block.locator('.margin > [data-part="row"]').count();

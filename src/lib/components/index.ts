@@ -10,6 +10,10 @@
 // Layout shell
 export { default as AppShell } from "./AppShell.svelte";
 export { default as Breadcrumb } from "./Breadcrumb.svelte";
+export { default as Drawer } from "./Drawer.svelte";
+export { default as InspectorTrigger } from "./InspectorTrigger.svelte";
+export { default as NavTrigger } from "./NavTrigger.svelte";
+export { default as ResizeHandle } from "./ResizeHandle.svelte";
 export { default as Main } from "./Main.svelte";
 export { default as Topbar } from "./Topbar.svelte";
 export { default as Workspace } from "./Workspace.svelte";
@@ -54,6 +58,10 @@ export { default as TagChip } from "./TagChip.svelte";
 export { default as Button } from "./Button.svelte";
 export { default as IconButton } from "./IconButton.svelte";
 export { default as Diagnostics } from "./Diagnostics.svelte";
+export { default as Notice } from "./Notice.svelte";
+export { default as NoticeRegion } from "./NoticeRegion.svelte";
+export { default as Toast } from "./Toast.svelte";
+export { default as ToastHost } from "./ToastHost.svelte";
 export { default as Lifecycle } from "./Lifecycle.svelte";
 
 // Shared types
@@ -68,6 +76,9 @@ export type {
 
 // MCP relay connection (srs-web#307)
 export { default as McpConnection } from "./McpConnection.svelte";
+export { default as AgentPanel } from "./AgentPanel.svelte";
+export { default as Disclosure } from "./Disclosure.svelte";
+export type { PanelAgent } from "./agent-panel.js";
 
 // Essay editor writing surface (srs-web#328)
 export { default as Block } from "./Block.svelte";

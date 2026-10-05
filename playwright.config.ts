@@ -36,6 +36,8 @@ export default defineConfig({
     command: `npm run dev -- --port ${port}`,
     url: baseURL,
     reuseExistingServer: true,
+    // A process variable beats every .env* file: a developer's .env.local relay cannot leak into the suite.
+    env: { VITE_MCP_RELAY_URL: "" },
     timeout: 30000,
   },
 })

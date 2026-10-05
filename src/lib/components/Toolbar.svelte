@@ -11,7 +11,7 @@
   action carries them), never as a menu. Checkable actions are View-style toggles (menuitemcheckbox); on
   the full and compact tiers choosing one leaves the menu open, in the narrow overflow it closes.
   `tier` forces a tier. The Toolbar never imports from essay/.
-  Tokens `--toolbar-*`; parts `bar lead title status primary menu overflow`. Wraps .toolbar (toolbar.css).
+  Tokens `--toolbar-*`; parts `bar lead title status primary menu overflow trail`. Wraps .toolbar (toolbar.css).
 -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
@@ -28,6 +28,7 @@
     titleSlot,
     status,
     lead,
+    trail,
     actions,
     groups,
     tier: forced,
@@ -39,8 +40,10 @@
     titleSlot?: Snippet;
     /** Status text/spans (role="status" is the caller's, with its own testids). */
     status?: Snippet;
-    /** First in the bar; empty here, #424 places its nav-drawer trigger in it. */
+    /** First in the bar: the shell's nav-drawer trigger (#424). */
     lead?: Snippet;
+    /** Last in the bar, after the menus, at every tier: the shell's inspector-drawer trigger (#424). */
+    trail?: Snippet;
     actions: ToolbarAction[];
     /** Menu groups in order: id, label, icon (compact trigger / lone-action icon). */
     groups: { id: string; label: string; icon?: IconComponent }[];
@@ -144,4 +147,5 @@
       {/each}
     {/if}
   </div>
+  {#if trail}<div class="toolbar__trail" data-part="trail">{@render trail()}</div>{/if}
 </header>

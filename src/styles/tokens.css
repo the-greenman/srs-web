@@ -102,10 +102,13 @@
 
   /* ── App layout dimensions ──────────────────────────────────────────────── */
   --nav-width: 264px;
-  --inspector-width: 320px;
+  --inspector-width: 20rem;
   --topbar-height: 56px;
-  --content-max: 820px;
-  --rail-width: 18rem;
+  /* Governance and Guides canvas cap (deleted with Workspace wide in PR-B). */
+  --canvas-max: 820px;
+  /* Converted shells (Essay, Generic): the content cap; Wide swaps in --content-max-wide. */
+  --content-max: 46rem;
+  --content-max-wide: 80rem;
 }
 
 /* Comfortable touch targets on coarse pointers */

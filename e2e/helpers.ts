@@ -13,9 +13,30 @@ import type { Page } from "@playwright/test";
  */
 export async function openPackageEditor(
   page: Page,
-  editor: "governance" | "guides"
+  editor: "governance" | "guides" | "essay"
 ): Promise<void> {
+  await openNavDrawer(page); // the picker is in the nav, a drawer on a phone; a no-op above 720px
   await page.getByTestId(`package-editor-${editor}`).click();
+}
+
+/**
+ * Open the nav drawer when the nav is one (<= 720px); a no-op above that, so one spec body works at any
+ * width. A closed drawer's contents are not visible, so any spec at a drawer width reaches nav content
+ * only through this (#424).
+ */
+export async function openNavDrawer(page: Page): Promise<void> {
+  const trigger = page.getByTestId("nav-trigger");
+  if (!(await trigger.isVisible())) return;
+  await trigger.click();
+  await expect(page.getByTestId("shell-drawer-nav")).toBeVisible();
+}
+
+/** Open the inspector drawer when the inspector is one (<= 1100px); a no-op above that. */
+export async function openInspectorDrawer(page: Page): Promise<void> {
+  const trigger = page.getByTestId("inspector-trigger");
+  if (!(await trigger.isVisible())) return;
+  await trigger.click();
+  await expect(page.getByTestId("shell-drawer-inspector")).toBeVisible();
 }
 
 /**
@@ -30,19 +51,33 @@ export async function acceptMigration(page: Page, ...ids: string[]): Promise<voi
   await expect(prompt).not.toBeVisible();
 }
 
-/** One relay channel per agent, each opened from the Agents panel; returns the MCP helpers. */
-export async function connectAgents(page: Page, essayPath: string, count: number) {
-  let minted = 0;
-  await page.route("https://relay.test/v1/channels", (route) => {
-    const k = ++minted;
+/**
+ * Mock a relay's channel bootstrap (POST https://<host>/v1/channels). Each call mints c<k>/CALLER<k>/EXEC<k>
+ * for a per-call counter k, or the fixed c/CALLER/EXEC when `fixed` (the single-agent specs). `refuse`
+ * answers 400 invalid_origin instead. The executor WebSocket handlers differ per spec and stay local.
+ */
+export async function routeRelayChannels(
+  page: Page,
+  o: { host?: string; fixed?: boolean; refuse?: boolean } = {}
+): Promise<void> {
+  const host = o.host ?? "relay.test";
+  let k = 0;
+  await page.route(`https://${host}/v1/channels`, (route) => {
+    if (o.refuse) return route.fulfill({ status: 400, json: { error: "invalid_origin" } });
+    const n = o.fixed ? "" : String(++k);
     return route.fulfill({
       json: {
-        channel: `c${k}`,
-        callerUrl: `https://relay.test/v1/channels/c${k}/call/CALLER${k}`,
-        executorUrl: `wss://relay.test/v1/channels/c${k}/executor/EXEC${k}`,
+        channel: `c${n}`,
+        callerUrl: `https://${host}/v1/channels/c${n}/call/CALLER${n}`,
+        executorUrl: `wss://${host}/v1/channels/c${n}/executor/EXEC${n}`,
       },
     });
   });
+}
+
+/** One relay channel per agent, each opened from the Agents panel; returns the MCP helpers. */
+export async function connectAgents(page: Page, essayPath: string, count: number) {
+  await routeRelayChannels(page);
   const sockets = new Map<number, { send: (f: unknown) => void; url: string }>();
   const replies = new Map<string, (r: { status: number; body?: string }) => void>();
   await page.routeWebSocket(/relay\.test.*executor/, (ws) => {
@@ -149,10 +184,13 @@ export async function connectAgents(page: Page, essayPath: string, count: number
   return { rpc, tool, comment, attach, relate };
 }
 
+/** Open menus and popovers; the toast host is a popover too, and is not a menu. */
+export const openMenus = (page: Page) => page.locator(":popover-open:not(.toast-host)");
+
 /** Open a Toolbar group menu (wide tiers); a no-op when it is already open. */
 export async function openMenu(page: Page, group: "Document" | "View" | "Go"): Promise<void> {
   // Read the real popover state: aria-expanded follows the toggle event a tick later.
-  if ((await page.locator(":popover-open").count()) === 0) {
+  if ((await openMenus(page).count()) === 0) {
     await page.getByRole("button", { name: group, exact: true }).click();
   }
 }
@@ -160,7 +198,7 @@ export async function openMenu(page: Page, group: "Document" | "View" | "Go"): P
 /** Escape, then wait until no popover is open (the toggle event lands a tick after the key). */
 export async function closeMenus(page: Page): Promise<void> {
   await page.keyboard.press("Escape");
-  await expect(page.locator(":popover-open")).toHaveCount(0);
+  await expect(openMenus(page)).toHaveCount(0);
 }
 
 /** Open a group menu, click one item, and close the menu again (View stays open on toggle). */
@@ -171,7 +209,7 @@ export async function menuItem(
 ): Promise<void> {
   await openMenu(page, group);
   await page.getByTestId(testid).click();
-  if ((await page.locator(":popover-open").count()) > 0) await closeMenus(page);
+  if ((await openMenus(page).count()) > 0) await closeMenus(page);
 }
 
 /** The Comments toggle's aria-checked ("true" | "false" | "mixed"), read through the View menu. */

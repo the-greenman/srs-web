@@ -9,10 +9,13 @@
   import {
     ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
-    LayersPanel, MarkdownHelp, MarkdownText, McpConnection, Panel, AnnotationMargin, PinnedPane, Select, Tag,
-    TagChip, Textarea,
+    LayersPanel, MarkdownHelp, MarkdownText, AgentPanel, Panel, AnnotationMargin, PinnedPane, Select, Tag,
+    TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost,
   } from "$lib/components";
+  import LiveRegions from "$lib/components/LiveRegions.svelte";
+  import { notify } from "$lib/notices.svelte";
   import ToolbarSpecimen from "./styleguide/ToolbarSpecimen.svelte";
+  import ShellSpecimen from "./styleguide/ShellSpecimen.svelte";
   import Frame from "./styleguide/Frame.svelte";
   import Icons from "./styleguide/icons";
   import { initWasm } from "$lib/srs-client";
@@ -32,9 +35,18 @@
     ["annotations", "Annotations and comments"],
     ["paragraph", "Paragraph"],
     ["panels", "Panels and trays"],
+    ["agents", "Agent library"],
+    ["shell", "Page frame"],
+    ["notices", "Notices"],
     ["forms", "Form controls"],
   ];
 
+  const agentGroupTitles: Record<string, string> = {
+    none: "No relay (a seeded agent stays hidden)",
+    empty: "One relay, no agents",
+    several: "Several relays and agents: online, saved with a long name, in use elsewhere",
+    errors: "Connection errors: rejected and failed",
+  };
   let theme = $state("Default");
   let wasm = $state<"loading" | "ready" | string>("loading");
   let swatchValues = $state<Record<string, string>>({});
@@ -110,22 +122,11 @@
   {@render gated(pinnedPane)}
   <Panel title="Agents">
     <AgentFeed status={fx.agentStatus} now={fx.NOW} paragraphLabel={fx.paragraphLabel} onselect={noop} />
-    <div class="mcp-agents">
-      <McpConnection
-        status="online" callerUrl={fx.longCallerUrl} repositoryName={fx.longRepoName}
-        actor={fx.agents[0]} lastActivity="titled ¶ Opening · 2 min ago"
-        onDisconnect={noop} onRotate={noop} onTakeover={noop}
-      />
-      <McpConnection
-        status="rejected" error={fx.longError} repositoryName={fx.longRepoName}
-        agentName={fx.longAgentName} onDisconnect={noop} onTakeover={noop}
-      />
-      <div class="mcp-conn__actions" data-testid="mcp-library-item">
-        <strong>{fx.longAgentName}</strong>
-        <Button size="sm" variant="secondary" onclick={noop}>Connect</Button>
-        <Button size="sm" variant="ghost" onclick={noop}>Forget</Button>
-      </div>
-    </div>
+    <AgentPanel
+      relays={fx.relays} agents={fx.panelAgents} now={fx.NOW}
+      onAddRelay={() => null} onUpdateRelay={() => null} onRemoveRelay={() => null} onSetDefault={noop}
+      onConnectNew={noop} onConnect={noop} onDisconnect={noop} onForget={noop} onRename={noop} onRotate={noop} onTakeover={noop}
+    />
   </Panel>
   <Panel title="Comments">{@render gated(thread)}</Panel>
 {/snippet}
@@ -398,10 +399,79 @@
       <Panel title="Panel" aside={3}><p>Panel body.</p></Panel>
       <Panel title="Static" collapsible={false}><p>Not collapsible.</p></Panel>
     </div>
-    <p>Rail components at the real rail width (18rem) and a narrow width (15rem), with long text.</p>
+    <p>Rail components at the real inspector width (20rem) and a narrow width (15rem), with long text.</p>
     <div class="sg__rails">
-      <Frame width="var(--rail-width)" caption="Rail 18rem">{@render rail()}</Frame>
+      <Frame width="var(--inspector-width)" caption="Inspector 20rem">{@render rail()}</Frame>
       <Frame width="15rem" caption="Narrow 15rem">{@render rail()}</Frame>
+    </div>
+  </section>
+
+  <section id="agents">
+    <h2>Agent library</h2>
+    <p>The AgentPanel: rows, never headings. Each state at the rail widths (20rem, 18rem) and a narrow width (16rem).</p>
+    {#each Object.entries(fx.agentGroups) as [name, g] (name)}
+      <h3>{agentGroupTitles[name]}</h3>
+      <div class="sg__rails" data-testid="sg-agent-{name}">
+        {#each fx.agentWidths as [width, caption] (width)}
+          <Frame {width} {caption} testid="sg-agent-frame">
+            <AgentPanel
+              relays={g.relays} agents={g.agents} now={fx.NOW}
+              onAddRelay={() => null}
+              onUpdateRelay={() => null} onRemoveRelay={() => null} onSetDefault={noop}
+              onConnectNew={noop} onConnect={noop} onDisconnect={noop} onForget={noop} onRename={noop} onRotate={noop} onTakeover={noop}
+            />
+          </Frame>
+        {/each}
+      </div>
+    {/each}
+  </section>
+
+  <section id="shell">
+    <h2>Page frame</h2>
+    <p class="sg__note">One frame for every editor: a 100dvh grid whose nav and inspector scroll themselves. At or below 720px the nav,
+      and at or below 1100px the inspector, are drawers opened from the bar. Shown at 375px: both closed, the nav drawer open, the
+      inspector drawer open (badge = unseen activity). The drawer is drawn statically here; the live one is a modal dialog.</p>
+    <div class="sg__shells">
+      {#each [["none", "Drawers closed"], ["nav", "Nav drawer open"], ["inspector", "Inspector drawer open"]] as const as [open, caption]}
+        <figure class="sg__figure">
+          <figcaption>{caption}</figcaption>
+          <ShellSpecimen {open} />
+        </figure>
+      {/each}
+    </div>
+    <h3>Wide: the content cap, off and on</h3>
+    <div class="sg__row">
+      {#each [["Wide off: --content-max 46rem", "var(--content-max)"], ["Wide on: --content-max-wide 80rem", "var(--content-max-wide)"]] as [caption, cap]}
+        <figure class="sg__figure" data-testid="sg-wide">
+          <figcaption>{caption}</figcaption>
+          <div class="sg__frame"><div class="sg__capbar" style:max-width={cap}>content</div></div>
+        </figure>
+      {/each}
+    </div>
+  </section>
+
+  <section id="notices">
+    <h2>Notices</h2>
+    <p class="sg__note">A toast is a transient event (bottom-centre of the main column; errors are sticky), a Notice is persistent
+      state, Diagnostics groups the engine's findings by identical message. Specimens are drawn statically; the button fires the real toast.</p>
+    <h3>Toast</h3>
+    <div class="stack">
+      <Toast data-specimen kind="info" text="Saved. Newer changes remain unsaved." testid="specimen-toast-info" />
+      <Toast data-specimen kind="success" text="Link copied" testid="specimen-toast-success" />
+      <Toast data-specimen kind="error" text="Could not save: the folder is read-only." testid="specimen-toast-error" />
+      <Button variant="secondary" data-testid="specimen-fire-toast" onclick={() => notify({ kind: "success", key: "sg", text: "Link copied" })}>Fire toast</Button>
+    </div>
+    <h3>Notice</h3>
+    <div class="stack">
+      <Notice data-specimen kind="info" testid="specimen-notice-info">This link points to a paragraph that is no longer here.</Notice>
+      <Notice data-specimen kind="warning" testid="specimen-notice-warning">2 size warnings: the document is large.</Notice>
+      <Notice data-specimen kind="error" testid="specimen-notice-error" onDismiss={noop}>Could not export: the engine refused the view.</Notice>
+    </div>
+    <h3>Diagnostics</h3>
+    <div class="stack">
+      <div data-testid="specimen-diagnostics-collapsed"><Diagnostics data-specimen variant="notice" diagnostics={fx.noticeDiagnostics} documentKey="sg-collapsed" /></div>
+      <div data-testid="specimen-diagnostics-expanded"><Diagnostics data-specimen variant="notice" diagnostics={fx.noticeDiagnostics} documentKey="sg-expanded" expanded /></div>
+      <div data-testid="specimen-diagnostics-panel"><Diagnostics diagnostics={fx.noticeDiagnostics} /></div>
     </div>
   </section>
 
@@ -415,3 +485,5 @@
     </div>
   </section>
 </main>
+<LiveRegions />
+<ToastHost />

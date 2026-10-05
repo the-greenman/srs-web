@@ -1,47 +1,24 @@
 /* ============================================================================
    component: essay-shell (.essay-shell) — page frame of the essay editor
-   Writing column (a white page) + a side rail (layers, draft, agents) as a .panel-rail. Stacks on narrow screens.
+   The writing column (a white page) in the shell's flush .workspace; the rail (layers, draft, agents) is the
+   inspector column, or its drawer below 1100px. Frame, scroll and Wide: layout.css, AppShell (#424).
    Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
    ========================================================================== */
 .essay-shell {
-  min-height: 100vh;
   background: var(--color-bg);
   color: var(--color-text);
 }
 .essay-shell__narrow-icon {
   display: none;
 }
-.essay-shell__status {
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-}
-.essay-shell__error {
-  margin: var(--space-xs) var(--space-sm);
-  padding: 8px 12px;
-  border: 1px solid var(--color-text-strong);
-  font-size: var(--size-sm);
-}
-.essay-shell__grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--rail-width);
-  gap: var(--space-md);
-  /* The page and the rail never shrink to make room for a wide margin: the grid grows with it. */
-  max-width: calc(72rem + var(--margin-width) - var(--margin-width-compact));
-  margin: 0 auto;
-  padding: var(--space-md) var(--space-sm);
-}
-/* The wide margin is a real column: the text column keeps its width and the page grows by the extra. */
-/* bp: compact */
-@media (min-width: 721px) {
-  .essay-shell[data-margin="expanded"] {
-    --margin-width: var(--margin-width-wide);
-  }
-}
+/* The page sits in the flush .workspace (the one scroller). Its cap is the content cap, which Wide widens
+   (--content-max on .app: read here, on the element, so the override is seen), plus the margin column's
+   growth, so the margin never crosses the page edge. */
 .essay-shell__page {
   min-width: 0;
-  max-width: calc(var(--essay-page-width) + var(--margin-width) - var(--margin-width-compact));
-  width: 100%;
-  margin: 0 auto;
+  max-width: calc(var(--content-max) + var(--margin-width) - var(--margin-width-compact));
+  width: calc(100% - 2 * var(--space-sm));
+  margin: var(--space-md) auto;
   padding: var(--space-md) var(--space-md) var(--space-lg);
   background: var(--color-page);
   border: var(--rule-soft);
@@ -64,12 +41,6 @@
 .essay-shell__empty {
   padding: var(--space-md);
 }
-/* bp: rail */
-@media (max-width: 960px) {
-  .essay-shell__grid {
-    grid-template-columns: 1fr;
-  }
-}
 /* bp: compact */
 @media (max-width: 720px) {
   .essay-shell__page {
@@ -89,15 +60,10 @@
    a one-row zoom bar. Mirror of NARROW in src/lib/breakpoints.ts. */
 /* bp: phone */
 @media (max-width: 480px) {
-  .essay-shell__grid {
-    padding: var(--space-xs) 0;
-    gap: var(--space-xs);
-  }
-  /* The page runs edge to edge; the stacked panels below it keep a side gutter. */
-  .essay-shell__grid > .panel-rail {
-    padding: 0 var(--space-sm);
-  }
+  /* The page runs edge to edge. */
   .essay-shell__page {
+    width: 100%;
+    margin: var(--space-xs) auto;
     padding: var(--space-xs) var(--space-sm);
     border-left: 0;
     border-right: 0;

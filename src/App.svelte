@@ -15,6 +15,7 @@
   B11 lifecycle & supersession:   https://github.com/the-greenman/srs-web/issues/7
 -->
 <script lang="ts">
+  import Notice from '$lib/components/Notice.svelte';
   import {
     initWasm,
     loadRepo,
@@ -31,6 +32,7 @@
   } from "$lib/srs-client.js";
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
   import { acquireChannelLock, releaseChannelLock, channelsInUseElsewhere, connections, credsKey, type AgentConnection } from "$lib/agent-connections.js";
+  import { relays } from "$lib/relay-library.js";
   import { observeSession, pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
   import { listRelations, listTypes, type AgentWriteGuard, type McpSession, type SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
@@ -44,11 +46,11 @@
   import GitSaveModal from "$lib/components/GitSaveModal.svelte";
   import Panel from "$lib/components/Panel.svelte";
   import AgentPresence from "$lib/components/AgentPresence.svelte";
-  import McpConnection from "$lib/components/McpConnection.svelte";
-  import Button from "$lib/components/Button.svelte";
-  import Input from "$lib/components/Input.svelte";
+  import AgentPanel from "$lib/components/AgentPanel.svelte";
+  import type { PanelAgent } from "$lib/components/agent-panel.js";
   import { RelayHost, type HostState } from "$lib/mcp/relay-host.js";
-  import { untrack } from "svelte";
+  import { tick, untrack } from "svelte";
+  import { notify, pinNotice, resetNotices, toUiDiagnostic, unpinNotice, type NoticeKind } from "$lib/notices.svelte.js";
   import { slugifyFilename } from "$lib/slug.js";
   import {
     createStorageProvidersFromEnv,
@@ -87,7 +89,6 @@
 
   /** Document-level Save (write-capable cloud/git handles only). */
   let saving = $state(false);
-  let saveMessage = $state<string | null>(null);
   /** Git Save dialog (branch choice + install hint) state. */
   let gitSaveOpen = $state(false);
   let gitSaveError = $state<string | null>(null);
@@ -124,8 +125,6 @@
    * diagnostic, not a silent omission — the repository still opens, so the
    * only way the user learns an object was rejected is if we show it.
    */
-  let catalogDiagnostics = $state<{ severity: string; message: string }[]>([]);
-  let catalogDiagnosticsOpen = $state(true);
 
   /** Cached working copy loaded from localStorage on WASM init. */
   let cachedSession = $state<WorkingCopyEntry | null>(null);
@@ -200,6 +199,17 @@
     if (repo) applyActor(repo);
   });
 
+  /** A new document: drop the old one's toasts, dismissals and catalog notice (the load path pins its own after). */
+  function clearNotices(): void {
+    resetNotices();
+    unpinNotice("catalog");
+  }
+
+  /** One save-result toast: the single "save" key, so a later result replaces an earlier (even a sticky error). */
+  const saveToast = (kind: NoticeKind, text: string, duration?: number): void => {
+    notify({ kind, key: "save", text, testid: "save-status", duration });
+  };
+
   function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
     // Every load path passes through here: from now on each engine write reports itself.
     if (repo) {
@@ -207,6 +217,7 @@
       applyActor(repo);
       void resolveSignedInActor();
     }
+    clearNotices();
     workingCopy.cancel();
     workingCopySaved = true;
     const revision = documentMutations.beginDocument(repo?.write_epoch() ?? 0, { dirty });
@@ -271,21 +282,30 @@
   // a storage provider — persistence stays an explicit Save/Export.
   // ---------------------------------------------------------------------------
 
-  // `localStorage["srs-web.mcp-relay-url"]` is a runtime override for dev/e2e.
-  const relayUrl =
-    import.meta.env.VITE_MCP_RELAY_URL ||
-    (() => {
-      try {
-        return localStorage.getItem("srs-web.mcp-relay-url") ?? "";
-      } catch {
-        return "";
-      }
-    })();
+  // Relays are a user-managed library (srs-web#442, relay-library.ts); each agent is bound to one.
+  let relayList = $state(relays.list());
+  /** Bind agents that predate the library to the default relay (called after every relay change). */
+  function adoptRelays() {
+    const d = relayList.find((r) => r.isDefault);
+    if (d) library = [...connections.adoptRelay(d.id)];
+  }
+  const relayError = (r: { relays: typeof relayList } | { error: string }, done?: string): string | null => {
+    if ("error" in r) return r.error;
+    relayList = r.relays;
+    adoptRelays();
+    if (done) notify({ kind: "info", key: "agents", text: done });
+    return null;
+  };
+  const addRelay = (label: string, url: string) => relayError(relays.add(label, url), "Relay added");
+  const updateRelay = (id: string, patch: { label?: string; url?: string }) => relayError(relays.update(id, patch));
+  const removeRelay = (id: string) => relayError(relays.remove(id), "Relay removed");
+  function setDefaultRelay(id: string) {
+    relayList = relays.setDefault(id);
+  }
   // One relay channel + MCP session per agent connection (srs-web#358), each with its own
   // host-minted actor id. `agents` is the reactive view; hosts/sessions are managed here only.
   type Agent = { conn: AgentConnection; state: HostState };
   let agents = $state<Agent[]>([]);
-  let newAgentLabel = $state("");
   /** Agent writes observed at each session boundary (agent-activity.ts), newest first. */
   let agentWrites = $state<AgentWrite[]>([]);
   /** Client-reported names (MCP initialize clientInfo); the engine's actor name is label, else this. */
@@ -299,17 +319,44 @@
   });
   /** Saved channels (the library) and those held by another tab (Web Locks). */
   let library = $state<AgentConnection[]>(connections.list());
+  adoptRelays();
   let inUse = $state<Set<string>>(new Set());
   const refreshInUse = () => void channelsInUseElsewhere().then((s) => (inUse = s));
+  /** The floating dock starts open only once a relay exists: with none it would sit over the page's own controls. */
+  let dockOpen = $state(relays.list().length > 0);
+  /** Go > Agents…: expand the dock and focus its first control. */
+  async function openDock() {
+    dockOpen = true;
+    await tick();
+    document.querySelector<HTMLElement>('.mcp-dock [data-testid="agent-panel"] button, .mcp-dock [data-testid="agent-panel"] input')?.focus();
+  }
+  /** The 15 s clock for "Connected 2 min ago" (EssayShell keeps its own). */
+  let agentNow = $state(Date.now());
+  $effect(() => {
+    const t = setInterval(() => (agentNow = Date.now()), 15000);
+    return () => clearInterval(t);
+  });
+  const panelAgents = $derived<PanelAgent[]>(
+    library.map((conn) => ({
+      conn,
+      name: agentName(conn),
+      relayLabel: relayList.find((r) => r.id === conn.relayId)?.label ?? "Relay missing",
+      state: agents.find((a) => a.conn.id === conn.id)?.state ?? null,
+      inUseElsewhere: inUse.has(conn.id),
+    }))
+  );
   const hosts = new Map<string, { host: RelayHost; session: McpSession | null }>();
-  const setAgentState = (id: string, state: HostState) =>
-    (agents = agents.map((a) => (a.conn.id === id ? { ...a, state } : a)));
+  const setAgentState = (id: string, state: HostState) => {
+    if (state.status === "online" && agents.find((a) => a.conn.id === id)?.state.status !== "online")
+      library = [...connections.touch(id)];
+    agents = agents.map((a) => (a.conn.id === id ? { ...a, state } : a));
+  };
   function hostFor(conn: AgentConnection): RelayHost {
     let h = hosts.get(conn.id);
     if (!h) {
       h = {
         host: new RelayHost({
-          relayUrl,
+          relayUrl: relays.get(conn.relayId)?.url ?? "",
           storageKey: credsKey(conn.id),
           onHandled: () => void syncDocument(),
           onChange: (s) => setAgentState(conn.id, s),
@@ -377,13 +424,18 @@
   /** Open a saved channel in this tab, only if no other tab holds it. */
   async function openChannel(conn: AgentConnection) {
     if (agents.some((a) => a.conn.id === conn.id)) return;
+    if (!relays.get(conn.relayId)) return; // unbound or relay missing: cannot connect
     if (!(await acquireChannelLock(conn.id))) return refreshInUse();
     agents = [...agents, { conn, state: { status: "idle", callerUrl: null, error: null } }];
     openAgentSession(conn, repo);
   }
-  function connectAgent(label?: string) {
-    library = [...connections.add(label)];
+  function connectAgent(label: string | undefined, relayId: string) {
+    library = [...connections.add(label, relayId)];
     void openChannel(library[library.length - 1]);
+  }
+  /** Disconnected agents only: the actor name is fixed when a session opens. */
+  function renameAgent(id: string, label: string) {
+    library = [...connections.rename(id, label)];
   }
   /** Detach in this tab; the channel and its credentials stay in the library. */
   function disconnectAgent(id: string) {
@@ -398,11 +450,11 @@
   function forgetAgent(id: string) {
     disconnectAgent(id);
     library = [...connections.remove(id)];
+    notify({ kind: "info", key: "agents", text: "Agent forgotten" });
   }
 
   $effect(() => {
     const current = repo;
-    if (!relayUrl) return;
     untrack(() => {
       agentWrites = []; // a new repository: earlier writes name instances that are gone
       for (const { conn } of agents) openAgentSession(conn, current);
@@ -410,7 +462,7 @@
   });
 
   $effect(() => {
-    if (!relayUrl) return;
+    if (library.length === 0) return;
     refreshInUse();
     window.addEventListener("focus", refreshInUse);
     document.addEventListener("visibilitychange", refreshInUse);
@@ -471,10 +523,20 @@
         beginDocument({ dirty });
         repoName = stripSrsExtension(handle.name);
         cachedSession = null;
-        saveMessage = dirty ? "Migrated to the current data model. Unsaved - Save to keep it." : null;
-        if (dirty) saveWorkingCopy(repoName, exportSrsj(loaded));
-        catalogDiagnostics = collectCatalogDiagnostics(loaded);
-        catalogDiagnosticsOpen = true;
+        if (dirty) {
+          saveToast("info", "Migrated to the current data model. Unsaved - Save to keep it.", 8000);
+          saveWorkingCopy(repoName, exportSrsj(loaded));
+        }
+        const catalog = collectCatalogDiagnostics(loaded);
+        if (catalog.length) {
+          pinNotice({
+            key: "catalog",
+            documentKey: repoName,
+            kind: "warning",
+            diagnostics: catalog.map(toUiDiagnostic),
+            testid: "catalog-diagnostics",
+          });
+        }
         appState = "loaded";
       });
     } catch (e: unknown) {
@@ -541,7 +603,6 @@
     beginDocument();
     repoName = name;
     cachedSession = null;
-    saveMessage = null;
     appState = "loaded";
   }
 
@@ -560,8 +621,10 @@
         activeDocument = null;
         repoName = stripSrsExtension(name);
         cachedSession = null;
-        saveMessage = dirty ? "Migrated to the current data model. Unsaved - export to keep it." : null;
-        if (dirty) saveWorkingCopy(repoName, exportSrsj(loaded));
+        if (dirty) {
+          saveToast("info", "Migrated to the current data model. Unsaved - export to keep it.", 8000);
+          saveWorkingCopy(repoName, exportSrsj(loaded));
+        }
         appState = "loaded";
       });
     } catch (e: unknown) {
@@ -591,6 +654,11 @@
   // ---------------------------------------------------------------------------
   // Save (write back to the opened cloud/git document)
   // ---------------------------------------------------------------------------
+
+  /** The toast for a completed save: success, or info when newer changes remain unsaved. */
+  function savedMessage(current: boolean, text = "Saved."): [NoticeKind, string] {
+    return current ? ["success", text] : ["info", `${text} Newer changes remain unsaved.`];
+  }
 
   function saveErrorMessage(e: unknown): string {
     const code =
@@ -627,7 +695,6 @@
     syncDocument();
     const saveSnapshot = documentMutations.captureSave();
     saving = true;
-    saveMessage = null;
     try {
       if (handle.kind === "tree") {
         // A tree handle that is not GitBranchAware is an on-device folder
@@ -635,10 +702,10 @@
         // first: the provider fan-out below ends in GitHub, so a "local" handle
         // falling through would try to create a file on GitHub.
         await (handle as DocumentHandle & RepoTreeAware).commitTree(exportTree(repository));
-        saveMessage = completeDocumentSave(saveSnapshot) ? "Saved." : "Saved. Newer changes remain unsaved.";
+        saveToast(...savedMessage(completeDocumentSave(saveSnapshot)));
       } else if (handle.kind === "bytes" && handle.writeBytes) {
         await handle.writeBytes(exportArchive(repository), handle.revision);
-        saveMessage = completeDocumentSave(saveSnapshot) ? "Saved." : "Saved. Newer changes remain unsaved.";
+        saveToast(...savedMessage(completeDocumentSave(saveSnapshot)));
       } else {
         // Auto-upgrade: create a new .srs file and switch the active handle to it.
         const provider =
@@ -651,16 +718,14 @@
           const newName = toArchiveName(handle.name);
           const newHandle = await provider.create(newName, exportArchive(repository));
           activeDocument = newHandle;
-          saveMessage = completeDocumentSave(saveSnapshot)
-            ? `Saved as ${newHandle.name}.`
-            : `Saved as ${newHandle.name}. Newer changes remain unsaved.`;
+          saveToast(...savedMessage(completeDocumentSave(saveSnapshot), `Saved as ${newHandle.name}.`));
         } else {
           await handle.write(exportSrsj(repository), handle.revision);
-          saveMessage = completeDocumentSave(saveSnapshot) ? "Saved." : "Saved. Newer changes remain unsaved.";
+          saveToast(...savedMessage(completeDocumentSave(saveSnapshot)));
         }
       }
     } catch (e: unknown) {
-      saveMessage = saveErrorMessage(e);
+      saveToast("error", saveErrorMessage(e));
     } finally {
       saving = false;
     }
@@ -705,9 +770,13 @@
           throw new Error("Git save is not supported for this document type yet.");
       }
       const saveIsCurrent = completeDocumentSave(saveSnapshot);
-      saveMessage = branchedOff
-        ? `Saved to new branch “${branch}”. Open a pull request on GitHub to merge it.${saveIsCurrent ? "" : " Newer changes remain unsaved."}`
-        : saveIsCurrent ? "Saved." : "Saved. Newer changes remain unsaved.";
+      if (branchedOff) {
+        saveToast(
+          "success",
+          `Saved to new branch “${branch}”. Open a pull request on GitHub to merge it.${saveIsCurrent ? "" : " Newer changes remain unsaved."}`,
+          8000
+        );
+      } else saveToast(...savedMessage(saveIsCurrent));
       gitSaveOpen = false;
     } catch (e: unknown) {
       // Keep the dialog open so the install hint stays visible on a permission error.
@@ -721,28 +790,6 @@
 <!-- =========================================================================
      Boot state
      ========================================================================= -->
-{#snippet catalogBanner()}
-  {#if catalogDiagnostics.length > 0 && catalogDiagnosticsOpen}
-    <div class="catalog-banner" role="alert" data-testid="catalog-diagnostics">
-      <p class="catalog-banner__msg">
-        {catalogDiagnostics.length} catalog diagnostic{catalogDiagnostics.length === 1 ? "" : "s"} in
-        <strong>{repoName}</strong> — objects reported by the engine, not silently dropped.
-      </p>
-      <ul class="catalog-banner__list">
-        {#each catalogDiagnostics.slice(0, 10) as d}
-          <li class="catalog-banner__item" data-severity={d.severity}>{d.severity}: {d.message}</li>
-        {/each}
-      </ul>
-      {#if catalogDiagnostics.length > 10}
-        <p class="catalog-banner__more">…and {catalogDiagnostics.length - 10} more.</p>
-      {/if}
-      <button class="catalog-banner__dismiss" onclick={() => { catalogDiagnosticsOpen = false; }}>
-        Dismiss
-      </button>
-    </div>
-  {/if}
-{/snippet}
-
 {#if appState === "boot"}
   <div class="splash">
     <p class="splash__status">Loading engine…</p>
@@ -753,7 +800,7 @@
      ========================================================================= -->
 {:else if appState === "error"}
   <div class="splash">
-    <p class="splash__error" role="alert">{errorMsg}</p>
+    <Notice kind="error">{errorMsg}</Notice>
     <button
       class="splash__retry"
       onclick={() => {
@@ -773,7 +820,7 @@
       <strong>{pendingMigration.name}</strong> uses an older SRS data model and cannot be
       opened as-is. Migrating updates the working copy (<code>{pendingMigration.ids.join(", ")}</code>). Nothing is saved until you press Save.
     </p>
-    {#if migrationError}<p class="splash__error" role="alert" data-testid="migration-error">{migrationError}</p>{/if}
+    {#if migrationError}<Notice kind="error" testid="migration-error">{migrationError}</Notice>{/if}
     <div class="restore-banner__actions">
       <button class="restore-banner__restore" data-testid="migration-apply" onclick={runPendingMigration}>Migrate and open</button>
       <button class="restore-banner__dismiss" data-testid="migration-cancel" onclick={cancelPendingMigration}>Cancel</button>
@@ -787,7 +834,7 @@
     {#if cachedSession !== null}
       <div class="restore-banner" role="status">
         <p class="restore-banner__msg">Unsaved session: <strong>{cachedSession.name}</strong></p>
-        {#if restoreError}<p class="restore-banner__error" role="alert">{restoreError}</p>{/if}
+        {#if restoreError}<Notice kind="error">{restoreError}</Notice>{/if}
         <div class="restore-banner__actions">
           <button class="restore-banner__restore" onclick={() => {
             restoreError = null;
@@ -824,7 +871,6 @@
      Loaded state — generic shell
      ========================================================================= -->
 {:else if !activeEditor}
-  {@render catalogBanner()}
   <GenericSrsShell
     repo={repo!}
     packageEditors={offeredEditors}
@@ -833,14 +879,14 @@
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
     readOnlyReason={activeDocument?.readOnlyReason ?? null}
     {saving}
-    {saveMessage}
     documentDirty={documentDirty}
     documentRevision={documentRevision}
     onOpenEditor={(id) => { editorMode = id; }}
+    onOpenAgents={openDock}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;
-      saveMessage = null;
+      clearNotices();
       repo = null;
       activeDocument = null;
       appState = "idle";
@@ -851,7 +897,6 @@
      Loaded state — registered editor shell (src/lib/editors/registry.ts)
      ========================================================================= -->
 {:else}
-  {@render catalogBanner()}
   {@const Shell = activeEditor!.component}
   <Shell
     repo={repo!}
@@ -862,7 +907,6 @@
     onSave={activeDocument?.capabilities.write ? handleSave : undefined}
     readOnlyReason={activeDocument?.readOnlyReason ?? null}
     saving={saving}
-    saveMessage={saveMessage}
     documentDirty={documentDirty}
     documentRevision={documentRevision}
     onDocumentMutation={syncDocument}
@@ -873,13 +917,12 @@
       applyGuards();
     }}
     workingCopySaved={workingCopySaved}
-    agentPanel={relayUrl ? agentDock : undefined}
-    agentStatus={relayUrl ? agentStatus : undefined}
+    agentPanel={agentLibrary}
+    agentStatus={relayList.length > 0 ? agentStatus : undefined}
     onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;
-      saveMessage = null;
       repo = null;
       beginDocument();
       activeDocument = null;
@@ -889,48 +932,32 @@
   />
 {/if}
 
-{#snippet agentDock(ctx?: AgentPanelCtx)}
-<div class="mcp-agents">
-  {#each agents as a (a.conn.id)}
-    <McpConnection
-      status={a.state.status}
-      callerUrl={a.state.callerUrl}
-      error={a.state.error}
-      repositoryName={repoName}
-      agentName={agentName(a.conn)}
-      actor={{ kind: "ai", id: a.conn.id, name: agentName(a.conn) }}
-      lastActivity={ctx?.lastActivity(a.conn.id)}
-      onRotate={() => void hosts.get(a.conn.id)?.host.rotate()}
-      onTakeover={() => void hosts.get(a.conn.id)?.host.takeover()}
-      onDisconnect={() => disconnectAgent(a.conn.id)}
-    />
-  {/each}
-  {#each library.filter((c) => !agents.some((a) => a.conn.id === c.id)) as c (c.id)}
-    <div class="mcp-conn__actions" data-testid="mcp-library-item">
-      <strong>{agentName(c)}</strong>
-      {#if inUse.has(c.id)}<span class="mcp-conn__note" data-testid="mcp-in-use">in use in another tab</span>{/if}
-      <Button size="sm" variant="secondary" disabled={inUse.has(c.id)} onclick={() => void openChannel(c)} data-testid="mcp-library-connect">Connect</Button>
-      <Button size="sm" variant="ghost" onclick={() => forgetAgent(c.id)} data-testid="mcp-library-forget">Forget</Button>
-    </div>
-  {/each}
-  <details>
-  <summary data-testid="mcp-connect-open">Connect an agent</summary>
-  <form onsubmit={(e) => { e.preventDefault(); connectAgent(newAgentLabel); newAgentLabel = ""; }}>
-    <div class="mcp-conn__url">
-      <Input bind:value={newAgentLabel} placeholder="Agent label (optional)" aria-label="Agent label" data-testid="mcp-agent-label" />
-      <Button size="sm" variant="secondary" type="submit" data-testid="mcp-connect-agent">Connect</Button>
-    </div>
-  </form>
-  </details>
-</div>
+{#snippet agentLibrary(ctx?: AgentPanelCtx)}
+  <AgentPanel
+    relays={relayList}
+    agents={panelAgents}
+    {ctx}
+    now={agentNow}
+    onAddRelay={addRelay}
+    onUpdateRelay={updateRelay}
+    onRemoveRelay={removeRelay}
+    onSetDefault={setDefaultRelay}
+    onConnectNew={connectAgent}
+    onConnect={(id) => { const c = library.find((x) => x.id === id); if (c) void openChannel(c); }}
+    onDisconnect={disconnectAgent}
+    onForget={forgetAgent}
+    onRename={renameAgent}
+    onRotate={(id) => void hosts.get(id)?.host.rotate()}
+    onTakeover={(id) => void hosts.get(id)?.host.takeover()}
+  />
 {/snippet}
 
 <!-- Shells that render `agentPanel` (the essay rail) own its placement; the rest get the floating dock. -->
-{#if relayUrl && repo && !activeEditor?.hostsAgentPanel}
+{#if repo && !activeEditor?.hostsAgentPanel}
   <div class="mcp-dock">
-    <Panel title="Agents" persistKey="dock.agents">
+    <Panel title="Agents" persistKey="dock.agents" bind:open={dockOpen}>
       {#snippet actions()}<AgentPresence status={agentStatus} />{/snippet}
-      {@render agentDock()}
+      {#if dockOpen}{@render agentLibrary()}{/if}
     </Panel>
   </div>
 {/if}
@@ -989,39 +1016,9 @@
     margin: 0;
   }
 
-  .splash__error {
-    color: #c00;
-    margin: 0;
-  }
-
   .splash__retry {
     margin-top: 0.5rem;
     cursor: pointer;
-  }
-
-  /* ---- Catalog diagnostics banner (RFC-038 [R24]) ---- */
-  .catalog-banner {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--color-border, #ddd);
-    background: var(--color-warn-bg, #fff8e1);
-    font-size: 0.875rem;
-  }
-  .catalog-banner__msg {
-    margin: 0 0 0.5rem;
-  }
-  .catalog-banner__list {
-    margin: 0;
-    padding-left: 1.25rem;
-  }
-  .catalog-banner__item[data-severity="error"] {
-    color: var(--color-error, #b3261e);
-  }
-  .catalog-banner__more {
-    margin: 0.25rem 0 0;
-    opacity: 0.8;
-  }
-  .catalog-banner__dismiss {
-    margin-top: 0.5rem;
   }
 
   /* ---- Restore banner ---- */
@@ -1038,12 +1035,6 @@
   .restore-banner__msg {
     margin: 0 0 0.5rem;
     font-size: 0.875rem;
-  }
-
-  .restore-banner__error {
-    font-size: 0.75rem;
-    color: var(--error, #cc0000);
-    margin: 0 0 0.5rem;
   }
 
   .restore-banner__actions {

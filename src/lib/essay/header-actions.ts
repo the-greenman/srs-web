@@ -4,11 +4,10 @@ import CircleQuestionMark from "@lucide/svelte/icons/circle-question-mark";
  * View / Go / Help) and `kind`; `Toolbar` renders the list once, whatever the width (labelled menus,
  * icon-only menus, or one overflow). Wiring only: each entry calls a shell callback.
  */
-import Compass from "@lucide/svelte/icons/compass";
-import Eye from "@lucide/svelte/icons/eye";
-import FileText from "@lucide/svelte/icons/file-text";
 import type { IconComponent } from "../components/icon.js";
 import type { ToolbarAction } from "../components/menu-action.js";
+import { BASE_GROUPS, agentsAction, wideAction } from "../components/shell-actions.js";
+import type { ShellState } from "../shell-context.svelte.js";
 
 export type HeaderGroup = "document" | "view" | "go" | "help";
 
@@ -17,9 +16,7 @@ export interface HeaderAction extends ToolbarAction {
 }
 
 export const HEADER_GROUPS: { id: HeaderGroup; label: string; icon: IconComponent }[] = [
-  { id: "document", label: "Document", icon: FileText },
-  { id: "view", label: "View", icon: Eye },
-  { id: "go", label: "Go", icon: Compass },
+  ...(BASE_GROUPS as { id: HeaderGroup; label: string; icon: IconComponent }[]),
   { id: "help", label: "Help", icon: CircleQuestionMark },
 ];
 
@@ -29,20 +26,22 @@ export interface HeaderHandlers {
   /** Copy the agent handoff (whole essay, or the zoom target). Absent while no essay is open. */
   onagent?: () => void;
   onhelp: () => void;
-  onvariant: () => void;
   oncomments: () => void;
   onsave?: () => void;
   onexport: () => void;
   /** Download the visible essay text as markdown. Absent while no essay is open. */
   onexportmd?: () => void;
   onexplorer?: () => void;
+  /** Absent when the shell has no agent panel to open. */
+  onopenagents?: () => void;
   onopenanother: () => void;
 }
 
 export function headerActions(
   h: HeaderHandlers,
   s: {
-    expanded: boolean;
+    /** The shell's state: View > Wide is its one toggle (`wideAction`), present only when the shell has the capability. */
+    shell: ShellState;
     comments: "all" | "none" | "mixed";
     saving: boolean;
     /** Anything to save; Save is disabled when clean (D4). */
@@ -105,16 +104,7 @@ export function headerActions(
       enabled: true,
       testid: "export-markdown",
     },
-    {
-      id: "margin",
-      group: "view",
-      kind: "toggle",
-      label: "Margin notes",
-      run: h.onvariant,
-      enabled: true,
-      checked: s.expanded,
-      testid: "margin-variant",
-    },
+    wideAction(s.shell) as HeaderAction | undefined,
     {
       id: "comments",
       group: "view",
@@ -133,6 +123,7 @@ export function headerActions(
       run: h.onexplorer,
       enabled: true,
     },
+    !!h.onopenagents && (agentsAction(h.onopenagents) as HeaderAction),
     {
       id: "other",
       group: "go",

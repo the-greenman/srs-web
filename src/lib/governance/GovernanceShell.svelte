@@ -3,7 +3,7 @@
      See plans/governance-shell-76.md and srs-web#76.
      Nav migrated from TYPE_REGISTRY to container-driven (ADR-009, srs-web#93). -->
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onMount } from "svelte";
   import {
     listRecords,
     createRecord,
@@ -31,7 +31,6 @@
     SrsRepository,
     SrsRecord,
     SrsRelation,
-    Diagnostic as WasmDiagnostic,
     CreateRecordInput,
     UpdateRecordInput,
     SchemaDefinition,
@@ -44,6 +43,8 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import Breadcrumb from "$lib/components/Breadcrumb.svelte";
   import Main from "$lib/components/Main.svelte";
+  import Notice from "$lib/components/Notice.svelte";
+  import { notify, toUiDiagnostic } from "$lib/notices.svelte.js";
   import Topbar from "$lib/components/Topbar.svelte";
   import Workspace from "$lib/components/Workspace.svelte";
   import Nav from "$lib/components/Nav.svelte";
@@ -88,7 +89,6 @@
     /** Why `onSave` is undefined, shown where the Save button would be. Null when writable or unknown. */
     readOnlyReason?: string | null;
     saving?: boolean;
-    saveMessage?: string | null;
     /** App-owned dirty state, shared with non-UI repository writers. */
     documentDirty?: boolean;
     /** Changes after mount invalidate derived browser projections of the repository. */
@@ -117,7 +117,6 @@
     onSave,
     readOnlyReason = null,
     saving = false,
-    saveMessage = null,
     documentDirty = false,
     documentRevision = 0,
     onDocumentMutation = () => true,
@@ -263,11 +262,19 @@
   /** Error message for single-decision export (cleared on record selection change). */
   let decisionExportError = $state<string | null>(null);
 
-  /** Topbar autosave indicator state. */
-  let saveIndicator = $state<"idle" | "saved" | "local-save-failed">("idle");
-  let saveIndicatorTimer = $state<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * The local recovery copy's result is a toast on its own "recovery" key (#441), never the document-save
+   * "save" key, so an autosave can not replace a document-save error.
+   */
+  const localSaveFailed = () =>
+    notify({
+      kind: "error",
+      key: "recovery",
+      testid: "local-save-failed",
+      text: "Local recovery copy could not be saved",
+    });
   $effect(() => {
-    if (!workingCopySaved) saveIndicator = "local-save-failed";
+    if (!workingCopySaved) localSaveFailed();
   });
 
   // ---------------------------------------------------------------------------
@@ -338,10 +345,6 @@
   // Helpers
   // ---------------------------------------------------------------------------
 
-  function mapDiagnostic(d: WasmDiagnostic): Diagnostic {
-    const sev = d.severity === "warning" ? "warn" : d.severity;
-    return { severity: sev, message: d.message };
-  }
 
   /**
    * Load container nav from repositoryNavigation() (RFC-013 primary path).
@@ -499,25 +502,16 @@
   function persistWorkingCopy(): void {
     try {
       const savedLocally = onDocumentMutation();
-      if (saveIndicatorTimer !== null) clearTimeout(saveIndicatorTimer);
       if (savedLocally) {
-        saveIndicator = "saved";
-        saveIndicatorTimer = setTimeout(() => {
-          saveIndicator = "idle";
-          saveIndicatorTimer = null;
-        }, 2000);
+        notify({ kind: "success", key: "recovery", testid: "recovery-status", text: "Recovery copy saved" });
       } else {
-        saveIndicator = "local-save-failed";
+        localSaveFailed();
         console.warn("persistWorkingCopy: local recovery-copy write failed");
       }
     } catch (e: unknown) {
       console.warn("persistWorkingCopy failed:", e);
     }
   }
-
-  onDestroy(() => {
-    if (saveIndicatorTimer !== null) clearTimeout(saveIndicatorTimer);
-  });
 
   function refreshValidation(): void {
     const report = repo.validate();
@@ -529,7 +523,7 @@
     instanceCount = report.summary.checked;
     errorCount = report.summary.errors;
     warnCount = report.summary.warnings;
-    diagnostics = report.diagnostics.map(mapDiagnostic);
+    diagnostics = report.diagnostics.map(toUiDiagnostic);
   }
 
   // ---------------------------------------------------------------------------
@@ -996,64 +990,45 @@
   {#snippet main()}
     {#if activeView === "governance"}
     <Main>
-      <Topbar>
-        {#snippet crumb()}
-          <Breadcrumb items={governanceCrumbItems()} />
-        {/snippet}
-        {#snippet actions()}
-          {#if formMode === null && activeSectionSchema}
-            <button
-              class="topbar__new"
-              onclick={() => { formMode = "create"; editingRecord = null; }}
-              disabled={saving}
-            >New {activeSectionSchema.label}</button>
-          {/if}
-          <span
-            class="topbar__save-indicator"
-            class:topbar__save-indicator--visible={saveIndicator === "saved"}
-            role="status"
-            aria-live="polite"
-          >Saved</span>
-          {#if saveIndicator === "local-save-failed"}
-            <span
-              class="topbar__save-message topbar__save-message--error"
-              data-testid="local-save-failed"
-              role="alert"
-            >Local recovery copy could not be saved</span>
-          {/if}
-          {#if onSave}
-            <button
-              class="topbar__export"
-              data-testid="save-document"
-              onclick={onSave}
-              disabled={saving}
-            >{saving ? "Saving…" : "Save"}</button>
-          {:else if readOnlyReason}
-            <span class="topbar__save-message" data-testid="readonly-reason">{readOnlyReason}</span>
-          {/if}
-          {#if documentDirty}
-            <span class="topbar__save-message" data-testid="document-dirty-status">Unsaved changes</span>
-          {/if}
-          {#if saveMessage}
-            <span
-              class="topbar__save-message"
-              data-testid="save-status"
-              role="status"
-              aria-live="polite"
-            >{saveMessage}</span>
-          {/if}
-          <button class="topbar__export" onclick={onExport}>Download .srs</button>
-          {#if onExportSrsj}
-            <button class="topbar__export" onclick={onExportSrsj}>Download .srsj</button>
-          {/if}
-          <button class="topbar__reset" onclick={onOpenAnother}>Open another file</button>
-        {/snippet}
-      </Topbar>
+      {#snippet bar()}
+        <Topbar>
+          {#snippet crumb()}
+            <Breadcrumb items={governanceCrumbItems()} />
+          {/snippet}
+          {#snippet actions()}
+            {#if formMode === null && activeSectionSchema}
+              <button
+                class="topbar__new"
+                onclick={() => { formMode = "create"; editingRecord = null; }}
+                disabled={saving}
+              >New {activeSectionSchema.label}</button>
+            {/if}
+            {#if onSave}
+              <button
+                class="topbar__export"
+                data-testid="save-document"
+                onclick={onSave}
+                disabled={saving}
+              >{saving ? "Saving…" : "Save"}</button>
+            {:else if readOnlyReason}
+              <span class="topbar__save-message" data-testid="readonly-reason">{readOnlyReason}</span>
+            {/if}
+            {#if documentDirty}
+              <span class="topbar__save-message" data-testid="document-dirty-status">Unsaved changes</span>
+            {/if}
+            <button class="topbar__export" onclick={onExport}>Download .srs</button>
+            {#if onExportSrsj}
+              <button class="topbar__export" onclick={onExportSrsj}>Download .srsj</button>
+            {/if}
+            <button class="topbar__reset" onclick={onOpenAnother}>Open another file</button>
+          {/snippet}
+        </Topbar>
+      {/snippet}
 
       {#if warnCount > 0 && errorCount === 0}
-        <div class="size-warning-banner" role="status">
+        <Notice kind="warning" testid="size-warning">
           {warnCount} size warning{warnCount === 1 ? "" : "s"} — see Repository panel for details.
-        </div>
+        </Notice>
       {/if}
 
       <Workspace>
@@ -1132,18 +1107,22 @@
     </Main>
     {:else if activeView === "migrations"}
     <Main>
-      <Topbar>
-        {#snippet crumb()}
-          <Breadcrumb items={[{ label: repoName }, { label: "Migrations" }]} />
-        {/snippet}
-      </Topbar>
-      <Migrations
-        repo={repo}
-        onMigrationApplied={() => {
-          loadContainerNav();
-          refreshValidation();
-        }}
-      />
+      {#snippet bar()}
+        <Topbar>
+          {#snippet crumb()}
+            <Breadcrumb items={[{ label: repoName }, { label: "Migrations" }]} />
+          {/snippet}
+        </Topbar>
+      {/snippet}
+      <Workspace>
+        <Migrations
+          repo={repo}
+          onMigrationApplied={() => {
+            loadContainerNav();
+            refreshValidation();
+          }}
+        />
+      </Workspace>
     </Main>
     {/if}
   {/snippet}
@@ -1183,7 +1162,7 @@
             </div>
           {/if}
           {#if formError}
-            <p class="inspector__error" role="alert">{formError}</p>
+            <Notice kind="error">{formError}</Notice>
           {/if}
         </Panel>
       {/if}
@@ -1287,7 +1266,7 @@
             >TXT</button>
           </div>
           {#if decisionExportError}
-            <p class="inspector__error" role="alert">{decisionExportError}</p>
+            <Notice kind="error">{decisionExportError}</Notice>
           {/if}
         </Panel>
       {/if}
@@ -1439,11 +1418,6 @@
     font-size: 0.7rem;
     opacity: 0.75;
     max-width: 22rem;
-  }
-
-  .topbar__save-message--error {
-    color: var(--error, #cc0000);
-    opacity: 1;
   }
 
   /* ---- Inspector KV ---- */
@@ -1635,46 +1609,5 @@
     display: flex;
     gap: 0.4rem;
     align-items: center;
-  }
-
-  .inspector__error {
-    font-size: 0.7rem;
-    color: var(--error, #cc0000);
-    margin: 0.25rem 0 0;
-  }
-
-  /* ---- Autosave indicator ---- */
-  @keyframes save-fade {
-    0%   { opacity: 1; }
-    60%  { opacity: 1; }
-    100% { opacity: 0; }
-  }
-
-  .topbar__save-indicator {
-    font-size: 0.75rem;
-    opacity: 0;
-    pointer-events: none;
-    color: var(--accent, #0066cc);
-  }
-
-  .topbar__save-indicator--visible {
-    animation: save-fade 2s ease-out forwards;
-  }
-
-  /* ---- Size warning banner ---- */
-  .size-warning-banner {
-    padding: 0.4rem 1.25rem;
-    font-size: 0.8rem;
-    background: color-mix(in srgb, var(--warn, #b45309) 10%, transparent);
-    color: var(--warn-text, #92400e);
-    border-bottom: 1px solid color-mix(in srgb, var(--warn, #b45309) 20%, transparent);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .size-warning-banner {
-      background: color-mix(in srgb, #d97706 12%, transparent);
-      color: #fde68a;
-      border-bottom-color: color-mix(in srgb, #d97706 25%, transparent);
-    }
   }
 </style>

@@ -1,5 +1,5 @@
 <!--
-  AgentFeed — the newest-first feed of agent writes (the per-agent row lives in McpConnection); each row is a compact ActorMark plus the name. Presentation only: App observes the writes (agent-activity.ts); the shell supplies
+  AgentFeed — the newest-first feed of agent writes (the per-agent row lives in AgentPanel); each row is a compact ActorMark plus the name. Presentation only: App observes the writes (agent-activity.ts); the shell supplies
   the paragraph label and what a click does. A write whose paragraph is unknown is not clickable.
   Wraps .agent-activity (agent-activity.css). Story: srs-web#372
 -->
