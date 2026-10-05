@@ -584,6 +584,7 @@
         {/snippet}
         {#snippet footer()}
           <Button
+            size="sm"
             variant="ghost"
             onDark
             data-testid="guides-new-guide"
@@ -783,13 +784,13 @@
         {/if}
         <Panel title="Export" collapsible={false} class="inspector__section">
           <Button
-            variant="ghost"
+            size="sm"
             data-testid="guides-export-markdown"
             onclick={handleExportMarkdown}
             disabled={!guideViewId}
           >Export Markdown</Button>
           <Button
-            variant="ghost"
+            size="sm"
             data-testid="guides-export-print"
             onclick={handlePrint}
             disabled={!previewHtml}
@@ -807,7 +808,7 @@
             {/each}
           </select>
         </Panel>
-        <Panel title="Preview" collapsible={false} grow class="inspector__section">
+        <Panel title="Preview" collapsible={false} grow class="inspector__section guides-preview">
           <PreviewPane html={previewHtml} loading={previewLoading} themeCss={selectedThemeCss} />
         </Panel>
       </Inspector>
