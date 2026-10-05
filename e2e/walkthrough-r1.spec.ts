@@ -96,12 +96,8 @@ test.describe("R1 release walkthrough (#54)", () => {
 
       await page.getByTestId("create-name").fill("R1 Walkthrough Org");
       await page.getByTestId("create-editor-governance").check();
-      const [download] = await Promise.all([
-        page.waitForEvent("download"),
-        page.getByTestId("create-local").click(),
-      ]);
-      // New documents are .srs archives; verify download fires and editor loads.
-      void download; // archive content verified via CLI round-trip below
+      // Creating saves nothing (#341); the editor loads straight away.
+      await page.getByTestId("create-repository").click();
 
       // The chosen editor opens directly.
       await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });

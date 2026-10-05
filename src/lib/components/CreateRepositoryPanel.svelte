@@ -2,55 +2,40 @@
   CreateRepositoryPanel — "New repository" onboarding (srs-web#141, #341).
 
   Presentation only (ADR-001): the caller owns scaffolding (WASM) and persistence;
-  this panel collects a name, the editors to start with (none = a blank repository,
-  where Install is offered later) and a destination, mirroring SourceChooser's
-  three-backend layout and busy/error handling.
+  this panel collects a name and the editors to start with (none = a blank repository,
+  where Install is offered later). Creating saves nothing: the repository lives in the
+  browser and the first Save asks where to put it (SaveToModal).
 -->
 <script lang="ts">
   import Notice from './Notice.svelte';
-  import type { StorageProviderId, StorageProviders } from "$lib/storage/index.js";
-  import { StorageError } from "$lib/storage/index.js";
   import Button from "./Button.svelte";
   import { creatableEditors } from "$lib/editors/registry.js";
 
   interface Props {
-    providers: StorageProviders;
-    onCreate: (name: string, editors: string[], destination: StorageProviderId) => Promise<void>;
+    onCreate: (name: string, editors: string[]) => Promise<void>;
   }
 
-  let { providers, onCreate }: Props = $props();
+  let { onCreate }: Props = $props();
 
   const editors = creatableEditors();
 
   let name = $state("");
   let chosen = $state<string[]>([]);
-  let busy = $state<StorageProviderId | null>(null);
+  let busy = $state(false);
   let error = $state<string | null>(null);
 
   const trimmedName = $derived(name.trim());
 
-  function canCreateCloud(provider: { configured: boolean; create?: unknown }): boolean {
-    return provider.configured && typeof provider.create === "function";
-  }
-
-  async function run(destination: StorageProviderId): Promise<void> {
-    if (trimmedName === "" || busy !== null) return;
-    busy = destination;
+  async function run(): Promise<void> {
+    if (trimmedName === "" || busy) return;
+    busy = true;
     error = null;
     try {
-      await onCreate(trimmedName, chosen, destination);
+      await onCreate(trimmedName, chosen);
     } catch (caught) {
-      const code =
-        caught instanceof StorageError
-          ? caught.code
-          : typeof caught === "object" && caught !== null && "code" in caught
-            ? caught.code
-            : null;
-      if (code !== "cancelled") {
-        error = caught instanceof Error ? caught.message : String(caught);
-      }
+      error = caught instanceof Error ? caught.message : String(caught);
     } finally {
-      busy = null;
+      busy = false;
     }
   }
 </script>
@@ -62,13 +47,13 @@
     type="text"
     placeholder="Name your repository…"
     bind:value={name}
-    disabled={busy !== null}
+    disabled={busy}
     onkeydown={(e) => {
-      if (e.key === "Enter") void run("local");
+      if (e.key === "Enter") void run();
     }}
   />
 
-  <fieldset class="create-panel__editors" disabled={busy !== null}>
+  <fieldset class="create-panel__editors" disabled={busy}>
     <legend>Start with</legend>
     {#each editors as editor (editor.id)}
       <label title={editor.description}>
@@ -78,32 +63,11 @@
     {/each}
   </fieldset>
 
-  <div class="create-panel__destinations">
-    <Button
-      data-testid="create-local"
-      disabled={trimmedName === "" || busy !== null}
-      title="Create and download to this device"
-      onclick={() => void run("local")}
-    >{busy === "local" ? "Creating…" : "To this device"}</Button>
-
-    <Button
-      variant="secondary"
-      data-testid="create-dropbox"
-      disabled={trimmedName === "" || busy !== null || !canCreateCloud(providers.dropbox)}
-      title={providers.dropbox.configured ? "Create in Dropbox" : "Dropbox is not configured"}
-      onclick={() => void run("dropbox")}
-    >{busy === "dropbox" ? "Creating…" : "In Dropbox"}</Button>
-
-    <Button
-      variant="secondary"
-      data-testid="create-google-drive"
-      disabled={trimmedName === "" || busy !== null || !canCreateCloud(providers.googleDrive)}
-      title={providers.googleDrive.configured
-        ? "Create in Google Drive"
-        : "Google Drive is not configured"}
-      onclick={() => void run("google-drive")}
-    >{busy === "google-drive" ? "Creating…" : "In Google Drive"}</Button>
-  </div>
+  <Button
+    data-testid="create-repository"
+    disabled={trimmedName === "" || busy}
+    onclick={() => void run()}
+  >{busy ? "Creating…" : "Create"}</Button>
 
   {#if error}
     <Notice kind="error">{error}</Notice>
@@ -143,27 +107,5 @@
     padding: 0;
     margin-bottom: 0.25rem;
     color: var(--color-text-muted, inherit);
-  }
-
-  .create-panel__destinations {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.75rem;
-  }
-
-  .create-panel__destinations :global(.btn) {
-    min-height: 3.25rem;
-    display: grid;
-    place-items: center;
-    padding: 0.75rem 1rem;
-    box-sizing: border-box;
-  }
-
-
-  /* bp: form */
-  @media (max-width: 640px) {
-    .create-panel__destinations {
-      grid-template-columns: 1fr;
-    }
   }
 </style>

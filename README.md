@@ -67,7 +67,7 @@ The app offers two editors (ADR-002):
 
 ## Creating a new repository and installing editor packages
 
-The start screen offers **New repository** beside opening an existing file. You enter a name, tick the editors to start with, and pick a destination (this device, Dropbox or Google Drive). All semantics run in the WASM core.
+The start screen offers **New repository** beside opening an existing file. You enter a name, tick the editors to start with, and press **Create**. The repository is created in the browser only and nothing is saved yet. The first **Save** asks where to put it (this device, Dropbox or Google Drive); later saves go to that file. All semantics run in the WASM core.
 
 - **Governance** scaffolds identity, the Decision Log container and the root container from `governance-seed.srsj`, through `scaffold_new_repository`. The seed ships inside the `srs-bindings-web.tar.gz` release artifact and lands at `src/lib/srs_bindings/governance-seed.srsj` via `scripts/ensure-bindings.mjs`, so it always matches the engine. Never hand-edit or vendor a copy.
 - **Any other editor** starts from a blank repository (`SrsRepository.create({title})`, where the core derives the namespace). Its packages are installed from pinned bundles (`install_package_bundle`), then the editor opens.

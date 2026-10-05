@@ -45,6 +45,7 @@
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import CreateRepositoryPanel from "$lib/components/CreateRepositoryPanel.svelte";
   import GitSaveModal from "$lib/components/GitSaveModal.svelte";
+  import SaveToModal from "$lib/components/SaveToModal.svelte";
   import Panel from "$lib/components/Panel.svelte";
   import AgentPresence from "$lib/components/AgentPresence.svelte";
   import AgentPanel from "$lib/components/AgentPanel.svelte";
@@ -63,7 +64,6 @@
     StorageError,
     type DocumentHandle,
     type RepoTreeAware,
-    type StorageProviderId,
   } from "$lib/storage/index.js";
 
   // Link to install/manage the GitHub App (a GitHub App must be installed to write).
@@ -93,6 +93,8 @@
   /** Git Save dialog (branch choice + install hint) state. */
   let gitSaveOpen = $state(false);
   let gitSaveError = $state<string | null>(null);
+  let saveToOpen = $state(false);
+  let saveToError = $state<string | null>(null);
 
   let repo = $state<SrsRepository | null>(null);
 
@@ -592,17 +594,14 @@
   // ---------------------------------------------------------------------------
 
   /**
-   * Build a new repository in memory, then persist it to the chosen backend: the first chosen
-   * editor with a `seed` (transitional, srs#390) or a blank repo, every other chosen editor's
-   * bundles installed, then each editor's `create` hook. All semantics are in the WASM core.
-   * Nothing is persisted or assigned until the whole repo is built, so a throw leaves the app
-   * idle with the error shown in the panel. The first chosen editor (EDITORS order) opens.
+   * Build a new repository in memory: the first chosen editor with a `seed` (transitional,
+   * srs#390) or a blank repo, every other chosen editor's bundles installed, then each
+   * editor's `create` hook. All semantics are in the WASM core. Nothing is persisted or
+   * downloaded: the repo has no storage handle, so the first Save asks where to put it
+   * (saveTo). A throw leaves the app idle with the error shown in the panel. The first
+   * chosen editor (EDITORS order) opens.
    */
-  async function createRepository(
-    name: string,
-    editorIds: string[],
-    destination: StorageProviderId
-  ): Promise<void> {
+  async function createRepository(name: string, editorIds: string[]): Promise<void> {
     const chosen = EDITORS.filter((e) => editorIds.includes(e.id));
     const seeded = chosen.filter((e) => e.seed);
     if (seeded.length > 1) {
@@ -614,26 +613,9 @@
       chosen.filter((e) => !e.seed).flatMap((e) => e.requires.map((r) => r.packageId))
     );
     for (const editor of chosen) await editor.create?.(newRepo);
-    const filename = `${slugifyFilename(name)}.srs`;
-
-    if (destination === "local") {
-      downloadArchive(exportArchive(newRepo), filename);
-      activeDocument = null;
-    } else {
-      // Resolve explicitly so a new provider id can never silently misroute here.
-      const provider =
-        destination === "dropbox"
-          ? storageProviders.dropbox
-          : destination === "google-drive"
-            ? storageProviders.googleDrive
-            : storageProviders.github;
-      if (!provider?.create) {
-        throw new Error(`${provider?.label ?? destination} cannot create new files.`);
-      }
-      activeDocument = await provider.create(filename, exportArchive(newRepo));
-    }
 
     repo = newRepo;
+    activeDocument = null;
     beginDocument();
     repoName = name;
     editorMode = chosen[0]?.id ?? "generic";
@@ -713,13 +695,50 @@
    * dialog (branch choice + install hint); other cloud handles write directly.
    */
   async function handleSave(): Promise<void> {
-    if (saving || !repo || !activeDocument?.capabilities.write) return;
+    if (saving || !repo) return;
+    if (!activeDocument) {
+      // No storage handle yet (new repository or restored session): ask where to save.
+      saveToError = null;
+      saveToOpen = true;
+      return;
+    }
+    if (!activeDocument.capabilities.write) return;
     if (isGitBranchAware(activeDocument)) {
       gitSaveError = null;
       gitSaveOpen = true;
       return;
     }
     await saveDirect();
+  }
+
+  /** First save of a handle-less document: download it, or create a file in a cloud provider. */
+  async function saveTo(destination: "local" | "dropbox" | "google-drive"): Promise<void> {
+    if (!repo) return;
+    const repository = repo;
+    syncDocument();
+    const saveSnapshot = documentMutations.captureSave();
+    const filename = `${slugifyFilename(repoName)}.srs`;
+    saving = true;
+    saveToError = null;
+    try {
+      if (destination === "local") {
+        // The handle stays null, so the next Save offers the choice again.
+        downloadArchive(exportArchive(repository), filename);
+        saveToast(...savedMessage(completeDocumentSave(saveSnapshot)));
+      } else {
+        const provider = destination === "dropbox" ? storageProviders.dropbox : storageProviders.googleDrive;
+        if (!provider.create) throw new Error(`${provider.label} cannot create new files.`);
+        const handle = await provider.create(filename, exportArchive(repository));
+        activeDocument = handle;
+        saveToast(...savedMessage(completeDocumentSave(saveSnapshot), `Saved as ${handle.name}.`));
+      }
+      saveToOpen = false;
+    } catch (e: unknown) {
+      const code = typeof e === "object" && e !== null && "code" in e ? (e as { code?: string }).code : null;
+      if (code !== "cancelled") saveToError = saveErrorMessage(e);
+    } finally {
+      saving = false;
+    }
   }
 
   /** Direct revision-aware write for non-git cloud handles (Dropbox/Drive). */
@@ -899,7 +918,7 @@
     {/if}
     <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} />
     <p class="splash__divider">or start a new repository</p>
-    <CreateRepositoryPanel providers={storageProviders} onCreate={createRepository} />
+    <CreateRepositoryPanel onCreate={createRepository} />
   </div>
 
 <!-- =========================================================================
@@ -911,7 +930,7 @@
     packageEditors={offeredEditors}
     repoName={repoName}
     onExport={handleExportArchive}
-    onSave={activeDocument?.capabilities.write ? handleSave : undefined}
+    onSave={activeDocument === null || activeDocument.capabilities.write ? handleSave : undefined}
     readOnlyReason={activeDocument?.readOnlyReason ?? null}
     {saving}
     documentDirty={documentDirty}
@@ -940,7 +959,7 @@
     documentProvider={activeDocument?.provider ?? "local"}
     onExport={handleExportArchive}
     onExportSrsj={handleExport}
-    onSave={activeDocument?.capabilities.write ? handleSave : undefined}
+    onSave={activeDocument === null || activeDocument.capabilities.write ? handleSave : undefined}
     readOnlyReason={activeDocument?.readOnlyReason ?? null}
     saving={saving}
     documentDirty={documentDirty}
@@ -1009,6 +1028,19 @@
     onCancel={() => {
       gitSaveOpen = false;
       gitSaveError = null;
+    }}
+  />
+{/if}
+
+{#if saveToOpen && !activeDocument}
+  <SaveToModal
+    providers={storageProviders}
+    busy={saving}
+    error={saveToError}
+    onSave={saveTo}
+    onCancel={() => {
+      saveToOpen = false;
+      saveToError = null;
     }}
   />
 {/if}
