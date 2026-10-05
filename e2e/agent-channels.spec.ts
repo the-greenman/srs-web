@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { connectAgents, openAdvanced, routeRelayChannels } from "./helpers";
+import { connectAgents, openDirectUrl, routeRelayChannels } from "./helpers";
 
 /**
  * agent-channels.spec.ts — srs-web#358: one relay channel + MCP session per agent, each with its
@@ -74,8 +74,7 @@ test("two agents: distinct authors and ids, guard on both, disconnect leaves the
   await page.getByTestId("mcp-connect-open").click();
   await page.getByTestId("mcp-connect-agent").click();
   await expect(page.getByTestId("mcp-status")).toHaveText(["Connected", "Connected"]);
-  await openAdvanced(page);
-  await expect(page.getByTestId("mcp-caller-url")).toHaveCount(2);
+  expect(new Set([await openDirectUrl(page, 0), await openDirectUrl(page, 1)]).size).toBe(2);
   const ids: string[] = await page.evaluate(() =>
     JSON.parse(localStorage.getItem("srs-web.agent-connections") ?? "[]").map(
       (c: { id: string }) => c.id
@@ -199,7 +198,7 @@ test("reload keeps ids and URLs; a typed label is the author; repo change keeps 
   await page.getByTestId("mcp-connect-agent").click();
   await expect(page.getByTestId("mcp-status")).toHaveText(["Connected", "Connected"]);
   const snapshot = async () => {
-    await openAdvanced(page);
+    const urls = [await openDirectUrl(page, 0), await openDirectUrl(page, 1)];
     return {
       // ids only: lastConnectedAt (#442) legitimately changes on reconnect
       ids: await page.evaluate(() =>
@@ -207,9 +206,7 @@ test("reload keeps ids and URLs; a typed label is the author; repo change keeps 
           (c: { id: string }) => c.id
         )
       ),
-      urls: await page
-        .getByTestId("mcp-caller-url")
-        .evaluateAll((e) => e.map((i) => (i as HTMLInputElement).value)),
+      urls,
     };
   };
   const before = await snapshot();
