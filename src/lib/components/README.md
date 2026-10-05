@@ -22,7 +22,7 @@ giving the app ergonomic, reusable building blocks.
 
 ```svelte
 <script lang="ts">
-  import { AppShell, Nav, NavGroup, NavItem, Main, Topbar, Workspace,
+  import { AppShell, Nav, NavGroup, NavItem, Main, Workspace,
            Card, CardField, Inspector, Diagnostics,
            Lifecycle, Tag, Button } from '$lib/components';
   import type { Diagnostic } from '$lib/components';
@@ -46,9 +46,9 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `AppShell` | `nav?` `main` `inspector?` `wide?` `shell?` | `.app` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3), srs-web [#424](https://github.com/the-greenman/srs-web/issues/424) |
 | `Drawer` | `open` (bindable) `side` `label` `closeOnPick?` (a modal `<dialog>`: the nav and inspector below 720 / 1100px) | `.drawer` | srs-web [#424](https://github.com/the-greenman/srs-web/issues/424) |
 | `ResizeHandle` | `kind` `value` `controls` `onchange` `oncommit` (the one column resizer, used by `Nav` and `Inspector`) | `.resize-handle` | srs-web [#424](https://github.com/the-greenman/srs-web/issues/424) |
-| `NavTrigger` / `InspectorTrigger` | none (read the shell context; render only in drawer mode; the Toolbar puts them in `lead` / `trail`, `Topbar` renders them itself) | `.shell-trigger` | srs-web [#424](https://github.com/the-greenman/srs-web/issues/424) |
-| `Main` / `Topbar` / `Workspace` | snippets, `wide?` | `.app__main` `.topbar` `.workspace` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
-| `Nav` / `NavGroup` / `NavItem` | `repo` `label` `count?` `active?` | `.nav*` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
+| `NavTrigger` / `InspectorTrigger` | none (read the shell context; render only in drawer mode; the Toolbar puts them in `lead` / `trail`) | `.shell-trigger` | srs-web [#424](https://github.com/the-greenman/srs-web/issues/424) |
+| `Main` / `Workspace` | snippets (`Main` takes `bar` and `children`) | `.app__main` `.workspace` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
+| `Nav` / `NavGroup` / `NavItem` | `repo` `label` `count?` `active?`; `NavItem` is a `<button>` (`onclick`, `testid`; `aria-current` when active), a link only with `href` | `.nav*` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
 | `Inspector` / `Meta` | `title` `aside?` `rows` | `.inspector*` `.meta` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3) |
 | `Card` / `CardField` | `id` `title` `status?` `grid?` `empty?` | `.card*` | B5 [#4](https://github.com/the-greenman/srs-web/issues/4) |
 | `LogTable` | `columns` + row children | `.log-table` | B5 [#4](https://github.com/the-greenman/srs-web/issues/4), B12 [#8](https://github.com/the-greenman/srs-web/issues/8) |
@@ -83,7 +83,7 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `Panel` | `title` `aside?` `open?` `persistKey?` `collapsible?` `actions?` | `.panel` `.panel-rail` | srs-web [#362](https://github.com/the-greenman/srs-web/issues/362) |
 | `AttachmentGlyph` / `HoverCard` / `PinnedPane` | `kind` `title` `text?` `pinned?` `onpin?` / `open?` `anchor?` `static?` `onremove?` / `items` `onunpin` | `.glyph` `.hover-card` `.pinned` | srs-web [#329](https://github.com/the-greenman/srs-web/issues/329) |
 | `AgentPanel` | `relays` `agents` (`PanelAgent[]`, agent-panel.ts) `ctx?` `now` + `onAddRelay/onUpdateRelay/onRemoveRelay/onSetDefault/onConnectNew/onConnect/onDisconnect/onForget/onRename/onRotate/onTakeover/pair` (the agent and relay library as rows; presentational, App owns the stores) | `.agent-panel` | srs-web [#442](https://github.com/the-greenman/srs-web/issues/442) |
-| Toolbar **Go > Agents…** | `agentsAction(run)` in `shell-actions.ts`, fed by `onopenagents` (essay and generic shells, the only two that mount a `Toolbar`). The Guides and Governance shells use a menu-less `Topbar` and rely on the always-present dock | `toolbar-agents` | #442 |
+| Toolbar **Go > Agents…** | `agentsAction(run)` in `shell-actions.ts`, fed by `onopenagents` (all four shells; the essay hosts its own panel, the other three open the floating dock through `onOpenAgents`) | `toolbar-agents` | #442 |
 | `Disclosure` | `label` `open?` (bindable) `testid?` (ghost `Button` + chevron + `aria-expanded`; `Panel` stays `<details>`) | `.disclosure` | #442 |
 | `McpConnection` | `status` `callerUrl?` (shown only while the Direct URL view is open) `error?` `pairingView?` `onTakeover?` `onClosePair?` `onRetryPair?` (the per-agent detail block under an `AgentPanel` row: pairing view, or the direct URL while its view is open) | `.mcp-conn` | #307, #442, #447 |
 | `CopyField` | `value` `label` `buttonLabel` `testid` (readonly value + Copy button that flips to "Copied") | `.mcp-conn__url` | #447 |

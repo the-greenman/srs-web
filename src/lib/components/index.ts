@@ -15,7 +15,6 @@ export { default as InspectorTrigger } from "./InspectorTrigger.svelte";
 export { default as NavTrigger } from "./NavTrigger.svelte";
 export { default as ResizeHandle } from "./ResizeHandle.svelte";
 export { default as Main } from "./Main.svelte";
-export { default as Topbar } from "./Topbar.svelte";
 export { default as Workspace } from "./Workspace.svelte";
 
 // Navigation rail

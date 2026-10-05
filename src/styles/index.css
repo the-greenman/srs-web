@@ -53,6 +53,7 @@
 @import url("./components/nav.css") layer(components);
 @import url("./components/breadcrumb.css") layer(components);
 @import url("./components/governance.css") layer(components);
+@import url("./components/guides.css") layer(components);
 @import url("./components/inspector.css") layer(components);
 @import url("./components/shell.css") layer(components);
 @import url("./components/generic-shell.css") layer(components);

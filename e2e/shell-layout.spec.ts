@@ -236,7 +236,7 @@ test.describe("drawers at 375px", () => {
     page,
   }) => {
     await openGuides(page);
-    await expect(page.getByTestId("guides-preview-toggle")).toBeHidden();
+    expect((await page.getByTestId("toolbar").boundingBox())!.height).toBeLessThan(72);
     await expect(page.getByTestId("inspector-trigger")).toHaveCount(1);
     await openNavDrawer(page);
     await page.getByTestId("guides-guide-item").first().click();

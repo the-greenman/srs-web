@@ -6,7 +6,7 @@
   render inside a Drawer (shell-drawer-nav / shell-drawer-inspector); NavTrigger / InspectorTrigger,
   placed by the bar, open them. Crossing a breakpoint remounts that region's content (it moves between
   the column and the dialog); Panels keep their state through persistKey.
-  It creates (or receives, `shell`) the ShellState during script init, so every child, a Topbar or a
+  It creates (or receives, `shell`) the ShellState during script init, so every child, a Toolbar or a
   trigger, finds it with getShell(). `data-margin` on .app is the ONE Wide carrier: "expanded" only when
   the shell has the Wide capability (`wideEnabled`) AND the stored Wide is on; otherwise it is set to
   "compact". `shell` takes precedence: a given ShellState carries its own `wideEnabled`, and `wide` only
