@@ -200,7 +200,7 @@ As Phase 1.
 
 #### Tasks
 
-- [ ] `e2e/agent-reopen.spec.ts` (fixture `essay.srsj`, helpers `routeRelayChannels({ fixed: true })` and the `routeWebSocket` + `rpc` pattern from `agent-channels.spec.ts`; record every frame the mocked executor receives):
+- [x] `e2e/agent-reopen.spec.ts` (fixture `essay.srsj`, helpers `routeRelayChannels({ fixed: true })` and the `routeWebSocket` + `rpc` pattern from `agent-channels.spec.ts`; record every frame the mocked executor receives):
   1. **Reopen:** connect an agent, open the repo, `page.reload()`, reopen the same repo: the row reaches `online` with no Connect click, the executor socket URL has the same `EXEC` credential, channel bootstrap was called once overall.
   2. **Different repository:** after the reload open another document: no executor socket opens.
   3. **No tab conflict:** a second page in the same context loads the saved list while the first holds the lock: its row shows in-use and opens no socket (after the ~1 s retry still none).
@@ -210,13 +210,18 @@ As Phase 1.
   7. **Fallback:** with `srs-web.mcp-init.*` cleared before the reload, `tools/list` replies 404 with a body containing `not initialized`; then `initialize` replies 200 and `tools/list` replies 200.
   8. **Takeover after reload:** the first executor socket of the reopened agent is closed before opening (mock refusal, status `rejected`), the second socket request carries the takeover param: exactly one automatic takeover, the row ends `online`; a manual Connect after Disconnect never sends the takeover param.
   9. **Clearing:** after Rotate and after Forget, `localStorage` has no `srs-web.mcp-init.<id>`.
-- [ ] README "Agents and relays" section: agents connected when the page closed reopen when the same repository opens (unless another tab holds them), reusing the same channel and credentials, so paired clients keep working; the host remembers each client's last `initialize` (per agent, in this browser, client metadata only) and replays it after a reload; with several clients on one channel the last one to initialize wins; Forget or Rotate URL discards it; without it a call on a fresh session gets HTTP 404 and the client must re-initialize.
-- [ ] ADR-020 (k) addendum "Reopen (#418)" and the header amended-by list (line 9), as in the ADR table.
+- [x] README "Agents and relays" section: agents connected when the page closed reopen when the same repository opens (unless another tab holds them), reusing the same channel and credentials, so paired clients keep working; the host remembers each client's last `initialize` (per agent, in this browser, client metadata only) and replays it after a reload; with several clients on one channel the last one to initialize wins; Forget or Rotate URL discards it; without it a call on a fresh session gets HTTP 404 and the client must re-initialize.
+- [x] ADR-020 (k) addendum "Reopen (#418)" and the header amended-by list (line 9), as in the ADR table.
 
 #### Acceptance Criteria
 
-- [ ] New Playwright spec passes; `e2e/agent-library.spec.ts`, `agent-channels.spec.ts`, `mcp-relay.spec.ts` still pass.
-- [ ] README and ADR text match the shipped behaviour.
+- [x] New Playwright spec passes; `e2e/agent-library.spec.ts`, `agent-channels.spec.ts`, `mcp-relay.spec.ts` still pass.
+- [x] README and ADR text match the shipped behaviour.
+
+#### Deviations
+
+- The "no tab conflict" spec waits ~2.5 s (past the retry) and the takeover spec simulates the refusal with `ws.close()` in the mock; the manual-Connect check follows a refused manual Connect after Disconnect, with a synthetic `focus` event first because the in-use list refreshes on focus and lags the lock release (pre-existing, not changed here).
+- The "different repository" spec uses `essay-empty.srsj` (`essay-catalog.srsj` shares essay's repositoryId).
 
 #### Testing
 
@@ -233,12 +238,12 @@ As Phase 1, plus the Playwright command above.
 
 ## Final Acceptance
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
+- [x] `npm run typecheck` passes
+- [x] `npm run lint` passes
 - [ ] `npm test` passes
-- [ ] `npm run build` succeeds
-- [ ] Targeted Playwright (Phase 3) passes
-- [ ] No srs-rust or relay change was needed to merge
+- [x] `npm run build` succeeds
+- [x] Targeted Playwright (Phase 3) passes
+- [x] No srs-rust or relay change was needed to merge
 
 ## Coordination Rules
 

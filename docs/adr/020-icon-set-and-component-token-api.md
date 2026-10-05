@@ -6,7 +6,7 @@
 - **Supersedes:** —
 - **Superseded by:** —
 - **Amends:** [ADR-019](019-ui-theming-surface-and-live-styleguide.md) (makes its "hard-coded colours" consequence true)
-- **Amended by:** srs-web#423 (Toolbar and paragraph strip parts and tokens, action-registry rule: see "Toolbar and paragraph strip"); srs-web#424 (page frame, Drawer, Wide: see "Shell frame, Drawer, Wide", and parts (g) and (h)); srs-web#441 (notices: see part (j)); srs-web#442 (agent library: see part (k)); srs-web#447 (pairing: see part (k))
+- **Amended by:** srs-web#423 (Toolbar and paragraph strip parts and tokens, action-registry rule: see "Toolbar and paragraph strip"); srs-web#424 (page frame, Drawer, Wide: see "Shell frame, Drawer, Wide", and parts (g) and (h)); srs-web#441 (notices: see part (j)); srs-web#442 (agent library: see part (k)); srs-web#447 (pairing: see part (k)); srs-web#418 (reopen: see part (k))
 
 ## Context
 
@@ -322,3 +322,9 @@ sessions) and never imports a store. This is client configuration, not SRS seman
   visible 4 s toast, accepted. No new tokens.
 - **Specimens.** `/styleguide` renders five groups (no relay, one relay and no agents, several relays and agents,
   connection errors, pairing shown) at 20rem, 18rem and 16rem.
+- **Reopen (#418).** Agents that were open on a repository when the page closed reopen when the same repository
+  opens again, reusing the same channel and credentials (the agent's `reopen` field holds the repositoryId; a
+  Disconnect or Forget clears it). A channel another tab holds stays "in use elsewhere" (part j, no toast); a
+  failed reopen shows the row's existing error state. The host also keeps each agent's last `initialize` body
+  (client metadata only) and replays it into the fresh session, so paired clients keep working. No new part or
+  token, so no specimen change.
