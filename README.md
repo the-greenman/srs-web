@@ -32,7 +32,7 @@ npm run typecheck  # svelte-check
 npm run lint       # Biome
 ```
 
-The WASM bindings are **not committed** — `scripts/ensure-bindings.mjs` downloads `srs-bindings-web.tar.gz` from the `srs-rust` GitHub releases over plain HTTPS (no auth). `prebuild` fetches only if `src/lib/srs_bindings/` is missing (so fresh clones and CI build with zero setup); `predeploy`/`fetch-bindings` always re-download with `--force` so a stale binding can never ship. The installable package bundles are fetched alongside by `scripts/ensure-packages.mjs`; see [Creating a new repository](#creating-a-new-repository-and-installing-editor-packages). See [Cloudflare Workers production](#cloudflare-workers-production) for building bindings locally against an unreleased engine.
+The WASM bindings are **not committed** — `scripts/ensure-bindings.mjs` downloads `srs-bindings-web.tar.gz` from the `srs-rust` GitHub releases over plain HTTPS (no auth). `predev`/`prebuild` fetch when `src/lib/srs_bindings/` is missing or holds a different build than the pin (a `.pin` marker records the downloaded URL + sha256, so a pin bump refreshes every checkout); `predeploy`/`fetch-bindings` always re-download with `--force` so a stale binding can never ship. The installable package bundles are fetched alongside by `scripts/ensure-packages.mjs`; see [Creating a new repository](#creating-a-new-repository-and-installing-editor-packages). See [Cloudflare Workers production](#cloudflare-workers-production) for building bindings locally against an unreleased engine.
 
 ## How it uses SRS
 
@@ -213,10 +213,13 @@ The WASM bindings are not committed here — they are fetched from the
 plain-HTTPS download with no auth or `gh` CLI required (srs-rust is public;
 override the source with `SRS_BINDINGS_URL`). It runs in two modes:
 
-- `npm run build` (`prebuild` hook): downloads only if
-  `src/lib/srs_bindings/` is missing, so a fresh clone — including automated
-  Cloudflare Workers builds — builds with zero setup, while a locally built
-  binding is never clobbered.
+- `npm run dev` / `npm run build` (`predev` / `prebuild` hooks): downloads when
+  `src/lib/srs_bindings/` is missing or its `.pin` marker (the URL + sha256 of
+  the last verified download) differs from the pin, so a fresh clone builds
+  with zero setup and a long-lived checkout never runs stale bindings after a
+  pin bump (srs-web#459). A local `wasm-pack` build leaves the marker in place,
+  so it is kept until the pin changes; a checkout with no marker yet
+  (downloaded before #459) re-downloads once.
 - `npm run deploy` (`predeploy` → `npm run fetch-bindings`): always
   re-downloads (`--force`), overwriting whatever was there, so there's no way
   to accidentally ship a stale binding on deploy.
