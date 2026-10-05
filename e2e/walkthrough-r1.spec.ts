@@ -95,6 +95,7 @@ test.describe("R1 release walkthrough (#54)", () => {
       await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
 
       await page.getByTestId("create-name").fill("R1 Walkthrough Org");
+      await page.getByTestId("create-editor-governance").check();
       const [download] = await Promise.all([
         page.waitForEvent("download"),
         page.getByTestId("create-local").click(),
@@ -102,9 +103,7 @@ test.describe("R1 release walkthrough (#54)", () => {
       // New documents are .srs archives; verify download fires and editor loads.
       void download; // archive content verified via CLI round-trip below
 
-      // Editor is loaded (generic shell); switch to the Governance package editor.
-      await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
-      await openPackageEditor(page, "governance");
+      // The chosen editor opens directly.
       await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
       await expect(
         page

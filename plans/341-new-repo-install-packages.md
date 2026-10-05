@@ -140,14 +140,14 @@ If D1(a) is chosen, `create`'s input gains an optional `namespace`. That change 
     - a second identical install is a no-op
 
 ### Phase 3: New repository panel (#341)
-- [ ] `CreateRepositoryPanel.svelte`: name, then an editor checklist built from the creatable editors, then the existing three destinations.
-- [ ] App `createRepository`:
+- [x] `CreateRepositoryPanel.svelte`: name, then an editor checklist built from the creatable editors, then the existing three destinations.
+- [x] App `createRepository`:
   - The base repo is the first chosen editor with a `seed`, or `createBlankRepository(name)`.
   - Install every other chosen editor's bundles.
   - Run `def.create?.(repo)` for each chosen editor.
   - Persist, open, and set `editorMode`.
-- [ ] Rename audit: update `CreateGovernanceDocumentPanel` imports, tests and testids (`create-name`, `create-local`, …, kept as they are; add `create-editor-{id}` checkboxes).
-- [ ] e2e, in `e2e/create-document.spec.ts`:
+- [x] Rename audit: update `CreateGovernanceDocumentPanel` imports, tests and testids (`create-name`, `create-local`, …, kept as they are; add `create-editor-{id}` checkboxes).
+- [x] e2e, in `e2e/create-document.spec.ts`:
   - `new repository with Essay opens the essay editor` (local)
   - the existing governance tests tick `create-editor-governance` and now land in GovernanceShell
   - `blank repository installs Essay from the generic shell`: generic shell, then `package-editor-essay-install`, then EssayShell with `document-dirty-status`

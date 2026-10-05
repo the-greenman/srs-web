@@ -25,7 +25,8 @@
     exportArchive,
     observeWrites,
     exportTree,
-    createGovernanceDocument,
+    createBlankRepository,
+    installBundles,
     neededMigrationIds,
     RFC046_MIGRATION_ID,
     applyMigration,
@@ -39,10 +40,10 @@
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
-  import { availableEditors, installEditor as installEditorPackages, usableEditor } from "$lib/editors/registry.js";
+  import { EDITORS, availableEditors, installEditor as installEditorPackages, usableEditor } from "$lib/editors/registry.js";
   import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
-  import CreateGovernanceDocumentPanel from "$lib/components/CreateGovernanceDocumentPanel.svelte";
+  import CreateRepositoryPanel from "$lib/components/CreateRepositoryPanel.svelte";
   import GitSaveModal from "$lib/components/GitSaveModal.svelte";
   import Panel from "$lib/components/Panel.svelte";
   import AgentPresence from "$lib/components/AgentPresence.svelte";
@@ -587,17 +588,32 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Create new governance document (srs-web#141)
+  // Create new repository (srs-web#141, #341)
   // ---------------------------------------------------------------------------
 
   /**
-   * Scaffold a new governance document (all semantics in the WASM
-   * `scaffold_new_repository` binding) and persist it to the chosen backend.
-   * Throws on failure — the create panel renders the error and the app stays
-   * idle; no half-created state is entered.
+   * Build a new repository in memory, then persist it to the chosen backend: the first chosen
+   * editor with a `seed` (transitional, srs#390) or a blank repo, every other chosen editor's
+   * bundles installed, then each editor's `create` hook. All semantics are in the WASM core.
+   * Nothing is persisted or assigned until the whole repo is built, so a throw leaves the app
+   * idle with the error shown in the panel. The first chosen editor (EDITORS order) opens.
    */
-  async function createDocument(name: string, destination: StorageProviderId): Promise<void> {
-    const { repo: newRepo } = createGovernanceDocument(name);
+  async function createRepository(
+    name: string,
+    editorIds: string[],
+    destination: StorageProviderId
+  ): Promise<void> {
+    const chosen = EDITORS.filter((e) => editorIds.includes(e.id));
+    const seeded = chosen.filter((e) => e.seed);
+    if (seeded.length > 1) {
+      throw new Error(`${seeded.map((e) => e.label).join(" and ")} cannot start the same repository.`);
+    }
+    const newRepo = seeded[0]?.seed?.(name) ?? createBlankRepository(name);
+    installBundles(
+      newRepo,
+      chosen.filter((e) => !e.seed).flatMap((e) => e.requires.map((r) => r.packageId))
+    );
+    for (const editor of chosen) await editor.create?.(newRepo);
     const filename = `${slugifyFilename(name)}.srs`;
 
     if (destination === "local") {
@@ -620,6 +636,7 @@
     repo = newRepo;
     beginDocument();
     repoName = name;
+    editorMode = chosen[0]?.id ?? "generic";
     cachedSession = null;
     appState = "loaded";
   }
@@ -881,8 +898,8 @@
       </div>
     {/if}
     <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} />
-    <p class="splash__divider">or start a governance repository</p>
-    <CreateGovernanceDocumentPanel providers={storageProviders} onCreate={createDocument} />
+    <p class="splash__divider">or start a new repository</p>
+    <CreateRepositoryPanel providers={storageProviders} onCreate={createRepository} />
   </div>
 
 <!-- =========================================================================

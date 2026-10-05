@@ -1,8 +1,9 @@
 <!--
-  CreateGovernanceDocumentPanel — "Create new governance document" onboarding (srs-web#141).
+  CreateRepositoryPanel — "New repository" onboarding (srs-web#141, #341).
 
   Presentation only (ADR-001): the caller owns scaffolding (WASM) and persistence;
-  this panel collects a name and a destination, mirroring SourceChooser's
+  this panel collects a name, the editors to start with (none = a blank repository,
+  where Install is offered later) and a destination, mirroring SourceChooser's
   three-backend layout and busy/error handling.
 -->
 <script lang="ts">
@@ -10,15 +11,19 @@
   import type { StorageProviderId, StorageProviders } from "$lib/storage/index.js";
   import { StorageError } from "$lib/storage/index.js";
   import Button from "./Button.svelte";
+  import { creatableEditors } from "$lib/editors/registry.js";
 
   interface Props {
     providers: StorageProviders;
-    onCreate: (name: string, destination: StorageProviderId) => Promise<void>;
+    onCreate: (name: string, editors: string[], destination: StorageProviderId) => Promise<void>;
   }
 
   let { providers, onCreate }: Props = $props();
 
+  const editors = creatableEditors();
+
   let name = $state("");
+  let chosen = $state<string[]>([]);
   let busy = $state<StorageProviderId | null>(null);
   let error = $state<string | null>(null);
 
@@ -33,7 +38,7 @@
     busy = destination;
     error = null;
     try {
-      await onCreate(trimmedName, destination);
+      await onCreate(trimmedName, chosen, destination);
     } catch (caught) {
       const code =
         caught instanceof StorageError
@@ -55,13 +60,23 @@
     class="create-panel__name"
     data-testid="create-name"
     type="text"
-    placeholder="Name your governance document…"
+    placeholder="Name your repository…"
     bind:value={name}
     disabled={busy !== null}
     onkeydown={(e) => {
       if (e.key === "Enter") void run("local");
     }}
   />
+
+  <fieldset class="create-panel__editors" disabled={busy !== null}>
+    <legend>Start with</legend>
+    {#each editors as editor (editor.id)}
+      <label title={editor.description}>
+        <input type="checkbox" data-testid="create-editor-{editor.id}" value={editor.id} bind:group={chosen} />
+        {editor.label}
+      </label>
+    {/each}
+  </fieldset>
 
   <div class="create-panel__destinations">
     <Button
@@ -112,6 +127,22 @@
     background: var(--color-bg);
     font-family: var(--font-sans);
     font-size: 1rem;
+  }
+
+  .create-panel__editors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-family: var(--font-sans);
+  }
+
+  .create-panel__editors legend {
+    padding: 0;
+    margin-bottom: 0.25rem;
+    color: var(--color-text-muted, inherit);
   }
 
   .create-panel__destinations {

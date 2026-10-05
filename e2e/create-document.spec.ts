@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Download, type Page, expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openNavDrawer, openPackageEditor } from "./helpers.js";
 
 /**
  * create-document.spec.ts — "Create new governance document" onboarding (#141).
@@ -38,6 +38,7 @@ async function downloadText(download: Download): Promise<string> {
 
 async function createLocal(page: Page, name: string): Promise<string> {
   await page.getByTestId("create-name").fill(name);
+  await page.getByTestId("create-editor-governance").check();
   const [download] = await Promise.all([
     page.waitForEvent("download"),
     page.getByTestId("create-local").click(),
@@ -45,11 +46,12 @@ async function createLocal(page: Page, name: string): Promise<string> {
   return downloadText(download);
 }
 
-test.describe("Create new governance document (#141)", () => {
+test.describe("New repository (#141, #341)", () => {
   test("local create downloads a migrated, valid srsj and opens the editor", async ({ page }) => {
     await openGovernancePicker(page);
 
     await page.getByTestId("create-name").fill("My Test Org");
+    await page.getByTestId("create-editor-governance").check();
     const [download] = await Promise.all([
       page.waitForEvent("download"),
       page.getByTestId("create-local").click(),
@@ -58,9 +60,7 @@ test.describe("Create new governance document (#141)", () => {
     // New documents are now created as .srs archives (SRSzip).
     expect(download.suggestedFilename()).toBe("my-test-org.srs");
 
-    // App transitioned to the loaded (generic) editor; switch to the Governance package editor.
-    await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
-    await openPackageEditor(page, "governance");
+    // The chosen editor opens directly.
     await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
     // No validation errors surfaced for the fresh document
     await expect(page.locator('[role="alert"]')).toHaveCount(0);
@@ -69,8 +69,6 @@ test.describe("Create new governance document (#141)", () => {
   test("create → first decision → export → re-import keeps the decision", async ({ page }) => {
     await openGovernancePicker(page);
     await createLocal(page, "Round Trip Org");
-    await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
-    await openPackageEditor(page, "governance");
     await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 5000 });
 
     // Capture the first decision through the UI — the scaffold pre-creates none.
@@ -166,11 +164,10 @@ test.describe("Create new governance document (#141)", () => {
 
     await openGovernancePicker(page);
     await page.getByTestId("create-name").fill("Cloud Org");
+    await page.getByTestId("create-editor-governance").check();
     await page.getByTestId("create-dropbox").click();
 
-    // App lands in the loaded (generic) editor backed by the created handle
-    await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 10000 });
-    await openPackageEditor(page, "governance");
+    // App lands in the chosen editor, backed by the created handle
     await expect(page.getByRole("link", { name: /Decision/ })).toBeVisible({ timeout: 10000 });
 
     const calls = await page.evaluate(
@@ -181,5 +178,30 @@ test.describe("Create new governance document (#141)", () => {
     // New documents are created as .srs archives.
     expect(calls[0].name).toBe("cloud-org.srs");
     expect(calls[0].isBinary).toBe(true);
+  });
+
+  test("new repository with Essay opens the essay editor", async ({ page }) => {
+    await openGovernancePicker(page);
+    await page.getByTestId("create-name").fill("Essay Repo");
+    await page.getByTestId("create-editor-essay").check();
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByTestId("create-local").click(),
+    ]);
+    expect(download.suggestedFilename()).toBe("essay-repo.srs");
+    await expect(page.locator(".essay-shell__page")).toBeVisible({ timeout: 10000 });
+  });
+
+  test("blank repository installs Essay from the generic shell", async ({ page }) => {
+    await openGovernancePicker(page);
+    await page.getByTestId("create-name").fill("Blank Repo");
+    await Promise.all([page.waitForEvent("download"), page.getByTestId("create-local").click()]);
+    await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
+
+    await openNavDrawer(page);
+    await page.getByTestId("package-editor-essay-install").click();
+    await expect(page.getByRole("button", { name: "New essay" })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("document-dirty-status")).toBeVisible();
   });
 });
