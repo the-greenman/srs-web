@@ -27,7 +27,17 @@ const svelteIn = (dir: string) =>
     .map((n) => `${dir}/${n}`);
 /** Shells already converted to component CSS (#424): they may carry no scoped style at all. Governance and Guides join in PR-B. */
 const SHELL_FILES = svelteIn("src/lib/generic");
-const svelte = [...svelteIn("src/lib/components"), ...SHELL_FILES];
+/** Editors whose controls moved onto Button/IconButton (#428): scanned for raw colour too. */
+const EDITOR_FILES = ["src/lib/editor/SectionForm.svelte", "src/lib/editor/BlueprintDocumentEditor.svelte"];
+const svelte = [...svelteIn("src/lib/components"), ...SHELL_FILES, ...EDITOR_FILES];
+/** Files migrated onto the Modal and Button primitives (#428): no one-off button or dialog classes. */
+const MIGRATED = [
+  ...EDITOR_FILES,
+  ...["GitSaveModal", "SuccessorModal", "DecisionLinkPicker", "DecisionLogView", "SourceChooser"].map(
+    (n) => `src/lib/components/${n}.svelte`
+  ),
+];
+const ONE_OFF = /[\w-]*(?:modal-btn|modal-overlay|modal-dialog|te-btn|__[\w-]*btn|group__add)\b/g;
 
 /** Allowed exceptions: every entry needs a reason. */
 const HUE =
@@ -70,6 +80,13 @@ describe("styles use tokens only", () => {
         }
       }
     }
+    expect(hits).toEqual([]);
+  });
+
+  it("migrated files carry no one-off button or dialog class", () => {
+    const hits = MIGRATED.flatMap((file) =>
+      [...readFileSync(join(ROOT, file), "utf8").matchAll(ONE_OFF)].map((m) => `${file}: ${m[0]}`)
+    );
     expect(hits).toEqual([]);
   });
 
