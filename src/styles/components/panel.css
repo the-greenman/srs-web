@@ -72,8 +72,6 @@ summary.panel__head:focus-visible {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  /* cancel the top margin so the grow section butts up cleanly */
-  margin-top: 0 !important;
 }
 .panel--grow > .panel__body {
   flex: 1;
