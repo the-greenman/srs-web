@@ -760,8 +760,7 @@
    * parameter is removed from the address bar first (success or not), so a refresh never re-fetches
    * by surprise: it lands on the picker, and a failed link is not retried in a loop.
    */
-  async function openFromLink(raw: string): Promise<void> {
-    history.replaceState(history.state, "", withoutOpenParam(location.href));
+  async function openFromUrl(raw: string): Promise<void> {
     try {
       const url = parseOpenUrl(raw);
       openingHost = url.host;
@@ -770,11 +769,19 @@
         onOpen: (handle) => loadDocument(handle, url.host),
         onOpenArchive: (bytes, name) => loadArchiveDocument(bytes, name, url.host),
       });
+    } finally {
+      openingHost = null;
+    }
+  }
+
+  /** `?open=`: the one shared path, with a failure taking the whole page (the chooser shows it inline instead). */
+  async function openFromLink(raw: string): Promise<void> {
+    history.replaceState(history.state, "", withoutOpenParam(location.href));
+    try {
+      await openFromUrl(raw);
     } catch (e: unknown) {
       errorMsg = e instanceof Error ? e.message : String(e);
       appState = "error";
-    } finally {
-      openingHost = null;
     }
   }
 
@@ -1053,7 +1060,7 @@
         </div>
       </div>
     {/if}
-    <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} />
+    <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} onOpenUrl={openFromUrl} />
     <p class="splash__divider">or start a new repository</p>
     <CreateRepositoryPanel onCreate={createRepository} />
   </div>

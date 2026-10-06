@@ -12,6 +12,7 @@
     LayersPanel, MarkdownHelp, MarkdownText, AgentPanel, McpConnection, Panel, AnnotationMargin, PinnedPane, Select, Tag,
     TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost, SrsMark,
   } from "$lib/components";
+  import SourceChooser from "$lib/components/SourceChooser.svelte";
   import LiveRegions from "$lib/components/LiveRegions.svelte";
   import { notify } from "$lib/notices.svelte";
   import { pairingMinutesLeft } from "$lib/components/agent-panel";
@@ -39,6 +40,7 @@
     ["panels", "Panels and trays"],
     ["agents", "Agent library"],
     ["shell", "Page frame"],
+    ["chooser", "Source chooser"],
     ["notices", "Notices"],
     ["forms", "Form controls"],
     ["dialogs", "Dialogs"],
@@ -477,6 +479,21 @@
         </figure>
       {/each}
     </div>
+  </section>
+
+  <section id="chooser">
+    <h2>Source chooser</h2>
+    <p class="sg__note">The landing options: this device and folders first, cloud providers (unconfigured here), then "From a URL" for a read-only link.
+      The input is a native <code>type=url</code>; the button stays disabled until it holds a link, and a refusal shows as an error Notice below.</p>
+    <SourceChooser
+      providers={{
+        dropbox: { configured: false, label: "Dropbox", authenticate: noop, open: noop },
+        googleDrive: { configured: false, label: "Google Drive", authenticate: noop, open: noop },
+        github: { configured: false, label: "GitHub", authenticate: noop, open: noop },
+      } as never}
+      onOpen={async () => {}}
+      onOpenUrl={async () => { throw new Error("Only https:// links can be opened."); }}
+    />
   </section>
 
   <section id="notices">
