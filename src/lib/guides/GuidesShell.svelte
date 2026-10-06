@@ -584,6 +584,7 @@
         {/snippet}
         {#snippet footer()}
           <Button
+            size="sm"
             variant="ghost"
             onDark
             data-testid="guides-new-guide"
@@ -653,6 +654,7 @@
                   <h2 class="guides-detail__title">{selectedGuide.displayLabel ?? "Untitled Guide"}</h2>
                   <Button
                     variant="ghost"
+                    size="sm"
                     data-testid="guides-export-guide-json"
                     onclick={handleExportGuideJson}
                     title="Export this guide as a JSON document-view projection"
@@ -680,6 +682,7 @@
                   <div class="guides-section-controls">
                     <Button
                       variant="ghost"
+                    size="sm"
                       data-testid="guides-edit-guide"
                       onclick={() => openEditGuide(selectedGuide)}
                     >Edit</Button>
@@ -691,6 +694,7 @@
                   <div class="guides-section-picker-wrap">
                     <Button
                       variant="ghost"
+                    size="sm"
                       data-testid="guides-add-section"
                       onclick={() => { sectionPickerOpen = !sectionPickerOpen; }}
                     >+ Add Section</Button>
@@ -783,13 +787,13 @@
         {/if}
         <Panel title="Export" collapsible={false} class="inspector__section">
           <Button
-            variant="ghost"
+            size="sm"
             data-testid="guides-export-markdown"
             onclick={handleExportMarkdown}
             disabled={!guideViewId}
           >Export Markdown</Button>
           <Button
-            variant="ghost"
+            size="sm"
             data-testid="guides-export-print"
             onclick={handlePrint}
             disabled={!previewHtml}
