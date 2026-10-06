@@ -44,24 +44,40 @@ describe("Diagnostics notice variant", () => {
   });
 
   it("dismiss hides it for that document only, and a change in the diagnostics re-shows it", async () => {
-    const a = render(Diagnostics, { diagnostics: three, variant: "notice", documentKey: "doc-a", testid: "a" });
+    const a = render(Diagnostics, {
+      diagnostics: three,
+      variant: "notice",
+      documentKey: "doc-a",
+      testid: "a",
+    });
     await fireEvent.click(a.getByRole("button", { name: "Dismiss" }));
     expect(a.queryByTestId("a")).toBeNull();
-    const b = render(Diagnostics, { diagnostics: three, variant: "notice", documentKey: "doc-b", testid: "b" });
+    const b = render(Diagnostics, {
+      diagnostics: three,
+      variant: "notice",
+      documentKey: "doc-b",
+      testid: "b",
+    });
     expect(b.queryByTestId("b")).not.toBeNull();
     await a.rerender({ diagnostics: mixed });
     expect(a.queryByTestId("a")).not.toBeNull();
   });
 
   it("renders nothing when there are no diagnostics", () => {
-    const { container } = render(Diagnostics, { diagnostics: [], variant: "notice", documentKey: "d" });
+    const { container } = render(Diagnostics, {
+      diagnostics: [],
+      variant: "notice",
+      documentKey: "d",
+    });
     expect(container.querySelector(".notice")).toBeNull();
   });
 });
 
 describe("Diagnostics panel variant", () => {
   it("keeps its all-clear text and summary line, and shows grouped rows with counts", () => {
-    expect(render(Diagnostics, { diagnostics: [] }).container.textContent).toContain("No diagnostics");
+    expect(render(Diagnostics, { diagnostics: [] }).container.textContent).toContain(
+      "No diagnostics"
+    );
     cleanup();
     const { container } = render(Diagnostics, { diagnostics: mixed });
     expect(container.querySelector(".diag-summary")?.textContent).toContain("1 error");

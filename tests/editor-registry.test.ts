@@ -43,13 +43,17 @@ describe("editor registry", () => {
     }));
     expect(availableEditors(repo, types).map((o) => o.editor.id)).toEqual(EDITORS.map((e) => e.id));
     expect(
-      availableEditors(repo, [{ id: "guide", namespace: "com.mudemocracy", name: "guide", version: 1 }])
+      availableEditors(repo, [
+        { id: "guide", namespace: "com.mudemocracy", name: "guide", version: 1 },
+      ])
     ).toEqual([]);
   });
 
   it("marks an editor unmet when the core says its requirement is not satisfied", () => {
     const essay = EDITORS.find((e) => e.id === "essay")!;
-    check.mockReturnValue([{ satisfied: false, reason: "version-too-low", candidateVersions: ["1.0.0"] }]);
+    check.mockReturnValue([
+      { satisfied: false, reason: "version-too-low", candidateVersions: ["1.0.0"] },
+    ]);
     const [offered] = availableEditors(repo, [
       { id: essay.entryTypeId, namespace: "n", name: "x", version: 1 },
     ]);

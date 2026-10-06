@@ -377,10 +377,19 @@ describe("GenericSrsShell diagnostics notices (#441)", () => {
   }));
   const mount = () =>
     render(GenericSrsShell, {
-      props: { repo: {} as never, repoName: "Example repository", onExport: vi.fn(), onOpenAnother: vi.fn() },
+      props: {
+        repo: {} as never,
+        repoName: "Example repository",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+      },
     });
   const renderWith = (diagnostics: string[]) =>
-    mocks.renderDocumentView.mockReturnValue({ rendered: "<h1>x</h1>", diagnostics, projection: null });
+    mocks.renderDocumentView.mockReturnValue({
+      rendered: "<h1>x</h1>",
+      diagnostics,
+      projection: null,
+    });
   beforeEach(() => {
     mocks.listDocumentViews.mockReturnValue(views);
   });
@@ -418,7 +427,9 @@ describe("GenericSrsShell diagnostics notices (#441)", () => {
       throw new Error("engine exploded");
     });
     const { container } = mount();
-    await waitFor(() => expect(container.querySelector('[role="alert"]')?.textContent).toContain("engine exploded"));
+    await waitFor(() =>
+      expect(container.querySelector('[role="alert"]')?.textContent).toContain("engine exploded")
+    );
     expect(container.querySelector(".diag-notice")).toBeNull();
     mocks.renderDocumentView.mockReset();
     restore();

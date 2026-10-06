@@ -3,14 +3,26 @@ import { RelayHost, StalePairing } from "../src/lib/mcp/relay-host";
 
 const creds = (n: string) => ({ callerUrl: `https://${n}/c`, executorUrl: `wss://${n}/e` });
 function run(relayUrl: string) {
-  const m = new Map([["k", JSON.stringify({ relayUrl: "https://a.test", creds: creds("a.test") })]]);
-  const fetchImpl = vi.fn(async () => new Response(JSON.stringify(creds("fresh")), { status: 200 }));
+  const m = new Map([
+    ["k", JSON.stringify({ relayUrl: "https://a.test", creds: creds("a.test") })],
+  ]);
+  const fetchImpl = vi.fn(
+    async () => new Response(JSON.stringify(creds("fresh")), { status: 200 })
+  );
   const host = new RelayHost({
     relayUrl,
     storageKey: "k",
     storage: { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v) },
     fetchImpl: fetchImpl as unknown as typeof fetch,
-    createSocket: () => ({ send() {}, close() {}, onopen: null, onmessage: null, onclose: null, onerror: null }) as never,
+    createSocket: () =>
+      ({
+        send() {},
+        close() {},
+        onopen: null,
+        onmessage: null,
+        onclose: null,
+        onerror: null,
+      }) as never,
     onHandled() {},
     onChange() {},
   });
@@ -40,7 +52,9 @@ describe("RelayHost.pair", () => {
   });
   const pairing = { code: "ABCDE-FGHJK", expiresAt: 1, connectorUrl: "https://x/call" };
   function setup() {
-    const stored = new Map([["k", JSON.stringify({ relayUrl: "https://a.test", creds: fc("old") })]]);
+    const stored = new Map([
+      ["k", JSON.stringify({ relayUrl: "https://a.test", creds: fc("old") })],
+    ]);
     let release: () => void = () => {};
     const urls: string[] = [];
     const fetchImpl = vi.fn(async (url: string) => {
@@ -56,7 +70,15 @@ describe("RelayHost.pair", () => {
       storageKey: "k",
       storage: { getItem: (k) => stored.get(k) ?? null, setItem: (k, v) => void stored.set(k, v) },
       fetchImpl: fetchImpl as unknown as typeof fetch,
-      createSocket: () => ({ send() {}, close() {}, onopen: null, onmessage: null, onclose: null, onerror: null }) as never,
+      createSocket: () =>
+        ({
+          send() {},
+          close() {},
+          onopen: null,
+          onmessage: null,
+          onclose: null,
+          onerror: null,
+        }) as never,
       onHandled() {},
       onChange() {},
     });
@@ -83,17 +105,20 @@ describe("RelayHost.pair", () => {
     expect(urls[0]).toBe("https://a.test/v1/channels/old/pairing/E-old");
     host.detach();
   });
-  it.each(["rotate", "detach", "takeover"] as const)("rejects with StalePairing when %s lands first", async (op) => {
-    const { host, urls, release } = setup();
-    await host.attach(session);
-    const p = host.pair();
-    await vi.waitFor(() => expect(urls).toHaveLength(1));
-    if (op === "detach") host.detach();
-    else await host[op]();
-    release();
-    await expect(p).rejects.toBeInstanceOf(StalePairing);
-    host.detach();
-  });
+  it.each(["rotate", "detach", "takeover"] as const)(
+    "rejects with StalePairing when %s lands first",
+    async (op) => {
+      const { host, urls, release } = setup();
+      await host.attach(session);
+      const p = host.pair();
+      await vi.waitFor(() => expect(urls).toHaveLength(1));
+      if (op === "detach") host.detach();
+      else await host[op]();
+      release();
+      await expect(p).rejects.toBeInstanceOf(StalePairing);
+      host.detach();
+    }
+  );
   it("uses the new credential after a rotate settles", async () => {
     const { host, urls, release } = setup();
     await host.attach(session);

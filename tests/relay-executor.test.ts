@@ -90,7 +90,10 @@ describe("RelayExecutor", () => {
 
   it("answers 404 with the handler's body when the session is unknown; 200 otherwise; 202 for nothing", async () => {
     let unknown = true;
-    const { sockets } = make((t) => (t === "n" ? undefined : '{"error":"not initialized"}'), () => unknown);
+    const { sockets } = make(
+      (t) => (t === "n" ? undefined : '{"error":"not initialized"}'),
+      () => unknown
+    );
     sockets[0].request("q", "a");
     sockets[0].request("n", "b");
     await flush();

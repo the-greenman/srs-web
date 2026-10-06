@@ -32,7 +32,14 @@ const FEATURE_TYPE = "55555555-0000-4000-8000-000000000005";
 const FEATURE_GROUP_TYPE = "66666666-0000-4000-8000-000000000006";
 
 function blueprintSummary(id: string): BlueprintSummary {
-  return { id, namespace: "com.example", name: "page", version: 1, description: "", rootTypeCount: 1 };
+  return {
+    id,
+    namespace: "com.example",
+    name: "page",
+    version: 1,
+    description: "",
+    rootTypeCount: 1,
+  };
 }
 
 /** Build a fake repo implementing only the methods document-model.ts calls. */
@@ -53,7 +60,11 @@ function fakeRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
   return { ...base, ...overrides } as unknown as SrsRepository;
 }
 
-function projectedRecord(instanceId: string, typeId: string, children: ProjectedRecord[] = []): ProjectedRecord {
+function projectedRecord(
+  instanceId: string,
+  typeId: string,
+  children: ProjectedRecord[] = []
+): ProjectedRecord {
   return {
     instanceId,
     typeId,
@@ -79,7 +90,10 @@ describe("blueprintForComposition", () => {
       list_blueprints: () => ({ summaries: [bpOther, bpMatch] }) as BlueprintListResult,
       blueprint_schema: (blueprintId: string) => {
         const rootType = blueprintId === bpMatch.id ? ROOT_TYPE : OTHER_ROOT_TYPE;
-        return { schema: { properties: { root: { $ref: `#/definitions/${rootType}` } }, definitions: {} }, diagnostics: [] };
+        return {
+          schema: { properties: { root: { $ref: `#/definitions/${rootType}` } }, definitions: {} },
+          diagnostics: [],
+        };
       },
     });
   }
@@ -151,18 +165,44 @@ describe("componentTypes", () => {
           properties: {
             root: { $ref: `#/definitions/${ROOT_TYPE}` },
             // `contains` groups the page's direct children (RFC-041 oneOf expansion over extendsTypeId).
-            contains: { items: { oneOf: [{ $ref: `#/definitions/${HERO_TYPE}` }, { $ref: `#/definitions/${PROSE_TYPE}` }] } },
+            contains: {
+              items: {
+                oneOf: [
+                  { $ref: `#/definitions/${HERO_TYPE}` },
+                  { $ref: `#/definitions/${PROSE_TYPE}` },
+                ],
+              },
+            },
             // `precedes` includes source types too — same PROSE_TYPE appears in both groups.
-            precedes: { items: { oneOf: [{ $ref: `#/definitions/${PROSE_TYPE}` }, { $ref: `#/definitions/${FEATURE_TYPE}` }] } },
+            precedes: {
+              items: {
+                oneOf: [
+                  { $ref: `#/definitions/${PROSE_TYPE}` },
+                  { $ref: `#/definitions/${FEATURE_TYPE}` },
+                ],
+              },
+            },
           },
           definitions: {},
         },
         diagnostics: [],
       }),
       list_types: () => [
-        { id: HERO_TYPE, namespace: "com.example", name: "hero", version: 2, description: "Hero banner" },
+        {
+          id: HERO_TYPE,
+          namespace: "com.example",
+          name: "hero",
+          version: 2,
+          description: "Hero banner",
+        },
         { id: PROSE_TYPE, namespace: "com.example", name: "prose", version: 1 },
-        { id: FEATURE_TYPE, namespace: "com.example", name: "feature", version: 3, description: "Feature card" },
+        {
+          id: FEATURE_TYPE,
+          namespace: "com.example",
+          name: "feature",
+          version: 3,
+          description: "Feature card",
+        },
       ],
       ...overrides,
     });
@@ -193,7 +233,14 @@ describe("componentTypes", () => {
       blueprint_schema: () => ({
         schema: {
           properties: {
-            precedes: { items: { oneOf: [{ $ref: `#/definitions/${ROOT_TYPE}` }, { $ref: `#/definitions/${HERO_TYPE}` }] } },
+            precedes: {
+              items: {
+                oneOf: [
+                  { $ref: `#/definitions/${ROOT_TYPE}` },
+                  { $ref: `#/definitions/${HERO_TYPE}` },
+                ],
+              },
+            },
           },
           definitions: {},
         },
@@ -239,7 +286,9 @@ describe("componentTypes", () => {
 
   it("keeps a type whose only declared contains-parent is the blueprint's own root type (guide root→sections)", () => {
     const repo = schemaRepo({
-      list_blueprint_structure: () => [{ relationType: "contains", sourceTypeId: ROOT_TYPE, targetTypeId: HERO_TYPE }],
+      list_blueprint_structure: () => [
+        { relationType: "contains", sourceTypeId: ROOT_TYPE, targetTypeId: HERO_TYPE },
+      ],
     });
     const types = componentTypes(repo, blueprintSummary("bp"));
     expect(types.map((t) => t.typeId)).toContain(HERO_TYPE);
@@ -261,7 +310,8 @@ describe("childTypes", () => {
         { id: FEATURE_TYPE, namespace: "com.example", name: "feature", version: 1 },
         { id: CARD_SUBTYPE, namespace: "com.example", name: "feature-highlight", version: 1 },
       ],
-      get_type: (id: string) => (id === CARD_SUBTYPE ? { id, extendsTypeId: FEATURE_TYPE } : { id }),
+      get_type: (id: string) =>
+        id === CARD_SUBTYPE ? { id, extendsTypeId: FEATURE_TYPE } : { id },
     });
 
     const types = childTypes(repo, blueprintSummary("bp"), FEATURE_GROUP_TYPE);
@@ -274,8 +324,11 @@ describe("childTypes", () => {
       list_blueprint_structure: () => [
         { relationType: "contains", sourceTypeId: FEATURE_GROUP_TYPE, targetTypeId: FEATURE_TYPE },
       ],
-      list_types: () => [{ id: FEATURE_TYPE, namespace: "com.example", name: "feature", version: 1 }],
-      get_type: (id: string) => (id === GROUP_SUBTYPE ? { id, extendsTypeId: FEATURE_GROUP_TYPE } : { id }),
+      list_types: () => [
+        { id: FEATURE_TYPE, namespace: "com.example", name: "feature", version: 1 },
+      ],
+      get_type: (id: string) =>
+        id === GROUP_SUBTYPE ? { id, extendsTypeId: FEATURE_GROUP_TYPE } : { id },
     });
 
     // GROUP_SUBTYPE extends FEATURE_GROUP_TYPE, so it inherits the same contains spec.
@@ -293,7 +346,9 @@ describe("childTypes", () => {
       list_blueprint_structure: () => [
         { relationType: "precedes", sourceTypeId: FEATURE_GROUP_TYPE, targetTypeId: FEATURE_TYPE },
       ],
-      list_types: () => [{ id: FEATURE_TYPE, namespace: "com.example", name: "feature", version: 1 }],
+      list_types: () => [
+        { id: FEATURE_TYPE, namespace: "com.example", name: "feature", version: 1 },
+      ],
     });
     expect(childTypes(repo, blueprintSummary("bp"), FEATURE_GROUP_TYPE)).toEqual([]);
   });
@@ -318,7 +373,14 @@ describe("loadDocument", () => {
     const repo = fakeRepo({
       resolve_container_view: (containerId: string) => {
         expect(containerId).toBe("container-fixed");
-        return { containerId, root, members: [root], columns: [], excludeLifecycleStates: [], diagnostics: [] };
+        return {
+          containerId,
+          root,
+          members: [root],
+          columns: [],
+          excludeLifecycleStates: [],
+          diagnostics: [],
+        };
       },
       render_composition: (viewId: string, format: string, containerId?: string | null) => {
         expect(viewId).toBe("comp");
@@ -338,7 +400,10 @@ describe("loadDocument", () => {
                 sectionId: "s1",
                 order: 0,
                 // Group "b" nests card "b1" — the same shape the HTML preview nests under it.
-                records: [projectedRecord("b", FEATURE_GROUP_TYPE, [projectedRecord("b1", FEATURE_TYPE)]), projectedRecord("a", HERO_TYPE)],
+                records: [
+                  projectedRecord("b", FEATURE_GROUP_TYPE, [projectedRecord("b1", FEATURE_TYPE)]),
+                  projectedRecord("a", HERO_TYPE),
+                ],
               },
             ],
           },
@@ -354,7 +419,11 @@ describe("loadDocument", () => {
       description: "",
       createdAt: "",
       sections: [
-        { sectionId: "s1", order: 0, source: { type: "container-subset", containerId: "container-fixed" } },
+        {
+          sectionId: "s1",
+          order: 0,
+          source: { type: "container-subset", containerId: "container-fixed" },
+        },
       ],
     };
 
@@ -391,7 +460,13 @@ describe("loadDocument", () => {
           containerTitle: "Page",
           // The engine's own projection includes the root record among the
           // section's top-level records (it is a direct container member).
-          sections: [{ sectionId: "s1", order: 0, records: [projectedRecord("root-1", ROOT_TYPE), projectedRecord("a", HERO_TYPE)] }],
+          sections: [
+            {
+              sectionId: "s1",
+              order: 0,
+              records: [projectedRecord("root-1", ROOT_TYPE), projectedRecord("a", HERO_TYPE)],
+            },
+          ],
         },
       }),
     });
@@ -402,7 +477,13 @@ describe("loadDocument", () => {
       version: 1,
       description: "",
       createdAt: "",
-      sections: [{ sectionId: "s1", order: 0, source: { type: "container-subset", containerId: "container-fixed" } }],
+      sections: [
+        {
+          sectionId: "s1",
+          order: 0,
+          source: { type: "container-subset", containerId: "container-fixed" },
+        },
+      ],
     };
 
     const doc = loadDocument(repo, composition);
@@ -416,9 +497,23 @@ describe("loadDocument", () => {
       compositions_for_container: () => [],
       resolve_container_view: (containerId: string) => {
         if (containerId === "c-other") {
-          return { containerId, root: member("x", 0, OTHER_ROOT_TYPE), members: [], columns: [], excludeLifecycleStates: [], diagnostics: [] };
+          return {
+            containerId,
+            root: member("x", 0, OTHER_ROOT_TYPE),
+            members: [],
+            columns: [],
+            excludeLifecycleStates: [],
+            diagnostics: [],
+          };
         }
-        return { containerId, root, members: [root], columns: [], excludeLifecycleStates: [], diagnostics: [] };
+        return {
+          containerId,
+          root,
+          members: [root],
+          columns: [],
+          excludeLifecycleStates: [],
+          diagnostics: [],
+        };
       },
       render_composition: () => ({ rendered: "{}", diagnostics: [], projection: null }),
     });
@@ -451,14 +546,24 @@ describe("loadDocument", () => {
       description: "",
       createdAt: "",
       rootTypeRefs: [{ typeId: ROOT_TYPE, typeVersion: 1 }],
-      sections: [{ sectionId: "page", order: 0, source: { type: "container-subset", containerId: "c-b" } }],
+      sections: [
+        { sectionId: "page", order: 0, source: { type: "container-subset", containerId: "c-b" } },
+      ],
     };
     const repo = fakeRepo({
       list_containers: () => [{ containerId: "c-a" }, { containerId: "c-b" }],
-      compositions_for_container: (containerId: string) => (containerId === "c-b" ? [variantB] : []),
+      compositions_for_container: (containerId: string) =>
+        containerId === "c-b" ? [variantB] : [],
       resolve_container_view: (containerId: string) => {
         const root = containerId === "c-a" ? rootA : rootB;
-        return { containerId, root, members: [root], columns: [], excludeLifecycleStates: [], diagnostics: [] };
+        return {
+          containerId,
+          root,
+          members: [root],
+          columns: [],
+          excludeLifecycleStates: [],
+          diagnostics: [],
+        };
       },
       render_composition: () => ({ rendered: "{}", diagnostics: [], projection: null }),
     });

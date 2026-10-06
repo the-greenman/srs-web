@@ -18,7 +18,9 @@ beforeEach(() => {
 /** A nav item by text, whichever element it is (role-agnostic: it was a link, it is a button). */
 async function navItem(name: RegExp): Promise<HTMLElement> {
   return waitFor(() => {
-    const el = [...document.querySelectorAll<HTMLElement>(".nav__item")].find((e) => name.test(e.textContent ?? ""));
+    const el = [...document.querySelectorAll<HTMLElement>(".nav__item")].find((e) =>
+      name.test(e.textContent ?? "")
+    );
     if (!el) throw new Error(`no nav item ${name}`);
     return el;
   });
@@ -555,7 +557,9 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
       },
     });
     await createRecordViaNewFlow();
-    expect((await screen.findByTestId("recovery-status")).textContent).toContain("Recovery copy saved");
+    expect((await screen.findByTestId("recovery-status")).textContent).toContain(
+      "Recovery copy saved"
+    );
     expect(screen.getByTestId("save-status").textContent).toContain("Save failed");
   });
 
@@ -572,7 +576,9 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
       },
     });
     await createRecordViaNewFlow();
-    expect((await screen.findByTestId("recovery-status")).textContent).toContain("Recovery copy saved");
+    expect((await screen.findByTestId("recovery-status")).textContent).toContain(
+      "Recovery copy saved"
+    );
   });
 });
 

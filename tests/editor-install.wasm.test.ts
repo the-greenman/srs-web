@@ -50,7 +50,10 @@ describe.skipIf(!haveBindings)("install an editor's packages on the real engine"
     expect(() => newEssay(repo, "First")).not.toThrow();
 
     const e1 = repo.write_epoch();
-    const [again] = installBundles(repo, essay.requires.map((r) => r.packageId));
+    const [again] = installBundles(
+      repo,
+      essay.requires.map((r) => r.packageId)
+    );
     expect(again.installed).toBe(0);
     expect(again.skippedIdentical).toBeGreaterThan(0);
     expect(repo.write_epoch()).toBe(e1);

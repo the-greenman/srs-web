@@ -16,6 +16,8 @@ export interface GenericHandlers {
   /** Absent while the document cannot be saved (read-only): no Save is offered. */
   onsave?: () => void;
   onexport: () => void;
+  /** Present only while the document is read-only (#471): Document > Save a copy… (kept out of the bar). */
+  onsavecopy?: () => void;
   onopenanother: () => void;
   /** Absent when the shell cannot open the agent library. */
   onopenagents?: () => void;
@@ -36,6 +38,15 @@ export function genericActions(
       label: "Export",
       run: h.onexport,
       enabled: true,
+    },
+    !!h.onsavecopy && {
+      id: "save-copy",
+      group: "document",
+      kind: "action",
+      label: "Save a copy…",
+      run: h.onsavecopy,
+      enabled: true,
+      testid: "save-copy",
     },
     !!h.onpreview && {
       id: "preview",

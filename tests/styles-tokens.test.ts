@@ -33,14 +33,21 @@ const SHELL_FILES = [
   ...svelteIn("src/lib/essay"),
 ];
 /** Editors whose controls moved onto Button/IconButton (#428): scanned for raw colour too. */
-const EDITOR_FILES = ["src/lib/editor/SectionForm.svelte", "src/lib/editor/BlueprintDocumentEditor.svelte"];
+const EDITOR_FILES = [
+  "src/lib/editor/SectionForm.svelte",
+  "src/lib/editor/BlueprintDocumentEditor.svelte",
+];
 const svelte = [...svelteIn("src/lib/components"), ...SHELL_FILES, ...EDITOR_FILES];
 /** Files migrated onto the Modal and Button primitives (#428): no one-off button or dialog classes. */
 const MIGRATED = [
   ...EDITOR_FILES,
-  ...["GitSaveModal", "SuccessorModal", "DecisionLinkPicker", "DecisionLogView", "SourceChooser"].map(
-    (n) => `src/lib/components/${n}.svelte`
-  ),
+  ...[
+    "GitSaveModal",
+    "SuccessorModal",
+    "DecisionLinkPicker",
+    "DecisionLogView",
+    "SourceChooser",
+  ].map((n) => `src/lib/components/${n}.svelte`),
 ];
 const ONE_OFF = /[\w-]*(?:modal-btn|modal-overlay|modal-dialog|te-btn|__[\w-]*btn|group__add)\b/g;
 

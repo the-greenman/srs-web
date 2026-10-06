@@ -1813,15 +1813,26 @@ describe("createBlankRepository", () => {
 
 describe("installPackageBundle", () => {
   it("passes the bundle through and returns the core's result", () => {
-    const result = { name: "essay", version: "1.5.0", installed: 3, skippedIdentical: 0, conflicts: [], notes: [] };
+    const result = {
+      name: "essay",
+      version: "1.5.0",
+      installed: 3,
+      skippedIdentical: 0,
+      conflicts: [],
+      notes: [],
+    };
     const spy = vi.fn().mockReturnValue(result);
     expect(installPackageBundle(mockRepo({ install_package_bundle: spy }), "BUNDLE")).toBe(result);
     expect(spy).toHaveBeenCalledWith("BUNDLE", "{}");
   });
 
   it("throws on conflicts, with the core's notes", () => {
-    const spy = vi.fn().mockReturnValue({ name: "essay", version: "1.5.0", conflicts: [{}], notes: ["n1"] });
-    expect(() => installPackageBundle(mockRepo({ install_package_bundle: spy }), "B")).toThrow(/conflicting.*n1/);
+    const spy = vi
+      .fn()
+      .mockReturnValue({ name: "essay", version: "1.5.0", conflicts: [{}], notes: ["n1"] });
+    expect(() => installPackageBundle(mockRepo({ install_package_bundle: spy }), "B")).toThrow(
+      /conflicting.*n1/
+    );
   });
 });
 
@@ -1831,21 +1842,33 @@ describe("installBundles", () => {
 
   it("throws for a package with no pinned bundle, before any write", () => {
     const install = vi.fn();
-    expect(() => installBundles(mockRepo({ install_package_bundle: install }), ["no-such-package"])).toThrow(/No bundled package/);
+    expect(() =>
+      installBundles(mockRepo({ install_package_bundle: install }), ["no-such-package"])
+    ).toThrow(/No bundled package/);
     expect(install).not.toHaveBeenCalled();
   });
 
   it("throws on an unsatisfied bundle dependency before installing it", () => {
     const install = vi.fn();
-    const check = vi.fn().mockReturnValue({ dependencies: [{ name: "core", version: "2.0.0", satisfied: false, reason: "missing" }] });
-    expect(() => installBundles(mockRepo({ check_package_requirements: check, install_package_bundle: install }), [ESSAY])).toThrow(/needs core 2.0.0/);
+    const check = vi.fn().mockReturnValue({
+      dependencies: [{ name: "core", version: "2.0.0", satisfied: false, reason: "missing" }],
+    });
+    expect(() =>
+      installBundles(
+        mockRepo({ check_package_requirements: check, install_package_bundle: install }),
+        [ESSAY]
+      )
+    ).toThrow(/needs core 2.0.0/);
     expect(install).not.toHaveBeenCalled();
   });
 
   it("installs each package once, however often it is required", () => {
     const install = vi.fn().mockReturnValue(ok);
     const check = vi.fn().mockReturnValue({ dependencies: [] });
-    installBundles(mockRepo({ check_package_requirements: check, install_package_bundle: install }), [ESSAY, ESSAY]);
+    installBundles(
+      mockRepo({ check_package_requirements: check, install_package_bundle: install }),
+      [ESSAY, ESSAY]
+    );
     expect(install).toHaveBeenCalledTimes(1);
   });
 });

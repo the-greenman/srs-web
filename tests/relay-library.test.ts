@@ -16,21 +16,37 @@ beforeEach(() => {
 });
 
 describe("validateRelayUrl", () => {
-  it.each(["https://relay.test", "http://localhost:8787", "http://127.0.0.1:8787"])("accepts %s", (u) => {
-    expect(validateRelayUrl(u).ok).toBe(true);
-  });
-  it.each(["http://relay.test", "ftp://x", "javascript:alert(1)", "https://u:p@x", "", "garbage", "https://x.test/#h", "https://relay.test/v1", "https://relay.test/?a=1"])(
-    "rejects %s",
-    (u) => expect(validateRelayUrl(u).ok).toBe(false)
+  it.each(["https://relay.test", "http://localhost:8787", "http://127.0.0.1:8787"])(
+    "accepts %s",
+    (u) => {
+      expect(validateRelayUrl(u).ok).toBe(true);
+    }
   );
+  it.each([
+    "http://relay.test",
+    "ftp://x",
+    "javascript:alert(1)",
+    "https://u:p@x",
+    "",
+    "garbage",
+    "https://x.test/#h",
+    "https://relay.test/v1",
+    "https://relay.test/?a=1",
+  ])("rejects %s", (u) => expect(validateRelayUrl(u).ok).toBe(false));
   it("refuses a path or query with a clear error instead of truncating", () => {
     const r = validateRelayUrl("https://relay.test/v1");
     expect(r.ok).toBe(false);
     expect(!r.ok && r.error).toContain("no path or query");
   });
   it("normalises to the origin", () => {
-    expect(validateRelayUrl("https://relay.test/")).toEqual({ ok: true, url: "https://relay.test" });
-    expect(validateRelayUrl(" https://relay.test ")).toEqual({ ok: true, url: "https://relay.test" });
+    expect(validateRelayUrl("https://relay.test/")).toEqual({
+      ok: true,
+      url: "https://relay.test",
+    });
+    expect(validateRelayUrl(" https://relay.test ")).toEqual({
+      ok: true,
+      url: "https://relay.test",
+    });
   });
 });
 
@@ -53,18 +69,26 @@ describe("relay store", () => {
     ]);
   });
   it("makes the first relay the default when a stored list has none", () => {
-    s.setItem("srs-web.relays", JSON.stringify({ relays: [{ id: "r", url: "https://a.test", label: "A" }] }));
+    s.setItem(
+      "srs-web.relays",
+      JSON.stringify({ relays: [{ id: "r", url: "https://a.test", label: "A" }] })
+    );
     expect(store().list()[0].isDefault).toBe(true);
   });
   it("rejects duplicates and labels default to the host", () => {
     const r = store();
     expect("relays" in r.add("", "https://relay.test") && r.list()[0].label).toBe("relay.test");
-    expect(r.add("x", "https://relay.test/")).toEqual({ error: "That relay is already in the library." });
+    expect(r.add("x", "https://relay.test/")).toEqual({
+      error: "That relay is already in the library.",
+    });
   });
   it("seeds from env then legacy key, once only; legacy key untouched", () => {
     s.setItem("srs-web.mcp-relay-url", "https://legacy.test");
     const l = store({ env: "https://env.test" }).list();
-    expect(l.map((r) => [r.url, r.isDefault])).toEqual([["https://env.test", true], ["https://legacy.test", false]]);
+    expect(l.map((r) => [r.url, r.isDefault])).toEqual([
+      ["https://env.test", true],
+      ["https://legacy.test", false],
+    ]);
     expect(s.getItem("srs-web.mcp-relay-url")).toBe("https://legacy.test");
     const r = store({ env: "https://env.test" });
     r.remove(l[0].id);
@@ -109,7 +133,11 @@ describe("relay store", () => {
 it("reload() on the relays key re-reads storage; other keys are ignored (#394)", async () => {
   const { createRelayStore, KEY } = await import("../src/lib/relay-library");
   const m = new Map<string, string>();
-  const s = { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k) };
+  const s = {
+    getItem: (k: string) => m.get(k) ?? null,
+    setItem: (k: string, v: string) => void m.set(k, v),
+    removeItem: (k: string) => void m.delete(k),
+  };
   const a = createRelayStore(() => s);
   a.add("A", "https://a.test");
   createRelayStore(() => s).add("B", "https://b.test");

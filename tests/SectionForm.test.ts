@@ -133,12 +133,31 @@ describe("SectionForm table grid editor (srs-web#266)", () => {
 
 describe("SectionForm late-arriving fields", () => {
   it("renders a field added after mount without a bind:value={undefined} crash", async () => {
-    const heading = { label: "Heading", valueType: "string" as const, required: true, name: "heading" };
+    const heading = {
+      label: "Heading",
+      valueType: "string" as const,
+      required: true,
+      name: "heading",
+    };
     const body = { label: "Body", valueType: "text" as const, required: false, name: "body" };
     const { container, rerender } = render(SectionForm, {
-      props: { label: "Block", fields: [heading], composites: [], record: undefined, onSave: () => {}, onCancel: () => {} },
+      props: {
+        label: "Block",
+        fields: [heading],
+        composites: [],
+        record: undefined,
+        onSave: () => {},
+        onCancel: () => {},
+      },
     });
-    await rerender({ label: "Block", fields: [heading, body], composites: [], record: undefined, onSave: () => {}, onCancel: () => {} });
+    await rerender({
+      label: "Block",
+      fields: [heading, body],
+      composites: [],
+      record: undefined,
+      onSave: () => {},
+      onCancel: () => {},
+    });
     expect(container.querySelector("#rf-body")).not.toBeNull();
   });
 });

@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LIST_KEY, acquireChannelLock, channelsInUseElsewhere, createConnectionStore, credsKey, initKey, releaseChannelLock } from "../src/lib/agent-connections";
+import {
+  LIST_KEY,
+  acquireChannelLock,
+  channelsInUseElsewhere,
+  createConnectionStore,
+  credsKey,
+  initKey,
+  releaseChannelLock,
+} from "../src/lib/agent-connections";
 
 const mem = () => {
   const m = new Map<string, string>();
@@ -91,7 +99,10 @@ describe("agent connections", () => {
     expect(c.setReopen(first.id, "r")[0].reopen).toBe("r");
   });
   it("an old list loads as never-reopen", () => {
-    s.setItem("srs-web.agent-connections", JSON.stringify([{ id: "agent:x" }, { id: "agent:y", reopen: true }]));
+    s.setItem(
+      "srs-web.agent-connections",
+      JSON.stringify([{ id: "agent:x" }, { id: "agent:y", reopen: true }])
+    );
     expect(store().list()[0].reopen).toBeUndefined();
   });
   it("seeds one connection and keeps its id across reloads", () => {
@@ -211,7 +222,9 @@ describe("relay binding (#442)", () => {
     expect(c.count("relay:1")).toBe(1);
     expect(c.rename(b.id, " New ")[1].label).toBe("New");
     expect(c.rename(b.id, "")[1].label).toBeUndefined();
-    expect(c.touch(b.id, "2026-01-01T00:00:00.000Z")[1].lastConnectedAt).toBe("2026-01-01T00:00:00.000Z");
+    expect(c.touch(b.id, "2026-01-01T00:00:00.000Z")[1].lastConnectedAt).toBe(
+      "2026-01-01T00:00:00.000Z"
+    );
     expect(store().list()[1].lastConnectedAt).toBe("2026-01-01T00:00:00.000Z");
   });
   it("a seeded entry stays unbound until adoptRelay binds it (bound ones keep theirs)", () => {

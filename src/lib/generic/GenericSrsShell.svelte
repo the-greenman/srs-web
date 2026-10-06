@@ -68,6 +68,10 @@
     onSave?: () => Promise<void>;
     /** Why `onSave` is undefined, shown where the Save button would be. Null when writable or unknown. */
     readOnlyReason?: string | null;
+    /** Opened from a link (#471): nothing in the shell edits (no Edit fields, document editor or comments). */
+    readOnly?: boolean;
+    /** Document > Save a copy…; given only while `readOnly`. */
+    onSaveCopy?: () => void;
     saving?: boolean;
     /** App-owned dirty state, shared with non-UI repository writers. */
     documentDirty?: boolean;
@@ -88,6 +92,8 @@
     onExport,
     onSave,
     readOnlyReason = null,
+    readOnly = false,
+    onSaveCopy,
     saving = false,
     documentDirty = false,
     documentRevision = 0,
@@ -311,7 +317,7 @@
    * a schema for is editable here.
    */
   function beginEdit(): void {
-    if (!selectedRecord) return;
+    if (!selectedRecord || readOnly) return;
     editError = null;
     try {
       const result = typeSchema(repo, selectedRecord.typeId, selectedRecord.typeVersion);
@@ -444,9 +450,10 @@
       {
         onsave: onSave ? () => void onSave() : undefined,
         onexport: onExport,
+        onsavecopy: onSaveCopy,
         onopenanother: onOpenAnother,
         onopenagents: onOpenAgents,
-        onpreview: surface === "document" && activeBlueprint && activeComposition ? () => (showFullPreview = !showFullPreview) : undefined,
+        onpreview: surface === "document" && activeBlueprint && activeComposition && !readOnly ? () => (showFullPreview = !showFullPreview) : undefined,
       },
       { shell, saving, dirty: documentDirty, fullPreview: showFullPreview },
     ),
@@ -554,7 +561,7 @@
       </header>
       {#if documentError}<Notice kind="error">{documentError}</Notice>{/if}
       <Diagnostics variant="notice" testid="document-diagnostics" diagnostics={diagnosticsFromStrings(documentDiagnostics)} documentKey={`${repoName}:${selectedCompositionId}`} />
-      {#if activeBlueprint && activeComposition}
+      {#if activeBlueprint && activeComposition && !readOnly}
         <div class="document-editor-panel document-editor-panel--full" data-testid="document-editor-panel">
           <BlueprintDocumentEditor
             {repo}
@@ -658,14 +665,14 @@
           <p>Record</p>
           <h2>{selectedRecord.displayLabel ?? selectedRecord.instanceId}</h2>
           <span>{selectedRecord.typeNamespace}/{selectedRecord.typeName}</span>
-          <button class="generic-edit" disabled={saving} onclick={beginEdit}>Edit fields</button>
+          {#if !readOnly}<button class="generic-edit" disabled={saving} onclick={beginEdit}>Edit fields</button>{/if}
           {#if editError}<Notice kind="error" testid="generic-edit-error">{editError}</Notice>{/if}
         </header>
         {#each Object.entries(selectedRecord.fieldValues) as [name, value] (name)}
           <div class="generic-field"><strong>{name}</strong><FieldValueView {value} /></div>
         {/each}
         {#key selectedRecord.instanceId}
-          <InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} heading />
+          {#if !readOnly}<InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} heading />{/if}
         {/key}
       {/if}
     {:else}

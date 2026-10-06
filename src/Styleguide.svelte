@@ -256,6 +256,11 @@
         </div>
       </figure>
     {/each}
+    <h3>Toolbar: read-only document (opened from a link): no Save, Save a copy… in Document</h3>
+    <div class="sg__frame sg__toolbar" style:width="768px">
+      <ToolbarSpecimen title="meeting" tier="full" groups={HEADER_GROUPS} actions={fx.readOnlyToolbarActions} />
+    </div>
+    <Notice kind="info">Opened from semanticops.com, read-only. Use Document &gt; Save a copy… to keep an editable copy.</Notice>
     <h3>Toolbar: Save disabled (clean) and a lead slot</h3>
     <div class="sg__frame sg__toolbar" style:width="768px">
       <ToolbarSpecimen title="A clean document" tier="compact" groups={HEADER_GROUPS} actions={fx.toolbarActions.map((a) => (a.kind === "primary" ? { ...a, enabled: false } : a))}>
