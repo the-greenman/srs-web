@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import {
   MUTATING_METHODS,
+  mayKeepWorkingCopy,
   NON_MUTATING_METHODS,
   readOnlyGuard,
   readOnlyRepo,
@@ -64,5 +65,13 @@ describe("readOnlyGuard", () => {
     expect(g.containerIds).toEqual(["c1", "c2"]);
     expect(g.instanceIds).toEqual(["r1", "n1"]);
     expect(g.fillOnlyFields).toEqual([]);
+  });
+});
+
+describe("mayKeepWorkingCopy", () => {
+  it("never keeps a document opened from a link", () => {
+    expect(mayKeepWorkingCopy("semanticops.com", true)).toBe(false);
+    expect(mayKeepWorkingCopy(null, true)).toBe(true);
+    expect(mayKeepWorkingCopy(null, false)).toBe(false);
   });
 });

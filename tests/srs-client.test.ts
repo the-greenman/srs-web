@@ -1850,11 +1850,9 @@ describe("installBundles", () => {
 
   it("throws on an unsatisfied bundle dependency before installing it", () => {
     const install = vi.fn();
-    const check = vi
-      .fn()
-      .mockReturnValue({
-        dependencies: [{ name: "core", version: "2.0.0", satisfied: false, reason: "missing" }],
-      });
+    const check = vi.fn().mockReturnValue({
+      dependencies: [{ name: "core", version: "2.0.0", satisfied: false, reason: "missing" }],
+    });
     expect(() =>
       installBundles(
         mockRepo({ check_package_requirements: check, install_package_bundle: install }),

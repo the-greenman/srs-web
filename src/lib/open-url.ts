@@ -16,7 +16,7 @@ export function parseOpenUrl(raw: string, allowLocalHttp = import.meta.env.DEV):
   try {
     url = new URL(raw);
   } catch {
-    throw new OpenUrlError(`"${raw}" is not a valid URL.`);
+    throw new OpenUrlError("That is not a valid link.");
   }
   const local = LOCAL_HOSTS.has(url.hostname);
   if (url.protocol !== "https:" && !(allowLocalHttp && local && url.protocol === "http:")) {
@@ -68,6 +68,7 @@ async function readCapped(res: Response): Promise<Uint8Array> {
 /** `.srs` is a ZIP ("PK\x03\x04"); `.srsj` is JSON. Anything else (an HTML error page, say) is not an archive. */
 export function sniffArchive(bytes: Uint8Array): "srs" | "srsj" | null {
   if (bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 3 && bytes[3] === 4) return "srs";
+  // TextDecoder drops a UTF-8 BOM
   const head = new TextDecoder().decode(bytes.subarray(0, 64)).trimStart();
   return head.startsWith("{") ? "srsj" : null;
 }
@@ -85,6 +86,12 @@ export async function fetchArchiveFile(url: URL, fetchFn: typeof fetch = fetch):
     throw new OpenUrlError(
       `Could not fetch ${url.host}: the network failed, or the server does not allow other sites to read this file (CORS).`
     );
+  }
+  // A redirect must stay on the host the user was shown, and be https like any other link.
+  if (res.url) {
+    const to = parseOpenUrl(res.url);
+    if (to.host !== url.host)
+      throw new OpenUrlError(`${url.host} redirected to ${to.host}, which is not opened.`);
   }
   if (!res.ok)
     throw new OpenUrlError(`${`${url.host} answered ${res.status} ${res.statusText}`.trim()}.`);

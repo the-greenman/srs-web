@@ -146,3 +146,7 @@ export function readOnlyGuard(repo: SrsRepository): AgentWriteGuard {
     fillOnlyFields: [],
   };
 }
+
+/** Whether the recovery copy (localStorage) may hold the document: never one opened from a link. */
+export const mayKeepWorkingCopy = (readOnlyHost: string | null, dirty: boolean): boolean =>
+  !readOnlyHost && dirty;

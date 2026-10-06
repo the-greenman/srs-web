@@ -37,7 +37,7 @@
   import { observeSession, pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
   import { reopenSaved } from "$lib/reopen.js";
   import { fetchArchiveFile, parseOpenUrl, withoutOpenParam } from "$lib/open-url.js";
-  import { readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
+  import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
   import { listRelations, listTypes, repositoryId, type AgentWriteGuard, type McpSession, type SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
@@ -250,7 +250,7 @@
    * when the document was closed or saved in the meantime.
    */
   const workingCopy = workingCopyScheduler(() => {
-    if (repo && documentMutations.dirty) workingCopySaved = saveWorkingCopy(repoName, exportSrsj(repo));
+    if (repo && mayKeepWorkingCopy(readOnlyHost, documentMutations.dirty)) workingCopySaved = saveWorkingCopy(repoName, exportSrsj(repo));
   }, 2000);
   $effect(() => {
     const flush = () => workingCopy.flush();

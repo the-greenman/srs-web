@@ -34,7 +34,7 @@ describe("parseOpenUrl", () => {
   });
   it("refuses credentials and garbage", () => {
     expect(() => parseOpenUrl("https://u:p@example.com/a.srs", false)).toThrow(/user name/);
-    expect(() => parseOpenUrl("", false)).toThrow(/not a valid URL/);
+    expect(() => parseOpenUrl("", false)).toThrow(/not a valid link/);
   });
 });
 
@@ -67,6 +67,28 @@ describe("fetchArchiveFile", () => {
   it("fixes the extension from the content", async () => {
     expect((await fetchArchiveFile(new URL("https://x.test/a"), ok(json))).name).toBe("a.srsj");
     expect((await fetchArchiveFile(new URL("https://x.test/a.srsj"), ok(zip))).name).toBe("a.srs");
+  });
+  it("refuses a redirect to another host or to http", async () => {
+    const via = (to: string) => {
+      const f = vi.fn(async () => {
+        const r = new Response(zip);
+        Object.defineProperty(r, "url", { value: to });
+        return r;
+      });
+      return f as unknown as typeof fetch;
+    };
+    await expect(fetchArchiveFile(url, via("https://evil.test/a.srs"))).rejects.toThrow(
+      /redirected to evil.test/
+    );
+    await expect(fetchArchiveFile(url, via("http://semanticops.com/a.srs"))).rejects.toThrow(
+      /https/
+    );
+    expect((await fetchArchiveFile(url, via("https://semanticops.com/other.srs"))).size).toBe(
+      zip.length
+    );
+  });
+  it("reads a .srsj with a UTF-8 BOM", () => {
+    expect(sniffArchive(new Uint8Array([0xef, 0xbb, 0xbf, ...json]))).toBe("srsj");
   });
   it("reports a network or CORS failure", async () => {
     const f = vi.fn(async () => {
