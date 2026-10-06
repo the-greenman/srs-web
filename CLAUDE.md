@@ -5,6 +5,8 @@ It is a thin client that delegates all SRS semantics to the Rust engine (`srs-ru
 bindings; the editor adds presentation only (capability-layering). Part of the SemanticOps
 monorepo.
 
+**Project context (agent memory):** decisions, conventions, component boundaries and known traps for the whole SRS ecosystem live in the sibling [`srs-context`](https://github.com/the-greenman/srs-context) repo (an SRS repository; a SessionStart hook injects its brief when the clone is present). Use the `srs-context` skill: scope with `find`, read the component's context before changing it, and record what you learn before finishing. CLAUDE.md stays authoritative on conflict.
+
 ## Project & priority management
 
 Issues across the ecosystem are tracked on **Project #5 "SRS"** and prioritised **top-down from
