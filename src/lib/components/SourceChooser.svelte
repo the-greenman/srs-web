@@ -347,6 +347,7 @@
       />
       <Button
         variant="secondary"
+        size="sm"
         type="submit"
         data-testid="source-url"
         disabled={!urlValid || busy !== null}
@@ -481,11 +482,6 @@
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 0.75rem;
-  }
-
-  .source-chooser__url :global(.btn) {
-    min-height: 0;
-    padding: 0.5rem 1rem;
   }
 
   .source-chooser__local {
