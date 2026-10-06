@@ -23,23 +23,28 @@
     StorageError,
   } from "$lib/storage/index.js";
   import Button from "./Button.svelte";
+  import Input from "./Input.svelte";
   import SrsMark from "./SrsMark.svelte";
 
   interface Props {
     providers: StorageProviders;
     onOpen: (handle: DocumentHandle) => Promise<void>;
     onOpenArchive?: (bytes: Uint8Array, name: string) => Promise<void>;
+    /** Read-only open of an archive link (the same path as `?open=`); throws the user-facing reason. */
+    onOpenUrl?: (url: string) => Promise<void>;
   }
 
-  let { providers, onOpen, onOpenArchive }: Props = $props();
+  let { providers, onOpen, onOpenArchive, onOpenUrl }: Props = $props();
 
-  type Busy = "local" | "dropbox" | "google-drive" | "github";
+  type Busy = "local" | "url" | "dropbox" | "google-drive" | "github";
   /** Providers that browse a folder tree in the shared modal (list + open). */
   type BrowseId = "dropbox" | "github";
   const BROWSE_LABEL: Record<BrowseId, string> = { dropbox: "Dropbox", github: "GitHub" };
 
   let busy = $state<Busy | null>(null);
   let error = $state<string | null>(null);
+  let url = $state("");
+  let urlValid = $state(false);
 
   // Provider-agnostic folder browser, shared by Dropbox and GitHub. The `path`
   // string is opaque to the modal (Dropbox: "/folder"; GitHub: "owner/repo/dir").
@@ -173,6 +178,13 @@
     if (!files || files.length === 0) return;
     void run("local", async () => onOpen(await treeFromDirectoryInput(files)));
     input.value = "";
+  }
+
+  /** Enter or the button; native `type=url` validity gates it, the loader's own checks answer inline. */
+  function handleUrl(event: SubmitEvent): void {
+    event.preventDefault();
+    if (!onOpenUrl || !urlValid) return;
+    void run("url", () => onOpenUrl(url.trim()));
   }
 
   function openBrowser(id: BrowseId): void {
@@ -320,6 +332,29 @@
     title={providers.github?.configured ? "Open from GitHub" : "GitHub is not configured"}
     onclick={() => openBrowser("github")}
   >{busy === "github" ? "Connecting…" : "GitHub"}</Button>
+
+  {#if onOpenUrl}
+    <form class="source-chooser__url" onsubmit={handleUrl}>
+      <Input
+        type="url"
+        data-testid="source-url-input"
+        aria-label="Link to an .srs or .srsj file"
+        placeholder="https:// link to an .srs or .srsj"
+        autocomplete="off"
+        bind:value={url}
+        oninput={(e) => (urlValid = url.trim() !== "" && e.currentTarget.validity.valid)}
+        disabled={busy !== null}
+      />
+      <Button
+        variant="secondary"
+        size="sm"
+        type="submit"
+        data-testid="source-url"
+        disabled={!urlValid || busy !== null}
+        title="Open a link read-only"
+      >{busy === "url" ? "Opening…" : "From a URL"}</Button>
+    </form>
+  {/if}
 </div>
 
 {#if error}
@@ -440,6 +475,13 @@
     place-items: center;
     padding: 0.75rem 1rem;
     box-sizing: border-box;
+  }
+
+  .source-chooser__url {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
   }
 
   .source-chooser__local {

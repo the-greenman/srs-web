@@ -164,3 +164,23 @@ test("agent writes to a repository opened from a link are refused by the core gu
   expect(JSON.stringify(w)).toContain("Rejected by the session write guard");
   await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
 });
+
+test("the chooser's From a URL opens the same read-only document, with refusals inline", async ({ page }) => {
+  const link = "https://semanticops.test/try/meeting.srs";
+  await serve(page, link, "pagetest.srs");
+  await page.goto("/");
+  const go = page.getByTestId("source-url");
+  await expect(go).toBeDisabled();
+  const input = page.getByTestId("source-url-input");
+  await input.fill("http://semanticops.test/a.srs");
+  await go.click();
+  await expect(page.getByRole("alert")).toContainText("Only https:// links can be opened.");
+  await input.fill(link);
+  await input.press("Enter");
+  await acceptMigration(page);
+  await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 20000 });
+  await expect(page.getByTestId("read-only-note")).toContainText("Opened from semanticops.test, read-only");
+  await expect(page.getByTestId("save-document")).toHaveCount(0);
+  await openMenu(page, "Document");
+  await expect(page.getByTestId("save-copy")).toBeVisible();
+});
