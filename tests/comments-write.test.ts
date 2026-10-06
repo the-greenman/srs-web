@@ -8,7 +8,8 @@ const m = vi.hoisted(() => ({
   listRelationTypes: vi.fn(() => []),
   listRelations: vi.fn(() => []),
   listRecords: vi.fn(() => []),
-  renderMarkdown: (s: string) => `<p>${s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")}</p><script>x</script>`,
+  renderMarkdown: (s: string) =>
+    `<p>${s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")}</p><script>x</script>`,
 }));
 vi.mock("../src/lib/srs-client.js", () => m);
 import { addComment } from "../src/lib/comments";

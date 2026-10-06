@@ -9,7 +9,11 @@ vi.mock("$lib/clipboard.js", () => ({ copyText }));
 import McpConnection from "../src/lib/components/McpConnection.svelte";
 
 beforeEach(() => copyText.mockClear());
-const data = { code: "K7QPM-2XD4R", expiresAt: 0, connectorUrl: "https://relay.test/v1/channels/c1/call" };
+const data = {
+  code: "K7QPM-2XD4R",
+  expiresAt: 0,
+  connectorUrl: "https://relay.test/v1/channels/c1/call",
+};
 const view = (o = {}) => ({ data, error: null, minutes: 10, ...o });
 
 it("keeps the direct URL, takeover for a refused channel, with the error as a Notice", async () => {
@@ -29,7 +33,11 @@ it("renders nothing for an online agent with no caller URL", () => {
 });
 it("shows the direct URL, its warning and Done only when given a callerUrl", async () => {
   const onClosePair = vi.fn();
-  const { getByTestId, getByText } = render(McpConnection, { status: "online", callerUrl: "https://relay.test/c/X", onClosePair });
+  const { getByTestId, getByText } = render(McpConnection, {
+    status: "online",
+    callerUrl: "https://relay.test/c/X",
+    onClosePair,
+  });
   getByText(/Anyone with this URL can read and write this document/);
   await fireEvent.click(getByTestId("mcp-caller-url-copy"));
   expect(copyText).toHaveBeenCalledWith("https://relay.test/c/X");
@@ -37,7 +45,10 @@ it("shows the direct URL, its warning and Done only when given a callerUrl", asy
   expect(onClosePair).toHaveBeenCalledOnce();
 });
 it("shows the pairing view: URL, code, copy buttons, plain-text countdown, security line", async () => {
-  const { getByLabelText, getByRole, getByTestId } = render(McpConnection, { status: "online", pairingView: view() });
+  const { getByLabelText, getByRole, getByTestId } = render(McpConnection, {
+    status: "online",
+    pairingView: view(),
+  });
   expect((getByLabelText("Connector URL") as HTMLInputElement).value).toBe(data.connectorUrl);
   expect((getByLabelText("Pairing code") as HTMLInputElement).value).toBe("K7QPM-2XD4R");
   await fireEvent.click(getByRole("button", { name: "Copy connector URL" }));
@@ -51,13 +62,21 @@ it("shows the pairing view: URL, code, copy buttons, plain-text countdown, secur
   expect(getByTestId("pair-security").textContent).toContain("Anyone with this code");
 });
 it("says Refreshing… at zero minutes", () => {
-  const { getByTestId } = render(McpConnection, { status: "online", pairingView: view({ minutes: 0 }) });
+  const { getByTestId } = render(McpConnection, {
+    status: "online",
+    pairingView: view({ minutes: 0 }),
+  });
   expect(getByTestId("pair-countdown").textContent).toBe("Refreshing…");
 });
 it("shows an error beside the kept code, with Retry; Done closes", async () => {
   const onRetryPair = vi.fn();
   const onClosePair = vi.fn();
-  const { getByRole, getByTestId } = render(McpConnection, { status: "online", pairingView: view({ error: "pairing failed: 500" }), onRetryPair, onClosePair });
+  const { getByRole, getByTestId } = render(McpConnection, {
+    status: "online",
+    pairingView: view({ error: "pairing failed: 500" }),
+    onRetryPair,
+    onClosePair,
+  });
   expect(getByRole("alert").textContent).toContain("pairing failed: 500");
   expect((getByTestId("pair-code") as HTMLInputElement).value).toBe("K7QPM-2XD4R");
   await fireEvent.click(getByTestId("pair-retry"));
@@ -66,7 +85,10 @@ it("shows an error beside the kept code, with Retry; Done closes", async () => {
   expect(onClosePair).toHaveBeenCalledOnce();
 });
 it("shows a loading line before any data", () => {
-  const { getByTestId } = render(McpConnection, { status: "online", pairingView: view({ data: null, minutes: 0 }) });
+  const { getByTestId } = render(McpConnection, {
+    status: "online",
+    pairingView: view({ data: null, minutes: 0 }),
+  });
   expect(getByTestId("pair-loading")).toBeTruthy();
 });
 it("is presentation only: no timers or notify", () => {

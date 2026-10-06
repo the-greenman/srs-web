@@ -22,7 +22,9 @@ describe("Main", () => {
     });
     const order = [getByTestId("bar"), getByTestId("pin"), getByTestId("content")];
     for (let i = 0; i < order.length - 1; i++) {
-      expect(order[i].compareDocumentPosition(order[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(
+        order[i].compareDocumentPosition(order[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
     }
     expect(container.querySelectorAll('[aria-live="polite"]')).toHaveLength(1);
     expect(container.querySelectorAll(".toast-host")).toHaveLength(1);

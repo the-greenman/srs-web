@@ -1,5 +1,12 @@
 import { expect, it } from "vitest";
-import { canShow, isShown, setOpen, summary, toggle, toggleAll } from "../src/lib/essay/thread-visibility";
+import {
+  canShow,
+  isShown,
+  setOpen,
+  summary,
+  toggle,
+  toggleAll,
+} from "../src/lib/essay/thread-visibility";
 
 const ids = ["a", "b", "c"];
 const none = new Set<string>();

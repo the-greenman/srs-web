@@ -41,7 +41,10 @@ beforeEach(() => {
 
 it("asks the engine to leave structural edges out and shows every other relation with label, direction, neighbour and actor", () => {
   const n = loadInstanceNotes({} as never, "i");
-  expect(m.contextRecord).toHaveBeenCalledWith(expect.anything(), "i", undefined, ["composition", "sequence"]);
+  expect(m.contextRecord).toHaveBeenCalledWith(expect.anything(), "i", undefined, [
+    "composition",
+    "sequence",
+  ]);
   expect(n.annotations.map((a) => [a.kind, a.icon, a.direction, a.label, a.actor])).toEqual([
     ["relation", "refines (label)", "out", "Tgt", who],
     ["relation", "mystery", "in", "Src", undefined],
@@ -50,7 +53,9 @@ it("asks the engine to leave structural edges out and shows every other relation
 
 it("without the comment package there is no thread; with it, comments-on rows never appear as relations", () => {
   expect(loadInstanceNotes({} as never, "i").available).toBe(false);
-  m.listTypes.mockReturnValue([{ id: COMMENT_TYPE_ID, namespace: "n", name: "comment", version: 1 }]);
+  m.listTypes.mockReturnValue([
+    { id: COMMENT_TYPE_ID, namespace: "n", name: "comment", version: 1 },
+  ]);
   m.listRelationTypes.mockReturnValue([{ key: COMMENTS_ON, label: "comments on" }]);
   const n = loadInstanceNotes({} as never, "i");
   expect(n.available).toBe(true);

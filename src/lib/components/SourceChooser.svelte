@@ -14,7 +14,7 @@
     isOpenableName,
     isSrsArchiveName,
     isSrsDocumentName,
-    LocalDocumentHandle,
+    openLocalFile,
     canPickLocalDirectory,
     pickLocalDirectory,
     treeFromDirectoryInput,
@@ -154,14 +154,7 @@
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    if (isSrsArchiveName(file.name) && onOpenArchive) {
-      void run("local", async () => {
-        const buf = await file.arrayBuffer();
-        await onOpenArchive(new Uint8Array(buf), file.name);
-      });
-    } else {
-      void run("local", () => onOpen(new LocalDocumentHandle(file)));
-    }
+    void run("local", () => openLocalFile(file, { onOpen, onOpenArchive }));
     input.value = "";
   }
 

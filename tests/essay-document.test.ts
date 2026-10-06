@@ -520,8 +520,19 @@ describe("essayReferences (srs-web#278)", () => {
     m.getContainer.mockReturnValue({ childContainerIds: ["C"], memberInstanceIds: [] });
     m.getRecord.mockReturnValue({ instanceId: "S", fieldValues: { essay: "E" } });
     // biome-ignore lint/suspicious/noExplicitAny: a hand-built model with only what the refresh reads
-    const model: any = { essayId: "E", title: "T", containerId: "C", draftContainerId: null, binContainerId: null,
-      stateId: "S", canSnapshot: true, bundleContainerId: "B", paragraphs: {}, comments: {}, attachments: {} };
+    const model: any = {
+      essayId: "E",
+      title: "T",
+      containerId: "C",
+      draftContainerId: null,
+      binContainerId: null,
+      stateId: "S",
+      canSnapshot: true,
+      bundleContainerId: "B",
+      paragraphs: {},
+      comments: {},
+      attachments: {},
+    };
     expect(essayReferences({} as never, model)).toBe("# T\n");
     expect(m.listDocumentViews).toHaveBeenCalledWith(expect.anything(), {
       namespace: "com.mudemocracy.essay",
@@ -533,6 +544,8 @@ describe("essayReferences (srs-web#278)", () => {
   it("says so when the package predates the composition", async () => {
     const { essayReferences } = await import("../src/lib/essay/essay-document.js");
     m.listDocumentViews.mockReturnValueOnce([]);
-    expect(() => essayReferences({} as never, { canSnapshot: true, stateId: "S" } as never)).toThrow(/1\.6\.0/);
+    expect(() =>
+      essayReferences({} as never, { canSnapshot: true, stateId: "S" } as never)
+    ).toThrow(/1\.6\.0/);
   });
 });

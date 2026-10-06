@@ -112,7 +112,9 @@ it("setShell ran before children: a Toolbar inside finds the context and renders
   expect(host.getByTestId("inspector-badge").textContent).toBe("3");
   // NavTrigger is first and InspectorTrigger last in the bar.
   expect(
-    host.container.querySelector(".toolbar")!.firstElementChild!.contains(host.getByTestId("nav-trigger"))
+    host.container
+      .querySelector(".toolbar")!
+      .firstElementChild!.contains(host.getByTestId("nav-trigger"))
   ).toBe(true);
   expect(
     host.container

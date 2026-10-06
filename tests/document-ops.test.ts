@@ -6,7 +6,12 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { insertChild, insertComponent, moveComponent, removeComponent } from "../src/lib/editor/document-ops.js";
+import {
+  insertChild,
+  insertComponent,
+  moveComponent,
+  removeComponent,
+} from "../src/lib/editor/document-ops.js";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 
 function fakeRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
@@ -29,9 +34,19 @@ describe("insertComponent", () => {
   it("creates the record in the container, then splices it into the chain after the anchor", () => {
     const calls: string[] = [];
     const repo = fakeRepo({
-      create_record_in_container: (containerId: string, typeId: string, typeVersion: number, inputJson: string) => {
+      create_record_in_container: (
+        containerId: string,
+        typeId: string,
+        typeVersion: number,
+        inputJson: string
+      ) => {
         calls.push(`create:${containerId}:${typeId}:${typeVersion}:${inputJson}`);
-        return { instanceId: "new-1", typeId, typeVersion, fieldValues: JSON.parse(inputJson).fieldValues };
+        return {
+          instanceId: "new-1",
+          typeId,
+          typeVersion,
+          fieldValues: JSON.parse(inputJson).fieldValues,
+        };
       },
       insert_into_precedes_chain: (inputJson: string) => {
         calls.push(`insert:${inputJson}`);
@@ -42,7 +57,13 @@ describe("insertComponent", () => {
 
     const created = insertComponent(
       repo,
-      { typeId: "t1", typeVersion: 2, containerId: "c1", afterId: "prev-1", fieldValues: { heading: "Hi" } },
+      {
+        typeId: "t1",
+        typeVersion: 2,
+        containerId: "c1",
+        afterId: "prev-1",
+        fieldValues: { heading: "Hi" },
+      },
       onMutation
     );
 
@@ -68,7 +89,11 @@ describe("insertComponent", () => {
     });
     const onMutation = vi.fn();
 
-    const created = insertComponent(repo, { typeId: "t1", typeVersion: 1, containerId: "c1" }, onMutation);
+    const created = insertComponent(
+      repo,
+      { typeId: "t1", typeVersion: 1, containerId: "c1" },
+      onMutation
+    );
 
     expect(created.instanceId).toBe("new-1");
     expect(onMutation).toHaveBeenCalledTimes(1);
@@ -83,7 +108,9 @@ describe("insertComponent", () => {
         fieldValues: {},
       }),
     });
-    expect(() => insertComponent(repo, { typeId: "t1", typeVersion: 1, containerId: "c1" })).not.toThrow();
+    expect(() =>
+      insertComponent(repo, { typeId: "t1", typeVersion: 1, containerId: "c1" })
+    ).not.toThrow();
   });
 });
 
@@ -91,13 +118,28 @@ describe("insertChild", () => {
   it("creates the record in the container, asserts the contains relation from the parent, then splices it after the anchor sibling", () => {
     const calls: string[] = [];
     const repo = fakeRepo({
-      create_record_in_container: (containerId: string, typeId: string, typeVersion: number, inputJson: string) => {
+      create_record_in_container: (
+        containerId: string,
+        typeId: string,
+        typeVersion: number,
+        inputJson: string
+      ) => {
         calls.push(`create:${containerId}:${typeId}:${typeVersion}:${inputJson}`);
-        return { instanceId: "child-1", typeId, typeVersion, fieldValues: JSON.parse(inputJson).fieldValues };
+        return {
+          instanceId: "child-1",
+          typeId,
+          typeVersion,
+          fieldValues: JSON.parse(inputJson).fieldValues,
+        };
       },
       create_relation: (inputJson: string) => {
         calls.push(`relation:${inputJson}`);
-        return { relationId: "r1", relationType: "contains", sourceInstanceId: "parent-1", targetInstanceId: "child-1" };
+        return {
+          relationId: "r1",
+          relationType: "contains",
+          sourceInstanceId: "parent-1",
+          targetInstanceId: "child-1",
+        };
       },
       insert_into_precedes_chain: (inputJson: string) => {
         calls.push(`insert:${inputJson}`);
@@ -108,7 +150,14 @@ describe("insertChild", () => {
 
     const created = insertChild(
       repo,
-      { parentId: "parent-1", typeId: "t1", typeVersion: 1, containerId: "c1", afterId: "sib-1", fieldValues: { heading: "Hi" } },
+      {
+        parentId: "parent-1",
+        typeId: "t1",
+        typeVersion: 1,
+        containerId: "c1",
+        afterId: "sib-1",
+        fieldValues: { heading: "Hi" },
+      },
       onMutation
     );
 
@@ -129,13 +178,23 @@ describe("insertChild", () => {
         typeVersion,
         fieldValues: {},
       }),
-      create_relation: () => ({ relationId: "r1", relationType: "contains", sourceInstanceId: "parent-1", targetInstanceId: "child-1" }),
+      create_relation: () => ({
+        relationId: "r1",
+        relationType: "contains",
+        sourceInstanceId: "parent-1",
+        targetInstanceId: "child-1",
+      }),
       insert_into_precedes_chain: () => {
         throw new Error("must not be called for the parent's first child");
       },
     });
 
-    const created = insertChild(repo, { parentId: "parent-1", typeId: "t1", typeVersion: 1, containerId: "c1" });
+    const created = insertChild(repo, {
+      parentId: "parent-1",
+      typeId: "t1",
+      typeVersion: 1,
+      containerId: "c1",
+    });
     expect(created.instanceId).toBe("child-1");
   });
 });

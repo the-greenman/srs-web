@@ -23,13 +23,20 @@ describe("shared shell actions (#463)", () => {
       "Save",
       true,
     ]);
-    expect(saveAction(run, { saving: true, enabled: false })).toMatchObject({ label: "Saving…", enabled: false });
+    expect(saveAction(run, { saving: true, enabled: false })).toMatchObject({
+      label: "Saving…",
+      enabled: false,
+    });
     a.run();
     expect(run).toHaveBeenCalled();
   });
 
   it("openAnotherAction is Go > Open another", () => {
-    expect(openAnotherAction(noop)).toMatchObject({ id: "other", group: "go", label: "Open another" });
+    expect(openAnotherAction(noop)).toMatchObject({
+      id: "other",
+      group: "go",
+      label: "Open another",
+    });
   });
 
   it("exportActions offers .srsj only with its handler (default testids toolbar-export[-srsj])", () => {
@@ -59,6 +66,9 @@ describe("shared shell actions (#463)", () => {
 
   it("commonActions drops Wide for a shell without the capability", () => {
     const none = new ShellState({ wideEnabled: false });
-    expect(commonActions(base, { shell: none, saving: false }).map((a) => a.id)).toEqual(["export", "other"]);
+    expect(commonActions(base, { shell: none, saving: false }).map((a) => a.id)).toEqual([
+      "export",
+      "other",
+    ]);
   });
 });

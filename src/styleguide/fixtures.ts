@@ -5,7 +5,7 @@ import type { Annotation } from "$lib/annotations";
 import type { Comment } from "$lib/comments";
 import type { Layer } from "$lib/components/LayersPanel.svelte";
 import type { PanelAgent } from "$lib/components/agent-panel";
-import type { MenuAction } from "$lib/components/menu-action";
+import type { MenuAction, ToolbarAction } from "$lib/components/menu-action";
 import { headerActions } from "$lib/essay/header-actions";
 import type { PairingResponse } from "$lib/mcp/relay-protocol";
 import { ShellState } from "$lib/shell-context.svelte";
@@ -608,4 +608,19 @@ export const noticeDiagnostics: Diagnostic[] = [
   })),
   { severity: "warn", message: "[section:essay] container not found; rendering section as empty" },
   { severity: "error", message: "view dispatch failed for type governance/decision_log" },
+];
+
+/** A read-only document's toolbar (#471): no Save; Save a copy… sits in the Document menu beside Export. */
+export const readOnlyToolbarActions: ToolbarAction[] = [
+  { id: "export", group: "document", kind: "action", label: "Export", run: nop, enabled: true },
+  {
+    id: "save-copy",
+    group: "document",
+    kind: "action",
+    label: "Save a copy…",
+    run: nop,
+    enabled: true,
+    testid: "specimen-save-copy",
+  },
+  { id: "other", group: "go", kind: "action", label: "Open another", run: nop, enabled: true },
 ];

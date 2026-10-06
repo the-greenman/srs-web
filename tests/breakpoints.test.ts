@@ -2,7 +2,14 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
-import { BREAKPOINTS, DRAWER_INSPECTOR, DRAWER_NAV, NARROW, RAIL, tierOf } from "../src/lib/breakpoints";
+import {
+  BREAKPOINTS,
+  DRAWER_INSPECTOR,
+  DRAWER_NAV,
+  NARROW,
+  RAIL,
+  tierOf,
+} from "../src/lib/breakpoints";
 
 const SRC = join(__dirname, "..", "src");
 const walk = (dir: string): string[] =>

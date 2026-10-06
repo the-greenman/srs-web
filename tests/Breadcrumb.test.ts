@@ -6,7 +6,9 @@ import Breadcrumb from "../src/lib/components/Breadcrumb.svelte";
 describe("Breadcrumb", () => {
   it("is a labelled nav with an ordered list; the last item is the current page", () => {
     const { container } = render(Breadcrumb, {
-      props: { items: [{ label: "repo" }, { label: "Articles", onclick: () => {} }, { label: "Now" }] },
+      props: {
+        items: [{ label: "repo" }, { label: "Articles", onclick: () => {} }, { label: "Now" }],
+      },
     });
     expect(container.querySelector("nav[aria-label=Breadcrumb] > ol")).not.toBeNull();
     expect(container.querySelectorAll("ol > li")).toHaveLength(3);
