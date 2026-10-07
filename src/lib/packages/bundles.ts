@@ -17,10 +17,11 @@ export function bundledPackage(packageId: string): string | undefined {
   return BUNDLES[`./${packageId}.srspkg`];
 }
 
-/** The earlier published bundles of a package (the lock's `history`), as bundle JSON texts: the engine's upgrade proof (#450). */
-export function priorBundles(packageId: string): string[] {
+/** The earlier published bundles of a package (the lock's `history`): version and bundle JSON text. */
+export function priorBundleEntries(packageId: string): { version: string; text: string }[] {
+  const prefix = `./${packageId}@`;
   return Object.keys(BUNDLES)
-    .filter((k) => k.startsWith(`./${packageId}@`))
+    .filter((k) => k.startsWith(prefix))
     .sort()
-    .map((k) => BUNDLES[k]);
+    .map((k) => ({ version: k.slice(prefix.length, -".srspkg".length), text: BUNDLES[k] }));
 }

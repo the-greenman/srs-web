@@ -1,14 +1,16 @@
-import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { bundledPackage, priorBundles } from "../src/lib/packages/bundles.js";
+import { PINNED, bundledPackage, priorBundleEntries } from "../src/lib/packages/bundles.js";
 
-const lock: { packageId: string; history?: { version: string; url: string; sha256: string }[] }[] = JSON.parse(readFileSync("packages.lock.json", "utf8"));
+const lock: { packageId: string; history?: { version: string; url: string; sha256: string }[] }[] =
+  JSON.parse(readFileSync("packages.lock.json", "utf8"));
 
-const dataUrl = (content: string) => `data:application/octet-stream;base64,${Buffer.from(content).toString("base64")}`;
+const dataUrl = (content: string) =>
+  `data:application/octet-stream;base64,${Buffer.from(content).toString("base64")}`;
 
 describe("pinned package bundles", () => {
   it("every packages.lock.json entry is bundled", () => {
@@ -17,11 +19,19 @@ describe("pinned package bundles", () => {
 
   it("every lock history entry is bundled as prior proof, and the current bundle is not a prior one", () => {
     for (const { packageId, history = [] } of lock) {
-      expect(priorBundles(packageId).length, packageId).toBe(history.length);
+      expect(
+        priorBundleEntries(packageId).map((e) => e.version),
+        packageId
+      ).toEqual(history.map((h) => h.version).sort());
+      const pinned = PINNED.find((p) => p.packageId === packageId)!.version;
+      for (const h of history)
+        expect(h.version, `${packageId} history must be older than the pin`).not.toBe(pinned);
       for (const h of history) expect(h.sha256).toMatch(/^[0-9a-f]{64}$/);
-      expect(priorBundles(packageId)).not.toContain(bundledPackage(packageId));
+      expect(priorBundleEntries(packageId).map((e) => e.text)).not.toContain(
+        bundledPackage(packageId)
+      );
     }
-    expect(priorBundles("no-such-package")).toEqual([]);
+    expect(priorBundleEntries("no-such-package")).toEqual([]);
   });
 
   it("ensure-packages fetches a history entry to <packageId>@<version>.srspkg, verified", () => {
@@ -33,7 +43,11 @@ describe("pinned package bundles", () => {
       fakeLock,
       JSON.stringify([
         {
-          packageId, name: "test", version: "2.0.0", url: dataUrl("current"), sha256: sha("current"),
+          packageId,
+          name: "test",
+          version: "2.0.0",
+          url: dataUrl("current"),
+          sha256: sha("current"),
           history: [{ version: "1.0.0", url: dataUrl("earlier"), sha256: sha("earlier") }],
         },
       ])
@@ -54,7 +68,13 @@ describe("pinned package bundles", () => {
     writeFileSync(
       fakeLock,
       JSON.stringify([
-        { packageId, name: "test", version: "1.0.0", url: dataUrl(fresh), sha256: createHash("sha256").update(fresh).digest("hex") },
+        {
+          packageId,
+          name: "test",
+          version: "1.0.0",
+          url: dataUrl(fresh),
+          sha256: createHash("sha256").update(fresh).digest("hex"),
+        },
       ])
     );
     writeFileSync(join(dir, `${packageId}.srspkg`), "stale-cached-bytes");
@@ -73,7 +93,13 @@ describe("pinned package bundles", () => {
     writeFileSync(
       fakeLock,
       JSON.stringify([
-        { packageId, name: "test", version: "1.0.0", url: dataUrl("still-wrong"), sha256: "0".repeat(64) },
+        {
+          packageId,
+          name: "test",
+          version: "1.0.0",
+          url: dataUrl("still-wrong"),
+          sha256: "0".repeat(64),
+        },
       ])
     );
     writeFileSync(join(dir, `${packageId}.srspkg`), "stale-cached-bytes");

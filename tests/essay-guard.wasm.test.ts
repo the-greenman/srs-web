@@ -23,8 +23,8 @@ describe.skipIf(!haveBindings)("essayWriteGuard on the real engine", () => {
     const { bundledPackage } = await import("../src/lib/packages/bundles.js");
     const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
     mkdirSync(dir, { recursive: true });
-    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
-    const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "essay-guard.mjs"));
+    const mod = await import(/* @vite-ignore */ path.join(dir, "essay-guard.mjs"));
     mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
     const repo = mod.SrsRepository.load(
       readFileSync(path.join(bindings, "governance-seed.srsj"), "utf8")

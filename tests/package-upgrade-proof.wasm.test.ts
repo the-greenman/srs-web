@@ -21,8 +21,8 @@ describe.skipIf(!haveBindings)("upgrade proof and consent on the real engine", (
   async function essay150WithoutReferenceCopies() {
     const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
     mkdirSync(dir, { recursive: true });
-    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
-    const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "proof.mjs"));
+    const mod = await import(/* @vite-ignore */ path.join(dir, "proof.mjs"));
     mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
     const fresh = mod.SrsRepository.create(JSON.stringify({ title: "Live case" }));
     fresh.install_package_bundle(pkg(`${ESSAY}@1.5.0.srspkg`), "{}");

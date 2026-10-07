@@ -9,7 +9,7 @@
  *   wasm-pack build crates/srs-bindings --target web --out-dir ../../srs-web/src/lib/srs_bindings
  */
 
-import { bundledPackage, priorBundles } from "./packages/bundles.js";
+import { PINNED, bundledPackage, priorBundleEntries } from "./packages/bundles.js";
 // Empty governance document seed, shipped inside srs-bindings-web.tar.gz
 // (srs-rust#381) and refreshed by scripts/ensure-bindings.mjs alongside the WASM,
 // so the seed can never drift from the engine that scaffolds it.
@@ -1658,6 +1658,22 @@ export function upgradePackageBundle(
   ) as UpgradePackageResult;
 }
 
+/**
+ * The earlier bundles that may prove definitions of the installed package: the engine refuses the whole
+ * upgrade if a prior is newer than the installed version. The core decides which: a prior is kept only
+ * when `check_package_requirements` says the installed package satisfies its version (no TS comparison).
+ */
+export function priorBundles(repo: SrsRepository, packageId: string): string[] {
+  const entries = priorBundleEntries(packageId);
+  if (entries.length === 0) return [];
+  const name = PINNED.find((p) => p.packageId === packageId)?.name ?? "";
+  const outcomes = checkPackageRequirements(
+    repo,
+    entries.map((e) => ({ packageId, namespace: "", name, version: e.version }))
+  );
+  return entries.filter((_, i) => outcomes[i]?.satisfied).map((e) => e.text);
+}
+
 /** The engine's upgrade options (srs-rust#1269, #1325). */
 export interface UpgradeOptions {
   dryRun?: boolean;
@@ -1682,7 +1698,7 @@ export function upgradeBundles(
     if (!text) throw new Error(`No bundled package ${packageId}`);
     return upgradePackageBundle(repo, text, {
       dryRun: options.dryRun,
-      priorBundles: priorBundles(packageId),
+      priorBundles: priorBundles(repo, packageId),
       adopt: options.adopt?.[packageId],
     });
   });

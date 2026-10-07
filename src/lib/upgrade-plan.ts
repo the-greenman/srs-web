@@ -14,9 +14,11 @@ export function adoptByPackage(
 ): Record<string, string[]> {
   const out: Record<string, string[]> = {};
   for (const p of plans) {
-    const ids = p.conflicts
-      .filter((c) => isAdoptable(c) && checked.includes(c.id))
-      .map((c) => c.id);
+    const ids = [
+      ...new Set(
+        p.conflicts.filter((c) => isAdoptable(c) && checked.includes(c.id)).map((c) => c.id)
+      ),
+    ];
     if (ids.length) out[p.packageId] = ids;
   }
   return out;

@@ -10,8 +10,8 @@ describe.skipIf(!haveBindings)("renderMarkdown on the real engine", () => {
   it("renders markdown and escapes raw HTML", async () => {
     const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
     mkdirSync(dir, { recursive: true });
-    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
-    const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "markdown.mjs"));
+    const mod = await import(/* @vite-ignore */ path.join(dir, "markdown.mjs"));
     mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
     expect(mod.renderMarkdown("**a**")).toContain("<strong>a</strong>");
     expect(mod.renderMarkdown("<img src=x onerror=alert(1)>")).not.toContain("<img");

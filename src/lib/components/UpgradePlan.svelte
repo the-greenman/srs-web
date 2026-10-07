@@ -53,13 +53,13 @@
       {#if plan.updated.some((u) => u.provenBy)}
         <p>Updated definitions are unchanged from the published version they came from:</p>
         <ul data-testid="upgrade-verified">
-          {#each plan.updated.filter((u) => u.provenBy) as u (u.id)}<li>{u.name} (verified against {u.provenBy})</li>{/each}
+          {#each plan.updated.filter((u) => u.provenBy) as u (`${u.kind}:${u.id}@${u.version}`)}<li>{u.name} (verified against {u.provenBy})</li>{/each}
         </ul>
       {/if}
       {#if plan.conflicts.some(isAdoptable)}
         <p>These cannot be verified as unchanged, so they are kept unless you choose to replace them:</p>
         <ul data-testid="upgrade-unproven">
-          {#each plan.conflicts.filter(isAdoptable) as c (c.id)}
+          {#each plan.conflicts.filter(isAdoptable) as c (`${c.kind}:${c.id}@${c.version}`)}
             <li>
               <Checkbox bind:group={adopt} value={c.id} disabled={busy} data-testid="upgrade-adopt-{c.name}">
                 {c.name}: Replace with the published definition (any local change to it is lost)
@@ -71,13 +71,13 @@
       {#if plan.conflicts.some((c) => !isAdoptable(c))}
         <p>Kept as they are:</p>
         <ul data-testid="upgrade-conflicts">
-          {#each plan.conflicts.filter((c) => !isAdoptable(c)) as c (c.id)}<li>{c.name}: {keptReason(c)}</li>{/each}
+          {#each plan.conflicts.filter((c) => !isAdoptable(c)) as c (`${c.kind}:${c.id}@${c.version}`)}<li>{c.name}: {keptReason(c)}</li>{/each}
         </ul>
       {/if}
       {#if plan.removedUpstream.length}
         <p>No longer in the package:</p>
         <ul data-testid="upgrade-removed">
-          {#each plan.removedUpstream as r (r.id)}<li>{r.name}</li>{/each}
+          {#each plan.removedUpstream as r (`${r.kind}:${r.id}@${r.version}`)}<li>{r.name}</li>{/each}
         </ul>
       {/if}
       {#if plan.dependencyWarnings.length}

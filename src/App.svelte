@@ -1175,7 +1175,7 @@
     documentRevision={documentRevision}
     onOpenEditor={(id) => { editorMode = id; }}
     onInstallEditor={installEditor}
-    onReviewUpgrade={reviewEditorUpgrade}
+    onReviewUpgrade={canUpgrade ? reviewEditorUpgrade : undefined}
     onOpenPackages={canUpgrade ? () => (packagesOpen = true) : undefined}
     onOpenAgents={openDock}
     onOpenAnother={() => {
