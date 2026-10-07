@@ -191,7 +191,8 @@
       return;
     }
     pendingMigration = null;
-    pending.finish(true);
+    // Read-only: migrate silently in memory, never dirty — there is nowhere to save it (#478).
+    pending.finish(!readOnlyHost);
   }
 
   function cancelPendingMigration(): void {

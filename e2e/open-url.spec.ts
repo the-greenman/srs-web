@@ -29,6 +29,9 @@ test("opens a .srs from a link read-only, names the host, clears the parameter",
   await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 20000 });
   expect(requests).toEqual(["none"]);
 
+  // read-only + migrated must never be dirty: nothing to save, so nothing is offered (srs-web#478)
+  await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
+
   // the source is stated, read-only is stated, and the parameter left the address bar
   await expect(page.getByTestId("read-only-note")).toContainText("Opened from semanticops.test, read-only");
   expect(new URL(page.url()).search).toBe("");
