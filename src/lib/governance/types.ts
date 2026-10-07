@@ -11,9 +11,10 @@ export interface FieldFormDef {
   /** Field UUID from `x-srs-field-id` when the projection carries it (optional post-RFC-039). */
   fieldId?: string;
   label: string;
-  /** Widget kind derived from the projected schema (enum→select, textarea→text, uri→url).
-   * Presentation-only — distinct from the SRS Field's `fieldType` object. */
-  valueType: "string" | "text" | "select" | "url";
+  /** Widget kind derived from the projected schema (enum→select, textarea→text, uri→url,
+   * contentMediaType "text/markdown"→markdown). Presentation-only — distinct from the
+   * SRS Field's `fieldType` object. */
+  valueType: "string" | "text" | "select" | "url" | "markdown";
   required: boolean;
   options?: string[];
   /** Schema property name — the RFC-039 carrier key into `fieldValues`. Always set. */

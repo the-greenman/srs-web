@@ -1,15 +1,19 @@
 <!--
   FieldValueView — renders a single field value (RFC-039 carrier: scalar,
   array, or nested composite object). Pass valueType="url" to render url
-  values as clickable anchors.
+  values as clickable anchors, or valueType="markdown" to render through the
+  core's sanitized markdown renderer (MarkdownView).
   B5 record renderer: https://github.com/the-greenman/srs-web/issues/4
 -->
 <script lang="ts">
+  import MarkdownView from '$lib/components/MarkdownView.svelte';
+
   let { value, valueType }: { value: unknown; valueType?: string } = $props();
 
   const isArray = $derived(Array.isArray(value));
   const values = $derived(isArray ? (value as unknown[]) : [value]);
   const isUrl = $derived(valueType === 'url');
+  const isMarkdown = $derived(valueType === 'markdown');
 
   function formatValue(v: unknown): string {
     if (v === null || v === undefined) return '';
@@ -35,6 +39,8 @@
         {#if isUrl && isRenderableAsAnchor(v)}
           {@const href = formatValue(v)}
           <a {href} target="_blank" rel="noopener noreferrer">{href}</a>
+        {:else if isMarkdown}
+          <MarkdownView value={formatValue(v)} />
         {:else}
           {formatValue(v)}
         {/if}
@@ -44,6 +50,8 @@
 {:else if isUrl && isRenderableAsAnchor(value)}
   {@const href = formatValue(value)}
   <a {href} target="_blank" rel="noopener noreferrer">{href}</a>
+{:else if isMarkdown}
+  <MarkdownView value={formatValue(value)} />
 {:else}
   <span>{formatValue(value)}</span>
 {/if}
