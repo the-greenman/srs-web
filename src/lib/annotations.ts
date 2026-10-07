@@ -1,3 +1,4 @@
+import type { Comment } from "$lib/comments.js";
 /**
  * Annotations (srs-web#374, #422): one data-only descriptor per thing worth showing in the margin of
  * an instance. `annotationsFor` is the only place that decides WHAT is annotated; how each kind
@@ -5,7 +6,7 @@
  * It reads any `AnnotationSource` keyed by instanceId (essay and the generic shells each build one),
  * never an essay model. A new kind = a new branch here + a map entry there.
  */
-import type { Comment } from "$lib/comments.js";
+import { formatBytes } from "$lib/format-bytes.js";
 import type { Actor } from "$lib/srs-client.js";
 
 /** Relation categories that are layout, not meaning: the core leaves them out of the context read. */
@@ -49,10 +50,20 @@ export interface Related {
   actor?: Actor;
 }
 
+/** A file attached to an instance (RFC-017 `attaches` source reference): not a relation, so no neighbour. */
+export interface FileAttachment {
+  documentId: string;
+  name: string;
+  /** Absent until the core reports sizes (srs-rust#645). */
+  sizeBytes?: number;
+}
+
 /** What `annotationsFor` reads: maps keyed by instanceId, plus the target's own label. */
 export interface AnnotationSource {
   comments: Record<string, Comment[]>;
   attachments: Record<string, Attachment[]>;
+  /** File attachments by instance id (RFC-017); absent = none. */
+  files?: Record<string, FileAttachment[]>;
   related?: Record<string, Related[]>;
   /** Other documents holding the instance, by instance id; absent = not shared. */
   sharedIn?: Record<string, { id: string; title: string }[]>;
@@ -60,7 +71,7 @@ export interface AnnotationSource {
   label(instanceId: string): string;
 }
 
-export type AnnotationKind = "comments" | "attachment" | "relation" | "shared";
+export type AnnotationKind = "comments" | "attachment" | "file" | "relation" | "shared";
 
 export interface Annotation {
   kind: AnnotationKind;
@@ -78,6 +89,8 @@ export interface Annotation {
   relation?: string;
   /** Comments: the latest author; attachment / relation: the relation's `createdBy`. */
   actor?: Actor;
+  /** File: the attachment document, for Download. */
+  documentId?: string;
   /** The other end, when there is one (relation: focus it; attachment: the neighbour). */
   targetId?: string;
   /** Relation direction, for the arrow. */
@@ -107,6 +120,16 @@ export function annotationsFor(source: AnnotationSource, instanceId: string): An
         actor: a.actor,
         targetId: a.neighbourId,
         direction: a.direction,
+      })
+    ),
+    ...(source.files?.[instanceId] ?? []).map(
+      (f): Annotation => ({
+        kind: "file",
+        key: `file:${f.documentId}`,
+        label: f.name,
+        icon: "file",
+        text: f.sizeBytes === undefined ? "" : formatBytes(f.sizeBytes),
+        documentId: f.documentId,
       })
     ),
     ...(sharedIn.length

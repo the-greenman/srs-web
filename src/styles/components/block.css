@@ -32,9 +32,14 @@
 .block-stack__item.is-drop-after::after {
   bottom: -1px;
 }
-.block-stack__item.is-drop-into {
+.block-stack__item.is-drop-into,
+.block-stack__item.is-drop-file {
   outline: 1px dashed var(--color-text-strong);
   outline-offset: -1px;
+}
+/* A file drag over a paragraph (attach): the same dashed frame, with the file-drop wash. */
+.block-stack__item.is-drop-file {
+  background: var(--file-drop-over-bg);
 }
 
 .block {

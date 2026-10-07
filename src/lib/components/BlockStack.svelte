@@ -33,6 +33,7 @@
     row,
     nest = false,
     candrop = () => true,
+    onfiles,
     label = 'Paragraphs',
     class: klass = '',
   }: {
@@ -45,13 +46,19 @@
     nest?: boolean;
     /** False when dropping `dragId` on `targetId` is illegal (e.g. into its own run): no drop offered. */
     candrop?: (dragId: string, targetId: string) => boolean;
+    /** Files dropped onto a row. Absent: file drags are ignored (never a reorder either way). */
+    onfiles?: (id: string, files: File[]) => void;
     label?: string;
     class?: string;
   } = $props();
 
   let over = $state<{ id: string | null; zone: Zone } | null>(null);
+  /** The row a file drag is over (a separate state: it has no zone). */
+  let fileOver = $state<string | null>(null);
 
   const accepts = (e: DragEvent) => e.dataTransfer?.types.includes(DRAG_MIME) ?? false;
+
+  const hasFiles = (e: DragEvent) => !!onfiles && (e.dataTransfer?.types.includes('Files') ?? false);
 
   function handleFor(item: StackItem): HandleAttrs {
     return {
@@ -93,9 +100,15 @@
       class:is-drop-before={over?.id === item.id && over.zone === 'before'}
       class:is-drop-after={over?.id === item.id && over.zone === 'after'}
       class:is-drop-into={over?.id === item.id && over.zone === 'into'}
+      class:is-drop-file={fileOver === item.id}
       style:--depth={item.depth}
       data-id={item.id}
       ondragover={(e) => {
+        if (hasFiles(e)) {
+          e.preventDefault();
+          fileOver = item.id;
+          return;
+        }
         if (!accepts(e)) return;
         e.stopPropagation(); // also keeps the list from offering "append" over a refused row
         const p = dragging();
@@ -106,7 +119,19 @@
         e.preventDefault();
         over = { id: item.id, zone: zoneOf(e, e.currentTarget, nest) };
       }}
-      ondrop={(e) => finish(e, item.id, zoneOf(e, e.currentTarget, nest))}
+      ondragleave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) fileOver = null;
+      }}
+      ondrop={(e) => {
+        if (hasFiles(e)) {
+          e.preventDefault();
+          e.stopPropagation();
+          fileOver = null;
+          onfiles?.(item.id, Array.from(e.dataTransfer?.files ?? []));
+          return;
+        }
+        finish(e, item.id, zoneOf(e, e.currentTarget, nest));
+      }}
     >
       {@render row(item, handleFor(item))}
     </li>

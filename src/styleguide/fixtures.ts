@@ -140,6 +140,20 @@ export const annotationSet = (n: number): Annotation[] => {
 const LONG_LABEL =
   "An unusually long attached note title that must wrap onto two lines and then clamp, never spilling out of the margin";
 /** Long labels on every row kind. */
+/** File attachments (RFC-017): one with a known size, one without (the core reports sizes with srs-rust#645). */
+export const fileAnnotations: Annotation[] = [
+  { kind: "comments", key: "fc", count: 0, label: "Opening" },
+  {
+    kind: "file",
+    key: "file:d1",
+    label: "interview-notes.md",
+    icon: "file",
+    text: "2 KB",
+    documentId: "d1",
+  },
+  { kind: "file", key: "file:d2", label: "budget.csv", icon: "file", text: "", documentId: "d2" },
+];
+
 export const longLabelAnnotations: Annotation[] = [
   { kind: "comments", key: "c", count: 12, label: "Opening" },
   att(1, "source", LONG_LABEL, agents[0]),

@@ -60,6 +60,7 @@
     over = false;
     if (!hasFiles(e)) return;
     e.preventDefault();
+    e.stopPropagation(); // inside a paragraph: the row's own file drop must not take it again
     if (!busy) void take(Array.from(e.dataTransfer?.files ?? []));
   }
   function paste(e: ClipboardEvent) {

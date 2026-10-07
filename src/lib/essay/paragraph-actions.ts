@@ -15,6 +15,7 @@ import Link from "@lucide/svelte/icons/link";
 import ListIndentDecrease from "@lucide/svelte/icons/list-indent-decrease";
 import ListIndentIncrease from "@lucide/svelte/icons/list-indent-increase";
 import Maximize2 from "@lucide/svelte/icons/maximize-2";
+import Paperclip from "@lucide/svelte/icons/paperclip";
 import Pencil from "@lucide/svelte/icons/pencil";
 import Plus from "@lucide/svelte/icons/plus";
 import Trash from "@lucide/svelte/icons/trash";
@@ -30,6 +31,7 @@ export interface ParagraphHandlers {
   oncopylink?: () => void;
   oncopyagent?: () => void;
   onrename?: () => void;
+  onattach?: () => void;
 }
 
 export type ParagraphActionId =
@@ -44,6 +46,7 @@ export type ParagraphActionId =
   | "zoom"
   | "link"
   | "agent"
+  | "attach"
   | "rename";
 
 export interface ParagraphAction {
@@ -144,6 +147,13 @@ export function paragraphActions(
       label: "Copy for agent",
       icon: Bot,
       run: h.oncopyagent,
+      enabled: true,
+    },
+    !!h.onattach && {
+      id: "attach",
+      label: "Attach file…",
+      icon: Paperclip,
+      run: h.onattach,
       enabled: true,
     },
     !!h.onrename && { id: "rename", label: "Rename", icon: Pencil, run: h.onrename, enabled: true },

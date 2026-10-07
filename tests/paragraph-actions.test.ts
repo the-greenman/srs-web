@@ -91,3 +91,13 @@ it("primary (the hover strip) is hide, zoom and link only; each is also in the f
   expect(primary.every((id) => list.some((a) => a.id === id))).toBe(true);
   expect(list.filter((a) => ["draft", "delete"].includes(a.id)).some((a) => a.primary)).toBe(false);
 });
+
+it("attach is a non-primary action (menu only, never the hover strip), present only with its handler", () => {
+  const onattach = vi.fn();
+  const attach = paragraphActions({ onattach }, { label: "Claim" }).find((a) => a.id === "attach");
+  expect(attach).toMatchObject({ label: "Attach file…", enabled: true });
+  expect(attach?.primary).toBeFalsy();
+  attach?.run();
+  expect(onattach).toHaveBeenCalledOnce();
+  expect(paragraphActions({}, { label: "Claim" }).some((a) => a.id === "attach")).toBe(false);
+});

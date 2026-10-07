@@ -349,6 +349,19 @@
     </div>
     <h3>Long labels (wide column)</h3>
     <div class="sg__col" style:width="var(--margin-width-wide)"><AnnotationMargin annotations={fx.longLabelAnnotations} variant="expanded" onopen={noop} /></div>
+    <h3>File attachments (hover or focus a glyph for the name, size and Download)</h3>
+    <div class="sg__col" style:width="var(--margin-width-wide)"><AnnotationMargin annotations={fx.fileAnnotations} variant="expanded" onopen={noop} ondownload={noop} /></div>
+    <h3>A file dragged over a paragraph (the drop state; the menu holds Attach file…)</h3>
+    {#snippet fileDrop()}
+      <div class="sg__wide">
+        <ol class="block-stack" aria-label="File drop specimen">
+          <li class="block-stack__item is-drop-file">
+            <Block id="file-drop" title="Drop target" body="Dropping files here attaches them to this paragraph." onbody={noop} ontitle={noop} onhide={noop} onnew={noop} onindent={noop} onmove={noop} onattach={noop} />
+          </li>
+        </ol>
+      </div>
+    {/snippet}
+    {@render gated(fileDrop)}
     <h3>Paragraphs with 0, 1, 4 and 10 annotations (wide margin)</h3>
     {#snippet annotated()}
       <div class="sg__wide">

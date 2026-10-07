@@ -36,6 +36,13 @@ const m = vi.hoisted(() => ({
   listRelations: vi.fn(() => []),
   contextRecord: vi.fn(() => ({ relations: [] })),
   containersForInstance: vi.fn(() => []),
+  listAttachments: vi.fn(() => ({
+    sourceDocumentsPath: "s",
+    entries: [] as { documentId: string; sizeBytes?: number }[],
+  })),
+  getRecordAttachments: vi.fn(() => null as unknown),
+  addAttachment: vi.fn(() => ({ documentId: "doc" })),
+  linkAttachment: vi.fn(),
   copyContainer: vi.fn(),
   forkRecord: vi.fn(),
   createRelation: vi.fn(),
@@ -58,26 +65,27 @@ const m = vi.hoisted(() => ({
 }));
 vi.mock("../src/lib/srs-client.js", () => m);
 
+import { annotationsFor } from "../src/lib/annotations.js";
+import { essaySource } from "../src/lib/essay/annotation-source.js";
 import {
   addParagraph,
   agentHandoff,
+  attachFiles,
   binParagraph,
   deleteForever,
+  essayWriteGuard,
   loadEssay,
   moveEntry,
   newEssay,
-  removeReference,
-  essayWriteGuard,
   refreshBundle,
   removeAttachment,
+  removeReference,
   setEssayPurpose,
   setEssayTitle,
   setHidden,
   shiftEntry,
   transfer,
 } from "../src/lib/essay/essay-document.js";
-import { annotationsFor } from "../src/lib/annotations.js";
-import { essaySource } from "../src/lib/essay/annotation-source.js";
 
 const rec = (instanceId: string, typeId: string, fieldValues: Record<string, unknown>) => ({
   instanceId,
@@ -840,5 +848,57 @@ describe("comments and references containers (srs-web#494, #495, #496)", () => {
     m.getContainer.mockReturnValue({ containerId: "x" }); // now they exist
     loadEssay(repo(), "E", { repair: true });
     expect(m.createContainer).not.toHaveBeenCalled();
+  });
+});
+
+describe("file attachments (srs-web#506)", () => {
+  const file = (name: string) => ({ name, type: "text/markdown", bytes: new Uint8Array([1]) });
+
+  it("attachFiles adds then links each file, in order", () => {
+    m.addAttachment
+      .mockReturnValueOnce({ documentId: "d1" })
+      .mockReturnValueOnce({ documentId: "d2" });
+    attachFiles({} as never, "p1", [file("a.md"), file("b.md")]);
+    expect(m.addAttachment.mock.calls.map((c) => c[1])).toEqual([
+      { fileName: "a.md", contentType: "text/markdown" },
+      { fileName: "b.md", contentType: "text/markdown" },
+    ]);
+    expect(m.linkAttachment.mock.calls.map((c) => c[1])).toEqual([
+      { instanceId: "p1", documentId: "d1" },
+      { instanceId: "p1", documentId: "d2" },
+    ]);
+  });
+
+  it("surfaces the core's error (a duplicate name) and links nothing for that file", () => {
+    m.addAttachment.mockImplementationOnce(() => {
+      throw new Error("an attachment named a.md already exists");
+    });
+    expect(() => attachFiles({} as never, "p1", [file("a.md")])).toThrow("already exists");
+    expect(m.linkAttachment).not.toHaveBeenCalled();
+  });
+
+  it("loads a paragraph's files with the size the core knows, and the margin shows them as a file annotation", () => {
+    m.listAttachments.mockReturnValue({
+      sourceDocumentsPath: "s",
+      entries: [{ documentId: "d1", sizeBytes: 2048 }],
+    });
+    m.getRecordAttachments.mockImplementation(((_r: unknown, i: { instanceId: string }) =>
+      i.instanceId === "p1"
+        ? {
+            instanceId: "p1",
+            sourceDocumentsPath: "s",
+            attachments: [{ documentId: "d1", title: "notes.md" }],
+          }
+        : null) as never);
+    const model = loadEssay({ write_epoch: () => 7 } as never, "E");
+    expect(model.files.p1).toEqual([{ documentId: "d1", name: "notes.md", sizeBytes: 2048 }]);
+    expect(model.files.p9).toBeUndefined();
+    const file = annotationsFor(essaySource(model), "p1").find((a) => a.kind === "file");
+    expect(file).toMatchObject({
+      key: "file:d1",
+      label: "notes.md",
+      text: "2 KB",
+      documentId: "d1",
+    });
   });
 });

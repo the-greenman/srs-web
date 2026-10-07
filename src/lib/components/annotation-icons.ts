@@ -28,6 +28,7 @@ export const KIND_ICONS: Record<string, IconComponent> = {
   claim: Lightbulb,
   "counter-claim": Scale,
   document: FileText,
+  file: FileText,
   spreadsheet: Table,
   image: Image,
   link: Link,

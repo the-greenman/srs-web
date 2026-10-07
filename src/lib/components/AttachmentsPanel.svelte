@@ -8,6 +8,7 @@
   import { tick } from "svelte";
   import { onDestroy } from "svelte";
   import { listAttachments, addAttachment, getAttachmentBytes } from "$lib/srs-client.js";
+  import { downloadAttachment } from "$lib/attachment-download.js";
   import type {
     SrsRepository,
     AttachmentListResult,
@@ -165,14 +166,7 @@
     if (!entry.documentId) return;
     error = null;
     try {
-      const bytes = getAttachmentBytes(repo, entry.documentId);
-      const blob = new Blob([Uint8Array.from(bytes)]);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = entry.path.split("/").at(-1) ?? entry.path;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadAttachment(repo, entry.documentId, entry.path.split("/").at(-1) ?? entry.path);
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : "Download failed";
     }
