@@ -61,6 +61,8 @@
     /** Editors offered for this repo, computed once by App (registry.availableEditors). */
     packageEditors?: OfferedEditor[];
     repoName: string;
+    /** The Toolbar's displayed title (srs-web#480) — see EditorShellProps. */
+    documentTitle?: string;
     onExport: () => void;
     /** Write the engine-owned current repository to the opened backend, when allowed. */
     onSave?: () => Promise<void>;
@@ -91,6 +93,7 @@
     repo,
     packageEditors = [],
     repoName,
+    documentTitle = repoName,
     onExport,
     onSave,
     readOnlyReason = null,
@@ -456,7 +459,7 @@
 {#snippet mainPane()}
   <Main>
     {#snippet bar()}
-    <Toolbar title={repoName} actions={barActions} groups={BASE_GROUPS}>
+    <Toolbar title={documentTitle} actions={barActions} groups={BASE_GROUPS}>
       {#snippet lead()}<NavTrigger />{/snippet}
       {#snippet trail()}<InspectorTrigger />{/snippet}
       {#snippet status()}

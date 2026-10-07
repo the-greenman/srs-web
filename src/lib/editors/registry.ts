@@ -32,6 +32,10 @@ import type { Component, Snippet } from "svelte";
 export interface EditorShellProps {
   repo: SrsRepository;
   repoName: string;
+  /** The Toolbar's displayed title (srs-web#480) — the manifest/identity title when one
+   * resolves, else the same value as `repoName`. Kept separate because `repoName` also
+   * names the export/download file and remains tied to the opened file/URL name. */
+  documentTitle?: string;
   onExport: () => void;
   onExportSrsj?: () => void;
   onSave?: () => Promise<void>;

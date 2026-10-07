@@ -76,6 +76,8 @@
   interface Props {
     repo: SrsRepository;
     repoName: string;
+    /** The Toolbar's displayed title (srs-web#480) — see EditorShellProps. */
+    documentTitle?: string;
     documentProvider: string;
     onExport: () => void;
     onExportSrsj?: () => void;
@@ -98,6 +100,7 @@
   let {
     repo,
     repoName,
+    documentTitle = repoName,
     documentProvider,
     onExport,
     onExportSrsj,
@@ -602,7 +605,7 @@
     {#snippet main()}
       <Main>
         {#snippet bar()}
-          <Toolbar title={repoName} actions={barActions} groups={BASE_GROUPS}>
+          <Toolbar title={documentTitle} actions={barActions} groups={BASE_GROUPS}>
             {#snippet lead()}<NavTrigger />{/snippet}
             {#snippet titleSlot()}<Breadcrumb items={guideCrumbItems()} />{/snippet}
             {#snippet status()}

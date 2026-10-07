@@ -1176,7 +1176,8 @@
   <GenericSrsShell
     repo={repo!}
     packageEditors={offeredEditors}
-    repoName={documentTitle}
+    repoName={repoName}
+    documentTitle={documentTitle}
     onExport={handleExportArchive}
     onSave={readOnlyHost ? undefined : activeDocument === null || activeDocument.capabilities.write ? handleSave : undefined}
     readOnly={readOnlyHost !== null}
@@ -1207,7 +1208,8 @@
   {@const Shell = activeEditor!.component}
   <Shell
     repo={repo!}
-    repoName={documentTitle}
+    repoName={repoName}
+    documentTitle={documentTitle}
     documentProvider={activeDocument?.provider ?? "local"}
     onExport={handleExportArchive}
     onExportSrsj={handleExport}
