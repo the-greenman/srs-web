@@ -4,7 +4,13 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Download, type Page, expect, test } from "@playwright/test";
-import { openPackageEditor, navItem, newRecord, exportItem } from "./helpers.js";
+import {
+  exportItem,
+  navItem,
+  newRecord,
+  openPackageEditor,
+  waitForRecoveryCopy,
+} from "./helpers.js";
 
 /**
  * walkthrough-r1.spec.ts — Release verification: Decision Log R1 "safe to try"
@@ -102,10 +108,7 @@ test.describe("R1 release walkthrough (#54)", () => {
       // The chosen editor opens directly.
       await expect(navItem(page, /Decision/)).toBeVisible({ timeout: 5000 });
       await expect(
-        page
-          .locator(".panel__head")
-          .filter({ hasText: "Validation" })
-          .locator(".panel__aside")
+        page.locator(".panel__head").filter({ hasText: "Validation" }).locator(".panel__aside")
       ).toContainText("clean");
     });
 
@@ -244,6 +247,7 @@ test.describe("R1 release walkthrough (#54)", () => {
     //    offers restore/discard.
     // ------------------------------------------------------------------
     await test.step("reload the browser and restore the unsaved session", async () => {
+      await waitForRecoveryCopy(page);
       await page.reload();
       await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 10000 });
 

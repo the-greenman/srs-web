@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { waitForRecoveryCopy } from "./helpers.js";
 
 /**
  * essay-purpose.spec.ts — srs-web#411: the essay's purpose (markdown, edited in place under the
@@ -39,6 +40,7 @@ test("purpose renders markdown until focused, persists in the working copy and s
   await expect(page.locator(".purpose__render strong")).toHaveText("board");
   await expect(page.getByTestId("document-dirty-status")).toBeVisible();
 
+  await waitForRecoveryCopy(page);
   await page.reload();
   await page.locator(".restore-banner__restore").click();
   await page.getByTestId("package-editor-essay").click();
