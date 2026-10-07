@@ -793,3 +793,10 @@ export const cappedContainerMap = containerGraph(
     target: `leaf${i + 1}`,
   }))
 );
+
+/** AttachDrop: a forced rejection list (#503). */
+export const attachRejected = [
+  { name: "photo.png", reason: "not a text file (image/png)" },
+  { name: "transcript.txt", reason: "1.4 MB is over the 1 MB limit" },
+];
+export const MB = 1024 * 1024;

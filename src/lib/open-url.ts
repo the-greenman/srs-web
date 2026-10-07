@@ -3,6 +3,8 @@
  * go through the same loader as "From this device" (App.loadArchiveDocument / loadDocument).
  */
 
+import { formatBytes } from "./format-bytes.js";
+
 /** Largest archive we will download (bytes). The error names it. */
 export const MAX_ARCHIVE_BYTES = 50 * 1024 * 1024;
 
@@ -34,12 +36,10 @@ export function withoutOpenParam(href: string): string {
   return url.pathname + url.search + url.hash;
 }
 
-const mb = (n: number) => `${Math.round(n / 1024 / 1024)} MB`;
-
 async function readCapped(res: Response): Promise<Uint8Array> {
   const tooLarge = () =>
     new OpenUrlError(
-      `The file is larger than the ${mb(MAX_ARCHIVE_BYTES)} limit for opening from a link.`
+      `The file is larger than the ${formatBytes(MAX_ARCHIVE_BYTES)} limit for opening from a link.`
     );
   if (Number(res.headers.get("content-length")) > MAX_ARCHIVE_BYTES) throw tooLarge();
   const reader = res.body?.getReader();

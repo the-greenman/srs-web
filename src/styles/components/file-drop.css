@@ -1,0 +1,46 @@
+/* ============================================================================
+   component: file-drop (.file-drop) — the attach zone (#503)
+   ----------------------------------------------------------------------------
+   A dashed, focusable zone. Modifiers: --over (a file is being dragged on it), --compact (one line).
+   Tokens --file-drop-* (tokens-components.css).
+   ========================================================================== */
+.file-drop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--file-drop-gap);
+  padding: var(--file-drop-pad);
+  color: var(--color-text);
+  background: var(--file-drop-bg);
+  border: var(--file-drop-border);
+  border-radius: var(--file-drop-radius);
+  font-size: var(--size-sm);
+  cursor: pointer;
+}
+.file-drop:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.file-drop--over {
+  background: var(--file-drop-over-bg);
+  border: var(--file-drop-over-border);
+}
+.file-drop--compact {
+  flex-wrap: nowrap;
+  padding: var(--file-drop-compact-pad);
+}
+.file-drop[aria-busy="true"] {
+  cursor: progress;
+  color: var(--color-muted);
+}
+.file-drop__icon {
+  display: inline-flex;
+  flex: none;
+}
+.file-drop__label {
+  font-weight: 500;
+}
+.file-drop__hint {
+  flex-basis: 100%;
+  color: var(--color-muted);
+}

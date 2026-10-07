@@ -146,6 +146,23 @@
   --notice-warn-rule: 2px solid var(--color-warn);
   --notice-error-bg: var(--color-error-subtle);
   --notice-error-rule: 3px solid var(--color-error);
+  /* Attach zone and repository size (#503). */
+  --file-drop-bg: var(--color-surface-raised);
+  --file-drop-border: 1px dashed var(--color-line-strong);
+  --file-drop-over-bg: var(--color-line-soft);
+  --file-drop-over-border: 2px dashed var(--color-line-strong);
+  --file-drop-pad: var(--space-md) var(--space-sm);
+  --file-drop-compact-pad: var(--space-xs) var(--space-sm);
+  --file-drop-gap: var(--space-xs);
+  --file-drop-radius: var(--radius-md);
+  --size-meter-gap: var(--space-xs);
+  --size-meter-height: 8px;
+  --size-meter-radius: var(--radius-md);
+  --size-meter-border: var(--rule-soft);
+  --size-meter-track: var(--color-surface-raised);
+  --size-meter-fill: var(--color-muted-strong);
+  --size-meter-fill-warn: var(--color-warn);
+  --size-meter-fill-high: var(--color-error);
   --toast-bg: var(--color-surface-raised);
   --toast-border: 1px solid var(--color-line);
   --toast-shadow: var(--shadow-popover);

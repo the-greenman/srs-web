@@ -59,6 +59,8 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `Button` | `variant` `size?` (`md` \| `sm`; `sm` for rails, trays, panels: wraps its label) `onDark?` `active?` | `.btn` | B1 [#2](https://github.com/the-greenman/srs-web/issues/2), B10 [#6](https://github.com/the-greenman/srs-web/issues/6) |
 | `Diagnostics` | `diagnostics` `variant?` (`panel` \| `notice`) `documentKey?` `testid?` `expanded?` (grouped by identical message; the notice variant is collapsible and dismissible per document) | `.diag*` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3), B13 [#9](https://github.com/the-greenman/srs-web/issues/9), #441 |
 | `Notice` | `kind?` (`info` \| `success` \| `warning` \| `error`) `onDismiss?` `action?` (`{label, onAction}`, one button beside the message) `testid?` (error is `role=alert`, the rest `role=status`) | `.notice` | #441, ADR-020 (j) |
+| `AttachDrop` | `policy?` (`AttachPolicy`) `usedBytes?` `onfiles` `busy?` `compact?` `label?` (drop, paste or pick text files; `checkFiles` gates them, rejections show in a warning Notice; `state` and `rejected` are styleguide-only) | `.file-drop` | #503 |
+| `RepoSize` | `totalBytes` `maxBytes?` `pendingBytes?` (a native `<meter>` and label; label only without a limit) | `.size-meter` | #503 |
 | `Toast` | `kind?` `text` `testid?` `onDismiss?` (one toast row; the text is aria-hidden) | `.toast` | #441 |
 | `ToastHost` | none (reads the notice store; mounted once by `Main`) | `.toast-host` | #441, ADR-020 (j) |
 | `NoticeRegion` | none (renders the pinned notices; `Main` places it below the bar) | `.notice`, `.diag*` | #441 |

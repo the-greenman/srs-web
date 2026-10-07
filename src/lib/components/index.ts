@@ -60,6 +60,8 @@ export { default as TagChip } from "./TagChip.svelte";
 export { default as Button } from "./Button.svelte";
 export { default as IconButton } from "./IconButton.svelte";
 export { default as Diagnostics } from "./Diagnostics.svelte";
+export { default as AttachDrop } from "./AttachDrop.svelte";
+export { default as RepoSize } from "./RepoSize.svelte";
 export { default as Notice } from "./Notice.svelte";
 export { default as NoticeRegion } from "./NoticeRegion.svelte";
 export { default as Toast } from "./Toast.svelte";

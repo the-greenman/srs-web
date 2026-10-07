@@ -63,6 +63,8 @@
 @import url("./components/field.css") layer(components);
 @import url("./components/diagnostics.css") layer(components);
 @import url("./components/notice.css") layer(components);
+@import url("./components/file-drop.css") layer(components);
+@import url("./components/size-meter.css") layer(components);
 @import url("./components/toast.css") layer(components);
 @import url("./components/lifecycle.css") layer(components);
 @import url("./components/mcp-connection.css") layer(components);

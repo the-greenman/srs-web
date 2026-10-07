@@ -1,5 +1,6 @@
 <!-- AttachmentsPanel.svelte — list repo attachments and upload new files (srs-web#99) -->
 <script lang="ts">
+  import { readFile } from "./attach-check.js";
   import Notice from './Notice.svelte';
   import ArrowDown from "@lucide/svelte/icons/arrow-down";
   import Button from "./Button.svelte";
@@ -148,12 +149,7 @@
     uploading = true;
     error = null;
     try {
-      const bytes = await new Promise<Uint8Array>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(new Uint8Array(reader.result as ArrayBuffer));
-        reader.onerror = () => reject(reader.error);
-        reader.readAsArrayBuffer(file);
-      });
+      const bytes = await readFile(file);
       addAttachment(repo, { fileName: file.name }, bytes);
       refresh();
       onMutate();
