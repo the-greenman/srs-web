@@ -1,6 +1,6 @@
 # srs-web
 
-A browser editor for SRS repositories: edit them entirely client-side, on storage you own, with an agents panel for connecting MCP agents to the open document. Deployed as a Cloudflare Worker at [`app.mudemocracy.org`](https://app.mudemocracy.org).
+A browser editor for SRS repositories: edit them entirely client-side, on storage you own, with an agents panel for connecting MCP agents to the open document. Deployed as a Cloudflare Worker at [`app.semanticops.com`](https://app.semanticops.com) (also served at `app.mudemocracy.org` until the governance editor replaces it there).
 
 SRS (pronounced "source") is an open standard for portable semantic documents that people and AI can both understand and use. [semanticops.com](https://semanticops.com) explains it (agents start at [`/llms.txt`](https://semanticops.com/llms.txt)); [srs.semanticops.com](https://srs.semanticops.com) hosts the specification and schemas.
 
@@ -206,9 +206,11 @@ other providers still work; only GitHub sign-in is inert.
 
 Deployed as a Cloudflare Worker (a static-assets SPA **plus** the minimal
 `worker/index.ts` OAuth token-exchange route, ADR-011) with the
-custom domain `https://app.mudemocracy.org` attached directly in
-`wrangler.jsonc` (`routes: [{ pattern: "app.mudemocracy.org", custom_domain:
-true }]`). The first `wrangler deploy` provisions the DNS + custom domain
+custom domains attached directly in `wrangler.jsonc`: the primary host
+`https://app.semanticops.com` and a second host `https://app.mudemocracy.org`,
+served by the same worker until the governance editor replaces it
+(`routes: [{ pattern: "app.semanticops.com", custom_domain: true }, { pattern:
+"app.mudemocracy.org", custom_domain: true }]`). The first `wrangler deploy` provisions the DNS + custom domain
 binding automatically, no dashboard step required. Deploys are done by
 Cloudflare Workers Builds on every push to `main` (Cloudflare's own Git
 integration, not a GitHub Action, so there is no deploy workflow here).
@@ -268,8 +270,9 @@ Before deploying:
   wrangler secret put GITHUB_CLIENT_SECRET
   ```
 
-  The public `GITHUB_CLIENT_ID` and the `APP_ORIGIN` / `GITHUB_REDIRECT_URI`
-  allow-list values are plaintext `[vars]` in `wrangler.jsonc`.
+  The public `GITHUB_CLIENT_ID` and the `APP_ORIGINS` (comma-separated)
+  allow-list is a plaintext `[vars]` entry in `wrangler.jsonc`. The OAuth `redirect_uri` must equal the
+  request's allowed origin plus `/`.
 
   `vite build` runs in production mode by default and loads `.env.production`
   automatically, so these values are compiled into the static bundle the same
@@ -279,10 +282,12 @@ Before deploying:
 
 Configure the provider consoles with:
 
-- Dropbox redirect URI: `https://app.mudemocracy.org/`
-- Google authorized JavaScript origin: `https://app.mudemocracy.org`
-- Google API key website restriction: `https://app.mudemocracy.org/*`
-- GitHub App authorization callback URL: `https://app.mudemocracy.org/`
+For both `https://app.semanticops.com` and `https://app.mudemocracy.org`:
+
+- Dropbox redirect URIs: `https://<host>/`
+- Google authorized JavaScript origins: `https://<host>`
+- Google API key website restrictions: `https://<host>/*`
+- GitHub App authorization callback URLs: `https://<host>/`
 - GitHub App visibility: **public** (Advanced → Make public); private apps
   404 the authorize page for every user except the owner
 
