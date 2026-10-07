@@ -89,6 +89,7 @@ export { default as LayersPanel } from "./LayersPanel.svelte";
 export { default as ActionMenu } from "./ActionMenu.svelte";
 export { default as Toolbar } from "./Toolbar.svelte";
 export { default as BinTray } from "./BinTray.svelte";
+export { default as ReferencesTray } from "./ReferencesTray.svelte";
 export { default as MarkdownHelp } from "./MarkdownHelp.svelte";
 export { default as MarkdownText } from "./MarkdownText.svelte";
 export { default as Panel } from "./Panel.svelte";

@@ -922,7 +922,11 @@ describe("find", () => {
     const spy = vi.fn().mockReturnValue({ hits: [], total: 0 });
     const repo = mockRepo({ find: spy });
 
-    find(repo, { contentMatch: "x" }, { limit: 50, offset: 100, rank: true, byTypeLimit: 0, facets: true });
+    find(
+      repo,
+      { contentMatch: "x" },
+      { limit: 50, offset: 100, rank: true, byTypeLimit: 0, facets: true }
+    );
 
     expect(spy).toHaveBeenCalledWith(
       JSON.stringify({ contentMatch: "x" }),

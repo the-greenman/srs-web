@@ -6,6 +6,7 @@
  */
 import {
   createRecord,
+  createRecordInContainer,
   createRelation,
   deleteRecord,
   listRelationTypes,
@@ -72,11 +73,21 @@ export function loadComments(repo: SrsRepository, types: TypeSummary[]): Record<
   return out;
 }
 
-/** Reply on an instance: a comment record + `comments-on` (comment -> target); never a container member. */
-export function addComment(repo: SrsRepository, targetId: string, text: string): void {
-  const rec = createRecord(repo, COMMENT_TYPE_ID, typeVersion(repo, COMMENT_TYPE_ID), {
-    fieldValues: { comment_text: text },
-  });
+/**
+ * Reply on an instance: a comment record + `comments-on` (comment -> target). With `containerId`
+ * (an essay's comments container, srs-web#494) the record is created into it in the same call.
+ */
+export function addComment(
+  repo: SrsRepository,
+  targetId: string,
+  text: string,
+  containerId?: string | null
+): void {
+  const input = { fieldValues: { comment_text: text } };
+  const v = typeVersion(repo, COMMENT_TYPE_ID);
+  const rec = containerId
+    ? createRecordInContainer(repo, containerId, COMMENT_TYPE_ID, v, input)
+    : createRecord(repo, COMMENT_TYPE_ID, v, input);
   try {
     createRelation(repo, {
       relationType: COMMENTS_ON,

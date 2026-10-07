@@ -74,7 +74,7 @@ src/styles/
     modal.css          .modal        the titled native <dialog> (showModal; `inline` specimen)
     action-menu.css    .action-menu  the menu of rows (plain and checkable, grouped)
     toolbar.css        .toolbar      the generic document bar (#423): context row + grouped menus, three width tiers
-    draft-tray.css     .tray         DraftTray and BinTray rows
+    draft-tray.css     .tray         DraftTray, BinTray and ReferencesTray rows
     ... and one file per remaining block (see index.css)
   tokens-components.css  component tokens (--btn-*, --icon-btn-*, --popover-*, --hue-pill-*, --actor-*, --margin-*, --comment-*, --toolbar-*, --block-tools-*)
 ```

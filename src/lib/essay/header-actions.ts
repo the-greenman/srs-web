@@ -29,8 +29,6 @@ export const HEADER_GROUPS: { id: HeaderGroup; label: string; icon: IconComponen
 export interface HeaderHandlers {
   onnew: () => void;
   oncopy?: () => void;
-  /** Copy the agent handoff (whole essay, or the zoom target). Absent while no essay is open. */
-  onagent?: () => void;
   onhelp: () => void;
   oncomments: () => void;
   onsave?: () => void;
@@ -79,15 +77,6 @@ export function headerActions(
       run: h.oncopy,
       enabled: true,
       testid: "copy-document",
-    },
-    !!h.onagent && {
-      id: "agent",
-      group: "document",
-      kind: "action",
-      label: "Copy for agent",
-      run: h.onagent,
-      enabled: true,
-      testid: "copy-for-agent",
     },
     {
       id: "export",
