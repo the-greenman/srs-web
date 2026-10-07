@@ -386,6 +386,26 @@ describe("GuidesShell — blueprint schema with non-fatal diagnostics", () => {
     expect(newGuideBtn.disabled).toBe(false);
   });
 
+  it("lists only record sections when the guide's container also holds a note (srs-web#483)", async () => {
+    const base = guidesRepoWithSections();
+    const repo = {
+      ...base,
+      resolve_container_view: (...args: unknown[]) => {
+        // biome-ignore lint/suspicious/noExplicitAny: raw WASM boundary, see above
+        const view = (base as any).resolve_container_view(...args);
+        return {
+          ...view,
+          members: [{ instanceId: "note-1", tier: 0, displayLabel: "N" }, ...view.members],
+        };
+      },
+    } as SrsRepository;
+    render(GuidesShell, { props: { repo, ...defaultProps, saving: false } });
+    await screen.findByTestId("toolbar-other");
+    await selectFirstGuide();
+
+    expect(await screen.findAllByTestId("guides-section-item")).toHaveLength(2);
+  });
+
   it("disables section move-up/move-down/remove controls while saving, and re-enables them once false", async () => {
     const repo = guidesRepoWithSections();
     const { rerender } = render(GuidesShell, {

@@ -140,7 +140,7 @@ function containerForRootType(
   for (const summary of listContainers(repo)) {
     try {
       const view = resolveContainerView(repo, summary.containerId);
-      if (view.root && rootTypeIds.has(view.root.record.typeId)) return summary.containerId;
+      if (view.root?.record && rootTypeIds.has(view.root.record.typeId)) return summary.containerId;
     } catch {
       // Container failed to resolve (dangling root, etc.) — not a candidate.
     }

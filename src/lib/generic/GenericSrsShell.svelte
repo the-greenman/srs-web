@@ -420,7 +420,7 @@
           <div class="generic-tree-members">
             {#if members.length === 0}<span class="generic-muted">No members</span>{/if}
             {#each members as member (member.instanceId)}
-              <button class="nav__item" onclick={() => openRecord(member.instanceId)}>{member.displayLabel || member.instanceId.slice(0, 8)}</button>
+              <button class="nav__item" onclick={() => openRecord(member.instanceId)}>{member.displayLabel || member.instanceId.slice(0, 8)}{#if member.tier === 0}<small class="nav__item-count" data-testid="member-note-mark">note</small>{/if}</button>
             {/each}
           </div>
         {/if}

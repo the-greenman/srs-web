@@ -81,9 +81,10 @@
           .neighbours.filter((n) => kept.has(n.neighbour.instanceId))
           .map((n) => ({ relationId: n.relationId, relationType: n.relationType, source: id, target: n.neighbour.instanceId })),
       );
-      return containerGraph(members, edges);
-    } catch {
-      return null;
+      return { graph: containerGraph(members, edges), error: null };
+    } catch (e: unknown) {
+      // A failed read is an error, not an empty scope (srs-web#483).
+      return { graph: null, error: e instanceof Error ? e.message : String(e) };
     }
   });
 </script>
@@ -108,12 +109,15 @@
   {/if}
 {:else if !containerId}
   <p class="generic-muted">Select a record to see its relations.</p>
-{:else if !container || container.nodes.length === 0}
+{:else if container?.error}
+  <Notice kind="error">{container.error}</Notice>
+{:else if !container?.graph || container.graph.nodes.length === 0}
   <p class="generic-muted">No records match this scope.</p>
 {:else}
+  {@const graph = container.graph}
   <p class="generic-muted" data-testid="map-note">
     Relations resolved by the engine for the active container.
-    {#if container.totalNodes > CONTAINER_NODE_CAP}Showing {container.nodes.length} of {container.totalNodes} records, select a record to explore.{/if}
+    {#if graph.totalNodes > CONTAINER_NODE_CAP}Showing {graph.nodes.length} of {graph.totalNodes} records, select a record to explore.{/if}
   </p>
-  <RelationGraph view="container" graph={container} {onOpen} />
+  <RelationGraph view="container" {graph} {onOpen} />
 {/if}

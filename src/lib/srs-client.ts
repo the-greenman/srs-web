@@ -1736,7 +1736,10 @@ export interface ResolvedMember {
   instanceId: string;
   tier: number;
   displayLabel: string;
-  record: SrsRecord;
+  /** Present for Tier-2 records only; absent for Tier-0 notes (core contract, `ResolvedMember.record` is `Option`). */
+  record?: SrsRecord;
+  isVisibleByDefault?: boolean;
+  sectionContainerId?: string;
 }
 
 export interface ContainerView {
@@ -1750,14 +1753,17 @@ export interface ContainerView {
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM ResolvedMember has unknown field case
-function normalizeMember(m: any): ResolvedMember {
-  const record = normalizeRecord(m.record);
-  record.displayLabel = (m.displayLabel ?? m.display_label) || undefined;
+export function normalizeMember(m: any): ResolvedMember {
+  // Tier-0 notes carry no `record` key: keep the core-resolved label, never invent one.
+  const record = m.record ? normalizeRecord(m.record) : undefined;
+  if (record) record.displayLabel = (m.displayLabel ?? m.display_label) || undefined;
   return {
     instanceId: m.instanceId ?? m.instance_id,
     tier: m.tier,
     displayLabel: m.displayLabel ?? m.display_label ?? "",
     record,
+    isVisibleByDefault: m.isVisibleByDefault ?? m.is_visible_by_default,
+    sectionContainerId: m.sectionContainerId ?? m.section_container_id ?? undefined,
   };
 }
 

@@ -304,20 +304,22 @@
    * come from the DocumentView via the core; the client only reads values at the
    * core-provided fieldIds — no field-name semantics in TS.
    */
-  let activeContainerView = $derived.by<ContainerView | null>(() => {
-    if (activeContainerId === null) return null;
-    if (activeContainer?.sectionTypeId === DECISION_TYPE_ID) return null;
+  let activeContainerViewResult = $derived.by<{ view: ContainerView | null; error: string | null }>(() => {
+    if (activeContainerId === null) return { view: null, error: null };
+    if (activeContainer?.sectionTypeId === DECISION_TYPE_ID) return { view: null, error: null };
     try {
       const view = resolveContainerView(repo, activeContainerId);
       if (view.diagnostics.length > 0) {
         console.warn("resolveContainerView diagnostics:", view.diagnostics);
       }
-      return view;
+      // Only `columns` is read here, never `members`: a Tier-0 note member (no `record`) cannot affect the list.
+      return { view, error: null };
     } catch (e: unknown) {
       console.error("resolveContainerView failed:", e);
-      return null;
+      return { view: null, error: e instanceof Error ? e.message : String(e) };
     }
   });
+  let activeContainerView = $derived(activeContainerViewResult.view);
 
   /** Column spec for the active container's list, ordered by the DocumentView's `order`. */
   let activeColumns = $derived(
@@ -1063,6 +1065,7 @@
               <span class="section-heading__count">{activeRecords.length}</span>
             </div>
 
+            {#if activeContainerViewResult.error}<Notice kind="error" testid="container-view-error">{activeContainerViewResult.error}</Notice>{/if}
             {#if activeRecords.length === 0}
               <p class="governance-empty-state">No {activeContainer?.title?.toLowerCase() ?? ""} records in this repository.</p>
             {:else}

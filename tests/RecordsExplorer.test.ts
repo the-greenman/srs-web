@@ -217,6 +217,31 @@ describe("RelationMap", () => {
     expect(mocks.listRelations).not.toHaveBeenCalled();
   });
 
+  it("labels note members as nodes, and shows a failed container read as an error (srs-web#483)", async () => {
+    mocks.resolveContainerView.mockReturnValueOnce({
+      members: [
+        { instanceId: "n1", tier: 0, displayLabel: "A note" },
+        { instanceId: "r1", tier: 2, displayLabel: "A record", record: {} },
+      ],
+    } as never);
+    mocks.neighbours.mockReturnValue({ instanceId: "x", total: 0, neighbours: [] });
+    const { unmount } = render(RelationMap, {
+      props: { repo: {} as never, selected: null, containerId: "c1", onOpen: vi.fn() },
+    });
+    expect(await screen.findByRole("button", { name: /^Inspect A note/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Inspect A record/ })).toBeTruthy();
+    unmount();
+
+    mocks.resolveContainerView.mockImplementationOnce(() => {
+      throw new Error("boom");
+    });
+    render(RelationMap, {
+      props: { repo: {} as never, selected: null, containerId: "c2", onOpen: vi.fn() },
+    });
+    expect(await screen.findByText("boom")).toBeTruthy();
+    expect(screen.queryByText("No records match this scope.")).toBeNull();
+  });
+
   it("prompts for a record when there is no scope", async () => {
     render(RelationMap, {
       props: { repo: {} as never, selected: null, containerId: null, onOpen: vi.fn() },
