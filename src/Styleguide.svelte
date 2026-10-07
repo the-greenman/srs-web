@@ -19,6 +19,8 @@
   import ToolbarSpecimen from "./styleguide/ToolbarSpecimen.svelte";
   import ShellSpecimen from "./styleguide/ShellSpecimen.svelte";
   import Frame from "./styleguide/Frame.svelte";
+  import RecordsView from "$lib/generic/RecordsView.svelte";
+  import RelationGraph from "$lib/generic/RelationGraph.svelte";
   import Icons from "./styleguide/icons";
   import { initWasm } from "$lib/srs-client";
   import * as fx from "./styleguide/fixtures";
@@ -40,6 +42,7 @@
     ["panels", "Panels and trays"],
     ["agents", "Agent library"],
     ["shell", "Page frame"],
+    ["records", "Records and map"],
     ["chooser", "Source chooser"],
     ["notices", "Notices"],
     ["forms", "Form controls"],
@@ -478,6 +481,38 @@
           <div class="sg__frame"><div class="sg__capbar" style:max-width={cap}>content</div></div>
         </figure>
       {/each}
+    </div>
+  </section>
+
+  <section id="records">
+    <h2>Records and map</h2>
+    <p class="sg__note">Records over a repository larger than one page: grouped by type, collapsed, a count each; a group pages 50 at a time.
+      With search text the list is flat and ranked, reads "N results" and shows the matching snippet. The map focuses one record: inbound
+      neighbours on the left, outbound on the right, relation types in the legend and on hover or focus, labels wrapped to two lines.
+      Colours are the <code>--generic-graph-*</code> tokens.</p>
+    <div class="sg__shells">
+      <figure class="sg__figure sg__figure--list" data-testid="sg-records-grouped">
+        <figcaption>Grouped by type (no search)</figcaption>
+        <RecordsView typeOptions={[]} searching={false} total={704} groups={fx.recordGroups} onOpen={noop} />
+      </figure>
+      <figure class="sg__figure sg__figure--list" data-testid="sg-records-searched">
+        <figcaption>Searched: flat, ranked</figcaption>
+        <RecordsView search="travelling form" typeOptions={[]} searching={true} total={9} hits={fx.recordSearchHits} onOpen={noop} />
+      </figure>
+    </div>
+    <div class="sg__shells">
+      <figure class="sg__figure sg__figure--map" data-testid="sg-map-focus">
+        <figcaption>Focused on a record, both directions</figcaption>
+        <RelationGraph view="focus" focus={fx.focusMap.focus} layout={fx.focusMap.layout} onOpen={noop} />
+      </figure>
+      <figure class="sg__figure sg__figure--map" data-testid="sg-map-outbound">
+        <figcaption>Focused, outbound only (12 of 156 shown)</figcaption>
+        <RelationGraph view="focus" focus={fx.outboundOnlyMap.focus} layout={fx.outboundOnlyMap.layout} onOpen={noop} />
+      </figure>
+      <figure class="sg__figure sg__figure--map" data-testid="sg-map-container">
+        <figcaption>A container, capped at 24 of {fx.cappedContainerMap.totalNodes} records</figcaption>
+        <RelationGraph view="container" graph={fx.cappedContainerMap} onOpen={noop} />
+      </figure>
     </div>
   </section>
 

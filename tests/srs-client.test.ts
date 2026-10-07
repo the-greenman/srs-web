@@ -15,6 +15,7 @@ import {
   createBlankRepository,
   initWasm,
   installBundles,
+  neighbours,
   installPackageBundle,
   type AddAttachmentInput,
   type AllowedLifecycleTransitionsResult,
@@ -142,6 +143,9 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
       throw new Error("not mocked");
     },
     find: () => {
+      throw new Error("not mocked");
+    },
+    neighbours: () => {
       throw new Error("not mocked");
     },
     list_terms: () => {
@@ -903,7 +907,48 @@ describe("find", () => {
     find(repo, { contentMatch: "foo" });
 
     expect(spy).toHaveBeenCalledOnce();
-    expect(spy).toHaveBeenCalledWith(JSON.stringify({ contentMatch: "foo" }));
+    expect(spy).toHaveBeenCalledWith(
+      JSON.stringify({ contentMatch: "foo" }),
+      undefined,
+      undefined,
+      undefined,
+      undefined
+    );
+  });
+
+  it("passes limit, offset, rank and byTypeLimit as the binding's trailing arguments", () => {
+    const spy = vi.fn().mockReturnValue({ hits: [], total: 0 });
+    const repo = mockRepo({ find: spy });
+
+    find(repo, { contentMatch: "x" }, { limit: 50, offset: 100, rank: true, byTypeLimit: 0 });
+
+    expect(spy).toHaveBeenCalledWith(JSON.stringify({ contentMatch: "x" }), 50, 100, true, 0);
+  });
+
+  it("returns total and the type and note facets (srs-rust#1312)", () => {
+    const repo = mockRepo({
+      find: () => ({
+        hits: [],
+        total: 704,
+        facets: {
+          byType: { values: [{ value: "a.b/concept", typeId: "t1", count: 64 }], other: 3 },
+          notes: 27,
+        },
+      }),
+    });
+
+    const result = find(repo, {});
+
+    expect(result.total).toBe(704);
+    expect(result.facets.byType).toEqual([{ value: "a.b/concept", typeId: "t1", count: 64 }]);
+    expect(result.facets.otherTypes).toBe(3);
+    expect(result.facets.notes).toBe(27);
+  });
+
+  it("reads absent facets as empty", () => {
+    const repo = mockRepo({ find: () => ({ hits: [], total: 0, facets: {} }) });
+
+    expect(find(repo, {}).facets).toEqual({ byType: [], otherTypes: 0, notes: 0 });
   });
 
   it("returns a DiscoveryResult with normalised camelCase hit fields", () => {
@@ -1870,5 +1915,28 @@ describe("installBundles", () => {
       [ESSAY, ESSAY]
     );
     expect(install).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// neighbours (srs-rust#1229)
+// ---------------------------------------------------------------------------
+
+describe("neighbours", () => {
+  it("passes the filter and page to repo.neighbours and returns the page with its total", () => {
+    const edge = {
+      direction: "out",
+      relationId: "r1",
+      relationType: "contains",
+      neighbour: { instanceId: "n1", label: "One" },
+    };
+    const spy = vi.fn().mockReturnValue({ instanceId: "a", total: 41, neighbours: [edge] });
+    const repo = mockRepo({ neighbours: spy });
+
+    const result = neighbours(repo, "a", { direction: "out", limit: 12, offset: 12 });
+
+    expect(spy).toHaveBeenCalledWith("a", undefined, "out", 12, 12);
+    expect(result.total).toBe(41);
+    expect(result.neighbours).toEqual([edge]);
   });
 });

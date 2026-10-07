@@ -168,9 +168,7 @@ describe("computeLifecycleVisibleIds", () => {
     const result = computeLifecycleVisibleIds(repo, ["superseded", "abandoned"]);
 
     expect(spy).toHaveBeenCalledOnce();
-    expect(spy).toHaveBeenCalledWith(
-      JSON.stringify({ excludeLifecycleStates: ["superseded", "abandoned"] })
-    );
+    expect(spy.mock.calls[0][0]).toBe(JSON.stringify({ excludeLifecycleStates: ["superseded", "abandoned"] }));
     expect(result).toBeInstanceOf(Set);
     expect(result?.has("inst-001")).toBe(true);
     expect(result?.has("inst-002")).toBe(true);
@@ -235,7 +233,7 @@ describe("computeTagHitIds", () => {
     const result = computeTagHitIds(repo, "exhibitions");
 
     expect(spy).toHaveBeenCalledOnce();
-    expect(spy).toHaveBeenCalledWith(JSON.stringify({ tag: ["exhibitions"] }));
+    expect(spy.mock.calls[0][0]).toBe(JSON.stringify({ tag: ["exhibitions"] }));
     expect(result).toBeInstanceOf(Set);
     expect(result?.has("inst-001")).toBe(true);
     expect(result?.has("inst-002")).toBe(true);
@@ -299,7 +297,7 @@ describe("computeSearchHitIds", () => {
     const result = computeSearchHitIds(repo, "foo");
 
     expect(spy).toHaveBeenCalledOnce();
-    expect(spy).toHaveBeenCalledWith(JSON.stringify({ contentMatch: "foo" }));
+    expect(spy.mock.calls[0][0]).toBe(JSON.stringify({ contentMatch: "foo" }));
     expect(result).toBeInstanceOf(Set);
     expect(result?.has("inst-001")).toBe(true);
     expect(result?.has("inst-002")).toBe(true);
@@ -312,7 +310,7 @@ describe("computeSearchHitIds", () => {
 
     computeSearchHitIds(repo, "  bar  ");
 
-    expect(spy).toHaveBeenCalledWith(JSON.stringify({ contentMatch: "bar" }));
+    expect(spy.mock.calls[0][0]).toBe(JSON.stringify({ contentMatch: "bar" }));
   });
 
   it("returns null and does NOT call find when searchQuery is empty", () => {

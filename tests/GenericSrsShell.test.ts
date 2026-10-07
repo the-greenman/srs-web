@@ -27,8 +27,10 @@ const mocks = vi.hoisted(() => ({
       },
     ],
     total: 2,
+    facets: { byType: [], otherTypes: 0, notes: 0 },
     diagnostics: [],
   })),
+  neighbours: vi.fn(() => ({ instanceId: "record-1", total: 0, neighbours: [] })),
   getRecord: vi.fn((id: string) => ({
     instanceId: id,
     displayLabel: id === "record-1" ? "First" : "Second",

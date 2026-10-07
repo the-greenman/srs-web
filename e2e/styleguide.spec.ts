@@ -305,6 +305,29 @@ test.describe("Styleguide", () => {
   });
 });
 
+// ── Records and map (srs-web#481) ───────────────────────────────────────────────────────
+test.describe("Styleguide records and map", () => {
+  for (const theme of ["Default", "Demo"]) {
+    test(`grouped, searched and focused-map specimens render: ${theme} theme`, async ({ page }) => {
+      const errors: string[] = [];
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.goto("/styleguide");
+      await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+      await page.getByLabel("Theme").selectOption(theme);
+
+      const grouped = page.getByTestId("sg-records-grouped");
+      await expect(grouped.getByTestId("record-group")).toHaveCount(4);
+      await expect(grouped.getByTestId("record-row")).toHaveCount(3);
+      await expect(grouped.getByTestId("group-more")).toBeVisible();
+      await expect(page.getByTestId("sg-records-searched").getByTestId("records-count")).toHaveText("9 results");
+      await expect(page.getByTestId("sg-map-focus").locator("g.neighbour")).toHaveCount(7);
+      await expect(page.getByTestId("sg-map-focus").getByTestId("graph-legend")).toContainText("depends-on");
+      await expect(page.getByTestId("sg-map-container").locator("circle")).toHaveCount(24);
+      expect(errors).toEqual([]);
+    });
+  }
+});
+
 // ── Notices (srs-web#441) ───────────────────────────────────────────────────────────────
 test.describe("Styleguide notices", () => {
   for (const theme of ["Default", "Demo"]) {

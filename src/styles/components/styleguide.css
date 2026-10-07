@@ -182,6 +182,16 @@
   flex-wrap: wrap;
   gap: var(--space-md);
 }
+.sg__figure--list {
+  flex: 1 1 22rem;
+  min-width: 0;
+  max-width: 100%;
+}
+.sg__figure--map {
+  flex: 1 1 30rem;
+  min-width: 0;
+  max-width: min(100%, 46rem);
+}
 .sg__shell {
   position: relative;
   box-sizing: border-box;
