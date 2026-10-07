@@ -39,6 +39,11 @@
   align-items: center;
   gap: var(--space-xs);
 }
+/* The SRS mark at three sizes: captions on one line, marks sharing a baseline. */
+.sg__marks {
+  align-items: flex-end;
+  gap: var(--space-md);
+}
 .sg__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
@@ -176,6 +181,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-md);
+}
+.sg__figure--list {
+  flex: 1 1 22rem;
+  min-width: 0;
+  max-width: 100%;
+}
+.sg__figure--map {
+  flex: 1 1 30rem;
+  min-width: 0;
+  max-width: min(100%, 46rem);
 }
 .sg__shell {
   position: relative;

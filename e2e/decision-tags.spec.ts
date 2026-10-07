@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * decision-tags.spec.ts — e2e tests for srs-web#105: decision tag chips.
@@ -26,8 +26,8 @@ test.describe("Decision tag chips — read display", () => {
 
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(navItem(page, /Decision Log/)).toBeVisible({ timeout: 5000 });
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByTestId("decision-log-view")).toBeVisible();
   });
 
@@ -87,8 +87,8 @@ test.describe("Decision tag chips — inspector tag editor", () => {
 
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await expect(navItem(page, /Decision Log/)).toBeVisible({ timeout: 5000 });
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByTestId("decision-log-view")).toBeVisible();
   });
 

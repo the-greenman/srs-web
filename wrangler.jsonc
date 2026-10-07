@@ -6,8 +6,7 @@
 	"compatibility_date": "2026-07-06",
 	"main": "./worker/index.ts",
 	"vars": {
-		"APP_ORIGIN": "https://app.mudemocracy.org",
-		"GITHUB_REDIRECT_URI": "https://app.mudemocracy.org/",
+		"APP_ORIGINS": "https://app.semanticops.com,https://app.mudemocracy.org",
 		"GITHUB_CLIENT_ID": "Iv23liFJ9ym1hcYQ6TuN"
 	},
 	"observability": {
@@ -32,6 +31,7 @@
 		"run_worker_first": ["/api/*"]
 	},
 	"routes": [
+		{ "pattern": "app.semanticops.com", "custom_domain": true },
 		{ "pattern": "app.mudemocracy.org", "custom_domain": true }
 	],
 	"env": {
@@ -50,8 +50,7 @@
 			"preview_urls": false,
 			"vars": {
 				// PLACEHOLDER: replace <account> with your Cloudflare workers.dev subdomain
-				"APP_ORIGIN": "https://srs-web-preview.<account>.workers.dev",
-				"GITHUB_REDIRECT_URI": "https://srs-web-preview.<account>.workers.dev/",
+				"APP_ORIGINS": "https://srs-web-preview.<account>.workers.dev",
 				// PLACEHOLDER: replace with the preview OAuth App's public client ID
 				"GITHUB_CLIENT_ID": "<preview-github-oauth-app-client-id>"
 			}

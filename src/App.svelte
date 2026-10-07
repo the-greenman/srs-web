@@ -36,6 +36,8 @@
   import { relays } from "$lib/relay-library.js";
   import { observeSession, pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
   import { reopenSaved } from "$lib/reopen.js";
+  import { fetchArchiveFile, parseOpenUrl, withoutOpenParam } from "$lib/open-url.js";
+  import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
   import { listRelations, listTypes, repositoryId, type AgentWriteGuard, type McpSession, type SrsRepository } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
@@ -44,6 +46,8 @@
   import { EDITORS, availableEditors, installEditor as installEditorPackages, upgradeEditor as upgradeEditorPackages, usableEditor } from "$lib/editors/registry.js";
   import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
+  import SrsMark from "$lib/components/SrsMark.svelte";
+  import Wordmark from "$lib/components/Wordmark.svelte";
   import CreateRepositoryPanel from "$lib/components/CreateRepositoryPanel.svelte";
   import GitSaveModal from "$lib/components/GitSaveModal.svelte";
   import SaveToModal from "$lib/components/SaveToModal.svelte";
@@ -60,6 +64,7 @@
     downloadDocument,
     downloadArchive,
     isGitBranchAware,
+    openLocalFile,
     stripSrsExtension,
     toArchiveName,
     StorageError,
@@ -88,6 +93,13 @@
   let repoName = $state<string>("Untitled repository");
   const storageProviders = createStorageProvidersFromEnv();
   let activeDocument = $state<DocumentHandle | null>(null);
+  /**
+   * Set (to the source host) while the open repository came from a link and may not be edited (#471).
+   * Cleared by every other load path, and by saving a copy to the user's own storage.
+   */
+  let readOnlyHost = $state<string | null>(null);
+  /** Host of a link being fetched at boot (#471), for the splash text. */
+  let openingHost = $state<string | null>(null);
 
   /** Document-level Save (write-capable cloud/git handles only). */
   let saving = $state(false);
@@ -114,7 +126,7 @@
    */
   const offeredEditors = $derived.by(() => {
     void documentRevision; // re-run after a mutation (a package install changes the answer)
-    return repo ? availableEditors(repo, listTypes(repo)) : [];
+    return repo && !readOnlyHost ? availableEditors(repo, listTypes(repo)) : [];
   });
   const activeEditor = $derived(usableEditor(offeredEditors, editorMode));
   // An editor that stops being usable drops back to the generic shell for good, so a later
@@ -188,6 +200,7 @@
     pendingMigration = null;
     repo = null;
     activeDocument = null;
+    readOnlyHost = null;
     appState = "idle";
   }
 
@@ -217,6 +230,7 @@
   function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
     // Every load path passes through here: from now on each engine write reports itself.
     if (repo) {
+      if (readOnlyHost) repo = readOnlyRepo(repo, () => readOnlyHost !== null);
       repo = observeWrites(repo, syncDocument);
       applyActor(repo);
       void resolveSignedInActor();
@@ -238,7 +252,7 @@
    * when the document was closed or saved in the meantime.
    */
   const workingCopy = workingCopyScheduler(() => {
-    if (repo && documentMutations.dirty) workingCopySaved = saveWorkingCopy(repoName, exportSrsj(repo));
+    if (repo && mayKeepWorkingCopy(readOnlyHost, documentMutations.dirty)) workingCopySaved = saveWorkingCopy(repoName, exportSrsj(repo));
   }, 2000);
   $effect(() => {
     const flush = () => workingCopy.flush();
@@ -388,7 +402,9 @@
   function applyGuard(id: string): boolean {
     const h = hosts.get(id);
     try {
-      if (agentGuard && agentGuardRepo === repo) h?.session?.set_write_guard(JSON.stringify(agentGuard));
+      // Read-only (#471): the core guard over the whole repository, in place of any shell's own.
+      const guard = readOnlyHost && repo ? readOnlyGuard(repo) : agentGuard && agentGuardRepo === repo ? agentGuard : null;
+      if (guard) h?.session?.set_write_guard(JSON.stringify(guard));
       else h?.session?.clear_write_guard();
       return true;
     } catch (e) {
@@ -482,7 +498,12 @@
     await released; // the in-use query must not still see our own lock
     refreshInUse();
   }
-  function forgetAgent(id: string) {
+  async function forgetAgent(id: string) {
+    // Defence in depth: the menu disables Forget, but the in-use set can be stale. Ask the locks now.
+    if ((await channelsInUseElsewhere()).has(id)) {
+      refreshInUse();
+      return;
+    }
     disconnectAgent(id);
     library = [...connections.remove(id)];
     notify({ kind: "info", key: "agents", text: "Agent forgotten" });
@@ -521,6 +542,18 @@
     });
   });
 
+  // Another tab changed the stored lists: re-read what is displayed. Never touches open agents
+  // (`agents`/`hosts` are separate state), and `storage` never fires in the tab that wrote.
+  $effect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.storageArea !== localStorage) return;
+      if (relays.reload(e.key)) relayList = relays.list();
+      if (connections.reload(e.key)) library = [...connections.list()];
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  });
+
   $effect(() => {
     if (library.length === 0) return;
     refreshInUse();
@@ -539,6 +572,11 @@
   $effect(() => {
     initWasm()
       .then(() => {
+        const link = new URLSearchParams(location.search).get("open");
+        if (link !== null) {
+          void openFromLink(link);
+          return;
+        }
         const cached = loadWorkingCopy();
         if (cached !== null) {
           cachedSession = cached;
@@ -556,8 +594,9 @@
   // Document loading
   // ---------------------------------------------------------------------------
 
-  async function loadDocument(handle: DocumentHandle): Promise<void> {
+  async function loadDocument(handle: DocumentHandle, fromHost: string | null = null): Promise<void> {
     errorMsg = null;
+    readOnlyHost = fromHost;
     try {
       switch (handle.kind) {
         case "bytes": {
@@ -585,7 +624,7 @@
         cachedSession = null;
         if (dirty) {
           saveToast("info", "Migrated to the current data model. Unsaved - Save to keep it.", 8000);
-          saveWorkingCopy(repoName, exportSrsj(loaded));
+          if (!readOnlyHost) saveWorkingCopy(repoName, exportSrsj(loaded));
         }
         const catalog = collectCatalogDiagnostics(loaded);
         if (catalog.length) {
@@ -602,6 +641,7 @@
     } catch (e: unknown) {
       repo = null;
       activeDocument = null;
+      readOnlyHost = null;
       throw new Error(
         `Failed to load repository: ${e instanceof Error ? e.message : String(e)}`,
         { cause: e },
@@ -695,6 +735,7 @@
 
     repo = newRepo;
     activeDocument = null;
+    readOnlyHost = null;
     beginDocument();
     repoName = name;
     editorMode = chosen[0]?.id ?? "generic";
@@ -706,8 +747,9 @@
   // Document loading — archive (.srs)
   // ---------------------------------------------------------------------------
 
-  async function loadArchiveDocument(bytes: Uint8Array, name: string): Promise<void> {
+  async function loadArchiveDocument(bytes: Uint8Array, name: string, fromHost: string | null = null): Promise<void> {
     errorMsg = null;
+    readOnlyHost = fromHost;
     try {
       const loaded = loadRepoFromArchive(bytes);
       repo = loaded;
@@ -719,16 +761,51 @@
         cachedSession = null;
         if (dirty) {
           saveToast("info", "Migrated to the current data model. Unsaved - export to keep it.", 8000);
-          saveWorkingCopy(repoName, exportSrsj(loaded));
+          if (!readOnlyHost) saveWorkingCopy(repoName, exportSrsj(loaded));
         }
         appState = "loaded";
       });
     } catch (e: unknown) {
       repo = null;
+      readOnlyHost = null;
       throw new Error(
         `Failed to load archive: ${e instanceof Error ? e.message : String(e)}`,
         { cause: e },
       );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Open from a link (?open=<https url>, #471)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Fetch the archive and hand it to the same loaders as a file from this device, read-only. The
+   * parameter is removed from the address bar first (success or not), so a refresh never re-fetches
+   * by surprise: it lands on the picker, and a failed link is not retried in a loop.
+   */
+  async function openFromUrl(raw: string): Promise<void> {
+    try {
+      const url = parseOpenUrl(raw);
+      openingHost = url.host;
+      const file = await fetchArchiveFile(url);
+      await openLocalFile(file, {
+        onOpen: (handle) => loadDocument(handle, url.host),
+        onOpenArchive: (bytes, name) => loadArchiveDocument(bytes, name, url.host),
+      });
+    } finally {
+      openingHost = null;
+    }
+  }
+
+  /** `?open=`: the one shared path, with a failure taking the whole page (the chooser shows it inline instead). */
+  async function openFromLink(raw: string): Promise<void> {
+    history.replaceState(history.state, "", withoutOpenParam(location.href));
+    try {
+      await openFromUrl(raw);
+    } catch (e: unknown) {
+      errorMsg = e instanceof Error ? e.message : String(e);
+      appState = "error";
     }
   }
 
@@ -790,6 +867,12 @@
     await saveDirect();
   }
 
+  /** Document > Save a copy… of a read-only repository: the same destination choice as a first save. */
+  function saveCopy(): void {
+    saveToError = null;
+    saveToOpen = true;
+  }
+
   /** First save of a handle-less document: download it, or create a file in a cloud provider. */
   async function saveTo(destination: "local" | "dropbox" | "google-drive"): Promise<void> {
     if (!repo) return;
@@ -809,6 +892,11 @@
         if (!provider.create) throw new Error(`${provider.label} cannot create new files.`);
         const handle = await provider.create(filename, exportArchive(repository));
         activeDocument = handle;
+        // The copy is the user's own file: edit it from here on (a downloaded copy leaves this one read-only).
+        if (readOnlyHost) {
+          readOnlyHost = null;
+          applyGuards();
+        }
         saveToast(...savedMessage(completeDocumentSave(saveSnapshot), `Saved as ${handle.name}.`));
       }
       saveToOpen = false;
@@ -925,7 +1013,7 @@
      ========================================================================= -->
 {#if appState === "boot"}
   <div class="splash">
-    <p class="splash__status">Loading engine…</p>
+    <p class="splash__status">{openingHost ? `Opening from ${openingHost}…` : "Loading engine…"}</p>
   </div>
 
 <!-- =========================================================================
@@ -962,6 +1050,7 @@
 
 {:else if appState === "idle"}
   <div class="splash" data-testid="generic-file-picker">
+    <div class="splash__brand"><SrsMark size={28} /><Wordmark size="sm" /></div>
     <h1 class="splash__title">SRS Viewer</h1>
     <p class="splash__sub">Open any <code>.srs</code> or <code>.srsj</code> repository to read its documents, structure, and records.</p>
     {#if cachedSession !== null}
@@ -976,6 +1065,7 @@
             try {
               const restored = loadRepo(entry.srsj);
               repo = restored;
+              readOnlyHost = null;
               gateOnMigration(restored, entry.name, () => {
                 repo = restored;
                 beginDocument({ dirty: true });
@@ -995,7 +1085,7 @@
         </div>
       </div>
     {/if}
-    <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} />
+    <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} onOpenUrl={openFromUrl} />
     <p class="splash__divider">or start a new repository</p>
     <CreateRepositoryPanel onCreate={createRepository} />
   </div>
@@ -1009,8 +1099,10 @@
     packageEditors={offeredEditors}
     repoName={repoName}
     onExport={handleExportArchive}
-    onSave={activeDocument === null || activeDocument.capabilities.write ? handleSave : undefined}
-    readOnlyReason={activeDocument?.readOnlyReason ?? null}
+    onSave={readOnlyHost ? undefined : activeDocument === null || activeDocument.capabilities.write ? handleSave : undefined}
+    readOnly={readOnlyHost !== null}
+    onSaveCopy={readOnlyHost ? saveCopy : undefined}
+    readOnlyReason={readOnlyHost ? `Opened from ${readOnlyHost}, read-only. Use Document > Save a copy… to keep an editable copy.` : activeDocument?.readOnlyReason ?? null}
     {saving}
     documentDirty={documentDirty}
     documentRevision={documentRevision}
@@ -1056,6 +1148,7 @@
     agentPanel={agentLibrary}
     agentStatus={relayList.length > 0 ? agentStatus : undefined}
     onOpenExplorer={() => { editorMode = "generic"; }}
+    onOpenAgents={activeEditor!.hostsAgentPanel ? undefined : openDock}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;
@@ -1124,7 +1217,7 @@
   />
 {/if}
 
-{#if saveToOpen && !activeDocument}
+{#if saveToOpen && (!activeDocument || readOnlyHost)}
   <SaveToModal
     providers={storageProviders}
     busy={saving}
@@ -1149,6 +1242,13 @@
     padding: 2rem;
     text-align: center;
     font-family: inherit;
+  }
+
+  .splash__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
   }
 
   .splash__title {

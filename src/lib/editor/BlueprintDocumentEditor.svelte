@@ -433,7 +433,6 @@
             fields={def.fields}
             composites={def.composites}
             {record}
-            wide
             onSave={(input) => saveBlock(item.instanceId, input)}
             onCancel={() => toggle(item.instanceId)}
             saving={disabled}
@@ -491,7 +490,6 @@
             fields={rootForm.fields}
             composites={rootForm.composites}
             record={rootRecord}
-            wide
             onSave={saveRoot}
             onCancel={() => toggle("root")}
             saving={disabled}

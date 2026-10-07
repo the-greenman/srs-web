@@ -24,6 +24,7 @@
   import type { DropTarget } from "$lib/components/BlockStack.svelte";
   import CommentThread from "$lib/components/CommentThread.svelte";
   import BinTray from "$lib/components/BinTray.svelte";
+  import ReferencesTray from "$lib/components/ReferencesTray.svelte";
   import DraftTray from "$lib/components/DraftTray.svelte";
   import Panel from "$lib/components/Panel.svelte";
   import LayersPanel from "$lib/components/LayersPanel.svelte";
@@ -62,12 +63,13 @@
     agentHandoff,
     shiftEntry,
     removeAttachment,
+    removeReference,
     setHidden,
     setTitle,
     transfer,
   } from "./essay-document.js";
-  import { essayMarkdown, essayWriteGuard } from "./essay-document.js";
-  import { downloadText } from "$lib/governance/decision-export-utils.js";
+  import { essayMarkdown, essayReferences, essaySnapshot, essayWriteGuard } from "./essay-document.js";
+  import { downloadText, triggerDownload } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { formatAddress, parseAddress } from "./address.js";
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
@@ -81,6 +83,7 @@
   let {
     repo,
     repoName,
+    readOnlyReason = null,
     onExport,
     onSave,
     saving = false,
@@ -94,7 +97,9 @@
   }: {
     // Common EditorShellProps this shell does not use (kept so every shell takes one prop set).
     documentProvider?: string;
+    onOpenAgents?: () => void;
     onExportSrsj?: () => void;
+    /** Set when the repository was opened read-only: no repair writes on load. */
     readOnlyReason?: string | null;
     repo: SrsRepository;
     repoName: string;
@@ -149,8 +154,10 @@
         essayId = essays[0]?.id ?? null;
         if (essayId) loadViewState(essayId);
       }
-      model = essayId ? loadEssay(repo, essayId) : null;
+      model = essayId ? loadEssay(repo, essayId, { repair: !readOnlyReason }) : null;
       error = null;
+      if (model?.repairError)
+        notify({ kind: "error", key: "essay-repair", text: `Could not set up this essay's containers: ${model.repairError}` });
     } catch (e) {
       error = msg(e);
     }
@@ -275,6 +282,21 @@
   const binItems = $derived(
     (model?.binEntries ?? []).map((e) => ({ id: e.instanceId, label: label(e.instanceId) })),
   );
+  const referenceItems = $derived(
+    (model?.references ?? []).map((r) => ({
+      id: r.id,
+      label: r.label,
+      type: r.typeName,
+      paragraphs: r.paragraphIds.map((id) => ({ id, label: label(id) })),
+      openable: r.paragraphIds.length > 0,
+    })),
+  );
+  /** Open a reference: pin its attachment (its relation to a paragraph) in the pinned pane. */
+  function openReference(id: string) {
+    const att = Object.values(model?.attachments ?? {}).flat().find((a) => a.neighbourId === id);
+    if (att && !pinnedIds.includes(att.id)) togglePin(att.id);
+  }
+  const dropReference = (id: string) => run(() => removeReference(repo, model!, id));
   const draftItems = $derived(
     (model?.draftEntries ?? []).map((e) => ({ id: e.instanceId, label: label(e.instanceId) })),
   );
@@ -284,7 +306,7 @@
       if (!saveLocalName(name)) return void (error = "Could not remember your name in this browser.");
     }
     openThreads = setOpen(openThreads, paragraphId, true);
-    void run(() => addComment(repo, paragraphId, text));
+    void run(() => addComment(repo, paragraphId, text, model?.commentsContainerId));
   }
 
   /** Focus a paragraph (agent feed, deep link); leave zoom first when it is hidden by it. */
@@ -363,6 +385,31 @@
     }
   }
 
+  /** Export references (srs-web#278): the material the essay refers to, as markdown, from the bundle. */
+  function exportReferences() {
+    try {
+      downloadText(essayReferences(repo, model!), "text/markdown", `${model!.title} (references).md`);
+      notify({ kind: "success", key: "export", text: "References exported" });
+    } catch (e) {
+      error = msg(e);
+    } finally {
+      reload(); // the bundle may be new: model, write guard and handoff learn it
+    }
+  }
+
+  /** Export snapshot (srs-web#417): refresh the bundle, then the core's slice of it as a `.srs`. */
+  function exportSnapshot() {
+    try {
+      const { bytes } = essaySnapshot(repo, model!);
+      triggerDownload(new Blob([bytes], { type: "application/zip" }), `${model!.title} (snapshot).srs`);
+      notify({ kind: "success", key: "export", text: "Snapshot exported" });
+    } catch (e) {
+      error = msg(e);
+    } finally {
+      reload(); // the bundle may be new (even if the export was refused): model, write guard and handoff learn it
+    }
+  }
+
   /** Copy the agent handoff (srs-web#411): the whole essay, or `focusId` as the paragraph to look at. */
   async function copyForAgent(focusId?: string) {
     const m = model;
@@ -372,6 +419,12 @@
       essay: { id: m.essayId, title: m.title },
       containerId: m.containerId,
       purpose: m.purpose,
+      stateId: m.stateId,
+      draftContainerId: m.draftContainerId,
+      binContainerId: m.binContainerId,
+      commentsContainerId: m.commentsContainerId,
+      referencesContainerId: m.referencesContainerId,
+      bundleContainerId: m.bundleContainerId,
       focus: focusId ? { id: focusId, title: m.paragraphs[focusId] ? label(focusId) : "untitled" } : undefined,
     });
     if (await copyText(text)) {
@@ -494,12 +547,13 @@
       {
         onnew: createEssay,
         oncopy: model ? copyDocument : undefined,
-        onagent: model ? () => copyForAgent(zoomId ?? undefined) : undefined,
         onhelp: () => { helpOpen = true; },
         oncomments: () => (openThreads = toggleAll(openThreads, shownIds)),
         onsave: onSave,
         onexport: onExport,
         onexportmd: model ? exportMarkdown : undefined,
+        onsnapshot: model?.canSnapshot ? exportSnapshot : undefined,
+        onreferences: model?.canSnapshot ? exportReferences : undefined,
         onexplorer: onOpenExplorer,
         onopenagents: agentPanel ? openAgents : undefined,
         onopenanother: onOpenAnother,
@@ -682,6 +736,11 @@
             onforget={forget}
           />
         </Panel>
+        {#if model.referencesContainerId}
+          <Panel title="References" aside={referenceItems.length} persistKey="essay.references" collapseWhen={NARROW}>
+            <ReferencesTray items={referenceItems} onopen={openReference} onfocus={(id) => focusParagraph(id)} onremove={dropReference} />
+          </Panel>
+        {/if}
         <PinnedPane items={pinned} onunpin={togglePin} onremove={(id) => run(() => removeAttachment(repo, id))} />
 {/if}
         {#if agentPanel}{@render agents()}{/if}
@@ -695,6 +754,9 @@
 {#snippet agents()}
   <Panel title="Agents" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey="essay.agents" collapseWhen={NARROW} bind:open={agentsOpen}>
     {#snippet actions()}{#if agentStatus}<AgentPresence status={agentStatus} />{/if}{/snippet}
+    {#if model}
+      <Button size="sm" variant="mono" data-testid="copy-for-agent" onclick={() => copyForAgent(zoomId ?? undefined)}>Copy essay handoff</Button>
+    {/if}
     {#if agentStatus}
       <AgentFeed
         {now}

@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * load-repo.spec.ts — file upload and loaded-state tests.
@@ -37,7 +37,7 @@ test.describe("Load repository", () => {
     await fileInput.setInputFiles(FIXTURE_PATH);
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
   });
 
   test("shows Decision Log nav item after loading", async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe("Load repository", () => {
     await fileInput.setInputFiles(FIXTURE_PATH);
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Decision Log/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Decision Log/)).toBeVisible({ timeout: 5000 });
   });
 
   test("shows Roles nav item after loading", async ({ page }) => {
@@ -53,7 +53,7 @@ test.describe("Load repository", () => {
     await fileInput.setInputFiles(FIXTURE_PATH);
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Roles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Roles/)).toBeVisible({ timeout: 5000 });
   });
 
   test("shows Exercises nav item after loading", async ({ page }) => {
@@ -61,13 +61,13 @@ test.describe("Load repository", () => {
     await fileInput.setInputFiles(FIXTURE_PATH);
     await openPackageEditor(page, "governance");
 
-    await expect(page.getByRole("link", { name: /Exercises/ })).toBeVisible({
+    await expect(navItem(page, /Exercises/)).toBeVisible({
       timeout: 5000,
     });
   });
 
   // Quarantined (#173): .topbar__repo was replaced by the Breadcrumb component
-  // (.topbar__crumb-*). Rewrite against the current breadcrumb.
+  // (.breadcrumb__*). Rewrite against the current breadcrumb.
   test.fixme("shows the repo filename in the topbar after loading", async ({ page }) => {
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(FIXTURE_PATH);

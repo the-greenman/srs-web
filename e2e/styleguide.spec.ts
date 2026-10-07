@@ -144,6 +144,7 @@ test.describe("Styleguide", () => {
         await expect(shells.nth(s).getByTestId("nav-trigger")).toBeVisible();
         await expect(shells.nth(s).getByTestId("inspector-trigger")).toBeVisible();
         await expect(shells.nth(s).getByTestId("inspector-badge")).toHaveText("3");
+        await expect(shells.nth(s).getByRole("navigation", { name: "Breadcrumb" })).toBeVisible();
       }
       await expect(shells.nth(1).locator(".nav")).toBeVisible();
       await expect(shells.nth(2).locator(".inspector")).toBeVisible();
@@ -196,6 +197,31 @@ test.describe("Styleguide", () => {
       });
     }
   }
+
+  // ── SRS mark (srs-web#462): painted by --srs-mark-* tokens, so the demo theme reskins it ───
+  test("the SRS mark is drawn at three sizes and the demo theme reskins every paint", async ({ page }) => {
+    await page.goto("/styleguide");
+    await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+    const marks = page.getByTestId("sg-srs-mark").locator("svg.srs-mark");
+    await expect(marks).toHaveCount(3);
+    expect(await marks.evaluateAll((els) => els.map((e) => e.getAttribute("width")))).toEqual(["16", "24", "96"]);
+    const paints = () =>
+      marks.last().evaluate((svg) => {
+        const cs = (sel: string, prop: "fill" | "stroke") =>
+          getComputedStyle(svg.querySelector(sel) as Element)[prop];
+        return [
+          cs(".srs-mark__paper", "fill"),
+          cs(".srs-mark__ink", "fill"),
+          cs(".srs-mark__line", "stroke"),
+          cs(".srs-mark__rim", "stroke"),
+        ];
+      });
+    const before = await paints();
+    await page.getByLabel("Theme").selectOption("Demo");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "demo");
+    const after = await paints();
+    before.forEach((colour, i) => expect(after[i], `paint ${i}`).not.toBe(colour));
+  });
 
   // ── Demo theme: no element paints a default palette colour (srs-web#421) ──────────────────
   test("under the demo theme no element paints a default palette colour", async ({ page }) => {
@@ -277,6 +303,29 @@ test.describe("Styleguide", () => {
     );
     expect(reports, "elements painting a default palette colour under the demo theme").toEqual([]);
   });
+});
+
+// ── Records and map (srs-web#481) ───────────────────────────────────────────────────────
+test.describe("Styleguide records and map", () => {
+  for (const theme of ["Default", "Demo"]) {
+    test(`grouped, searched and focused-map specimens render: ${theme} theme`, async ({ page }) => {
+      const errors: string[] = [];
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.goto("/styleguide");
+      await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+      await page.getByLabel("Theme").selectOption(theme);
+
+      const grouped = page.getByTestId("sg-records-grouped");
+      await expect(grouped.getByTestId("record-group")).toHaveCount(4);
+      await expect(grouped.getByTestId("record-row")).toHaveCount(3);
+      await expect(grouped.getByTestId("group-more")).toBeVisible();
+      await expect(page.getByTestId("sg-records-searched").getByTestId("records-count")).toHaveText("9 results");
+      await expect(page.getByTestId("sg-map-focus").locator("g.neighbour")).toHaveCount(7);
+      await expect(page.getByTestId("sg-map-focus").getByTestId("graph-legend")).toContainText("depends-on");
+      await expect(page.getByTestId("sg-map-container").locator("circle")).toHaveCount(24);
+      expect(errors).toEqual([]);
+    });
+  }
 });
 
 // ── Notices (srs-web#441) ───────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { navItem } from "./helpers.js";
 
 /**
  * app.spec.ts — basic app load tests.
@@ -28,6 +29,6 @@ test.describe("App baseline", () => {
 
     // The generic picker is visible; repository navigation appears only after loading.
     await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
-    await expect(page.getByRole("link", { name: /^Articles$/ })).not.toBeVisible();
+    await expect(navItem(page, /^Articles$/)).not.toBeVisible();
   });
 });

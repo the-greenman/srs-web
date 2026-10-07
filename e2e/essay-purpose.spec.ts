@@ -1,7 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { menuItem } from "./helpers";
 import type { Page } from "@playwright/test";
 
 /**
@@ -13,6 +12,13 @@ const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures"
 const items = (page: Page) => page.locator(".essay-shell__page .block-stack__item");
 const purpose = (page: Page) =>
   page.locator(".essay-shell__purpose :is(.purpose__render, .purpose__body)");
+
+/** The Document menu no longer holds Copy for agent (srs-web#498). */
+async function openMenuAbsent(page: Page) {
+  await page.getByRole("button", { name: "Document", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Copy for agent" })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+}
 
 async function open(page: Page) {
   await page.goto("/");
@@ -39,7 +45,7 @@ test("purpose renders markdown until focused, persists in the working copy and s
   await expect(page.locator(".purpose__render strong")).toHaveText("board");
 });
 
-test("Copy for agent: header copies the whole essay, a paragraph menu focuses that paragraph", async ({
+test("Copy essay handoff: the Agents panel copies the whole essay, a paragraph menu focuses that paragraph", async ({
   page,
   context,
 }) => {
@@ -49,14 +55,16 @@ test("Copy for agent: header copies the whole essay, a paragraph menu focuses th
   await page.keyboard.type("Persuade the board.");
   await page.getByRole("heading", { name: "On small democracy" }).click();
 
-  await menuItem(page, "Document", "copy-for-agent");
+  await page.getByTestId("copy-for-agent").click(); // the Agents panel (srs-web#498)
   await expect(page.getByTestId("address-notice")).toHaveText(/Copied/);
   const whole = await page.evaluate(() => navigator.clipboard.readText());
   expect(whole).toContain("On small democracy");
   expect(whole).toContain("Purpose: Persuade the board.");
   expect(whole).toMatch(/srs:\/\/[0-9a-f-]{36}\/container\/[0-9a-f-]{36}/);
-  expect(whole).not.toContain("/context/");
-  expect(whole).toContain("comment and attach, never edit it");
+  expect(whole).not.toContain("Focus:");
+  expect(whole).toContain("How to work on this essay");
+  expect(whole).toContain("Never edit a paragraph body");
+  await openMenuAbsent(page);
 
   const id = (await items(page).nth(1).locator(".block").getAttribute("data-block-id"))!;
   await items(page).nth(1).getByTestId("paragraph-menu").click({ force: true });

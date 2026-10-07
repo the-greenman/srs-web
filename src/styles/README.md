@@ -1,7 +1,7 @@
 # srs-web design system
 
 A modular, layered CSS foundation for the SRS governance editor. Plain CSS — no
-build step, no framework lock-in. It extends the [muDemocracy](https://mudemocracy.org)
+build step, no framework lock-in. It follows the [semanticops.com](https://semanticops.com)
 design language (paper + ink, **no accent colour**, IBM Plex Sans/Mono) into an
 application shell.
 
@@ -33,7 +33,7 @@ to the component's own declaration. The component reads them (`.btn { background
 a variant re-assigns the token on the variant selector (`.btn--primary { --btn-bg: var(--btn-primary-bg) }`).
 No `var(--x, <colour>)` fallbacks: a read token must be defined.
 `tests/styles-tokens.test.ts` enforces this for `src/styles/**`, every `src/lib/components` `<style>` block
-and the converted shells (`src/lib/generic`); the Governance and Guides shells enter the scan with #424 PR-B.
+and all four shells (`src/lib/generic`, `governance`, `guides`, `essay`), which carry no scoped `<style>`.
 
 ## `data-part`
 
@@ -58,6 +58,7 @@ src/styles/
   components/
     button.css         .btn          actions
     tag.css            .tag          lifecycle status vocabulary
+    srs-mark.css       .srs-mark     the SRS mark (SrsMark.svelte); painted by --srs-mark-ink|paper|line
     nav.css            .nav          dark navigation rail (.nav__scroll is its one scroller)
     inspector.css      .inspector    right rail + .meta key/value list
     shell.css          .drawer .resize-handle  frame parts (#424): the off-canvas Drawer, the column resizer, trigger badge
@@ -73,7 +74,7 @@ src/styles/
     modal.css          .modal        the titled native <dialog> (showModal; `inline` specimen)
     action-menu.css    .action-menu  the menu of rows (plain and checkable, grouped)
     toolbar.css        .toolbar      the generic document bar (#423): context row + grouped menus, three width tiers
-    draft-tray.css     .tray         DraftTray and BinTray rows
+    draft-tray.css     .tray         DraftTray, BinTray and ReferencesTray rows
     ... and one file per remaining block (see index.css)
   tokens-components.css  component tokens (--btn-*, --icon-btn-*, --popover-*, --hue-pill-*, --actor-*, --margin-*, --comment-*, --toolbar-*, --block-tools-*)
 ```

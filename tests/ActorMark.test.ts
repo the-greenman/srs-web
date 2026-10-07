@@ -10,7 +10,9 @@ it("names the actor and its kind; shape class tells agent from human", () => {
   expect(mark.classList.contains("actor-mark--ai")).toBe(true);
   expect(mark.textContent).toBe("S");
   const h = render(ActorMark, { actor: { kind: "human", id: "h:1", name: "Ada" } });
-  expect(within(h.container).getByTestId("actor-mark").classList.contains("actor-mark--ai")).toBe(false);
+  expect(within(h.container).getByTestId("actor-mark").classList.contains("actor-mark--ai")).toBe(
+    false
+  );
 });
 
 it("same id, same hue; no actor is the unattributed neutral state", () => {

@@ -16,10 +16,8 @@ export interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> };
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
-  /** Exact app origin, e.g. https://app.mudemocracy.org — never a spoofable Host header. */
-  APP_ORIGIN: string;
-  /** Exact registered OAuth redirect URI, e.g. https://app.mudemocracy.org/ */
-  GITHUB_REDIRECT_URI: string;
+  /** Comma-separated exact app origins, e.g. https://app.semanticops.com,https://app.mudemocracy.org — never a spoofable Host header. */
+  APP_ORIGINS: string;
 }
 
 interface TokenRequestBody {
@@ -36,16 +34,14 @@ interface ProviderConfig {
   tokenUrl: string;
   clientId: (env: Env) => string;
   clientSecret: (env: Env) => string;
-  redirectUri: (env: Env) => string;
 }
 
-/** Registered providers. Codeberg slots in here with no handler rework (its own secret + redirect). */
+/** Registered providers. Codeberg slots in here with no handler rework (its own secret). */
 const PROVIDERS: Record<string, ProviderConfig> = {
   github: {
     tokenUrl: "https://github.com/login/oauth/access_token",
     clientId: (env) => env.GITHUB_CLIENT_ID,
     clientSecret: (env) => env.GITHUB_CLIENT_SECRET,
-    redirectUri: (env) => env.GITHUB_REDIRECT_URI,
   },
 };
 
@@ -59,6 +55,13 @@ interface UpstreamToken {
   refresh_token_expires_in?: number;
   error?: string;
   error_description?: string;
+}
+
+/** The request Origin if it is exactly one of env.APP_ORIGINS, else null (fails closed). */
+function allowedOrigin(request: Request, env: Env): string | null {
+  const origin = request.headers.get("Origin");
+  if (!origin) return null;
+  return env.APP_ORIGINS.split(",").some((o) => o.trim() === origin) ? origin : null;
 }
 
 function json(body: unknown, status = 200): Response {
@@ -78,8 +81,8 @@ async function handleTokenExchange(
 
   // Open-oracle guard: only same-origin browser requests. A missing/null Origin
   // (curl, server-to-server) fails closed.
-  const origin = request.headers.get("Origin");
-  if (!origin || origin !== env.APP_ORIGIN) return json({ error: "forbidden_origin" }, 403);
+  const origin = allowedOrigin(request, env);
+  if (!origin) return json({ error: "forbidden_origin" }, 403);
 
   let payload: TokenRequestBody;
   try {
@@ -90,7 +93,7 @@ async function handleTokenExchange(
 
   const { code, code_verifier, redirect_uri } = payload;
   if (!code || !code_verifier) return json({ error: "missing_parameters" }, 400);
-  if (redirect_uri !== provider.redirectUri(env)) {
+  if (redirect_uri !== `${origin}/`) {
     return json({ error: "invalid_redirect_uri" }, 403);
   }
 
@@ -148,8 +151,8 @@ async function handleTokenRefresh(
   if (!provider) return json({ error: "unsupported_provider" }, 404);
 
   // Same open-oracle guard as handleTokenExchange.
-  const origin = request.headers.get("Origin");
-  if (!origin || origin !== env.APP_ORIGIN) return json({ error: "forbidden_origin" }, 403);
+  const origin = allowedOrigin(request, env);
+  if (!origin) return json({ error: "forbidden_origin" }, 403);
 
   let payload: TokenRefreshBody;
   try {

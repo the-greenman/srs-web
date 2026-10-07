@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { openInspectorDrawer, openNavDrawer, openPackageEditor, openMenus } from "./helpers.js";
+import { navItem, openInspectorDrawer, openMenus, openNavDrawer, openPackageEditor, setWide } from "./helpers.js";
 
 /**
  * shell-layout.spec.ts — the shared page frame (#424): the window never scrolls, each column scrolls
@@ -21,7 +21,7 @@ async function load(page: Page, name: string) {
 async function openGovernance(page: Page) {
   await load(page, "gallery.srsj");
   await openPackageEditor(page, "governance");
-  await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+  await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
 }
 
 // The package picker is in the nav; at phone width that is the drawer.
@@ -66,22 +66,6 @@ test.describe("independent scroll", () => {
       () => document.documentElement.scrollHeight <= window.innerHeight
     );
     expect(fits).toBe(true);
-  });
-});
-
-test.describe("Wide", () => {
-  test("a stored Wide never changes a shell without the toggle (Governance stays 820px, compact)", async ({
-    page,
-  }) => {
-    await page.addInitScript(() => localStorage.setItem("srs-web.margin", "expanded"));
-    await page.setViewportSize({ width: 1920, height: 1000 });
-    await openGovernance(page);
-    await expect(page.locator(".app")).toHaveAttribute("data-margin", "compact");
-    const w = await page
-      .locator(".canvas")
-      .first()
-      .evaluate((el) => el.getBoundingClientRect().width);
-    expect(Math.round(w)).toBe(820);
   });
 });
 
@@ -162,13 +146,13 @@ test.describe("drawers at 375px", () => {
     await page.getByTestId("nav-trigger").click();
     const drawer = page.getByTestId("shell-drawer-nav");
     await expect(drawer).toBeVisible();
-    await drawer.getByRole("link", { name: /Decision Log/ }).click();
+    await drawer.locator(".nav__item").filter({ hasText: /Decision Log/ }).click();
     await expect(drawer).toBeHidden();
     await expect(page.getByRole("heading", { name: "Decision Log", level: 2 })).toBeVisible();
     await expect(page.getByTestId("nav-trigger")).toBeFocused();
   });
 
-  test("Governance: both triggers sit inside the viewport (the old Topbar buttons wrap, they are not clipped)", async ({
+  test("Governance: both triggers sit inside the viewport", async ({
     page,
   }) => {
     await load(page, "gallery.srsj");
@@ -178,6 +162,16 @@ test.describe("drawers at 375px", () => {
       expect(box.x, id).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width, id).toBeLessThanOrEqual(375);
     }
+  });
+
+  test("Governance: the bar is one row, with no more than the Save primary", async ({ page }) => {
+    await load(page, "gallery.srsj");
+    await openEditor(page, "governance");
+    const bar = page.getByTestId("toolbar");
+    expect((await bar.boundingBox())!.height).toBeLessThan(72);
+    // A local file is not writable here: no Save, and the reason shows under the bar. Never more than one primary.
+    expect(await bar.locator('[data-part="primary"]').count()).toBeLessThanOrEqual(1);
+    await expect(page.getByTestId("readonly-reason")).toBeVisible();
   });
 
   test("Governance migrations view renders exactly one nav-trigger", async ({ page }) => {
@@ -242,7 +236,7 @@ test.describe("drawers at 375px", () => {
     page,
   }) => {
     await openGuides(page);
-    await expect(page.getByTestId("guides-preview-toggle")).toBeHidden();
+    expect((await page.getByTestId("toolbar").boundingBox())!.height).toBeLessThan(72);
     await expect(page.getByTestId("inspector-trigger")).toHaveCount(1);
     await openNavDrawer(page);
     await page.getByTestId("guides-guide-item").first().click();
@@ -257,14 +251,6 @@ async function openEssay(page: Page) {
   await load(page, "essay.srsj");
   await openEditor(page, "essay");
   await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
-}
-
-async function setWide(page: Page, on: boolean) {
-  await page.getByTestId("toolbar-menu-view").click();
-  const item = page.getByTestId("margin-variant");
-  if ((await item.getAttribute("aria-checked")) !== String(on)) await item.click();
-  await page.keyboard.press("Escape");
-  await expect(page.locator(".app")).toHaveAttribute("data-margin", on ? "expanded" : "compact");
 }
 
 const pageWidth = (page: Page) =>
@@ -289,6 +275,34 @@ test.describe("Essay on the frame: Wide", () => {
     await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
     expect(await pageWidth(page)).toBeGreaterThan(1000); // the cap is 80rem (1280px), not just the margin column growing;
   });
+});
+
+// Wide in every shell: one setting, one carrier, the same cap (content width read from the element that caps it).
+const WIDE_SHELLS = [
+  { name: "Essay", file: "essay.srsj", editor: "essay", cap: ".essay-shell__page" },
+  { name: "Generic", file: "gallery.srsj", editor: null, cap: ".generic-page" },
+  { name: "Governance", file: "gallery.srsj", editor: "governance", cap: ".canvas" },
+  { name: "Guides", file: "muSrs.srsj", editor: "guides", cap: ".canvas" },
+] as const;
+
+test.describe("Wide in every shell", () => {
+  test.use({ viewport: { width: 1920, height: 1000 } });
+  for (const sh of WIDE_SHELLS) {
+    test(`${sh.name}: off is at most 46rem, on is wider, and it survives a reload`, async ({ page }) => {
+      const open = async () => {
+        await load(page, sh.file);
+        if (sh.editor) await openEditor(page, sh.editor);
+      };
+      await open();
+      expect(await widthOf(page, sh.cap)).toBeLessThanOrEqual(46 * 16 + 1);
+      await setWide(page, true);
+      expect(await widthOf(page, sh.cap)).toBeGreaterThan(46 * 16 + 1);
+      await page.reload(); // nothing but localStorage survives: re-upload and reopen
+      await open();
+      await expect(page.locator(".app")).toHaveAttribute("data-margin", "expanded");
+      expect(await widthOf(page, sh.cap)).toBeGreaterThan(46 * 16 + 1);
+    });
+  }
 });
 
 test.describe("Essay on the frame: geometry", () => {

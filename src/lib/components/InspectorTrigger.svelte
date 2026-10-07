@@ -1,8 +1,7 @@
 <!--
   InspectorTrigger — the button that opens the inspector drawer (#424), with an activity badge
   (`shell.inspectorBadge`, set by the shell that has such a signal; the shell clears it, this only
-  shows it). Renders only while the inspector is a drawer. A Toolbar puts it in `trail`; Topbar
-  renders it itself. Wraps IconButton.
+  shows it). Renders only while the inspector is a drawer. A Toolbar puts it in `trail`. Wraps IconButton.
 -->
 <script lang="ts">
   import PanelRight from '@lucide/svelte/icons/panel-right';

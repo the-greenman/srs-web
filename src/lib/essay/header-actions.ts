@@ -6,7 +6,13 @@ import CircleQuestionMark from "@lucide/svelte/icons/circle-question-mark";
  */
 import type { IconComponent } from "../components/icon.js";
 import type { ToolbarAction } from "../components/menu-action.js";
-import { BASE_GROUPS, agentsAction, wideAction } from "../components/shell-actions.js";
+import {
+  BASE_GROUPS,
+  agentsAction,
+  openAnotherAction,
+  saveAction,
+  wideAction,
+} from "../components/shell-actions.js";
 import type { ShellState } from "../shell-context.svelte.js";
 
 export type HeaderGroup = "document" | "view" | "go" | "help";
@@ -23,14 +29,15 @@ export const HEADER_GROUPS: { id: HeaderGroup; label: string; icon: IconComponen
 export interface HeaderHandlers {
   onnew: () => void;
   oncopy?: () => void;
-  /** Copy the agent handoff (whole essay, or the zoom target). Absent while no essay is open. */
-  onagent?: () => void;
   onhelp: () => void;
   oncomments: () => void;
   onsave?: () => void;
   onexport: () => void;
   /** Download the visible essay text as markdown. Absent while no essay is open. */
   onexportmd?: () => void;
+  /** Download the essay's snapshot (.srs slice). Absent while no essay is open or its package cannot bundle. */
+  onsnapshot?: () => void;
+  onreferences?: () => void;
   onexplorer?: () => void;
   /** Absent when the shell has no agent panel to open. */
   onopenagents?: () => void;
@@ -51,15 +58,8 @@ export function headerActions(
   }
 ): HeaderAction[] {
   const all: (HeaderAction | false | undefined)[] = [
-    !!h.onsave && {
-      id: "save",
-      group: "document",
-      kind: "primary",
-      label: s.saving ? "Saving…" : "Save",
-      run: h.onsave,
-      enabled: !s.saving && s.dirty,
-      testid: "save-document",
-    },
+    !!h.onsave &&
+      (saveAction(h.onsave, { saving: s.saving, enabled: !s.saving && s.dirty }) as HeaderAction),
     {
       id: "new",
       group: "document",
@@ -78,15 +78,6 @@ export function headerActions(
       enabled: true,
       testid: "copy-document",
     },
-    !!h.onagent && {
-      id: "agent",
-      group: "document",
-      kind: "action",
-      label: "Copy for agent",
-      run: h.onagent,
-      enabled: true,
-      testid: "copy-for-agent",
-    },
     {
       id: "export",
       group: "document",
@@ -103,6 +94,24 @@ export function headerActions(
       run: h.onexportmd,
       enabled: true,
       testid: "export-markdown",
+    },
+    !!h.onreferences && {
+      id: "export-references",
+      group: "document",
+      kind: "action",
+      label: "Export references (.md)",
+      run: h.onreferences,
+      enabled: true,
+      testid: "export-references",
+    },
+    !!h.onsnapshot && {
+      id: "export-snapshot",
+      group: "document",
+      kind: "action",
+      label: "Export snapshot",
+      run: h.onsnapshot,
+      enabled: true,
+      testid: "export-snapshot",
     },
     wideAction(s.shell) as HeaderAction | undefined,
     {
@@ -124,14 +133,7 @@ export function headerActions(
       enabled: true,
     },
     !!h.onopenagents && (agentsAction(h.onopenagents) as HeaderAction),
-    {
-      id: "other",
-      group: "go",
-      kind: "action",
-      label: "Open another",
-      run: h.onopenanother,
-      enabled: true,
-    },
+    openAnotherAction(h.onopenanother) as HeaderAction,
     {
       id: "help",
       group: "help",

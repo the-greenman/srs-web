@@ -2,10 +2,20 @@ import { describe, expect, it, vi } from "vitest";
 import { pairingMinutesLeft } from "../src/lib/components/agent-panel";
 import { bootstrapChannel, executorCredential, requestPairing } from "../src/lib/mcp/relay-wire";
 
-const creds = { channel: "c1", callerUrl: "https://relay.test/v1/channels/c1/call/CALLER1", executorUrl: "wss://relay.test/v1/channels/c1/executor/EXEC1?generation=x" };
-const ok = { code: "ABCDE-FGHJK", expiresAt: 1000, connectorUrl: "https://relay.test/v1/channels/c1/call" };
+const creds = {
+  channel: "c1",
+  callerUrl: "https://relay.test/v1/channels/c1/call/CALLER1",
+  executorUrl: "wss://relay.test/v1/channels/c1/executor/EXEC1?generation=x",
+};
+const ok = {
+  code: "ABCDE-FGHJK",
+  expiresAt: 1000,
+  connectorUrl: "https://relay.test/v1/channels/c1/call",
+};
 const reply = (status: number, body?: unknown) =>
-  vi.fn(async () => new Response(typeof body === "string" ? body : JSON.stringify(body), { status })) as unknown as typeof fetch;
+  vi.fn(
+    async () => new Response(typeof body === "string" ? body : JSON.stringify(body), { status })
+  ) as unknown as typeof fetch;
 
 describe("executorCredential", () => {
   it.each([
@@ -24,7 +34,9 @@ describe("requestPairing", () => {
     for (const relay of ["https://relay.test", "https://relay.test/"]) {
       const f = reply(200, ok);
       expect(await requestPairing(relay, creds, f)).toEqual(ok);
-      expect(f).toHaveBeenCalledExactlyOnceWith("https://relay.test/v1/channels/c1/pairing/EXEC1", { method: "POST" });
+      expect(f).toHaveBeenCalledExactlyOnceWith("https://relay.test/v1/channels/c1/pairing/EXEC1", {
+        method: "POST",
+      });
     }
   });
   it.each([
@@ -34,7 +46,9 @@ describe("requestPairing", () => {
     [502, "<html>", /^pairing failed: 502$/],
     [200, { code: 1 }, /^pairing failed: malformed response$/],
   ])("maps %i %j", async (status, body, msg) => {
-    const e = await requestPairing("https://relay.test", creds, reply(status, body)).catch((x) => x);
+    const e = await requestPairing("https://relay.test", creds, reply(status, body)).catch(
+      (x) => x
+    );
     expect(e.message).toMatch(msg);
     expect(e.message).not.toContain("EXEC1");
   });
@@ -42,8 +56,12 @@ describe("requestPairing", () => {
 
 describe("bootstrapChannel", () => {
   it("still surfaces invalid_origin", async () => {
-    await expect(bootstrapChannel("https://relay.test", reply(400, { error: "invalid_origin" }))).rejects.toThrow(/invalid_origin/);
-    await expect(bootstrapChannel("https://relay.test", reply(500, "x"))).rejects.toThrow("relay bootstrap failed: 500");
+    await expect(
+      bootstrapChannel("https://relay.test", reply(400, { error: "invalid_origin" }))
+    ).rejects.toThrow(/invalid_origin/);
+    await expect(bootstrapChannel("https://relay.test", reply(500, "x"))).rejects.toThrow(
+      "relay bootstrap failed: 500"
+    );
   });
 });
 

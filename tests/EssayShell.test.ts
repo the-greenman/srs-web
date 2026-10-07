@@ -17,6 +17,9 @@ const model: EssayModel = {
   draftEntries: [],
   binContainerId: null,
   binEntries: [],
+  commentsContainerId: null,
+  referencesContainerId: null,
+  references: [],
   comments: {},
   attachments: {},
   related: {},
@@ -59,6 +62,7 @@ vi.mock("../src/lib/essay/essay-document.js", () => ({
   moveEntry: vi.fn(),
   shiftEntry: vi.fn(),
   setHidden: vi.fn(),
+  removeReference: vi.fn(),
   setTitle: vi.fn(),
   transfer: vi.fn(),
 }));

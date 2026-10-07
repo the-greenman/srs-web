@@ -45,6 +45,8 @@ export interface EditorShellProps {
   workingCopySaved?: boolean;
   onOpenAnother: () => void;
   onOpenExplorer?: () => void;
+  /** Open the agent library (Go > Agents…). Absent for a shell that hosts its own agent panel. */
+  onOpenAgents?: () => void;
   documentProvider: string;
   readOnlyReason?: string | null;
   /** A shell declares (or, with null, withdraws) the write guard App applies to agent MCP writes. */

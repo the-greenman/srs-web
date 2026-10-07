@@ -8,7 +8,7 @@
    Variants: --primary --secondary --ghost --mono  (+ --on-dark for the nav)
    Used everywhere; import/export actions land in B10:
      https://github.com/the-greenman/srs-web/issues/6
-   Ported from the muDemocracy button system.
+   Follows the semanticops.com button system.
    ========================================================================== */
 
 .btn {

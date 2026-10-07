@@ -4,8 +4,9 @@
 // The bindings are gitignored (build output, not source), so a fresh clone —
 // e.g. a Cloudflare Workers automated build — doesn't have them. This script
 // downloads the release artifact from the public srs-rust repo when the
-// bindings are missing. Pass --force to re-download even if present (used
-// before deploys to pick up the latest release).
+// bindings are missing or were downloaded for a different pin (a `.pin` marker
+// records the URL + sha256 of the build on disk, so bumping the pin refreshes
+// every checkout — srs-web#459). Pass --force to re-download regardless.
 //
 // No auth and no gh CLI required: srs-rust is public, so the artifact is a
 // plain HTTPS download. The tarball is verified against a pinned sha256 (SHA256 below) before
@@ -19,15 +20,15 @@
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DEFAULT_URL =
-  "https://github.com/the-greenman/srs-rust/releases/download/v0.1.0-build.468/srs-bindings-web.tar.gz";
+  "https://github.com/the-greenman/srs-rust/releases/download/v0.1.0-build.489/srs-bindings-web.tar.gz";
 // sha256 of the tarball at DEFAULT_URL (the release's srs-bindings-web.tar.gz.sha256 asset).
-const SHA256 = "1719b1162555e8d4dfb1dd3fd408b8cb4f8e889459e17a7a974259a3ea14bc1d";
+const SHA256 = "cce6ac186db36187ec80a98eb316c4657bdb1123012482ced4921b8361dd3c1b";
 
 const verifySha256 = (bytes, expected) =>
   createHash("sha256").update(bytes).digest("hex") === expected.trim().toLowerCase();
@@ -41,13 +42,23 @@ const url = process.env.SRS_BINDINGS_URL ?? DEFAULT_URL;
 const overridden = process.env.SRS_BINDINGS_URL !== undefined;
 const expected = overridden ? process.env.SRS_BINDINGS_SHA256 : SHA256;
 
+const pinFile = join(bindingsDir, ".pin");
+const pin = `${url}\n${expected ?? ""}\n`;
+const readPin = () => {
+  try {
+    return readFileSync(pinFile, "utf8");
+  } catch {
+    return null;
+  }
+};
 const present = entryFiles.every((f) => existsSync(join(bindingsDir, f)));
-if (present && !force) {
+if (present && !force && readPin() === pin) {
   console.log(
-    `srs_bindings already present at ${bindingsDir} — skipping download (use --force to refresh)`
+    `srs_bindings already present at ${bindingsDir} for the pinned build — skipping download (use --force to refresh)`
   );
   process.exit(0);
 }
+if (present && !force) console.log("srs_bindings on disk are not the pinned build — refreshing");
 
 console.log(`Downloading srs-bindings-web from ${url}`);
 const res = await fetch(url, { redirect: "follow" });
@@ -86,4 +97,5 @@ if (missing.length > 0) {
   console.error(`Artifact extracted but expected files are missing: ${missing.join(", ")}`);
   process.exit(1);
 }
+writeFileSync(pinFile, pin);
 console.log(`srs_bindings ready at ${bindingsDir}`);

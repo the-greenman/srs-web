@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem, newRecord } from "./helpers.js";
 
 /**
  * validate-on-save.spec.ts — B13: diagnostics refresh after every mutation.
@@ -30,7 +30,7 @@ test.describe("Validate on save (B13)", () => {
     await openPackageEditor(page, "governance");
 
     // Wait for loaded state — nav shows Articles link
-    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
   });
 
   // --------------------------------------------------------------------------
@@ -57,7 +57,7 @@ test.describe("Validate on save (B13)", () => {
     const initialCount = parseInt(initialCountText ?? "0", 10);
 
     // Create a new article
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Validation Test Article");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Body text for validation test");
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
@@ -83,7 +83,7 @@ test.describe("Validate on save (B13)", () => {
   // --------------------------------------------------------------------------
   test("Validation panel stays clean and record count decreases after deleting a record", async ({ page }) => {
     // First create a deletable record (no relations)
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("To Delete For Validation");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Will be deleted");
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
@@ -119,7 +119,7 @@ test.describe("Validate on save (B13)", () => {
   test("Validation panel stays clean after editing a record", async ({ page }) => {
     // All gallery records are "active" (immutable). Create a draft first so
     // we have a record that can be directly edited without the SuccessorModal.
-    await page.locator("button.topbar__new").click();
+    await newRecord(page);
     await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Draft For Edit Test");
     await page.locator(".field").filter({ hasText: "Article Text" }).locator("textarea").fill("Body text for edit test");
     await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");

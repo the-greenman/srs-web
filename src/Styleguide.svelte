@@ -9,16 +9,19 @@
   import {
     ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
-    LayersPanel, MarkdownHelp, MarkdownText, AgentPanel, McpConnection, Panel, AnnotationMargin, PinnedPane, Select, Tag,
-    TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost,
+    LayersPanel, MarkdownHelp, MarkdownText, AgentPanel, McpConnection, Panel, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
+    TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
   } from "$lib/components";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
+  import SourceChooser from "$lib/components/SourceChooser.svelte";
   import LiveRegions from "$lib/components/LiveRegions.svelte";
   import { notify } from "$lib/notices.svelte";
   import { pairingMinutesLeft } from "$lib/components/agent-panel";
   import ToolbarSpecimen from "./styleguide/ToolbarSpecimen.svelte";
   import ShellSpecimen from "./styleguide/ShellSpecimen.svelte";
   import Frame from "./styleguide/Frame.svelte";
+  import RecordsView from "$lib/generic/RecordsView.svelte";
+  import RelationGraph from "$lib/generic/RelationGraph.svelte";
   import Icons from "./styleguide/icons";
   import { initWasm } from "$lib/srs-client";
   import * as fx from "./styleguide/fixtures";
@@ -34,11 +37,14 @@
     ["toolbar", "Toolbar"],
     ["chips", "Chips and badges"],
     ["actors", "Actors"],
+    ["srs-mark", "SRS mark"],
     ["annotations", "Annotations and comments"],
     ["paragraph", "Paragraph"],
     ["panels", "Panels and trays"],
     ["agents", "Agent library"],
     ["shell", "Page frame"],
+    ["records", "Records and map"],
+    ["chooser", "Source chooser"],
     ["notices", "Notices"],
     ["forms", "Form controls"],
     ["dialogs", "Dialogs"],
@@ -122,6 +128,7 @@
   </Panel>
   <Panel title="Draft"><DraftTray items={[...fx.draftItems, ...fx.longDraftItems]} ondrop={noop} onputback={noop} /></Panel>
   <Panel title="Bin"><BinTray items={[...fx.binItems, ...fx.longBinItems]} onrestore={noop} onforget={noop} /></Panel>
+  <Panel title="References" aside={fx.referenceItems.length}><ReferencesTray items={fx.referenceItems} onopen={noop} onfocus={noop} onremove={noop} /></Panel>
   {#snippet pinnedPane()}<PinnedPane items={[...fx.pinned, ...fx.longPinned]} onunpin={noop} onremove={noop} />{/snippet}
   {@render gated(pinnedPane)}
   <Panel title="Agents">
@@ -256,6 +263,11 @@
         </div>
       </figure>
     {/each}
+    <h3>Toolbar: read-only document (opened from a link): no Save, Save a copy… in Document</h3>
+    <div class="sg__frame sg__toolbar" style:width="768px">
+      <ToolbarSpecimen title="meeting" tier="full" groups={HEADER_GROUPS} actions={fx.readOnlyToolbarActions} />
+    </div>
+    <Notice kind="info">Opened from semanticops.com, read-only. Use Document &gt; Save a copy… to keep an editable copy.</Notice>
     <h3>Toolbar: Save disabled (clean) and a lead slot</h3>
     <div class="sg__frame sg__toolbar" style:width="768px">
       <ToolbarSpecimen title="A clean document" tier="compact" groups={HEADER_GROUPS} actions={fx.toolbarActions.map((a) => (a.kind === "primary" ? { ...a, enabled: false } : a))}>
@@ -295,6 +307,33 @@
       <ActorStack actors={[fx.human, ...fx.agents.slice(0, 2)]} />
       <ActorStack actors={fx.manyActors} />
       <ActorStack actors={[fx.unattributed, fx.agents[0]]} />
+    </div>
+  </section>
+
+  <section id="wordmark">
+    <h2>Wordmark</h2>
+    <p class="sg__note">The SemanticOps name: Semantic regular, Ops bold, tight tracking. Sizes sm, md, lg.</p>
+    <div class="sg__row" data-testid="sg-wordmark">
+      {#each ["sm", "md", "lg"] as const as size}
+        <figure class="sg__figure">
+          <figcaption>{size}</figcaption>
+          <Wordmark {size} />
+        </figure>
+      {/each}
+    </div>
+  </section>
+
+  <section id="srs-mark">
+    <h2>SRS mark</h2>
+    <p class="sg__note">The upright S: an ink half and a paper half split by an S line, a seed of the opposite colour in each, an ink rim.
+      Decorative, always beside a text label. Colours are --srs-mark-ink, --srs-mark-paper and --srs-mark-line; the Theme switcher reskins it.</p>
+    <div class="sg__row sg__marks" data-testid="sg-srs-mark">
+      {#each [[16, "16px: the picker size"], [24, "24px"], [96, "96px"]] as const as [size, caption]}
+        <figure class="sg__figure">
+          <figcaption>{caption}</figcaption>
+          <SrsMark {size} />
+        </figure>
+      {/each}
     </div>
   </section>
 
@@ -458,6 +497,53 @@
         </figure>
       {/each}
     </div>
+  </section>
+
+  <section id="records">
+    <h2>Records and map</h2>
+    <p class="sg__note">Records over a repository larger than one page: grouped by type, collapsed, a count each; a group pages 50 at a time.
+      With search text the list is flat and ranked, reads "N results" and shows the matching snippet. The map focuses one record: inbound
+      neighbours on the left, outbound on the right, relation types in the legend and on hover or focus, labels wrapped to two lines.
+      Colours are the <code>--generic-graph-*</code> tokens.</p>
+    <div class="sg__shells">
+      <figure class="sg__figure sg__figure--list" data-testid="sg-records-grouped">
+        <figcaption>Grouped by type (no search)</figcaption>
+        <RecordsView typeOptions={[]} searching={false} total={704} groups={fx.recordGroups} onOpen={noop} />
+      </figure>
+      <figure class="sg__figure sg__figure--list" data-testid="sg-records-searched">
+        <figcaption>Searched: flat, ranked</figcaption>
+        <RecordsView search="travelling form" typeOptions={[]} searching={true} total={9} hits={fx.recordSearchHits} onOpen={noop} />
+      </figure>
+    </div>
+    <div class="sg__shells">
+      <figure class="sg__figure sg__figure--map" data-testid="sg-map-focus">
+        <figcaption>Focused on a record, both directions</figcaption>
+        <RelationGraph view="focus" focus={fx.focusMap.focus} layout={fx.focusMap.layout} onOpen={noop} />
+      </figure>
+      <figure class="sg__figure sg__figure--map" data-testid="sg-map-outbound">
+        <figcaption>Focused, outbound only (12 of 156 shown)</figcaption>
+        <RelationGraph view="focus" focus={fx.outboundOnlyMap.focus} layout={fx.outboundOnlyMap.layout} onOpen={noop} />
+      </figure>
+      <figure class="sg__figure sg__figure--map" data-testid="sg-map-container">
+        <figcaption>A container, first 24 members of {fx.cappedContainerMap.totalNodes} records</figcaption>
+        <RelationGraph view="container" graph={fx.cappedContainerMap} onOpen={noop} />
+      </figure>
+    </div>
+  </section>
+
+  <section id="chooser">
+    <h2>Source chooser</h2>
+    <p class="sg__note">The landing options: this device and folders first, cloud providers (unconfigured here), then "From a URL" for a read-only link.
+      The input is a native <code>type=url</code>; the button stays disabled until it holds a link, and a refusal shows as an error Notice below.</p>
+    <SourceChooser
+      providers={{
+        dropbox: { configured: false, label: "Dropbox", authenticate: noop, open: noop },
+        googleDrive: { configured: false, label: "Google Drive", authenticate: noop, open: noop },
+        github: { configured: false, label: "GitHub", authenticate: noop, open: noop },
+      } as never}
+      onOpen={async () => {}}
+      onOpenUrl={async () => { throw new Error("Only https:// links can be opened."); }}
+    />
   </section>
 
   <section id="notices">

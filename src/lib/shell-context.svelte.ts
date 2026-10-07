@@ -1,7 +1,7 @@
 /**
  * The shell's presentation state, shared with the bar and the triggers through context (#424).
  * `AppShell` creates one `ShellState` during script init (before any child renders) and `getShell()`
- * is undefined-safe, so a standalone `Topbar` or `Toolbar` outside an `AppShell` renders no triggers.
+ * is undefined-safe, so a standalone `Toolbar` outside an `AppShell` renders no triggers.
  * Wide is the ONE Wide state; it persists only through `saveWide`.
  */
 import { getContext, setContext } from "svelte";

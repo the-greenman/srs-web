@@ -1,6 +1,6 @@
 <!--
   Main — the centre column wrapper (.app__main). Renders, in real DOM order (tab and reading order, no CSS
-  `order`): the shell's bar (Toolbar or Topbar, passed as the `bar` snippet), the NoticeRegion (pinned
+  `order`): the shell's bar (the Toolbar, passed as the `bar` snippet), the NoticeRegion (pinned
   document notices), then the content (whose .workspace is the one scroller). It also hosts the one toast
   system: LiveRegions (always rendered) and the ToastHost (#441, ADR-020 j). One Main is mounted at a time,
   so there is one ToastHost per app.

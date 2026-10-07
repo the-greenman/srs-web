@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import GovernanceShell from "../src/lib/governance/GovernanceShell.svelte";
 import { notify, resetNotices } from "../src/lib/notices.svelte.js";
@@ -14,6 +14,23 @@ beforeEach(() => {
     removeEventListener: () => {},
   }));
 });
+
+/** A nav item by text, whichever element it is (role-agnostic: it was a link, it is a button). */
+async function navItem(name: RegExp): Promise<HTMLElement> {
+  return waitFor(() => {
+    const el = [...document.querySelectorAll<HTMLElement>(".nav__item")].find((e) =>
+      name.test(e.textContent ?? "")
+    );
+    if (!el) throw new Error(`no nav item ${name}`);
+    return el;
+  });
+}
+
+/** "New {label}" lives in the Document menu, whose rows exist only while it is open. */
+async function newRecordItem(): Promise<HTMLElement> {
+  await fireEvent.click(await screen.findByTestId("toolbar-menu-document"));
+  return screen.findByTestId("governance-new-record");
+}
 
 function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
   const base: SrsRepository = {
@@ -223,7 +240,7 @@ describe("GovernanceShell — size warning banner", () => {
       },
     });
     // Wait for mount to complete then check the banner by its specific class
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
     const banner = container.querySelector('[data-testid="size-warning"]');
     expect(banner).not.toBeNull();
     expect(banner!.textContent).toContain("1 size warning");
@@ -248,7 +265,7 @@ describe("GovernanceShell — size warning banner", () => {
         onOpenAnother: vi.fn(),
       },
     });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
     expect(container.querySelector('[data-testid="size-warning"]')).toBeNull();
   });
 
@@ -271,7 +288,7 @@ describe("GovernanceShell — size warning banner", () => {
         onOpenAnother: vi.fn(),
       },
     });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
     const banner = container.querySelector('[data-testid="size-warning"]');
     expect(banner).not.toBeNull();
     expect(banner!.textContent).toContain("2 size warnings");
@@ -300,7 +317,7 @@ describe("GovernanceShell — Repository inspector count", () => {
         onOpenAnother: vi.fn(),
       },
     });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
     const sections = Array.from(container.querySelectorAll(".inspector__section"));
     const repositorySection = sections.find((s) =>
       s.querySelector(".panel__head")?.textContent?.includes("Repository")
@@ -340,7 +357,7 @@ describe("GovernanceShell — addContainerMember failure branch", () => {
     });
 
     // Wait for onMount to complete — button appears once containerSchemas is built
-    const newBtn = await screen.findByRole("button", { name: /New Article/i });
+    const newBtn = await newRecordItem();
     fireEvent.click(newBtn);
 
     // RecordForm should mount in create mode
@@ -407,11 +424,11 @@ describe("GovernanceShell — sections sharing one container", () => {
         onOpenAnother: vi.fn(),
       },
     });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
     // All three sections must be present — the shared containerId must not collapse them.
-    expect(await screen.findByRole("link", { name: /Guide A/i })).toBeDefined();
-    expect(await screen.findByRole("link", { name: /Guide B/i })).toBeDefined();
-    expect(await screen.findByRole("link", { name: /Decision Log/i })).toBeDefined();
+    expect(await navItem(/Guide A/i)).toBeDefined();
+    expect(await navItem(/Guide B/i)).toBeDefined();
+    expect(await navItem(/Decision Log/i)).toBeDefined();
   });
 });
 
@@ -427,7 +444,7 @@ describe("GovernanceShell — Repository nav group", () => {
         onOpenAnother: vi.fn(),
       },
     });
-    const item = await screen.findByRole("link", { name: /Migrations/i });
+    const item = await navItem(/Migrations/i);
     expect(item).toBeDefined();
   });
 });
@@ -458,7 +475,7 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
 
   /** Create a record via the "New" flow — this also drives persistWorkingCopy(). */
   async function createRecordViaNewFlow(): Promise<void> {
-    const newBtn = await screen.findByRole("button", { name: /New Article/i });
+    const newBtn = await newRecordItem();
     fireEvent.click(newBtn);
     const formContainer = await screen.findByTestId("record-form");
     const form = formContainer.querySelector("form");
@@ -540,7 +557,9 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
       },
     });
     await createRecordViaNewFlow();
-    expect((await screen.findByTestId("recovery-status")).textContent).toContain("Recovery copy saved");
+    expect((await screen.findByTestId("recovery-status")).textContent).toContain(
+      "Recovery copy saved"
+    );
     expect(screen.getByTestId("save-status").textContent).toContain("Save failed");
   });
 
@@ -557,7 +576,9 @@ describe("GovernanceShell — local-save-failure reflection (srs-web#312 bug 1)"
       },
     });
     await createRecordViaNewFlow();
-    expect((await screen.findByTestId("recovery-status")).textContent).toContain("Recovery copy saved");
+    expect((await screen.findByTestId("recovery-status")).textContent).toContain(
+      "Recovery copy saved"
+    );
   });
 });
 
@@ -605,13 +626,34 @@ describe("GovernanceShell — saving-state mutation guard (srs-web#312 bug 2)", 
   }
 
   async function createAndSelectRecord(): Promise<void> {
-    const newBtn = await screen.findByRole("button", { name: /New Article/i });
+    const newBtn = await newRecordItem();
     fireEvent.click(newBtn);
     const formContainer = await screen.findByTestId("record-form");
     const form = formContainer.querySelector("form");
     expect(form).not.toBeNull();
     fireEvent.submit(form!);
   }
+
+  it("shows an error, not an empty list, when the container view fails to resolve (srs-web#483)", async () => {
+    const repo = repoWithSelectedRecordSupport({
+      resolve_container_view: () => {
+        throw new Error("view exploded");
+      },
+    });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    render(GovernanceShell, {
+      props: {
+        repo,
+        repoName: "test.srsj",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+      },
+    });
+    expect((await screen.findByTestId("container-view-error")).textContent).toContain(
+      "view exploded"
+    );
+  });
 
   it("disables Edit, Delete, and lifecycle-transition buttons while saving is true, and re-enables them once false", async () => {
     const repo = repoWithSelectedRecordSupport();
@@ -662,7 +704,7 @@ describe("GovernanceShell — read-only reason (srs-web#317)", () => {
         readOnlyReason: "This folder was opened read-only. Use Export to save your changes.",
       },
     });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
 
     expect(screen.getByTestId("readonly-reason").textContent).toMatch(/read-only/);
     expect(screen.queryByTestId("save-document")).toBeNull();
@@ -681,7 +723,7 @@ describe("GovernanceShell — read-only reason (srs-web#317)", () => {
         readOnlyReason: "should not render",
       },
     });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
 
     expect(screen.getByTestId("save-document")).toBeTruthy();
     expect(screen.queryByTestId("readonly-reason")).toBeNull();

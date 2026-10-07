@@ -1,0 +1,32 @@
+/* ============================================================================
+   component: wordmark (.wordmark): the SemanticOps name (Wordmark.svelte).
+   Mirrors semanticops.com/src/components/Wordmark.astro. Semantic regular, Ops bold.
+   ========================================================================== */
+
+.wordmark {
+  font-family: var(--font-sans);
+  line-height: var(--leading-solid);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-strong);
+  white-space: nowrap;
+}
+
+.wordmark--sm {
+  font-size: var(--size-md);
+}
+
+.wordmark--md {
+  font-size: var(--size-lg);
+}
+
+.wordmark--lg {
+  font-size: var(--size-xl);
+}
+
+.wordmark__lead {
+  font-weight: var(--weight-regular);
+}
+
+.wordmark__tail {
+  font-weight: var(--weight-bold);
+}

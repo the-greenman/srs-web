@@ -71,7 +71,8 @@ for (const { name, viewport } of widths) {
       await context.grantPermissions(["clipboard-read", "clipboard-write"]);
       await page.clock.install();
       await open(page);
-      await page.getByTestId("header-menu").tap();
+      await openInspectorDrawer(page);
+      await page.locator("details.panel", { hasText: "Agents" }).first().locator("summary").tap(); // panels start collapsed on a phone
       await page.clock.pauseAt(new Date(Date.now() + 1000)); // freeze: a loaded machine must not outlive the toast
       await page.getByTestId("copy-for-agent").tap();
       const toast = page.locator(".toast-host .toast").first();

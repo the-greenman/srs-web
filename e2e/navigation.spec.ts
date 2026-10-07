@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openPackageEditor } from "./helpers.js";
+import { openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * navigation.spec.ts — nav section switching tests.
@@ -35,7 +35,7 @@ test.describe("Navigation", () => {
     await openPackageEditor(page, "governance");
 
     // Wait for loaded state — use the nav link as the signal
-    await expect(page.getByRole("link", { name: /Articles/ })).toBeVisible({ timeout: 5000 });
+    await expect(navItem(page, /Articles/)).toBeVisible({ timeout: 5000 });
   });
 
   test("Articles is the default active section", async ({ page }) => {
@@ -44,20 +44,20 @@ test.describe("Navigation", () => {
   });
 
   test("clicking Decision Log shows Decision Log section heading", async ({ page }) => {
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByRole("heading", { name: "Decision Log", level: 2 })).toBeVisible();
   });
 
   test("clicking Roles shows Roles section heading", async ({ page }) => {
-    await page.getByRole("link", { name: /Roles/ }).click();
+    await navItem(page, /Roles/).click();
     await expect(page.getByRole("heading", { name: "Roles", level: 2 })).toBeVisible();
   });
 
   test("clicking Articles after another section returns to Articles heading", async ({ page }) => {
-    await page.getByRole("link", { name: /Decision Log/ }).click();
+    await navItem(page, /Decision Log/).click();
     await expect(page.getByRole("heading", { name: "Decision Log", level: 2 })).toBeVisible();
 
-    await page.getByRole("link", { name: /Articles/ }).click();
+    await navItem(page, /Articles/).click();
     await expect(page.getByRole("heading", { name: "Articles", level: 2 })).toBeVisible();
   });
 });

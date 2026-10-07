@@ -20,7 +20,9 @@ import {
   createRecord,
   deleteRecord,
   deleteRelation,
+  exportSlice,
   forkRecord,
+  getContainer,
   getContainerOutline,
   getRecord,
   listContainers,
@@ -46,6 +48,7 @@ import type {
   TypeSummary,
 } from "$lib/srs-client.js";
 import { recordsOfType, typeVersion } from "$lib/type-version.js";
+import { uuid5 } from "$lib/uuid5.js";
 import type { Zone } from "./essay-model.js";
 import { hiddenByAncestor, toggled } from "./essay-model.js";
 import { DOCUMENT_STATE_TYPE_ID, ESSAY_TYPE_ID, PARAGRAPH_TYPE_ID } from "./type-registry.js";
@@ -58,6 +61,14 @@ export interface Paragraph {
 export interface EssaySummary {
   id: string;
   title: string;
+}
+/** A collected source, claim or problem; `paragraphIds` come from inverting the paragraphs' context. */
+export interface Reference {
+  id: string;
+  label: string;
+  /** The record's type name (source, claim, problem...). */
+  typeName: string;
+  paragraphIds: string[];
 }
 export interface EssayModel {
   essayId: string;
@@ -75,6 +86,18 @@ export interface EssayModel {
   /** The Bin: created on the first delete (null until then). */
   binContainerId: string | null;
   binEntries: OutlineEntry[];
+  /** The snapshot bundle (srs-web#417): created on the first Export snapshot (null until then). */
+  bundleContainerId: string | null;
+  /** Set when this load's repair failed (tried once per essay per repo handle; the shell shows it as a notice). */
+  repairError?: string | null;
+  /** The essay's comments container (essay package 1.7.0; null on older packages or before repair). */
+  commentsContainerId: string | null;
+  /** The essay's collected references container (essay package 1.7.0; null as above). */
+  referencesContainerId: string | null;
+  /** The references container's records, each with the paragraphs it is linked to (none = unlinked). */
+  references: Reference[];
+  /** Whether the installed document-state type can record a bundle (older packages cannot: no Export snapshot). */
+  canSnapshot: boolean;
   /** Comments by paragraph id, oldest first. */
   comments: Record<string, Comment[]>;
   /** Attachments by paragraph id (see Attachment). */
@@ -87,7 +110,10 @@ export interface EssayModel {
 
 /**
  * Owner ruling (muDemocracy.org#226): agents never write the essay text — they comment via
- * new records and relations. Labels are metadata: fillable only while empty.
+ * new records and relations. Labels are metadata: fillable only while empty. The comments and
+ * references containers are deliberately NOT guarded (nor is the snapshot bundle: the engine guards a
+ * container's whole closure, and the bundle's children include them; refreshBundle re-declares it): agents file into them (containerId on create,
+ * or container_member_add); every other container stays protected.
  */
 export function essayWriteGuard(m: EssayModel): AgentWriteGuard {
   return {
@@ -234,38 +260,69 @@ function loadSharedIn(
   return out;
 }
 
-/** Whether the installed essay type declares `purpose` (older packages do not). Cached per type version. */
-const purposeCache = new WeakMap<object, { version: number; ok: boolean }>();
-function hasPurposeField(repo: SrsRepository, types: TypeSummary[]): boolean {
-  const version = types.find((x) => x.id === ESSAY_TYPE_ID)?.version ?? 0;
-  const hit = purposeCache.get(repo);
+/** Whether the installed `typeId` declares `field` (older packages do not). Cached per type version. */
+const fieldCache = new WeakMap<object, Map<string, { version: number; ok: boolean }>>();
+function hasField(
+  repo: SrsRepository,
+  types: TypeSummary[],
+  typeId: string,
+  field: string
+): boolean {
+  const version = types.find((x) => x.id === typeId)?.version ?? 0;
+  const cache = fieldCache.get(repo) ?? new Map();
+  fieldCache.set(repo, cache);
+  const key = `${typeId}.${field}`;
+  const hit = cache.get(key);
   if (hit?.version === version) return hit.ok;
   let ok = false;
   try {
-    ok =
-      "purpose" in ((typeSchema(repo, ESSAY_TYPE_ID, version).schema.properties as object) ?? {});
+    ok = field in ((typeSchema(repo, typeId, version).schema.properties as object) ?? {});
   } catch {
-    /* type not resolvable: no purpose */
+    /* type not resolvable: no such field */
   }
-  purposeCache.set(repo, { version, ok });
+  cache.set(key, { version, ok });
   return ok;
 }
 
-export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
+/**
+ * `repair` (editable repositories only) writes what an older essay lacks: its document-state record,
+ * and the comments / references containers; and files every linked comment not yet in the comments
+ * container. All idempotent and add-only (srs-web#494, #495, #496).
+ */
+export function loadEssay(
+  repo: SrsRepository,
+  essayId: string,
+  opts: { repair?: boolean } = {}
+): EssayModel {
   const types = listTypes(repo); // resolved once per reload
   const essay = recordsOfType(repo, types, ESSAY_TYPE_ID).find((r) => r.instanceId === essayId);
   if (!essay) throw new Error("Essay not found");
   const summary = listContainers(repo, { anchorInstanceId: essayId })[0];
   if (!summary) throw new Error("This essay has no container");
   const containerId = summary.containerId;
-  const state =
+  const title = str(essay.fieldValues.title) || "Untitled essay";
+  let state =
     recordsOfType(repo, types, DOCUMENT_STATE_TYPE_ID).find(
       (r) => r.fieldValues.essay === essayId
     ) ?? null;
+  let repairError: string | null = null;
+  const tried = repairTried(repo);
+  if (opts.repair && !tried.has(essayId)) {
+    // Once per essay per repo handle: a failure part-way must not repeat on the reload it causes.
+    tried.add(essayId);
+    try {
+      if (!state) state = addEditorState(repo, types, essayId, title);
+      else state = repairAreas(repo, types, state, title, essayId);
+    } catch (e) {
+      repairError = e instanceof Error ? e.message : String(e);
+    }
+  }
   const draftContainerId = str(state?.fieldValues.draft_container_id) || null;
   const draftEntries = draftContainerId ? getContainerOutline(repo, draftContainerId).body : [];
   const binContainerId = str(state?.fieldValues.bin_container_id) || null;
   const binEntries = binContainerId ? getContainerOutline(repo, binContainerId).body : [];
+  const commentsContainerId = str(state?.fieldValues.comments_container_id) || null;
+  const referencesContainerId = str(state?.fieldValues.references_container_id) || null;
   const entries = getContainerOutline(repo, containerId).body;
   const paragraphs: Record<string, Paragraph> = {};
   for (const c of [containerId, draftContainerId, binContainerId]) {
@@ -275,11 +332,40 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
     }
   }
   const context = loadContext(repo, Object.keys(paragraphs));
+  const comments = loadComments(repo, types);
+  if (opts.repair && commentsContainerId && !tried.has(`sweep:${essayId}`)) {
+    try {
+      const filed = new Set(
+        getContainerOutline(repo, commentsContainerId).entries.map((e) => e.instanceId)
+      );
+      for (const id of Object.keys(paragraphs))
+        for (const c of comments[id] ?? [])
+          if (!filed.has(c.id)) {
+            addContainerMember(repo, commentsContainerId, c.id);
+            filed.add(c.id);
+          }
+    } catch (e) {
+      tried.add(`sweep:${essayId}`); // stop retrying on every reload
+      repairError ??= e instanceof Error ? e.message : String(e);
+    }
+  }
+  const references: Reference[] = referencesContainerId
+    ? listRecords(repo, { containerId: referencesContainerId }).map((r) => ({
+        id: r.instanceId,
+        label: r.displayLabel || r.instanceId,
+        typeName: r.typeName ?? "",
+        paragraphIds: Object.keys(context.attachments).filter((pid) =>
+          context.attachments[pid].some((a) => a.neighbourId === r.instanceId)
+        ),
+      }))
+    : [];
   const hiddenRaw = state?.fieldValues.hidden_instance_ids;
   return {
     essayId,
-    title: str(essay.fieldValues.title) || "Untitled essay",
-    purpose: hasPurposeField(repo, types) ? str(essay.fieldValues.purpose) : null,
+    title,
+    purpose: hasField(repo, types, ESSAY_TYPE_ID, "purpose")
+      ? str(essay.fieldValues.purpose)
+      : null,
     containerId,
     entries,
     paragraphs,
@@ -289,7 +375,13 @@ export function loadEssay(repo: SrsRepository, essayId: string): EssayModel {
     draftEntries,
     binContainerId,
     binEntries,
-    comments: loadComments(repo, types),
+    repairError,
+    commentsContainerId,
+    referencesContainerId,
+    references,
+    bundleContainerId: str(state?.fieldValues.bundle_container_id) || null,
+    canSnapshot: !!state && hasField(repo, types, DOCUMENT_STATE_TYPE_ID, "bundle_container_id"),
+    comments,
     attachments: context.attachments,
     related: context.related,
     sharedIn: loadSharedIn(repo, types, Object.keys(paragraphs), [
@@ -339,39 +431,76 @@ export const setEssayPurpose = (repo: SrsRepository, essayId: string, purpose: s
   patchRecord(repo, essayId, { purpose });
 
 /**
- * The short markdown the writer pastes into an agent (srs-web#411): what the essay is for, where
- * to read it (MCP resources) and the rules. `focus` = the paragraph (or zoom target) to look at.
+ * The markdown the writer pastes into an agent (srs-web#411, #498): what the essay is for, the
+ * ids of everything it consists of, where to read it (MCP resources) and the rules for working on
+ * it. `focus` = the paragraph (or zoom target) to look at. Lines for absent ids are omitted.
  */
 export function agentHandoff(a: {
   repositoryId: string;
   essay: { id: string; title: string };
   containerId: string;
   purpose?: string | null;
+  stateId?: string | null;
+  draftContainerId?: string | null;
+  binContainerId?: string | null;
+  commentsContainerId?: string | null;
+  referencesContainerId?: string | null;
+  /** The snapshot bundle, once an Export snapshot has made one. */
+  bundleContainerId?: string | null;
   focus?: { id: string; title: string };
 }): string {
   const uri = `srs://${a.repositoryId}`;
+  const containers = [
+    `essay ${a.containerId} (the text, in order)`,
+    a.draftContainerId && `draft ${a.draftContainerId}`,
+    a.binContainerId && `bin ${a.binContainerId}`,
+    a.commentsContainerId && `comments ${a.commentsContainerId}`,
+    a.referencesContainerId && `references ${a.referencesContainerId}`,
+  ].filter(Boolean);
+  const c = a.commentsContainerId;
+  const r = a.referencesContainerId;
   return [
     `# Essay: ${a.essay.title}`,
     ...(a.purpose?.trim() ? [`Purpose: ${a.purpose.trim()}`] : []),
-    `Repository ${a.repositoryId}, essay record ${a.essay.id}, container ${a.containerId}.`,
-    `Read: ${uri}/container/${a.containerId}`,
+    `Repository ${a.repositoryId}. Essay record ${a.essay.id}${a.stateId ? `, document-state ${a.stateId}` : ""}.`,
+    `Containers: ${containers.join(" · ")}`,
+    `Read the essay: ${uri}/container/${a.containerId} · one paragraph: ${uri}/context/${a.containerId}/<paragraphId>`,
+    ...(a.bundleContainerId ? [`Snapshot bundle: ${uri}/container/${a.bundleContainerId}`] : []),
     ...(a.focus
       ? [
-          `Focus: "${a.focus.title}" (paragraph ${a.focus.id})`,
-          `Read: ${uri}/context/${a.containerId}/${a.focus.id}`,
+          `Focus: "${a.focus.title}" (paragraph ${a.focus.id}) · ${uri}/context/${a.containerId}/${a.focus.id}`,
         ]
       : []),
-    "The text is the writer's: comment and attach, never edit it.",
+    "",
+    "How to work on this essay",
+    `- The text is the writer's. Never edit a paragraph body, the essay title or purpose, or any container except comments and references: the engine refuses these writes.`,
+    `- Comment: record_create com.mudemocracy.essay/comment {comment_text}${c ? ` with containerId ${c}` : ""}, then relation_create com.mudemocracy.essay/comments-on from the comment to the paragraph. One comment per paragraph per point. Don't write an author: your session's identity is stamped.`,
+    `- Gather: a source, claim or problem worth having for this essay goes in references: create it${r ? ` with containerId ${r}` : ""}, or container_member_add an existing one. Read references first so you don't duplicate.`,
+    "- Attach: link a reference to a paragraph with com.mudemocracy.essay/bears-on (paragraph → problem), evidences (source or claim → paragraph, supports) or com.mudemocracy.essay/counters (source or claim → paragraph, opposes).",
+    "- Titles: you may set paragraph_title only where it is empty.",
+    "- Before creating a record of any type, read its type_schema; the aiGuidance there is authoritative.",
   ].join("\n");
 }
 
 /** A side area's container title (draft / bin), from its essay's (one convention for new, copy and rename). */
-const areaTitle = (title: string, area: "draft" | "bin"): string => `${title} (${area})`;
+const areaTitle = (
+  title: string,
+  area: "draft" | "bin" | "snapshot" | "comments" | "references"
+): string => `${title} (${area})`;
 
 /** Rename the essay record and its containers (the document's, its draft's and its bin's). */
 export function setEssayTitle(
   repo: SrsRepository,
-  m: Pick<EssayModel, "essayId" | "containerId" | "draftContainerId" | "binContainerId">,
+  m: Pick<
+    EssayModel,
+    | "essayId"
+    | "containerId"
+    | "draftContainerId"
+    | "binContainerId"
+    | "bundleContainerId"
+    | "commentsContainerId"
+    | "referencesContainerId"
+  >,
   title: string
 ): void {
   patchRecord(repo, m.essayId, { title });
@@ -379,6 +508,12 @@ export function setEssayTitle(
   if (m.draftContainerId)
     updateContainer(repo, m.draftContainerId, { title: areaTitle(title, "draft") });
   if (m.binContainerId) updateContainer(repo, m.binContainerId, { title: areaTitle(title, "bin") });
+  if (m.bundleContainerId)
+    updateContainer(repo, m.bundleContainerId, { title: areaTitle(title, "snapshot") });
+  if (m.commentsContainerId)
+    updateContainer(repo, m.commentsContainerId, { title: areaTitle(title, "comments") });
+  if (m.referencesContainerId)
+    updateContainer(repo, m.referencesContainerId, { title: areaTitle(title, "references") });
 }
 export const setTitle = (repo: SrsRepository, id: string, title: string): void =>
   patchRecord(repo, id, { paragraph_title: title });
@@ -386,6 +521,12 @@ export const setTitle = (repo: SrsRepository, id: string, title: string): void =
 /** Remove an attached record's link to a paragraph (the relation only; the neighbour stays). */
 export const removeAttachment = (repo: SrsRepository, relationId: string): void =>
   deleteRelation(repo, relationId);
+
+/** Take a reference out of the essay's references container: the membership only, never the record. */
+export function removeReference(repo: SrsRepository, m: EssayModel, id: string): void {
+  if (!m.referencesContainerId) throw new Error("This essay has no references container");
+  removeContainerMember(repo, m.referencesContainerId, id);
+}
 
 /** Hide / show a paragraph in place: editor-only state held in the document-state record. */
 export function setHidden(repo: SrsRepository, m: EssayModel, id: string, hidden: boolean): void {
@@ -489,12 +630,100 @@ export function deleteForever(repo: SrsRepository, m: EssayModel, id: string): v
   }
 }
 
-/** The editor's own state for an essay: a draft container + the document-state record. */
-function addEditorState(repo: SrsRepository, essayId: string, title: string): void {
+/** Essays already repaired (or attempted) per repository handle, so a failing repair is not retried by the reload it causes. */
+const repairedCache = new WeakMap<object, Set<string>>();
+const repairTried = (repo: SrsRepository): Set<string> => {
+  const hit = repairedCache.get(repo) ?? new Set<string>();
+  repairedCache.set(repo, hit);
+  return hit;
+};
+
+/** Namespace of the deterministic area-container ids (UUIDv5 of `<essayId>:<area>`). */
+const AREA_NS = "5d1f3c0e-8f0a-4b8e-9a53-2d6c1e7b4a90";
+
+/**
+ * The container with this deterministic id: created if absent, re-read if a second tab (or an
+ * earlier partial repair) already made it. Same id on every client = no duplicate containers.
+ */
+function ensureContainer(repo: SrsRepository, containerId: string, title: string): string {
+  try {
+    getContainer(repo, containerId);
+    return containerId;
+  } catch {
+    /* absent: create it */
+  }
+  try {
+    return createContainer(repo, { containerId, title }).containerId;
+  } catch (e) {
+    try {
+      getContainer(repo, containerId); // lost a race: it exists now
+      return containerId;
+    } catch {
+      throw e;
+    }
+  }
+}
+
+/**
+ * Create the comments / references containers the installed document-state type can record
+ * (essay package 1.7.0; feature-detected, so an older package gets none) and return their ids
+ * keyed by state field. `have` = the state's existing values: those areas are left alone.
+ */
+function newAreas(
+  repo: SrsRepository,
+  types: TypeSummary[],
+  essayId: string,
+  title: string,
+  have: Record<string, unknown> = {}
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [field, area] of [
+    ["comments_container_id", "comments"],
+    ["references_container_id", "references"],
+  ] as const)
+    if (!str(have[field]) && hasField(repo, types, DOCUMENT_STATE_TYPE_ID, field))
+      out[field] = ensureContainer(
+        repo,
+        uuid5(AREA_NS, `${essayId}:${area}`),
+        areaTitle(title, area)
+      );
+  return out;
+}
+
+/**
+ * The editor's own state for an essay: a draft container, the comments and references containers
+ * + the document-state record. The record's own id is random (record create takes no id), so two
+ * tabs repairing at once could still make two states; the containers are deterministic.
+ */
+function addEditorState(
+  repo: SrsRepository,
+  types: TypeSummary[],
+  essayId: string,
+  title: string
+): SrsRecord {
   const draft = createContainer(repo, { title: areaTitle(title, "draft") });
-  createRecord(repo, DOCUMENT_STATE_TYPE_ID, typeVersion(repo, DOCUMENT_STATE_TYPE_ID), {
-    fieldValues: { essay: essayId, hidden_instance_ids: [], draft_container_id: draft.containerId },
+  return createRecord(repo, DOCUMENT_STATE_TYPE_ID, typeVersion(repo, DOCUMENT_STATE_TYPE_ID), {
+    fieldValues: {
+      essay: essayId,
+      hidden_instance_ids: [],
+      draft_container_id: draft.containerId,
+      ...newAreas(repo, types, essayId, title),
+    },
   });
+}
+
+/** An older essay's state record lacking either new container: create it lazily (as the Bin is) and record it. */
+function repairAreas(
+  repo: SrsRepository,
+  types: TypeSummary[],
+  state: SrsRecord,
+  title: string,
+  essayId: string
+): SrsRecord {
+  const missing = newAreas(repo, types, essayId, title, state.fieldValues);
+  if (!Object.keys(missing).length) return state;
+  patchRecord(repo, state.instanceId, missing, typeVersion(repo, DOCUMENT_STATE_TYPE_ID));
+  return { ...state, fieldValues: { ...state.fieldValues, ...missing } };
 }
 
 /** New essay: record + container (+ draft container + state).. */
@@ -508,7 +737,7 @@ export function newEssay(repo: SrsRepository, title: string): string {
     identityInstanceId: essay.instanceId,
     memberInstanceIds: [{ instanceId: essay.instanceId }],
   });
-  addEditorState(repo, essay.instanceId, title);
+  addEditorState(repo, listTypes(repo), essay.instanceId, title);
   return essay.instanceId;
 }
 
@@ -523,7 +752,7 @@ export function copyEssay(repo: SrsRepository, m: EssayModel): string {
   const essayId = copy.container.anchorInstanceId;
   if (!essayId) throw new Error("The copied document has no essay record");
   patchRecord(repo, essayId, { title }); // copyContainer already titled the container
-  addEditorState(repo, essayId, title);
+  addEditorState(repo, listTypes(repo), essayId, title);
   return essayId;
 }
 
@@ -550,4 +779,88 @@ export function essayMarkdown(repo: SrsRepository, m: EssayModel): string {
   const hidden = new Set(m.hidden);
   const exclude = [...hidden, ...hiddenByAncestor(m.entries, hidden), m.essayId];
   return renderDocumentView(repo, view.id, "markdown", m.containerId, null, exclude).rendered;
+}
+
+/**
+ * (Re)declare the snapshot bundle (srs-web#417): its `childContainerIds` are the essay, draft and
+ * bin, comments and references containers (RFC-034 I-151: their paragraphs, comments and gathered
+ * references come with them) and its own members the essay record, document-state, (on a package
+ * without a comments container) this essay's comments, and the one-hop non-structural
+ * neighbours of its paragraphs (problems, sources, claims). Created on first use and linked from
+ * document-state; later refreshes apply only the difference. Membership is declared here, never
+ * derived. Returns the bundle's container id.
+ */
+export function refreshBundle(repo: SrsRepository, m: EssayModel): string {
+  if (!m.stateId || !m.canSnapshot)
+    throw new Error("This essay's package cannot record a snapshot bundle.");
+  // The comments and references containers are children: they carry every comment and the gathered
+  // references (linked to a paragraph or not); the attachments loop below stays for older essays.
+  const children = [
+    m.containerId,
+    m.draftContainerId,
+    m.binContainerId,
+    m.commentsContainerId,
+    m.referencesContainerId,
+  ].filter((c): c is string => !!c);
+  const own = new Set<string>([m.essayId, m.stateId]);
+  for (const id of Object.keys(m.paragraphs)) {
+    for (const a of m.attachments[id] ?? []) own.add(a.neighbourId);
+  }
+  // Comments not yet filed in the comments container (a read-only document never sweeps) are members.
+  const filed = new Set(
+    m.commentsContainerId
+      ? getContainerOutline(repo, m.commentsContainerId).entries.map((e) => e.instanceId)
+      : []
+  );
+  for (const id of Object.keys(m.paragraphs))
+    for (const c of m.comments[id] ?? []) if (!filed.has(c.id)) own.add(c.id);
+  let bundle = m.bundleContainerId;
+  if (!bundle) {
+    bundle = createContainer(repo, {
+      title: areaTitle(m.title, "snapshot"),
+      childContainerIds: children,
+      memberInstanceIds: [...own].map((instanceId) => ({ instanceId })),
+    }).containerId;
+    // v1 state records upgrade to the installed type in the same write that records the bundle.
+    patchRecord(
+      repo,
+      m.stateId,
+      { bundle_container_id: bundle },
+      typeVersion(repo, DOCUMENT_STATE_TYPE_ID)
+    );
+    return bundle;
+  }
+  const cur = getContainer(repo, bundle);
+  if (children.join() !== (cur.childContainerIds ?? []).join())
+    updateContainer(repo, bundle, { childContainerIds: children });
+  const have = new Set((cur.memberInstanceIds ?? []).map((e) => e.instanceId));
+  for (const id of have) if (!own.has(id)) removeContainerMember(repo, bundle, id);
+  for (const id of own) if (!have.has(id)) addContainerMember(repo, bundle, id);
+  return bundle;
+}
+
+/** Export snapshot: refresh the bundle, then the core slice of it (`.srs` bytes). Refusals come from the core. */
+export function essaySnapshot(
+  repo: SrsRepository,
+  m: EssayModel
+): { bundleId: string; bytes: Uint8Array<ArrayBuffer> } {
+  const bundleId = refreshBundle(repo, m);
+  return { bundleId, bytes: exportSlice(repo, bundleId) };
+}
+
+/**
+ * Export references (srs-web#278): refresh the bundle, then the core render of the package's
+ * `essay-references` composition for the bundle container (its sections filter the bundle's members
+ * by type). The markdown export stays content only; this is the separate referenced-material export.
+ */
+export function essayReferences(repo: SrsRepository, m: EssayModel): string {
+  const view = listDocumentViews(repo, {
+    namespace: "com.mudemocracy.essay",
+    name: "essay-references",
+  })[0];
+  if (!view)
+    throw new Error(
+      "This repository's essay package has no references composition (needs essay 1.6.0)."
+    );
+  return renderDocumentView(repo, view.id, "markdown", refreshBundle(repo, m)).rendered;
 }

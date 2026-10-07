@@ -17,6 +17,8 @@ const m = vi.hoisted(() => ({
   updateContainer: vi.fn(),
   getRecord: vi.fn(),
   getContainerOutline: vi.fn(),
+  getContainer: vi.fn(),
+  exportSlice: vi.fn(() => new Uint8Array([1])),
   listContainers: vi.fn(() => [{ containerId: "C", title: "t" }]),
   listTypes: vi.fn(() => [
     { id: "0021ef06-4d6b-42fb-af5a-2d53d287138c", namespace: "n", name: "essay", version: 1 },
@@ -39,7 +41,16 @@ const m = vi.hoisted(() => ({
   createRelation: vi.fn(),
   deleteRecord: vi.fn(),
   deleteRelation: vi.fn(),
-  typeSchema: vi.fn(() => ({ schema: { properties: { title: {}, purpose: {} } } })),
+  typeSchema: vi.fn(() => ({
+    schema: {
+      properties: {
+        title: {},
+        purpose: {},
+        comments_container_id: {},
+        references_container_id: {},
+      },
+    },
+  })),
   listRelationTypes: vi.fn(() => [
     { key: "evidences", label: "evidences" },
     { key: "x/counters", label: "counters" },
@@ -54,6 +65,10 @@ import {
   deleteForever,
   loadEssay,
   moveEntry,
+  newEssay,
+  removeReference,
+  essayWriteGuard,
+  refreshBundle,
   removeAttachment,
   setEssayPurpose,
   setEssayTitle,
@@ -382,7 +397,7 @@ describe("essay-document", () => {
       f.typeName === "essay" ? [rec("E", ESSAY_TYPE_ID, { title: "T", purpose: "Why" })] : []
     );
     expect(loadEssay(repo, "E").purpose).toBe("Why");
-    m.typeSchema.mockReturnValue({ schema: { properties: { title: {} } } });
+    m.typeSchema.mockImplementation(() => ({ schema: { properties: { title: {} } } }));
     expect(loadEssay({ write_epoch: () => 0 } as never, "E").purpose).toBeNull();
   });
 
@@ -397,33 +412,53 @@ describe("essay-document", () => {
   });
 });
 
-describe("agentHandoff (srs-web#411)", () => {
+describe("agentHandoff (srs-web#411, #498)", () => {
   const base = {
     repositoryId: "R",
     essay: { id: "E", title: "On small democracy" },
     containerId: "C",
   };
+  const all = {
+    ...base,
+    stateId: "S",
+    draftContainerId: "D",
+    binContainerId: "B",
+    commentsContainerId: "K",
+    referencesContainerId: "F",
+  };
 
-  it("whole essay: title, purpose, ids, the container URI and the rules; no focus", () => {
-    const t = agentHandoff({ ...base, purpose: "Persuade the board." });
-    expect(t).toContain("On small democracy");
+  it("names the document-state and every container, and teaches the rules", () => {
+    const t = agentHandoff({ ...all, purpose: "Persuade the board.", bundleContainerId: "Z" });
+    expect(t).toContain("# Essay: On small democracy");
     expect(t).toContain("Purpose: Persuade the board.");
-    expect(t).toContain("Repository R, essay record E, container C");
-    expect(t).toContain("srs://R/container/C");
-    expect(t).not.toContain("/context/");
-    expect(t).toContain("The text is the writer's: comment and attach, never edit it.");
+    expect(t).toContain("Repository R. Essay record E, document-state S.");
+    expect(t).toContain(
+      "Containers: essay C (the text, in order) · draft D · bin B · comments K · references F"
+    );
+    expect(t).toContain("srs://R/container/C · one paragraph: srs://R/context/C/<paragraphId>");
+    expect(t).toContain("Snapshot bundle: srs://R/container/Z");
+    expect(t).toContain("How to work on this essay");
+    expect(t).toContain("{comment_text} with containerId K, then relation_create");
+    expect(t).toContain("create it with containerId F, or container_member_add");
+    expect(t).toContain("paragraph_title only where it is empty");
+    expect(t).toContain("read its type_schema");
+    expect(t).not.toContain("Focus:");
+    expect(t).not.toContain("\u2014"); // no em dashes
   });
 
-  it("with a focus: its title, id and context URI; stays short", () => {
-    const t = agentHandoff({ ...base, purpose: "P", focus: { id: "p1", title: "Opening" } });
-    expect(t).toContain('"Opening" (paragraph p1)');
-    expect(t).toContain("srs://R/context/C/p1");
-    expect(t.split("\n").length).toBeLessThanOrEqual(15);
+  it("with a focus: its title, id and context URI", () => {
+    const t = agentHandoff({ ...all, focus: { id: "p1", title: "Opening" } });
+    expect(t).toContain('Focus: "Opening" (paragraph p1) · srs://R/context/C/p1');
   });
 
-  it("no purpose: the line is left out", () => {
-    expect(agentHandoff({ ...base, purpose: "" })).not.toContain("Purpose");
-    expect(agentHandoff({ ...base, purpose: null })).not.toContain("Purpose");
+  it("lines for absent ids are omitted", () => {
+    const t = agentHandoff(base);
+    expect(t).toContain("Repository R. Essay record E.");
+    expect(t).toContain("Containers: essay C (the text, in order)");
+    expect(t).not.toMatch(
+      /draft|bin |comments [A-Z0-9]|references [A-Z0-9]|document-state|Snapshot|Purpose/
+    );
+    expect(t).toContain("record_create com.mudemocracy.essay/comment {comment_text}, then");
   });
 });
 
@@ -449,5 +484,361 @@ describe("essayMarkdown (srs-web#416)", () => {
       "g1",
       "E",
     ]);
+  });
+});
+
+describe("refreshBundle (srs-web#417)", () => {
+  // biome-ignore lint/suspicious/noExplicitAny: a hand-built model with only what the refresh reads
+  const model = (over: Record<string, unknown> = {}): any => ({
+    essayId: "E",
+    title: "T",
+    containerId: "C",
+    draftContainerId: "D",
+    binContainerId: null,
+    stateId: "S",
+    canSnapshot: true,
+    bundleContainerId: null,
+    paragraphs: { p1: {}, p2: {} },
+    comments: { p1: [{ id: "c1" }] },
+    attachments: { p2: [{ neighbourId: "prob" }] },
+    ...over,
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    m.getRecord.mockReturnValue({ instanceId: "S", fieldValues: { essay: "E" } });
+  });
+
+  it("first use: creates the bundle declaring the containers as children and the records as members, and links it from the state", () => {
+    m.createContainer.mockReturnValue({ containerId: "B" });
+    expect(refreshBundle({} as never, model())).toBe("B");
+    const input = m.createContainer.mock.calls[0][1];
+    expect(input.childContainerIds).toEqual(["C", "D"]);
+    expect(input.memberInstanceIds.map((e: { instanceId: string }) => e.instanceId).sort()).toEqual(
+      ["E", "S", "c1", "prob"]
+    );
+    expect(m.updateRecord.mock.calls[0][2].fieldValues.bundle_container_id).toBe("B");
+  });
+
+  it("later: applies only the difference with the member ops, and children once", () => {
+    m.getContainer.mockReturnValue({
+      childContainerIds: ["C", "D"],
+      memberInstanceIds: [{ instanceId: "E" }, { instanceId: "S" }, { instanceId: "gone" }],
+    });
+    refreshBundle({} as never, model({ bundleContainerId: "B" }));
+    expect(m.createContainer).not.toHaveBeenCalled();
+    expect(m.updateContainer).not.toHaveBeenCalled();
+    expect(m.removeContainerMember).toHaveBeenCalledWith(expect.anything(), "B", "gone");
+    expect(m.addContainerMember.mock.calls.map((c) => c[2]).sort()).toEqual(["c1", "prob"]);
+  });
+
+  it("a new bin is declared as a child on the next refresh", () => {
+    m.getContainer.mockReturnValue({ childContainerIds: ["C", "D"], memberInstanceIds: [] });
+    refreshBundle({} as never, model({ bundleContainerId: "B", binContainerId: "X" }));
+    expect(m.updateContainer).toHaveBeenCalledWith(expect.anything(), "B", {
+      childContainerIds: ["C", "D", "X"],
+    });
+  });
+
+  it("refuses when the package cannot record a bundle", () => {
+    expect(() => refreshBundle({} as never, model({ canSnapshot: false }))).toThrow();
+  });
+});
+
+describe("essayReferences (srs-web#278)", () => {
+  it("refreshes the bundle, then renders the essay-references composition for it", async () => {
+    const { essayReferences } = await import("../src/lib/essay/essay-document.js");
+    vi.clearAllMocks();
+    m.getContainer.mockReturnValue({ childContainerIds: ["C"], memberInstanceIds: [] });
+    m.getRecord.mockReturnValue({ instanceId: "S", fieldValues: { essay: "E" } });
+    // biome-ignore lint/suspicious/noExplicitAny: a hand-built model with only what the refresh reads
+    const model: any = {
+      essayId: "E",
+      title: "T",
+      containerId: "C",
+      draftContainerId: null,
+      binContainerId: null,
+      stateId: "S",
+      canSnapshot: true,
+      bundleContainerId: "B",
+      paragraphs: {},
+      comments: {},
+      attachments: {},
+    };
+    expect(essayReferences({} as never, model)).toBe("# T\n");
+    expect(m.listDocumentViews).toHaveBeenCalledWith(expect.anything(), {
+      namespace: "com.mudemocracy.essay",
+      name: "essay-references",
+    });
+    expect(m.renderDocumentView).toHaveBeenCalledWith({}, "V", "markdown", "B");
+  });
+
+  it("says so when the package predates the composition", async () => {
+    const { essayReferences } = await import("../src/lib/essay/essay-document.js");
+    m.listDocumentViews.mockReturnValueOnce([]);
+    expect(() =>
+      essayReferences({} as never, { canSnapshot: true, stateId: "S" } as never)
+    ).toThrow(/1\.6\.0/);
+  });
+});
+
+describe("comments and references containers (srs-web#494, #495, #496)", () => {
+  const repo = () => ({ write_epoch: () => 0 }) as never;
+  beforeEach(() => {
+    // clearAllMocks keeps implementations: put back the defaults these tests override.
+    m.typeSchema.mockImplementation(() => ({
+      schema: {
+        properties: {
+          title: {},
+          purpose: {},
+          comments_container_id: {},
+          references_container_id: {},
+        },
+      },
+    }));
+    m.createRecord.mockImplementation((() => ({ instanceId: "new" })) as never);
+    m.createContainer.mockReset();
+    m.getContainer.mockReset();
+    m.getContainer.mockImplementation(() => {
+      throw new Error("no such container");
+    });
+    m.listRelations.mockReturnValue([]);
+    m.contextRecord.mockReturnValue({ relations: [] });
+    m.addContainerMember.mockReset();
+  });
+  const stateRec = (extra: Record<string, unknown> = {}) =>
+    rec("S", DOCUMENT_STATE_TYPE_ID, {
+      essay: "E",
+      hidden_instance_ids: [],
+      draft_container_id: "D",
+      ...extra,
+    });
+  const withState = (state: unknown[]) => {
+    const base = m.listRecords.getMockImplementation() as (r: unknown, f: unknown) => unknown;
+    m.listRecords.mockImplementation((r: unknown, f: { typeName?: string }) =>
+      f.typeName === "document-state" ? state : base(r, f)
+    );
+    return m.listRecords.getMockImplementation() as (r: unknown, f: unknown) => unknown;
+  };
+
+  it("a new essay creates both containers and records their ids on the state", () => {
+    let n = 0;
+    m.createContainer.mockImplementation(({ title }: { title: string }) => ({
+      containerId: `k${++n}`,
+      title,
+    }));
+    newEssay(repo(), "T");
+    expect(m.createContainer.mock.calls.map((c) => c[1].title)).toEqual([
+      "T",
+      "T (draft)",
+      "T (comments)",
+      "T (references)",
+    ]);
+    const state = m.createRecord.mock.calls.at(-1) as unknown[];
+    expect((state[3] as { fieldValues: unknown }).fieldValues).toEqual({
+      essay: "new",
+      hidden_instance_ids: [],
+      draft_container_id: "k2",
+      comments_container_id: "k3",
+      references_container_id: "k4",
+    });
+  });
+
+  it("an older state type without the fields gets no containers (feature-detected)", () => {
+    m.typeSchema.mockImplementation(() => ({ schema: { properties: { title: {} } } }));
+    m.createContainer.mockReturnValue({ containerId: "k" });
+    newEssay(repo(), "T");
+    expect(m.createContainer).toHaveBeenCalledTimes(2); // essay + draft only
+  });
+
+  it("repair: an essay with no document-state gets one on load; a read-only load writes nothing", () => {
+    withState([]);
+    let n = 0;
+    m.createContainer.mockImplementation(() => ({ containerId: `k${++n}` }));
+    m.createRecord.mockImplementation(((
+      _r: unknown,
+      _t: string,
+      _v: number,
+      i: { fieldValues: unknown }
+    ) => ({
+      instanceId: "S2",
+      fieldValues: i.fieldValues,
+    })) as never);
+    expect(loadEssay(repo(), "E").stateId).toBeNull();
+    expect(m.createRecord).not.toHaveBeenCalled();
+    const model = loadEssay(repo(), "E", { repair: true });
+    expect(model.stateId).toBe("S2");
+    expect(model.draftContainerId).toBe("k1");
+    expect(model.commentsContainerId).toBe("k2");
+    expect(model.referencesContainerId).toBe("k3");
+  });
+
+  it("repair: a state missing either container creates it lazily, and a second load is a no-op", () => {
+    let n = 0;
+    m.createContainer.mockImplementation(() => ({ containerId: `k${++n}` }));
+    const model = loadEssay(repo(), "E", { repair: true });
+    expect(model.commentsContainerId).toBe("k1");
+    expect(model.referencesContainerId).toBe("k2");
+    expect(m.updateRecord).toHaveBeenCalledOnce();
+    expect(m.updateRecord.mock.calls[0][2]).toMatchObject({
+      typeVersion: 1,
+      fieldValues: { comments_container_id: "k1", references_container_id: "k2" },
+    });
+    vi.clearAllMocks();
+    withState([stateRec({ comments_container_id: "K", references_container_id: "F" })]);
+    m.getContainerOutline.mockReturnValue({ entries: [], body: [] });
+    loadEssay(repo(), "E", { repair: true });
+    expect(m.createContainer).not.toHaveBeenCalled();
+    expect(m.updateRecord).not.toHaveBeenCalled();
+  });
+
+  it("sweep: files a linked comment that is not in the comments container; never removes; a second load adds nothing", () => {
+    m.listTypes.mockReturnValue([
+      ...m.listTypes(),
+      { id: COMMENT_TYPE_ID, namespace: "n", name: "comment", version: 1 },
+    ]);
+    const base = withState([
+      stateRec({ comments_container_id: "K", references_container_id: "F" }),
+    ]);
+    const c = (id: string) => ({
+      ...rec(id, COMMENT_TYPE_ID, { comment_text: id }),
+      createdAt: id,
+    });
+    m.listRecords.mockImplementation((r: unknown, f: { typeName?: string }) =>
+      f.typeName === "comment"
+        ? [c("c1"), c("c2")]
+        : (base as (r: unknown, f: unknown) => unknown)(r, f)
+    );
+    m.listRelations.mockReturnValue([
+      { relationId: "r1", sourceInstanceId: "c1", targetInstanceId: "p1" },
+      { relationId: "r2", sourceInstanceId: "c2", targetInstanceId: "p1" },
+    ]);
+    const filed = [{ instanceId: "c1" }, { instanceId: "stray" }];
+    m.getContainerOutline.mockImplementation((_r: unknown, id: string) =>
+      id === "K" ? { entries: filed, body: filed } : { entries: [], body: [] }
+    );
+    m.addContainerMember.mockImplementation((_r: unknown, k: string, id: string) => {
+      if (k === "K") filed.push({ instanceId: id });
+    });
+    loadEssay(repo(), "E");
+    expect(m.addContainerMember).not.toHaveBeenCalled(); // read-only load: no sweep
+    loadEssay(repo(), "E", { repair: true });
+    expect(m.addContainerMember.mock.calls).toEqual([[expect.anything(), "K", "c2"]]);
+    expect(m.removeContainerMember).not.toHaveBeenCalled();
+    m.addContainerMember.mockClear();
+    loadEssay(repo(), "E", { repair: true });
+    expect(m.addContainerMember).not.toHaveBeenCalled();
+  });
+
+  it("references carry the paragraphs they are linked to; an unlinked one has none", () => {
+    const base = withState([
+      stateRec({ comments_container_id: "K", references_container_id: "F" }),
+    ]);
+    m.listRecords.mockImplementation((r: unknown, f: { containerId?: string }) =>
+      f.containerId === "F"
+        ? [
+            { ...rec("s1", "t", {}), displayLabel: "Linked source", typeName: "source" },
+            { ...rec("s2", "t", {}), displayLabel: "Loose claim", typeName: "claim" },
+          ]
+        : (base as (r: unknown, f: unknown) => unknown)(r, f)
+    );
+    const note = { kind: "note", instanceId: "s1", title: "N", sections: [] };
+    m.contextRecord.mockImplementation((_r: unknown, id: string) => ({
+      relations:
+        id === "p1"
+          ? [
+              {
+                direction: "in",
+                relationId: "a",
+                relationType: "evidences",
+                sourceId: "s1",
+                targetId: "p1",
+                neighbour: note,
+              },
+            ]
+          : [],
+    }));
+    m.getContainerOutline.mockReturnValue({ entries: [], body: [] });
+    const model = loadEssay(repo(), "E");
+    expect(model.references).toEqual([
+      { id: "s1", label: "Linked source", typeName: "source", paragraphIds: ["p1"] },
+      { id: "s2", label: "Loose claim", typeName: "claim", paragraphIds: [] },
+    ]);
+    removeReference({} as never, model, "s2");
+    expect(m.removeContainerMember).toHaveBeenCalledWith(expect.anything(), "F", "s2");
+    expect(m.deleteRecord).not.toHaveBeenCalled();
+  });
+
+  it("the write guard keeps the state record, and leaves the comments and references containers writable", () => {
+    const g = essayWriteGuard({
+      essayId: "E",
+      containerId: "C",
+      stateId: "S",
+      draftContainerId: "D",
+      binContainerId: "B",
+      commentsContainerId: "K",
+      referencesContainerId: "F",
+    } as never);
+    expect(g.instanceIds).toContain("S");
+    expect(g.containerIds).toEqual(["C", "D", "B"]);
+    expect(
+      essayWriteGuard({ essayId: "E", containerId: "C", bundleContainerId: "Z" } as never)
+        .containerIds
+    ).toEqual(["C"]); // the bundle's closure includes comments and references
+  });
+
+  it("the snapshot bundle declares both containers as children and drops the per-comment member loop", () => {
+    m.getRecord.mockReturnValue({ instanceId: "S", fieldValues: { essay: "E" } });
+    m.createContainer.mockReturnValue({ containerId: "Z" });
+    // biome-ignore lint/suspicious/noExplicitAny: hand-built model
+    const model: any = {
+      essayId: "E",
+      title: "T",
+      containerId: "C",
+      draftContainerId: "D",
+      binContainerId: null,
+      commentsContainerId: "K",
+      referencesContainerId: "F",
+      stateId: "S",
+      canSnapshot: true,
+      bundleContainerId: null,
+      paragraphs: { p1: {} },
+      comments: { p1: [{ id: "c0" }, { id: "c1" }] },
+      attachments: { p1: [{ neighbourId: "prob" }] },
+    };
+    m.getContainerOutline.mockReturnValue({ entries: [{ instanceId: "c0" }], body: [] });
+    refreshBundle({} as never, model);
+    const input = m.createContainer.mock.calls[0][1];
+    expect(input.childContainerIds).toEqual(["C", "D", "K", "F"]);
+    expect(input.memberInstanceIds.map((e: { instanceId: string }) => e.instanceId).sort()).toEqual(
+      ["E", "S", "c1", "prob"] // c0 is filed in K; the unfiled c1 (a read-only doc never sweeps) is a member
+    );
+  });
+
+  it("repair is tried once per essay per repo handle: a failure is reported once and not retried", () => {
+    m.createContainer.mockImplementation(() => {
+      throw new Error("boom");
+    });
+    const r = repo();
+    expect(loadEssay(r, "E", { repair: true }).repairError).toBe("boom");
+    expect(loadEssay(r, "E", { repair: true }).repairError).toBeNull();
+    expect(m.createContainer).toHaveBeenCalledTimes(1);
+  });
+
+  it("area containers get deterministic ids; one that already exists is reused, not created again", () => {
+    m.createContainer.mockImplementation(
+      (_r: unknown, { containerId }: { containerId: string }) => ({
+        containerId,
+      })
+    );
+    const a = loadEssay(repo(), "E", { repair: true });
+    const b = loadEssay(repo(), "E", { repair: true }); // a second tab: fresh handle, same state
+    expect(b.commentsContainerId).toBe(a.commentsContainerId);
+    expect(a.commentsContainerId).toMatch(/^[0-9a-f-]{8}-[0-9a-f-]{4}-5/);
+    expect(a.commentsContainerId).not.toBe(a.referencesContainerId);
+    vi.clearAllMocks();
+    m.getContainer.mockReturnValue({ containerId: "x" }); // now they exist
+    loadEssay(repo(), "E", { repair: true });
+    expect(m.createContainer).not.toHaveBeenCalled();
   });
 });

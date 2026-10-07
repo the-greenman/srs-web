@@ -227,9 +227,7 @@ describe("git-data: readBlob / readBlobs", () => {
 
   it("still splits genuinely distinct blobs across multiple GraphQL requests", async () => {
     const contents = Array.from({ length: 350 }, (_, i) => `blob-${i}`);
-    const shas = await Promise.all(
-      contents.map((c) => gitBlobSha(new TextEncoder().encode(c)))
-    );
+    const shas = await Promise.all(contents.map((c) => gitBlobSha(new TextEncoder().encode(c))));
     const shaToText = new Map(shas.map((sha, i) => [sha, contents[i]]));
     const fetchMock = vi.fn().mockImplementation((url: string, init: RequestInit) => {
       expect(url).toBe("https://api.github.com/graphql");
@@ -254,9 +252,7 @@ describe("git-data: readBlob / readBlobs", () => {
 
   it("threads readBlobs' concurrency parameter into the GraphQL batch worker pool", async () => {
     const contents = Array.from({ length: 700 }, (_, i) => `c${i}`); // 3 batches: 300, 300, 100
-    const shas = await Promise.all(
-      contents.map((c) => gitBlobSha(new TextEncoder().encode(c)))
-    );
+    const shas = await Promise.all(contents.map((c) => gitBlobSha(new TextEncoder().encode(c))));
     const shaToText = new Map(shas.map((sha, i) => [sha, contents[i]]));
     let inFlight = 0;
     let maxInFlight = 0;

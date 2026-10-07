@@ -11,7 +11,9 @@ describe("copyText", () => {
     expect(writeText).toHaveBeenCalledWith("x");
   });
   it("is false when the write rejects", async () => {
-    vi.stubGlobal("navigator", { clipboard: { writeText: vi.fn().mockRejectedValue(new Error("no")) } });
+    vi.stubGlobal("navigator", {
+      clipboard: { writeText: vi.fn().mockRejectedValue(new Error("no")) },
+    });
     expect(await copyText("x")).toBe(false);
   });
   it("is false, not a throw, without navigator.clipboard", async () => {

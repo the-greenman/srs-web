@@ -197,3 +197,35 @@ describe("SourceChooser — auto-scan", () => {
     expect(providers.dropbox.scanForSrs).toHaveBeenLastCalledWith("", "explicit", rootListing);
   });
 });
+
+describe("SourceChooser — open from a URL", () => {
+  const setup = (onOpenUrl: (u: string) => Promise<void>) =>
+    render(SourceChooser, { providers: makeProviders(), onOpen: vi.fn(), onOpenUrl });
+
+  it("is disabled while empty or not a URL, and submits the trimmed link", async () => {
+    const onOpenUrl = vi.fn().mockResolvedValue(undefined);
+    const { getByTestId } = setup(onOpenUrl);
+    const input = getByTestId("source-url-input") as HTMLInputElement;
+    const button = getByTestId("source-url") as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    await fireEvent.input(input, { target: { value: "not a url" } });
+    expect(button.disabled).toBe(true);
+    await fireEvent.input(input, { target: { value: " https://x.test/a.srs " } });
+    expect(button.disabled).toBe(false);
+    await fireEvent.submit(input.form!);
+    expect(onOpenUrl).toHaveBeenCalledWith("https://x.test/a.srs");
+  });
+
+  it("shows the loader's refusal inline", async () => {
+    const { getByTestId, findByText } = setup(() => Promise.reject(new Error("Only https:// links can be opened.")));
+    const input = getByTestId("source-url-input") as HTMLInputElement;
+    await fireEvent.input(input, { target: { value: "http://x.test/a.srs" } });
+    await fireEvent.submit(input.form!);
+    expect(await findByText("Only https:// links can be opened.")).toBeTruthy();
+  });
+
+  it("is absent without onOpenUrl", () => {
+    const { queryByTestId } = render(SourceChooser, { providers: makeProviders(), onOpen: vi.fn() });
+    expect(queryByTestId("source-url")).toBeNull();
+  });
+});

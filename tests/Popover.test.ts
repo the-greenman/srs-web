@@ -68,11 +68,12 @@ it("a stale 'closed' toggle after a reopen is ignored; a genuine close still clo
   Object.assign(HTMLElement.prototype, { showPopover: vi.fn(), hidePopover: vi.fn() });
   let shown = true; // the surface's actual DOM state (:popover-open)
   const real = HTMLElement.prototype.matches;
-  const spy = vi
-    .spyOn(HTMLElement.prototype, "matches")
-    .mockImplementation(function (this: HTMLElement, q: string) {
-      return q === ":popover-open" ? shown : real.call(this, q);
-    });
+  const spy = vi.spyOn(HTMLElement.prototype, "matches").mockImplementation(function (
+    this: HTMLElement,
+    q: string
+  ) {
+    return q === ":popover-open" ? shown : real.call(this, q);
+  });
   const { getByRole, container } = render(PopoverHost, { label: "Things", open: true });
   await tick();
   const surface = container.querySelector<HTMLElement>('[data-part="surface"]')!;

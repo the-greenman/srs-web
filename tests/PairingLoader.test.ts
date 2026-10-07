@@ -8,7 +8,11 @@ import { toasts } from "../src/lib/notices.svelte";
 import Host from "./PairingLoaderHost.svelte";
 
 const T0 = Date.parse("2026-01-01T00:00:00Z");
-const res = (code: string, expiresAt: number) => ({ code, expiresAt, connectorUrl: "https://r/call" });
+const res = (code: string, expiresAt: number) => ({
+  code,
+  expiresAt,
+  connectorUrl: "https://r/call",
+});
 let host: HTMLElement;
 const mount = (pair: () => Promise<ReturnType<typeof res>>, now = T0) => {
   const r = render(Host, { pair, now });
@@ -33,7 +37,10 @@ afterEach(() => {
 
 describe("PairingLoader", () => {
   it("calls pair once on mount and refreshes once at expiresAt", async () => {
-    const pair = vi.fn().mockResolvedValueOnce(res("AAAAA-AAAAA", T0 + 60_000)).mockResolvedValue(res("BBBBB-BBBBB", T0 + 660_000));
+    const pair = vi
+      .fn()
+      .mockResolvedValueOnce(res("AAAAA-AAAAA", T0 + 60_000))
+      .mockResolvedValue(res("BBBBB-BBBBB", T0 + 660_000));
     mount(pair);
     await tick(0);
     expect(pair).toHaveBeenCalledTimes(1);
@@ -111,7 +118,10 @@ describe("PairingLoader", () => {
   });
 
   it("does not auto-retry a failure while no code is held; Retry does", async () => {
-    const pair = vi.fn().mockRejectedValueOnce(new Error("pairing failed: 500")).mockResolvedValue(res("AAAAA-AAAAA", T0 + 600_000));
+    const pair = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("pairing failed: 500"))
+      .mockResolvedValue(res("AAAAA-AAAAA", T0 + 600_000));
     const { getByTestId } = mount(pair);
     await tick(60_000);
     expect(pair).toHaveBeenCalledTimes(1);

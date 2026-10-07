@@ -4,13 +4,20 @@
  * shell-actions.ts (one definition), and no shell imports another's registry.
  */
 import type { ToolbarAction } from "../components/menu-action.js";
-import { agentsAction, wideAction } from "../components/shell-actions.js";
+import {
+  agentsAction,
+  openAnotherAction,
+  saveAction,
+  wideAction,
+} from "../components/shell-actions.js";
 import type { ShellState } from "../shell-context.svelte.js";
 
 export interface GenericHandlers {
   /** Absent while the document cannot be saved (read-only): no Save is offered. */
   onsave?: () => void;
   onexport: () => void;
+  /** Present only while the document is read-only (#471): Document > Save a copy… (kept out of the bar). */
+  onsavecopy?: () => void;
   onopenanother: () => void;
   /** Absent when the shell cannot open the agent library. */
   onopenagents?: () => void;
@@ -23,15 +30,7 @@ export function genericActions(
   s: { shell: ShellState; saving: boolean; dirty: boolean; fullPreview: boolean }
 ): ToolbarAction[] {
   const all: (ToolbarAction | false | undefined)[] = [
-    !!h.onsave && {
-      id: "save",
-      group: "document",
-      kind: "primary",
-      label: s.saving ? "Saving…" : "Save",
-      run: h.onsave,
-      enabled: !s.saving && s.dirty,
-      testid: "save-document",
-    },
+    !!h.onsave && saveAction(h.onsave, { saving: s.saving, enabled: !s.saving && s.dirty }),
     {
       id: "export",
       group: "document",
@@ -39,6 +38,15 @@ export function genericActions(
       label: "Export",
       run: h.onexport,
       enabled: true,
+    },
+    !!h.onsavecopy && {
+      id: "save-copy",
+      group: "document",
+      kind: "action",
+      label: "Save a copy…",
+      run: h.onsavecopy,
+      enabled: true,
+      testid: "save-copy",
     },
     !!h.onpreview && {
       id: "preview",
@@ -52,14 +60,7 @@ export function genericActions(
     },
     wideAction(s.shell),
     !!h.onopenagents && agentsAction(h.onopenagents),
-    {
-      id: "other",
-      group: "go",
-      kind: "action",
-      label: "Open another",
-      run: h.onopenanother,
-      enabled: true,
-    },
+    openAnotherAction(h.onopenanother),
   ];
   return all.filter((a): a is ToolbarAction => !!a);
 }

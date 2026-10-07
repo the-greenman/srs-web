@@ -45,7 +45,12 @@
   import Main from "$lib/components/Main.svelte";
   import Notice from "$lib/components/Notice.svelte";
   import { notify, toUiDiagnostic } from "$lib/notices.svelte.js";
-  import Topbar from "$lib/components/Topbar.svelte";
+  import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
+  import NavTrigger from "$lib/components/NavTrigger.svelte";
+  import Toolbar from "$lib/components/Toolbar.svelte";
+  import { BASE_GROUPS } from "$lib/components/shell-actions.js";
+  import { ShellState } from "$lib/shell-context.svelte.js";
+  import { governanceActions } from "./toolbar-actions.js";
   import Workspace from "$lib/components/Workspace.svelte";
   import Nav from "$lib/components/Nav.svelte";
   import NavGroup from "$lib/components/NavGroup.svelte";
@@ -105,6 +110,8 @@
      */
     workingCopySaved?: boolean;
     onOpenAnother: () => void;
+    /** Go > Agents…: open the agent library. */
+    onOpenAgents?: () => void;
     /** Part of the common EditorShellProps; unused by this shell. */
     onOpenExplorer?: () => void;
   }
@@ -122,7 +129,10 @@
     onDocumentMutation = () => true,
     workingCopySaved = true,
     onOpenAnother,
+    onOpenAgents,
   }: Props = $props();
+
+  const shell = new ShellState({ wideEnabled: true });
 
   // ---------------------------------------------------------------------------
   // Local types
@@ -294,20 +304,22 @@
    * come from the DocumentView via the core; the client only reads values at the
    * core-provided fieldIds — no field-name semantics in TS.
    */
-  let activeContainerView = $derived.by<ContainerView | null>(() => {
-    if (activeContainerId === null) return null;
-    if (activeContainer?.sectionTypeId === DECISION_TYPE_ID) return null;
+  let activeContainerViewResult = $derived.by<{ view: ContainerView | null; error: string | null }>(() => {
+    if (activeContainerId === null) return { view: null, error: null };
+    if (activeContainer?.sectionTypeId === DECISION_TYPE_ID) return { view: null, error: null };
     try {
       const view = resolveContainerView(repo, activeContainerId);
       if (view.diagnostics.length > 0) {
         console.warn("resolveContainerView diagnostics:", view.diagnostics);
       }
-      return view;
+      // Only `columns` is read here, never `members`: a Tier-0 note member (no `record`) cannot affect the list.
+      return { view, error: null };
     } catch (e: unknown) {
       console.error("resolveContainerView failed:", e);
-      return null;
+      return { view: null, error: e instanceof Error ? e.message : String(e) };
     }
   });
+  let activeContainerView = $derived(activeContainerViewResult.view);
 
   /** Column spec for the active container's list, ordered by the DocumentView's `order`. */
   let activeColumns = $derived(
@@ -542,6 +554,27 @@
   // ---------------------------------------------------------------------------
   // Breadcrumb
   // ---------------------------------------------------------------------------
+
+  const barActions = $derived(
+    governanceActions(
+      {
+        onsave: onSave ? () => void onSave() : undefined,
+        onexport: onExport,
+        onexportsrsj: onExportSrsj,
+        onopenanother: onOpenAnother,
+        onopenagents: onOpenAgents,
+        onnew:
+          activeView === "governance" && formMode === null && activeSectionSchema
+            ? () => {
+                formMode = "create";
+                editingRecord = null;
+              }
+            : undefined,
+        newLabel: activeSectionSchema?.label,
+      },
+      { shell, saving },
+    ),
+  );
 
   function governanceCrumbItems(): BreadcrumbItem[] {
     const items: BreadcrumbItem[] = [{ label: repoName, title: `Opened from ${documentProvider}` }];
@@ -922,17 +955,33 @@
   }
 </script>
 
-<AppShell>
+{#snippet bar()}
+  <Toolbar title={repoName} actions={barActions} groups={BASE_GROUPS}>
+    {#snippet lead()}<NavTrigger />{/snippet}
+    {#snippet titleSlot()}
+      <Breadcrumb items={activeView === "migrations" ? [{ label: repoName }, { label: "Migrations" }] : governanceCrumbItems()} />
+    {/snippet}
+    {#snippet status()}
+      {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
+    {/snippet}
+    {#snippet trail()}<InspectorTrigger />{/snippet}
+  </Toolbar>
+  <!-- The reason is a sentence: a line under the bar rather than in the one-row bar. -->
+  {#if !onSave && readOnlyReason}<Notice kind="info" testid="readonly-reason">{readOnlyReason}</Notice>{/if}
+{/snippet}
+
+<AppShell {shell} navLabel="Governance navigation" inspectorLabel="Record">
   {#snippet nav()}
     <Nav repo={repoName} eyebrow="srs · governance">
       {#snippet children()}
         <NavGroup label="Governance">
           {#each containers as container (container.navKey)}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div
-              onclick={(e) => {
-                e.preventDefault();
+            <NavItem
+              label={container.title}
+              id={container.icon}
+              count={containerRecords[container.containerId]?.length ?? 0}
+              active={activeNavKey === container.navKey}
+              onclick={() => {
                 activeView = "governance";
                 activeContainerId = container.containerId;
                 activeNavKey = container.navKey;
@@ -942,22 +991,15 @@
                 formError = null;
                 showLinkPicker = false;
               }}
-            >
-              <NavItem
-                label={container.title}
-                id={container.icon}
-                count={containerRecords[container.containerId]?.length ?? 0}
-                active={activeNavKey === container.navKey}
-                href="#"
-              />
-            </div>
+            />
           {/each}
         </NavGroup>
         <NavGroup label="Repository">
           {#snippet children()}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div
+            <NavItem
+              label="Migrations"
+              id="M"
+              active={activeView === "migrations"}
               onclick={() => {
                 activeView = "migrations";
                 activeContainerId = null;
@@ -968,14 +1010,7 @@
                 formError = null;
                 showLinkPicker = false;
               }}
-            >
-              <NavItem
-                label="Migrations"
-                id="M"
-                active={activeView === "migrations"}
-                href="#"
-              />
-            </div>
+            />
           {/snippet}
         </NavGroup>
       {/snippet}
@@ -989,42 +1024,7 @@
 
   {#snippet main()}
     {#if activeView === "governance"}
-    <Main>
-      {#snippet bar()}
-        <Topbar>
-          {#snippet crumb()}
-            <Breadcrumb items={governanceCrumbItems()} />
-          {/snippet}
-          {#snippet actions()}
-            {#if formMode === null && activeSectionSchema}
-              <button
-                class="topbar__new"
-                onclick={() => { formMode = "create"; editingRecord = null; }}
-                disabled={saving}
-              >New {activeSectionSchema.label}</button>
-            {/if}
-            {#if onSave}
-              <button
-                class="topbar__export"
-                data-testid="save-document"
-                onclick={onSave}
-                disabled={saving}
-              >{saving ? "Saving…" : "Save"}</button>
-            {:else if readOnlyReason}
-              <span class="topbar__save-message" data-testid="readonly-reason">{readOnlyReason}</span>
-            {/if}
-            {#if documentDirty}
-              <span class="topbar__save-message" data-testid="document-dirty-status">Unsaved changes</span>
-            {/if}
-            <button class="topbar__export" onclick={onExport}>Download .srs</button>
-            {#if onExportSrsj}
-              <button class="topbar__export" onclick={onExportSrsj}>Download .srsj</button>
-            {/if}
-            <button class="topbar__reset" onclick={onOpenAnother}>Open another file</button>
-          {/snippet}
-        </Topbar>
-      {/snippet}
-
+    <Main {bar}>
       {#if warnCount > 0 && errorCount === 0}
         <Notice kind="warning" testid="size-warning">
           {warnCount} size warning{warnCount === 1 ? "" : "s"} — see Repository panel for details.
@@ -1065,8 +1065,9 @@
               <span class="section-heading__count">{activeRecords.length}</span>
             </div>
 
+            {#if activeContainerViewResult.error}<Notice kind="error" testid="container-view-error">{activeContainerViewResult.error}</Notice>{/if}
             {#if activeRecords.length === 0}
-              <p class="empty-state">No {activeContainer?.title?.toLowerCase() ?? ""} records in this repository.</p>
+              <p class="governance-empty-state">No {activeContainer?.title?.toLowerCase() ?? ""} records in this repository.</p>
             {:else}
               <div class="record-list">
                 {#each activeRecords as record (record.instanceId)}
@@ -1106,14 +1107,7 @@
       </Workspace>
     </Main>
     {:else if activeView === "migrations"}
-    <Main>
-      {#snippet bar()}
-        <Topbar>
-          {#snippet crumb()}
-            <Breadcrumb items={[{ label: repoName }, { label: "Migrations" }]} />
-          {/snippet}
-        </Topbar>
-      {/snippet}
+    <Main {bar}>
       <Workspace>
         <Migrations
           repo={repo}
@@ -1326,288 +1320,3 @@
     linkError={linkError}
   />
 {/if}
-
-<style>
-  /* ---- Section heading ---- */
-  .section-heading {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .section-heading__title {
-    margin: 0;
-    font-size: 1.125rem;
-    font-weight: 600;
-  }
-
-  .section-heading__count {
-    font-size: 0.8125rem;
-    opacity: 0.5;
-  }
-
-  /* ---- Record list ---- */
-  .record-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .record-list__item {
-    cursor: pointer;
-    border-radius: 2px;
-    outline: 2px solid transparent;
-    outline-offset: 2px;
-    transition: outline-color 0.1s;
-  }
-
-  .record-list__item--selected {
-    outline-color: currentColor;
-  }
-
-  .empty-state {
-    opacity: 0.5;
-    font-size: 0.875rem;
-  }
-
-  /* ---- Topbar extras ---- */
-  .topbar__reset {
-    font-size: 0.75rem;
-    background: none;
-    border: 1px solid currentColor;
-    border-radius: 2px;
-    padding: 0.2rem 0.5rem;
-    cursor: pointer;
-    opacity: 0.6;
-  }
-
-  .topbar__reset:hover {
-    opacity: 1;
-  }
-
-  .topbar__new {
-    font-size: 0.75rem;
-    background: none;
-    border: 1px solid currentColor;
-    border-radius: 2px;
-    padding: 0.2rem 0.5rem;
-    cursor: pointer;
-  }
-
-  .topbar__export {
-    font-size: 0.75rem;
-    background: none;
-    border: 1px solid currentColor;
-    border-radius: 2px;
-    padding: 0.2rem 0.5rem;
-    cursor: pointer;
-    opacity: 0.6;
-  }
-
-  .topbar__export:hover {
-    opacity: 1;
-  }
-
-  .topbar__export:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-
-  .topbar__save-message {
-    font-size: 0.7rem;
-    opacity: 0.75;
-    max-width: 22rem;
-  }
-
-  /* ---- Inspector KV ---- */
-  .inspector__kv {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    padding: 0.2rem 0;
-  }
-
-  .inspector__kv--meta {
-    margin-top: 0.25rem;
-    border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
-    padding-top: 0.4rem;
-  }
-
-  .inspector__k {
-    opacity: 0.55;
-  }
-
-  .inspector__v {
-    max-width: 10rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .inspector__v--mono {
-    font-family: monospace;
-    font-size: 0.6875rem;
-  }
-
-  /* ---- Inspector record actions ---- */
-  .inspector__record-actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
-  }
-
-  .inspector__btn {
-    font-size: 0.75rem;
-    background: none;
-    border: 1px solid currentColor;
-    border-radius: 2px;
-    padding: 0.2rem 0.5rem;
-    cursor: pointer;
-    opacity: 0.7;
-  }
-
-  .inspector__btn:hover { opacity: 1; }
-
-  .inspector__btn--danger { color: #c00; border-color: #c00; }
-
-  /* ---- Inspector lifecycle transition buttons ---- */
-  .inspector__transitions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
-  }
-
-  .inspector__btn--transition {
-    font-size: 0.6875rem;
-    opacity: 0.65;
-  }
-
-  .inspector__btn--confirm {
-    opacity: 1;
-    color: #c00;
-    border-color: currentColor;
-  }
-
-  /* ---- Inspector decision relations ---- */
-  .inspector__empty {
-    font-size: 0.75rem;
-    opacity: 0.5;
-    margin: 0.25rem 0 0.5rem;
-  }
-
-  .inspector__relations {
-    list-style: none;
-    margin: 0 0 0.5rem;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-
-  .inspector__relation-item {
-    display: flex;
-    gap: 0.35rem;
-    align-items: baseline;
-    font-size: 0.75rem;
-    padding: 0.2rem 0;
-    border-top: 1px solid color-mix(in srgb, currentColor 8%, transparent);
-  }
-
-  .inspector__relation-type {
-    font-style: italic;
-    opacity: 0.65;
-    min-width: 5rem;
-  }
-
-  .inspector__relation-dir {
-    opacity: 0.45;
-  }
-
-  .inspector__relation-peer {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 8rem;
-  }
-
-  .inspector__relation-peer--link {
-    background: none;
-    border: none;
-    padding: 0;
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-    text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-    text-underline-offset: 2px;
-  }
-
-  .inspector__relation-peer--link:hover {
-    text-decoration-color: currentColor;
-  }
-
-  .inspector__relation-delete {
-    margin-left: auto;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 0.7rem;
-    opacity: 0.4;
-    padding: 0 0.15rem;
-    line-height: 1;
-    color: #c00;
-    flex-shrink: 0;
-  }
-  .inspector__relation-delete:hover { opacity: 1; }
-
-  /* ---- Nav footer ---- */
-  .nav__footer-stat {
-    font-size: 0.6875rem;
-    opacity: 0.4;
-    padding: 0.5rem 0;
-  }
-
-  /* ---- Inspector tag editor ---- */
-  .inspector__tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 0.5rem;
-    min-height: 1.5rem;
-  }
-
-  .inspector__tag-add {
-    display: flex;
-    gap: 0.35rem;
-    align-items: center;
-    margin-top: 0.25rem;
-  }
-
-  .inspector__tag-input {
-    flex: 1;
-    font-size: 0.75rem;
-    padding: 0.2rem 0.4rem;
-    border: 1px solid var(--grey-3, #ccc);
-    border-radius: 3px;
-    background: var(--surface, #fff);
-    color: var(--ink);
-    min-width: 0;
-  }
-
-  .inspector__tag-input:focus {
-    outline: 2px solid var(--accent, #0066cc);
-    outline-offset: 1px;
-  }
-
-  .inspector__export-row {
-    display: flex;
-    gap: 0.4rem;
-    align-items: center;
-  }
-</style>

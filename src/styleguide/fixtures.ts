@@ -5,11 +5,15 @@ import type { Annotation } from "$lib/annotations";
 import type { Comment } from "$lib/comments";
 import type { Layer } from "$lib/components/LayersPanel.svelte";
 import type { PanelAgent } from "$lib/components/agent-panel";
-import type { MenuAction } from "$lib/components/menu-action";
+import type { MenuAction, ToolbarAction } from "$lib/components/menu-action";
 import { headerActions } from "$lib/essay/header-actions";
+import type { GroupView } from "$lib/generic/RecordsView.svelte";
+import { containerGraph, focusLayout } from "$lib/generic/map-layout";
 import type { PairingResponse } from "$lib/mcp/relay-protocol";
 import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor, UpgradePackageResult } from "$lib/srs-client";
+
+import type { DiscoveryHit } from "$lib/srs-client";
 import type { Diagnostic, Status } from "$lib/types";
 
 export const NOW = Date.parse("2026-10-04T12:00:00Z");
@@ -254,6 +258,19 @@ export const draftItems = [
   { id: "d2", label: "Old intro" },
 ];
 export const binItems = [{ id: "x1", label: "Deleted paragraph" }];
+export const referenceItems = [
+  {
+    id: "r1",
+    label: "Boundaries as relations",
+    type: "source",
+    paragraphs: [
+      { id: "p1", label: "Opening" },
+      { id: "p2", label: "The second claim" },
+    ],
+    openable: true,
+  },
+  { id: "r2", label: "Nobody owns the edge", type: "claim", paragraphs: [], openable: false },
+];
 
 export const pinned = [
   {
@@ -533,6 +550,9 @@ export const componentTokens = [
   "--comment-thread-max",
   "--comment-clamp-lines",
   "--comment-composer-max",
+  "--srs-mark-ink",
+  "--srs-mark-paper",
+  "--srs-mark-line",
 ];
 
 /** The essay header registry with no-op handlers: Save enabled, Comments `mixed`, Margin notes off. */
@@ -541,7 +561,6 @@ export const toolbarActions = headerActions(
   {
     onnew: nop,
     oncopy: nop,
-    onagent: nop,
     onhelp: nop,
     oncomments: nop,
     onsave: nop,
@@ -567,6 +586,12 @@ export const stripText = {
 /** The shell specimen (#424): a nav of two groups with a count, an inspector of two panels, a badge. */
 export const shellFixture = {
   repo: "Small democracy",
+  /** A long breadcrumb: the document bar's title slot, ellipsised beside the single Save primary (#463). */
+  crumb: [
+    { label: "Small democracy" },
+    { label: "Articles", onclick: nop },
+    { label: "How a decision is reopened after the review period closes" },
+  ],
   navGroups: [
     {
       label: "Sections",
@@ -621,3 +646,136 @@ export const upgradePlan: UpgradePackageResult = {
   dependencyWarnings: [],
   notes: [],
 };
+/** A read-only document's toolbar (#471): no Save; Save a copy… sits in the Document menu beside Export. */
+export const readOnlyToolbarActions: ToolbarAction[] = [
+  { id: "export", group: "document", kind: "action", label: "Export", run: nop, enabled: true },
+  {
+    id: "save-copy",
+    group: "document",
+    kind: "action",
+    label: "Save a copy…",
+    run: nop,
+    enabled: true,
+    testid: "specimen-save-copy",
+  },
+  { id: "other", group: "go", kind: "action", label: "Open another", run: nop, enabled: true },
+];
+
+// ── Records explorer and relation map (#481): invented content, no repository data ──────────────────
+
+const hitOf = (i: number, typeName: string, extra: Partial<DiscoveryHit> = {}): DiscoveryHit => ({
+  instanceId: `fx-${typeName}-${i}`,
+  label: `Sample ${typeName} ${i}`,
+  typeNamespace: "com.example.spec",
+  typeName,
+  matchedFields: [],
+  ...extra,
+});
+
+/** Grouped by type: collapsed groups with counts, one open with a "Show more", and a Notes group. */
+export const recordGroups: GroupView[] = [
+  {
+    key: "t1",
+    name: "mechanism",
+    namespace: "com.example.spec",
+    count: 175,
+    open: true,
+    hits: [
+      hitOf(1, "mechanism", {
+        label: "Manifest extensions (`ext:slices`)",
+        lifecycleState: "draft",
+      }),
+      hitOf(2, "mechanism", {
+        label:
+          "A long mechanism title that wraps onto a second line when the column is narrow, as real titles do",
+      }),
+      hitOf(3, "mechanism"),
+    ],
+  },
+  {
+    key: "t2",
+    name: "invariant",
+    namespace: "com.example.spec",
+    count: 128,
+    open: false,
+    hits: [],
+  },
+  {
+    key: "t3",
+    name: "rfc-proposed-artifact",
+    namespace: "com.example.spec",
+    count: 17,
+    open: false,
+    hits: [],
+  },
+  { key: "__notes__", name: "Notes", namespace: "", count: 27, open: false, hits: [] },
+];
+
+/** A ranked search: type and state per row, with the matching snippet where it differs from the label. */
+export const recordSearchHits: DiscoveryHit[] = [
+  hitOf(1, "concept", { label: "Travelling form", score: 9.9, snippet: "Travelling form" }),
+  hitOf(2, "concept", {
+    label: "What a container can hold, a bundle can carry",
+    score: 8.4,
+    lifecycleState: "ratified",
+    snippet: "...the travelling form of a repository is a bundle that carries its container...",
+  }),
+  hitOf(3, "design-note", { label: "Portability and `Possession`", score: 6.7 }),
+  {
+    instanceId: "fx-note",
+    label: "A note about forms",
+    typeNamespace: "",
+    typeName: "",
+    matchedFields: [],
+  },
+];
+
+const nb = (id: string, label: string, relationType: string, direction: "in" | "out") => ({
+  id,
+  label,
+  relationType,
+  direction,
+});
+
+/** Both directions: inbound on the left, outbound on the right, grouped by relation type. */
+export const focusMap = {
+  focus: { id: "fx-focus", label: "Extensions" },
+  layout: focusLayout([
+    nb("a", "Reading this specification", "contains", "in"),
+    nb("b", "Foundations", "refines", "in"),
+    nb("c", "Generated reference: View", "contains", "out"),
+    nb("d", "Import Tracking", "contains", "out"),
+    nb("e", "Addressability", "contains", "out"),
+    nb(
+      "f",
+      "A long neighbour title that wraps to two lines and then truncates with an ellipsis",
+      "depends-on",
+      "out"
+    ),
+    nb("g", "Views L2", "depends-on", "out"),
+  ]),
+};
+
+/** One-directional focus: the focus sits toward the empty side. */
+export const outboundOnlyMap = {
+  focus: { id: "fx-focus", label: "The case" },
+  layout: focusLayout(
+    Array.from({ length: 12 }, (_, i) =>
+      nb(`o${i}`, `Claim number ${i + 1} under this topic`, "contains", "out")
+    )
+  ),
+};
+
+/** A container's first 24 members in outline order, of 41. */
+export const cappedContainerMap = containerGraph(
+  Array.from({ length: 41 }, (_, i) => ({
+    id: i === 0 ? "hub" : `leaf${i}`,
+    label: i === 0 ? "Hub record" : `Leaf ${i}`,
+  })),
+  Array.from({ length: 40 }, (_, i) => ({
+    relationId: `r${i}`,
+    relationType: "contains",
+    source: "hub",
+    target: `leaf${i + 1}`,
+  }))
+);

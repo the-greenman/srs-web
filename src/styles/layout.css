@@ -1,7 +1,7 @@
 /* ============================================================================
    layout — the three-pane application shell
    ----------------------------------------------------------------------------
-   Structural regions only: the nav | main | inspector grid, the sticky topbar,
+   Structural regions only: the nav | main | inspector grid
    and the scrolling content canvas. Visual styling of what goes *inside* each
    region lives in the component files (nav.css, inspector.css, ...).
 
@@ -45,71 +45,6 @@
   overflow: hidden;
 }
 
-/* ── Topbar: breadcrumb + contextual actions ──────────────────────────────── */
-.topbar {
-  min-height: var(--topbar-height);
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: 0 var(--space-md);
-  flex: none;
-  border-bottom: var(--rule);
-  background: var(--color-surface);
-}
-.topbar__crumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-muted);
-}
-.topbar__crumb-sep {
-  opacity: 0.5;
-}
-.topbar__crumb-current {
-  color: var(--color-text);
-}
-.topbar__crumb-link {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  color: inherit;
-  font: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
-}
-.topbar__crumb-link:hover {
-  text-decoration: underline;
-}
-.topbar__actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-/* On a phone the buttons wrap rather than being clipped (the frame no longer scrolls sideways), so the
-   inspector trigger at the bar's end stays reachable. Desktop is unchanged. */
-/* bp: compact */
-@media (max-width: 720px) {
-  .topbar__actions {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    min-width: 0;
-    padding: var(--space-xs) 0;
-  }
-}
-/* The inspector trigger is the last item: right-aligned on its own, flush after the actions when there are some. */
-.topbar > .shell-trigger {
-  margin-left: auto;
-}
-.topbar__actions + .shell-trigger {
-  margin-left: 0;
-}
-
 /* ── Scrolling workspace + centred reading/edit canvas ────────────────────── */
 .workspace {
   flex: 1;
@@ -123,11 +58,8 @@
   padding: 0;
 }
 .canvas {
-  max-width: var(--canvas-max);
+  max-width: var(--content-max);
   margin: 0 auto;
-}
-.canvas--wide {
-  max-width: none;
 }
 
 /* Section heading inside the workspace (e.g. "Articles", "Decision Log") */

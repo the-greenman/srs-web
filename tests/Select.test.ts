@@ -24,7 +24,9 @@ it("{value, label} options carry the value and show the label; the name is forwa
     "aria-label": "Essay",
   });
   expect((getByRole("combobox", { name: "Essay" }) as HTMLSelectElement).value).toBe("e2");
-  expect((getAllByRole("option") as HTMLOptionElement[]).map((o) => [o.value, o.textContent])).toEqual([
+  expect(
+    (getAllByRole("option") as HTMLOptionElement[]).map((o) => [o.value, o.textContent])
+  ).toEqual([
     ["e1", "First essay"],
     ["e2", "Second essay"],
   ]);

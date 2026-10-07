@@ -36,11 +36,10 @@ it("a handled request's write summary becomes a write naming its agent and targe
 it("indirect changes (fork) are reported; a relation is attributed to its target", () => {
   const seen: AgentWrite[] = [];
   const h = (sum: string) =>
-    observeSession(
-      fake(sum),
-      "a",
-      { onWrite: (w) => seen.push(w), relationTarget: (id) => (id === "r1" ? "p" : undefined) }
-    ).handle("{}");
+    observeSession(fake(sum), "a", {
+      onWrite: (w) => seen.push(w),
+      relationTarget: (id) => (id === "r1" ? "p" : undefined),
+    }).handle("{}");
   h(
     summary("record_fork", [
       { target: "instance", id: "f", kind: "created" },
@@ -63,15 +62,12 @@ it("the feed is newest first and capped", () => {
   expect(pushWrite([w(1), w(2)], w(3), 2).map((x) => x.at)).toEqual([3, 1]);
 });
 
-
 it("observeSession reports the client's name from initialize", () => {
   const session = fake();
   let name = "";
-  observeSession(
-    session,
-    "a",
-    { onWrite: () => {}, onClientName: (n) => (name = n) }
-  ).handle(JSON.stringify({ method: "initialize", params: { clientInfo: { name: "alpha" } } }));
+  observeSession(session, "a", { onWrite: () => {}, onClientName: (n) => (name = n) }).handle(
+    JSON.stringify({ method: "initialize", params: { clientInfo: { name: "alpha" } } })
+  );
   expect(name).toBe("alpha");
 });
 
@@ -137,10 +133,17 @@ const memStore = (i: { body: string; initialized: boolean } | null = null) => {
 };
 
 it("rpcInfo reads method, client name and error from one parse; never throws", () => {
-  expect(rpcInfo(INIT)).toEqual({ method: "initialize", clientName: "claude-code", isError: false });
+  expect(rpcInfo(INIT)).toEqual({
+    method: "initialize",
+    clientName: "claude-code",
+    isError: false,
+  });
   expect(rpcInfo('{"error":{}}').isError).toBe(true);
   expect(rpcInfo("not json")).toEqual({ isError: false });
-  const call = JSON.stringify({ method: "tools/call", params: { arguments: { text: '"initialize"' } } });
+  const call = JSON.stringify({
+    method: "tools/call",
+    params: { arguments: { text: '"initialize"' } },
+  });
   expect(rpcInfo(call).method).toBe("tools/call");
 });
 

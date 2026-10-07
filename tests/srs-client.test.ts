@@ -30,6 +30,7 @@ import {
   applyMigration,
   availableMigrations,
   containersForInstance,
+  createBlankRepository,
   createGovernanceDocument,
   createRelation,
   deleteRelation,
@@ -39,6 +40,9 @@ import {
   getAttachmentBytes,
   getContainerOutline,
   getRecordAttachments,
+  initWasm,
+  installBundles,
+  installPackageBundle,
   linkAttachment,
   listAttachments,
   listBlueprints,
@@ -50,6 +54,7 @@ import {
   listTerms,
   listTypes,
   moveContainerMemberRelative,
+  neighbours,
   repositoryNavigation,
   resolveContainerView,
   scaffoldGovernanceDocument,
@@ -143,6 +148,9 @@ function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
       throw new Error("not mocked");
     },
     find: () => {
+      throw new Error("not mocked");
+    },
+    neighbours: () => {
       throw new Error("not mocked");
     },
     list_terms: () => {
@@ -904,7 +912,62 @@ describe("find", () => {
     find(repo, { contentMatch: "foo" });
 
     expect(spy).toHaveBeenCalledOnce();
-    expect(spy).toHaveBeenCalledWith(JSON.stringify({ contentMatch: "foo" }));
+    expect(spy).toHaveBeenCalledWith(
+      JSON.stringify({ contentMatch: "foo" }),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined
+    );
+  });
+
+  it("passes limit, offset, rank and byTypeLimit as the binding's trailing arguments", () => {
+    const spy = vi.fn().mockReturnValue({ hits: [], total: 0 });
+    const repo = mockRepo({ find: spy });
+
+    find(
+      repo,
+      { contentMatch: "x" },
+      { limit: 50, offset: 100, rank: true, byTypeLimit: 0, facets: true }
+    );
+
+    expect(spy).toHaveBeenCalledWith(
+      JSON.stringify({ contentMatch: "x" }),
+      50,
+      100,
+      true,
+      0,
+      undefined,
+      true
+    );
+  });
+
+  it("returns total and the type and note facets (srs-rust#1312)", () => {
+    const repo = mockRepo({
+      find: () => ({
+        hits: [],
+        total: 704,
+        facets: {
+          byType: { values: [{ value: "a.b/concept", typeId: "t1", count: 64 }], other: 3 },
+          notes: 27,
+        },
+      }),
+    });
+
+    const result = find(repo, {});
+
+    expect(result.total).toBe(704);
+    expect(result.facets.byType).toEqual([{ value: "a.b/concept", typeId: "t1", count: 64 }]);
+    expect(result.facets.otherTypes).toBe(3);
+    expect(result.facets.notes).toBe(27);
+  });
+
+  it("reads absent facets as empty", () => {
+    const repo = mockRepo({ find: () => ({ hits: [], total: 0, facets: {} }) });
+
+    expect(find(repo, {}).facets).toEqual({ byType: [], otherTypes: 0, notes: 0 });
   });
 
   it("returns a DiscoveryResult with normalised camelCase hit fields", () => {
@@ -1814,15 +1877,26 @@ describe("createBlankRepository", () => {
 
 describe("installPackageBundle", () => {
   it("passes the bundle through and returns the core's result", () => {
-    const result = { name: "essay", version: "1.5.0", installed: 3, skippedIdentical: 0, conflicts: [], notes: [] };
+    const result = {
+      name: "essay",
+      version: "1.5.0",
+      installed: 3,
+      skippedIdentical: 0,
+      conflicts: [],
+      notes: [],
+    };
     const spy = vi.fn().mockReturnValue(result);
     expect(installPackageBundle(mockRepo({ install_package_bundle: spy }), "BUNDLE")).toBe(result);
     expect(spy).toHaveBeenCalledWith("BUNDLE", "{}");
   });
 
   it("throws on conflicts, with the core's notes", () => {
-    const spy = vi.fn().mockReturnValue({ name: "essay", version: "1.5.0", conflicts: [{}], notes: ["n1"] });
-    expect(() => installPackageBundle(mockRepo({ install_package_bundle: spy }), "B")).toThrow(/conflicting.*n1/);
+    const spy = vi
+      .fn()
+      .mockReturnValue({ name: "essay", version: "1.5.0", conflicts: [{}], notes: ["n1"] });
+    expect(() => installPackageBundle(mockRepo({ install_package_bundle: spy }), "B")).toThrow(
+      /conflicting.*n1/
+    );
   });
 });
 
@@ -1832,21 +1906,33 @@ describe("installBundles", () => {
 
   it("throws for a package with no pinned bundle, before any write", () => {
     const install = vi.fn();
-    expect(() => installBundles(mockRepo({ install_package_bundle: install }), ["no-such-package"])).toThrow(/No bundled package/);
+    expect(() =>
+      installBundles(mockRepo({ install_package_bundle: install }), ["no-such-package"])
+    ).toThrow(/No bundled package/);
     expect(install).not.toHaveBeenCalled();
   });
 
   it("throws on an unsatisfied bundle dependency before installing it", () => {
     const install = vi.fn();
-    const check = vi.fn().mockReturnValue({ dependencies: [{ name: "core", version: "2.0.0", satisfied: false, reason: "missing" }] });
-    expect(() => installBundles(mockRepo({ check_package_requirements: check, install_package_bundle: install }), [ESSAY])).toThrow(/needs core 2.0.0/);
+    const check = vi.fn().mockReturnValue({
+      dependencies: [{ name: "core", version: "2.0.0", satisfied: false, reason: "missing" }],
+    });
+    expect(() =>
+      installBundles(
+        mockRepo({ check_package_requirements: check, install_package_bundle: install }),
+        [ESSAY]
+      )
+    ).toThrow(/needs core 2.0.0/);
     expect(install).not.toHaveBeenCalled();
   });
 
   it("installs each package once, however often it is required", () => {
     const install = vi.fn().mockReturnValue(ok);
     const check = vi.fn().mockReturnValue({ dependencies: [] });
-    installBundles(mockRepo({ check_package_requirements: check, install_package_bundle: install }), [ESSAY, ESSAY]);
+    installBundles(
+      mockRepo({ check_package_requirements: check, install_package_bundle: install }),
+      [ESSAY, ESSAY]
+    );
     expect(install).toHaveBeenCalledTimes(1);
   });
 });
@@ -1865,5 +1951,78 @@ describe("upgradeBundles", () => {
     upgradeBundles(mockRepo({ upgrade_package_bundle: upgrade }), [ESSAY, ESSAY], { dryRun: true });
     expect(upgrade).toHaveBeenCalledTimes(1);
     expect(JSON.parse(upgrade.mock.calls[0][1])).toEqual({ dryRun: true });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// neighbours (srs-rust#1229)
+// ---------------------------------------------------------------------------
+
+describe("neighbours", () => {
+  it("passes the filter and page to repo.neighbours and returns the page with its total", () => {
+    const edge = {
+      direction: "out",
+      relationId: "r1",
+      relationType: "contains",
+      neighbour: { instanceId: "n1", label: "One" },
+    };
+    const spy = vi.fn().mockReturnValue({ instanceId: "a", total: 41, neighbours: [edge] });
+    const repo = mockRepo({ neighbours: spy });
+
+    const result = neighbours(repo, "a", { direction: "out", limit: 12, offset: 12 });
+
+    expect(spy).toHaveBeenCalledWith("a", undefined, "out", 12, 12);
+    expect(result.total).toBe(41);
+    expect(result.neighbours).toEqual([edge]);
+  });
+});
+
+describe("resolveContainerView members (srs-web#483)", () => {
+  const view = (members: unknown[]) => ({
+    containerId: "c1",
+    members,
+    columns: [],
+    excludeLifecycleStates: [],
+    diagnostics: [],
+  });
+
+  it("keeps a Tier-0 note member that carries no record, with the core-resolved label", () => {
+    const note = {
+      instanceId: "n1",
+      tier: 0,
+      displayLabel: "A note title",
+      isVisibleByDefault: true,
+      sectionContainerId: "sc1",
+    };
+    const repo = mockRepo({ resolve_container_view: () => view([note]) });
+
+    const [m] = resolveContainerView(repo, "c1").members;
+
+    expect(m.record).toBeUndefined();
+    expect(m).toMatchObject({
+      instanceId: "n1",
+      tier: 0,
+      displayLabel: "A note title",
+      isVisibleByDefault: true,
+      sectionContainerId: "sc1",
+    });
+  });
+
+  it("normalises the record of a Tier-2 member and a mixed container resolves whole", () => {
+    const rec = { instanceId: "r1", typeId: "t", typeVersion: 1, fieldValues: [] };
+    const repo = mockRepo({
+      resolve_container_view: () =>
+        view([
+          { instanceId: "n1", tier: 0, displayLabel: "N" },
+          { instanceId: "r1", tier: 2, displayLabel: "R", record: rec },
+        ]),
+    });
+
+    const { members } = resolveContainerView(repo, "c1");
+
+    expect(members.map((m) => m.instanceId)).toEqual(["n1", "r1"]);
+    expect(members[0].record).toBeUndefined();
+    expect(members[1].record?.instanceId).toBe("r1");
+    expect(members[1].record?.displayLabel).toBe("R");
   });
 });

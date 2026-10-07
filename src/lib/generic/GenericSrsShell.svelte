@@ -8,12 +8,9 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import {
-    find,
     getRecord,
     listContainers,
     listDocumentViews,
-    listRelations,
-    listTypes,
     renderDocumentView,
     resolveContainerView,
     repositoryNavigation,
@@ -22,15 +19,12 @@
   } from "$lib/srs-client.js";
   import type {
     ContainerSummary,
-    DiscoveryHit,
     DocumentViewSummary,
     RepositoryNavigation,
     SrsRecord,
-    SrsRelation,
     SrsRepository,
     SchemaDefinition,
     ResolvedMember,
-    TypeSummary,
     UpdateRecordInput,
   } from "$lib/srs-client.js";
   import PreviewPane from "$lib/components/PreviewPane.svelte";
@@ -46,10 +40,14 @@
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import type { UpgradePackageResult } from "$lib/srs-client.js";
   import InstanceNotes from "$lib/InstanceNotes.svelte";
+  import RecordsExplorer from "./RecordsExplorer.svelte";
+  import RelationMap from "./RelationMap.svelte";
+  import { plainLabel } from "./labels.js";
   import AppShell from "$lib/components/AppShell.svelte";
   import Inspector from "$lib/components/Inspector.svelte";
   import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
   import Main from "$lib/components/Main.svelte";
+  import Button from "$lib/components/Button.svelte";
   import Notice from "$lib/components/Notice.svelte";
   import Diagnostics from "$lib/components/Diagnostics.svelte";
   import { diagnosticsFromStrings } from "$lib/notices.svelte.js";
@@ -70,6 +68,10 @@
     onSave?: () => Promise<void>;
     /** Why `onSave` is undefined, shown where the Save button would be. Null when writable or unknown. */
     readOnlyReason?: string | null;
+    /** Opened from a link (#471): nothing in the shell edits (no Edit fields, document editor or comments). */
+    readOnly?: boolean;
+    /** Document > Save a copy…; given only while `readOnly`. */
+    onSaveCopy?: () => void;
     saving?: boolean;
     /** App-owned dirty state, shared with non-UI repository writers. */
     documentDirty?: boolean;
@@ -94,6 +96,8 @@
     onExport,
     onSave,
     readOnlyReason = null,
+    readOnly = false,
+    onSaveCopy,
     saving = false,
     documentDirty = false,
     documentRevision = 0,
@@ -158,7 +162,6 @@
   let compositions = $state<DocumentViewSummary[]>([]);
   let containers = $state<ContainerSummary[]>([]);
   let navigation = $state<RepositoryNavigation | null>(null);
-  let types = $state<TypeSummary[]>([]);
   let selectedCompositionId = $state<string | null>(null);
   let selectedContainerId = $state<string | null>(null);
   let selectedRecord = $state<SrsRecord | null>(null);
@@ -167,18 +170,16 @@
   let documentDiagnostics = $state<string[]>([]);
   let documentError = $state<string | null>(null);
   let loadingDocument = $state(false);
-  let search = $state("");
-  let selectedTypeId = $state<string>("");
   let expandedContainerIds = $state<Set<string>>(new Set());
   let expandedMembers = $state<Record<string, ResolvedMember[]>>({});
-  let records = $state<DiscoveryHit[]>([]);
-  let recordDiagnostics = $state<string[]>([]);
   let recordError = $state<string | null>(null);
   let editFormDef = $state<{ label: string; fields: FieldFormDef[]; composites: CompositeFormDef[] } | null>(null);
   let activeBlueprint = $state<BlueprintSummary | null>(null);
   let documentRenderRevision = $state(0);
   let editing = $state(false);
   let editSaving = $state(false);
+  /** Bumped by an in-shell edit so Records and Map reload (the engine mutated in place). */
+  let editRevision = $state(0);
   let editError = $state<string | null>(null);
 
   const activeComposition = $derived(
@@ -201,7 +202,6 @@
     try {
       compositions = listDocumentViews(repo);
       containers = listContainers(repo);
-      types = listTypes(repo);
       try {
         navigation = repositoryNavigation(repo);
       } catch {
@@ -213,7 +213,6 @@
       if (!refresh || !containers.some((c) => c.containerId === selectedContainerId)) {
         selectedContainerId = navigation?.sections[0]?.sectionContainerId ?? containers[0]?.containerId ?? null;
       }
-      refreshRecords();
       if (refresh) {
         if (surface === "document" && selectedCompositionId) renderPreview(selectedCompositionId);
         return;
@@ -264,7 +263,6 @@
     selectedContainerId = containerId;
     clearRecordSelection();
     surface = "structure";
-    refreshRecords();
   }
 
   function toggleContainer(containerId: string): void {
@@ -281,33 +279,13 @@
     expandedContainerIds = next;
   }
 
-  function refreshRecords(): void {
-    try {
-      const selectedType = types.find((type) => type.id === selectedTypeId);
-      const result = find(repo, {
-        contentMatch: search || undefined,
-        typeId: selectedType?.id,
-        containerId: (surface === "structure" || surface === "map") ? selectedContainerId ?? undefined : undefined,
-      });
-      records = result.hits;
-      recordDiagnostics = result.diagnostics;
-      recordError = null;
-    } catch (error: unknown) {
-      records = [];
-      recordDiagnostics = [];
-      recordError = message(error);
-    }
-  }
-
   function openRecords(): void {
     clearRecordSelection();
     surface = "records";
-    refreshRecords();
   }
 
   function openMap(): void {
     surface = "map";
-    refreshRecords();
   }
 
   /**
@@ -346,7 +324,7 @@
    * a schema for is editable here.
    */
   function beginEdit(): void {
-    if (!selectedRecord) return;
+    if (!selectedRecord || readOnly) return;
     editError = null;
     try {
       const result = typeSchema(repo, selectedRecord.typeId, selectedRecord.typeVersion);
@@ -372,7 +350,7 @@
     try {
       selectedRecord = updateRecord(repo, selectedRecord.instanceId, input);
       editing = false;
-      refreshRecords();
+      editRevision++;
     } catch (error: unknown) {
       editError = message(error);
     } finally {
@@ -387,18 +365,6 @@
     if (documentRevision === observedDocumentRevision) return;
     observedDocumentRevision = documentRevision;
     loadCatalog();
-  });
-
-  const selectedRelations = $derived.by(() => {
-    if (!selectedRecord) return [];
-    try {
-      return [
-        ...listRelations(repo, { source: selectedRecord.instanceId }),
-        ...listRelations(repo, { target: selectedRecord.instanceId }),
-      ];
-    } catch {
-      return [];
-    }
   });
 
   const structureContainers = $derived.by(() => {
@@ -416,62 +382,6 @@
       : containers.map((container) => ({ container, label: container.title, key: container.containerId, depth: 0 }));
   });
 
-  const graph = $derived.by(() => {
-    const nodeById = new Map<string, { id: string; label: string }>();
-    const addNode = (id: string, fallback = id.slice(0, 8), alreadyResolved = false) => {
-      if (nodeById.has(id)) return;
-      if (alreadyResolved) {
-        nodeById.set(id, { id, label: fallback });
-        return;
-      }
-      try {
-        const record = getRecord(repo, id);
-        if (!record) throw new Error("record not found");
-        nodeById.set(id, {
-          id,
-          label: record.displayLabel ?? id.slice(0, 8),
-        });
-      } catch {
-        nodeById.set(id, { id, label: fallback });
-      }
-    };
-
-    let relations: SrsRelation[] = [];
-    if (selectedRecord) {
-      addNode(selectedRecord.instanceId, selectedRecord.displayLabel ?? selectedRecord.instanceId.slice(0, 8));
-      relations = selectedRelations;
-      for (const relation of relations) {
-        addNode(relation.sourceInstanceId);
-        addNode(relation.targetInstanceId);
-      }
-    } else if (selectedContainerId) {
-      try {
-        relations = listRelations(repo, { containerId: selectedContainerId });
-        const view = resolveContainerView(repo, selectedContainerId);
-        const memberById = new Map(view.members.map((member) => [member.instanceId, member]));
-        for (const relation of relations) {
-          const source = memberById.get(relation.sourceInstanceId);
-          const target = memberById.get(relation.targetInstanceId);
-          addNode(relation.sourceInstanceId, source?.displayLabel ?? relation.sourceInstanceId.slice(0, 8), Boolean(source));
-          addNode(relation.targetInstanceId, target?.displayLabel ?? relation.targetInstanceId.slice(0, 8), Boolean(target));
-        }
-      } catch {
-        relations = [];
-      }
-    }
-    return { nodes: [...nodeById.values()], relations };
-  });
-
-  function graphPoint(index: number, count: number): { x: number; y: number } {
-    if (count <= 1) return { x: 300, y: 180 };
-    const angle = (Math.PI * 2 * index) / count - Math.PI / 2;
-    return { x: 300 + Math.cos(angle) * 210, y: 180 + Math.sin(angle) * 120 };
-  }
-
-  function graphNodePoint(instanceId: string): { x: number; y: number } {
-    return graphPoint(graph.nodes.findIndex((node) => node.id === instanceId), graph.nodes.length);
-  }
-
   onMount(loadCatalog);
 
   const barActions = $derived(
@@ -479,9 +389,10 @@
       {
         onsave: onSave ? () => void onSave() : undefined,
         onexport: onExport,
+        onsavecopy: onSaveCopy,
         onopenanother: onOpenAnother,
         onopenagents: onOpenAgents,
-        onpreview: surface === "document" && activeBlueprint && activeComposition ? () => (showFullPreview = !showFullPreview) : undefined,
+        onpreview: surface === "document" && activeBlueprint && activeComposition && !readOnly ? () => (showFullPreview = !showFullPreview) : undefined,
       },
       { shell, saving, dirty: documentDirty, fullPreview: showFullPreview },
     ),
@@ -511,7 +422,7 @@
 {/snippet}
 
 {#snippet navPane()}
-  <Nav repo={repoName} eyebrow="SRS repository">
+  <Nav repo={repoName} eyebrow="SRS repository" wordmark>
     {#snippet children()}
     <section class="nav__group" data-part="documents">
       <h2 class="nav__group-label">Documents</h2>
@@ -547,7 +458,7 @@
           <div class="generic-tree-members">
             {#if members.length === 0}<span class="generic-muted">No members</span>{/if}
             {#each members as member (member.instanceId)}
-              <button class="nav__item" onclick={() => openRecord(member.instanceId)}>{member.displayLabel || member.instanceId.slice(0, 8)}</button>
+              <button class="nav__item" onclick={() => openRecord(member.instanceId)}>{member.displayLabel || member.instanceId.slice(0, 8)}{#if member.tier === 0}<small class="nav__item-count" data-testid="member-note-mark">note</small>{/if}</button>
             {/each}
           </div>
         {/if}
@@ -585,6 +496,7 @@
     {#if !onSave && readOnlyReason}<Notice kind="info" testid="read-only-note">{readOnlyReason}</Notice>{/if}
     <div class="workspace">
       <div class="generic-page">
+    {#if recordError && surface !== "document"}<Notice kind="error">{recordError}</Notice>{/if}
     {#if surface === "document"}
       <header>
         <p>Document</p>
@@ -592,7 +504,7 @@
       </header>
       {#if documentError}<Notice kind="error">{documentError}</Notice>{/if}
       <Diagnostics variant="notice" testid="document-diagnostics" diagnostics={diagnosticsFromStrings(documentDiagnostics)} documentKey={`${repoName}:${selectedCompositionId}`} />
-      {#if activeBlueprint && activeComposition}
+      {#if activeBlueprint && activeComposition && !readOnly}
         <div class="document-editor-panel document-editor-panel--full" data-testid="document-editor-panel">
           <BlueprintDocumentEditor
             {repo}
@@ -613,64 +525,31 @@
     {:else if surface === "map"}
       <header>
         <p>Scoped map</p>
-        <h1>{selectedRecord ? selectedRecord.displayLabel ?? "Record relations" : activeContainer ? activeContainer.title : "Repository records"}</h1>
+        <h1>{selectedRecord ? plainLabel(selectedRecord.displayLabel, "Record relations") : activeContainer ? activeContainer.title : "Repository records"}</h1>
       </header>
-      {#if selectedRecord}<button onclick={() => { clearRecordSelection(); refreshRecords(); }}>Clear record focus</button>{/if}
-      <p class="generic-muted">{selectedRecord ? "Direct relations of the selected record." : selectedContainerId ? "Relations resolved by the engine for the active container." : "Select a container or record to view its relations."}</p>
-      {#if graph.nodes.length === 0}
-        <p class="generic-muted">No records match this scope.</p>
-      {:else}
-        <div class="generic-graph" data-testid="scoped-graph">
-          <svg viewBox="0 0 600 360" role="img" aria-label="Scoped record relation graph">
-            {#each graph.relations as relation (relation.relationId)}
-              {@const from = graphNodePoint(relation.sourceInstanceId)}
-              {@const to = graphNodePoint(relation.targetInstanceId)}
-              <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} />
-              <text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2}>{relation.relationType}</text>
-            {/each}
-            {#each graph.nodes as node, index (node.id)}
-              {@const point = graphPoint(index, graph.nodes.length)}
-              <g
-                class:focused={node.id === selectedRecord?.instanceId}
-                role="button"
-                tabindex="0"
-                aria-label={`Inspect ${node.label}`}
-                onclick={() => openRecord(node.id)}
-                onkeydown={(event) => { if (event.key === "Enter" || event.key === " ") openRecord(node.id); }}
-              >
-                <circle cx={point.x} cy={point.y} r="28" />
-                <text class="node-label" x={point.x} y={point.y + 45}>{node.label.length > 22 ? `${node.label.slice(0, 21)}…` : node.label}</text>
-              </g>
-            {/each}
-          </svg>
-        </div>
-      {/if}
+      {#if selectedRecord}<Button size="sm" onclick={clearRecordSelection}>Clear record focus</Button>{/if}
+      <RelationMap
+        {repo}
+        selected={selectedRecord ? { id: selectedRecord.instanceId, label: selectedRecord.displayLabel ?? selectedRecord.instanceId.slice(0, 8) } : null}
+        containerId={selectedContainerId}
+        revision={documentRevision + editRevision}
+        onOpen={openRecord}
+      />
     {:else}
       <header>
         <p>{surface === "structure" ? "Structure" : "Explore"}</p>
         <h1>{surface === "structure" ? activeContainer?.title ?? "Container" : "Records"}</h1>
       </header>
-      <div class="generic-controls">
-        <input aria-label="Search records" bind:value={search} oninput={refreshRecords} placeholder="Search repository" />
-        <select aria-label="Filter records by type" bind:value={selectedTypeId} onchange={refreshRecords}>
-          <option value="">All types</option>
-          {#each types as type (type.id)}
-            <option value={type.id}>{type.namespace}/{type.name}</option>
-          {/each}
-        </select>
-        {#if surface === "structure"}<button onclick={openRecords}>Search all records</button>{/if}
-      </div>
-      {#if recordError}<Notice kind="error">{recordError}</Notice>{/if}
-      <Diagnostics variant="notice" testid="record-diagnostics" diagnostics={diagnosticsFromStrings(recordDiagnostics)} documentKey={`${repoName}:records:${surface === "records" ? "" : selectedContainerId}`} />
-      <p class="generic-muted">{records.length} record{records.length === 1 ? "" : "s"}</p>
-      <div class="generic-records">
-        {#each records as record (record.instanceId)}
-          <button class="generic-record-row" data-testid="record-row" onclick={() => openRecord(record.instanceId)}>
-            <strong>{record.label || record.instanceId.slice(0, 8)}</strong>
-            <span>{record.typeNamespace}/{record.typeName}{record.lifecycleState ? ` · ${record.lifecycleState}` : ""}</span>
-          </button>
-        {/each}
-      </div>
+      {#key surface === "structure" ? selectedContainerId : ""}
+        <RecordsExplorer
+          {repo}
+          containerId={surface === "structure" ? selectedContainerId : null}
+          revision={documentRevision + editRevision}
+          documentKey={`${repoName}:records:${surface === "records" ? "" : selectedContainerId}`}
+          onOpen={openRecord}
+          onSearchAll={surface === "structure" ? openRecords : undefined}
+        />
+      {/key}
     {/if}
       </div>
     </div>
@@ -686,7 +565,6 @@
           fields={editFormDef.fields}
           composites={editFormDef.composites}
           record={selectedRecord}
-          wide
           onSave={saveEdit}
           onCancel={() => { editing = false; editError = null; }}
           saving={editSaving}
@@ -697,14 +575,14 @@
           <p>Record</p>
           <h2>{selectedRecord.displayLabel ?? selectedRecord.instanceId}</h2>
           <span>{selectedRecord.typeNamespace}/{selectedRecord.typeName}</span>
-          <button class="generic-edit" disabled={saving} onclick={beginEdit}>Edit fields</button>
+          {#if !readOnly}<button class="generic-edit" disabled={saving} onclick={beginEdit}>Edit fields</button>{/if}
           {#if editError}<Notice kind="error" testid="generic-edit-error">{editError}</Notice>{/if}
         </header>
         {#each Object.entries(selectedRecord.fieldValues) as [name, value] (name)}
           <div class="generic-field"><strong>{name}</strong><FieldValueView {value} /></div>
         {/each}
         {#key selectedRecord.instanceId}
-          <InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} heading />
+          {#if !readOnly}<InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} heading />{/if}
         {/key}
       {/if}
     {:else}

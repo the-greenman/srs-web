@@ -1,8 +1,18 @@
 // @vitest-environment happy-dom
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import GuidesShell from "../src/lib/guides/GuidesShell.svelte";
 import type { SrsRepository } from "../src/lib/srs-client.js";
+
+// The shell frame turns the inspector into a closed drawer at <= 1100px (happy-dom is 1024 wide): these
+// tests exercise the desktop frame, so stub a wide viewport (#424).
+beforeEach(() => {
+  vi.stubGlobal("matchMedia", (q: string) => ({
+    matches: Number(/max-width:\s*(\d+)px/.exec(q)?.[1]) >= 1440,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+});
 
 function mockRepo(overrides: Partial<SrsRepository>): SrsRepository {
   const base: SrsRepository = {
@@ -174,8 +184,8 @@ describe("GuidesShell — size warning banner", () => {
       }),
     });
     const { container } = render(GuidesShell, { props: { repo, ...defaultProps } });
-    // Wait for mount — the "Open another file" button is always rendered
-    await screen.findByRole("button", { name: /Open another file/i });
+    // Wait for mount — the Go > Open another button is always rendered
+    await screen.findByTestId("toolbar-other");
     const banner = container.querySelector('[data-testid="size-warning"]');
     expect(banner).not.toBeNull();
     expect(banner!.textContent).toContain("1 size warning");
@@ -189,7 +199,7 @@ describe("GuidesShell — size warning banner", () => {
       }),
     });
     const { container } = render(GuidesShell, { props: { repo, ...defaultProps } });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
     expect(container.querySelector('[data-testid="size-warning"]')).toBeNull();
   });
 
@@ -201,7 +211,7 @@ describe("GuidesShell — size warning banner", () => {
       }),
     });
     const { container } = render(GuidesShell, { props: { repo, ...defaultProps } });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
     expect(container.querySelector('[data-testid="size-warning"]')).toBeNull();
   });
 
@@ -213,7 +223,7 @@ describe("GuidesShell — size warning banner", () => {
       }),
     });
     const { container } = render(GuidesShell, { props: { repo, ...defaultProps } });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
     const banner = container.querySelector('[data-testid="size-warning"]');
     expect(banner).not.toBeNull();
     expect(banner!.textContent).toContain("3 size warnings");
@@ -274,7 +284,7 @@ describe("GuidesShell — blueprint schema with non-fatal diagnostics", () => {
       "cardinality 'one-to-many' on relation 'contains' could not be parsed; minItems/maxItems omitted",
     ]);
     render(GuidesShell, { props: { repo, ...defaultProps } });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
 
     const items = await screen.findAllByTestId("guides-guide-item");
     expect(items).toHaveLength(1);
@@ -364,7 +374,7 @@ describe("GuidesShell — blueprint schema with non-fatal diagnostics", () => {
     const { rerender } = render(GuidesShell, {
       props: { repo, ...defaultProps, saving: false },
     });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
 
     const newGuideBtn = (await screen.findByTestId("guides-new-guide")) as HTMLButtonElement;
     expect(newGuideBtn.disabled).toBe(false);
@@ -376,12 +386,32 @@ describe("GuidesShell — blueprint schema with non-fatal diagnostics", () => {
     expect(newGuideBtn.disabled).toBe(false);
   });
 
+  it("lists only record sections when the guide's container also holds a note (srs-web#483)", async () => {
+    const base = guidesRepoWithSections();
+    const repo = {
+      ...base,
+      resolve_container_view: (...args: unknown[]) => {
+        // biome-ignore lint/suspicious/noExplicitAny: raw WASM boundary, see above
+        const view = (base as any).resolve_container_view(...args);
+        return {
+          ...view,
+          members: [{ instanceId: "note-1", tier: 0, displayLabel: "N" }, ...view.members],
+        };
+      },
+    } as SrsRepository;
+    render(GuidesShell, { props: { repo, ...defaultProps, saving: false } });
+    await screen.findByTestId("toolbar-other");
+    await selectFirstGuide();
+
+    expect(await screen.findAllByTestId("guides-section-item")).toHaveLength(2);
+  });
+
   it("disables section move-up/move-down/remove controls while saving, and re-enables them once false", async () => {
     const repo = guidesRepoWithSections();
     const { rerender } = render(GuidesShell, {
       props: { repo, ...defaultProps, saving: false },
     });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
     await selectFirstGuide();
 
     const sectionItems = await screen.findAllByTestId("guides-section-item");
@@ -424,7 +454,7 @@ describe("GuidesShell — read-only reason (srs-web#317)", () => {
         readOnlyReason: "This folder was opened read-only. Use Export to save your changes.",
       },
     });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
 
     expect(screen.getByTestId("readonly-reason").textContent).toMatch(/read-only/);
     expect(screen.queryByTestId("save-document")).toBeNull();
@@ -440,7 +470,7 @@ describe("GuidesShell — read-only reason (srs-web#317)", () => {
         readOnlyReason: "should not render",
       },
     });
-    await screen.findByRole("button", { name: /Open another file/i });
+    await screen.findByTestId("toolbar-other");
 
     expect(screen.getByTestId("save-document")).toBeTruthy();
     expect(screen.queryByTestId("readonly-reason")).toBeNull();

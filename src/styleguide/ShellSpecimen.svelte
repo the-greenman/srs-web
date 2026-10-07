@@ -1,12 +1,12 @@
 <!--
-  ShellSpecimen — the page frame for /styleguide (#424). A real Toolbar with the real NavTrigger and
+  ShellSpecimen — the page frame for /styleguide (#424). A real Toolbar (a long Breadcrumb title, the single Save primary) with the real NavTrigger and
   InspectorTrigger (a ShellState in drawer mode is provided here), the real Nav and Panels, and the
   drawer panel drawn statically over a scrim in a positioned frame: the live Drawer is a modal
   <dialog> (top layer, full viewport) and cannot sit inside a specimen frame. Specimens only.
   `wide` is a separate row: the content cap with Wide off and on (the cap is the --content-max token).
 -->
 <script lang="ts">
-  import { Inspector, Nav, NavGroup, NavItem, Panel } from "$lib/components";
+  import { Breadcrumb, Inspector, Nav, NavGroup, NavItem, Panel } from "$lib/components";
   import Toolbar from "$lib/components/Toolbar.svelte";
   import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
   import NavTrigger from "$lib/components/NavTrigger.svelte";
@@ -29,6 +29,7 @@
 <div class="sg__shell" data-testid="sg-shell" data-open={open}>
   <Toolbar title={f.repo} groups={HEADER_GROUPS} actions={fx.toolbarActions} tier="narrow">
     {#snippet lead()}<NavTrigger />{/snippet}
+    {#snippet titleSlot()}<Breadcrumb items={f.crumb} />{/snippet}
     {#snippet trail()}<InspectorTrigger />{/snippet}
   </Toolbar>
   <p class="sg__shell-main">{f.mainLine}</p>

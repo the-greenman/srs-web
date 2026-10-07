@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render } from "@testing-library/svelte";
 import { createRawSnippet } from "svelte";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import AppShell from "../src/lib/components/AppShell.svelte";
-import Topbar from "../src/lib/components/Topbar.svelte";
+import Toolbar from "../src/lib/components/Toolbar.svelte";
 import { ShellState } from "../src/lib/shell-context.svelte.js";
 import ShellHost from "./ShellHost.svelte";
 
@@ -104,29 +104,28 @@ it("between 721 and 1100 only the inspector is a drawer", () => {
   expect(container.querySelector('[data-testid="shell-drawer-inspector"]')).not.toBeNull();
 });
 
-it("setShell ran before children: a Topbar inside finds the context and renders both triggers; a standalone Topbar renders none", async () => {
+it("setShell ran before children: a Toolbar inside finds the context and renders both triggers; a standalone Toolbar renders none", async () => {
   width(375);
   const host = render(ShellHost, { badge: 3 });
   expect(host.getByTestId("nav-trigger")).toBeTruthy();
   expect(host.getByTestId("inspector-trigger")).toBeTruthy();
   expect(host.getByTestId("inspector-badge").textContent).toBe("3");
   // NavTrigger is first and InspectorTrigger last in the bar.
-  const kids = [...host.container.querySelector(".topbar")!.children].map(
-    (e) => e.getAttribute("data-testid") ?? e.className
-  );
-  expect(kids[0]).toBe("nav-trigger");
   expect(
     host.container
-      .querySelector(".topbar")!
+      .querySelector(".toolbar")!
+      .firstElementChild!.contains(host.getByTestId("nav-trigger"))
+  ).toBe(true);
+  expect(
+    host.container
+      .querySelector(".toolbar")!
       .lastElementChild!.contains(host.getByTestId("inspector-trigger"))
   ).toBe(true);
   // choosing the triggers opens the drawers
   await fireEvent.click(host.getByTestId("nav-trigger"));
   expect((host.getByTestId("shell-drawer-nav") as HTMLDialogElement).open).toBe(true);
   cleanup();
-  const alone = render(Topbar, {
-    crumb: createRawSnippet(() => ({ render: () => "<span>c</span>" })),
-  });
+  const alone = render(Toolbar, { title: "c", actions: [], groups: [] });
   expect(alone.queryByTestId("nav-trigger")).toBeNull();
   expect(alone.queryByTestId("inspector-trigger")).toBeNull();
 });

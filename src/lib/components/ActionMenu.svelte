@@ -121,6 +121,7 @@
             class="action-menu__item"
             data-testid={tid(a)}
             disabled={!a.enabled}
+            title={a.enabled ? undefined : a.reason}
             onclick={() => pick(a)}
           >{#if a.icon}{@const Icon = a.icon}<span class="action-menu__icon" aria-hidden="true"><Icon size={16} aria-hidden="true" /></span>{/if}{a.label}</button>
         {/if}

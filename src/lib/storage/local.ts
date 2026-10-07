@@ -34,6 +34,24 @@ export class LocalDocumentHandle implements DocumentHandle {
   }
 }
 
+/**
+ * The one dispatch for a file on this device (or fetched from a link, #471): a `.srs` archive goes to
+ * `onOpenArchive` as bytes, anything else is opened as a handle.
+ */
+export async function openLocalFile(
+  file: File,
+  open: {
+    onOpen: (handle: DocumentHandle) => Promise<void>;
+    onOpenArchive?: (bytes: Uint8Array, name: string) => Promise<void>;
+  }
+): Promise<void> {
+  if (isSrsArchiveName(file.name) && open.onOpenArchive) {
+    await open.onOpenArchive(new Uint8Array(await file.arrayBuffer()), file.name);
+  } else {
+    await open.onOpen(new LocalDocumentHandle(file));
+  }
+}
+
 export function downloadDocument(content: string, filename: string): void {
   const blob = new Blob([content], { type: "application/json" });
   const url = URL.createObjectURL(blob);

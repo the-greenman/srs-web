@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { openDirectUrl, openPackageEditor, routeRelayChannels } from "./helpers";
+import { openDirectUrl, openMenu, openPackageEditor, routeRelayChannels } from "./helpers";
 
 /**
  * agent-library.spec.ts — srs-web#442: relays and agents are user-managed libraries, and the agent
@@ -175,7 +175,19 @@ test.describe("Go > Agents…", () => {
     await expect(page.getByTestId("relay-add-open")).toBeFocused(); // the first control
   });
 
-  test("a menu-less Topbar shell (Guides) still reaches the dock at 390px", async ({ page }) => {
+  test("governance editor: the action opens and focuses the dock", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+    await page.locator('input[type="file"]#srsj-file').setInputFiles(path.join(FIXTURES, "gallery.srsj"));
+    await openPackageEditor(page, "governance");
+    await openMenu(page, "Go");
+    await page.getByTestId("toolbar-agents").click();
+    await expect(page.locator(".mcp-dock").getByTestId("agent-panel-empty")).toBeVisible();
+    await expect(page.getByTestId("relay-add-open")).toBeFocused(); // the first control
+  });
+
+  test("Guides at 390px reaches the dock through Go > Agents…", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/");
     await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
@@ -183,7 +195,9 @@ test.describe("Go > Agents…", () => {
     await openPackageEditor(page, "guides");
     await page.setViewportSize({ width: 390, height: 800 });
     const dock = page.locator(".mcp-dock");
-    await dock.getByText("Agents", { exact: true }).click(); // collapsed until a relay exists
+    await openMenu(page, "Go"); // the narrow overflow
+    await page.getByTestId("toolbar-agents").click();
+    await expect(page.getByTestId("relay-add-open")).toBeFocused();
     await expect(dock.getByTestId("agent-panel-empty")).toBeVisible();
     await dock.getByTestId("relay-label").fill("Phone relay");
     await dock.getByTestId("relay-url").fill("https://phone.test");
