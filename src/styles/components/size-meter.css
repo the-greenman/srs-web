@@ -1,0 +1,50 @@
+/* ============================================================================
+   component: size-meter (.size-meter) — repository size against its limit (#503)
+   ----------------------------------------------------------------------------
+   A native <meter> painted through tokens, with its label. Tokens --size-meter-*.
+   ========================================================================== */
+.size-meter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-meter-gap);
+  font-size: var(--size-sm);
+  color: var(--color-text);
+}
+.size-meter__meter {
+  width: 100%;
+  height: var(--size-meter-height);
+  appearance: none;
+  background: var(--size-meter-track);
+  border: var(--size-meter-border);
+  border-radius: var(--size-meter-radius);
+}
+.size-meter__meter::-webkit-meter-bar {
+  background: var(--size-meter-track);
+  border: 0;
+  border-radius: var(--size-meter-radius);
+}
+.size-meter__meter::-webkit-meter-optimum-value {
+  background: var(--size-meter-fill);
+  border-radius: var(--size-meter-radius);
+}
+.size-meter__meter::-webkit-meter-suboptimum-value {
+  background: var(--size-meter-fill-warn);
+  border-radius: var(--size-meter-radius);
+}
+.size-meter__meter::-webkit-meter-even-less-good-value {
+  background: var(--size-meter-fill-high);
+  border-radius: var(--size-meter-radius);
+}
+.size-meter__meter::-moz-meter-bar {
+  background: var(--size-meter-fill);
+  border-radius: var(--size-meter-radius);
+}
+.size-meter__meter:-moz-meter-sub-optimum::-moz-meter-bar {
+  background: var(--size-meter-fill-warn);
+}
+.size-meter__meter:-moz-meter-sub-sub-optimum::-moz-meter-bar {
+  background: var(--size-meter-fill-high);
+}
+.size-meter__label {
+  color: var(--color-muted);
+}

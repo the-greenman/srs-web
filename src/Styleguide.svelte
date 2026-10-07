@@ -10,7 +10,7 @@
     ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, MarkdownHelp, MarkdownText, AgentPanel, McpConnection, Panel, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
-    TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
+    TagChip, Textarea, Notice, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
   } from "$lib/components";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
@@ -47,6 +47,7 @@
     ["records", "Records and map"],
     ["chooser", "Source chooser"],
     ["notices", "Notices"],
+    ["attachments", "Attachments"],
     ["forms", "Form controls"],
     ["dialogs", "Dialogs"],
   ];
@@ -570,6 +571,26 @@
       <div data-testid="specimen-diagnostics-collapsed"><Diagnostics data-specimen variant="notice" diagnostics={fx.noticeDiagnostics} documentKey="sg-collapsed" /></div>
       <div data-testid="specimen-diagnostics-expanded"><Diagnostics data-specimen variant="notice" diagnostics={fx.noticeDiagnostics} documentKey="sg-expanded" expanded /></div>
       <div data-testid="specimen-diagnostics-panel"><Diagnostics diagnostics={fx.noticeDiagnostics} /></div>
+    </div>
+  </section>
+
+  <section id="attachments">
+    <h2>Attachments</h2>
+    <p class="sg__note">AttachDrop takes text files by drop, paste or picker; RepoSize shows the repository against its limit. The forced states are for this page only.</p>
+    <h3>AttachDrop</h3>
+    <div class="stack">
+      <AttachDrop data-specimen data-testid="sg-attach-idle" onfiles={noop} />
+      <AttachDrop data-specimen data-testid="sg-attach-compact" compact onfiles={noop} />
+      <AttachDrop data-specimen data-testid="sg-attach-over" state="over" onfiles={noop} />
+      <AttachDrop data-specimen data-testid="sg-attach-busy" busy onfiles={noop} />
+      <AttachDrop data-specimen data-testid="sg-attach-rejected" rejected={fx.attachRejected} onfiles={noop} />
+    </div>
+    <h3>RepoSize</h3>
+    <div class="stack">
+      <RepoSize totalBytes={2.3 * fx.MB} />
+      <RepoSize totalBytes={4 * fx.MB} maxBytes={10 * fx.MB} />
+      <RepoSize totalBytes={9.2 * fx.MB} maxBytes={10 * fx.MB} />
+      <RepoSize totalBytes={2.3 * fx.MB} maxBytes={10 * fx.MB} pendingBytes={120 * 1024} />
     </div>
   </section>
 
