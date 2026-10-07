@@ -63,7 +63,7 @@
   /** Facets and the first page of the whole scope: depends on the container and mutations only. */
   function runScope(): void {
     try {
-      const base = find(repo, scoped(), { limit: PAGE, byTypeLimit: 0 });
+      const base = find(repo, scoped(), { limit: PAGE, byTypeLimit: 0, facets: true });
       scope = { total: base.total, facets: base.facets, hits: base.hits };
       diagnostics = base.diagnostics;
       error = null;

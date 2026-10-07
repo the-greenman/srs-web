@@ -91,6 +91,7 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `LayersPanel` | `layers` `ondrop` `onhide` `onfold` `onkey` (touch: per-row ellipsis menu via `ActionMenu`) | `.layers` | #328, [#382](https://github.com/the-greenman/srs-web/issues/382) |
 | `ActionMenu` | `actions` (`MenuAction[]` from `menu-action.ts`, `icon` is a Lucide component; `essay/paragraph-actions.ts` builds the paragraph list) `label` `testid?` `focusKey?` `placement?` (a `Popover role="menu"`) | `.action-menu` | srs-web [#382](https://github.com/the-greenman/srs-web/issues/382) |
 | `DraftTray` / `BinTray` | `items` `available?` `ondrop` `onputback` / `items` `onrestore` `onforget` | `.tray` `.draft-tray` `.bin-tray` | #328, #397 |
+| `ReferencesTray` | `items` `onopen` `onfocus` `onremove` | `.tray` `.refs-tray` `.tray__chip` | #495 |
 | `EyeToggle` | `hidden?` `label?` | `.eye` | #328 |
 
 ## Icons, popovers, `data-part`

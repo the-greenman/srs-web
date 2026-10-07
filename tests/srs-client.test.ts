@@ -912,6 +912,8 @@ describe("find", () => {
       undefined,
       undefined,
       undefined,
+      undefined,
+      undefined,
       undefined
     );
   });
@@ -920,9 +922,21 @@ describe("find", () => {
     const spy = vi.fn().mockReturnValue({ hits: [], total: 0 });
     const repo = mockRepo({ find: spy });
 
-    find(repo, { contentMatch: "x" }, { limit: 50, offset: 100, rank: true, byTypeLimit: 0 });
+    find(
+      repo,
+      { contentMatch: "x" },
+      { limit: 50, offset: 100, rank: true, byTypeLimit: 0, facets: true }
+    );
 
-    expect(spy).toHaveBeenCalledWith(JSON.stringify({ contentMatch: "x" }), 50, 100, true, 0);
+    expect(spy).toHaveBeenCalledWith(
+      JSON.stringify({ contentMatch: "x" }),
+      50,
+      100,
+      true,
+      0,
+      undefined,
+      true
+    );
   });
 
   it("returns total and the type and note facets (srs-rust#1312)", () => {

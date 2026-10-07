@@ -57,6 +57,7 @@ export const NON_MUTATING_METHODS: ReadonlySet<string> = new Set([
   "containers_for_instance",
   "context_field",
   "context_record",
+  "context_record_markdown",
   "declared_extensions_conformance",
   "doctor",
   "export_archive",

@@ -2,6 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 const m = vi.hoisted(() => ({
   createRecord: vi.fn(() => ({ instanceId: "c1" })),
+  createRecordInContainer: vi.fn(() => ({ instanceId: "c1" })),
   createRelation: vi.fn(),
   deleteRecord: vi.fn(),
   listTypes: vi.fn(() => [{ id: "7482e41b-7d3d-4069-b165-ee509dacce22", version: 1 }]),
@@ -27,4 +28,17 @@ it("deletes the created comment record when the relation fails, and rethrows", (
 it("keeps the record when the relation succeeds", () => {
   addComment({} as never, "t", "hi");
   expect(m.deleteRecord).not.toHaveBeenCalled();
+});
+
+it("with a comments container the record is created into it in the same call", () => {
+  addComment({} as never, "t", "hi", "K");
+  expect(m.createRecordInContainer).toHaveBeenCalledWith(
+    expect.anything(),
+    "K",
+    "7482e41b-7d3d-4069-b165-ee509dacce22",
+    1,
+    { fieldValues: { comment_text: "hi" } }
+  );
+  expect(m.createRecord).not.toHaveBeenCalled();
+  expect(m.createRelation).toHaveBeenCalledOnce();
 });

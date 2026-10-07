@@ -85,17 +85,13 @@ describe("headerActions (srs-web#383)", () => {
     shell.wide = false;
   });
 
-  it("adds Copy for agent only when its handler exists", () => {
+  it("has no Copy for agent: it lives in the Agents panel", () => {
     expect(headerActions(base, state).some((a) => a.id === "agent")).toBe(false);
-    const onagent = vi.fn();
-    const a = headerActions({ ...base, onagent }, state).find((x) => x.id === "agent")!;
-    a.run();
-    expect([a.label, onagent.mock.calls.length]).toEqual(["Copy for agent", 1]);
   });
 
   it("every action names a known group, toggles carry checked, mixed maps through, ids are unique", () => {
     const a = headerActions(
-      { ...base, oncopy: noop, onagent: noop, onexportmd: noop, onexplorer: noop, onsave: noop },
+      { ...base, oncopy: noop, onexportmd: noop, onexplorer: noop, onsave: noop },
       { ...state, comments: "mixed" }
     );
     const groups = HEADER_GROUPS.map((g) => g.id) as string[];

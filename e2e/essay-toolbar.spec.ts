@@ -93,7 +93,6 @@ test("390: the bar is title, Save and one overflow; every action is in it", asyn
 const OLD_TEN: [string, string, "Document" | "View" | "Go" | null][] = [
   ["New document", "new-document", "Document"],
   ["Copy document", "copy-document", "Document"],
-  ["Copy for agent", "copy-for-agent", "Document"],
   ["Export", "toolbar-export", "Document"],
   ["Export markdown", "export-markdown", "Document"],
   ["Wide", "margin-variant", "View"],
@@ -103,7 +102,7 @@ const OLD_TEN: [string, string, "Document" | "View" | "Go" | null][] = [
   ["Markdown help", "toolbar-help", null],
 ];
 for (const width of [1440, 768, 390]) {
-  test(`${width}: all ten previous header actions are reachable by name`, async ({ page }) => {
+  test(`${width}: all nine previous header actions are reachable by name`, async ({ page }) => {
     await open(page, width);
     for (const [name, testid, group] of OLD_TEN) {
       if (width === 390) await page.getByTestId("header-menu").click();

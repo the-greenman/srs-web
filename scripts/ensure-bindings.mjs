@@ -26,9 +26,9 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DEFAULT_URL =
-  "https://github.com/the-greenman/srs-rust/releases/download/v0.1.0-build.480/srs-bindings-web.tar.gz";
+  "https://github.com/the-greenman/srs-rust/releases/download/v0.1.0-build.489/srs-bindings-web.tar.gz";
 // sha256 of the tarball at DEFAULT_URL (the release's srs-bindings-web.tar.gz.sha256 asset).
-const SHA256 = "2772d030fd91e6519ed4353d390be514aaa6c5be888cd1218ac8f34bf300cd74";
+const SHA256 = "cce6ac186db36187ec80a98eb316c4657bdb1123012482ced4921b8361dd3c1b";
 
 const verifySha256 = (bytes, expected) =>
   createHash("sha256").update(bytes).digest("hex") === expected.trim().toLowerCase();

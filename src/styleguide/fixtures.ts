@@ -257,6 +257,19 @@ export const draftItems = [
   { id: "d2", label: "Old intro" },
 ];
 export const binItems = [{ id: "x1", label: "Deleted paragraph" }];
+export const referenceItems = [
+  {
+    id: "r1",
+    label: "Boundaries as relations",
+    type: "source",
+    paragraphs: [
+      { id: "p1", label: "Opening" },
+      { id: "p2", label: "The second claim" },
+    ],
+    openable: true,
+  },
+  { id: "r2", label: "Nobody owns the edge", type: "claim", paragraphs: [], openable: false },
+];
 
 export const pinned = [
   {
@@ -547,7 +560,6 @@ export const toolbarActions = headerActions(
   {
     onnew: nop,
     oncopy: nop,
-    onagent: nop,
     onhelp: nop,
     oncomments: nop,
     onsave: nop,
