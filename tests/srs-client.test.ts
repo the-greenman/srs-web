@@ -17,6 +17,7 @@ import {
   initWasm,
   installBundles,
   installPackageBundle,
+  repositoryId,
   upgradeBundles,
   type AddAttachmentInput,
   type AllowedLifecycleTransitionsResult,
@@ -2053,5 +2054,19 @@ describe("resolveContainerView members (srs-web#483)", () => {
     expect(members[0].record).toBeUndefined();
     expect(members[1].record?.instanceId).toBe("r1");
     expect(members[1].record?.displayLabel).toBe("R");
+  });
+});
+
+describe("repositoryId (srs-web#505)", () => {
+  it("reads the srsj manifest, and falls back to the tree when export_srsj throws", () => {
+    const ok = { export_srsj: () => JSON.stringify({ manifest: { repositoryId: "a" } }) };
+    expect(repositoryId(ok as unknown as SrsRepository)).toBe("a");
+    const withAttachment = {
+      export_srsj: () => {
+        throw new Error("cannot carry binary content");
+      },
+      export_tree: () => ({ "manifest.json": new TextEncoder().encode('{"repositoryId":"b"}') }),
+    };
+    expect(repositoryId(withAttachment as unknown as SrsRepository)).toBe("b");
   });
 });

@@ -256,7 +256,12 @@
    * when the document was closed or saved in the meantime.
    */
   const workingCopy = workingCopyScheduler(() => {
-    if (repo && mayKeepWorkingCopy(readOnlyHost, documentMutations.dirty)) workingCopySaved = saveWorkingCopy(repoName, exportSrsj(repo));
+    const r = repo;
+    if (r && mayKeepWorkingCopy(readOnlyHost, documentMutations.dirty)) {
+      void saveWorkingCopy(repoName, () => exportArchive(r)).then((ok) => {
+        if (r === repo) workingCopySaved = ok;
+      });
+    }
   }, 2000);
   $effect(() => {
     const flush = () => workingCopy.flush();
@@ -292,7 +297,7 @@
     documentDirty = documentMutations.dirty;
     if (savedCurrentRevision) {
       workingCopy.cancel();
-      clearWorkingCopy();
+      void clearWorkingCopy();
     }
     return savedCurrentRevision;
   }
@@ -581,12 +586,13 @@
           void openFromLink(link);
           return;
         }
-        const cached = loadWorkingCopy();
-        if (cached !== null) {
-          cachedSession = cached;
-          editorMode = "generic";
-        }
-        appState = "idle";
+        return loadWorkingCopy().then((cached) => {
+          if (cached !== null) {
+            cachedSession = cached;
+            editorMode = "generic";
+          }
+          appState = "idle";
+        });
       })
       .catch((e: unknown) => {
         errorMsg = `Failed to load WASM engine: ${e instanceof Error ? e.message : String(e)}`;
@@ -628,7 +634,7 @@
         cachedSession = null;
         if (dirty) {
           saveToast("info", "Migrated to the current data model. Unsaved - Save to keep it.", 8000);
-          if (!readOnlyHost) saveWorkingCopy(repoName, exportSrsj(loaded));
+          if (!readOnlyHost) void saveWorkingCopy(repoName, () => exportArchive(loaded));
         }
         const catalog = collectCatalogDiagnostics(loaded);
         if (catalog.length) {
@@ -828,7 +834,7 @@
         cachedSession = null;
         if (dirty) {
           saveToast("info", "Migrated to the current data model. Unsaved - export to keep it.", 8000);
-          if (!readOnlyHost) saveWorkingCopy(repoName, exportSrsj(loaded));
+          if (!readOnlyHost) void saveWorkingCopy(repoName, () => exportArchive(loaded));
         }
         appState = "loaded";
       });
@@ -1130,7 +1136,7 @@
             const entry = cachedSession;
             if (!entry) return;
             try {
-              const restored = loadRepo(entry.srsj);
+              const restored = entry.bytes ? loadRepoFromArchive(entry.bytes) : loadRepo(entry.srsj ?? "");
               repo = restored;
               readOnlyHost = null;
               gateOnMigration(restored, entry.name, () => {
@@ -1141,14 +1147,14 @@
                 appState = "loaded";
                 editorMode = "generic";
                 cachedSession = null;
-                saveWorkingCopy(repoName, exportSrsj(restored));
+                void saveWorkingCopy(repoName, () => exportArchive(restored));
               });
             } catch (e: unknown) {
-              clearWorkingCopy();
+              void clearWorkingCopy();
               restoreError = `Could not restore session: ${e instanceof Error ? e.message : String(e)}`;
             }
           }}>Restore session</button>
-          <button class="restore-banner__dismiss" onclick={() => { clearWorkingCopy(); cachedSession = null; restoreError = null; }}>Discard</button>
+          <button class="restore-banner__dismiss" onclick={() => { void clearWorkingCopy(); cachedSession = null; restoreError = null; }}>Discard</button>
         </div>
       </div>
     {/if}
@@ -1179,7 +1185,7 @@
     onOpenPackages={canUpgrade ? () => (packagesOpen = true) : undefined}
     onOpenAgents={openDock}
     onOpenAnother={() => {
-      clearWorkingCopy();
+      void clearWorkingCopy();
       cachedSession = null;
       clearNotices();
       repo = null;
@@ -1218,7 +1224,7 @@
     onOpenAgents={activeEditor!.hostsAgentPanel ? undefined : openDock}
     onOpenPackages={canUpgrade ? () => (packagesOpen = true) : undefined}
     onOpenAnother={() => {
-      clearWorkingCopy();
+      void clearWorkingCopy();
       cachedSession = null;
       repo = null;
       beginDocument();

@@ -1,36 +1,77 @@
 /**
- * browser-cache.ts — working-copy persistence in localStorage.
+ * browser-cache.ts - recovery-copy persistence.
  *
- * ADR-001: the `.srsj` string is treated as opaque here. Only `exportSrsj()`
- * (WASM) produces it and only `loadRepo()` (WASM) consumes it. TypeScript never
- * inspects the contents.
+ * The recovery copy is the `.srs` archive (`exportArchive()`, so attachment bytes survive)
+ * kept in IndexedDB: one database, one object store, one key (srs-web#505). ADR-001: the
+ * bytes are opaque here; only WASM produces and consumes them.
  */
 
-const WORKING_COPY_KEY = "srs-web:working-copy";
+const DB_NAME = "srs-web";
+const STORE = "working-copy";
+const KEY = "current";
+// ponytail: legacy localStorage `.srsj` recovery copy (pre-#505); delete LEGACY_KEY handling after a release or two.
+const LEGACY_KEY = "srs-web:working-copy";
 
-/**
- * An in-browser snapshot of the current working copy.
- * `savedAt` is always ISO 8601 produced by `new Date().toISOString()`.
- */
+/** `bytes` is the `.srs` archive; `srsj` is set only for a migrated legacy entry. */
 export interface WorkingCopyEntry {
   name: string;
-  srsj: string;
   savedAt: string;
+  bytes?: Uint8Array;
+  srsj?: string;
+}
+
+// One cached connection: a write issued from `pagehide` then starts its transaction
+// synchronously (an async open would be torn down with the page). Reopened if it fails.
+let dbPromise: Promise<IDBDatabase> | undefined;
+let dbFactory: IDBFactory | undefined;
+function openDb(): Promise<IDBDatabase> {
+  if (dbFactory !== indexedDB) dbPromise = undefined; // a different factory (tests) is a different DB
+  dbFactory = indexedDB;
+  dbPromise ??= new Promise<IDBDatabase>((resolve, reject) => {
+    const open = indexedDB.open(DB_NAME, 1);
+    open.onupgradeneeded = () => open.result.createObjectStore(STORE);
+    open.onerror = () => reject(open.error);
+    open.onsuccess = () => resolve(open.result);
+  }).catch((e) => {
+    dbPromise = undefined;
+    throw e;
+  });
+  return dbPromise as Promise<IDBDatabase>;
+}
+
+async function idb<T>(
+  mode: IDBTransactionMode,
+  run: (s: IDBObjectStore) => IDBRequest<T>
+): Promise<T> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const req = run(db.transaction(STORE, mode).objectStore(STORE));
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => resolve(req.result);
+  });
 }
 
 /**
- * Persist the working copy to localStorage. Returns true on success, false on
- * any error (including QuotaExceededError). Non-fatal — autosave failure must
- * never interrupt the user's edit flow.
+ * Persist the recovery copy. `exportBytes` runs inside the try, so an export throw is a
+ * `false`, like IndexedDB being unavailable or over quota. Never throws: autosave failure
+ * must not interrupt editing.
  */
-export function saveWorkingCopy(name: string, srsj: string): boolean {
+export async function saveWorkingCopy(
+  name: string,
+  exportBytes: () => Uint8Array
+): Promise<boolean> {
   try {
     const entry: WorkingCopyEntry = {
       name,
-      srsj,
+      bytes: exportBytes(),
       savedAt: new Date().toISOString(),
     };
-    localStorage.setItem(WORKING_COPY_KEY, JSON.stringify(entry));
+    await idb("readwrite", (s) => s.put(entry, KEY));
+    try {
+      localStorage.removeItem(LEGACY_KEY);
+    } catch {
+      /* ignore */
+    }
     return true;
   } catch (e: unknown) {
     console.warn("autosave failed:", e);
@@ -38,40 +79,49 @@ export function saveWorkingCopy(name: string, srsj: string): boolean {
   }
 }
 
-/**
- * Load the cached working copy from localStorage.
- * Returns null if absent, malformed, or if any required field fails validation.
- * Never throws.
- */
-export function loadWorkingCopy(): WorkingCopyEntry | null {
+function loadLegacy(): WorkingCopyEntry | null {
   try {
-    const raw = localStorage.getItem(WORKING_COPY_KEY);
+    const raw = localStorage.getItem(LEGACY_KEY);
     if (raw === null) return null;
-
-    const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
-
-    const entry = parsed as Record<string, unknown>;
-    if (
-      typeof entry.name !== "string" ||
-      typeof entry.srsj !== "string" ||
-      typeof entry.savedAt !== "string" ||
-      Number.isNaN(new Date(entry.savedAt).getTime())
-    ) {
+    const e = JSON.parse(raw) as Record<string, unknown>;
+    if (typeof e.name !== "string" || typeof e.srsj !== "string" || typeof e.savedAt !== "string")
       return null;
-    }
-
-    return { name: entry.name, srsj: entry.srsj, savedAt: entry.savedAt };
+    return { name: e.name, srsj: e.srsj, savedAt: e.savedAt };
   } catch {
     return null;
   }
 }
 
-/**
- * Remove the cached working copy from localStorage.
- */
-export function clearWorkingCopy(): void {
-  localStorage.removeItem(WORKING_COPY_KEY);
+/** Load the recovery copy (IndexedDB, else a legacy localStorage entry). Never throws. */
+export async function loadWorkingCopy(): Promise<WorkingCopyEntry | null> {
+  try {
+    const e = (await idb("readonly", (s) => s.get(KEY))) as Partial<WorkingCopyEntry> | undefined;
+    if (
+      e &&
+      typeof e.name === "string" &&
+      typeof e.savedAt === "string" &&
+      e.bytes instanceof Uint8Array
+    ) {
+      return { name: e.name, savedAt: e.savedAt, bytes: e.bytes };
+    }
+  } catch {
+    /* fall through to the legacy entry */
+  }
+  return loadLegacy();
+}
+
+/** Remove the recovery copy (and any legacy entry). Never throws. */
+export async function clearWorkingCopy(): Promise<void> {
+  try {
+    localStorage.removeItem(LEGACY_KEY);
+  } catch {
+    /* ignore */
+  }
+  try {
+    await idb("readwrite", (s) => s.delete(KEY));
+  } catch {
+    /* ignore */
+  }
 }
 
 /**
