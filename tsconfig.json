@@ -10,6 +10,7 @@
     "noUnusedParameters": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
+    "resolveJsonModule": true,
     "outDir": "dist",
     "paths": {
       "$lib/*": ["./src/lib/*"]

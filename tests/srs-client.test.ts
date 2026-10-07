@@ -10,6 +10,7 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
+import { priorBundles } from "../src/lib/packages/bundles.js";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 import {
   createBlankRepository,
@@ -1946,11 +1947,21 @@ describe("upgradeBundles", () => {
     expect(upgrade).not.toHaveBeenCalled();
   });
 
-  it("upgrades each package once and passes the dry-run option to the core", () => {
+  it("upgrades each package once and passes the dry-run option and the earlier bundles to the core", () => {
     const upgrade = vi.fn().mockReturnValue({ name: "essay" });
     upgradeBundles(mockRepo({ upgrade_package_bundle: upgrade }), [ESSAY, ESSAY], { dryRun: true });
     expect(upgrade).toHaveBeenCalledTimes(1);
-    expect(JSON.parse(upgrade.mock.calls[0][1])).toEqual({ dryRun: true });
+    const options = JSON.parse(upgrade.mock.calls[0][1]);
+    expect(options.dryRun).toBe(true);
+    expect(options.priorBundles).toEqual(priorBundles(ESSAY));
+    expect(options.priorBundles.length).toBeGreaterThan(0);
+    expect(options.adopt).toBeUndefined();
+  });
+
+  it("passes only that package's adopted definition ids", () => {
+    const upgrade = vi.fn().mockReturnValue({ name: "essay" });
+    upgradeBundles(mockRepo({ upgrade_package_bundle: upgrade }), [ESSAY], { adopt: { [ESSAY]: ["d1"], other: ["x"] } });
+    expect(JSON.parse(upgrade.mock.calls[0][1])).toMatchObject({ dryRun: false, adopt: ["d1"] });
   });
 });
 

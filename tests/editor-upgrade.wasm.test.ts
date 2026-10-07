@@ -31,10 +31,10 @@ describe.skipIf(!haveBindings)("upgrade an editor's outdated package on the real
   }
 
   it("offers Upgrade, plans without writing, then upgrades, validates clean and opens", async () => {
-    const { EDITORS, availableEditors, upgradeEditor } = await import(
+    const { EDITORS, availableEditors } = await import(
       "../src/lib/editors/registry.js"
     );
-    const { checkPackageRequirements, listTypes } = await import("../src/lib/srs-client.js");
+    const { checkPackageRequirements, listTypes, upgradeBundles } = await import("../src/lib/srs-client.js");
     const { newEssay } = await import("../src/lib/essay/essay-document.js");
     const repo = await outdated();
     if (typeof repo.upgrade_package_bundle !== "function") return; // bindings predate srs-rust#1269
@@ -45,15 +45,16 @@ describe.skipIf(!haveBindings)("upgrade an editor's outdated package on the real
     expect(offered.unmet?.upgrade).toEqual(essay.requires);
     expect(offered.unmet?.install).toBeUndefined();
 
+    const ids = offered.unmet!.upgrade!.map((r) => r.packageId);
     const e0 = repo.write_epoch();
-    const [plan] = upgradeEditor(repo, offered, { dryRun: true });
+    const [plan] = upgradeBundles(repo, ids, { dryRun: true });
     expect(plan.dryRun).toBe(true);
-    expect([plan.previousVersion, plan.version]).toEqual(["1.2.0", "1.5.0"]);
+    expect([plan.previousVersion, plan.version]).toEqual(["1.2.0", "1.7.0"]);
     expect(plan.added.length + plan.newVersions.length + plan.updated.length).toBeGreaterThan(0);
     expect(repo.write_epoch()).toBe(e0);
     expect(availableEditors(repo, listTypes(repo))[0].unmet?.upgrade).toBeTruthy();
 
-    const [done] = upgradeEditor(repo, offered);
+    const [done] = upgradeBundles(repo, ids);
     expect(done.conflicts).toEqual([]);
     expect(repo.write_epoch()).toBeGreaterThan(e0);
     expect(repo.validate().summary.errors).toBe(0);

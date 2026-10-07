@@ -9,7 +9,7 @@
  *   wasm-pack build crates/srs-bindings --target web --out-dir ../../srs-web/src/lib/srs_bindings
  */
 
-import { bundledPackage } from "./packages/bundles.js";
+import { bundledPackage, priorBundles } from "./packages/bundles.js";
 // Empty governance document seed, shipped inside srs-bindings-web.tar.gz
 // (srs-rust#381) and refreshed by scripts/ensure-bindings.mjs alongside the WASM,
 // so the seed can never drift from the engine that scaffolds it.
@@ -1606,6 +1606,11 @@ export interface UpgradeItem {
   name: string;
 }
 
+/** A definition the upgrade overwrote or would overwrite; `provenBy` = the earlier bundle version that proved it unmodified (srs-rust#1325). */
+export interface UpgradeUpdated extends UpgradeItem {
+  provenBy?: string;
+}
+
 /** A definition the upgrade would not overwrite: the local copy is kept. */
 export interface UpgradeConflict extends UpgradeItem {
   conflictKind: "local-edit" | "no-reference-copy" | "key-collision";
@@ -1621,7 +1626,9 @@ export interface UpgradePackageResult {
   dryRun: boolean;
   added: UpgradeItem[];
   newVersions: UpgradeItem[];
-  updated: UpgradeItem[];
+  updated: UpgradeUpdated[];
+  /** Unproven definitions replaced with the user's consent (`adopt`); absent on an engine without srs-rust#1325. */
+  adopted?: UpgradeItem[];
   unchanged: UpgradeItem[];
   repaired: UpgradeItem[];
   conflicts: UpgradeConflict[];
@@ -1637,24 +1644,47 @@ export interface UpgradePackageResult {
 export function upgradePackageBundle(
   repo: SrsRepository,
   bundleText: string,
-  { dryRun = false }: { dryRun?: boolean } = {}
+  options: UpgradeOptions = {}
 ): UpgradePackageResult {
+  // priorBundles and adopt are srs-rust#1325 options; sent only when given, so an engine without them is unaffected.
+  const { dryRun = false, priorBundles, adopt } = options;
   return repo.upgrade_package_bundle(
     bundleText,
-    JSON.stringify({ dryRun })
+    JSON.stringify({
+      dryRun,
+      ...(priorBundles?.length ? { priorBundles } : {}),
+      ...(adopt?.length ? { adopt } : {}),
+    })
   ) as UpgradePackageResult;
 }
 
-/** Upgrade (or dry-run) the pinned bundles for `packageIds`, deduped, in order. Throws when one is not bundled. */
+/** The engine's upgrade options (srs-rust#1269, #1325). */
+export interface UpgradeOptions {
+  dryRun?: boolean;
+  /** Earlier published bundles (JSON texts) that prove an installed definition unmodified. */
+  priorBundles?: string[];
+  /** Ids of unproven definitions the user agreed to replace. */
+  adopt?: string[];
+}
+
+/**
+ * Upgrade (or dry-run) the pinned bundles for `packageIds`, deduped, in order, each with its earlier
+ * bundles as proof. `adopt` maps a packageId to the definition ids the user agreed to replace in it.
+ * Throws when one is not bundled.
+ */
 export function upgradeBundles(
   repo: SrsRepository,
   packageIds: string[],
-  options: { dryRun?: boolean } = {}
+  options: { dryRun?: boolean; adopt?: Record<string, string[]> } = {}
 ): UpgradePackageResult[] {
   return [...new Set(packageIds)].map((packageId) => {
     const text = bundledPackage(packageId);
     if (!text) throw new Error(`No bundled package ${packageId}`);
-    return upgradePackageBundle(repo, text, options);
+    return upgradePackageBundle(repo, text, {
+      dryRun: options.dryRun,
+      priorBundles: priorBundles(packageId),
+      adopt: options.adopt?.[packageId],
+    });
   });
 }
 

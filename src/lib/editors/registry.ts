@@ -14,11 +14,9 @@ import {
   type RequirementOutcome,
   type SrsRepository,
   type TypeSummary,
-  type UpgradePackageResult,
   checkPackageRequirements,
   createGovernanceDocument,
   installBundles,
-  upgradeBundles,
 } from "$lib/srs-client.js";
 /**
  * The one editor registry (srs-web#338).
@@ -47,6 +45,8 @@ export interface EditorShellProps {
   onOpenExplorer?: () => void;
   /** Open the agent library (Go > Agents…). Absent for a shell that hosts its own agent panel. */
   onOpenAgents?: () => void;
+  /** Open Document > Packages… (#450). Absent while the document is read-only. */
+  onOpenPackages?: () => void;
   documentProvider: string;
   readOnlyReason?: string | null;
   /** A shell declares (or, with null, withdraws) the write guard App applies to agent MCP writes. */
@@ -236,22 +236,6 @@ export function installEditor(repo: SrsRepository, offered: OfferedEditor): void
   installBundles(
     repo,
     (offered.unmet?.install ?? []).map((req) => req.packageId)
-  );
-}
-
-/**
- * Upgrade the packages an offered editor needs (its `unmet.upgrade`) from the pinned bundles; the core
- * decides conflicts and keeps local edits. `dryRun` returns the plan and writes nothing.
- */
-export function upgradeEditor(
-  repo: SrsRepository,
-  offered: OfferedEditor,
-  options: { dryRun?: boolean } = {}
-): UpgradePackageResult[] {
-  return upgradeBundles(
-    repo,
-    (offered.unmet?.upgrade ?? []).map((req) => req.packageId),
-    options
   );
 }
 
