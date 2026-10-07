@@ -147,6 +147,8 @@
   let expandedContainerIds = $state<Set<string>>(new Set());
   let expandedMembers = $state<Record<string, ResolvedMember[]>>({});
   let recordError = $state<string | null>(null);
+  /** Read-only inspector field metadata for the selected record (srs-web#479). */
+  let recordFieldMeta = $state<Map<string, FieldFormDef>>(new Map());
   let editFormDef = $state<{ label: string; fields: FieldFormDef[]; composites: CompositeFormDef[] } | null>(null);
   let activeBlueprint = $state<BlueprintSummary | null>(null);
   let documentRenderRevision = $state(0);
@@ -276,15 +278,35 @@
       editing = false;
       editFormDef = null;
       editError = null;
-      selectedRecord = getRecord(repo, instanceId);
+      const record = getRecord(repo, instanceId);
+      selectedRecord = record;
+      recordFieldMeta = record ? fetchFieldMeta(record) : new Map();
       showInspector();
     } catch (error: unknown) {
       recordError = message(error);
     }
   }
 
+  /**
+   * Field-name → FieldFormDef map for the read-only inspector view, so
+   * FieldValueView knows which fields are markdown/url rather than plain
+   * text (srs-web#479). Best-effort: an unprojectable type still shows the
+   * record with plain-text field rendering.
+   */
+  function fetchFieldMeta(record: SrsRecord): Map<string, FieldFormDef> {
+    try {
+      const result = typeSchema(repo, record.typeId, record.typeVersion);
+      const definition = result.schema as unknown as SchemaDefinition;
+      if (!definition.properties) return new Map();
+      return new Map(definitionToFields(definition).map((field) => [field.name, field]));
+    } catch {
+      return new Map();
+    }
+  }
+
   function clearRecordSelection(): void {
     selectedRecord = null;
+    recordFieldMeta = new Map();
     editing = false;
     editFormDef = null;
     editError = null;
@@ -554,7 +576,7 @@
           {#if editError}<Notice kind="error" testid="generic-edit-error">{editError}</Notice>{/if}
         </header>
         {#each Object.entries(selectedRecord.fieldValues) as [name, value] (name)}
-          <div class="generic-field"><strong>{name}</strong><FieldValueView {value} /></div>
+          <div class="generic-field"><strong>{name}</strong><FieldValueView {value} valueType={recordFieldMeta.get(name)?.valueType} /></div>
         {/each}
         {#key selectedRecord.instanceId}
           {#if !readOnly}<InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} heading />{/if}

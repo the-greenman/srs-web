@@ -45,6 +45,10 @@ function propertyToField(name: string, prop: SchemaProperty, required: boolean):
   let valueType: FieldFormDef["valueType"];
   if (prop.enum) {
     valueType = "select";
+  } else if (prop.contentMediaType === "text/markdown") {
+    // Markdown fields also carry x-srs-widget "textarea" (shared multi-line editor
+    // widget) — check contentMediaType first so markdown wins over the plain-text path.
+    valueType = "markdown";
   } else if (prop["x-srs-widget"] === "textarea") {
     valueType = "text";
   } else if (prop.format === "uri" || prop.items?.format === "uri") {

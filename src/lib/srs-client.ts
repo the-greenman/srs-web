@@ -974,6 +974,8 @@ export interface SchemaProperty {
   type?: string;
   /** Populated by WASM typeSchema() for url valueType fields (srs-rust type_schema_service.rs). Value "uri" → valueType "url" in blueprint-utils.ts. */
   format?: string;
+  /** Populated by WASM typeSchema() for markdown-format string fields (srs-rust type_schema_service.rs). Value "text/markdown" → valueType "markdown" in blueprint-fields.ts. */
+  contentMediaType?: string;
   enum?: string[];
   /** May be absent (RFC-039 projections do not guarantee it) — never require it. */
   "x-srs-field-id"?: string;
