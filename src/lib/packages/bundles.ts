@@ -11,3 +11,11 @@ const BUNDLES = import.meta.glob("./*.srspkg", {
 export function bundledPackage(packageId: string): string | undefined {
   return BUNDLES[`./${packageId}.srspkg`];
 }
+
+/** The earlier published bundles of a package (the lock's `history`), as bundle JSON texts: the engine's upgrade proof (#450). */
+export function priorBundles(packageId: string): string[] {
+  return Object.keys(BUNDLES)
+    .filter((k) => k.startsWith(`./${packageId}@`))
+    .sort()
+    .map((k) => BUNDLES[k]);
+}

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Ensure the pinned package bundles (packages.lock.json) are present at
-// src/lib/packages/<packageId>.srspkg, verified by sha256.
+// src/lib/packages/<packageId>.srspkg (plus <packageId>@<version>.srspkg for each `history`
+// entry), verified by sha256.
 //
 // A missing bundle is downloaded. A present one is re-verified; a mismatch
 // there is expected after packages.lock.json is bumped (the cached bundle
@@ -23,8 +24,15 @@ const lock = JSON.parse(readFileSync(lockPath, "utf8"));
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
 mkdirSync(dir, { recursive: true });
-for (const { packageId, name, version, url, sha256: expected } of lock) {
-  const file = join(dir, `${packageId}.srspkg`);
+// Each entry is the current bundle (`<packageId>.srspkg`) plus its `history` of earlier published
+// bundles (`<packageId>@<version>.srspkg`). The editor passes those to the engine as upgrade proof
+// (srs-web#450); it ships them because github.com release downloads send no CORS header.
+const wanted = lock.flatMap((e) => [
+  e,
+  ...(e.history ?? []).map((h) => ({ ...h, packageId: e.packageId, name: e.name, file: `${e.packageId}@${h.version}.srspkg` })),
+]);
+for (const { packageId, name, version, url, sha256: expected, file: fileName } of wanted) {
+  const file = join(dir, fileName ?? `${packageId}.srspkg`);
 
   const download = async () => {
     console.log(`Downloading ${name} ${version} from ${url}`);

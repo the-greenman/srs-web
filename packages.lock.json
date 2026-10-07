@@ -4,6 +4,18 @@
     "name": "essay",
     "version": "1.7.0",
     "url": "https://github.com/the-greenman/srs-web/releases/download/packages-essay-1.7.0/essay.srspkg",
-    "sha256": "0deb630c8271bc6be2e8484fe40fb12bdfbf618c0ffc742bab4960cb8f3d218d"
+    "sha256": "0deb630c8271bc6be2e8484fe40fb12bdfbf618c0ffc742bab4960cb8f3d218d",
+    "history": [
+      {
+        "version": "1.5.0",
+        "url": "https://github.com/the-greenman/srs-web/releases/download/packages-essay-1.5.0/essay.srspkg",
+        "sha256": "117c09c61bc3e3f0060d2a797bad275905f5f7173a268e877b9a43f3052daf31"
+      },
+      {
+        "version": "1.6.0",
+        "url": "https://github.com/the-greenman/srs-web/releases/download/packages-essay-1.6.0/essay.srspkg",
+        "sha256": "236ee9b2930bf33b48ee6f7cf18c74f2fc97d6557c956e8ef70fc0e4a3a2a692"
+      }
+    ]
   }
 ]
