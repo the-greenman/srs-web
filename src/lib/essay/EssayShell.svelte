@@ -87,6 +87,7 @@
   let {
     repo,
     repoName,
+    documentTitle = repoName,
     readOnlyReason = null,
     onExport,
     onSave,
@@ -109,6 +110,8 @@
     readOnlyReason?: string | null;
     repo: SrsRepository;
     repoName: string;
+    /** The Toolbar's displayed title (srs-web#480) — see EditorShellProps. */
+    documentTitle?: string;
     onExport: () => void;
     onSave?: () => void;
     saving?: boolean;
@@ -608,7 +611,7 @@
     <Main>
   {#snippet bar()}
   <Toolbar
-    title={model?.title ?? repoName}
+    title={model?.title ?? documentTitle}
     actions={barActions}
     groups={HEADER_GROUPS}
     bind:root={toolbarEl}
