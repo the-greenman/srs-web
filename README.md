@@ -154,7 +154,7 @@ consoles before production deployment.
 
 1. Create a **GitHub App** (Settings → Developer settings → GitHub Apps) with
    **Contents: Read & write** and **Metadata: Read** repository permissions.
-   (Production uses the `mudemocracy` GitHub App; a classic OAuth App also
+   (Production uses the `semanticops-editor` GitHub App; a classic OAuth App also
    works with this code, but a GitHub App is preferred: fine-grained
    permissions, and tokens scoped to installations.)
 2. **Make the app public** (app settings → Advanced → Make public). A private
