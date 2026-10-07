@@ -24,3 +24,13 @@ The registry requires essay 1.3.0 and EssayShell needs nothing newer (`purpose`,
 ## Release
 
 The released bindings lack `upgrade_package_bundle`, so CI on this branch fails until `ensure-bindings.mjs` pins the build that ships srs-rust#1269 (done by the lead after release).
+
+## Widened, 2026-10-07 (owner decision)
+
+An upgrade is offered for **any package in `packages.lock.json`** older than its bundle, not only for an editor whose minimum is unmet. Design: section 2 of the owner plan; engine side srs-rust#1325.
+
+- **U5. Outdated = the core's `version-too-low`** for `{packageId, version: bundled}` (`check_package_requirements`); no version comparison in TS. Not installed = ignored (Install stays the editor path); another band = not offered.
+- **U6. One flow.** The pinned notice ("essay 1.7.0 is available (installed 1.5.0). Review upgrade"), Document > Packages… and an outdated editor's Upgrade all dry-run and open `UpgradePlan` from App; Apply upgrades through the write-observed repo. Offered unless the document is read-only (`readOnlyHost`); a local file is not (it edits in memory and exports, as Install does).
+- **U7. Proof.** `packages.lock.json` `history` lists earlier published bundles, fetched at build time (github.com release downloads send no CORS header) to `<packageId>@<version>.srspkg`; `priorBundles(packageId)` passes them as `priorBundles` so the engine can prove an installed definition unmodified (`provenBy`).
+- **U8. Consent.** An unproven (`no-reference-copy`) definition has an opt-in checkbox (default off); ticked ids go as `adopt`. `local-edit` and `key-collision` are read-only and explained.
+- **Waits on srs-rust#1325:** `priorBundles`, `adopt`, `adopted`, `provenBy`. The pinned bindings (build 489) ignore them; the UI degrades to the no-proof plan, and the two real-WASM proof tests skip with that reason until the pin is bumped.
