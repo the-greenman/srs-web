@@ -18,6 +18,7 @@ export { default as Main } from "./Main.svelte";
 export { default as Workspace } from "./Workspace.svelte";
 
 // Navigation rail
+export { default as Wordmark } from "./Wordmark.svelte";
 export { default as Nav } from "./Nav.svelte";
 export { default as NavGroup } from "./NavGroup.svelte";
 export { default as NavItem } from "./NavItem.svelte";
