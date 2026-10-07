@@ -30,6 +30,11 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.notice > .btn {
+  flex: none;
+  margin-block: calc(-1 * var(--space-xs) / 2);
+  margin-inline-start: auto;
+}
 .notice > .icon-btn {
   margin-block: calc(-1 * var(--space-xs) / 2);
   margin-inline-start: auto;

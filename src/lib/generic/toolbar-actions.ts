@@ -7,6 +7,7 @@ import type { ToolbarAction } from "../components/menu-action.js";
 import {
   agentsAction,
   openAnotherAction,
+  packagesAction,
   saveAction,
   wideAction,
 } from "../components/shell-actions.js";
@@ -21,6 +22,8 @@ export interface GenericHandlers {
   onopenanother: () => void;
   /** Absent when the shell cannot open the agent library. */
   onopenagents?: () => void;
+  /** Absent while the document is read-only (an upgrade writes). */
+  onopenpackages?: () => void;
   /** Absent unless the open composition has a blueprint editor to preview. */
   onpreview?: () => void;
 }
@@ -58,6 +61,7 @@ export function genericActions(
       checked: s.fullPreview,
       testid: "full-preview-toggle",
     },
+    !!h.onopenpackages && packagesAction(h.onopenpackages),
     wideAction(s.shell),
     !!h.onopenagents && agentsAction(h.onopenagents),
     openAnotherAction(h.onopenanother),

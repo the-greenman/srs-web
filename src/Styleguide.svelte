@@ -13,6 +13,7 @@
     TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
   } from "$lib/components";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
+  import PackagesDialog from "$lib/components/PackagesDialog.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import LiveRegions from "$lib/components/LiveRegions.svelte";
   import { notify } from "$lib/notices.svelte";
@@ -562,6 +563,7 @@
       <Notice data-specimen kind="info" testid="specimen-notice-info">This link points to a paragraph that is no longer here.</Notice>
       <Notice data-specimen kind="warning" testid="specimen-notice-warning">2 size warnings: the document is large.</Notice>
       <Notice data-specimen kind="error" testid="specimen-notice-error" onDismiss={noop}>Could not export: the engine refused the view.</Notice>
+      <Notice data-specimen kind="info" testid="specimen-notice-action" action={{ label: "Review upgrade", onAction: noop }}>essay 1.7.0 is available (installed 1.5.0).</Notice>
     </div>
     <h3>Diagnostics</h3>
     <div class="stack">
@@ -607,6 +609,7 @@
       {/snippet}
     </Modal>
     <UpgradePlan inline testid="sg-upgrade-plan" plans={[fx.upgradePlan]} onApply={() => {}} onCancel={() => {}} />
+    <div data-testid="sg-packages-dialog"><PackagesDialog inline packages={fx.installedPackagesFx} onUpgrade={() => {}} onClose={() => {}} /></div>
   </section>
 </main>
 <LiveRegions />

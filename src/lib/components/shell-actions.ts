@@ -31,6 +31,17 @@ export const agentsAction = (run: () => void): ToolbarAction => ({
   run,
 });
 
+/** Document > Packages…: the bundled packages installed here and their upgrades (#450). Present only while the document is writable. */
+export const packagesAction = (run: () => void): ToolbarAction => ({
+  id: "packages",
+  group: "document",
+  kind: "action",
+  label: "Packages…",
+  testid: "toolbar-packages",
+  enabled: true,
+  run,
+});
+
 /** Document > Save, the bar's one primary. `enabled` is the shell's own rule (Essay and Generic gate on dirty; Governance and Guides only on not saving). */
 export const saveAction = (
   run: () => void,
@@ -89,6 +100,8 @@ export interface CommonHandlers {
   onexportsrsj?: () => void;
   /** Absent when the shell cannot open the agent library. */
   onopenagents?: () => void;
+  /** Absent while the document is read-only (an upgrade writes). */
+  onopenpackages?: () => void;
   onopenanother: () => void;
 }
 
@@ -100,6 +113,7 @@ export function commonActions(
   const all: (ToolbarAction | undefined)[] = [
     h.onsave ? saveAction(h.onsave, { saving: s.saving, enabled: !s.saving }) : undefined,
     ...exportActions(h),
+    h.onopenpackages ? packagesAction(h.onopenpackages) : undefined,
     wideAction(s.shell),
     h.onopenagents ? agentsAction(h.onopenagents) : undefined,
     openAnotherAction(h.onopenanother),

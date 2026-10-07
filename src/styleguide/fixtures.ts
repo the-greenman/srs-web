@@ -10,6 +10,7 @@ import { headerActions } from "$lib/essay/header-actions";
 import type { GroupView } from "$lib/generic/RecordsView.svelte";
 import { containerGraph, focusLayout } from "$lib/generic/map-layout";
 import type { PairingResponse } from "$lib/mcp/relay-protocol";
+import type { InstalledPackage } from "$lib/package-upgrade";
 import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor, UpgradePackageResult } from "$lib/srs-client";
 
@@ -626,26 +627,39 @@ export const noticeDiagnostics: Diagnostic[] = [
   { severity: "error", message: "view dispatch failed for type governance/decision_log" },
 ];
 
-/** A package upgrade plan with one kept local edit (UpgradePlan specimen, #450). */
+/**
+ * A package upgrade plan (UpgradePlan specimen, #450): two definitions an earlier bundle proved
+ * unmodified, one unproven (opt-in replace) and one kept local edit.
+ */
 export const upgradePlan: UpgradePackageResult = {
   packageId: "5b14a4d4-ec08-4e5b-be75-c183aec90c40",
   name: "essay",
-  previousVersion: "1.2.0",
-  version: "1.5.0",
+  previousVersion: "1.5.0",
+  version: "1.7.0",
   upgraded: false,
   dryRun: true,
   added: [{ kind: "field", id: "f1", version: 1, name: "purpose" }],
-  newVersions: [{ kind: "type", id: "t1", version: 2, name: "essay" }],
-  updated: [],
-  unchanged: [],
+  newVersions: [{ kind: "type", id: "t1", version: 2, name: "document-state" }],
+  updated: [
+    { kind: "type", id: "t3", version: 1, name: "comment", provenBy: "1.5.0" },
+    { kind: "field", id: "f2", version: 1, name: "comment_text", provenBy: "1.5.0" },
+  ],
+  unchanged: [{ kind: "field", id: "f3", version: 1, name: "title" }],
   repaired: [],
   conflicts: [
+    { kind: "type", id: "t4", version: 1, name: "reference", conflictKind: "no-reference-copy" },
     { kind: "type", id: "t2", version: 1, name: "paragraph", conflictKind: "local-edit" },
   ],
   removedUpstream: [],
   dependencyWarnings: [],
   notes: [],
 };
+
+/** Bundled packages installed in a document (PackagesDialog specimen, #450): one outdated, one current. */
+export const installedPackagesFx: InstalledPackage[] = [
+  { packageId: "p1", name: "essay", bundled: "1.7.0", installed: "1.5.0", outdated: true },
+  { packageId: "p2", name: "governance", bundled: "2.1.0", installed: "2.1.0", outdated: false },
+];
 /** A read-only document's toolbar (#471): no Save; Save a copy… sits in the Document menu beside Export. */
 export const readOnlyToolbarActions: ToolbarAction[] = [
   { id: "export", group: "document", kind: "action", label: "Export", run: nop, enabled: true },

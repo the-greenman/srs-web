@@ -2,17 +2,23 @@
   UpgradePlan.svelte — the dry-run plan of a package upgrade (srs-web#450), in a Modal.
 
   Presentation only (ADR-001): the core planned it (upgrade_package_bundle, dryRun) and decides
-  conflicts; this lists the counts, each conflict (the local copy is kept) and the core's warnings.
+  conflicts; this lists the counts, the definitions an earlier bundle proved unmodified, and each
+  conflict. A definition nothing can prove (`no-reference-copy`) has an opt-in checkbox (default off,
+  `adopt` is the checked ids); a local edit or key collision is kept and only explained.
   Apply runs the real upgrade; Cancel closes. `inline` = the styleguide specimen.
 -->
 <script lang="ts">
   import type { UpgradePackageResult } from "$lib/srs-client.js";
+  import { isAdoptable, keptReason } from "$lib/upgrade-plan.js";
   import Button from "./Button.svelte";
+  import Checkbox from "./Checkbox.svelte";
   import Modal from "./Modal.svelte";
   import Notice from "./Notice.svelte";
 
   interface Props {
     plans: UpgradePackageResult[];
+    /** Ids of the unproven definitions the user agreed to replace. */
+    adopt?: string[];
     busy?: boolean;
     error?: string | null;
     onApply: () => void;
@@ -21,7 +27,7 @@
     testid?: string;
   }
 
-  const { plans, busy = false, error = null, onApply, onCancel, inline = false, testid = "upgrade-modal" }: Props = $props();
+  let { plans, adopt = $bindable([]), busy = false, error = null, onApply, onCancel, inline = false, testid = "upgrade-modal" }: Props = $props();
 
   const title = $derived(
     plans.length === 1
@@ -33,6 +39,7 @@
     ["new versions", p.newVersions.length],
     ["updated", p.updated.length],
     ["repaired", p.repaired.length],
+    ["unchanged", p.unchanged.length],
   ];
 </script>
 
@@ -43,10 +50,28 @@
       <ul data-testid="upgrade-counts">
         {#each counts(plan) as [label, n] (label)}<li>{n} {label}</li>{/each}
       </ul>
-      {#if plan.conflicts.length}
-        <p>Your local edits are kept for these definitions:</p>
+      {#if plan.updated.some((u) => u.provenBy)}
+        <p>Updated definitions are unchanged from the published version they came from:</p>
+        <ul data-testid="upgrade-verified">
+          {#each plan.updated.filter((u) => u.provenBy) as u (u.id)}<li>{u.name} (verified against {u.provenBy})</li>{/each}
+        </ul>
+      {/if}
+      {#if plan.conflicts.some(isAdoptable)}
+        <p>These cannot be verified as unchanged, so they are kept unless you choose to replace them:</p>
+        <ul data-testid="upgrade-unproven">
+          {#each plan.conflicts.filter(isAdoptable) as c (c.id)}
+            <li>
+              <Checkbox bind:group={adopt} value={c.id} disabled={busy} data-testid="upgrade-adopt-{c.name}">
+                {c.name}: Replace with the published definition (any local change to it is lost)
+              </Checkbox>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+      {#if plan.conflicts.some((c) => !isAdoptable(c))}
+        <p>Kept as they are:</p>
         <ul data-testid="upgrade-conflicts">
-          {#each plan.conflicts as c (c.id)}<li>{c.name} ({c.conflictKind})</li>{/each}
+          {#each plan.conflicts.filter((c) => !isAdoptable(c)) as c (c.id)}<li>{c.name}: {keptReason(c)}</li>{/each}
         </ul>
       {/if}
       {#if plan.removedUpstream.length}
