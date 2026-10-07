@@ -58,29 +58,43 @@
   const scoped = (): DiscoveryQuery => ({ containerId: containerId || undefined });
   const withType = (key: string): DiscoveryQuery => (key === NOTES ? { ...scoped(), tier: 0 } : { ...scoped(), typeId: key });
 
-  function run(): void {
+  const fail = (e: unknown) => (error = e instanceof Error ? e.message : String(e));
+
+  /** Facets and the first page of the whole scope: depends on the container and mutations only. */
+  function runScope(): void {
     try {
       const base = find(repo, scoped(), { limit: PAGE, byTypeLimit: 0 });
       scope = { total: base.total, facets: base.facets, hits: base.hits };
       diagnostics = base.diagnostics;
       error = null;
-      if (query || typeId) {
-        const q: DiscoveryQuery = { ...(typeId ? withType(typeId) : scoped()), contentMatch: query || undefined };
-        const page = find(repo, q, { limit: PAGE, rank: Boolean(query) });
-        flat = { total: page.total, hits: page.hits };
-      }
       for (const key of Object.keys(opened)) opened[key] = find(repo, withType(key), { limit: Math.max(PAGE, opened[key].length) }).hits;
     } catch (e: unknown) {
-      error = e instanceof Error ? e.message : String(e);
+      fail(e);
       scope = { total: 0, facets: { byType: [], otherTypes: 0, notes: 0 }, hits: [] };
+    }
+  }
+
+  /** The searched or type-filtered list: depends on the query, the type and mutations. */
+  function runFlat(): void {
+    if (!query && !typeId) return;
+    try {
+      const q: DiscoveryQuery = { ...(typeId ? withType(typeId) : scoped()), contentMatch: query || undefined };
+      const page = find(repo, q, { limit: PAGE, rank: Boolean(query) });
+      flat = { total: page.total, hits: page.hits };
+    } catch (e: unknown) {
+      fail(e);
       flat = { total: 0, hits: [] };
     }
   }
 
-  // A mutation (revision) reloads counts and the rows of open groups; a new scope remounts (the shell keys on it).
+  // A mutation (revision) reloads both; a new scope remounts (the shell keys on it).
+  $effect(() => {
+    void [containerId, revision];
+    untrack(runScope);
+  });
   $effect(() => {
     void [query, typeId, containerId, revision];
-    untrack(run);
+    untrack(runFlat);
   });
 
   const options = $derived(typeGroups(scope.facets));

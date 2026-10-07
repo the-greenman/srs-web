@@ -510,7 +510,7 @@
         <RelationGraph view="focus" focus={fx.outboundOnlyMap.focus} layout={fx.outboundOnlyMap.layout} onOpen={noop} />
       </figure>
       <figure class="sg__figure sg__figure--map" data-testid="sg-map-container">
-        <figcaption>A container, capped at 24 of {fx.cappedContainerMap.totalNodes} records</figcaption>
+        <figcaption>A container, first 24 members of {fx.cappedContainerMap.totalNodes} records</figcaption>
         <RelationGraph view="container" graph={fx.cappedContainerMap} onOpen={noop} />
       </figure>
     </div>

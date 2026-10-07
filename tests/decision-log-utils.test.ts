@@ -168,7 +168,9 @@ describe("computeLifecycleVisibleIds", () => {
     const result = computeLifecycleVisibleIds(repo, ["superseded", "abandoned"]);
 
     expect(spy).toHaveBeenCalledOnce();
-    expect(spy.mock.calls[0][0]).toBe(JSON.stringify({ excludeLifecycleStates: ["superseded", "abandoned"] }));
+    expect(spy.mock.calls[0][0]).toBe(
+      JSON.stringify({ excludeLifecycleStates: ["superseded", "abandoned"] })
+    );
     expect(result).toBeInstanceOf(Set);
     expect(result?.has("inst-001")).toBe(true);
     expect(result?.has("inst-002")).toBe(true);

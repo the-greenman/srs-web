@@ -67,7 +67,7 @@
           <text class="node-label" x={n.x + side * 14} y={n.y - (lines.length - 1) * 6 + 4} text-anchor={side === 1 ? "start" : "end"}>
             {#each lines as line, li (li)}<tspan x={n.x + side * 14} dy={li === 0 ? 0 : 12}>{line}</tspan>{/each}
           </text>
-          <text class="edge-label" x={(layout.center.x + n.x) / 2} y={(layout.center.y + n.y) / 2 - 6}>{n.relationType}</text>
+          <text class="edge-label" aria-hidden="true" x={(layout.center.x + n.x) / 2} y={(layout.center.y + n.y) / 2 - 6}>{n.relationType}</text>
         </g>
       {/each}
       <g

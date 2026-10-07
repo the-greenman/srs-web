@@ -78,41 +78,23 @@ export interface ContainerGraph {
 export const CONTAINER_NODE_CAP = 24;
 
 /**
- * A container's relations on a ring, capped at `cap` nodes. The cap keeps the best connected endpoints
- * (most edges first, then first seen), and only edges between kept nodes are drawn.
+ * A container's records on a ring: the first `cap` members in the container's own outline order, and only
+ * the edges between them. `totalNodes` is the member count before the cap.
  */
 export function containerGraph(
+  members: { id: string; label: string }[],
   edges: ContainerEdge[],
-  labelOf: (id: string) => string,
   cap = CONTAINER_NODE_CAP
 ): ContainerGraph {
-  const degree = new Map<string, number>();
-  for (const e of edges) {
-    degree.set(e.source, (degree.get(e.source) ?? 0) + 1);
-    degree.set(e.target, (degree.get(e.target) ?? 0) + 1);
-  }
-  const ids = [...degree.keys()];
-  const kept = new Set(
-    ids
-      .map((id, i) => ({ id, i }))
-      .sort((a, b) => (degree.get(b.id) ?? 0) - (degree.get(a.id) ?? 0) || a.i - b.i)
-      .slice(0, cap)
-      .map((x) => x.id)
-  );
-  const nodes = ids
-    .filter((id) => kept.has(id))
-    .map((id, i, all) => {
-      const angle = (Math.PI * 2 * i) / all.length - Math.PI / 2;
-      return {
-        id,
-        label: labelOf(id),
-        x: CX + Math.cos(angle) * 270,
-        y: CY + Math.sin(angle) * 170,
-      };
-    });
+  const kept = members.slice(0, cap);
+  const ids = new Set(kept.map((m) => m.id));
+  const nodes = kept.map((m, i) => {
+    const angle = (Math.PI * 2 * i) / kept.length - Math.PI / 2;
+    return { ...m, x: CX + Math.cos(angle) * 270, y: CY + Math.sin(angle) * 170 };
+  });
   return {
     nodes,
-    edges: edges.filter((e) => kept.has(e.source) && kept.has(e.target)),
-    totalNodes: ids.length,
+    edges: edges.filter((e) => ids.has(e.source) && ids.has(e.target)),
+    totalNodes: members.length,
   };
 }

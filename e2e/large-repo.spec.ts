@@ -20,7 +20,9 @@ async function openSpec(page: Page) {
   return errors;
 }
 
-test("Records opens grouped by type with counts, collapsed, and a Notes group", async ({ page }) => {
+test("Records opens grouped by type with counts, collapsed, and a Notes group", async ({
+  page,
+}) => {
   const errors = await openSpec(page);
 
   await expect(page.getByTestId("records-count")).toHaveText("704 records");
@@ -53,7 +55,9 @@ test("the Notes group opens through the core's note filter", async ({ page }) =>
   await expect(page.getByTestId("record-row")).toHaveCount(27);
 });
 
-test("the type filter lists only non-empty types and narrows to one flat, counted list", async ({ page }) => {
+test("the type filter lists only non-empty types and narrows to one flat, counted list", async ({
+  page,
+}) => {
   await openSpec(page);
   const select = page.getByLabel("Filter records by type");
 
@@ -65,17 +69,23 @@ test("the type filter lists only non-empty types and narrows to one flat, counte
   await expect(page.getByTestId("record-row")).toHaveCount(50);
 });
 
-test("search is ranked: the exact title comes first, and the count reads N results", async ({ page }) => {
+test("search is ranked: the exact title comes first, and the count reads N results", async ({
+  page,
+}) => {
   await openSpec(page);
 
   await page.getByLabel("Search records").fill("Travelling form");
 
   await expect(page.getByTestId("records-count")).toHaveText("9 results");
-  await expect(page.getByTestId("record-row").first().locator("strong")).toHaveText("Travelling form");
+  await expect(page.getByTestId("record-row").first().locator("strong")).toHaveText(
+    "Travelling form"
+  );
   await expect(page.getByTestId("record-group")).toHaveCount(0);
 });
 
-test("the Map focuses a hub record: 12 neighbours, an 'N more' page, and a legend", async ({ page }) => {
+test("the Map focuses a hub record: 12 neighbours, an 'N more' page, and a legend", async ({
+  page,
+}) => {
   await openSpec(page);
   await page.getByLabel("Search records").fill("Travelling form");
   await page.getByTestId("record-row").first().click();

@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { listRelations, neighbours, resolveContainerView } from "$lib/srs-client.js";
+  import { neighbours, resolveContainerView } from "$lib/srs-client.js";
   import type { Neighbour, SrsRepository } from "$lib/srs-client.js";
   import Button from "$lib/components/Button.svelte";
   import Notice from "$lib/components/Notice.svelte";
@@ -28,14 +28,14 @@
     onOpen: (id: string) => void;
   } = $props();
 
-  const PAGE = 12;
+  const NEIGHBOUR_PAGE = 12;
   let loaded = $state<Neighbour[]>([]);
   let total = $state(0);
   let error = $state<string | null>(null);
 
   function load(id: string, offset: number): void {
     try {
-      const page = neighbours(repo, id, { limit: PAGE, offset });
+      const page = neighbours(repo, id, { limit: NEIGHBOUR_PAGE, offset });
       loaded = offset === 0 ? page.neighbours : [...loaded, ...page.neighbours];
       total = page.total;
       error = null;
@@ -70,14 +70,18 @@
   const container = $derived.by(() => {
     if (selected || !containerId) return null;
     try {
-      const members = new Map(resolveContainerView(repo, containerId).members.map((m) => [m.instanceId, m.displayLabel]));
-      const edges = listRelations(repo, { containerId }).map((r) => ({
-        relationId: r.relationId,
-        relationType: r.relationType,
-        source: r.sourceInstanceId,
-        target: r.targetInstanceId,
+      const members = resolveContainerView(repo, containerId).members.map((m) => ({
+        id: m.instanceId,
+        label: plainLabel(m.displayLabel, m.instanceId.slice(0, 8)),
       }));
-      return containerGraph(edges, (id) => plainLabel(members.get(id), id.slice(0, 8)));
+      // Edges among the kept members only: one bounded neighbours read each, never the container's whole relation set.
+      const kept = new Set(members.slice(0, CONTAINER_NODE_CAP).map((m) => m.id));
+      const edges = [...kept].flatMap((id) =>
+        neighbours(repo, id, { direction: "out", limit: 100 })
+          .neighbours.filter((n) => kept.has(n.neighbour.instanceId))
+          .map((n) => ({ relationId: n.relationId, relationType: n.relationType, source: id, target: n.neighbour.instanceId })),
+      );
+      return containerGraph(members, edges);
     } catch {
       return null;
     }

@@ -733,13 +733,16 @@ export const outboundOnlyMap = {
   ),
 };
 
-/** A container's relations, capped at 24 of 41 nodes. */
+/** A container's first 24 members in outline order, of 41. */
 export const cappedContainerMap = containerGraph(
+  Array.from({ length: 41 }, (_, i) => ({
+    id: i === 0 ? "hub" : `leaf${i}`,
+    label: i === 0 ? "Hub record" : `Leaf ${i}`,
+  })),
   Array.from({ length: 40 }, (_, i) => ({
     relationId: `r${i}`,
     relationType: "contains",
     source: "hub",
-    target: `leaf${i}`,
-  })),
-  (id) => (id === "hub" ? "Hub record" : `Leaf ${id.slice(4)}`)
+    target: `leaf${i + 1}`,
+  }))
 );

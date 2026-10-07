@@ -20,7 +20,8 @@ const hit = (id: string, typeName = "concept") => ({
   typeName,
   matchedFields: [],
 });
-const hits = (n: number, from = 0, typeName?: string) => Array.from({ length: n }, (_, i) => hit(`r${from + i}`, typeName));
+const hits = (n: number, from = 0, typeName?: string) =>
+  Array.from({ length: n }, (_, i) => hit(`r${from + i}`, typeName));
 const facets = {
   byType: [
     { value: "ns/concept", typeId: "t-concept", count: 120 },
@@ -31,7 +32,10 @@ const facets = {
 };
 
 /** A fake core: 154 records, 4 of them notes. Honours typeId, tier, contentMatch, limit and offset. */
-function fakeFind(query: { typeId?: string; tier?: number; contentMatch?: string }, opts: { limit?: number; offset?: number } = {}) {
+function fakeFind(
+  query: { typeId?: string; tier?: number; contentMatch?: string },
+  opts: { limit?: number; offset?: number } = {}
+) {
   const all = query.contentMatch
     ? hits(7, 0)
     : query.typeId === "t-concept"
@@ -62,7 +66,11 @@ describe("RecordsExplorer", () => {
     render(RecordsExplorer, { props });
 
     const groups = await screen.findAllByTestId("record-group");
-    expect(groups.map((g) => g.querySelector("strong")?.textContent)).toEqual(["concept", "rfc", "Notes"]);
+    expect(groups.map((g) => g.querySelector("strong")?.textContent)).toEqual([
+      "concept",
+      "rfc",
+      "Notes",
+    ]);
     expect(groups[0].textContent).toContain("120");
     expect(screen.getByText("154 records")).toBeTruthy();
     expect(screen.queryAllByTestId("record-row")).toHaveLength(0);
@@ -80,7 +88,11 @@ describe("RecordsExplorer", () => {
 
     await fireEvent.click(screen.getByTestId("group-more"));
     expect(screen.getAllByTestId("record-row")).toHaveLength(100);
-    expect(mocks.find).toHaveBeenLastCalledWith(expect.anything(), { containerId: undefined, typeId: "t-concept" }, { limit: 50, offset: 50 });
+    expect(mocks.find).toHaveBeenLastCalledWith(
+      expect.anything(),
+      { containerId: undefined, typeId: "t-concept" },
+      { limit: 50, offset: 50 }
+    );
   });
 
   it("reaches notes through the core's tier filter", async () => {
@@ -89,7 +101,11 @@ describe("RecordsExplorer", () => {
 
     await fireEvent.click(groups[2].querySelector("button") as HTMLElement);
 
-    expect(mocks.find).toHaveBeenLastCalledWith(expect.anything(), { containerId: undefined, tier: 0 }, { limit: 50 });
+    expect(mocks.find).toHaveBeenLastCalledWith(
+      expect.anything(),
+      { containerId: undefined, tier: 0 },
+      { limit: 50 }
+    );
     expect(screen.getAllByTestId("record-row")).toHaveLength(4);
   });
 
@@ -97,7 +113,12 @@ describe("RecordsExplorer", () => {
     render(RecordsExplorer, { props });
     await screen.findAllByTestId("record-group");
     const select = screen.getByLabelText("Filter records by type") as HTMLSelectElement;
-    expect([...select.options].map((o) => o.textContent?.trim())).toEqual(["All types", "ns/concept (120)", "ns/rfc (30)", "Notes (4)"]);
+    expect([...select.options].map((o) => o.textContent?.trim())).toEqual([
+      "All types",
+      "ns/concept (120)",
+      "ns/rfc (30)",
+      "Notes (4)",
+    ]);
     // choosing an option is covered in e2e/large-repo.spec.ts (happy-dom has no :checked for the select binding)
   });
 
@@ -145,35 +166,61 @@ describe("RelationMap", () => {
   const page = (from: number, n: number) => Array.from({ length: n }, (_, i) => edge(from + i));
 
   it("asks for 12 neighbours, never reads a record, and pages the rest from 'N more'", async () => {
-    mocks.neighbours.mockImplementation((_r: unknown, _id: string, o: { limit: number; offset: number }) => ({
-      instanceId: "hub",
-      total: 30,
-      neighbours: page(o.offset, Math.min(o.limit, 30 - o.offset)),
-    }));
-    render(RelationMap, { props: { repo: {} as never, selected: { id: "hub", label: "Hub" }, containerId: null, onOpen: vi.fn() } });
+    mocks.neighbours.mockImplementation(
+      (_r: unknown, _id: string, o: { limit: number; offset: number }) => ({
+        instanceId: "hub",
+        total: 30,
+        neighbours: page(o.offset, Math.min(o.limit, 30 - o.offset)),
+      })
+    );
+    render(RelationMap, {
+      props: {
+        repo: {} as never,
+        selected: { id: "hub", label: "Hub" },
+        containerId: null,
+        onOpen: vi.fn(),
+      },
+    });
 
-    await waitFor(() => expect(screen.getAllByRole("button", { name: /Inbound|Outbound/ })).toHaveLength(12));
-    expect(mocks.neighbours).toHaveBeenCalledWith(expect.anything(), "hub", { limit: 12, offset: 0 });
+    await waitFor(() =>
+      expect(screen.getAllByRole("button", { name: /Inbound|Outbound/ })).toHaveLength(12)
+    );
+    expect(mocks.neighbours).toHaveBeenCalledWith(expect.anything(), "hub", {
+      limit: 12,
+      offset: 0,
+    });
     expect(screen.getByTestId("graph-legend").textContent).toContain("contains");
 
     await fireEvent.click(screen.getByTestId("map-more"));
-    await waitFor(() => expect(screen.getAllByRole("button", { name: /Inbound|Outbound/ })).toHaveLength(24));
+    await waitFor(() =>
+      expect(screen.getAllByRole("button", { name: /Inbound|Outbound/ })).toHaveLength(24)
+    );
     expect(screen.getByTestId("map-more").textContent).toContain("6 more");
   });
 
-  it("caps container mode at 24 nodes and says so", async () => {
-    mocks.resolveContainerView.mockReturnValue({ members: [] });
-    mocks.listRelations.mockReturnValue(
-      Array.from({ length: 40 }, (_, i) => ({ relationId: `r${i}`, relationType: "contains", sourceInstanceId: "hub", targetInstanceId: `leaf${i}` })) as never,
-    );
-    render(RelationMap, { props: { repo: {} as never, selected: null, containerId: "c1", onOpen: vi.fn() } });
+  it("caps container mode at the first 24 members and says so, without loading the relation set", async () => {
+    mocks.resolveContainerView.mockReturnValue({
+      members: Array.from({ length: 41 }, (_, i) => ({
+        instanceId: `m${i}`,
+        displayLabel: `M${i}`,
+      })),
+    } as never);
+    mocks.neighbours.mockReturnValue({ instanceId: "x", total: 0, neighbours: [] });
+    render(RelationMap, {
+      props: { repo: {} as never, selected: null, containerId: "c1", onOpen: vi.fn() },
+    });
 
-    expect(await screen.findByText(/Showing 24 of 41 records, select a record to explore/)).toBeTruthy();
+    expect(
+      await screen.findByText(/Showing 24 of 41 records, select a record to explore/)
+    ).toBeTruthy();
     expect(screen.getAllByRole("button", { name: /^Inspect/ })).toHaveLength(24);
+    expect(mocks.listRelations).not.toHaveBeenCalled();
   });
 
   it("prompts for a record when there is no scope", async () => {
-    render(RelationMap, { props: { repo: {} as never, selected: null, containerId: null, onOpen: vi.fn() } });
+    render(RelationMap, {
+      props: { repo: {} as never, selected: null, containerId: null, onOpen: vi.fn() },
+    });
     expect(screen.getByText("Select a record to see its relations.")).toBeTruthy();
   });
 });

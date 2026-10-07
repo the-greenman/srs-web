@@ -124,7 +124,7 @@
 .generic-records {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-xs);
 }
 .generic-record-row {
   display: flex;
@@ -240,7 +240,7 @@
 .generic-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-xs);
 }
 .generic-group .btn.generic-group__head {
   display: flex;
