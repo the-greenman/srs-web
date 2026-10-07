@@ -10,13 +10,16 @@
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+  import { tick, type Snippet } from 'svelte';
   import GripVertical from '@lucide/svelte/icons/grip-vertical';
   import ActionMenu from './ActionMenu.svelte';
   import EyeToggle from './EyeToggle.svelte';
   import IconButton from './IconButton.svelte';
   import InlineText from './InlineText.svelte';
   import MarkdownText from './MarkdownText.svelte';
+  import AttachDrop from './AttachDrop.svelte';
+  import type { AttachFile } from './attach-check.js';
+  import Popover from './Popover.svelte';
   import { keyMove } from './dnd';
   import type { KeyMove } from './dnd';
   import { paragraphActions } from '../essay/paragraph-actions.js';
@@ -40,6 +43,7 @@
     onzoom,
     oncopylink,
     oncopyagent,
+    onattach,
     margin,
   }: {
     id: string;
@@ -63,11 +67,23 @@
     onzoom?: () => void;
     oncopylink?: () => void;
     oncopyagent?: () => void;
+    /** Attach files to this paragraph (paste or picker, from the menu's "Attach file…"); absent = no such action. */
+    onattach?: (files: AttachFile[]) => void | Promise<void>;
     /** The one right-margin slot: comment badge, attachment glyphs. */
     margin?: Snippet;
   } = $props();
 
   let editingTitle = $state(false);
+  let attachOpen = $state(false);
+  let article = $state<HTMLElement>();
+  async function attach(files: AttachFile[]) {
+    attachOpen = false;
+    await onattach?.(files);
+  }
+  // Paste only works while the zone has focus: move it there when the popover opens.
+  $effect(() => {
+    if (attachOpen) void tick().then(() => article?.querySelector<HTMLElement>('.popover .file-drop')?.focus());
+  });
 
   const plainArrow = (e: KeyboardEvent) =>
     (e.key === 'ArrowUp' || e.key === 'ArrowDown') && !(e.altKey || e.ctrlKey || e.metaKey || e.shiftKey);
@@ -146,13 +162,13 @@
   // The one action list: the hover strip (its `primary` entries) and the ellipsis menu are both rendered from it.
   const actions = $derived(
     paragraphActions(
-      { onnew, onmove, onindent, onhide, onpull, ondelete, onzoom, oncopylink, oncopyagent, onrename: () => (editingTitle = true) },
+      { onnew, onmove, onindent, onhide, onpull, ondelete, onzoom, oncopylink, oncopyagent, onrename: () => (editingTitle = true), onattach: onattach && (() => (attachOpen = true)) },
       { label: shortLabel, hidden, inherited },
     ),
   );
 </script>
 
-<article class="block" class:is-off={hidden || inherited} data-block-id={id}>
+<article class="block" class:is-off={hidden || inherited} data-block-id={id} bind:this={article}>
   <div class="block__gutter" data-part="gutter">
     <IconButton
       class="block__handle"
@@ -165,6 +181,11 @@
       {...handle}
     />
     <ActionMenu class="block__menu" data-part="menu" {actions} label={shortLabel} focusKey={`menu:${id}`} />
+    {#if onattach}
+      <Popover bind:open={attachOpen} label={`Attach files to ${shortLabel}`} anchor={article} placement="bottom-start">
+        {#if attachOpen}<AttachDrop compact label="Attach text files" onfiles={attach} data-testid="attach-drop" />{/if}
+      </Popover>
+    {/if}
   </div>
   <div class="block__main" data-part="main">
     <div class="block__head" data-part="head" class:is-collapsed={!title && !editingTitle}>

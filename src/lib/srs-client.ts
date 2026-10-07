@@ -214,6 +214,8 @@ export interface SrsRepository {
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in linkAttachment()
   link_attachment(input_json: string): any;
   get_attachment_bytes(document_id: string): Uint8Array;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in resolveAttachments()
+  resolve_composition_attachments(input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getRecordAttachments()
   get_record_attachments(input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in contextRecord()
@@ -2296,6 +2298,24 @@ export function linkAttachment(
  */
 export function getAttachmentBytes(repo: SrsRepository, documentId: string): Uint8Array {
   return repo.get_attachment_bytes(documentId);
+}
+
+export interface ResolveAttachmentsResult {
+  sourceDocumentsPath: string;
+  records: {
+    instanceId: string;
+    attachments: (ResolvedAttachment & { sizeBytes?: number })[];
+  }[];
+}
+
+/** Resolve the attachments of many instances in ONE scan of the store (sizes included). ADR-001: WASM pass-through. */
+export function resolveAttachments(
+  repo: SrsRepository,
+  instanceIds: string[]
+): ResolveAttachmentsResult {
+  return repo.resolve_composition_attachments(
+    JSON.stringify({ instanceIds })
+  ) as ResolveAttachmentsResult;
 }
 
 /**

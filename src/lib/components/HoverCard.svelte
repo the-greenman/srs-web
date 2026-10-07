@@ -17,6 +17,7 @@
     text = '',
     relation = '',
     onremove,
+    ondownload,
     open = $bindable(false),
     anchor,
     static: inFlow = false,
@@ -27,18 +28,21 @@
     text?: string;
     relation?: string;
     onremove?: () => void;
+    /** A file attachment: the Download action. */
+    ondownload?: () => void;
     open?: boolean;
     anchor?: HTMLElement;
     static?: boolean;
     class?: string;
   } = $props();
-  // A tooltip must not hold interactive content: with Remove link it is a labelled group.
-  const role = $derived(onremove ? 'group' : 'tooltip');
+  // A tooltip must not hold interactive content: with Remove link or Download it is a labelled group.
+  const role = $derived(onremove || ondownload ? 'group' : 'tooltip');
 </script>
 
 {#snippet card()}
   <AttachmentPreview {kind} {title} {text} {relation} />
   {#if onremove}<Button size="sm" variant="ghost" class="hover-card__remove" data-part="remove" onclick={onremove}>Remove link</Button>{/if}
+  {#if ondownload}<Button size="sm" variant="ghost" data-part="download" data-testid="file-download" onclick={ondownload}>Download</Button>{/if}
 {/snippet}
 
 {#if inFlow}

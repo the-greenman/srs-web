@@ -5,6 +5,7 @@ import type { EssayModel } from "./essay-document.js";
 export const essaySource = (m: EssayModel): AnnotationSource => ({
   comments: m.comments,
   attachments: m.attachments,
+  files: m.files,
   related: m.related,
   sharedIn: m.sharedIn,
   label: (id) => m.paragraphs[id]?.title ?? "",

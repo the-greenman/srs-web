@@ -1,7 +1,8 @@
 import { STRUCTURAL_CATEGORIES } from "$lib/annotations.js";
-import type { Attachment, Related } from "$lib/annotations.js";
+import type { Attachment, FileAttachment, Related } from "$lib/annotations.js";
 import { COMMENTS_ON, loadComments } from "$lib/comments.js";
 import type { Comment } from "$lib/comments.js";
+import type { AttachFile } from "$lib/components/attach-check.js";
 /**
  * Essay document operations: a thin composition of srs-client calls (no SRS semantics here —
  * validation, ordering and depth rules are the engine's). The shell calls these and reloads.
@@ -11,6 +12,7 @@ import type { Comment } from "$lib/comments.js";
  * the draft area and the Bin (deleted paragraphs) are further containers.
  */
 import {
+  addAttachment,
   addContainerMember,
   addContainerMemberRelative,
   containersForInstance,
@@ -25,6 +27,7 @@ import {
   getContainer,
   getContainerOutline,
   getRecord,
+  linkAttachment,
   listContainers,
   listDocumentViews,
   listRecords,
@@ -34,6 +37,7 @@ import {
   moveContainerMemberRelative,
   removeContainerMember,
   renderDocumentView,
+  resolveAttachments,
   typeSchema,
   updateContainer,
   updateRecord,
@@ -102,6 +106,8 @@ export interface EssayModel {
   comments: Record<string, Comment[]>;
   /** Attachments by paragraph id (see Attachment). */
   attachments: Record<string, Attachment[]>;
+  /** File attachments (RFC-017) by paragraph id. */
+  files: Record<string, FileAttachment[]>;
   /** Semantic relations to other paragraphs by paragraph id (see Related). */
   related: Record<string, Related[]>;
   /** Other documents (essays) holding each shared paragraph, by paragraph id; absent = not shared. */
@@ -195,6 +201,7 @@ const toRelated = (r: ContextRelation): Related | null => {
 
 interface ParagraphContext {
   attachments: Record<string, Attachment[]>;
+  files: Record<string, FileAttachment[]>;
   related: Record<string, Related[]>;
 }
 /** Last context read per repository handle, keyed on the engine write epoch. */
@@ -210,7 +217,10 @@ function loadContext(repo: SrsRepository, ids: string[]): ParagraphContext {
   const key = `${ids.join(",")}|${repo.write_epoch()}`;
   const hit = attachmentCache.get(repo);
   if (hit?.key === key) return hit.value;
-  const out: ParagraphContext = { attachments: {}, related: {} };
+  const out: ParagraphContext = { attachments: {}, files: {}, related: {} };
+  const resolved = new Map(
+    resolveAttachments(repo, ids).records.map((r) => [r.instanceId, r.attachments])
+  );
   const toAtt = toAttachment(new Map(listRelationTypes(repo).map((t) => [t.key, t.label])));
   for (const id of ids) {
     const rels = contextRecord(repo, id, undefined, STRUCTURAL_CATEGORIES).relations;
@@ -218,6 +228,14 @@ function loadContext(repo: SrsRepository, ids: string[]): ParagraphContext {
     const rel = rels.map(toRelated).filter((a): a is Related => a !== null);
     if (att.length) out.attachments[id] = att;
     if (rel.length) out.related[id] = rel;
+    const files = (resolved.get(id) ?? []).map(
+      (f): FileAttachment => ({
+        documentId: f.documentId,
+        name: f.title || f.contentPath?.split("/").at(-1) || f.documentId,
+        sizeBytes: f.sizeBytes,
+      })
+    );
+    if (files.length) out.files[id] = files;
   }
   attachmentCache.set(repo, { key, value: out });
   return out;
@@ -383,6 +401,7 @@ export function loadEssay(
     canSnapshot: !!state && hasField(repo, types, DOCUMENT_STATE_TYPE_ID, "bundle_container_id"),
     comments,
     attachments: context.attachments,
+    files: context.files,
     related: context.related,
     sharedIn: loadSharedIn(repo, types, Object.keys(paragraphs), [
       containerId,
@@ -517,6 +536,21 @@ export function setEssayTitle(
 }
 export const setTitle = (repo: SrsRepository, id: string, title: string): void =>
   patchRecord(repo, id, { paragraph_title: title });
+
+/**
+ * Attach text files to a paragraph (RFC-017): each is stored, then linked. Sequential and not atomic:
+ * a failure (e.g. a duplicate file name, which the core refuses) stops there, earlier files stay attached.
+ */
+export function attachFiles(repo: SrsRepository, paragraphId: string, files: AttachFile[]): void {
+  for (const f of files) {
+    const { documentId } = addAttachment(
+      repo,
+      { fileName: f.name, ...(f.type ? { contentType: f.type } : {}) },
+      f.bytes
+    );
+    linkAttachment(repo, { instanceId: paragraphId, documentId });
+  }
+}
 
 /** Remove an attached record's link to a paragraph (the relation only; the neighbour stays). */
 export const removeAttachment = (repo: SrsRepository, relationId: string): void =>

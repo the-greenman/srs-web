@@ -43,12 +43,16 @@
   import LinkIcon from "@lucide/svelte/icons/link";
   import Notice from "$lib/components/Notice.svelte";
   import { notify } from "$lib/notices.svelte.js";
+  import { takeFiles } from "$lib/components/attach-check.js";
+  import type { AttachFile } from "$lib/components/attach-check.js";
+  import { downloadAttachment } from "$lib/attachment-download.js";
   import Input from "$lib/components/Input.svelte";
   import Select from "$lib/components/Select.svelte";
   import { NARROW } from "$lib/breakpoints";
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
     addParagraph,
+    attachFiles,
     binParagraph,
     copyEssay,
     deleteForever,
@@ -297,6 +301,32 @@
   function openReference(id: string) {
     const att = Object.values(model?.attachments ?? {}).flat().find((a) => a.neighbourId === id);
     if (att && !pinnedIds.includes(att.id)) togglePin(att.id);
+  }
+  const attach = (paragraphId: string, files: AttachFile[]) => run(() => attachFiles(repo, paragraphId, files));
+  /** Files dropped on a paragraph: the same client check as the popover, rejections as a warning toast. */
+  async function dropFiles(paragraphId: string, files: File[]) {
+    const { accepted, rejected } = await takeFiles(files, undefined, 0);
+    if (rejected.length)
+      notify({
+        kind: "warning",
+        key: "attach-rejected",
+        text: rejected.map((r) => `${r.name}: ${r.reason}`).join("; "),
+        testid: "attach-rejected",
+      });
+    if (!accepted.length) return;
+    await attach(paragraphId, accepted);
+  }
+  function downloadFile(a: Annotation) {
+    try {
+      downloadAttachment(repo, a.documentId!, a.label);
+    } catch (e) {
+      notify({
+        kind: "warning",
+        key: "download-unavailable",
+        text: `Could not download ${a.label}: ${msg(e)}`,
+        testid: "download-unavailable",
+      });
+    }
   }
   const dropReference = (id: string) => run(() => removeReference(repo, model!, id));
   const draftItems = $derived(
@@ -655,7 +685,7 @@
           <p class="essay-shell__hint">No paragraphs yet.</p>
           <Button variant="mono" data-testid="first-paragraph" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add first paragraph</Button>
         {/if}
-        <BlockStack {items} source="essay" label="Essay paragraphs" candrop={essayDrop} ondrop={(p, t) => onDrop("essay", p, t)}>
+        <BlockStack {items} source="essay" label="Essay paragraphs" candrop={essayDrop} ondrop={(p, t) => onDrop("essay", p, t)} onfiles={dropFiles}>
           {#snippet row(item, handle)}
             {@const p = model!.paragraphs[item.id]}
             {#if p}
@@ -666,6 +696,7 @@
                   active={[...pinnedIds, ...(showThread(p.id) ? [`comments:${p.id}`] : [])]}
                   onopen={(a) => openAnnotation(a, p.id)}
                   onremove={(a) => run(() => removeAttachment(repo, a.key))}
+                  ondownload={downloadFile}
                 />
               {/snippet}
               <Block
@@ -679,6 +710,7 @@
                 onzoom={() => setZoom(p.id)}
                 oncopylink={() => copyLink(p.id)}
                 oncopyagent={() => copyForAgent(p.id)}
+                onattach={(files) => attach(p.id, files)}
                 onbody={(v) => run(() => setBody(repo, p.id, v))}
                 ontitle={(v) => run(() => setTitle(repo, p.id, v))}
                 onhide={(h) => run(() => setHidden(repo, model!, p.id, h))}

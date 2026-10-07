@@ -28,6 +28,7 @@
     max = 4,
     onopen,
     onremove,
+    ondownload,
   }: {
     annotations: Annotation[];
     variant?: "compact" | "expanded";
@@ -39,14 +40,17 @@
     onopen?: (a: Annotation) => void;
     /** Attachments only: remove the link (a human action). */
     onremove?: (a: Annotation) => void;
+    /** Files only: save the attached file. */
+    ondownload?: (a: Annotation) => void;
   } = $props();
 
   /** The kind -> presentation map: order (lower first) and whether the row carries a label when expanded. */
   const KINDS: Record<AnnotationKind, { order: number; chip: boolean }> = {
     comments: { order: 0, chip: false },
     attachment: { order: 1, chip: true },
-    relation: { order: 2, chip: true },
-    shared: { order: 3, chip: true },
+    file: { order: 2, chip: true },
+    relation: { order: 3, chip: true },
+    shared: { order: 4, chip: true },
   };
   /** Accessible-name wording only; the drawn mark is a Lucide arrow. */
   const ARROW = { out: "→", in: "←" } as const;
@@ -111,6 +115,8 @@
     <CommentBadge count={a.count ?? 0} label={a.label} open={isOn(a)} onclick={() => onopen?.(a)} />
   {:else if a.kind === "attachment"}
     <AttachmentGlyph kind={a.icon ?? "note"} title={a.label} text={a.text} relation={a.relation} actor={a.actor} pinned={isOn(a)} onpin={() => onopen?.(a)} onremove={onremove && (() => onremove(a))} />
+  {:else if a.kind === "file"}
+    <AttachmentGlyph kind="file" title={a.label} text={a.text} ondownload={ondownload && (() => ondownload(a))} />
   {:else if a.kind === "shared"}
     <button type="button" class="margin__relation hue-pill hue-pill--neutral" data-part="mark" data-testid="shared-badge" aria-label={a.label} title={`${a.label} - make a local copy`} onclick={() => onopen?.(a)}><Copy size={14} aria-hidden="true" /></button>
   {:else if onopen}

@@ -23,7 +23,8 @@
     pinned = false,
     onpin,
     onremove,
-  }: { kind: string; title: string; text?: string; relation?: string; actor?: Actor; pinned?: boolean; onpin?: () => void; onremove?: () => void } = $props();
+    ondownload,
+  }: { kind: string; title: string; text?: string; relation?: string; actor?: Actor; pinned?: boolean; onpin?: () => void; onremove?: () => void; ondownload?: () => void } = $props();
 
   const Icon = $derived(iconFor(kind));
 
@@ -56,9 +57,9 @@
     class:hue-pill--solid={pinned}
     class:hue-pill--neutral={!actor?.id}
     style:--actor-hue={actor?.id ? actorHue(actor.id) : undefined}
-    aria-pressed={pinned}
-    aria-label={`${kind}${relation ? ` (${relation})` : ''}: ${title}. ${pinned ? 'Unpin' : 'Pin'}`}
+    aria-pressed={onpin ? pinned : undefined}
+    aria-label={`${kind}${relation ? ` (${relation})` : ''}: ${title}${onpin ? `. ${pinned ? 'Unpin' : 'Pin'}` : ''}`}
     onclick={onpin}
   ><Icon size={14} aria-hidden="true" /></button>
-  <HoverCard {kind} {title} {text} {relation} {onremove} bind:open={cardOpen} anchor={wrap} />
+  <HoverCard {kind} {title} {text} {relation} {onremove} {ondownload} bind:open={cardOpen} anchor={wrap} />
 </span>
