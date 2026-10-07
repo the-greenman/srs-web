@@ -23,6 +23,7 @@
     loadRepoFromTree,
     exportSrsj,
     exportArchive,
+    repositoryHasAttachments,
     observeWrites,
     exportTree,
     createBlankRepository,
@@ -900,6 +901,13 @@
 
   function handleExport() {
     if (!repo) return;
+    if (repositoryHasAttachments(repo)) {
+      // .srsj is JSON and cannot carry attachment bytes — auto-upgrade to the
+      // archive format, the same fallback saveDirect() uses for cloud handles.
+      downloadArchive(exportArchive(repo), toArchiveName(repoName));
+      saveToast("info", "Exported as .srs — attachments require the archive format.");
+      return;
+    }
     const json = exportSrsj(repo);
     downloadDocument(json, `${repoName}.srsj`);
   }
@@ -1061,6 +1069,15 @@
       };
       switch (handle.kind) {
         case "text":
+          if (repositoryHasAttachments(repository)) {
+            // GitHub single-file commits stay .srsj-only (ADR-015, pending Epic 09) —
+            // .srsj cannot carry attachment bytes, so tell the user plainly instead
+            // of letting export_srsj() throw a raw WASM error.
+            throw new StorageError(
+              "unsupported",
+              "This repository has attachments, which GitHub commits to a single file can't store yet. Use “Export .srs” (Document menu) to download it, or save a copy to Dropbox or Google Drive instead."
+            );
+          }
           await handle.saveToBranch(exportSrsj(repository), branchOpts);
           break;
         case "tree":

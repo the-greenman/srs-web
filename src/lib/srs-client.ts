@@ -797,6 +797,16 @@ export function exportSrsj(repo: SrsRepository): string {
   return repo.export_srsj();
 }
 
+/**
+ * Does the repository hold any attachment bytes? `export_srsj()` (JSON) cannot carry
+ * binary content and throws when it does — callers that export/save as `.srsj`
+ * (srs-web#507) check this first so they can fall back to the `.srs` archive instead
+ * of discovering the limit via a thrown exception.
+ */
+export function repositoryHasAttachments(repo: SrsRepository): boolean {
+  return listAttachments(repo).entries.length > 0;
+}
+
 /** The repository's manifest id (the `srs://<id>/...` resource namespace), read from the srsj envelope. */
 // ponytail: full export per call; replace with the core accessor (srs-rust#1250). export_srsj throws
 // when the repository holds attachment bytes, so fall back to the tree's manifest.json (srs-web#505).
