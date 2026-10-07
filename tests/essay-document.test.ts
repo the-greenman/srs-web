@@ -36,11 +36,7 @@ const m = vi.hoisted(() => ({
   listRelations: vi.fn(() => []),
   contextRecord: vi.fn(() => ({ relations: [] })),
   containersForInstance: vi.fn(() => []),
-  listAttachments: vi.fn(() => ({
-    sourceDocumentsPath: "s",
-    entries: [] as { documentId: string; sizeBytes?: number }[],
-  })),
-  getRecordAttachments: vi.fn(() => null as unknown),
+  resolveAttachments: vi.fn(() => ({ sourceDocumentsPath: "s", records: [] as unknown[] })),
   addAttachment: vi.fn(() => ({ documentId: "doc" })),
   linkAttachment: vi.fn(),
   copyContainer: vi.fn(),
@@ -878,21 +874,19 @@ describe("file attachments (srs-web#506)", () => {
   });
 
   it("loads a paragraph's files with the size the core knows, and the margin shows them as a file annotation", () => {
-    m.listAttachments.mockReturnValue({
+    m.resolveAttachments.mockReturnValue({
       sourceDocumentsPath: "s",
-      entries: [{ documentId: "d1", sizeBytes: 2048 }],
+      records: [
+        {
+          instanceId: "p1",
+          attachments: [{ documentId: "d1", title: "notes.md", sizeBytes: 2048 }],
+        },
+      ],
     });
-    m.getRecordAttachments.mockImplementation(((_r: unknown, i: { instanceId: string }) =>
-      i.instanceId === "p1"
-        ? {
-            instanceId: "p1",
-            sourceDocumentsPath: "s",
-            attachments: [{ documentId: "d1", title: "notes.md" }],
-          }
-        : null) as never);
     const model = loadEssay({ write_epoch: () => 7 } as never, "E");
     expect(model.files.p1).toEqual([{ documentId: "d1", name: "notes.md", sizeBytes: 2048 }]);
     expect(model.files.p9).toBeUndefined();
+    expect(m.resolveAttachments).toHaveBeenCalledTimes(1); // one batch read, not one per paragraph
     const file = annotationsFor(essaySource(model), "p1").find((a) => a.kind === "file");
     expect(file).toMatchObject({
       key: "file:d1",

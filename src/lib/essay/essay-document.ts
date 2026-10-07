@@ -27,9 +27,7 @@ import {
   getContainer,
   getContainerOutline,
   getRecord,
-  getRecordAttachments,
   linkAttachment,
-  listAttachments,
   listContainers,
   listDocumentViews,
   listRecords,
@@ -39,6 +37,7 @@ import {
   moveContainerMemberRelative,
   removeContainerMember,
   renderDocumentView,
+  resolveAttachments,
   typeSchema,
   updateContainer,
   updateRecord,
@@ -219,7 +218,9 @@ function loadContext(repo: SrsRepository, ids: string[]): ParagraphContext {
   const hit = attachmentCache.get(repo);
   if (hit?.key === key) return hit.value;
   const out: ParagraphContext = { attachments: {}, files: {}, related: {} };
-  const sizes = new Map(listAttachments(repo).entries.map((e) => [e.documentId, e.sizeBytes]));
+  const resolved = new Map(
+    resolveAttachments(repo, ids).records.map((r) => [r.instanceId, r.attachments])
+  );
   const toAtt = toAttachment(new Map(listRelationTypes(repo).map((t) => [t.key, t.label])));
   for (const id of ids) {
     const rels = contextRecord(repo, id, undefined, STRUCTURAL_CATEGORIES).relations;
@@ -227,11 +228,11 @@ function loadContext(repo: SrsRepository, ids: string[]): ParagraphContext {
     const rel = rels.map(toRelated).filter((a): a is Related => a !== null);
     if (att.length) out.attachments[id] = att;
     if (rel.length) out.related[id] = rel;
-    const files = (getRecordAttachments(repo, { instanceId: id })?.attachments ?? []).map(
+    const files = (resolved.get(id) ?? []).map(
       (f): FileAttachment => ({
         documentId: f.documentId,
         name: f.title || f.contentPath?.split("/").at(-1) || f.documentId,
-        sizeBytes: sizes.get(f.documentId),
+        sizeBytes: f.sizeBytes,
       })
     );
     if (files.length) out.files[id] = files;

@@ -9,7 +9,7 @@
 <script lang="ts">
   import Paperclip from '@lucide/svelte/icons/paperclip';
   import type { HTMLAttributes } from 'svelte/elements';
-  import { ACCEPT, checkFiles, readFile, type AttachFile, type AttachPolicy } from './attach-check.js';
+  import { ACCEPT, takeFiles, type AttachFile, type AttachPolicy } from './attach-check.js';
   import { formatBytes } from '../format-bytes.js';
   import Notice from './Notice.svelte';
 
@@ -43,12 +43,9 @@
   const hint = $derived(`Drop, paste or choose text files · up to ${formatBytes(policy?.maxPerFileBytes ?? 1_048_576)} each`);
 
   async function take(files: File[]) {
-    const result = checkFiles(files, policy, usedBytes);
+    const result = await takeFiles(files, policy, usedBytes);
     rejected = result.rejected;
-    if (!result.accepted.length) return;
-    await onfiles(
-      await Promise.all(result.accepted.map(async (f) => ({ name: f.name, type: f.type, bytes: await readFile(f) })))
-    );
+    if (result.accepted.length) await onfiles(result.accepted);
   }
   const hasFiles = (e: DragEvent) => e.dataTransfer?.types?.includes('Files') ?? false;
   function drag(e: DragEvent) {

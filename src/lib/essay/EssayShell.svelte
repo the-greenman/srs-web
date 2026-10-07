@@ -43,7 +43,7 @@
   import LinkIcon from "@lucide/svelte/icons/link";
   import Notice from "$lib/components/Notice.svelte";
   import { notify } from "$lib/notices.svelte.js";
-  import { checkFiles, readFile } from "$lib/components/attach-check.js";
+  import { takeFiles } from "$lib/components/attach-check.js";
   import type { AttachFile } from "$lib/components/attach-check.js";
   import { downloadAttachment } from "$lib/attachment-download.js";
   import Input from "$lib/components/Input.svelte";
@@ -305,7 +305,7 @@
   const attach = (paragraphId: string, files: AttachFile[]) => run(() => attachFiles(repo, paragraphId, files));
   /** Files dropped on a paragraph: the same client check as the popover, rejections as a warning toast. */
   async function dropFiles(paragraphId: string, files: File[]) {
-    const { accepted, rejected } = checkFiles(files, undefined, 0);
+    const { accepted, rejected } = await takeFiles(files, undefined, 0);
     if (rejected.length)
       notify({
         kind: "warning",
@@ -314,19 +314,16 @@
         testid: "attach-rejected",
       });
     if (!accepted.length) return;
-    await attach(
-      paragraphId,
-      await Promise.all(accepted.map(async (f) => ({ name: f.name, type: f.type, bytes: await readFile(f) })))
-    );
+    await attach(paragraphId, accepted);
   }
   function downloadFile(a: Annotation) {
     try {
       downloadAttachment(repo, a.documentId!, a.label);
-    } catch {
+    } catch (e) {
       notify({
         kind: "warning",
         key: "download-unavailable",
-        text: "This file can only be downloaded from a repository opened as an archive (.srs), not from this one.",
+        text: `Could not download ${a.label}: ${msg(e)}`,
         testid: "download-unavailable",
       });
     }

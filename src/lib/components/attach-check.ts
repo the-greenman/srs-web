@@ -81,3 +81,18 @@ export function checkFiles<T extends FileMeta>(
 export async function readFile(file: File): Promise<Uint8Array> {
   return new Uint8Array(await file.arrayBuffer());
 }
+
+/** The one read path for offered files: check them, then read the accepted ones. */
+export async function takeFiles(
+  files: File[],
+  policy: AttachPolicy | undefined,
+  usedBytes: number
+): Promise<{ accepted: AttachFile[]; rejected: { name: string; reason: string }[] }> {
+  const { accepted, rejected } = checkFiles(files, policy, usedBytes);
+  return {
+    accepted: await Promise.all(
+      accepted.map(async (f) => ({ name: f.name, type: f.type, bytes: await readFile(f) }))
+    ),
+    rejected,
+  };
+}

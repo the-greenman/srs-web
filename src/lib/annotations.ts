@@ -1,4 +1,3 @@
-import type { Comment } from "$lib/comments.js";
 /**
  * Annotations (srs-web#374, #422): one data-only descriptor per thing worth showing in the margin of
  * an instance. `annotationsFor` is the only place that decides WHAT is annotated; how each kind
@@ -6,6 +5,7 @@ import type { Comment } from "$lib/comments.js";
  * It reads any `AnnotationSource` keyed by instanceId (essay and the generic shells each build one),
  * never an essay model. A new kind = a new branch here + a map entry there.
  */
+import type { Comment } from "$lib/comments.js";
 import { formatBytes } from "$lib/format-bytes.js";
 import type { Actor } from "$lib/srs-client.js";
 
