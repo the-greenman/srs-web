@@ -4,10 +4,9 @@ import worker, { type Env } from "../worker/index.js";
 // Minimal Env that satisfies the Worker handler's needs.
 const baseEnv: Env = {
   ASSETS: { fetch: async () => new Response("asset", { status: 200 }) },
-  APP_ORIGIN: "https://app.test",
+  APP_ORIGINS: "https://app.test, https://other.test",
   GITHUB_CLIENT_ID: "client-id",
   GITHUB_CLIENT_SECRET: "client-secret",
-  GITHUB_REDIRECT_URI: "https://app.test/",
 };
 
 function makeRequest(
@@ -82,6 +81,53 @@ describe("POST /api/oauth/github/token refresh token passthrough", () => {
   });
 });
 
+describe("POST /api/oauth/github/token origin + redirect_uri", () => {
+  const body = { code: "c", code_verifier: "v", redirect_uri: "https://app.test/" };
+
+  it("accepts each configured host with its own redirect_uri", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => upstreamJson({ access_token: "t" })));
+    for (const host of ["https://app.test", "https://other.test"]) {
+      const res = await worker.fetch(
+        makeRequest("/api/oauth/github/token", {
+          origin: host,
+          body: { ...body, redirect_uri: `${host}/` },
+        }),
+        baseEnv
+      );
+      expect(res.status).toBe(200);
+    }
+  });
+
+  it("403s a foreign origin", async () => {
+    const res = await worker.fetch(
+      makeRequest("/api/oauth/github/token", { origin: "https://evil.example.com", body }),
+      baseEnv
+    );
+    expect(res.status).toBe(403);
+    expect((await res.json<{ error: string }>()).error).toBe("forbidden_origin");
+  });
+
+  it("403s a missing origin", async () => {
+    const res = await worker.fetch(
+      makeRequest("/api/oauth/github/token", { origin: null, body }),
+      baseEnv
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("403s a redirect_uri for the other host", async () => {
+    const res = await worker.fetch(
+      makeRequest("/api/oauth/github/token", {
+        origin: "https://other.test",
+        body, // redirect_uri is app.test
+      }),
+      baseEnv
+    );
+    expect(res.status).toBe(403);
+    expect((await res.json<{ error: string }>()).error).toBe("invalid_redirect_uri");
+  });
+});
+
 // ---------------------------------------------------------------------------
 // /api/oauth/github/refresh
 // ---------------------------------------------------------------------------
@@ -105,6 +151,17 @@ describe("POST /api/oauth/github/refresh", () => {
     });
     const res = await worker.fetch(req, baseEnv);
     expect(res.status).toBe(403);
+  });
+
+  it("accepts refresh from every configured host", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => upstreamJson({ access_token: "t" })));
+    for (const origin of ["https://app.test", "https://other.test"]) {
+      const res = await worker.fetch(
+        makeRequest("/api/oauth/github/refresh", { origin, body: { refresh_token: "r" } }),
+        baseEnv
+      );
+      expect(res.status).toBe(200);
+    }
   });
 
   it("returns 400 when refresh_token is absent from the body", async () => {

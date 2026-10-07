@@ -6,5 +6,4 @@
 # or the Worker's Origin/redirect_uri check rejects the exchange with 403.
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
-APP_ORIGIN=http://localhost:5173
-GITHUB_REDIRECT_URI=http://localhost:5173/
+APP_ORIGINS=http://localhost:5173
