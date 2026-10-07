@@ -48,6 +48,7 @@ import type {
   TypeSummary,
 } from "$lib/srs-client.js";
 import { recordsOfType, typeVersion } from "$lib/type-version.js";
+import { uuid5 } from "$lib/uuid5.js";
 import type { Zone } from "./essay-model.js";
 import { hiddenByAncestor, toggled } from "./essay-model.js";
 import { DOCUMENT_STATE_TYPE_ID, ESSAY_TYPE_ID, PARAGRAPH_TYPE_ID } from "./type-registry.js";
@@ -87,6 +88,8 @@ export interface EssayModel {
   binEntries: OutlineEntry[];
   /** The snapshot bundle (srs-web#417): created on the first Export snapshot (null until then). */
   bundleContainerId: string | null;
+  /** Set when this load's repair failed (tried once per essay per repo handle; the shell shows it as a notice). */
+  repairError?: string | null;
   /** The essay's comments container (essay package 1.7.0; null on older packages or before repair). */
   commentsContainerId: string | null;
   /** The essay's collected references container (essay package 1.7.0; null as above). */
@@ -108,7 +111,8 @@ export interface EssayModel {
 /**
  * Owner ruling (muDemocracy.org#226): agents never write the essay text — they comment via
  * new records and relations. Labels are metadata: fillable only while empty. The comments and
- * references containers are deliberately NOT guarded: agents file into them (containerId on create,
+ * references containers are deliberately NOT guarded (nor is the snapshot bundle: the engine guards a
+ * container's whole closure, and the bundle's children include them; refreshBundle re-declares it): agents file into them (containerId on create,
  * or container_member_add); every other container stays protected.
  */
 export function essayWriteGuard(m: EssayModel): AgentWriteGuard {
@@ -117,7 +121,6 @@ export function essayWriteGuard(m: EssayModel): AgentWriteGuard {
       m.containerId,
       ...(m.draftContainerId ? [m.draftContainerId] : []),
       ...(m.binContainerId ? [m.binContainerId] : []),
-      ...(m.bundleContainerId ? [m.bundleContainerId] : []),
     ],
     instanceIds: [m.essayId, ...(m.stateId ? [m.stateId] : [])],
     fillOnlyFields: ["paragraph_title"],
@@ -302,8 +305,18 @@ export function loadEssay(
     recordsOfType(repo, types, DOCUMENT_STATE_TYPE_ID).find(
       (r) => r.fieldValues.essay === essayId
     ) ?? null;
-  if (!state && opts.repair) state = addEditorState(repo, types, essayId, title);
-  else if (state && opts.repair) state = repairAreas(repo, types, state, title);
+  let repairError: string | null = null;
+  const tried = repairTried(repo);
+  if (opts.repair && !tried.has(essayId)) {
+    // Once per essay per repo handle: a failure part-way must not repeat on the reload it causes.
+    tried.add(essayId);
+    try {
+      if (!state) state = addEditorState(repo, types, essayId, title);
+      else state = repairAreas(repo, types, state, title, essayId);
+    } catch (e) {
+      repairError = e instanceof Error ? e.message : String(e);
+    }
+  }
   const draftContainerId = str(state?.fieldValues.draft_container_id) || null;
   const draftEntries = draftContainerId ? getContainerOutline(repo, draftContainerId).body : [];
   const binContainerId = str(state?.fieldValues.bin_container_id) || null;
@@ -320,16 +333,21 @@ export function loadEssay(
   }
   const context = loadContext(repo, Object.keys(paragraphs));
   const comments = loadComments(repo, types);
-  if (opts.repair && commentsContainerId) {
-    const filed = new Set(
-      getContainerOutline(repo, commentsContainerId).entries.map((e) => e.instanceId)
-    );
-    for (const id of Object.keys(paragraphs))
-      for (const c of comments[id] ?? [])
-        if (!filed.has(c.id)) {
-          addContainerMember(repo, commentsContainerId, c.id);
-          filed.add(c.id);
-        }
+  if (opts.repair && commentsContainerId && !tried.has(`sweep:${essayId}`)) {
+    try {
+      const filed = new Set(
+        getContainerOutline(repo, commentsContainerId).entries.map((e) => e.instanceId)
+      );
+      for (const id of Object.keys(paragraphs))
+        for (const c of comments[id] ?? [])
+          if (!filed.has(c.id)) {
+            addContainerMember(repo, commentsContainerId, c.id);
+            filed.add(c.id);
+          }
+    } catch (e) {
+      tried.add(`sweep:${essayId}`); // stop retrying on every reload
+      repairError ??= e instanceof Error ? e.message : String(e);
+    }
   }
   const references: Reference[] = referencesContainerId
     ? listRecords(repo, { containerId: referencesContainerId }).map((r) => ({
@@ -357,6 +375,7 @@ export function loadEssay(
     draftEntries,
     binContainerId,
     binEntries,
+    repairError,
     commentsContainerId,
     referencesContainerId,
     references,
@@ -611,6 +630,40 @@ export function deleteForever(repo: SrsRepository, m: EssayModel, id: string): v
   }
 }
 
+/** Essays already repaired (or attempted) per repository handle, so a failing repair is not retried by the reload it causes. */
+const repairedCache = new WeakMap<object, Set<string>>();
+const repairTried = (repo: SrsRepository): Set<string> => {
+  const hit = repairedCache.get(repo) ?? new Set<string>();
+  repairedCache.set(repo, hit);
+  return hit;
+};
+
+/** Namespace of the deterministic area-container ids (UUIDv5 of `<essayId>:<area>`). */
+const AREA_NS = "5d1f3c0e-8f0a-4b8e-9a53-2d6c1e7b4a90";
+
+/**
+ * The container with this deterministic id: created if absent, re-read if a second tab (or an
+ * earlier partial repair) already made it. Same id on every client = no duplicate containers.
+ */
+function ensureContainer(repo: SrsRepository, containerId: string, title: string): string {
+  try {
+    getContainer(repo, containerId);
+    return containerId;
+  } catch {
+    /* absent: create it */
+  }
+  try {
+    return createContainer(repo, { containerId, title }).containerId;
+  } catch (e) {
+    try {
+      getContainer(repo, containerId); // lost a race: it exists now
+      return containerId;
+    } catch {
+      throw e;
+    }
+  }
+}
+
 /**
  * Create the comments / references containers the installed document-state type can record
  * (essay package 1.7.0; feature-detected, so an older package gets none) and return their ids
@@ -619,6 +672,7 @@ export function deleteForever(repo: SrsRepository, m: EssayModel, id: string): v
 function newAreas(
   repo: SrsRepository,
   types: TypeSummary[],
+  essayId: string,
   title: string,
   have: Record<string, unknown> = {}
 ): Record<string, string> {
@@ -628,11 +682,19 @@ function newAreas(
     ["references_container_id", "references"],
   ] as const)
     if (!str(have[field]) && hasField(repo, types, DOCUMENT_STATE_TYPE_ID, field))
-      out[field] = createContainer(repo, { title: areaTitle(title, area) }).containerId;
+      out[field] = ensureContainer(
+        repo,
+        uuid5(AREA_NS, `${essayId}:${area}`),
+        areaTitle(title, area)
+      );
   return out;
 }
 
-/** The editor's own state for an essay: a draft container, the comments and references containers + the document-state record. */
+/**
+ * The editor's own state for an essay: a draft container, the comments and references containers
+ * + the document-state record. The record's own id is random (record create takes no id), so two
+ * tabs repairing at once could still make two states; the containers are deterministic.
+ */
 function addEditorState(
   repo: SrsRepository,
   types: TypeSummary[],
@@ -645,7 +707,7 @@ function addEditorState(
       essay: essayId,
       hidden_instance_ids: [],
       draft_container_id: draft.containerId,
-      ...newAreas(repo, types, title),
+      ...newAreas(repo, types, essayId, title),
     },
   });
 }
@@ -655,9 +717,10 @@ function repairAreas(
   repo: SrsRepository,
   types: TypeSummary[],
   state: SrsRecord,
-  title: string
+  title: string,
+  essayId: string
 ): SrsRecord {
-  const missing = newAreas(repo, types, title, state.fieldValues);
+  const missing = newAreas(repo, types, essayId, title, state.fieldValues);
   if (!Object.keys(missing).length) return state;
   patchRecord(repo, state.instanceId, missing, typeVersion(repo, DOCUMENT_STATE_TYPE_ID));
   return { ...state, fieldValues: { ...state.fieldValues, ...missing } };
@@ -741,9 +804,16 @@ export function refreshBundle(repo: SrsRepository, m: EssayModel): string {
   ].filter((c): c is string => !!c);
   const own = new Set<string>([m.essayId, m.stateId]);
   for (const id of Object.keys(m.paragraphs)) {
-    if (!m.commentsContainerId) for (const c of m.comments[id] ?? []) own.add(c.id);
     for (const a of m.attachments[id] ?? []) own.add(a.neighbourId);
   }
+  // Comments not yet filed in the comments container (a read-only document never sweeps) are members.
+  const filed = new Set(
+    m.commentsContainerId
+      ? getContainerOutline(repo, m.commentsContainerId).entries.map((e) => e.instanceId)
+      : []
+  );
+  for (const id of Object.keys(m.paragraphs))
+    for (const c of m.comments[id] ?? []) if (!filed.has(c.id)) own.add(c.id);
   let bundle = m.bundleContainerId;
   if (!bundle) {
     bundle = createContainer(repo, {

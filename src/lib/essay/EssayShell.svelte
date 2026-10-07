@@ -156,6 +156,8 @@
       }
       model = essayId ? loadEssay(repo, essayId, { repair: !readOnlyReason }) : null;
       error = null;
+      if (model?.repairError)
+        notify({ kind: "error", key: "essay-repair", text: `Could not set up this essay's containers: ${model.repairError}` });
     } catch (e) {
       error = msg(e);
     }

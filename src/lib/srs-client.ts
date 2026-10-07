@@ -1897,7 +1897,7 @@ function normalizeDiscoveryHit(raw: any): DiscoveryHit {
  * Full-text search across all records in the repository.
  * Pass `contentMatch` for free-text; combine with `typeNamespace`/`typeName` to scope results.
  * Hits are sorted by instanceId unless `opts.rank` orders `contentMatch` hits by relevance.
- * `opts.limit`/`opts.offset` page the hits; `total` and `facets` always count the whole filtered set.
+ * `opts.limit`/`opts.offset` page the hits; `total` counts the whole filtered set; `facets` do too but are returned only when `opts.facets` is set or `limit` is 0 (srs-rust#1317), else empty.
  * ADR-001: callers must not pass governance-specific field names — use `contentMatch` only.
  */
 export function find(

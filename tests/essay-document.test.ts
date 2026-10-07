@@ -598,6 +598,10 @@ describe("comments and references containers (srs-web#494, #495, #496)", () => {
     }));
     m.createRecord.mockImplementation((() => ({ instanceId: "new" })) as never);
     m.createContainer.mockReset();
+    m.getContainer.mockReset();
+    m.getContainer.mockImplementation(() => {
+      throw new Error("no such container");
+    });
     m.listRelations.mockReturnValue([]);
     m.contextRecord.mockReturnValue({ relations: [] });
     m.addContainerMember.mockReset();
@@ -777,6 +781,10 @@ describe("comments and references containers (srs-web#494, #495, #496)", () => {
     } as never);
     expect(g.instanceIds).toContain("S");
     expect(g.containerIds).toEqual(["C", "D", "B"]);
+    expect(
+      essayWriteGuard({ essayId: "E", containerId: "C", bundleContainerId: "Z" } as never)
+        .containerIds
+    ).toEqual(["C"]); // the bundle's closure includes comments and references
   });
 
   it("the snapshot bundle declares both containers as children and drops the per-comment member loop", () => {
@@ -795,14 +803,42 @@ describe("comments and references containers (srs-web#494, #495, #496)", () => {
       canSnapshot: true,
       bundleContainerId: null,
       paragraphs: { p1: {} },
-      comments: { p1: [{ id: "c1" }] },
+      comments: { p1: [{ id: "c0" }, { id: "c1" }] },
       attachments: { p1: [{ neighbourId: "prob" }] },
     };
+    m.getContainerOutline.mockReturnValue({ entries: [{ instanceId: "c0" }], body: [] });
     refreshBundle({} as never, model);
     const input = m.createContainer.mock.calls[0][1];
     expect(input.childContainerIds).toEqual(["C", "D", "K", "F"]);
     expect(input.memberInstanceIds.map((e: { instanceId: string }) => e.instanceId).sort()).toEqual(
-      ["E", "S", "prob"]
+      ["E", "S", "c1", "prob"] // c0 is filed in K; the unfiled c1 (a read-only doc never sweeps) is a member
     );
+  });
+
+  it("repair is tried once per essay per repo handle: a failure is reported once and not retried", () => {
+    m.createContainer.mockImplementation(() => {
+      throw new Error("boom");
+    });
+    const r = repo();
+    expect(loadEssay(r, "E", { repair: true }).repairError).toBe("boom");
+    expect(loadEssay(r, "E", { repair: true }).repairError).toBeNull();
+    expect(m.createContainer).toHaveBeenCalledTimes(1);
+  });
+
+  it("area containers get deterministic ids; one that already exists is reused, not created again", () => {
+    m.createContainer.mockImplementation(
+      (_r: unknown, { containerId }: { containerId: string }) => ({
+        containerId,
+      })
+    );
+    const a = loadEssay(repo(), "E", { repair: true });
+    const b = loadEssay(repo(), "E", { repair: true }); // a second tab: fresh handle, same state
+    expect(b.commentsContainerId).toBe(a.commentsContainerId);
+    expect(a.commentsContainerId).toMatch(/^[0-9a-f-]{8}-[0-9a-f-]{4}-5/);
+    expect(a.commentsContainerId).not.toBe(a.referencesContainerId);
+    vi.clearAllMocks();
+    m.getContainer.mockReturnValue({ containerId: "x" }); // now they exist
+    loadEssay(repo(), "E", { repair: true });
+    expect(m.createContainer).not.toHaveBeenCalled();
   });
 });
