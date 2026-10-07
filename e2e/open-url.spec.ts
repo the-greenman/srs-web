@@ -33,6 +33,10 @@ test("opens a .srs from a link read-only, names the host, clears the parameter",
   await expect(page.getByTestId("read-only-note")).toContainText("Opened from semanticops.test, read-only");
   expect(new URL(page.url()).search).toBe("");
 
+  // the title comes from the manifest's root container (srs-web#480), not the URL's
+  // basename ("meeting", from /try/meeting.srs) — pagetest.srs's container title is "Page Test"
+  await expect(page.getByTestId("toolbar").locator('[data-part="title"]')).toContainText("Page Test");
+
   // content renders (the homepage composition) but is not editable: no editor, no Save, no package editors
   await page.getByRole("button", { name: /homepage/i }).first().click();
   await expect(page.getByTestId("document-full-preview").or(page.locator(".generic-preview"))).toBeVisible();

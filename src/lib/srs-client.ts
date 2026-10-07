@@ -2153,6 +2153,30 @@ export function repositoryNavigation(repo: SrsRepository): RepositoryNavigation 
   return normalizeRepositoryNavigation(raw);
 }
 
+/**
+ * The repository's display title (srs-web#480): the identity record's label when the
+ * root container names one, else the root container's own title (RFC-013/RFC-038 —
+ * `default_repository_container` falls back to the namespace when no title was given
+ * at creation, so this is still a meaningful improvement over the opened file/URL name),
+ * else `fallback` (the caller's opened file/URL name, pre-stripped of its extension).
+ * A repository predating RFC-013 (no `manifest.container`) or a WASM read failure also
+ * falls back — this must never block opening the document.
+ */
+export function resolveRepositoryTitle(repo: SrsRepository, fallback: string): string {
+  try {
+    const navigation = repositoryNavigation(repo);
+    if (navigation.identity.displayLabel) return navigation.identity.displayLabel;
+    if (navigation.rootContainerId) {
+      const container = getContainer(repo, navigation.rootContainerId);
+      if (container.title) return container.title;
+    }
+  } catch {
+    // Fall through to the caller's fallback — title resolution is a presentation
+    // nicety, never a reason to fail opening the document.
+  }
+  return fallback;
+}
+
 // ---------------------------------------------------------------------------
 // Create governance document (srs-web#141)
 // ---------------------------------------------------------------------------

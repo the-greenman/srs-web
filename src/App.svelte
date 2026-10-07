@@ -38,7 +38,7 @@
   import { reopenSaved } from "$lib/reopen.js";
   import { fetchArchiveFile, parseOpenUrl, withoutOpenParam } from "$lib/open-url.js";
   import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
-  import { listRelations, listTypes, repositoryId, type AgentWriteGuard, type McpSession, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
+  import { listRelations, listTypes, repositoryId, resolveRepositoryTitle, type AgentWriteGuard, type McpSession, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
@@ -95,6 +95,14 @@
   let editorMode = $state<EditorMode>("generic");
 
   let repoName = $state<string>("Untitled repository");
+  /**
+   * The title shown to the user (Toolbar/Nav/breadcrumbs) — srs-web#480: prefers the
+   * manifest root container's title or the identity record's label over the opened
+   * file/URL name. Deliberately separate from `repoName`, which stays file-derived:
+   * `repoName` is also the export/download base name and the working-copy cache key,
+   * neither of which should change shape because a record happens to have a title.
+   */
+  let documentTitle = $state<string>("Untitled repository");
   const storageProviders = createStorageProvidersFromEnv();
   let activeDocument = $state<DocumentHandle | null>(null);
   /**
@@ -625,6 +633,7 @@
         activeDocument = handle;
         beginDocument({ dirty });
         repoName = stripSrsExtension(handle.name);
+        documentTitle = resolveRepositoryTitle(loaded, repoName);
         cachedSession = null;
         if (dirty) {
           saveToast("info", "Migrated to the current data model. Unsaved - Save to keep it.", 8000);
@@ -805,6 +814,7 @@
     readOnlyHost = null;
     beginDocument();
     repoName = name;
+    documentTitle = name;
     editorMode = chosen[0]?.id ?? "generic";
     cachedSession = null;
     appState = "loaded";
@@ -825,6 +835,7 @@
         beginDocument({ dirty });
         activeDocument = null;
         repoName = stripSrsExtension(name);
+        documentTitle = resolveRepositoryTitle(loaded, repoName);
         cachedSession = null;
         if (dirty) {
           saveToast("info", "Migrated to the current data model. Unsaved - export to keep it.", 8000);
@@ -1137,6 +1148,7 @@
                 repo = restored;
                 beginDocument({ dirty: true });
                 repoName = entry.name;
+                documentTitle = resolveRepositoryTitle(restored, repoName);
                 activeDocument = null;
                 appState = "loaded";
                 editorMode = "generic";
@@ -1164,7 +1176,7 @@
   <GenericSrsShell
     repo={repo!}
     packageEditors={offeredEditors}
-    repoName={repoName}
+    repoName={documentTitle}
     onExport={handleExportArchive}
     onSave={readOnlyHost ? undefined : activeDocument === null || activeDocument.capabilities.write ? handleSave : undefined}
     readOnly={readOnlyHost !== null}
@@ -1195,7 +1207,7 @@
   {@const Shell = activeEditor!.component}
   <Shell
     repo={repo!}
-    repoName={repoName}
+    repoName={documentTitle}
     documentProvider={activeDocument?.provider ?? "local"}
     onExport={handleExportArchive}
     onExportSrsj={handleExport}

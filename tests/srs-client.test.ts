@@ -58,6 +58,7 @@ import {
   neighbours,
   repositoryNavigation,
   resolveContainerView,
+  resolveRepositoryTitle,
   scaffoldGovernanceDocument,
   transitionRecord,
   typeSchema,
@@ -1452,6 +1453,91 @@ describe("repositoryNavigation", () => {
       },
     });
     expect(() => repositoryNavigation(repo)).toThrow("nav failed");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveRepositoryTitle (srs-web#480)
+// ---------------------------------------------------------------------------
+
+describe("resolveRepositoryTitle", () => {
+  it("prefers the identity record's display label over the container title", () => {
+    const rawNav = {
+      rootContainerId: "root-c",
+      identity: {
+        instanceId: "id-1",
+        typeId: "type-id-1",
+        typeVersion: 1,
+        typeNamespace: "com.test",
+        typeName: "meeting",
+        displayLabel: "Weekly Team Meeting",
+      },
+      sections: [],
+      diagnostics: [],
+    };
+    const repo = mockRepo({
+      repository_navigation: () => rawNav,
+      get_container: () => ({ containerId: "root-c", title: "com.example.meeting" }),
+    });
+
+    expect(resolveRepositoryTitle(repo, "fallback-name")).toBe("Weekly Team Meeting");
+  });
+
+  it("falls back to the root container's title when there is no identity", () => {
+    const rawNav = {
+      rootContainerId: "root-c",
+      identity: { instanceId: "", typeId: "", typeVersion: 0, typeNamespace: "", typeName: "", displayLabel: "" },
+      sections: [],
+      diagnostics: [],
+    };
+    const repo = mockRepo({
+      repository_navigation: () => rawNav,
+      get_container: () => ({ containerId: "root-c", title: "Governance Charter" }),
+    });
+
+    expect(resolveRepositoryTitle(repo, "fallback-name")).toBe("Governance Charter");
+  });
+
+  it("falls back to the caller's name for a pre-RFC-013 repo (no manifest.container)", () => {
+    const rawNav = {
+      rootContainerId: "",
+      identity: { instanceId: "", typeId: "", typeVersion: 0, typeNamespace: "", typeName: "", displayLabel: "" },
+      sections: [],
+      diagnostics: ["repository-navigation: manifest.container is absent; repo predates RFC-013 root container (epic #95)"],
+    };
+    const repo = mockRepo({
+      repository_navigation: () => rawNav,
+      get_container: () => {
+        throw new Error("not mocked");
+      },
+    });
+
+    expect(resolveRepositoryTitle(repo, "fallback-name")).toBe("fallback-name");
+  });
+
+  it("falls back to the caller's name when the container has no title either", () => {
+    const rawNav = {
+      rootContainerId: "root-c",
+      identity: { instanceId: "", typeId: "", typeVersion: 0, typeNamespace: "", typeName: "", displayLabel: "" },
+      sections: [],
+      diagnostics: [],
+    };
+    const repo = mockRepo({
+      repository_navigation: () => rawNav,
+      get_container: () => ({ containerId: "root-c", title: "" }),
+    });
+
+    expect(resolveRepositoryTitle(repo, "fallback-name")).toBe("fallback-name");
+  });
+
+  it("falls back to the caller's name when the WASM read throws, never blocking open", () => {
+    const repo = mockRepo({
+      repository_navigation: () => {
+        throw new Error("nav failed");
+      },
+    });
+
+    expect(resolveRepositoryTitle(repo, "fallback-name")).toBe("fallback-name");
   });
 });
 
