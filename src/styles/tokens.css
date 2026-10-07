@@ -5,8 +5,8 @@
    here paints; every other layer references these custom properties so a brand
    change is a one-file change.
 
-   Palette + type ported verbatim from the muDemocracy brand
-   (muDemocracy.org/src/styles/tokens.css, v3) to keep the two surfaces in lockstep.
+   Light-mode palette + type follow semanticops.com
+   (semanticops.com/src/styles/tokens.css) to keep the two surfaces in lockstep.
    Foundation for the whole editor — B1 scaffold:
      https://github.com/the-greenman/srs-web/issues/2
    ========================================================================== */
@@ -18,9 +18,11 @@
      No accent colour by design. Greys do the work. */
   --black: #1a1a1a;
   --paper: #f4f2ee;
+  --paper-lit: #faf8f5;
   --grey-1: #e8e5df;
   --grey-2: #c8c4bc;
   --grey-3: #8a8680;
+  --grey-3-deep: #66625c; /* muted text on paper: 4.5:1 or better */
   --grey-4: #4a4744;
   --ink: #2b2926;
 
@@ -30,7 +32,7 @@
   --color-surface: var(--paper);
   --color-page: #fff; /* the white page of the essay editor (srs-web#363); muDemocracy tokens need the same */
   --color-text: var(--ink);
-  --color-muted: var(--grey-3);
+  --color-muted: var(--grey-3-deep);
   --color-line: var(--grey-2);
   --color-line-soft: var(--grey-1);
   --color-line-strong: var(--black);
@@ -59,6 +61,9 @@
   --font-sans: "IBM Plex Sans", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", "Courier New", monospace;
 
+  --weight-regular: 400;
+  --weight-bold: 700;
+
   --size-xs: 11px;
   --size-sm: 13px;
   --size-base: 16px;
@@ -66,9 +71,11 @@
   --size-lg: 28px;
   --size-xl: 42px;
 
+  --leading-solid: 1;
   --leading-tight: 1.1;
   --leading-body: 1.6;
 
+  --tracking-tight: -0.02em;
   --tracking-label: 0.08em; /* mono uppercase labels */
   --tracking-eyebrow: 0.14em; /* loudest mono lockup */
 

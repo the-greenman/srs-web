@@ -1,7 +1,7 @@
 # srs-web design system
 
 A modular, layered CSS foundation for the SRS governance editor. Plain CSS — no
-build step, no framework lock-in. It extends the [muDemocracy](https://mudemocracy.org)
+build step, no framework lock-in. It follows the [semanticops.com](https://semanticops.com)
 design language (paper + ink, **no accent colour**, IBM Plex Sans/Mono) into an
 application shell.
 

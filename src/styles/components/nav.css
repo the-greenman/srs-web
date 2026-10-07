@@ -6,7 +6,7 @@
    counts and a repository-health footer fed by validate().
 
    The `ink-surface` SVG turbulence filter (defined once in index.html)
-   gives the dark block a printed-ink texture, matching the muDemocracy brand.
+   gives the dark block a printed-ink texture, matching the semanticops.com brand.
 
    Sidebar is the core of the read-only viewer — B4:
      https://github.com/the-greenman/srs-web/issues/3
@@ -38,6 +38,11 @@
 .nav__brand {
   padding: var(--space-md);
   border-bottom: 1px solid var(--color-on-dark-line);
+}
+.nav__brand .wordmark {
+  display: block;
+  margin-bottom: var(--space-xs);
+  color: var(--color-on-dark);
 }
 .nav__brand .eyebrow {
   color: var(--color-on-dark-muted);

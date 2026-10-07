@@ -28,7 +28,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Paper grain — fixed multiply overlay. Ported from the muDemocracy brand so
+/* Paper grain — fixed multiply overlay. Follows the semanticops.com brand so
    the editor reads as the same physical surface as the marketing site. */
 body::after {
   content: "";

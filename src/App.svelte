@@ -46,6 +46,8 @@
   import { EDITORS, availableEditors, installEditor as installEditorPackages, usableEditor } from "$lib/editors/registry.js";
   import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
+  import SrsMark from "$lib/components/SrsMark.svelte";
+  import Wordmark from "$lib/components/Wordmark.svelte";
   import CreateRepositoryPanel from "$lib/components/CreateRepositoryPanel.svelte";
   import GitSaveModal from "$lib/components/GitSaveModal.svelte";
   import SaveToModal from "$lib/components/SaveToModal.svelte";
@@ -1026,6 +1028,7 @@
 
 {:else if appState === "idle"}
   <div class="splash" data-testid="generic-file-picker">
+    <div class="splash__brand"><SrsMark size={28} /><Wordmark size="sm" /></div>
     <h1 class="splash__title">SRS Viewer</h1>
     <p class="splash__sub">Open any <code>.srs</code> or <code>.srsj</code> repository to read its documents, structure, and records.</p>
     {#if cachedSession !== null}
@@ -1215,6 +1218,13 @@
     padding: 2rem;
     text-align: center;
     font-family: inherit;
+  }
+
+  .splash__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
   }
 
   .splash__title {

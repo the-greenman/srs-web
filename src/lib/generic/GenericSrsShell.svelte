@@ -384,7 +384,7 @@
 {/snippet}
 
 {#snippet navPane()}
-  <Nav repo={repoName} eyebrow="SRS repository">
+  <Nav repo={repoName} eyebrow="SRS repository" wordmark>
     {#snippet children()}
     <section class="nav__group" data-part="documents">
       <h2 class="nav__group-label">Documents</h2>

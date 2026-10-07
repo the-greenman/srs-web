@@ -10,7 +10,7 @@
     ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, MarkdownHelp, MarkdownText, AgentPanel, McpConnection, Panel, AnnotationMargin, PinnedPane, Select, Tag,
-    TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost, SrsMark,
+    TagChip, Textarea, Notice, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
   } from "$lib/components";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import LiveRegions from "$lib/components/LiveRegions.svelte";
@@ -305,6 +305,19 @@
       <ActorStack actors={[fx.human, ...fx.agents.slice(0, 2)]} />
       <ActorStack actors={fx.manyActors} />
       <ActorStack actors={[fx.unattributed, fx.agents[0]]} />
+    </div>
+  </section>
+
+  <section id="wordmark">
+    <h2>Wordmark</h2>
+    <p class="sg__note">The SemanticOps name: Semantic regular, Ops bold, tight tracking. Sizes sm, md, lg.</p>
+    <div class="sg__row" data-testid="sg-wordmark">
+      {#each ["sm", "md", "lg"] as const as size}
+        <figure class="sg__figure">
+          <figcaption>{size}</figcaption>
+          <Wordmark {size} />
+        </figure>
+      {/each}
     </div>
   </section>
 

@@ -10,17 +10,21 @@
   import type { Snippet } from 'svelte';
   import { getShell } from '../shell-context.svelte.js';
   import ResizeHandle from './ResizeHandle.svelte';
+  import Wordmark from './Wordmark.svelte';
 
   let {
     repo,
     repoId,
     eyebrow = 'srs · governance',
+    wordmark = false,
     children,
     footer,
   }: {
     repo: string;
     repoId?: string;
     eyebrow?: string;
+    /** Show the SemanticOps wordmark above the eyebrow (the generic editor only). */
+    wordmark?: boolean;
     children?: Snippet;
     footer?: Snippet;
   } = $props();
@@ -31,6 +35,7 @@
 
 <nav class="nav app__nav" id="nav-{uid}" aria-label="Repository sections">
   <div class="nav__brand">
+    {#if wordmark}<Wordmark size="sm" />{/if}
     <p class="eyebrow" style="margin:0">{eyebrow}</p>
     <div class="nav__repo">{repo}</div>
     {#if repoId}<div class="nav__repo-id">{repoId}</div>{/if}
