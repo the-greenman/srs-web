@@ -243,9 +243,10 @@
     // The root comes from the core's resolveContainerView; selectedGuideId is only the
     // fallback when the binding reports no root.
     const rootId = view.root?.instanceId ?? selectedGuideId;
-    const sectionRecords = view.members
-      .filter((m) => m.tier > 0 && m.record.instanceId !== rootId)
-      .map((m) => m.record);
+    // Notes (tier 0) have no record and are not sections.
+    const sectionRecords = view.members.flatMap((m) =>
+      m.record && m.tier > 0 && m.record.instanceId !== rootId ? [m.record] : [],
+    );
     const ids = sectionRecords.map((s) => s.instanceId);
     const orderedIds = orderByPrecedes(repo, ids);
     const byId = new Map(sectionRecords.map((s) => [s.instanceId, s]));

@@ -634,6 +634,27 @@ describe("GovernanceShell — saving-state mutation guard (srs-web#312 bug 2)", 
     fireEvent.submit(form!);
   }
 
+  it("shows an error, not an empty list, when the container view fails to resolve (srs-web#483)", async () => {
+    const repo = repoWithSelectedRecordSupport({
+      resolve_container_view: () => {
+        throw new Error("view exploded");
+      },
+    });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    render(GovernanceShell, {
+      props: {
+        repo,
+        repoName: "test.srsj",
+        documentProvider: "local",
+        onExport: vi.fn(),
+        onOpenAnother: vi.fn(),
+      },
+    });
+    expect((await screen.findByTestId("container-view-error")).textContent).toContain(
+      "view exploded"
+    );
+  });
+
   it("disables Edit, Delete, and lifecycle-transition buttons while saving is true, and re-enables them once false", async () => {
     const repo = repoWithSelectedRecordSupport();
     const { rerender } = render(GovernanceShell, {

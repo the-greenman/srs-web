@@ -454,3 +454,27 @@ describe("GenericSrsShell diagnostics notices (#441)", () => {
     restore();
   });
 });
+
+describe("GenericSrsShell note members (srs-web#483)", () => {
+  it("lists a Tier-0 note member in Structure, labelled and marked as a note", async () => {
+    mocks.resolveContainerView.mockReturnValueOnce({
+      containerId: "container-1",
+      members: [
+        { instanceId: "note-1", tier: 0, displayLabel: "A note" },
+        { instanceId: "record-1", tier: 2, displayLabel: "A record", record: {} },
+      ],
+      columns: [],
+      excludeLifecycleStates: [],
+      diagnostics: [],
+    });
+    render(GenericSrsShell, {
+      props: { repo: {} as never, repoName: "r", onExport: vi.fn(), onOpenAnother: vi.fn() },
+    });
+
+    await fireEvent.click(await screen.findByRole("button", { name: "Toggle Foundation" }));
+
+    expect(screen.getByRole("button", { name: /^A note/ })).toBeTruthy();
+    expect(screen.getAllByTestId("member-note-mark")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "A record" })).toBeTruthy();
+  });
+});

@@ -533,6 +533,35 @@ describe("loadDocument", () => {
     expect(doc?.blocks).toEqual([]);
   });
 
+  it("skips a container whose root is a Tier-0 note (no record) while matching by rootTypeRefs (srs-web#483)", () => {
+    const root = member("root-3", 0, ROOT_TYPE);
+    const note = { instanceId: "n1", tier: 0, displayLabel: "A note" };
+    const view = (containerId: string, r: unknown) => ({
+      containerId,
+      root: r,
+      members: [r, note],
+      columns: [],
+      excludeLifecycleStates: [],
+      diagnostics: [],
+    });
+    const repo = fakeRepo({
+      list_containers: () => [{ containerId: "c-note" }, { containerId: "c-match" }],
+      compositions_for_container: () => [],
+      resolve_container_view: (id: string) => view(id, id === "c-note" ? note : root),
+      render_composition: () => ({ rendered: "{}", diagnostics: [], projection: null }),
+    });
+    const composition: DocumentViewSummary = {
+      id: "comp",
+      namespace: "com.example",
+      name: "page",
+      version: 1,
+      description: "",
+      rootTypeRefs: [{ typeId: ROOT_TYPE, typeVersion: 1 }],
+    };
+
+    expect(loadDocument(repo, composition)?.containerId).toBe("c-match");
+  });
+
   it("resolves a summary's own container-subset container, not the first sibling sharing its root type", () => {
     // Two homepage variants share a root type; the summary (from listDocumentViews)
     // carries no sections, so the full composition must be recovered to pick B's container.

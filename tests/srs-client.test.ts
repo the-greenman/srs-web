@@ -12,11 +12,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 import {
-  createBlankRepository,
-  initWasm,
-  installBundles,
-  neighbours,
-  installPackageBundle,
   type AddAttachmentInput,
   type AllowedLifecycleTransitionsResult,
   type ContainerListFilter,
@@ -30,6 +25,7 @@ import {
   applyMigration,
   availableMigrations,
   containersForInstance,
+  createBlankRepository,
   createGovernanceDocument,
   createRelation,
   deleteRelation,
@@ -39,6 +35,9 @@ import {
   getAttachmentBytes,
   getContainerOutline,
   getRecordAttachments,
+  initWasm,
+  installBundles,
+  installPackageBundle,
   linkAttachment,
   listAttachments,
   listBlueprints,
@@ -50,6 +49,7 @@ import {
   listTerms,
   listTypes,
   moveContainerMemberRelative,
+  neighbours,
   repositoryNavigation,
   resolveContainerView,
   scaffoldGovernanceDocument,
@@ -1938,5 +1938,55 @@ describe("neighbours", () => {
     expect(spy).toHaveBeenCalledWith("a", undefined, "out", 12, 12);
     expect(result.total).toBe(41);
     expect(result.neighbours).toEqual([edge]);
+  });
+});
+
+describe("resolveContainerView members (srs-web#483)", () => {
+  const view = (members: unknown[]) => ({
+    containerId: "c1",
+    members,
+    columns: [],
+    excludeLifecycleStates: [],
+    diagnostics: [],
+  });
+
+  it("keeps a Tier-0 note member that carries no record, with the core-resolved label", () => {
+    const note = {
+      instanceId: "n1",
+      tier: 0,
+      displayLabel: "A note title",
+      isVisibleByDefault: true,
+      sectionContainerId: "sc1",
+    };
+    const repo = mockRepo({ resolve_container_view: () => view([note]) });
+
+    const [m] = resolveContainerView(repo, "c1").members;
+
+    expect(m.record).toBeUndefined();
+    expect(m).toMatchObject({
+      instanceId: "n1",
+      tier: 0,
+      displayLabel: "A note title",
+      isVisibleByDefault: true,
+      sectionContainerId: "sc1",
+    });
+  });
+
+  it("normalises the record of a Tier-2 member and a mixed container resolves whole", () => {
+    const rec = { instanceId: "r1", typeId: "t", typeVersion: 1, fieldValues: [] };
+    const repo = mockRepo({
+      resolve_container_view: () =>
+        view([
+          { instanceId: "n1", tier: 0, displayLabel: "N" },
+          { instanceId: "r1", tier: 2, displayLabel: "R", record: rec },
+        ]),
+    });
+
+    const { members } = resolveContainerView(repo, "c1");
+
+    expect(members.map((m) => m.instanceId)).toEqual(["n1", "r1"]);
+    expect(members[0].record).toBeUndefined();
+    expect(members[1].record?.instanceId).toBe("r1");
+    expect(members[1].record?.displayLabel).toBe("R");
   });
 });
