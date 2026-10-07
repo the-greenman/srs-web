@@ -43,6 +43,7 @@ export const MUTATING_METHODS: ReadonlySet<string> = new Set([
   "transition_record",
   "update_container",
   "update_record",
+  "upgrade_package_bundle",
 ]);
 
 /** Methods that do not change repository data (reads, exports, session/actor plumbing, `free`). */

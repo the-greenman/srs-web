@@ -27,8 +27,10 @@ const mocks = vi.hoisted(() => ({
       },
     ],
     total: 2,
+    facets: { byType: [], otherTypes: 0, notes: 0 },
     diagnostics: [],
   })),
+  neighbours: vi.fn(() => ({ instanceId: "record-1", total: 0, neighbours: [] })),
   getRecord: vi.fn((id: string) => ({
     instanceId: id,
     displayLabel: id === "record-1" ? "First" : "Second",
@@ -185,14 +187,31 @@ describe("GenericSrsShell", () => {
   });
 
   it("renders a relation map scoped by the engine to the active container", async () => {
-    mocks.listRelations.mockReturnValueOnce([
-      {
-        relationId: "relation-1",
-        relationType: "relates",
-        sourceInstanceId: "record-1",
-        targetInstanceId: "record-2",
-      },
-    ]);
+    mocks.resolveContainerView.mockReturnValue({
+      containerId: "container-1",
+      members: [
+        { instanceId: "record-1", displayLabel: "First", record: {} },
+        { instanceId: "record-2", displayLabel: "Second", record: {} },
+      ],
+      columns: [],
+      excludeLifecycleStates: [],
+      diagnostics: [],
+    });
+    mocks.neighbours.mockImplementation((_r: unknown, id: string) => ({
+      instanceId: id,
+      total: 1,
+      neighbours:
+        id === "record-1"
+          ? [
+              {
+                direction: "out",
+                relationId: "relation-1",
+                relationType: "relates",
+                neighbour: { instanceId: "record-2", label: "Second" },
+              },
+            ]
+          : [],
+    }));
     render(GenericSrsShell, {
       props: {
         repo: {} as never,

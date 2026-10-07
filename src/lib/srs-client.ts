@@ -45,6 +45,9 @@ export interface McpSession {
   free(): void;
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped by find() and neighbours()
+type WasmJson = any;
+
 export interface SrsRepository {
   open_mcp_session(): McpSession;
   /** Engine write counter (srs-rust#1160): the one "repository changed" signal for UI and MCP writers. */
@@ -172,8 +175,20 @@ export interface SrsRepository {
   create_record_successor(predecessor_id: string, input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; null for missing/unknown field (srs-web#179)
   get_field_value_by_name(instance_id: string, field_name: string): any;
-  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in find()
-  find(query_json: string): any;
+  find(
+    query_json: string,
+    limit?: number,
+    offset?: number,
+    rank?: boolean,
+    by_type_limit?: number
+  ): WasmJson;
+  neighbours(
+    instance_id: string,
+    relation_type?: string,
+    direction?: string,
+    limit?: number,
+    offset?: number
+  ): WasmJson;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listTerms()
   list_terms(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in resolveContainerView()
@@ -1808,6 +1823,8 @@ export interface DiscoveryQuery {
 export interface DiscoveryHit {
   instanceId: string;
   label: string;
+  /** Absent on a Tier 0 note. */
+  typeId?: string;
   typeNamespace: string;
   typeName: string;
   lifecycleState?: string;
@@ -1816,11 +1833,39 @@ export interface DiscoveryHit {
   matchedFields: string[];
 }
 
+/** One non-empty type in `facets.byType` (srs-rust#1219, #1312). */
+export interface TypeFacet {
+  /** Canonical `namespace/name`. */
+  value: string;
+  typeId: string;
+  count: number;
+}
+
+/** Counts over the full filtered set (not the page). Absent facets are empty / zero. */
+export interface DiscoveryFacets {
+  byType: TypeFacet[];
+  /** Types folded into the remainder when `byTypeLimit` truncated the list (0 = none). */
+  otherTypes: number;
+  /** Tier 0 notes in the filtered set; they have no type, so they are not in `byType`. */
+  notes: number;
+}
+
 /** Full result from the `find` binding. */
 export interface DiscoveryResult {
   hits: DiscoveryHit[];
   total: number;
+  facets: DiscoveryFacets;
   diagnostics: string[];
+}
+
+/** Paging and ordering for `find`; the filter itself is the `DiscoveryQuery`. */
+export interface FindOptions {
+  limit?: number;
+  offset?: number;
+  /** Order `contentMatch` hits by BM25 relevance (fills `score`) instead of by instanceId. */
+  rank?: boolean;
+  /** Most types listed in `facets.byType`; 0 means all (the engine default is 20). */
+  byTypeLimit?: number;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM DiscoveryHit has unknown field case
@@ -1828,6 +1873,7 @@ function normalizeDiscoveryHit(raw: any): DiscoveryHit {
   return {
     instanceId: raw.instanceId ?? raw.instance_id,
     label: raw.label,
+    typeId: raw.typeId ?? raw.type_id,
     typeNamespace: raw.typeNamespace ?? raw.type_namespace,
     typeName: raw.typeName ?? raw.type_name,
     lifecycleState: raw.lifecycleState ?? raw.lifecycle_state,
@@ -1840,16 +1886,72 @@ function normalizeDiscoveryHit(raw: any): DiscoveryHit {
 /**
  * Full-text search across all records in the repository.
  * Pass `contentMatch` for free-text; combine with `typeNamespace`/`typeName` to scope results.
- * Returns hits sorted deterministically by instanceId (not ranked).
+ * Hits are sorted by instanceId unless `opts.rank` orders `contentMatch` hits by relevance.
+ * `opts.limit`/`opts.offset` page the hits; `total` and `facets` always count the whole filtered set.
  * ADR-001: callers must not pass governance-specific field names — use `contentMatch` only.
  */
-export function find(repo: SrsRepository, query: DiscoveryQuery): DiscoveryResult {
+export function find(
+  repo: SrsRepository,
+  query: DiscoveryQuery,
+  opts: FindOptions = {}
+): DiscoveryResult {
   // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; normalised below
-  const raw: any = repo.find(JSON.stringify(query));
+  const raw: any = repo.find(
+    JSON.stringify(query),
+    opts.limit,
+    opts.offset,
+    opts.rank,
+    opts.byTypeLimit
+  );
   return {
     hits: (raw.hits ?? []).map(normalizeDiscoveryHit),
     total: raw.total ?? 0,
+    facets: {
+      byType: raw.facets?.byType?.values ?? [],
+      otherTypes: raw.facets?.byType?.other ?? 0,
+      notes: raw.facets?.notes ?? 0,
+    },
     diagnostics: raw.diagnostics ?? [],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Neighbours: a bounded read of one instance's relation edges (srs-rust#1229)
+// ---------------------------------------------------------------------------
+
+/** One edge at the focused instance; `direction` is relative to it ("in": the neighbour points at it). */
+export interface Neighbour {
+  direction: "in" | "out";
+  relationId: string;
+  relationType: string;
+  neighbour: { instanceId: string; label: string; typeNamespace?: string; typeName?: string };
+}
+
+export interface NeighboursResult {
+  instanceId: string;
+  /** Every edge matching the filter, not just this page. */
+  total: number;
+  neighbours: Neighbour[];
+}
+
+/** A page of an instance's relation edges, with each neighbour's label inline (no per-node getRecord). */
+export function neighbours(
+  repo: SrsRepository,
+  instanceId: string,
+  opts: { relationType?: string; direction?: "in" | "out"; limit?: number; offset?: number } = {}
+): NeighboursResult {
+  // biome-ignore lint/suspicious/noExplicitAny: WASM boundary
+  const raw: any = repo.neighbours(
+    instanceId,
+    opts.relationType,
+    opts.direction,
+    opts.limit,
+    opts.offset
+  );
+  return {
+    instanceId: raw.instanceId ?? instanceId,
+    total: raw.total ?? 0,
+    neighbours: raw.neighbours ?? [],
   };
 }
 
