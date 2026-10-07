@@ -180,7 +180,9 @@ export interface SrsRepository {
     limit?: number,
     offset?: number,
     rank?: boolean,
-    by_type_limit?: number
+    by_type_limit?: number,
+    match_mode?: string,
+    facets?: boolean
   ): WasmJson;
   neighbours(
     instance_id: string,
@@ -1872,6 +1874,8 @@ export interface FindOptions {
   rank?: boolean;
   /** Most types listed in `facets.byType`; 0 means all (the engine default is 20). */
   byTypeLimit?: number;
+  /** Facets are opt-in (srs-rust#1317): returned by default only when `limit` is 0. */
+  facets?: boolean;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM DiscoveryHit has unknown field case
@@ -1907,7 +1911,9 @@ export function find(
     opts.limit,
     opts.offset,
     opts.rank,
-    opts.byTypeLimit
+    opts.byTypeLimit,
+    undefined,
+    opts.facets
   );
   return {
     hits: (raw.hits ?? []).map(normalizeDiscoveryHit),

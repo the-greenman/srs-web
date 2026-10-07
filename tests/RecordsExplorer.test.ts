@@ -75,7 +75,7 @@ describe("RecordsExplorer", () => {
     expect(screen.getByText("154 records")).toBeTruthy();
     expect(screen.queryAllByTestId("record-row")).toHaveLength(0);
     // the facet is asked for every type, once the page is a count source
-    expect(mocks.find.mock.calls[0][2]).toMatchObject({ byTypeLimit: 0 });
+    expect(mocks.find.mock.calls[0][2]).toMatchObject({ byTypeLimit: 0, facets: true });
   });
 
   it("opens a group to 50 rows with backticks stripped, and Show more pages by 50", async () => {
