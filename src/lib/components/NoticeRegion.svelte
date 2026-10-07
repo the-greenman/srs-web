@@ -13,6 +13,6 @@
   {#if n.diagnostics}
     <Diagnostics variant="notice" diagnostics={n.diagnostics} documentKey={n.documentKey} testid={n.testid} />
   {:else}
-    <Notice kind={n.kind} testid={n.testid}>{n.text}</Notice>
+    <Notice kind={n.kind} testid={n.testid} action={n.action}>{n.text}</Notice>
   {/if}
 {/each}

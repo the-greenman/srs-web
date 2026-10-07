@@ -94,10 +94,12 @@
     onAgentWriteGuard,
     agentPanel,
     agentStatus,
+    onOpenPackages,
   }: {
     // Common EditorShellProps this shell does not use (kept so every shell takes one prop set).
     documentProvider?: string;
     onOpenAgents?: () => void;
+    onOpenPackages?: () => void;
     onExportSrsj?: () => void;
     /** Set when the repository was opened read-only: no repair writes on load. */
     readOnlyReason?: string | null;
@@ -556,6 +558,7 @@
         onreferences: model?.canSnapshot ? exportReferences : undefined,
         onexplorer: onOpenExplorer,
         onopenagents: agentPanel ? openAgents : undefined,
+        onopenpackages: onOpenPackages,
         onopenanother: onOpenAnother,
       },
       { shell, comments: summary(openThreads, shownIds), saving, dirty: documentDirty, help: { id: helpId, open: helpOpen } },

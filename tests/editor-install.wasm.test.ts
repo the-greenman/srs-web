@@ -19,8 +19,8 @@ describe.skipIf(!haveBindings)("install an editor's packages on the real engine"
   async function blank() {
     const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
     mkdirSync(dir, { recursive: true });
-    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
-    const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "editor-install.mjs"));
+    const mod = await import(/* @vite-ignore */ path.join(dir, "editor-install.mjs"));
     mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
     return mod.SrsRepository.create(JSON.stringify({ title: "My Essays" }));
   }

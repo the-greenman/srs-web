@@ -86,6 +86,8 @@ export interface PinnedNotice {
   diagnostics?: Diagnostic[];
   /** Rendered as a plain `Notice` when there are no diagnostics. */
   text?: string;
+  /** A call-to-action beside a plain notice (the package upgrade offer, #450). */
+  action?: { label: string; onAction: () => void };
   testid?: string;
 }
 

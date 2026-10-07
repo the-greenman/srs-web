@@ -10,6 +10,7 @@ import {
   BASE_GROUPS,
   agentsAction,
   openAnotherAction,
+  packagesAction,
   saveAction,
   wideAction,
 } from "../components/shell-actions.js";
@@ -41,6 +42,8 @@ export interface HeaderHandlers {
   onexplorer?: () => void;
   /** Absent when the shell has no agent panel to open. */
   onopenagents?: () => void;
+  /** Absent while the document is read-only (an upgrade writes). */
+  onopenpackages?: () => void;
   onopenanother: () => void;
 }
 
@@ -132,6 +135,7 @@ export function headerActions(
       run: h.onexplorer,
       enabled: true,
     },
+    !!h.onopenpackages && (packagesAction(h.onopenpackages) as HeaderAction),
     !!h.onopenagents && (agentsAction(h.onopenagents) as HeaderAction),
     openAnotherAction(h.onopenanother) as HeaderAction,
     {

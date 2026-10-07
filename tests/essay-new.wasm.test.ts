@@ -28,8 +28,8 @@ describe.skipIf(!haveBindings)("newEssay on the real engine", () => {
     );
     const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
     mkdirSync(dir, { recursive: true });
-    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
-    const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "essay-new.mjs"));
+    const mod = await import(/* @vite-ignore */ path.join(dir, "essay-new.mjs"));
     mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
     const repo = mod.SrsRepository.load(
       readFileSync(path.join(__dirname, "../e2e/fixtures/essay-empty.srsj"), "utf8")
@@ -72,8 +72,8 @@ describe.skipIf(!haveBindings)("essay gestures on the real engine (core relative
     );
     const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
     mkdirSync(dir, { recursive: true });
-    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
-    const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "essay-new.mjs"));
+    const mod = await import(/* @vite-ignore */ path.join(dir, "essay-new.mjs"));
     mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
     const repo = mod.SrsRepository.load(
       readFileSync(path.join(__dirname, "../e2e/fixtures/essay-empty.srsj"), "utf8")
@@ -120,8 +120,8 @@ describe.skipIf(!haveBindings)("write observation on the real engine (srs-web#34
     const { DocumentMutationTracker } = await import("../src/lib/document-mutations.js");
     const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
     mkdirSync(dir, { recursive: true });
-    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
-    const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "essay-new.mjs"));
+    const mod = await import(/* @vite-ignore */ path.join(dir, "essay-new.mjs"));
     mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
     const raw = mod.SrsRepository.load(
       readFileSync(path.join(__dirname, "../e2e/fixtures/essay-empty.srsj"), "utf8")
@@ -162,8 +162,8 @@ describe.skipIf(!haveBindings)("paragraph attachments on the real engine (contex
     );
     const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
     mkdirSync(dir, { recursive: true });
-    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
-    const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "essay-new.mjs"));
+    const mod = await import(/* @vite-ignore */ path.join(dir, "essay-new.mjs"));
     mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
     const repo = mod.SrsRepository.load(
       readFileSync(path.join(__dirname, "../e2e/fixtures/essay-empty.srsj"), "utf8")
@@ -222,8 +222,8 @@ describe.skipIf(!haveBindings)(
       const { PARAGRAPH_TYPE_ID } = await import("../src/lib/essay/type-registry.js");
       const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
       mkdirSync(dir, { recursive: true });
-      copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
-      const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+      copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "essay-new.mjs"));
+      const mod = await import(/* @vite-ignore */ path.join(dir, "essay-new.mjs"));
       mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
       const repo = mod.SrsRepository.load(
         readFileSync(path.join(__dirname, "../e2e/fixtures/essay-empty.srsj"), "utf8")
@@ -287,8 +287,8 @@ describe.skipIf(!haveBindings)("commentsAvailable on the real engine", () => {
     const { commentsAvailable } = await import("../src/lib/comments.js");
     const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
     mkdirSync(dir, { recursive: true });
-    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "real.mjs"));
-    const mod = await import(/* @vite-ignore */ path.join(dir, "real.mjs"));
+    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "essay-new.mjs"));
+    const mod = await import(/* @vite-ignore */ path.join(dir, "essay-new.mjs"));
     mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
     const load = (f: string) =>
       mod.SrsRepository.load(readFileSync(path.join(__dirname, "../e2e/fixtures", f), "utf8"));

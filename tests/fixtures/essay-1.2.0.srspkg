@@ -1,0 +1,437 @@
+{
+  "$schema": "https://srs.semanticops.com/schema/2.0/package-bundle.json",
+  "compositions": [
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/composition.json",
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "An essay rendered from its container: the container's own entry order, with nesting depth as heading level, paragraphs as body text.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "id": "79b8c032-46af-467e-8e27-2a339b89d822",
+      "name": "essay",
+      "namespace": "com.mudemocracy.essay",
+      "rootTypeRefs": [
+        {
+          "typeId": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
+          "typeVersion": 1
+        }
+      ],
+      "sections": [
+        {
+          "emptyBehavior": "hide",
+          "order": 0,
+          "ordering": {
+            "source": "arranged"
+          },
+          "renderViewId": "16210dc2-a904-465a-85f9-bdbfd17860a0",
+          "sectionId": "essay",
+          "source": {
+            "type": "container-subset"
+          }
+        }
+      ],
+      "version": 1
+    }
+  ],
+  "dataModelRevision": 8,
+  "dependencyRefs": [
+    {
+      "definitionType": "type",
+      "id": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
+      "name": "essay",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "definitionType": "field",
+      "id": "0a74cd82-0ca0-4268-8a94-dca6927171d3",
+      "name": "essay",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "definitionType": "view",
+      "id": "16210dc2-a904-465a-85f9-bdbfd17860a0",
+      "name": "paragraph-view",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "definitionType": "field",
+      "id": "3cd8975b-7e51-457c-88f9-2173d0df5d87",
+      "name": "draft_container_id",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "definitionType": "field",
+      "id": "40e65e3b-a271-4116-a435-2d01c3127029",
+      "name": "title",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "definitionType": "field",
+      "id": "581e484f-5bc7-4651-a408-0ab53d2711d5",
+      "name": "comment_text",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "definitionType": "field",
+      "id": "59b7f51b-3e80-409c-8ee2-b995e1157952",
+      "name": "paragraph_title",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "definitionType": "field",
+      "id": "7cbb105e-7215-4772-a039-4f77671c214b",
+      "name": "hidden_instance_ids",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "definitionType": "field",
+      "id": "89424121-5cb4-4bfa-8a6f-33911bda8900",
+      "name": "summary",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "definitionType": "field",
+      "id": "8a16f0d3-0dc8-425a-9616-77dc12c26437",
+      "name": "body",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    }
+  ],
+  "description": "",
+  "fields": [
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Reference to the essay record (type essay) whose editor state this is. Required; exactly one document-state record exists per essay."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "The essay this editor state belongs to.",
+      "fieldType": {
+        "datatype": "ref",
+        "mode": "reference",
+        "rangeType": {
+          "typeId": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
+          "typeVersion": 1
+        }
+      },
+      "id": "0a74cd82-0ca0-4268-8a94-dca6927171d3",
+      "name": "essay",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Editor state only: the containerId of the container that holds this essay's draft paragraphs (paragraphs created but not yet placed in the arrangement). Optional; absent until the editor creates a draft area."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "Container holding this essay's draft paragraphs.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "uuid"
+      },
+      "id": "3cd8975b-7e51-457c-88f9-2173d0df5d87",
+      "name": "draft_container_id",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "The essay's title: a short noun phrase naming what the essay argues or is about. Shown as the document heading and in lists of essays. Human-authored; an agent may suggest one but must not overwrite a title the writer set."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "The essay's title.",
+      "fieldType": {
+        "datatype": "string"
+      },
+      "id": "40e65e3b-a271-4116-a435-2d01c3127029",
+      "name": "title",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "aiGuidance": {
+        "purpose": "Plain markdown text of one comment. Agents and humans may write comments. A comment is feedback on exactly one paragraph (linked by comments-on) and never edits it. Authorship is the engine-stamped createdBy (RFC-046); never write an author here."
+      },
+      "createdAt": "2026-10-02T21:40:51.924525593+00:00",
+      "description": "The text of a comment on one paragraph.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "581e484f-5bc7-4651-a408-0ab53d2711d5",
+      "name": "comment_text",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "A short label (a few words) naming what this paragraph does, shown small in the editor gutter and de-emphasised when rendered. Optional. Agents may propose titles for untitled paragraphs; the title labels the paragraph and is never a heading in the prose."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "Optional short title of one paragraph, shown small in the gutter.",
+      "fieldType": {
+        "datatype": "string"
+      },
+      "id": "59b7f51b-3e80-409c-8ee2-b995e1157952",
+      "name": "paragraph_title",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Editor state only: the instance ids (UUIDs) of paragraphs or other members the writer has hidden or folded in this essay's editor view. Hiding is an editor mechanic, not document meaning: spec renderers ignore it. One uuid string per list entry."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "Instance ids the editor has hidden in this essay.",
+      "fieldType": {
+        "cardinality": "list",
+        "datatype": "string",
+        "format": "uuid"
+      },
+      "id": "7cbb105e-7215-4772-a039-4f77671c214b",
+      "name": "hidden_instance_ids",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "A one to three sentence summary of what the essay says, for lists and orientation. Optional. Agents may draft or refresh it only when asked; it is a description of the essay, never part of its body text."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "A short summary of the essay.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "89424121-5cb4-4bfa-8a6f-33911bda8900",
+      "name": "summary",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Plain markdown prose of one paragraph: sentences only. Do NOT use structural markup such as headings, lists, tables or horizontal rules; structure comes from paragraph types and the document arrangement (nesting), never from markup in the body. Inline emphasis and links are acceptable. Never write or rewrite the writer's prose unless explicitly asked."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "The paragraph's prose.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "8a16f0d3-0dc8-425a-9616-77dc12c26437",
+      "name": "body",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    }
+  ],
+  "mode": "bundled",
+  "packageDependencies": [],
+  "packageId": "5b14a4d4-ec08-4e5b-be75-c183aec90c40",
+  "packageName": "essay",
+  "packageNamespace": "com.mudemocracy.essay",
+  "packageVersion": "1.2.0",
+  "publishedAt": "2026-10-03T00:00:00Z",
+  "relationTypes": [
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "Comment comments on Paragraph",
+      "category": "association",
+      "createdAt": "2026-10-02T21:39:43.187934005+00:00",
+      "description": "Comment comments on Paragraph (comment → paragraph). Essay-local for now; expected to become a core \"agent commentary on human content\" mechanism when a second consumer appears (owner, 2026-10-02).",
+      "id": "607009b0-310c-4eda-aad2-d079884ff85c",
+      "irreflexive": true,
+      "key": "com.mudemocracy.essay/comments-on",
+      "label": "comments on",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "Source or Claim counters Paragraph",
+      "category": "association",
+      "createdAt": "2026-10-03T08:58:42.358600456+00:00",
+      "description": "Source or claim counters Paragraph (source|claim → paragraph): it argues against what the paragraph says. Essay-local; supporting citations use core evidences instead. Guidance: source = argument source or claim record, target = essay paragraph; use only for genuine opposition to the paragraph's assertion, not mere difference of topic; check existing relations first, relation_create does not reject duplicates.",
+      "id": "9eed1245-e4b5-4446-bbb0-c96994cf405a",
+      "irreflexive": true,
+      "key": "com.mudemocracy.essay/counters",
+      "label": "counters",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "Paragraph bears on Problem",
+      "category": "association",
+      "createdAt": "2026-10-03T08:58:42.356397812+00:00",
+      "description": "Paragraph bears on Problem (paragraph → problem): the paragraph addresses or is about this problem statement. Essay-local. Guidance: source = essay paragraph, target = argument problem record; use only when the paragraph substantively addresses the problem; check existing relations first, relation_create does not reject duplicates.",
+      "id": "fc8b2665-a9e9-4d8f-a4cb-5556982d7121",
+      "irreflexive": true,
+      "key": "com.mudemocracy.essay/bears-on",
+      "label": "bears on",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    }
+  ],
+  "schemaVersion": "2.0",
+  "types": [
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "The identity record of one essay: its title and optional summary. The essay's container is anchored on this record; the prose lives in paragraph records arranged in that container, never in this record."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "The document anchor and identity record of one essay in the agent-supported essay editor.",
+      "fields": [
+        {
+          "displayLabel": "Title",
+          "fieldId": "40e65e3b-a271-4116-a435-2d01c3127029",
+          "order": 0,
+          "required": true
+        },
+        {
+          "displayLabel": "Summary",
+          "fieldId": "89424121-5cb4-4bfa-8a6f-33911bda8900",
+          "order": 1,
+          "required": false
+        }
+      ],
+      "id": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
+      "identityFieldId": "40e65e3b-a271-4116-a435-2d01c3127029",
+      "name": "essay",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "A comment is feedback on exactly one paragraph, linked to it by a com.mudemocracy.essay/comments-on relation (comment to paragraph). It never edits the paragraph. Authorship is the engine-stamped createdBy (RFC-046), never a field; the thread order is createdAt."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "Feedback on exactly one paragraph of an essay.",
+      "fields": [
+        {
+          "displayLabel": "Body",
+          "fieldId": "581e484f-5bc7-4651-a408-0ab53d2711d5",
+          "order": 0,
+          "required": true
+        }
+      ],
+      "id": "7482e41b-7d3d-4069-b165-ee509dacce22",
+      "name": "comment",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Editor state, one record per essay: which members the editor hides or folds and which container holds the draft paragraphs. Hide/fold are editor mechanics, not document meaning, so spec renderers and compositions ignore this type. Do not use it to carry content."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "Application-private editor state for one essay: hidden members and the draft container.",
+      "fields": [
+        {
+          "displayLabel": "Essay",
+          "fieldId": "0a74cd82-0ca0-4268-8a94-dca6927171d3",
+          "order": 0,
+          "required": true
+        },
+        {
+          "displayLabel": "Hidden instance ids",
+          "fieldId": "7cbb105e-7215-4772-a039-4f77671c214b",
+          "order": 1,
+          "required": false
+        },
+        {
+          "displayLabel": "Draft container id",
+          "fieldId": "3cd8975b-7e51-457c-88f9-2173d0df5d87",
+          "order": 2,
+          "required": false
+        }
+      ],
+      "id": "9785968f-bdd4-4c91-81ef-0e62075f3503",
+      "identityFieldId": "0a74cd82-0ca0-4268-8a94-dca6927171d3",
+      "name": "document-state",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    },
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "One paragraph of an essay. Prose only: no headings or other structural markup in the body; structure comes from paragraph types and the arrangement (entry order and depth in the essay container), not markup. Agents read, title and annotate paragraphs but do not write the writer's prose."
+      },
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "One paragraph of an essay: optional gutter title and plain markdown prose.",
+      "fields": [
+        {
+          "displayLabel": "Title",
+          "fieldId": "59b7f51b-3e80-409c-8ee2-b995e1157952",
+          "order": 0,
+          "required": false
+        },
+        {
+          "displayLabel": "Body",
+          "fieldId": "8a16f0d3-0dc8-425a-9616-77dc12c26437",
+          "order": 1,
+          "required": true
+        }
+      ],
+      "id": "ec61d93d-1cd1-4b52-b231-9f1bfc7b40b6",
+      "name": "paragraph",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    }
+  ],
+  "views": [
+    {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Prose-first paragraph rendering: body text is the content, the title is a small gutter-style label, never a heading."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.essay/paragraph"
+      ],
+      "createdAt": "2026-10-02T00:00:00Z",
+      "description": "Renders a paragraph as body prose with its optional title as a small de-emphasised lead-in; no field labels.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "displayHint": "de-emphasised",
+          "fieldId": "59b7f51b-3e80-409c-8ee2-b995e1157952",
+          "labelMode": "none",
+          "order": 0,
+          "required": false,
+          "visible": true
+        },
+        {
+          "fieldId": "8a16f0d3-0dc8-425a-9616-77dc12c26437",
+          "labelMode": "none",
+          "order": 1,
+          "required": true,
+          "visible": true
+        }
+      ],
+      "id": "16210dc2-a904-465a-85f9-bdbfd17860a0",
+      "name": "paragraph-view",
+      "namespace": "com.mudemocracy.essay",
+      "version": 1
+    }
+  ]
+}

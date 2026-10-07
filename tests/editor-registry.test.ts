@@ -12,6 +12,7 @@ const bundled = vi.hoisted(() => vi.fn());
 vi.mock("../src/lib/srs-client.js", () => ({
   checkPackageRequirements: check,
   REQUIREMENT_MISSING: "missing",
+  REQUIREMENT_VERSION_TOO_LOW: "version-too-low",
 }));
 vi.mock("../src/lib/packages/bundles.js", () => ({ bundledPackage: bundled }));
 const repo = {} as never;
@@ -60,6 +61,8 @@ describe("editor registry", () => {
     expect(offered.unmet).toEqual({
       requirement: essay.requires[0],
       reason: "Needs essay package 1.3.0 (you have 1.0.0)",
+      install: undefined,
+      upgrade: [essay.requires[0]],
     });
     expect(check).toHaveBeenCalledWith(repo, essay.requires);
   });
@@ -130,7 +133,7 @@ describe("editor registry", () => {
     });
 
     it.each(["version-too-low", "incompatible", "prerelease-excluded", "version-unknown"])(
-      "%s stays blocked",
+      "%s is never installed over",
       (reason) => {
         check.mockReturnValue([{ satisfied: false, reason, candidateVersions: ["1.0.0"] }]);
         const [o] = availableEditors(repo, present);
@@ -167,6 +170,56 @@ describe("editor registry", () => {
       check.mockReturnValue([{ satisfied: false, reason: "missing" }]);
       expect(availableEditors(repo, []).map((o) => o.editor.id)).toEqual(["essay"]);
       check.mockReturnValue([{ satisfied: false, reason: "incompatible" }]);
+      expect(availableEditors(repo, [])).toEqual([]);
+    });
+  });
+
+  describe("upgrade (#450)", () => {
+    const essay = EDITORS.find((e) => e.id === "essay")!;
+    const present = [{ id: essay.entryTypeId, namespace: "n", name: "x", version: 1 }];
+
+    it("version-too-low with a bundle is upgradable, not installable", () => {
+      check.mockReturnValue([
+        { satisfied: false, reason: "version-too-low", candidateVersions: ["1.2.0"] },
+      ]);
+      const [o] = availableEditors(repo, present);
+      expect(o.unmet?.upgrade).toEqual(essay.requires);
+      expect(o.unmet?.install).toBeUndefined();
+    });
+
+    it("version-too-low with no bundle is blocked", () => {
+      bundled.mockReturnValue(undefined);
+      check.mockReturnValue([{ satisfied: false, reason: "version-too-low" }]);
+      expect(availableEditors(repo, present)[0].unmet?.upgrade).toBeUndefined();
+    });
+
+    it.each(["incompatible", "prerelease-excluded", "version-unknown", "missing"])(
+      "%s is never upgraded",
+      (reason) => {
+        check.mockReturnValue([{ satisfied: false, reason }]);
+        expect(availableEditors(repo, present)[0].unmet?.upgrade).toBeUndefined();
+      }
+    );
+
+    it("a mix of missing and outdated is blocked: neither install nor upgrade", () => {
+      const real = essay.requires;
+      essay.requires = [real[0], { ...real[0], packageId: "other" }];
+      bundled.mockImplementation((id) => (id === "other" || id === ESSAY_PACKAGE_ID ? "bundle-text" : undefined));
+      try {
+        check.mockReturnValue([
+          { satisfied: false, reason: "missing" },
+          { satisfied: false, reason: "version-too-low" },
+        ]);
+        const o = availableEditors(repo, present).find((x) => x.editor.id === "essay")!;
+        expect(o.unmet?.install).toBeUndefined();
+        expect(o.unmet?.upgrade).toBeUndefined();
+      } finally {
+        essay.requires = real;
+      }
+    });
+
+    it("an absent entry type is not offered for an upgrade", () => {
+      check.mockReturnValue([{ satisfied: false, reason: "version-too-low" }]);
       expect(availableEditors(repo, [])).toEqual([]);
     });
   });

@@ -91,6 +91,7 @@
     onOpenAnother: () => void;
     /** Go > Agents…: open the agent library. */
     onOpenAgents?: () => void;
+    onOpenPackages?: () => void;
     /** Part of the common EditorShellProps; unused by this shell. */
     onOpenExplorer?: () => void;
   }
@@ -107,6 +108,7 @@
     documentRevision = 0,
     onOpenAnother,
     onOpenAgents,
+    onOpenPackages,
   }: Props = $props();
 
   const shell = new ShellState({ wideEnabled: true });
@@ -118,6 +120,7 @@
         onexportsrsj: onExportSrsj,
         onopenanother: onOpenAnother,
         onopenagents: onOpenAgents,
+        onopenpackages: onOpenPackages,
       },
       { shell, saving },
     ),

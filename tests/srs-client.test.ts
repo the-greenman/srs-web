@@ -10,8 +10,14 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
+import { priorBundleEntries } from "../src/lib/packages/bundles.js";
 import type { SrsRepository } from "../src/lib/srs-client.js";
 import {
+  createBlankRepository,
+  initWasm,
+  installBundles,
+  installPackageBundle,
+  upgradeBundles,
   type AddAttachmentInput,
   type AllowedLifecycleTransitionsResult,
   type ContainerListFilter,
@@ -1929,6 +1935,51 @@ describe("installBundles", () => {
       [ESSAY, ESSAY]
     );
     expect(install).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("upgradeBundles", () => {
+  const ESSAY = "5b14a4d4-ec08-4e5b-be75-c183aec90c40";
+  /** A core that says the installed package satisfies exactly the requested versions in `ok`. */
+  const installedAt = (ok: string[]) =>
+    vi.fn().mockImplementation((json: string) => ({
+      dependencies: JSON.parse(json).packageDependencies.map((d: { version: string }) => ({ satisfied: ok.includes(d.version) })),
+    }));
+
+  it("throws for a package with no pinned bundle, before any write", () => {
+    const upgrade = vi.fn();
+    expect(() => upgradeBundles(mockRepo({ upgrade_package_bundle: upgrade }), ["no-such-package"])).toThrow(/No bundled package/);
+    expect(upgrade).not.toHaveBeenCalled();
+  });
+
+  it("upgrades each package once and passes the dry-run option and the earlier bundles to the core", () => {
+    const upgrade = vi.fn().mockReturnValue({ name: "essay" });
+    const installed = (n: number) => installedAt(["1.5.0", "1.6.0"].slice(0, n));
+    upgradeBundles(mockRepo({ upgrade_package_bundle: upgrade, check_package_requirements: installed(2) }), [ESSAY, ESSAY], { dryRun: true });
+    expect(upgrade).toHaveBeenCalledTimes(1);
+    const options = JSON.parse(upgrade.mock.calls[0][1]);
+    expect(options.dryRun).toBe(true);
+    expect(options.priorBundles).toEqual(priorBundleEntries(ESSAY).map((e) => e.text));
+    expect(options.priorBundles.length).toBe(2);
+    expect(options.adopt).toBeUndefined();
+  });
+
+  it("sends only priors the installed package satisfies (core-decided): 1.5.0 installed gets 1.5.0, 1.2.0 gets none", () => {
+    const run = (okVersions: string[]) => {
+      const upgrade = vi.fn().mockReturnValue({ name: "essay" });
+      upgradeBundles(mockRepo({ upgrade_package_bundle: upgrade, check_package_requirements: installedAt(okVersions) }), [ESSAY], { dryRun: true });
+      return JSON.parse(upgrade.mock.calls[0][1]).priorBundles;
+    };
+    const [v150] = priorBundleEntries(ESSAY);
+    expect(v150.version).toBe("1.5.0");
+    expect(run(["1.5.0"])).toEqual([v150.text]);
+    expect(run([])).toBeUndefined();
+  });
+
+  it("passes only that package's adopted definition ids", () => {
+    const upgrade = vi.fn().mockReturnValue({ name: "essay" });
+    upgradeBundles(mockRepo({ upgrade_package_bundle: upgrade, check_package_requirements: installedAt([]) }), [ESSAY], { adopt: { [ESSAY]: ["d1"], other: ["x"] } });
+    expect(JSON.parse(upgrade.mock.calls[0][1])).toMatchObject({ dryRun: false, adopt: ["d1"] });
   });
 });
 

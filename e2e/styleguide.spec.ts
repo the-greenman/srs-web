@@ -344,6 +344,8 @@ test.describe("Styleguide notices", () => {
         "specimen-notice-info",
         "specimen-notice-warning",
         "specimen-notice-error",
+        "specimen-notice-action",
+        "specimen-notice-action-action",
         "specimen-diagnostics-collapsed",
         "specimen-diagnostics-expanded",
         "specimen-diagnostics-panel",
@@ -400,6 +402,18 @@ test.describe("Styleguide notices", () => {
       await expect(modal).toBeVisible();
       await expect(modal).toHaveAttribute("aria-labelledby", /.+/);
       await expect(modal.getByRole("button")).toHaveCount(4);
+      const plan = page.getByTestId("sg-upgrade-plan");
+      await expect(plan).toContainText("Upgrade essay 1.5.0 → 1.7.0");
+      await expect(plan.getByTestId("upgrade-verified")).toContainText("verified against 1.5.0");
+      await expect(plan.getByTestId("upgrade-conflicts")).toContainText("paragraph");
+      const adopt = plan.getByTestId("upgrade-adopt-reference");
+      await expect(adopt).not.toBeChecked();
+      await expect(plan).toContainText("Replace with the published definition (any local change to it is lost)");
+      const packages = page.getByTestId("sg-packages-dialog");
+      await expect(packages.getByTestId("package-upgrade-essay")).toBeVisible();
+      await expect(packages.getByTestId("package-row-governance")).toContainText("up to date");
+
+      if (theme === "Demo") await plan.screenshot({ path: process.env.SHOT_SPECIMEN ?? "test-results/upgrade-specimen.png" });
       const boxes = page.getByTestId("sg-checkbox").locator('input[type="checkbox"]');
       await expect(boxes.first()).toBeChecked();
       await expect(boxes.last()).not.toBeChecked();

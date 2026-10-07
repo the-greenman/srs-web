@@ -112,6 +112,7 @@
     onOpenAnother: () => void;
     /** Go > Agents…: open the agent library. */
     onOpenAgents?: () => void;
+    onOpenPackages?: () => void;
     /** Part of the common EditorShellProps; unused by this shell. */
     onOpenExplorer?: () => void;
   }
@@ -130,6 +131,7 @@
     workingCopySaved = true,
     onOpenAnother,
     onOpenAgents,
+    onOpenPackages,
   }: Props = $props();
 
   const shell = new ShellState({ wideEnabled: true });
@@ -563,6 +565,7 @@
         onexportsrsj: onExportSrsj,
         onopenanother: onOpenAnother,
         onopenagents: onOpenAgents,
+        onopenpackages: onOpenPackages,
         onnew:
           activeView === "governance" && formMode === null && activeSectionSchema
             ? () => {

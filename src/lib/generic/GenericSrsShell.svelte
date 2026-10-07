@@ -81,6 +81,10 @@
     onOpenEditor?: (id: string) => void;
     /** Install an unmet editor's packages and open it; rejects with the reason it could not. */
     onInstallEditor?: (id: string) => Promise<void>;
+    /** Review the upgrade of an outdated editor's packages (App plans it and shows the one upgrade dialog, #450). */
+    onReviewUpgrade?: (id: string) => void;
+    /** Open Document > Packages…; absent while the document is read-only. */
+    onOpenPackages?: () => void;
   }
 
   let {
@@ -99,6 +103,8 @@
     onOpenAgents,
     onOpenEditor,
     onInstallEditor,
+    onReviewUpgrade,
+    onOpenPackages,
   }: Props = $props();
 
   let installing = $state<string | null>(null);
@@ -357,6 +363,7 @@
         onsavecopy: onSaveCopy,
         onopenanother: onOpenAnother,
         onopenagents: onOpenAgents,
+        onopenpackages: onOpenPackages,
         onpreview: surface === "document" && activeBlueprint && activeComposition && !readOnly ? () => (showFullPreview = !showFullPreview) : undefined,
       },
       { shell, saving, dirty: documentDirty, fullPreview: showFullPreview },
@@ -372,6 +379,9 @@
         <small class="generic-muted" data-testid="{testPrefix}-{editor.id}-unmet">{unmet.reason}</small>
         {#if unmet.install && onInstallEditor}
           <button class="nav__item" data-testid="{testPrefix}-{editor.id}-install" disabled={installing !== null} onclick={() => void install(editor.id)}>{installing === editor.id ? "Installing…" : `Install ${editor.label}`}</button>
+        {/if}
+        {#if unmet.upgrade && onReviewUpgrade}
+          <button class="nav__item" data-testid="{testPrefix}-{editor.id}-upgrade" onclick={() => onReviewUpgrade(editor.id)}>Upgrade {editor.label}</button>
         {/if}
         {#if installError?.id === editor.id}
           <Notice kind="error">{installError.message}</Notice>

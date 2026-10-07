@@ -9,7 +9,7 @@
  *   wasm-pack build crates/srs-bindings --target web --out-dir ../../srs-web/src/lib/srs_bindings
  */
 
-import { bundledPackage } from "./packages/bundles.js";
+import { PINNED, bundledPackage, priorBundleEntries } from "./packages/bundles.js";
 // Empty governance document seed, shipped inside srs-bindings-web.tar.gz
 // (srs-rust#381) and refreshed by scripts/ensure-bindings.mjs alongside the WASM,
 // so the seed can never drift from the engine that scaffolds it.
@@ -163,6 +163,8 @@ export interface SrsRepository {
   check_package_requirements(input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in installPackageBundle()
   install_package_bundle(bundle_json: string, options_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in upgradePackageBundle()
+  upgrade_package_bundle(bundle_json: string, options_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listRelationTypes()
   list_relation_types(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listBlueprints()
@@ -1540,6 +1542,10 @@ export function checkPackageRequirements(
 
 /** The core's RFC-044 code for a requirement with no installed candidate (the only installable one). */
 export const REQUIREMENT_MISSING = "missing";
+/** The core's code for an installed package below the required version (the only upgradable one). */
+export const REQUIREMENT_VERSION_TOO_LOW = "version-too-low";
+/** The core's code for an installed package in a different compatibility band: never upgraded across. */
+export const REQUIREMENT_INCOMPATIBLE = "incompatible";
 
 /** `package install` payload (srs-cli schema package-install.json), the fields presented. */
 export interface InstallPackageResult {
@@ -1589,6 +1595,112 @@ export function installBundles(repo: SrsRepository, packageIds: string[]): Insta
       throw new Error(`${packageId} needs ${unmet.name} ${unmet.version}`);
     }
     return installPackageBundle(repo, text);
+  });
+}
+
+/** One definition in an upgrade plan list (`added`, `updated`, ...). */
+export interface UpgradeItem {
+  kind: string;
+  id: string;
+  version: number;
+  name: string;
+}
+
+/** A definition the upgrade overwrote or would overwrite; `provenBy` = the earlier bundle version that proved it unmodified (srs-rust#1325). */
+export interface UpgradeUpdated extends UpgradeItem {
+  provenBy?: string;
+}
+
+/** A definition the upgrade would not overwrite: the local copy is kept. */
+export interface UpgradeConflict extends UpgradeItem {
+  conflictKind: "local-edit" | "no-reference-copy" | "key-collision";
+}
+
+/** `upgrade_package_bundle` result (srs-rust#1269), the fields presented. */
+export interface UpgradePackageResult {
+  packageId: string;
+  name: string;
+  previousVersion: string;
+  version: string;
+  upgraded: boolean;
+  dryRun: boolean;
+  added: UpgradeItem[];
+  newVersions: UpgradeItem[];
+  updated: UpgradeUpdated[];
+  /** Unproven definitions replaced with the user's consent (`adopt`); absent on an engine without srs-rust#1325. */
+  adopted?: UpgradeItem[];
+  unchanged: UpgradeItem[];
+  repaired: UpgradeItem[];
+  conflicts: UpgradeConflict[];
+  removedUpstream: UpgradeItem[];
+  dependencyWarnings: string[];
+  notes: string[];
+}
+
+/**
+ * Upgrade the installed package to the bundle's version. The core decides everything (downgrade
+ * refusal, conflicts, local edits kept); a dry run writes nothing and returns the plan.
+ */
+export function upgradePackageBundle(
+  repo: SrsRepository,
+  bundleText: string,
+  options: UpgradeOptions = {}
+): UpgradePackageResult {
+  // priorBundles and adopt are srs-rust#1325 options; sent only when given, so an engine without them is unaffected.
+  const { dryRun = false, priorBundles, adopt } = options;
+  return repo.upgrade_package_bundle(
+    bundleText,
+    JSON.stringify({
+      dryRun,
+      ...(priorBundles?.length ? { priorBundles } : {}),
+      ...(adopt?.length ? { adopt } : {}),
+    })
+  ) as UpgradePackageResult;
+}
+
+/**
+ * The earlier bundles that may prove definitions of the installed package: the engine refuses the whole
+ * upgrade if a prior is newer than the installed version. The core decides which: a prior is kept only
+ * when `check_package_requirements` says the installed package satisfies its version (no TS comparison).
+ */
+export function priorBundles(repo: SrsRepository, packageId: string): string[] {
+  const entries = priorBundleEntries(packageId);
+  if (entries.length === 0) return [];
+  const name = PINNED.find((p) => p.packageId === packageId)?.name ?? "";
+  const outcomes = checkPackageRequirements(
+    repo,
+    entries.map((e) => ({ packageId, namespace: "", name, version: e.version }))
+  );
+  return entries.filter((_, i) => outcomes[i]?.satisfied).map((e) => e.text);
+}
+
+/** The engine's upgrade options (srs-rust#1269, #1325). */
+export interface UpgradeOptions {
+  dryRun?: boolean;
+  /** Earlier published bundles (JSON texts) that prove an installed definition unmodified. */
+  priorBundles?: string[];
+  /** Ids of unproven definitions the user agreed to replace. */
+  adopt?: string[];
+}
+
+/**
+ * Upgrade (or dry-run) the pinned bundles for `packageIds`, deduped, in order, each with its earlier
+ * bundles as proof. `adopt` maps a packageId to the definition ids the user agreed to replace in it.
+ * Throws when one is not bundled.
+ */
+export function upgradeBundles(
+  repo: SrsRepository,
+  packageIds: string[],
+  options: { dryRun?: boolean; adopt?: Record<string, string[]> } = {}
+): UpgradePackageResult[] {
+  return [...new Set(packageIds)].map((packageId) => {
+    const text = bundledPackage(packageId);
+    if (!text) throw new Error(`No bundled package ${packageId}`);
+    return upgradePackageBundle(repo, text, {
+      dryRun: options.dryRun,
+      priorBundles: priorBundles(repo, packageId),
+      adopt: options.adopt?.[packageId],
+    });
   });
 }
 

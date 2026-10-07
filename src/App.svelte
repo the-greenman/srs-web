@@ -38,12 +38,16 @@
   import { reopenSaved } from "$lib/reopen.js";
   import { fetchArchiveFile, parseOpenUrl, withoutOpenParam } from "$lib/open-url.js";
   import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
-  import { listRelations, listTypes, repositoryId, type AgentWriteGuard, type McpSession, type SrsRepository } from "$lib/srs-client.js";
+  import { listRelations, listTypes, repositoryId, type AgentWriteGuard, type McpSession, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
   import { EDITORS, availableEditors, installEditor as installEditorPackages, usableEditor } from "$lib/editors/registry.js";
+  import UpgradePlan from "$lib/components/UpgradePlan.svelte";
+  import PackagesDialog from "$lib/components/PackagesDialog.svelte";
+  import { installedPackages, upgradeNoticeText } from "$lib/package-upgrade.js";
+  import { adoptByPackage } from "$lib/upgrade-plan.js";
   import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import SrsMark from "$lib/components/SrsMark.svelte";
@@ -687,6 +691,91 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Package upgrade (srs-web#450): ONE flow for the pinned notice, Document > Packages… and an
+  // outdated editor's Upgrade. Dry run first (the plan dialog), Apply through the write-observed repo.
+  // The core decides what is outdated, what is safe to overwrite and what is a conflict (ADR-001).
+  // ---------------------------------------------------------------------------
+
+  /**
+   * An upgrade writes, so it is not offered on a read-only document (`readOnlyHost`: opened from a link, writes
+   * refused). A local file is not read-only: it edits in memory and exports, as package Install already does,
+   * even though its handle cannot save back (`readOnlyReason`).
+   */
+  const canUpgrade = $derived(!!repo && !readOnlyHost);
+  const bundledPackages = $derived.by(() => {
+    void documentRevision; // an upgrade or install changes the answer
+    if (!repo || !canUpgrade) return [];
+    try {
+      return installedPackages(repo);
+    } catch (e: unknown) {
+      console.warn("package check failed", e); // the offer is advisory; a failed check must not block the document
+      return [];
+    }
+  });
+
+  // The pinned offer: one notice per document while a bundled package installed here is outdated.
+  $effect(() => {
+    const outdated = bundledPackages.filter((p) => p.outdated);
+    untrack(() => {
+      if (outdated.length === 0) return unpinNotice("package-upgrade");
+      pinNotice({
+        key: "package-upgrade",
+        documentKey: repoName,
+        kind: "info",
+        text: upgradeNoticeText(outdated),
+        testid: "package-upgrade-notice",
+        action: { label: "Review upgrade", onAction: () => reviewUpgrade(outdated.map((p) => p.packageId)) },
+      });
+    });
+  });
+
+  let packagesOpen = $state(false);
+  let upgradeFlow = $state<{ ids: string[]; plans: UpgradePackageResult[]; openEditor?: string } | null>(null);
+  /** Ids of the unproven definitions the user ticked in the plan dialog (default none). */
+  let upgradeAdopt = $state<string[]>([]);
+  let upgradeBusy = $state(false);
+  let upgradeError = $state<string | null>(null);
+
+  /** Dry-run `ids` and show the plan; writes nothing. `openEditor` = open it after Apply (an editor's Upgrade). */
+  function reviewUpgrade(ids: string[], openEditor?: string): void {
+    if (!repo || !canUpgrade) return;
+    try {
+      upgradeFlow = { ids, plans: upgradeBundles(repo, ids, { dryRun: true }), openEditor };
+      upgradeAdopt = [];
+      upgradeError = null;
+      packagesOpen = false;
+    } catch (e: unknown) {
+      notify({ kind: "error", key: "upgrade", text: `Could not plan the upgrade: ${e instanceof Error ? e.message : String(e)}` });
+    }
+  }
+
+  /**
+   * Apply through the write-observed repo (the document is marked unsaved and saved normally). Whether an
+   * editor is now usable is re-derived, never assumed: a still-unmet editor drops back to generic.
+   */
+  function applyUpgrade(): void {
+    if (!repo || !upgradeFlow) return;
+    const { ids, plans, openEditor } = upgradeFlow;
+    upgradeBusy = true;
+    try {
+      upgradeBundles(repo, ids, { adopt: adoptByPackage(plans, upgradeAdopt) });
+    } catch (e: unknown) {
+      upgradeError = e instanceof Error ? e.message : String(e);
+      return;
+    } finally {
+      upgradeBusy = false;
+      syncDocument();
+    }
+    if (openEditor) editorMode = openEditor;
+    upgradeFlow = null;
+  }
+
+  function reviewEditorUpgrade(id: string): void {
+    const upgrade = offeredEditors.find((o) => o.editor.id === id)?.unmet?.upgrade;
+    if (upgrade) reviewUpgrade(upgrade.map((r) => r.packageId), id);
+  }
+
+  // ---------------------------------------------------------------------------
   // Create new repository (srs-web#141, #341)
   // ---------------------------------------------------------------------------
 
@@ -1086,6 +1175,8 @@
     documentRevision={documentRevision}
     onOpenEditor={(id) => { editorMode = id; }}
     onInstallEditor={installEditor}
+    onReviewUpgrade={canUpgrade ? reviewEditorUpgrade : undefined}
+    onOpenPackages={canUpgrade ? () => (packagesOpen = true) : undefined}
     onOpenAgents={openDock}
     onOpenAnother={() => {
       clearWorkingCopy();
@@ -1125,6 +1216,7 @@
     agentStatus={relayList.length > 0 ? agentStatus : undefined}
     onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAgents={activeEditor!.hostsAgentPanel ? undefined : openDock}
+    onOpenPackages={canUpgrade ? () => (packagesOpen = true) : undefined}
     onOpenAnother={() => {
       clearWorkingCopy();
       cachedSession = null;
@@ -1134,6 +1226,20 @@
       editorMode = "generic";
       appState = "idle";
     }}
+  />
+{/if}
+
+{#if packagesOpen}
+  <PackagesDialog packages={bundledPackages} onUpgrade={(id) => reviewUpgrade([id])} onClose={() => (packagesOpen = false)} />
+{/if}
+{#if upgradeFlow}
+  <UpgradePlan
+    plans={upgradeFlow.plans}
+    bind:adopt={upgradeAdopt}
+    busy={upgradeBusy}
+    error={upgradeError}
+    onApply={applyUpgrade}
+    onCancel={() => { if (!upgradeBusy) upgradeFlow = null; }}
   />
 {/if}
 
