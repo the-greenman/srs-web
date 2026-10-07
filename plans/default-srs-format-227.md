@@ -66,7 +66,7 @@ No new types from payload schemas. New optional methods added to `DocumentHandle
 **Out of scope:**
 - GitHub / git providers — explicitly deferred to Epic 09
 - `confirmGitSave()` path — stays `.srsj`; no binary write to git
-- Working copy (localStorage) — stays `.srsj` (autosave uses `export_srsj()`; `loadWorkingCopy` unchanged; binary localStorage is future work)
+- Working copy: was localStorage `.srsj` here; since srs-web#505 it is the `.srs` archive in IndexedDB (see ADR-001 amendment).
 - Renaming / deleting old `.srsj` in cloud storage during upgrade
 - Size warnings — separate concern (srs-web#100 handles those)
 

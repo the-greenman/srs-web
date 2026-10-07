@@ -798,9 +798,15 @@ export function exportSrsj(repo: SrsRepository): string {
 }
 
 /** The repository's manifest id (the `srs://<id>/...` resource namespace), read from the srsj envelope. */
-// ponytail: full exportSrsj per call; replace with the core accessor (srs-rust#1250)
+// ponytail: full export per call; replace with the core accessor (srs-rust#1250). export_srsj throws
+// when the repository holds attachment bytes, so fall back to the tree's manifest.json (srs-web#505).
 export function repositoryId(repo: SrsRepository): string {
-  return JSON.parse(exportSrsj(repo)).manifest.repositoryId as string;
+  try {
+    return JSON.parse(exportSrsj(repo)).manifest.repositoryId as string;
+  } catch {
+    const manifest = exportTree(repo)["manifest.json"];
+    return JSON.parse(new TextDecoder().decode(manifest)).repositoryId as string;
+  }
 }
 
 /**

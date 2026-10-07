@@ -6,31 +6,50 @@ import {
   workingCopyScheduler,
 } from "../src/lib/browser-cache.js";
 
-// ---------------------------------------------------------------------------
-// localStorage mock — vi.stubGlobal provides a simple Map-backed implementation.
-// ---------------------------------------------------------------------------
+// Tiny in-memory IndexedDB stub: just the open/transaction/objectStore/put/get/delete
+// surface browser-cache uses. Requests resolve on a microtask.
+function makeIndexedDBStub(): IDBFactory {
+  const data = new Map<string, unknown>();
+  const req = <T>(fn: () => T) => {
+    const r: { result?: T; onsuccess?: () => void } = {};
+    queueMicrotask(() => {
+      r.result = fn();
+      r.onsuccess?.();
+    });
+    return r;
+  };
+  const store = {
+    put: (v: unknown, k: string) => req(() => void data.set(k, v)),
+    get: (k: string) => req(() => data.get(k)),
+    delete: (k: string) => req(() => void data.delete(k)),
+  };
+  const db = {
+    transaction: () => ({ objectStore: () => store }),
+    close() {},
+    createObjectStore() {},
+  };
+  return {
+    open: () => {
+      const r: { result: unknown; onsuccess?: () => void; onupgradeneeded?: () => void } = {
+        result: db,
+      };
+      queueMicrotask(() => {
+        r.onupgradeneeded?.();
+        r.onsuccess?.();
+      });
+      return r;
+    },
+  } as unknown as IDBFactory;
+}
 
 function makeLocalStorageMock(): Storage {
   const store = new Map<string, string>();
   return {
     getItem: (k: string) => store.get(k) ?? null,
-    setItem: (k: string, v: string) => {
-      store.set(k, v);
-    },
-    removeItem: (k: string) => {
-      store.delete(k);
-    },
-    clear: () => {
-      store.clear();
-    },
-    key: (i: number) => [...store.keys()][i] ?? null,
-    get length() {
-      return store.size;
-    },
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
   } as unknown as Storage;
 }
-
-let mockStorage: Storage;
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -38,61 +57,67 @@ afterEach(() => {
 });
 
 function setup() {
-  mockStorage = makeLocalStorageMock();
-  vi.stubGlobal("localStorage", mockStorage);
+  vi.stubGlobal("indexedDB", makeIndexedDBStub());
+  vi.stubGlobal("localStorage", makeLocalStorageMock());
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
+const BYTES = new Uint8Array([1, 2, 3]);
 
-describe("browser-cache", () => {
-  it("round-trips name and srsj; savedAt is a valid ISO 8601 date", () => {
+describe("browser-cache (.srs archive in IndexedDB, srs-web#505)", () => {
+  it("round-trips name and archive bytes; savedAt is ISO 8601", async () => {
     setup();
-    saveWorkingCopy("my-repo", '{"records":[]}');
-    const entry = loadWorkingCopy();
-    expect(entry).not.toBeNull();
-    if (!entry) return;
-    expect(entry.name).toBe("my-repo");
-    expect(entry.srsj).toBe('{"records":[]}');
-    expect(typeof entry.savedAt).toBe("string");
-    expect(Number.isNaN(new Date(entry.savedAt).getTime())).toBe(false);
+    expect(await saveWorkingCopy("my-repo", () => BYTES)).toBe(true);
+    const entry = await loadWorkingCopy();
+    expect(entry?.name).toBe("my-repo");
+    expect(entry?.bytes).toEqual(BYTES);
+    expect(Number.isNaN(new Date(entry?.savedAt ?? "").getTime())).toBe(false);
   });
 
-  it("clearWorkingCopy causes loadWorkingCopy to return null", () => {
+  it("clearWorkingCopy empties it; load returns null when nothing is stored", async () => {
     setup();
-    saveWorkingCopy("repo", "{}");
-    clearWorkingCopy();
-    expect(loadWorkingCopy()).toBeNull();
+    expect(await loadWorkingCopy()).toBeNull();
+    await saveWorkingCopy("repo", () => BYTES);
+    await clearWorkingCopy();
+    expect(await loadWorkingCopy()).toBeNull();
   });
 
-  it("loadWorkingCopy returns null when storage is empty", () => {
+  it("an export throw yields false and never throws", async () => {
     setup();
-    expect(loadWorkingCopy()).toBeNull();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(
+      await saveWorkingCopy("repo", () => {
+        throw new Error("cannot carry binary content");
+      })
+    ).toBe(false);
   });
 
-  it("loadWorkingCopy returns null on corrupt JSON without throwing", () => {
+  it("unavailable IndexedDB yields false on save and null on load", async () => {
     setup();
-    mockStorage.setItem("srs-web:working-copy", "not-valid-json{{");
-    expect(() => loadWorkingCopy()).not.toThrow();
-    expect(loadWorkingCopy()).toBeNull();
-  });
-
-  it("saveWorkingCopy does not throw and returns false when localStorage.setItem throws QuotaExceededError", () => {
-    setup();
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    vi.spyOn(mockStorage, "setItem").mockImplementation(() => {
-      const err = new DOMException("QuotaExceededError", "QuotaExceededError");
-      throw err;
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal("indexedDB", {
+      open: () => {
+        throw new DOMException("denied", "SecurityError");
+      },
     });
-    expect(() => saveWorkingCopy("repo", "{}")).not.toThrow();
-    expect(saveWorkingCopy("repo", "{}")).toBe(false);
-    expect(warnSpy).toHaveBeenCalledWith("autosave failed:", expect.any(DOMException));
+    expect(await saveWorkingCopy("repo", () => BYTES)).toBe(false);
+    expect(await loadWorkingCopy()).toBeNull();
+    await expect(clearWorkingCopy()).resolves.toBeUndefined();
   });
 
-  it("saveWorkingCopy returns true on success", () => {
+  it("migrates a legacy localStorage .srsj entry, and a successful save removes it", async () => {
     setup();
-    expect(saveWorkingCopy("repo", "{}")).toBe(true);
+    const legacy = { name: "old", srsj: "{}", savedAt: new Date().toISOString() };
+    localStorage.setItem("srs-web:working-copy", JSON.stringify(legacy));
+    expect(await loadWorkingCopy()).toEqual(legacy);
+    await saveWorkingCopy("old", () => BYTES);
+    expect(localStorage.getItem("srs-web:working-copy")).toBeNull();
+    expect((await loadWorkingCopy())?.bytes).toEqual(BYTES);
+  });
+
+  it("ignores a corrupt legacy entry", async () => {
+    setup();
+    localStorage.setItem("srs-web:working-copy", "not-json{{");
+    expect(await loadWorkingCopy()).toBeNull();
   });
 });
 

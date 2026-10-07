@@ -224,7 +224,10 @@ export const openMenus = (page: Page) => page.locator(":popover-open:not(.toast-
 
 /** A Governance/Guides nav item by text. Role-agnostic (an `<a>` or a `<button>`), in the nav column or its drawer. */
 export const navItem = (page: Page, name: string | RegExp) =>
-  page.locator(".app__nav, [data-testid=shell-drawer-nav]").locator(".nav__item").filter({ hasText: name });
+  page
+    .locator(".app__nav, [data-testid=shell-drawer-nav]")
+    .locator(".nav__item")
+    .filter({ hasText: name });
 
 /**
  * Open a Toolbar group menu (wide tiers); a no-op when it is already open. At the narrow tier
@@ -280,4 +283,33 @@ export async function setWide(page: Page, on: boolean): Promise<void> {
   if ((await item.getAttribute("aria-checked")) !== String(on)) await item.click();
   await closeMenus(page);
   await expect(page.locator(".app")).toHaveAttribute("data-margin", on ? "expanded" : "compact");
+}
+
+/**
+ * Wait until the recovery copy (the `.srs` archive in IndexedDB, srs-web#505) has been written.
+ * It lands at most 2 s after a change; an async IndexedDB write started by `pagehide` is not
+ * guaranteed to finish, so a test that reloads right after an edit waits for it first.
+ */
+export async function waitForRecoveryCopy(page: Page): Promise<void> {
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            new Promise<boolean>((resolve) => {
+              const open = indexedDB.open("srs-web", 1);
+              open.onerror = () => resolve(false);
+              open.onsuccess = () => {
+                const get = open.result
+                  .transaction("working-copy")
+                  .objectStore("working-copy")
+                  .get("current");
+                get.onsuccess = () => resolve(get.result?.bytes instanceof Uint8Array);
+                get.onerror = () => resolve(false);
+              };
+            })
+        ),
+      { timeout: 10000 }
+    )
+    .toBe(true);
 }
