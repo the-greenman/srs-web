@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { type AttachFile, checkFiles } from "../src/lib/components/attach-check.js";
+import { type FileMeta, checkFiles } from "../src/lib/components/attach-check.js";
 
-const f = (name: string, type: string, size = 10): AttachFile => ({
-  name,
-  type,
-  bytes: new Uint8Array(size),
-});
+const f = (name: string, type: string, size = 10): FileMeta => ({ name, type, size });
 const MB = 1024 * 1024;
 
 describe("checkFiles", () => {

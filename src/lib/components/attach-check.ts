@@ -40,15 +40,21 @@ export const ACCEPT = `text/*,${DEFAULT_TEXT.join(",")},${Object.keys(BY_EXT)
   .map((e) => `.${e}`)
   .join(",")}`;
 
-const mimeOf = (f: AttachFile) =>
+export interface FileMeta {
+  name: string;
+  type: string;
+  size: number;
+}
+
+const mimeOf = (f: FileMeta) =>
   f.type || BY_EXT[f.name.split(".").pop()?.toLowerCase() ?? ""] || "";
 
-export function checkFiles(
-  files: AttachFile[],
+export function checkFiles<T extends FileMeta>(
+  files: T[],
   policy: AttachPolicy | undefined,
   usedBytes: number
-): { accepted: AttachFile[]; rejected: { name: string; reason: string }[] } {
-  const accepted: AttachFile[] = [];
+): { accepted: T[]; rejected: { name: string; reason: string }[] } {
+  const accepted: T[] = [];
   const rejected: { name: string; reason: string }[] = [];
   const maxFile = policy?.maxPerFileBytes ?? DEFAULT_MAX_FILE;
   let used = usedBytes;
@@ -59,14 +65,14 @@ export function checkFiles(
       : mime.startsWith("text/") || DEFAULT_TEXT.includes(mime);
     let reason = "";
     if (!typeOk) reason = mime ? `not a text file (${mime})` : "unknown file type";
-    else if (f.bytes.length > maxFile)
-      reason = `${formatBytes(f.bytes.length)} is over the ${formatBytes(maxFile)} limit`;
-    else if (policy?.maxTotalBytes !== undefined && used + f.bytes.length > policy.maxTotalBytes)
+    else if (f.size > maxFile)
+      reason = `${formatBytes(f.size)} is over the ${formatBytes(maxFile)} limit`;
+    else if (policy?.maxTotalBytes !== undefined && used + f.size > policy.maxTotalBytes)
       reason = `would take the repository past ${formatBytes(policy.maxTotalBytes)}`;
     if (reason) rejected.push({ name: f.name, reason });
     else {
       accepted.push(f);
-      used += f.bytes.length;
+      used += f.size;
     }
   }
   return { accepted, rejected };

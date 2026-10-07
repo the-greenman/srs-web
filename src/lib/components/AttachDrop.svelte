@@ -43,10 +43,12 @@
   const hint = $derived(`Drop, paste or choose text files · up to ${formatBytes(policy?.maxPerFileBytes ?? 1_048_576)} each`);
 
   async function take(files: File[]) {
-    const read = await Promise.all(files.map(async (f) => ({ name: f.name, type: f.type, bytes: await readFile(f) })));
-    const result = checkFiles(read, policy, usedBytes);
+    const result = checkFiles(files, policy, usedBytes);
     rejected = result.rejected;
-    if (result.accepted.length) await onfiles(result.accepted);
+    if (!result.accepted.length) return;
+    await onfiles(
+      await Promise.all(result.accepted.map(async (f) => ({ name: f.name, type: f.type, bytes: await readFile(f) })))
+    );
   }
   const hasFiles = (e: DragEvent) => e.dataTransfer?.types?.includes('Files') ?? false;
   function drag(e: DragEvent) {
@@ -104,6 +106,6 @@
 </div>
 {#if rejected.length}
   <Notice kind="warning">
-    {#each rejected as r (r.name)}<div>{r.name}: {r.reason}</div>{/each}
+    {#each rejected as r, i (i)}<div>{r.name}: {r.reason}</div>{/each}
   </Notice>
 {/if}

@@ -24,6 +24,12 @@ describe("AttachDrop", () => {
     await screen.findByText("photo.png: not a text file (image/png)");
     expect(onfiles).not.toHaveBeenCalled();
   });
+  it("lists two rejected files with the same name", async () => {
+    render(AttachDrop, { onfiles: vi.fn() });
+    const png = () => new File(["x"], "same.png", { type: "image/png" });
+    await drop([png(), png()]);
+    await waitFor(() => expect(screen.getAllByText("same.png: not a text file (image/png)")).toHaveLength(2));
+  });
   it("turns pasted text into a .md file", async () => {
     const onfiles = vi.fn();
     render(AttachDrop, { onfiles });
