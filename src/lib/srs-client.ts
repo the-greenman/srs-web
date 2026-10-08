@@ -668,26 +668,25 @@ export function exportTree(repo: SrsRepository): Record<string, Uint8Array> {
 // ---------------------------------------------------------------------------
 
 /**
- * serde_wasm_bindgen does not always honour #[serde(rename_all = "camelCase")].
- * Normalise both snake_case and camelCase field names so all TypeScript code
- * can assume camelCase regardless of the serialiser behaviour.
+ * The bindings serialise via `serde_json::to_string` → `JSON.parse` (srs-bindings `to_js`),
+ * so `#[serde(rename_all = "camelCase")]` is always honoured and the wire shape is camelCase.
  */
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM output has unknown shape
 function normalizeRecord(raw: any): SrsRecord {
   // RFC-039 carrier: fieldValues is a name-keyed object, passed through verbatim
   // so a read-back record can be re-serialised exactly on write round trips.
-  const fieldMeta = raw.fieldMeta ?? raw.field_meta;
+  const fieldMeta = raw.fieldMeta;
   return {
-    instanceId: raw.instanceId ?? raw.instance_id,
-    typeId: raw.typeId ?? raw.type_id,
-    typeVersion: raw.typeVersion ?? raw.type_version,
-    typeNamespace: raw.typeNamespace ?? raw.type_namespace,
-    typeName: raw.typeName ?? raw.type_name,
-    fieldValues: raw.fieldValues ?? raw.field_values ?? {},
+    instanceId: raw.instanceId,
+    typeId: raw.typeId,
+    typeVersion: raw.typeVersion,
+    typeNamespace: raw.typeNamespace,
+    typeName: raw.typeName,
+    fieldValues: raw.fieldValues ?? {},
     ...(fieldMeta != null && { fieldMeta }),
-    lifecycle: raw.lifecycleState ?? raw.lifecycle_state ?? raw.lifecycle,
-    createdAt: raw.createdAt ?? raw.created_at,
-    updatedAt: raw.updatedAt ?? raw.updated_at,
+    lifecycle: raw.lifecycleState ?? raw.lifecycle,
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt,
     ...(raw.createdBy != null && { createdBy: raw.createdBy }),
     ...(Array.isArray(raw.tags) && { tags: raw.tags }),
   };
@@ -696,8 +695,7 @@ function normalizeRecord(raw: any): SrsRecord {
 /**
  * Unwrap a `RecordSummary` from the WASM `list_records` binding (srs-rust#293).
  * The binding returns `{ instanceId, displayLabel, record }` — not a bare `Record`.
- * Normalises `displayLabel` from both camelCase and snake_case variants.
- * If the wrapper shape is absent (bare Record — contract break), logs a warning and
+ *  * If the wrapper shape is absent (bare Record — contract break), logs a warning and
  * falls back to `normalizeRecord(raw)` so the app does not crash.
  */
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM RecordSummary has unknown shape
@@ -705,9 +703,8 @@ function normalizeRecordSummary(raw: any): SrsRecord {
   if (raw.record !== undefined) {
     const inner = normalizeRecord(raw.record);
     // RecordSummary uses #[serde(rename_all = "camelCase")] so the WASM always emits
-    // `displayLabel`. The `?? raw.display_label` guard matches the dual-lookup convention
-    // used throughout this file for forward-defensive handling of serde config changes.
-    inner.displayLabel = raw.displayLabel ?? raw.display_label;
+    // `displayLabel`.
+    inner.displayLabel = raw.displayLabel;
     return inner;
   }
   // WASM contract violation: list_records always returns RecordSummary since srs-rust#293.
@@ -828,14 +825,14 @@ export function listRelations(repo: SrsRepository, filter: RelationListFilter = 
   // list_relations returns RelationSummary (sourceId / targetId), while the
   // Relation entity uses sourceInstanceId / targetInstanceId — accept both.
   return raw.map((r) => ({
-    relationId: r.relationId ?? r.relation_id,
-    relationType: r.relationType ?? r.relation_type,
-    sourceInstanceId: r.sourceInstanceId ?? r.source_instance_id ?? r.sourceId ?? r.source_id,
-    targetInstanceId: r.targetInstanceId ?? r.target_instance_id ?? r.targetId ?? r.target_id,
-    assertedBy: r.assertedBy ?? r.asserted_by,
+    relationId: r.relationId,
+    relationType: r.relationType,
+    sourceInstanceId: r.sourceInstanceId ?? r.sourceId,
+    targetInstanceId: r.targetInstanceId ?? r.targetId,
+    assertedBy: r.assertedBy,
     confidence: r.confidence,
     status: r.status,
-    createdAt: r.createdAt ?? r.created_at,
+    createdAt: r.createdAt,
   }));
 }
 
@@ -845,14 +842,14 @@ export function listRelations(repo: SrsRepository, filter: RelationListFilter = 
 export function createRelation(repo: SrsRepository, input: CreateRelationInput): SrsRelation {
   const raw = repo.create_relation(JSON.stringify(input));
   return {
-    relationId: raw.relationId ?? raw.relation_id,
-    relationType: raw.relationType ?? raw.relation_type,
-    sourceInstanceId: raw.sourceInstanceId ?? raw.source_instance_id,
-    targetInstanceId: raw.targetInstanceId ?? raw.target_instance_id,
-    assertedBy: raw.assertedBy ?? raw.asserted_by,
+    relationId: raw.relationId,
+    relationType: raw.relationType,
+    sourceInstanceId: raw.sourceInstanceId,
+    targetInstanceId: raw.targetInstanceId,
+    assertedBy: raw.assertedBy,
     confidence: raw.confidence,
     status: raw.status,
-    createdAt: raw.createdAt ?? raw.created_at,
+    createdAt: raw.createdAt,
   };
 }
 
@@ -911,14 +908,14 @@ export function setLifecycleState(
 // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; normalised field-by-field
 function normalizeRelationRaw(raw: any): SrsRelation {
   return {
-    relationId: raw.relationId ?? raw.relation_id,
-    relationType: raw.relationType ?? raw.relation_type,
-    sourceInstanceId: raw.sourceInstanceId ?? raw.source_instance_id,
-    targetInstanceId: raw.targetInstanceId ?? raw.target_instance_id,
-    assertedBy: raw.assertedBy ?? raw.asserted_by,
+    relationId: raw.relationId,
+    relationType: raw.relationType,
+    sourceInstanceId: raw.sourceInstanceId,
+    targetInstanceId: raw.targetInstanceId,
+    assertedBy: raw.assertedBy,
     confidence: raw.confidence,
     status: raw.status,
-    createdAt: raw.createdAt ?? raw.created_at,
+    createdAt: raw.createdAt,
   };
 }
 
@@ -1520,9 +1517,9 @@ export function listPackages(repo: SrsRepository): PackageSummary[] {
     namespace: item.namespace,
     name: item.name,
     version: item.version,
-    boundaryPath: item.boundaryPath ?? item.boundary_path ?? undefined,
-    fieldCount: item.fieldCount ?? item.field_count ?? 0,
-    typeCount: item.typeCount ?? item.type_count ?? 0,
+    boundaryPath: item.boundaryPath ?? undefined,
+    fieldCount: item.fieldCount ?? 0,
+    typeCount: item.typeCount ?? 0,
   }));
 }
 
@@ -1890,23 +1887,23 @@ export interface ContainerView {
 export function normalizeMember(m: any): ResolvedMember {
   // Tier-0 notes carry no `record` key: keep the core-resolved label, never invent one.
   const record = m.record ? normalizeRecord(m.record) : undefined;
-  if (record) record.displayLabel = (m.displayLabel ?? m.display_label) || undefined;
+  if (record) record.displayLabel = m.displayLabel || undefined;
   return {
-    instanceId: m.instanceId ?? m.instance_id,
+    instanceId: m.instanceId,
     tier: m.tier,
-    displayLabel: m.displayLabel ?? m.display_label ?? "",
+    displayLabel: m.displayLabel ?? "",
     record,
-    isVisibleByDefault: m.isVisibleByDefault ?? m.is_visible_by_default,
-    sectionContainerId: m.sectionContainerId ?? m.section_container_id ?? undefined,
+    isVisibleByDefault: m.isVisibleByDefault,
+    sectionContainerId: m.sectionContainerId ?? undefined,
   };
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM ColumnSpec has unknown field case
 function normalizeColumnSpec(c: any): ColumnSpec {
   return {
-    fieldId: c.fieldId ?? c.field_id,
-    fieldName: c.fieldName ?? c.field_name,
-    displayLabel: c.displayLabel ?? c.display_label ?? "",
+    fieldId: c.fieldId,
+    fieldName: c.fieldName,
+    displayLabel: c.displayLabel ?? "",
     order: c.order,
     required: c.required ?? false,
   };
@@ -1929,15 +1926,15 @@ export function resolveContainerView(
   // biome-ignore lint/suspicious/noExplicitAny: WASM boundary; normalised below
   const raw: any = repo.resolve_container_view(containerId, viewId ?? null);
   return {
-    containerId: raw.containerId ?? raw.container_id,
+    containerId: raw.containerId,
     // Wire key is `compositionId` (ContainerView.composition_id, srs-rust
     // crates/srs-repository/src/container_view_service.rs, serde camelCase) —
     // confirmed at the source; resolve_container_view never emitted documentViewId.
-    documentViewId: raw.compositionId ?? raw.composition_id,
+    documentViewId: raw.compositionId,
     root: raw.root ? normalizeMember(raw.root) : undefined,
     members: (raw.members ?? []).map(normalizeMember),
     columns: (raw.columns ?? []).map(normalizeColumnSpec),
-    excludeLifecycleStates: raw.excludeLifecycleStates ?? raw.exclude_lifecycle_states ?? [],
+    excludeLifecycleStates: raw.excludeLifecycleStates ?? [],
     diagnostics: raw.diagnostics ?? [],
   };
 }
@@ -2013,15 +2010,15 @@ export interface FindOptions {
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM DiscoveryHit has unknown field case
 function normalizeDiscoveryHit(raw: any): DiscoveryHit {
   return {
-    instanceId: raw.instanceId ?? raw.instance_id,
+    instanceId: raw.instanceId,
     label: raw.label,
-    typeId: raw.typeId ?? raw.type_id,
-    typeNamespace: raw.typeNamespace ?? raw.type_namespace,
-    typeName: raw.typeName ?? raw.type_name,
-    lifecycleState: raw.lifecycleState ?? raw.lifecycle_state,
+    typeId: raw.typeId,
+    typeNamespace: raw.typeNamespace,
+    typeName: raw.typeName,
+    lifecycleState: raw.lifecycleState,
     score: raw.score,
     snippet: raw.snippet,
-    matchedFields: raw.matchedFields ?? raw.matched_fields ?? [],
+    matchedFields: raw.matchedFields ?? [],
   };
 }
 
@@ -2136,13 +2133,13 @@ export function listTerms(repo: SrsRepository): Term[] {
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM NavigationNode has unknown field case
 function normalizeNavigationNode(raw: any): NavigationNode {
   return {
-    instanceId: raw.instanceId ?? raw.instance_id,
-    typeId: raw.typeId ?? raw.type_id,
-    typeVersion: raw.typeVersion ?? raw.type_version ?? 0,
-    typeNamespace: raw.typeNamespace ?? raw.type_namespace,
-    typeName: raw.typeName ?? raw.type_name,
-    displayLabel: raw.displayLabel ?? raw.display_label ?? "",
-    sectionContainerId: raw.sectionContainerId ?? raw.section_container_id,
+    instanceId: raw.instanceId,
+    typeId: raw.typeId,
+    typeVersion: raw.typeVersion ?? 0,
+    typeNamespace: raw.typeNamespace,
+    typeName: raw.typeName,
+    displayLabel: raw.displayLabel ?? "",
+    sectionContainerId: raw.sectionContainerId,
     depth: raw.depth ?? 0,
   };
 }
@@ -2150,7 +2147,7 @@ function normalizeNavigationNode(raw: any): NavigationNode {
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM RepositoryNavigation has unknown field case
 function normalizeRepositoryNavigation(raw: any): RepositoryNavigation {
   return {
-    rootContainerId: raw.rootContainerId ?? raw.root_container_id ?? "",
+    rootContainerId: raw.rootContainerId ?? "",
     identity: normalizeNavigationNode(raw.identity ?? {}),
     sections: (raw.sections ?? []).map(normalizeNavigationNode),
     diagnostics: raw.diagnostics ?? [],
@@ -2234,11 +2231,11 @@ export function scaffoldGovernanceDocument(
   );
   return {
     repo,
-    repositoryId: raw.repositoryId ?? raw.repository_id,
-    identityRecordId: raw.identityRecordId ?? raw.identity_record_id,
-    decisionLogContainerId: raw.decisionLogContainerId ?? raw.decision_log_container_id,
-    decisionLogRootId: raw.decisionLogRootId ?? raw.decision_log_root_id,
-    rootContainerId: raw.rootContainerId ?? raw.root_container_id,
+    repositoryId: raw.repositoryId,
+    identityRecordId: raw.identityRecordId,
+    decisionLogContainerId: raw.decisionLogContainerId,
+    decisionLogRootId: raw.decisionLogRootId,
+    rootContainerId: raw.rootContainerId,
   };
 }
 
@@ -2384,10 +2381,10 @@ export interface RelationSummary {
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM RelationSummary has unknown field case
 function normalizeRelationSummary(raw: any): RelationSummary {
   return {
-    relationId: raw.relationId ?? raw.relation_id,
-    relationType: raw.relationType ?? raw.relation_type,
-    sourceId: raw.sourceId ?? raw.source_id,
-    targetId: raw.targetId ?? raw.target_id,
+    relationId: raw.relationId,
+    relationType: raw.relationType,
+    sourceId: raw.sourceId,
+    targetId: raw.targetId,
   };
 }
 
