@@ -4,13 +4,12 @@ import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
 /**
- * essay-attach.spec.ts — srs-web#506: attach text files to a paragraph by drop or the ⋯ menu.
- * Fixture: essay.srsj. A `.srsj` repository cannot read attachment bytes back, so Download is
- * checked only for its graceful failure.
+ * essay-attach.spec.ts — srs-web#506, #519: attach text files to a paragraph by drop or the ⋯ menu; each is a
+ * source record in the references pool evidencing the paragraph (a source glyph). Fixture: essay-pool.srsj.
  */
-const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
+const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay-pool.srsj");
 const items = (page: Page) => page.locator(".essay-shell__page .block-stack__item");
-const glyphs = (page: Page, n: number) => items(page).nth(n).locator('.glyph[aria-label^="file"]');
+const glyphs = (page: Page, n: number) => items(page).nth(n).locator('.glyph[aria-label^="source"]');
 async function open(page: Page) {
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
@@ -23,8 +22,8 @@ test("dropping a file on a paragraph attaches it; the ⋯ menu attaches another"
   page,
 }) => {
   await open(page);
-  const target = items(page).nth(1);
-  await expect(glyphs(page, 1)).toHaveCount(0);
+  const target = items(page).nth(0);
+  await expect(glyphs(page, 0)).toHaveCount(0);
 
   const dt = await page.evaluateHandle(() => {
     const d = new DataTransfer();
@@ -35,9 +34,9 @@ test("dropping a file on a paragraph attaches it; the ⋯ menu attaches another"
   await target.dispatchEvent("dragover", { dataTransfer: dt });
   await expect(target).toHaveClass(/is-drop-file/);
   await target.dispatchEvent("drop", { dataTransfer: dt });
-  await expect(glyphs(page, 1)).toHaveCount(1);
+  await expect(glyphs(page, 0)).toHaveCount(1);
   await expect(target).not.toHaveClass(/is-drop-file/);
-  await glyphs(page, 1).hover();
+  await glyphs(page, 0).hover();
   await expect(page.getByRole("group", { name: "dropped-notes.md" })).toBeVisible();
 
   // ⋯ > Attach file…, then the picker
@@ -51,7 +50,7 @@ test("dropping a file on a paragraph attaches it; the ⋯ menu attaches another"
       mimeType: "text/plain",
       buffer: Buffer.from("picked"),
     });
-  await expect(glyphs(page, 1)).toHaveCount(2);
+  await expect(glyphs(page, 0)).toHaveCount(2);
 
   // a duplicate name is refused by the core and surfaced
   await target.getByTestId("paragraph-menu").click();
@@ -65,7 +64,7 @@ test("dropping a file on a paragraph attaches it; the ⋯ menu attaches another"
       buffer: Buffer.from("again"),
     });
   await expect(page.getByRole("alert")).toBeVisible();
-  await expect(glyphs(page, 1)).toHaveCount(2);
+  await expect(glyphs(page, 0)).toHaveCount(2);
 });
 
 test("a non-text file dropped on a paragraph is rejected with a message", async ({ page }) => {
