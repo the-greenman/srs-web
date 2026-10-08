@@ -9,7 +9,7 @@
   import {
     ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
-    LayersPanel, MarkdownHelp, MarkdownText, AgentPanel, McpConnection, Panel, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
+    LayersPanel, MarkdownHelp, MarkdownText, MethodBoard, AgentPanel, McpConnection, Panel, ProblemCard, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
     TagChip, Textarea, Notice, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
   } from "$lib/components";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
@@ -45,6 +45,7 @@
     ["agents", "Agent library"],
     ["shell", "Page frame"],
     ["records", "Records and map"],
+    ["method", "Method board"],
     ["chooser", "Source chooser"],
     ["notices", "Notices"],
     ["attachments", "Attachments"],
@@ -544,6 +545,21 @@
         <RelationGraph view="container" graph={fx.cappedContainerMap} onOpen={noop} />
       </figure>
     </div>
+  </section>
+
+  <section id="method">
+    <h2>Method board</h2>
+    <p class="sg__note">A problem card in each status: Suggested by an agent with a persona and sources; Affirmed with a trade-off side;
+      Set aside, unattributed, with a long title. The board groups by domain and cluster and filters by status (Suggested by default).</p>
+    <div class="sg__grid" data-testid="sg-problem-cards">
+      {#each fx.methodProblems as p (p.id)}<ProblemCard problem={p} selected={p.id === "mp1"} onopen={noop} />{/each}
+    </div>
+    <Frame width="100%" caption="Board, filter All">
+      <MethodBoard domains={fx.methodDomains} filter="all" onopen={noop} />
+    </Frame>
+    <Frame width="20rem" caption="Board, narrow 20rem">
+      <MethodBoard domains={fx.methodDomains} onopen={noop} />
+    </Frame>
   </section>
 
   <section id="chooser">

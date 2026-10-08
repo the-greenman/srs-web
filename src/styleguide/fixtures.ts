@@ -10,6 +10,7 @@ import { headerActions } from "$lib/essay/header-actions";
 import type { GroupView } from "$lib/generic/RecordsView.svelte";
 import { containerGraph, focusLayout } from "$lib/generic/map-layout";
 import type { PairingResponse } from "$lib/mcp/relay-protocol";
+import type { MethodDomain, MethodProblem } from "$lib/method/method-document";
 import type { InstalledPackage } from "$lib/package-upgrade";
 import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor, UpgradePackageResult } from "$lib/srs-client";
@@ -840,3 +841,60 @@ export const attachRejected = [
   { name: "transcript.txt", reason: "1.4 MB is over the 1 MB limit" },
 ];
 export const MB = 1024 * 1024;
+
+// Method board (srs-web#526): problems in each status, with and without links, one long title.
+const problem = (p: Partial<MethodProblem> & { id: string; title: string }): MethodProblem => ({
+  problemId: "",
+  statement: "",
+  kind: "",
+  imbalance: "",
+  personas: [],
+  sources: [],
+  status: "suggested",
+  ...p,
+});
+export const methodProblems: MethodProblem[] = [
+  problem({
+    id: "mp1",
+    problemId: "SP-1",
+    title: "A document cannot leave the editor and return",
+    statement:
+      "Export gives the writer markdown and a snapshot, but nothing comes back. Work edited elsewhere cannot return, so leaving the editor is a one way door.",
+    kind: "condition",
+    personas: [{ id: "per-w", label: "Writer" }],
+    sources: ["semanticops.com#21", "semanticops.com#29"],
+    createdBy: agents[0],
+  }),
+  problem({
+    id: "mp2",
+    problemId: "SP-2",
+    title: "Suggestions pile up unseen",
+    statement: "Agent suggestions wait in a queue nobody reads.",
+    kind: "consequence",
+    imbalance: "missing",
+    side: {
+      id: "pole",
+      label: "Testimony",
+      tradeOff: { id: "ten", label: "Testimony and authority" },
+    },
+    personas: [{ id: "per-o", label: "Owner" }],
+    sources: ["https://example.org/notes"],
+    createdBy: agents[1],
+    status: "affirmed",
+  }),
+  problem({
+    id: "mp3",
+    problemId: "SP-30",
+    title: "A very long problem title that wraps across two or three lines in a narrow column",
+    statement: "Unattributed and set aside.",
+    kind: "belief",
+    status: "set-aside",
+  }),
+];
+export const methodDomains: MethodDomain[] = [
+  {
+    id: "d1",
+    title: "Writing and review",
+    clusters: [{ id: "c1", title: "Leaving the editor", problems: methodProblems }],
+  },
+];

@@ -73,6 +73,8 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `TrayRow` | `label` `labelProps?` `actions?` snippet | `.tray__row` | #421 |
 | `MarkdownHelp` | `open?` (bindable) `id?` `anchor?` `onclose?` | `.md-help` | srs-web [#365](https://github.com/the-greenman/srs-web/issues/365) |
 | `ActorChip` | `actor?` | `.actor-chip` | srs-web [#330](https://github.com/the-greenman/srs-web/issues/330), [#372](https://github.com/the-greenman/srs-web/issues/372) |
+| `ProblemCard` | `problem` (MethodProblem) `selected?` `onopen?` | `.problem-card` (wraps `Card`, `Tag`, `TagChip`, `ActorChip`) | srs-web [#526](https://github.com/the-greenman/srs-web/issues/526) |
+| `MethodBoard` | `domains` `filter?` (bindable; default `suggested`) `selectedId?` `onopen?` | `.method-board` | srs-web [#526](https://github.com/the-greenman/srs-web/issues/526) |
 | `ActorMark` | `actor?` (none = Unattributed) `size?` (`sm` \| `md`) | `.actor-mark` | srs-web [#422](https://github.com/the-greenman/srs-web/issues/422) |
 | `ActorStack` | `actors` (`(Actor \| undefined)[]`) `max?` | `.actor-stack` | #422 |
 | `AgentPresence` | `status` (AgentStatus): an `ActorStack` of the connected agents | `.presence` | #422 |
