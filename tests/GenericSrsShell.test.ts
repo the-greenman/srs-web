@@ -416,10 +416,12 @@ describe("GenericSrsShell diagnostics notices (#441)", () => {
     renderWith([]);
   };
 
-  it("groups three identical warnings into one collapsed line with a count", async () => {
+  it("groups three identical render notes into one collapsed line with a count", async () => {
+    // These are renderDocumentView diagnostics (plain strings, no severity) — surfaced as info,
+    // not warn, so they never masquerade as repo.validate() findings (srs#907).
     renderWith([R23, R23, R23]);
     const { container } = mount();
-    await screen.findByText(/3 warnings/);
+    await screen.findByText(/3 info/);
     expect(container.querySelectorAll('[data-part="group"]')).toHaveLength(1);
     expect(container.querySelector('[data-part="count"]')?.textContent).toBe("x3");
     expect((container.querySelector(".diag-list") as HTMLElement).hidden).toBe(true);
@@ -433,11 +435,11 @@ describe("GenericSrsShell diagnostics notices (#441)", () => {
     renderWith([R23, R23]);
     mount();
     await fireEvent.click(await screen.findByRole("button", { name: "Dismiss" }));
-    expect(screen.queryByText(/2 warnings/)).toBeNull();
+    expect(screen.queryByText(/2 info/)).toBeNull();
     await fireEvent.click(screen.getByRole("button", { name: /reader2/ }));
-    expect(await screen.findByText(/2 warnings/)).toBeTruthy();
+    expect(await screen.findByText(/2 info/)).toBeTruthy();
     await fireEvent.click(screen.getByRole("button", { name: /reader1/ }));
-    await waitFor(() => expect(screen.queryByText(/2 warnings/)).toBeNull());
+    await waitFor(() => expect(screen.queryByText(/2 info/)).toBeNull());
     restore();
   });
 
