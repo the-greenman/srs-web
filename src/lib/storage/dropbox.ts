@@ -5,8 +5,16 @@ import {
   StorageConflictError,
   StorageFetchError,
 } from "./errors.js";
-import { isSrsArchiveName } from "./srs-detect.js";
-import type { DocumentHandle, StorageEntry, StorageProvider, WriteResult } from "./types.js";
+import { MANIFEST_FILE, isSrsArchiveName, listingHasRepoMarker } from "./srs-detect.js";
+import { TREE_SKIP_DIRS, assertRepoTree, sameBytes } from "./tree-utils.js";
+import type {
+  DocumentCapabilities,
+  DocumentHandle,
+  RepoTreeAware,
+  StorageEntry,
+  StorageProvider,
+  WriteResult,
+} from "./types.js";
 
 const API = "https://api.dropboxapi.com/2";
 const CONTENT = "https://content.dropboxapi.com/2";
@@ -27,6 +35,7 @@ interface DropboxMetadata {
   id: string;
   name: string;
   path_lower?: string;
+  path_display?: string;
   rev?: string;
 }
 
@@ -88,6 +97,43 @@ async function parseError(response: Response): Promise<string> {
   } catch {
     return text || response.statusText;
   }
+}
+
+/**
+ * `Dropbox-API-Arg` is an HTTP header, so non-ASCII characters (tree paths can carry
+ * any filename) must be JSON-escaped or the request is rejected.
+ */
+function apiArg(arg: object): string {
+  return JSON.stringify(arg).replace(
+    /[\u007f-\uffff]/g,
+    (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`
+  );
+}
+
+/** Concurrent requests per tree read/commit — polite to Dropbox's rate limits. */
+const TREE_CONCURRENCY = 6;
+
+/** Run `fn` over `items` with bounded concurrency; resolves to every settled result. */
+async function settleBounded<T>(
+  items: T[],
+  fn: (item: T) => Promise<void>
+): Promise<PromiseSettledResult<void>[]> {
+  const results: PromiseSettledResult<void>[] = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++;
+      try {
+        // biome-ignore lint/style/noNonNullAssertion: i < items.length
+        await fn(items[i]!);
+        results[i] = { status: "fulfilled", value: undefined };
+      } catch (reason) {
+        results[i] = { status: "rejected", reason };
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(TREE_CONCURRENCY, items.length) }, worker));
+  return results;
 }
 
 export async function completeDropboxOAuthCallback(config: DropboxConfig): Promise<boolean> {
@@ -224,6 +270,136 @@ export class DropboxDocumentHandle implements DocumentHandle {
   }
 }
 
+/** A file of the tree as last read or written: its bytes and the Dropbox revision they came from. */
+interface TreeBaseFile {
+  bytes: Uint8Array;
+  rev: string | null;
+}
+
+/**
+ * A whole exploded SRS repository in a Dropbox folder (srs-web#262), read and written
+ * as a unit like the GitHub and local tree handles (ADR-016, ADR-018).
+ *
+ * Dropbox has no multi-file atomic commit, so `commitTree` writes only the paths whose
+ * bytes changed, each guarded by the revision it was read at (`mode: update`), and
+ * deletes removed paths guarded by `parent_rev`. A concurrent edit surfaces as the
+ * same `StorageConflictError` the single-file path throws. A save that fails part-way
+ * leaves the base reflecting exactly what landed, so a retry resends only the rest.
+ */
+export class DropboxTreeHandle implements DocumentHandle, RepoTreeAware {
+  readonly provider = "dropbox" as const;
+  readonly kind = "tree" as const;
+  readonly revision = null;
+  readonly capabilities: DocumentCapabilities = { read: true, write: true };
+
+  constructor(
+    readonly id: string,
+    readonly name: string,
+    /** The repository folder's Dropbox path ("" for the account root). */
+    private readonly root: string,
+    private base: Record<string, TreeBaseFile>,
+    private readonly token: () => string
+  ) {}
+
+  readTree(): Promise<Record<string, Uint8Array>> {
+    // Copies, not the base: the caller mutates the tree it gets back, and
+    // commitTree() has to diff against what was actually on Dropbox.
+    return Promise.resolve(
+      Object.fromEntries(Object.entries(this.base).map(([path, f]) => [path, f.bytes]))
+    );
+  }
+
+  async commitTree(files: Record<string, Uint8Array>): Promise<WriteResult> {
+    const changed = Object.entries(files).filter(
+      ([path, bytes]) => !sameBytes(this.base[path]?.bytes, bytes)
+    );
+    const removed = Object.keys(this.base).filter((path) => !(path in files));
+    const next: Record<string, TreeBaseFile> = { ...this.base };
+
+    const results = await settleBounded(
+      [
+        ...changed.map(([path, bytes]) => ({ path, bytes: bytes as Uint8Array | null })),
+        ...removed.map((path) => ({ path, bytes: null as Uint8Array | null })),
+      ],
+      async ({ path, bytes }) => {
+        if (bytes) {
+          const rev = await this.upload(path, bytes, this.base[path]?.rev ?? null);
+          next[path] = { bytes, rev };
+        } else {
+          await this.remove(path, this.base[path]?.rev ?? null);
+          delete next[path];
+        }
+      }
+    );
+    this.base = next;
+
+    const failure = results.find((r): r is PromiseRejectedResult => r.status === "rejected");
+    if (failure) throw failure.reason;
+    return { revision: null };
+  }
+
+  read(): Promise<string> {
+    return Promise.reject(
+      new StorageFetchError("Tree-mode documents are read via readTree(), not read().")
+    );
+  }
+
+  write(): Promise<WriteResult> {
+    return Promise.reject(
+      new StorageFetchError("Tree-mode documents are committed via commitTree(), not write().")
+    );
+  }
+
+  private pathOf(relative: string): string {
+    return `${this.root}/${relative}`;
+  }
+
+  private async upload(
+    path: string,
+    bytes: Uint8Array,
+    rev: string | null
+  ): Promise<string | null> {
+    const response = await fetch(`${CONTENT}/files/upload`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.token()}`,
+        "Content-Type": "application/octet-stream",
+        "Dropbox-API-Arg": apiArg({
+          path: this.pathOf(path),
+          mode: rev ? { ".tag": "update", update: rev } : "add",
+          autorename: false,
+          mute: false,
+        }),
+      },
+      body: bytes as BodyInit,
+    });
+    if (response.status === 409) throw new StorageConflictError();
+    if (!response.ok) {
+      throw new StorageFetchError(
+        `Dropbox upload of ${path} failed: ${await parseError(response)}`
+      );
+    }
+    return ((await response.json()) as DropboxMetadata).rev ?? null;
+  }
+
+  private async remove(path: string, rev: string | null): Promise<void> {
+    const response = await fetch(`${API}/files/delete_v2`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.token()}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ path: this.pathOf(path), ...(rev ? { parent_rev: rev } : {}) }),
+    });
+    if (response.ok) return;
+    const message = await parseError(response);
+    // Already gone is the outcome we wanted.
+    if (message.includes("not_found")) return;
+    if (response.status === 409) throw new StorageConflictError();
+    throw new StorageFetchError(`Dropbox delete of ${path} failed: ${message}`);
+  }
+}
+
 export class DropboxProvider implements StorageProvider {
   readonly id = "dropbox" as const;
   readonly label = "Dropbox";
@@ -303,17 +479,96 @@ export class DropboxProvider implements StorageProvider {
     }
     // Complete listing — SRS-relevance filtering is presentation and lives in the
     // picker UI (ADR-018), so "Show all files" can actually show everything.
-    return entries
-      .map((entry) => ({
-        id: entry.id,
-        name: entry.name,
-        kind: entry[".tag"],
-        path: entry.path_lower,
-        revision: entry.rev ?? null,
-      }))
+    const raw: StorageEntry[] = entries.map((entry) => ({
+      id: entry.id,
+      name: entry.name,
+      kind: entry[".tag"],
+      path: entry.path_lower,
+      revision: entry.rev ?? null,
+    }));
+    // A folder carrying a repo marker is an exploded SRS repository root: surface a
+    // synthetic "Open as SRS repository" entry. manifest.json is then hidden — opened
+    // alone it is never a valid .srsj payload (same treatment as GitHub).
+    const isRepoRoot = listingHasRepoMarker(raw);
+    const sorted = raw
+      .filter((entry) => !(isRepoRoot && entry.kind === "file" && entry.name === MANIFEST_FILE))
       .sort((a, b) =>
         a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === "folder" ? -1 : 1
       );
+    if (isRepoRoot) {
+      sorted.unshift({
+        id: `${path}#repo`,
+        name: "Open as SRS repository",
+        kind: "repository",
+        path,
+        revision: null,
+      });
+    }
+    return sorted;
+  }
+
+  /** Open a `kind: "repository"` entry (a folder holding an SRS repo) as a tree-mode handle. */
+  async openTree(entry: StorageEntry): Promise<DropboxTreeHandle> {
+    await this.authenticate();
+    if (entry.kind !== "repository" || entry.path === undefined) {
+      throw new StorageFetchError("Dropbox did not return a usable repository path.");
+    }
+    const root = entry.path;
+    const listed: DropboxMetadata[] = [];
+    let response = await this.api<DropboxListResponse>("/files/list_folder", {
+      path: root,
+      recursive: true,
+    });
+    listed.push(...response.entries);
+    while (response.has_more) {
+      response = await this.api<DropboxListResponse>("/files/list_folder/continue", {
+        cursor: response.cursor,
+      });
+      listed.push(...response.entries);
+    }
+
+    const prefix = root.toLowerCase();
+    const wanted: { lower: string; relative: string; rev: string | null }[] = [];
+    for (const item of listed) {
+      if (item[".tag"] !== "file" || !item.path_lower || !item.path_display) continue;
+      if (!item.path_lower.startsWith(`${prefix}/`)) continue;
+      // path_display keeps the real case; path_lower only guides the prefix strip.
+      const relative = item.path_display.slice(prefix.length + 1);
+      if (
+        relative
+          .split("/")
+          .slice(0, -1)
+          .some((seg) => TREE_SKIP_DIRS.has(seg))
+      )
+        continue;
+      wanted.push({ lower: item.path_lower, relative, rev: item.rev ?? null });
+    }
+
+    const base: Record<string, TreeBaseFile> = {};
+    const results = await settleBounded(wanted, async (file) => {
+      const download = await fetch(`${CONTENT}/files/download`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.requireToken()}`,
+          "Dropbox-API-Arg": apiArg({ path: file.lower }),
+        },
+      });
+      if (!download.ok) {
+        throw new StorageFetchError(
+          `Dropbox download of ${file.relative} failed: ${await parseError(download)}`
+        );
+      }
+      base[file.relative] = {
+        bytes: new Uint8Array(await download.arrayBuffer()),
+        rev: file.rev,
+      };
+    });
+    const failure = results.find((r): r is PromiseRejectedResult => r.status === "rejected");
+    if (failure) throw failure.reason;
+
+    assertRepoTree(Object.fromEntries(Object.entries(base).map(([p, f]) => [p, f.bytes])));
+    const name = root.split("/").pop() || "Dropbox";
+    return new DropboxTreeHandle(entry.id, name, root, base, () => this.requireToken());
   }
 
   async open(entry: StorageEntry): Promise<DocumentHandle> {

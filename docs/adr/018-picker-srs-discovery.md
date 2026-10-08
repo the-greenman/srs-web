@@ -93,6 +93,8 @@ coverage honestly (`partial` + reason) instead of silently truncating.
   free) and optionally a native `scanForSrs` when the provider has a cheaper bulk primitive.
 - Google Drive (native Picker, no `list()`) and the local `<input type=file>` source get no
   discovery until they gain listing surfaces — tracked as follow-up issues.
-- Dropbox scan surfaces files only until Dropbox gains an `openTree()`; marker folders it finds
-  are deliberately not shown (nothing may be surfaced that cannot be opened).
+- ~~Dropbox scan surfaces files only until Dropbox gains an `openTree()`~~ — resolved in
+  srs-web#262: `DropboxProvider.openTree()` reads a folder recursively, so the generic scan now
+  surfaces Dropbox marker folders as `kind:"repository"` results (still gated on
+  `provider.openTree` existing — nothing is surfaced that cannot be opened).
 - The four duplicated extension regexes are gone; any future extension change is a one-file edit.
