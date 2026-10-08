@@ -14,7 +14,7 @@ test.describe("App baseline", () => {
 
     // Wait for WASM to initialise — app transitions boot → idle.
     await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "SRS Viewer" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Open a repository, or start one." })).toBeVisible();
   });
 
   test("shows the file input without selecting a package editor", async ({ page }) => {

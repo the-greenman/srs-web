@@ -42,7 +42,7 @@ test("purpose renders markdown until focused, persists in the working copy and s
 
   await waitForRecoveryCopy(page);
   await page.reload();
-  await page.locator(".restore-banner__restore").click();
+  await page.getByTestId("restore-session").click();
   await page.getByTestId("package-editor-essay").click();
   await expect(page.locator(".purpose__render strong")).toHaveText("board");
 });

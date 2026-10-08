@@ -16,6 +16,7 @@ import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor, UpgradePackageResult } from "$lib/srs-client";
 
 import type { DiscoveryHit } from "$lib/srs-client";
+import type { StorageProviders } from "$lib/storage/index";
 import type { Diagnostic, Status } from "$lib/types";
 
 export const NOW = Date.parse("2026-10-04T12:00:00Z");
@@ -554,6 +555,22 @@ function fxLongLayers(): Layer[] {
 }
 
 /** Component tokens listed in the Tokens section (names only; values are read from the page). */
+/** Fake storage providers for the Landing specimens (#534); every handler is a no-op. */
+const provider = (label: string, configured: boolean) => ({
+  configured,
+  label,
+  authenticate: async () => {},
+  open: async () => {
+    throw new Error("Specimen only.");
+  },
+});
+export const landingProviders = (configured: boolean) =>
+  ({
+    dropbox: provider("Dropbox", configured),
+    googleDrive: provider("Google Drive", configured),
+    github: provider("GitHub", configured),
+  }) as unknown as StorageProviders;
+
 export const componentTokens = [
   "--agent-panel-gap",
   "--agent-panel-row-pad",

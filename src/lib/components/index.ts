@@ -117,3 +117,5 @@ export { default as CommentBadge } from "./CommentBadge.svelte";
 export { default as AnnotationMargin } from "./AnnotationMargin.svelte";
 export { default as HoverCard } from "./HoverCard.svelte";
 export { default as PinnedPane } from "./PinnedPane.svelte";
+export { default as SectionHeader } from "./SectionHeader.svelte";
+export { default as SourceRow } from "./SourceRow.svelte";
