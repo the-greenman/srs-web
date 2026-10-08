@@ -161,3 +161,13 @@ describe("SectionForm late-arriving fields", () => {
     expect(container.querySelector("#rf-body")).not.toBeNull();
   });
 });
+
+describe("SectionForm markdown fields", () => {
+  it("edits a markdown field in a multi-line textarea, not a one-line input", () => {
+    const statement = { label: "Statement", valueType: "markdown" as const, required: true, name: "statement" };
+    const { container } = render(SectionForm, {
+      props: { label: "Problem", fields: [statement], composites: [], record: undefined, onSave: () => {}, onCancel: () => {} },
+    });
+    expect(container.querySelector("textarea#rf-statement")).not.toBeNull();
+  });
+});
