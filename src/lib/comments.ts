@@ -24,6 +24,13 @@ export const COMMENTS_ON_TYPE_ID = "607009b0-310c-4eda-aad2-d079884ff85c";
 /** The engine's relation filter / create input keys on the declared name, not the definition id. */
 export const COMMENTS_ON = "com.mudemocracy.essay/comments-on";
 
+/** SemanticOps comments package (srs-programme packages/comments, srs-web#527): preferred when installed. */
+export const SO_COMMENT_TYPE_ID = "11cd0a5f-8c3f-4ec2-a055-5b9f56c5b0bc";
+export const SO_COMMENTS_ON = "com.semanticops.comments/comments-on";
+
+/** True for either package's `comments-on` relation key. */
+export const isCommentsOn = (key: string): boolean => key === COMMENTS_ON || key === SO_COMMENTS_ON;
+
 /** A comment on an instance; `author` is the engine-stamped `createdBy` (absent = unattributed). */
 export interface Comment {
   id: string;
@@ -32,12 +39,19 @@ export interface Comment {
   author?: Actor;
 }
 
-/** Feature detection: the comment type AND the `comments-on` relation are both installed. */
+/** Whether a comment type AND its `comments-on` relation are both installed, per package. */
+function installed(repo: SrsRepository) {
+  const types = listTypes(repo);
+  const keys = listRelationTypes(repo);
+  const has = (typeId: string, rel: string) =>
+    types.some((t) => t.id === typeId) && keys.some((t) => t.key === rel);
+  return { so: has(SO_COMMENT_TYPE_ID, SO_COMMENTS_ON), old: has(COMMENT_TYPE_ID, COMMENTS_ON) };
+}
+
+/** Feature detection: either package's comment type and `comments-on` relation are installed. */
 export function commentsAvailable(repo: SrsRepository): boolean {
-  return (
-    listTypes(repo).some((t) => t.id === COMMENT_TYPE_ID) &&
-    listRelationTypes(repo).some((t) => t.key === COMMENTS_ON)
-  );
+  const i = installed(repo);
+  return i.so || i.old;
 }
 
 /** Last comment read per repository handle, keyed on the comments-on relation ids (srs-web#359). */
@@ -49,11 +63,18 @@ const commentCache = new WeakMap<object, { key: string; comments: Record<string,
  * changed, which keeps a commit's reload cheap (~6 ms vs ~15 ms on a muSrs-sized repo, 50 comments).
  */
 export function loadComments(repo: SrsRepository, types: TypeSummary[]): Record<string, Comment[]> {
-  const rels = listRelations(repo, { relationType: COMMENTS_ON });
+  // ponytail: read old essay comment ids until essays depend on com.semanticops.comments, muDemocracy.org#305
+  const rels = [SO_COMMENTS_ON, COMMENTS_ON].flatMap((relationType) =>
+    listRelations(repo, { relationType })
+  );
   const key = rels.map((r) => r.relationId).join(",");
   const hit = commentCache.get(repo);
   if (hit?.key === key) return hit.comments;
-  const byId = new Map(recordsOfType(repo, types, COMMENT_TYPE_ID).map((r) => [r.instanceId, r]));
+  const byId = new Map(
+    [SO_COMMENT_TYPE_ID, COMMENT_TYPE_ID]
+      .flatMap((id) => recordsOfType(repo, types, id))
+      .map((r) => [r.instanceId, r])
+  );
   const out: Record<string, Comment[]> = {};
   for (const rel of rels) {
     const r = byId.get(rel.sourceInstanceId);
@@ -84,13 +105,17 @@ export function addComment(
   containerId?: string | null
 ): void {
   const input = { fieldValues: { comment_text: text } };
-  const v = typeVersion(repo, COMMENT_TYPE_ID);
+  // Write the SemanticOps pair when installed, else the essay pair.
+  const [typeId, relationType] = installed(repo).so
+    ? [SO_COMMENT_TYPE_ID, SO_COMMENTS_ON]
+    : [COMMENT_TYPE_ID, COMMENTS_ON];
+  const v = typeVersion(repo, typeId);
   const rec = containerId
-    ? createRecordInContainer(repo, containerId, COMMENT_TYPE_ID, v, input)
-    : createRecord(repo, COMMENT_TYPE_ID, v, input);
+    ? createRecordInContainer(repo, containerId, typeId, v, input)
+    : createRecord(repo, typeId, v, input);
   try {
     createRelation(repo, {
-      relationType: COMMENTS_ON,
+      relationType,
       sourceInstanceId: rec.instanceId,
       targetInstanceId: targetId,
     });

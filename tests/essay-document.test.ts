@@ -255,14 +255,17 @@ describe("essay-document", () => {
     m.listRecords.mockImplementation((r: unknown, f: { typeName?: string }) =>
       f.typeName === "comment" ? [c("b", "2"), c("a", "1")] : base(r, f)
     );
-    m.listRelations.mockReturnValue([rel("r1", "b"), rel("r2", "a")]);
+    // the engine filters by relationType; loadComments now asks once per package
+    const only = (rels: unknown[]) => (_r: unknown, f: { relationType?: string }) =>
+      f.relationType === "com.mudemocracy.essay/comments-on" ? rels : [];
+    m.listRelations.mockImplementation(only([rel("r1", "b"), rel("r2", "a")]));
     const repo = { write_epoch: () => 0 };
     const commentReads = () =>
       m.listRecords.mock.calls.filter(([, f]) => f.typeName === "comment").length;
     expect(loadEssay(repo as never, "E").comments.p1.map((x) => x.id)).toEqual(["a", "b"]);
     loadEssay(repo as never, "E");
     expect(commentReads()).toBe(1);
-    m.listRelations.mockReturnValue([rel("r1", "b"), rel("r2", "a"), rel("r3", "a")]);
+    m.listRelations.mockImplementation(only([rel("r1", "b"), rel("r2", "a"), rel("r3", "a")]));
     loadEssay(repo as never, "E");
     expect(commentReads()).toBe(2);
   });

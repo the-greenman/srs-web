@@ -1,6 +1,6 @@
 import { STRUCTURAL_CATEGORIES } from "$lib/annotations.js";
 import type { Attachment, FileAttachment, Related } from "$lib/annotations.js";
-import { COMMENTS_ON, loadComments } from "$lib/comments.js";
+import { COMMENTS_ON, isCommentsOn, loadComments } from "$lib/comments.js";
 import type { Comment } from "$lib/comments.js";
 import type { AttachFile } from "$lib/components/attach-check.js";
 /**
@@ -173,7 +173,7 @@ const toAttachment =
   (labels: Map<string, string>) =>
   (r: ContextRelation): Attachment | null => {
     const n = r.neighbour;
-    if (!n || r.relationType === COMMENTS_ON) return null; // comments have their own thread
+    if (!n || isCommentsOn(r.relationType)) return null; // comments have their own thread
     if (n.kind === "record" && n.typeId === PARAGRAPH_TYPE_ID) return null; // shown as `related`, not an attachment
     const outgoing = r.direction === "out";
     const label = (outgoing ? r.targetLabel : r.sourceLabel) ?? "";
