@@ -228,3 +228,12 @@
   width: var(--toast-width);
   margin: var(--space-xs) var(--space-sm);
 }
+
+/* Landing specimens (#534): the page frame drawn in place, not at full viewport height. */
+.sg__landing {
+  border: var(--rule);
+  overflow: hidden;
+}
+.sg__landing .landing {
+  min-height: 0;
+}

@@ -37,7 +37,8 @@ const EDITOR_FILES = [
   "src/lib/editor/SectionForm.svelte",
   "src/lib/editor/BlueprintDocumentEditor.svelte",
 ];
-const svelte = [...svelteIn("src/lib/components"), ...SHELL_FILES, ...EDITOR_FILES];
+/** The app root carries no page-local colour (#534: the landing moved onto components). */
+const svelte = [...svelteIn("src/lib/components"), ...SHELL_FILES, ...EDITOR_FILES, "src/App.svelte"];
 /** Files migrated onto the Modal and Button primitives (#428): no one-off button or dialog classes. */
 const MIGRATED = [
   ...EDITOR_FILES,

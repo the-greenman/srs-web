@@ -10,10 +10,14 @@
     ActionBar, ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, MarkdownHelp, MarkdownText, MethodBoard, AgentPanel, McpConnection, Panel, ProblemCard, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
-    TagChip, Textarea, Notice, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
+    TagChip, Textarea, Notice, SectionHeader, SourceRow, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
   } from "$lib/components";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
+  import Landing from "$lib/components/Landing.svelte";
+  import LandingFrame from "$lib/components/LandingFrame.svelte";
+  import FolderOpen from "@lucide/svelte/icons/folder-open";
+  import GitBranch from "@lucide/svelte/icons/git-branch";
   import SourceChooser from "$lib/components/SourceChooser.svelte";
   import LiveRegions from "$lib/components/LiveRegions.svelte";
   import { notify } from "$lib/notices.svelte";
@@ -47,6 +51,7 @@
     ["records", "Records and map"],
     ["method", "Method board"],
     ["chooser", "Source chooser"],
+    ["landing", "Landing"],
     ["notices", "Notices"],
     ["attachments", "Attachments"],
     ["forms", "Form controls"],
@@ -568,17 +573,60 @@
 
   <section id="chooser">
     <h2>Source chooser</h2>
-    <p class="sg__note">The landing options: this device and folders first, cloud providers (unconfigured here), then "From a URL" for a read-only link.
+    <p class="sg__note">The "Open" column: one ink primary, then hairline source rows (cloud providers unconfigured here), then a link row for a read-only open.
       The input is a native <code>type=url</code>; the button stays disabled until it holds a link, and a refusal shows as an error Notice below.</p>
     <SourceChooser
-      providers={{
-        dropbox: { configured: false, label: "Dropbox", authenticate: noop, open: noop },
-        googleDrive: { configured: false, label: "Google Drive", authenticate: noop, open: noop },
-        github: { configured: false, label: "GitHub", authenticate: noop, open: noop },
-      } as never}
+      providers={fx.landingProviders(false)}
       onOpen={async () => {}}
       onOpenUrl={async () => { throw new Error("Only https:// links can be opened."); }}
     />
+  </section>
+
+  <section id="landing">
+    <h2>Landing</h2>
+    <p class="sg__note">The idle page (#534), after the semanticops.com design language: hairline header, left-aligned hero, two numbered sections
+      that stack below 640px. Handlers are no-ops. A skin sets <code>--landing-ground-image</code> to <code>none</code> to drop the dot grid.</p>
+    <h3>Section header</h3>
+    <div class="stack"><SectionHeader number="01" label="Open" /><SectionHeader number="02" label="Start new" /></div>
+    <h3>Source row</h3>
+    <div class="stack" data-testid="sg-source-rows">
+      <SourceRow icon={FolderOpen} label="Folder on this device" onclick={noop} />
+      <SourceRow icon={FolderOpen} label="Open a file" hint=".srs · .srsj" onclick={noop} />
+      <SourceRow icon={GitBranch} label="GitHub" busy busyLabel="Connecting…" onclick={noop} />
+      <SourceRow icon={GitBranch} label="GitHub" unavailable title="GitHub is not configured" onclick={noop} />
+      <SourceRow as="label" icon={FolderOpen} label="Folder (file input)" />
+    </div>
+    <h3>Landing frame (boot, error and migrate screens)</h3>
+    <div class="sg__landing" data-testid="sg-landing-frame">
+      <LandingFrame title="Update needed" standfirst="This repository uses an older SRS data model and cannot be opened as-is.">
+        <p class="landing__status">Migrating updates the working copy. Nothing is saved until you press Save.</p>
+        <div class="landing__actions"><Button variant="primary" onclick={noop}>Migrate and open</Button><Button onclick={noop}>Cancel</Button></div>
+      </LandingFrame>
+    </div>
+    <h3>Landing</h3>
+    <div class="sg__landing" data-testid="sg-landing-plain">
+      <Landing providers={fx.landingProviders(true)} onOpen={async () => {}} onOpenUrl={async () => {}} onCreate={async () => {}} />
+    </div>
+    <h3>Restore pending</h3>
+    <div class="sg__landing" data-testid="sg-landing-restore">
+      <Landing providers={fx.landingProviders(true)} onOpen={async () => {}} onOpenUrl={async () => {}} onCreate={async () => {}}>
+        {#snippet notices()}
+          <Notice data-specimen kind="info">Unsaved session: <strong>R1 Walkthrough Org</strong>
+            <div class="landing__actions"><Button size="sm" variant="primary" onclick={noop}>Restore session</Button><Button size="sm" onclick={noop}>Discard</Button></div>
+          </Notice>
+        {/snippet}
+      </Landing>
+    </div>
+    <h3>Error</h3>
+    <div class="sg__landing" data-testid="sg-landing-error">
+      <Landing providers={fx.landingProviders(true)} onOpen={async () => {}} onOpenUrl={async () => {}} onCreate={async () => {}}>
+        {#snippet notices()}<Notice data-specimen kind="error">Could not open the file: it is not an SRS archive.</Notice>{/snippet}
+      </Landing>
+    </div>
+    <h3>No providers configured</h3>
+    <div class="sg__landing" data-testid="sg-landing-unconfigured">
+      <Landing providers={fx.landingProviders(false)} onOpen={async () => {}} onCreate={async () => {}} />
+    </div>
   </section>
 
   <section id="notices">
