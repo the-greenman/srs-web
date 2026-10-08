@@ -1,0 +1,68 @@
+/* ============================================================================
+   component: source-row (.source-row) — a full-width hairline row that opens one source (#534)
+   A <button> or a <label> wrapping a hidden file input. States: ready, busy (.is-busy),
+   not set up (.is-unavailable: muted, disabled, mono tag). Tokens --source-row-*;
+   parts icon label hint tag arrow.
+   ========================================================================== */
+.source-row {
+  display: flex;
+  align-items: center;
+  gap: var(--source-row-gap);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--source-row-pad);
+  border: 0;
+  border-bottom: var(--source-row-rule);
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--size-base);
+  text-align: left;
+  cursor: pointer;
+}
+.source-row:hover:not(.is-disabled) {
+  background: var(--source-row-hover-bg);
+}
+.source-row:focus-visible,
+.source-row:focus-within {
+  outline: var(--focus-ring);
+  outline-offset: calc(-1 * var(--focus-offset));
+}
+.source-row.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.source-row.is-unavailable {
+  color: var(--source-row-muted-fg);
+  opacity: 1;
+}
+.source-row [data-part="icon"] {
+  display: inline-flex;
+  flex: none;
+  color: var(--color-muted-strong);
+}
+.source-row [data-part="label"] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.source-row [data-part="hint"],
+.source-row [data-part="tag"] {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--source-row-hint-fg);
+}
+.source-row [data-part="arrow"] {
+  display: inline-flex;
+  flex: none;
+  color: var(--color-muted);
+}
+.source-row input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}

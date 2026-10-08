@@ -1,0 +1,19 @@
+/* ============================================================================
+   component: section-header (.section-header) — "01 Open" and a hairline filling the row (#534)
+   ========================================================================== */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--section-header-gap);
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--section-header-fg);
+}
+.section-header__rule {
+  flex: 1 1 auto;
+  border-top: var(--section-header-rule);
+}

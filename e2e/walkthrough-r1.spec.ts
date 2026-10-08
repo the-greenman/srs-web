@@ -251,10 +251,10 @@ test.describe("R1 release walkthrough (#54)", () => {
       await page.reload();
       await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 10000 });
 
-      const banner = page.locator(".restore-banner");
+      const banner = page.getByTestId("restore-notice");
       await expect(banner).toBeVisible({ timeout: 5000 });
       await expect(banner).toContainText("R1 Walkthrough Org");
-      await banner.locator(".restore-banner__restore").click();
+      await banner.getByTestId("restore-session").click();
 
       await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
       await openPackageEditor(page, "governance");

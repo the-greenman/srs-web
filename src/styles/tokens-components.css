@@ -169,4 +169,34 @@
   --toast-width: min(26rem, 92vw);
   --toast-offset-bottom: var(--space-sm);
   --toast-gap: var(--space-xs);
+
+  /* Landing (#534): the front page frame, its numbered sections and source rows. A skin sets
+     --landing-ground-image to none to drop the quiet dot grid. */
+  --landing-ground: var(--color-bg);
+  --landing-ground-image: radial-gradient(var(--color-line-soft) 1px, transparent 1px);
+  --landing-ground-size: 24px 24px;
+  --landing-max: 72rem;
+  --landing-gutter: var(--space-gutter);
+  --landing-column-gap: var(--space-lg);
+  --landing-section-gap: var(--space-md);
+  --landing-header-rule: var(--rule);
+  --landing-header-pad: var(--space-sm);
+  --landing-hero-pad: var(--space-lg);
+  --landing-hero-gap: var(--space-sm);
+  --landing-title-max: 16ch;
+  --landing-standfirst-max: 40rem;
+  --landing-eyebrow-fg: var(--color-muted);
+  --landing-link-fg: var(--color-muted-strong);
+  --section-header-gap: var(--space-sm);
+  --section-header-rule: var(--rule);
+  --section-header-fg: var(--color-muted-strong);
+  --source-row-pad: var(--space-sm) var(--space-xs);
+  --source-row-gap: var(--space-sm);
+  --source-row-rule: var(--rule-soft);
+  --source-row-hover-bg: var(--color-hover);
+  --source-row-muted-fg: var(--color-muted);
+  --source-row-hint-fg: var(--color-muted);
+  --source-chooser-gap: var(--space-sm);
+  --create-panel-gap: var(--space-sm);
+  --create-panel-choice-pad: var(--space-sm) var(--space-xs);
 }

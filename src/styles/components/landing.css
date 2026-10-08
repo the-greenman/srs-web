@@ -1,0 +1,135 @@
+/* ============================================================================
+   component: landing (.landing) — the front page frame (Landing.svelte, LandingFrame.svelte, #534)
+   Left-aligned editorial layout after semanticops.com: a hairline header, a display headline with a
+   mono eyebrow and a standfirst, then numbered sections. Tokens --landing-*; parts
+   header link hero notices body.
+   ========================================================================== */
+.landing {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--landing-ground);
+  background-image: var(--landing-ground-image);
+  background-size: var(--landing-ground-size);
+  color: var(--color-text);
+}
+
+.landing__inner {
+  width: 100%;
+  max-width: var(--landing-max);
+  margin-inline: auto;
+  padding-inline: var(--landing-gutter);
+  box-sizing: border-box;
+}
+
+.landing__header {
+  border-bottom: var(--landing-header-rule);
+  background: var(--landing-ground);
+}
+.landing__header .landing__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding-block: var(--landing-header-pad);
+}
+.landing__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.landing__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--landing-link-fg);
+  text-decoration: none;
+}
+.landing__link:hover {
+  color: var(--color-text-strong);
+}
+.landing__link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.landing__hero {
+  display: grid;
+  gap: var(--landing-hero-gap);
+  padding-block: var(--landing-hero-pad) var(--landing-section-gap);
+}
+.landing__eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--landing-eyebrow-fg);
+}
+.landing__title {
+  margin: 0;
+  max-width: var(--landing-title-max);
+  font-family: var(--font-sans);
+  font-size: var(--size-display);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-strong);
+}
+.landing__standfirst {
+  margin: 0;
+  max-width: var(--landing-standfirst-max);
+  font-size: var(--size-standfirst);
+  line-height: var(--leading-snug);
+  color: var(--color-muted-strong);
+}
+
+.landing__notices {
+  display: grid;
+  gap: var(--space-xs);
+  padding-bottom: var(--landing-section-gap);
+}
+.landing__notices:empty {
+  display: none;
+}
+.landing__notices .notice {
+  margin: 0;
+}
+.landing__notices .notice__body > * + * {
+  margin-top: var(--space-xs);
+}
+
+.landing__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--landing-column-gap);
+  align-items: start;
+  padding-bottom: var(--landing-hero-pad);
+}
+.landing__section {
+  display: grid;
+  gap: var(--landing-section-gap);
+  min-width: 0;
+}
+
+/* bp: form */
+@media (max-width: 640px) {
+  .landing__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.landing__status {
+  margin: 0;
+  color: var(--color-muted-strong);
+}
+.landing__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  padding-block: var(--space-xs);
+}

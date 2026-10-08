@@ -22,9 +22,9 @@ test("recovery copy survives an attachment and restores", async ({ page }) => {
   await waitForRecoveryCopy(page);
 
   await page.reload();
-  const banner = page.locator(".restore-banner");
+  const banner = page.getByTestId("restore-notice");
   await expect(banner).toBeVisible({ timeout: 10000 });
-  await banner.locator(".restore-banner__restore").click();
+  await banner.getByTestId("restore-session").click();
   await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
   await openPackageEditor(page, "governance");
   await expect(page.getByTestId("attachment-item")).toHaveCount(1);

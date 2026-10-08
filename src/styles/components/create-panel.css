@@ -1,0 +1,53 @@
+/* ============================================================================
+   component: create-panel (.create-panel) — the "Start new" column of the landing (#534)
+   Name, the editor choices as hairline checkbox rows with descriptions, Create. Tokens --create-panel-*.
+   ========================================================================== */
+.create-panel {
+  display: grid;
+  gap: var(--create-panel-gap);
+  min-width: 0;
+}
+.create-panel__editors {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: var(--source-row-rule);
+  min-width: 0;
+}
+.create-panel__editors legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.create-panel__editors .checkbox {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--create-panel-choice-pad);
+  border-bottom: var(--source-row-rule);
+}
+.create-panel__editors .checkbox input {
+  margin-top: var(--space-2xs);
+}
+.create-panel__editors [data-part="text"] {
+  display: grid;
+  gap: var(--space-2xs);
+}
+.create-panel__editors [data-part="description"] {
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+}
+.create-panel__help {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.create-panel > .btn {
+  justify-self: start;
+}

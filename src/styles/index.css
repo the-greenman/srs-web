@@ -82,6 +82,11 @@
 @import url("./components/margin.css") layer(components);
 @import url("./components/agent-activity.css") layer(components);
 @import url("./components/method.css") layer(components);
+@import url("./components/landing.css") layer(components);
+@import url("./components/section-header.css") layer(components);
+@import url("./components/source-row.css") layer(components);
+@import url("./components/source-chooser.css") layer(components);
+@import url("./components/create-panel.css") layer(components);
 @import url("./components/styleguide.css") layer(components);
 
 /* Utilities — last word in the cascade */
