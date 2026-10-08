@@ -115,3 +115,21 @@ describe("affirmed forks", () => {
     expect(b.problems.find((p) => p.id === "f1")).toMatchObject({ status: "affirmed", cluster: { id: "c1" } });
   });
 });
+
+describe("commentCount", () => {
+  const cm = (id: string) => ({ id, text: "", createdAt: "" });
+  const board = buildBoard({
+    records: [rec("a", PROBLEM_TYPE_ID, { title: "A" }), rec("b", PROBLEM_TYPE_ID, { title: "B" }), rec("c", PROBLEM_TYPE_ID, { title: "C" }), rec("b2", PROBLEM_TYPE_ID, { title: "B" })],
+    relations: [rel("derived-from", "b2", "b")],
+    containers: { suggestions: "S", affirmed: "A" },
+    members: { suggestions: ["a", "b", "c"], affirmed: ["b2"] },
+    // c1 is on the suggestion b and its affirmed fork b2 (both packages may link it twice)
+    comments: { a: [cm("c0")], b: [cm("c1")], b2: [cm("c1"), cm("c1"), cm("c2")] },
+  });
+  const count = (id: string) => board.problems.find((p) => p.id === id)?.commentCount;
+  it("counts distinct comments per record, 0 when none", () => {
+    expect(count("a")).toBe(1);
+    expect(count("b2")).toBe(2);
+    expect(count("c")).toBe(0);
+  });
+});

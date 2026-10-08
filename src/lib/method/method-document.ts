@@ -1,3 +1,5 @@
+import { loadComments } from "$lib/comments.js";
+import type { Comment } from "$lib/comments.js";
 /**
  * Method board reads (srs-web#526): a thin composition of srs-client calls over the
  * com.semanticops.method package. The engine owns records, relations and membership; this file
@@ -11,6 +13,7 @@ import {
   listContainers,
   listRecords,
   listRelations,
+  listTypes,
   removeContainerMember,
 } from "$lib/srs-client.js";
 import type {
@@ -67,6 +70,8 @@ export interface MethodProblem {
   createdBy?: Actor;
   /** null: in none of the decision containers. */
   status: ProblemStatus | null;
+  /** Distinct comments on this record (comments.ts, either package); 0 when none or not installed. */
+  commentCount: number;
 }
 export interface MethodCluster {
   id: string;
@@ -90,6 +95,8 @@ export interface BoardInput {
   relations: SrsRelation[];
   containers: MethodContainers;
   members: Partial<Record<ContainerKey, string[]>>;
+  /** Comments by target instance, from `loadComments`. */
+  comments?: Record<string, Comment[]>;
 }
 
 const NO_DOMAIN = "No domain";
@@ -176,6 +183,7 @@ export function buildBoard(input: BoardInput): MethodModel {
         sources: list(f.source_ref),
         createdBy: r.createdBy,
         status: status(r.instanceId),
+        commentCount: new Set((input.comments?.[r.instanceId] ?? []).map((c) => c.id)).size,
       };
     })
     .sort(
@@ -231,6 +239,7 @@ export function loadMethod(repo: SrsRepository): MethodModel {
     ],
     containers,
     members,
+    comments: loadComments(repo, listTypes(repo)),
   });
   boardCache.set(repo, { epoch, value });
   return value;

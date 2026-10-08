@@ -3,44 +3,50 @@
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
     "container": {
-      "containerId": "b5778a3b-d299-497e-9a8c-8ea1adf4f484",
-      "identityInstanceId": "aafa0df2-84ef-4d54-be9c-dead7e2f0f22",
+      "containerId": "948db2d7-9a41-4436-9287-13327a6fb5e7",
+      "identityInstanceId": "a6e4440a-b0d9-43dc-87d0-06d8e697f2e4",
       "memberInstanceIds": [
         {
-          "instanceId": "aafa0df2-84ef-4d54-be9c-dead7e2f0f22"
+          "instanceId": "a6e4440a-b0d9-43dc-87d0-06d8e697f2e4"
         }
       ],
       "title": "Method fixture"
     },
-    "createdAt": "2026-10-08T15:26:59.237630938+00:00",
+    "createdAt": "2026-10-08T17:41:01.513685017+00:00",
     "dataModelRevision": 9,
     "namespace": "com.semanticops.programme",
-    "repositoryId": "b5778a3b-d299-497e-9a8c-8ea1adf4f484",
+    "packageRefs": [
+      {
+        "mode": "local",
+        "path": "packages/comments"
+      }
+    ],
+    "repositoryId": "948db2d7-9a41-4436-9287-13327a6fb5e7",
     "srsVersion": "2.0-draft",
     "title": "Method fixture"
   },
   "data": {
-    "containers/affirmed-bcc231a9.json": {
-      "containerId": "bcc231a9-f5f5-4081-b5e6-349e3dd1f455",
+    "containers/affirmed-863e3c83.json": {
+      "containerId": "863e3c83-a251-4efd-b8ad-fc4d2887a278",
       "memberInstanceIds": [],
       "title": "Affirmed"
     },
-    "containers/set-aside-a612c8d2.json": {
-      "containerId": "a612c8d2-914e-4b5b-aa23-ede9eecb0498",
+    "containers/set-aside-161bbeff.json": {
+      "containerId": "161bbeff-8536-47b7-8400-c31ebfee4b67",
       "memberInstanceIds": [],
       "title": "Set aside"
     },
-    "containers/suggestions-f3e4d307.json": {
-      "containerId": "f3e4d307-e935-4c5d-a7d1-25b1b13c5d14",
+    "containers/suggestions-eb513cf7.json": {
+      "containerId": "eb513cf7-16b0-4ddc-b77d-beb089b629cf",
       "memberInstanceIds": [
         {
-          "instanceId": "98acd4ba-b4ff-429a-98a9-37ff8e2043fd"
+          "instanceId": "504c5a88-d2cb-4618-8992-16e5e6f52dfb"
         },
         {
-          "instanceId": "2b6e4718-a08d-4c35-b148-1870fe337bdb"
+          "instanceId": "cc4ab221-f24b-40f8-8dcb-0cd12d70a774"
         },
         {
-          "instanceId": "d3e2451f-92d0-4490-baf4-50a7fd3a54cd"
+          "instanceId": "216ec53a-75a4-4420-97ab-20f970df6b05"
         }
       ],
       "title": "Suggestions"
@@ -1334,9 +1340,88 @@
       ],
       "version": 1
     },
-    "records/tier-2/cluster-0de0196f.json": {
+    "packages/comments/fields/commenttext-d34c8983.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Plain markdown text of one comment, and the comment identity (its label is the start of this text). Humans and agents may write comments. Create the comment as a record, then relate it comments-on (comment to the record it addresses). A comment never edits its target. Authorship is the engine-stamped createdBy (RFC-046); never write an author here."
+      },
+      "createdAt": "2026-10-08T15:16:01.308941412+00:00",
+      "description": "The text of a comment on a record.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "d34c8983-3b82-49b0-ac59-acd7ead5180a",
+      "name": "comment_text",
+      "namespace": "com.semanticops.comments",
+      "version": 1
+    },
+    "packages/comments/package.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
+      "blueprints": [],
+      "compositions": [],
+      "createdAt": "2026-10-08T17:41:01.226062728+00:00",
+      "description": "",
+      "fields": [
+        "fields/commenttext-d34c8983.json"
+      ],
+      "id": "9092f84e-fb94-4f81-a523-0f7ef5b02194",
+      "lifecycles": [],
+      "name": "comments",
+      "namespace": "com.semanticops.comments",
+      "protocols": [],
+      "relationTypes": [
+        "relation-types/comsemanticopscommentscomments-on-94dc4240.json"
+      ],
+      "status": "active",
+      "themes": [],
+      "title": "comments",
+      "types": [
+        "types/comment-11cd0a5f.json"
+      ],
+      "version": "1.0.0",
+      "views": [],
+      "vocabularies": []
+    },
+    "packages/comments/relation-types/comsemanticopscommentscomments-on-94dc4240.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "Comment comments on Target",
+      "category": "association",
+      "createdAt": "2026-10-08T15:16:01.452332087+00:00",
+      "description": "Comment comments on any record (comment -> target).",
+      "id": "94dc4240-84d2-49c2-863a-6af431cd3fcb",
+      "irreflexive": true,
+      "key": "com.semanticops.comments/comments-on",
+      "label": "comments on",
+      "namespace": "com.semanticops.comments",
+      "version": 1
+    },
+    "packages/comments/types/comment-11cd0a5f.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "A comment is feedback on exactly one record, linked to it by a com.semanticops.comments/comments-on relation (comment to target). It never edits the target. Create the comment record, then relate it comments-on. Authorship is the engine-stamped createdBy (RFC-046), never a field; thread order is createdAt. Its label is the start of its text."
+      },
+      "createdAt": "2026-10-08T15:16:01.381068924+00:00",
+      "description": "Feedback on one record.",
+      "fields": [
+        {
+          "displayLabel": "Body",
+          "fieldId": "d34c8983-3b82-49b0-ac59-acd7ead5180a",
+          "order": 0,
+          "required": true
+        }
+      ],
+      "id": "11cd0a5f-8c3f-4ec2-a055-5b9f56c5b0bc",
+      "identityFieldId": "d34c8983-3b82-49b0-ac59-acd7ead5180a",
+      "name": "comment",
+      "namespace": "com.semanticops.comments",
+      "version": 1
+    },
+    "records/tier-2/cluster-ceef47e6.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-08T15:26:57.728308220+00:00",
+      "createdAt": "2026-10-08T17:40:59.697833699+00:00",
       "createdBy": {
         "id": "agent:method-scout",
         "kind": "ai",
@@ -1346,16 +1431,34 @@
         "title": "Leaving the editor",
         "description": "Work cannot come back once it leaves."
       },
-      "instanceId": "0de0196f-90c2-459b-a9a3-bf83e9b86b82",
+      "instanceId": "ceef47e6-27bc-4eb9-82d2-666861cc0af3",
       "typeId": "c6a8eab1-25bf-462c-8d48-6ea47c22f724",
       "typeName": "cluster",
       "typeNamespace": "com.semanticops.method",
       "typeVersion": 1,
-      "updatedAt": "2026-10-08T15:26:57.728319562+00:00"
+      "updatedAt": "2026-10-08T17:40:59.697843974+00:00"
     },
-    "records/tier-2/domain-67bc2b63.json": {
+    "records/tier-2/comment-5e10a385.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-08T15:26:57.659086794+00:00",
+      "createdAt": "2026-10-08T17:41:01.235591027+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "fieldValues": {
+        "comment_text": "Which queue, exactly?"
+      },
+      "instanceId": "5e10a385-f84a-4367-99eb-4b0b20234eb2",
+      "typeId": "11cd0a5f-8c3f-4ec2-a055-5b9f56c5b0bc",
+      "typeName": "comment",
+      "typeNamespace": "com.semanticops.comments",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-08T17:41:01.235595333+00:00"
+    },
+    "records/tier-2/domain-ba6f42cd.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-08T17:40:59.621560740+00:00",
       "createdBy": {
         "id": "agent:method-scout",
         "kind": "ai",
@@ -1365,16 +1468,16 @@
         "title": "Writing and review",
         "purpose": "Writing in the editor and reviewing what agents suggest."
       },
-      "instanceId": "67bc2b63-7ea9-4529-b163-6cf1d767b1f0",
+      "instanceId": "ba6f42cd-4a11-415b-9bd7-34ca840d9404",
       "typeId": "6e4d0e77-b30a-47d5-a686-5a595a077d4c",
       "typeName": "domain",
       "typeNamespace": "com.semanticops.method",
       "typeVersion": 1,
-      "updatedAt": "2026-10-08T15:26:57.659092276+00:00"
+      "updatedAt": "2026-10-08T17:40:59.621574168+00:00"
     },
-    "records/tier-2/persona-525f5fcc.json": {
+    "records/tier-2/persona-5ff8e122.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-08T15:26:57.869062570+00:00",
+      "createdAt": "2026-10-08T17:40:59.855900428+00:00",
       "createdBy": {
         "id": "agent:method-scout",
         "kind": "ai",
@@ -1384,16 +1487,16 @@
         "title": "Writer",
         "summary": "Writes essays in the editor."
       },
-      "instanceId": "525f5fcc-c045-4686-a258-046d51229842",
+      "instanceId": "5ff8e122-215b-4b75-b13b-835487965afa",
       "typeId": "c57aafdd-d002-4ee6-9a2b-ff3805107580",
       "typeName": "persona",
       "typeNamespace": "com.semanticops.method",
       "typeVersion": 1,
-      "updatedAt": "2026-10-08T15:26:57.869066292+00:00"
+      "updatedAt": "2026-10-08T17:40:59.855904527+00:00"
     },
-    "records/tier-2/persona-ed8494e3.json": {
+    "records/tier-2/persona-fa6da632.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-08T15:26:57.799137641+00:00",
+      "createdAt": "2026-10-08T17:40:59.772463269+00:00",
       "createdBy": {
         "id": "agent:method-scout",
         "kind": "ai",
@@ -1403,16 +1506,16 @@
         "title": "Owner",
         "summary": "Decides what the method affirms."
       },
-      "instanceId": "ed8494e3-dbfc-47b5-92ca-c4630bcaa97b",
+      "instanceId": "fa6da632-0488-4f0b-82fd-d6f946b68394",
       "typeId": "c57aafdd-d002-4ee6-9a2b-ff3805107580",
       "typeName": "persona",
       "typeNamespace": "com.semanticops.method",
       "typeVersion": 1,
-      "updatedAt": "2026-10-08T15:26:57.799142521+00:00"
+      "updatedAt": "2026-10-08T17:40:59.772470180+00:00"
     },
-    "records/tier-2/pole-6639459b.json": {
+    "records/tier-2/pole-4656ec53.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-08T15:26:58.012334646+00:00",
+      "createdAt": "2026-10-08T17:41:00.010440434+00:00",
       "createdBy": {
         "id": "agent:method-scout",
         "kind": "ai",
@@ -1422,41 +1525,37 @@
         "title": "Testimony",
         "looks_like": "Claims carry who made them."
       },
-      "instanceId": "6639459b-182d-4a0a-a567-688e1e6706a8",
+      "instanceId": "4656ec53-637a-4367-b858-c48a016149a1",
       "typeId": "e3b62684-70d8-403d-ac8f-164fcb4b60a9",
       "typeName": "pole",
       "typeNamespace": "com.semanticops.method",
       "typeVersion": 1,
-      "updatedAt": "2026-10-08T15:26:58.012340902+00:00"
+      "updatedAt": "2026-10-08T17:41:00.010445274+00:00"
     },
-    "records/tier-2/problem-2b6e4718.json": {
+    "records/tier-2/problem-216ec53a.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-08T15:26:58.287067391+00:00",
+      "createdAt": "2026-10-08T17:41:00.375751707+00:00",
       "createdBy": {
-        "id": "agent:rebel",
+        "id": "agent:analyst",
         "kind": "ai",
-        "name": "Rebel scout"
+        "name": "Analyst scout"
       },
       "fieldValues": {
-        "problem_id": "SP-2",
-        "title": "Suggestions pile up unseen",
-        "statement": "Agent suggestions wait in a queue nobody reads.",
-        "kind": "consequence",
-        "source_ref": [
-          "https://example.org/notes"
-        ],
-        "imbalance": "missing"
+        "problem_id": "SP-3",
+        "title": "A brief replaces reading the source",
+        "statement": "Agents answer from the brief alone.",
+        "kind": "belief"
       },
-      "instanceId": "2b6e4718-a08d-4c35-b148-1870fe337bdb",
+      "instanceId": "216ec53a-75a4-4420-97ab-20f970df6b05",
       "typeId": "b7d15218-cee6-4a58-8e2a-a4cb7f6ccf06",
       "typeName": "problem",
       "typeNamespace": "com.semanticops.method",
       "typeVersion": 1,
-      "updatedAt": "2026-10-08T15:26:58.287076873+00:00"
+      "updatedAt": "2026-10-08T17:41:00.375756058+00:00"
     },
-    "records/tier-2/problem-98acd4ba.json": {
+    "records/tier-2/problem-504c5a88.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-08T15:26:58.217144740+00:00",
+      "createdAt": "2026-10-08T17:41:00.224045324+00:00",
       "createdBy": {
         "id": "agent:rebel",
         "kind": "ai",
@@ -1472,51 +1571,55 @@
           "muDemocracy.org#36"
         ]
       },
-      "instanceId": "98acd4ba-b4ff-429a-98a9-37ff8e2043fd",
+      "instanceId": "504c5a88-d2cb-4618-8992-16e5e6f52dfb",
       "typeId": "b7d15218-cee6-4a58-8e2a-a4cb7f6ccf06",
       "typeName": "problem",
       "typeNamespace": "com.semanticops.method",
       "typeVersion": 1,
-      "updatedAt": "2026-10-08T15:26:58.217148427+00:00"
+      "updatedAt": "2026-10-08T17:41:00.224049826+00:00"
     },
-    "records/tier-2/problem-d3e2451f.json": {
+    "records/tier-2/problem-cc4ab221.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-08T15:26:58.366971491+00:00",
+      "createdAt": "2026-10-08T17:41:00.298758679+00:00",
       "createdBy": {
-        "id": "agent:analyst",
+        "id": "agent:rebel",
         "kind": "ai",
-        "name": "Analyst scout"
+        "name": "Rebel scout"
       },
       "fieldValues": {
-        "problem_id": "SP-3",
-        "title": "A brief replaces reading the source",
-        "statement": "Agents answer from the brief alone.",
-        "kind": "belief"
+        "problem_id": "SP-2",
+        "title": "Suggestions pile up unseen",
+        "statement": "Agent suggestions wait in a queue nobody reads.",
+        "kind": "consequence",
+        "source_ref": [
+          "https://example.org/notes"
+        ],
+        "imbalance": "missing"
       },
-      "instanceId": "d3e2451f-92d0-4490-baf4-50a7fd3a54cd",
+      "instanceId": "cc4ab221-f24b-40f8-8dcb-0cd12d70a774",
       "typeId": "b7d15218-cee6-4a58-8e2a-a4cb7f6ccf06",
       "typeName": "problem",
       "typeNamespace": "com.semanticops.method",
       "typeVersion": 1,
-      "updatedAt": "2026-10-08T15:26:58.366979376+00:00"
+      "updatedAt": "2026-10-08T17:41:00.298762576+00:00"
     },
-    "records/tier-2/purpose-aafa0df2.json": {
+    "records/tier-2/purpose-a6e4440a.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-08T15:26:57.587406002+00:00",
+      "createdAt": "2026-10-08T17:40:59.547313914+00:00",
       "fieldValues": {
         "statement": "",
         "title": "Method fixture"
       },
-      "instanceId": "aafa0df2-84ef-4d54-be9c-dead7e2f0f22",
+      "instanceId": "a6e4440a-b0d9-43dc-87d0-06d8e697f2e4",
       "typeId": "3c000001-0000-4000-a000-000000000001",
       "typeName": "purpose",
       "typeNamespace": "com.semanticops.core",
       "typeVersion": 1,
-      "updatedAt": "2026-10-08T15:26:57.587406002+00:00"
+      "updatedAt": "2026-10-08T17:40:59.547313914+00:00"
     },
-    "records/tier-2/tension-33e671ba.json": {
+    "records/tier-2/tension-c7bf7e01.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-10-08T15:26:57.941308523+00:00",
+      "createdAt": "2026-10-08T17:40:59.936805750+00:00",
       "createdBy": {
         "id": "agent:method-scout",
         "kind": "ai",
@@ -1525,129 +1628,142 @@
       "fieldValues": {
         "title": "Testimony and authority"
       },
-      "instanceId": "33e671ba-10b5-4f93-aa47-3e593d70db8e",
+      "instanceId": "c7bf7e01-c78e-4f5b-a121-476c1dba8fd5",
       "typeId": "91bd6f8a-417c-4728-87d2-26991e451221",
       "typeName": "tension",
       "typeNamespace": "com.semanticops.method",
       "typeVersion": 1,
-      "updatedAt": "2026-10-08T15:26:57.941311374+00:00"
+      "updatedAt": "2026-10-08T17:40:59.936810347+00:00"
     },
-    "relations/2a69fa6c-52ec-4714-9211-f9dd19ae97d3.json": {
+    "relations/1f2b4cac-86ee-4a19-927b-3475959541b6.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-10-08T15:26:58.708067289+00:00",
+      "createdAt": "2026-10-08T17:41:00.443347973+00:00",
       "createdBy": {
         "id": "agent:analyst",
         "kind": "ai",
         "name": "Analyst scout"
       },
-      "relationId": "2a69fa6c-52ec-4714-9211-f9dd19ae97d3",
+      "relationId": "1f2b4cac-86ee-4a19-927b-3475959541b6",
+      "relationType": "contains",
+      "sourceInstanceId": "ceef47e6-27bc-4eb9-82d2-666861cc0af3",
+      "targetInstanceId": "504c5a88-d2cb-4618-8992-16e5e6f52dfb"
+    },
+    "relations/3a49dc7c-e282-47a2-8f5c-854229c541ac.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:01.305670136+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "relationId": "3a49dc7c-e282-47a2-8f5c-854229c541ac",
+      "relationType": "com.semanticops.comments/comments-on",
+      "sourceInstanceId": "5e10a385-f84a-4367-99eb-4b0b20234eb2",
+      "targetInstanceId": "cc4ab221-f24b-40f8-8dcb-0cd12d70a774"
+    },
+    "relations/5c17d685-5b8c-46b7-b57f-7e2b738e58d4.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.516567039+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "relationId": "5c17d685-5b8c-46b7-b57f-7e2b738e58d4",
+      "relationType": "contains",
+      "sourceInstanceId": "ceef47e6-27bc-4eb9-82d2-666861cc0af3",
+      "targetInstanceId": "cc4ab221-f24b-40f8-8dcb-0cd12d70a774"
+    },
+    "relations/5c53520c-eb69-48f2-92a7-622c434b3f30.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.661689649+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "relationId": "5c53520c-eb69-48f2-92a7-622c434b3f30",
       "relationType": "com.semanticops.method/held-by",
-      "sourceInstanceId": "2b6e4718-a08d-4c35-b148-1870fe337bdb",
-      "targetInstanceId": "ed8494e3-dbfc-47b5-92ca-c4630bcaa97b"
+      "sourceInstanceId": "504c5a88-d2cb-4618-8992-16e5e6f52dfb",
+      "targetInstanceId": "5ff8e122-215b-4b75-b13b-835487965afa"
     },
-    "relations/30dacdc2-a01b-44e9-88b0-51e406e948a5.json": {
+    "relations/71e2d0f0-b000-4ae4-bd33-18d0ed0de1dd.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-10-08T15:26:58.508517952+00:00",
+      "createdAt": "2026-10-08T17:41:00.886520424+00:00",
       "createdBy": {
         "id": "agent:analyst",
         "kind": "ai",
         "name": "Analyst scout"
       },
-      "relationId": "30dacdc2-a01b-44e9-88b0-51e406e948a5",
-      "relationType": "contains",
-      "sourceInstanceId": "0de0196f-90c2-459b-a9a3-bf83e9b86b82",
-      "targetInstanceId": "2b6e4718-a08d-4c35-b148-1870fe337bdb"
-    },
-    "relations/70f059e5-7046-4e43-a6f5-b7a957736ad7.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-10-08T15:26:58.643656634+00:00",
-      "createdBy": {
-        "id": "agent:analyst",
-        "kind": "ai",
-        "name": "Analyst scout"
-      },
-      "relationId": "70f059e5-7046-4e43-a6f5-b7a957736ad7",
-      "relationType": "com.semanticops.method/held-by",
-      "sourceInstanceId": "98acd4ba-b4ff-429a-98a9-37ff8e2043fd",
-      "targetInstanceId": "525f5fcc-c045-4686-a258-046d51229842"
-    },
-    "relations/73b5813c-a562-4c95-95dd-de3295e0c124.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-10-08T15:26:58.578080+00:00",
-      "createdBy": {
-        "id": "agent:analyst",
-        "kind": "ai",
-        "name": "Analyst scout"
-      },
-      "relationId": "73b5813c-a562-4c95-95dd-de3295e0c124",
-      "relationType": "contains",
-      "sourceInstanceId": "0de0196f-90c2-459b-a9a3-bf83e9b86b82",
-      "targetInstanceId": "d3e2451f-92d0-4490-baf4-50a7fd3a54cd"
-    },
-    "relations/7665befe-3acb-4736-9807-7902d867dbe8.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-10-08T15:26:58.434170519+00:00",
-      "createdBy": {
-        "id": "agent:analyst",
-        "kind": "ai",
-        "name": "Analyst scout"
-      },
-      "relationId": "7665befe-3acb-4736-9807-7902d867dbe8",
-      "relationType": "contains",
-      "sourceInstanceId": "0de0196f-90c2-459b-a9a3-bf83e9b86b82",
-      "targetInstanceId": "98acd4ba-b4ff-429a-98a9-37ff8e2043fd"
-    },
-    "relations/9f6fb737-584d-4845-b9db-daabf400e424.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-10-08T15:26:58.839547858+00:00",
-      "createdBy": {
-        "id": "agent:analyst",
-        "kind": "ai",
-        "name": "Analyst scout"
-      },
-      "relationId": "9f6fb737-584d-4845-b9db-daabf400e424",
+      "relationId": "71e2d0f0-b000-4ae4-bd33-18d0ed0de1dd",
       "relationType": "com.semanticops.method/concerns",
-      "sourceInstanceId": "2b6e4718-a08d-4c35-b148-1870fe337bdb",
-      "targetInstanceId": "6639459b-182d-4a0a-a567-688e1e6706a8"
+      "sourceInstanceId": "cc4ab221-f24b-40f8-8dcb-0cd12d70a774",
+      "targetInstanceId": "4656ec53-637a-4367-b858-c48a016149a1"
     },
-    "relations/b43ed855-bd5c-4f57-827c-c1a5fce90152.json": {
+    "relations/84cc523e-f1ff-4169-81a7-eea30bec6d2c.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-10-08T15:26:58.078587670+00:00",
-      "createdBy": {
-        "id": "agent:method-scout",
-        "kind": "ai",
-        "name": "Method scout"
-      },
-      "relationId": "b43ed855-bd5c-4f57-827c-c1a5fce90152",
-      "relationType": "contains",
-      "sourceInstanceId": "67bc2b63-7ea9-4529-b163-6cf1d767b1f0",
-      "targetInstanceId": "0de0196f-90c2-459b-a9a3-bf83e9b86b82"
-    },
-    "relations/c08189c0-b6a6-477a-81e6-ab2f2fafc55a.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-10-08T15:26:58.145949058+00:00",
-      "createdBy": {
-        "id": "agent:method-scout",
-        "kind": "ai",
-        "name": "Method scout"
-      },
-      "relationId": "c08189c0-b6a6-477a-81e6-ab2f2fafc55a",
-      "relationType": "contains",
-      "sourceInstanceId": "33e671ba-10b5-4f93-aa47-3e593d70db8e",
-      "targetInstanceId": "6639459b-182d-4a0a-a567-688e1e6706a8"
-    },
-    "relations/ed51e8cf-ec2d-441a-ab73-3566d19b4de3.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-10-08T15:26:58.774412248+00:00",
+      "createdAt": "2026-10-08T17:41:00.733931361+00:00",
       "createdBy": {
         "id": "agent:analyst",
         "kind": "ai",
         "name": "Analyst scout"
       },
-      "relationId": "ed51e8cf-ec2d-441a-ab73-3566d19b4de3",
+      "relationId": "84cc523e-f1ff-4169-81a7-eea30bec6d2c",
       "relationType": "com.semanticops.method/held-by",
-      "sourceInstanceId": "d3e2451f-92d0-4490-baf4-50a7fd3a54cd",
-      "targetInstanceId": "ed8494e3-dbfc-47b5-92ca-c4630bcaa97b"
+      "sourceInstanceId": "cc4ab221-f24b-40f8-8dcb-0cd12d70a774",
+      "targetInstanceId": "fa6da632-0488-4f0b-82fd-d6f946b68394"
+    },
+    "relations/86264ef1-b200-4287-b458-df77d6e2f3ce.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.809031184+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "relationId": "86264ef1-b200-4287-b458-df77d6e2f3ce",
+      "relationType": "com.semanticops.method/held-by",
+      "sourceInstanceId": "216ec53a-75a4-4420-97ab-20f970df6b05",
+      "targetInstanceId": "fa6da632-0488-4f0b-82fd-d6f946b68394"
+    },
+    "relations/91b2df9e-43ab-45d7-84c1-d5adb08c97d8.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.589163594+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "relationId": "91b2df9e-43ab-45d7-84c1-d5adb08c97d8",
+      "relationType": "contains",
+      "sourceInstanceId": "ceef47e6-27bc-4eb9-82d2-666861cc0af3",
+      "targetInstanceId": "216ec53a-75a4-4420-97ab-20f970df6b05"
+    },
+    "relations/9b3bcd0d-15cc-45fa-9957-eab2b14c5506.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.082094121+00:00",
+      "createdBy": {
+        "id": "agent:method-scout",
+        "kind": "ai",
+        "name": "Method scout"
+      },
+      "relationId": "9b3bcd0d-15cc-45fa-9957-eab2b14c5506",
+      "relationType": "contains",
+      "sourceInstanceId": "ba6f42cd-4a11-415b-9bd7-34ca840d9404",
+      "targetInstanceId": "ceef47e6-27bc-4eb9-82d2-666861cc0af3"
+    },
+    "relations/b3a9e62b-3c10-4065-b4b8-db5a8640e91b.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.152891995+00:00",
+      "createdBy": {
+        "id": "agent:method-scout",
+        "kind": "ai",
+        "name": "Method scout"
+      },
+      "relationId": "b3a9e62b-3c10-4065-b4b8-db5a8640e91b",
+      "relationType": "contains",
+      "sourceInstanceId": "c7bf7e01-c78e-4f5b-a121-476c1dba8fd5",
+      "targetInstanceId": "4656ec53-637a-4367-b858-c48a016149a1"
     }
   }
 }

@@ -24,6 +24,10 @@ test("review suggested problems and set one aside", async ({ page }) => {
   for (const card of await cards.all())
     await expect(card.getByTestId("actor-kind")).toHaveText("ai");
   await expect(cards.first()).toContainText("Writer");
+  await expect(board.getByTestId("problem-comments")).toHaveCount(1);
+  await expect(
+    cards.filter({ hasText: "Suggestions pile up unseen" }).getByRole("img", { name: "1 comment" })
+  ).toBeVisible();
   await expect(board.getByTestId("method-cluster")).toContainText("Leaving the editor");
 
   await page.getByRole("button", { name: "Open Suggestions pile up unseen" }).click();
