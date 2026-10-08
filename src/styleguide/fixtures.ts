@@ -282,9 +282,23 @@ export const referenceItems = [
       { id: "p1", label: "Opening" },
       { id: "p2", label: "The second claim" },
     ],
-    openable: true,
   },
-  { id: "r2", label: "Nobody owns the edge", type: "claim", paragraphs: [], openable: false },
+  { id: "r2", label: "Nobody owns the edge", type: "claim", paragraphs: [] },
+  // #519: a file row (kind, no link yet) and a URL row (kind + external link)
+  { id: "r3", label: "call-transcript.md", type: "source", kind: "transcript", paragraphs: [] },
+  {
+    id: "r4",
+    label: "https://example.org/small-democracy",
+    type: "source",
+    kind: "web",
+    url: "https://example.org/small-democracy",
+    paragraphs: [{ id: "p1", label: "Opening" }],
+  },
+];
+/** Paragraphs the tray can link a reference to (#519). */
+export const referenceParagraphs = [
+  { id: "p1", label: "Opening" },
+  { id: "p2", label: "The second claim" },
 ];
 
 export const pinned = [
@@ -470,6 +484,18 @@ export const longDraftItems = [
   { id: "ld2", label: "Short" },
 ];
 export const longBinItems = [{ id: "lx1", label: longLabel }];
+/** A web source in the pinned pane (#519): the URL as an external link, no relation to unlink. */
+export const urlPinned = [
+  {
+    id: "up1",
+    kind: "source",
+    relation: "web",
+    title: "https://example.org/small-democracy",
+    text: "",
+    href: "https://example.org/small-democracy",
+    removable: false,
+  },
+];
 export const longPinned = [
   {
     id: "lp1",

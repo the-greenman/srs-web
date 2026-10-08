@@ -20,14 +20,18 @@ import {
   copyContainer,
   createContainer,
   createRecord,
+  createRelation,
   deleteRecord,
   deleteRelation,
   exportSlice,
+  exportTree,
   forkRecord,
+  getAttachmentBytes,
   getContainer,
   getContainerOutline,
   getRecord,
   linkAttachment,
+  listAttachments,
   listContainers,
   listDocumentViews,
   listRecords,
@@ -55,7 +59,12 @@ import { recordsOfType, typeVersion } from "$lib/type-version.js";
 import { uuid5 } from "$lib/uuid5.js";
 import type { Zone } from "./essay-model.js";
 import { hiddenByAncestor, toggled } from "./essay-model.js";
-import { DOCUMENT_STATE_TYPE_ID, ESSAY_TYPE_ID, PARAGRAPH_TYPE_ID } from "./type-registry.js";
+import {
+  DOCUMENT_STATE_TYPE_ID,
+  ESSAY_TYPE_ID,
+  PARAGRAPH_TYPE_ID,
+  SOURCE_TYPE_ID,
+} from "./type-registry.js";
 
 export interface Paragraph {
   id: string;
@@ -73,6 +82,12 @@ export interface Reference {
   /** The record's type name (source, claim, problem...). */
   typeName: string;
   paragraphIds: string[];
+  /** A source's `source_kind` ("" otherwise). */
+  kind: string;
+  /** A source's `source_url` ("" otherwise). */
+  url: string;
+  /** The record's description, citation and statement (those it has), blank-line joined. */
+  text: string;
 }
 export interface EssayModel {
   essayId: string;
@@ -204,6 +219,23 @@ interface ParagraphContext {
   files: Record<string, FileAttachment[]>;
   related: Record<string, Related[]>;
 }
+const PREVIEW_BYTES = 2048;
+const TEXT_FIELDS = ["description", "citation", "statement"];
+/** An attached file's text (first `max` bytes); "" when the core cannot read the bytes back (a `.srsj` as loaded). */
+function attachedText(repo: SrsRepository, documentId: string, max?: number): string {
+  try {
+    const b = getAttachmentBytes(repo, documentId);
+    return new TextDecoder().decode(max ? b.subarray(0, max) : b);
+  } catch {
+    return "";
+  }
+}
+/** The whole text of the first file attached to `id` (a source reference); "" when none or unreadable. */
+export function referenceText(repo: SrsRepository, id: string): string {
+  const doc = resolveAttachments(repo, [id]).records[0]?.attachments[0]?.documentId;
+  return doc ? attachedText(repo, doc) : "";
+}
+
 /** Last context read per repository handle, keyed on the engine write epoch. */
 const attachmentCache = new WeakMap<object, { key: string; value: ParagraphContext }>();
 
@@ -222,6 +254,7 @@ function loadContext(repo: SrsRepository, ids: string[]): ParagraphContext {
     resolveAttachments(repo, ids).records.map((r) => [r.instanceId, r.attachments])
   );
   const toAtt = toAttachment(new Map(listRelationTypes(repo).map((t) => [t.key, t.label])));
+  const sources = new Set<string>();
   for (const id of ids) {
     const rels = contextRecord(repo, id, undefined, STRUCTURAL_CATEGORIES).relations;
     const att = rels.map(toAtt).filter((a): a is Attachment => a !== null);
@@ -236,7 +269,20 @@ function loadContext(repo: SrsRepository, ids: string[]): ParagraphContext {
       })
     );
     if (files.length) out.files[id] = files;
+    for (const r of rels)
+      if (r.neighbour?.kind === "record" && r.neighbour.typeId === SOURCE_TYPE_ID)
+        sources.add(r.neighbour.instanceId);
   }
+  // A source holding a text file: the hover card previews the file, not the record's fields.
+  const previews = new Map<string, string>();
+  if (sources.size)
+    for (const r of resolveAttachments(repo, [...sources]).records) {
+      const doc = r.attachments[0]?.documentId;
+      const text = doc ? attachedText(repo, doc, PREVIEW_BYTES) : "";
+      if (text) previews.set(r.instanceId, text);
+    }
+  for (const list of Object.values(out.attachments))
+    for (const a of list) a.text = previews.get(a.neighbourId) ?? a.text;
   attachmentCache.set(repo, { key, value: out });
   return out;
 }
@@ -372,6 +418,11 @@ export function loadEssay(
         id: r.instanceId,
         label: r.displayLabel || r.instanceId,
         typeName: r.typeName ?? "",
+        kind: str(r.fieldValues.source_kind),
+        url: str(r.fieldValues.source_url),
+        text: TEXT_FIELDS.map((k) => str(r.fieldValues[k]))
+          .filter(Boolean)
+          .join("\n\n"),
         paragraphIds: Object.keys(context.attachments).filter((pid) =>
           context.attachments[pid].some((a) => a.neighbourId === r.instanceId)
         ),
@@ -495,6 +546,7 @@ export function agentHandoff(a: {
     `- The text is the writer's. Never edit a paragraph body, the essay title or purpose, or any container except comments and references: the engine refuses these writes.`,
     `- Comment: record_create com.mudemocracy.essay/comment {comment_text}${c ? ` with containerId ${c}` : ""}, then relation_create com.mudemocracy.essay/comments-on from the comment to the paragraph. One comment per paragraph per point. Don't write an author: your session's identity is stamped.`,
     `- Gather: a source, claim or problem worth having for this essay goes in references: create it${r ? ` with containerId ${r}` : ""}, or container_member_add an existing one. Read references first so you don't duplicate.`,
+    `- The writer's own material is in references too: com.mudemocracy.argument/source records (a source_url for a web page; a text file attached to the record, e.g. a transcript or paper). The record fields are readable now; attached text is not yet (srs-rust#1333).`,
     "- Attach: link a reference to a paragraph with com.mudemocracy.essay/bears-on (paragraph → problem), evidences (source or claim → paragraph, supports) or com.mudemocracy.essay/counters (source or claim → paragraph, opposes).",
     "- Titles: you may set paragraph_title only where it is empty.",
     "- Before creating a record of any type, read its type_schema; the aiGuidance there is authoritative.",
@@ -537,19 +589,96 @@ export function setEssayTitle(
 export const setTitle = (repo: SrsRepository, id: string, title: string): void =>
   patchRecord(repo, id, { paragraph_title: title });
 
+/** `source_kind` guessed from a file name (editable later): transcripts, reports, else a document. */
+const kindOf = (name: string): string =>
+  /transcript|\.(srt|vtt)$/i.test(name)
+    ? "transcript"
+    : /report/i.test(name)
+      ? "report"
+      : "document";
+
 /**
- * Attach text files to a paragraph (RFC-017): each is stored, then linked. Sequential and not atomic:
- * a failure (e.g. a duplicate file name, which the core refuses) stops there, earlier files stay attached.
+ * Add references to the essay's pool (srs-web#519): every file is one `source` record (title = file
+ * name, the file attached to it), every URL one `web` source (a URL a source already holds, or repeated
+ * in the batch, is skipped). With `paragraphId` each also gets an `evidences` relation to that paragraph.
+ * The whole batch is checked before the first write (pool, source type, file names); the writes are
+ * still sequential, so a failure part-way names how many references were already added.
  */
-export function attachFiles(repo: SrsRepository, paragraphId: string, files: AttachFile[]): void {
-  for (const f of files) {
-    const { documentId } = addAttachment(
-      repo,
-      { fileName: f.name, ...(f.type ? { contentType: f.type } : {}) },
-      f.bytes
-    );
-    linkAttachment(repo, { instanceId: paragraphId, documentId });
+export function addReferences(
+  repo: SrsRepository,
+  m: Pick<EssayModel, "referencesContainerId">,
+  refs: { files?: AttachFile[]; urls?: string[] },
+  paragraphId?: string
+): string[] {
+  const container = m.referencesContainerId;
+  if (!container) throw new Error("This essay has no references container");
+  let version: number;
+  try {
+    version = typeVersion(repo, SOURCE_TYPE_ID);
+  } catch {
+    throw new Error("This repository has no source type (install the argument package)");
   }
+  const files = refs.files ?? [];
+  const taken = new Set(
+    listAttachments(repo).entries.flatMap((e) => [e.path.split("/").at(-1), e.title])
+  );
+  for (const f of files) {
+    if (taken.has(f.name)) throw new Error(`an attachment named ${f.name} already exists`);
+    taken.add(f.name);
+  }
+  const held = new Set(
+    listRecords(repo, { containerId: container }).map((r) => str(r.fieldValues.source_url))
+  );
+  const urls = (refs.urls ?? []).filter((u) => !held.has(u) && held.add(u));
+  const ids: string[] = [];
+  const add = (fieldValues: Record<string, string>): string => {
+    const id = createRecord(repo, SOURCE_TYPE_ID, version, { fieldValues }).instanceId;
+    addContainerMember(repo, container, id);
+    if (paragraphId) linkReference(repo, id, paragraphId);
+    return id;
+  };
+  try {
+    for (const f of files) {
+      const { documentId } = addAttachment(
+        repo,
+        { fileName: f.name, ...(f.type ? { contentType: f.type } : {}) },
+        f.bytes
+      );
+      const id = add({ title: f.name, source_kind: kindOf(f.name) });
+      linkAttachment(repo, { instanceId: id, documentId });
+      ids.push(id);
+    }
+    for (const url of urls) ids.push(add({ title: url, source_kind: "web", source_url: url }));
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(
+      ids.length
+        ? `${msg} (${ids.length} reference${ids.length === 1 ? "" : "s"} already added)`
+        : msg
+    );
+  }
+  return ids;
+}
+
+/** Link a reference to a paragraph: the source `evidences` it (the relation the margin glyph and agents already read). */
+export const linkReference = (repo: SrsRepository, sourceId: string, paragraphId: string): void => {
+  createRelation(repo, {
+    relationType: "evidences",
+    sourceInstanceId: sourceId,
+    targetInstanceId: paragraphId,
+  });
+};
+
+/** Bytes held by the repository (the sum of the exploded tree), recomputed per engine write epoch. */
+const bytesCache = new WeakMap<object, { epoch: number; bytes: number }>();
+export function repoBytes(repo: SrsRepository): number {
+  const epoch = repo.write_epoch();
+  const hit = bytesCache.get(repo);
+  if (hit?.epoch === epoch) return hit.bytes;
+  // ponytail: exports the whole tree to size it; replace with the core's repo_size (srs-rust#1328)
+  const bytes = Object.values(exportTree(repo)).reduce((n, b) => n + b.length, 0);
+  bytesCache.set(repo, { epoch, bytes });
+  return bytes;
 }
 
 /** Remove an attached record's link to a paragraph (the relation only; the neighbour stays). */
