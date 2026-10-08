@@ -4,7 +4,7 @@
   Tag chips added in srs-web#105.
 -->
 <script lang="ts">
-  import type { SrsRecord, SrsRepository } from "$lib/srs-client.js";
+  import type { ResolvedAttachment, SrsRecord, SrsRepository } from "$lib/srs-client.js";
   import type { Status } from "$lib/types.js";
   import Tag from "./Tag.svelte";
   import TagChip from "./TagChip.svelte";
@@ -12,11 +12,14 @@
   let {
     record,
     repo,
+    attachments = [],
     selected = false,
     onclick,
   }: {
     record: SrsRecord;
     repo: SrsRepository;
+    /** Pre-resolved by the parent in one batch call (srs-web#232). */
+    attachments?: ResolvedAttachment[];
     selected?: boolean;
     onclick: () => void;
   } = $props();
@@ -53,6 +56,13 @@
     {#if statement !== undefined}
       <span class="dscard__statement">{statement}</span>
     {/if}
+    {#if attachments.length > 0}
+      <div class="dscard__attachments" data-testid="decision-attachments">
+        {#each attachments as a (a.documentId)}
+          <TagChip label={a.title ?? a.documentId} />
+        {/each}
+      </div>
+    {/if}
     {#if tags.length > 0}
       <div class="dscard__tags">
         {#each tags as tag (tag)}
@@ -85,6 +95,7 @@
     white-space: pre-wrap;
   }
 
+  .dscard__attachments,
   .dscard__tags {
     display: flex;
     flex-wrap: wrap;

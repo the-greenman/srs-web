@@ -79,7 +79,9 @@ Consequence: after an `addAttachment` call, calling `persistWorkingCopy()` saves
 stub (the record/sidecar metadata) but the bytes are lost on reload unless the user also
 exports a `.srs` archive. `AttachmentsPanel.svelte` displays a visible note to this effect.
 Future work may expose a browser-side archive save (IndexedDB ZIP) to close this gap — tracked
-as part of srs-web#232 (resolve_document_view_attachments).
+separately from srs-web#232, which wired batch attachment resolution
+(`resolve_composition_attachments`, the binding that superseded `resolve_document_view_attachments`)
+into `DecisionLogView`.
 
 > **Amendment (srs-web#505):** the recovery copy is no longer `.srsj` in localStorage. It is the
 > `.srs` archive (`exportArchive()`) kept in IndexedDB, so attachment bytes survive a reload and the
