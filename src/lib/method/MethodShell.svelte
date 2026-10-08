@@ -166,15 +166,15 @@
     if (!selected || !model) return [];
     const m = model;
     const id = selected.id;
-    const canAffirm = selected.status !== "affirmed" && !!m.containers.affirmed;
-    const why = m.containers.affirmed ? "Already affirmed" : "This repository has no Affirmed container";
+    const canAffirm = !!m.containers.affirmed;
+    const why = "This repository has no Affirmed container";
     const affirmActs: MenuAction[] = [
       { id: "affirm", label: "Affirm", enabled: canAffirm, reason: why, run: () => affirm(m, id, false) },
       { id: "edit-affirm", label: "Edit and affirm", enabled: canAffirm, reason: why, run: () => affirm(m, id, true) },
     ];
     const edit: MenuAction = { id: "edit", label: "Edit", enabled: true, run: () => beginEdit() };
     // Order is the recommendation: the first is the primary button (ActionBar).
-    if (selected.status === "affirmed") return [edit, ...affirmActs];
+    if (selected.status === "affirmed") return [edit];
     if (selected.status === "set-aside")
       return [{ id: "restore", label: "Restore", enabled: !!m.containers.suggestions, reason: "No Suggestions container", run: () => run(() => moveToContainer(repo, m, id, "suggestions")) }, ...affirmActs, edit];
     return [...affirmActs, { id: "set-aside", label: "Set aside", enabled: !!m.containers.setAside, reason: "This repository has no Set aside container", run: () => run(() => moveToContainer(repo, m, id, "setAside")) }, edit];

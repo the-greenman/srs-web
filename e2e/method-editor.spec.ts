@@ -77,6 +77,8 @@ test("affirm a suggested problem: the fork keeps its links and is the owner's", 
   await expect(card.getByTestId("actor-kind")).toHaveText("human");
   await expect(board.getByTestId("method-cluster")).toContainText("Leaving the editor"); // contains carried
   await expect(page.getByTestId("method-detail")).toContainText("Owner Person");
+  await expect(page.getByTestId("problem-actions-affirm")).toHaveCount(0); // affirmed: just Edit
+  await expect(page.getByTestId("problem-actions-edit")).toBeVisible();
   await expect(page.getByTestId("document-dirty-status")).toBeVisible();
   expect(errors).toEqual([]);
 });
