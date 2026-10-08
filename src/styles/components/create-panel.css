@@ -11,7 +11,7 @@
   margin: 0;
   padding: 0;
   border: 0;
-  border-top: var(--source-row-rule);
+  border-top: var(--create-panel-rule);
   min-width: 0;
 }
 .create-panel__editors legend {
@@ -27,10 +27,12 @@
   width: 100%;
   box-sizing: border-box;
   padding: var(--create-panel-choice-pad);
-  border-bottom: var(--source-row-rule);
+  border-bottom: var(--create-panel-rule);
 }
 .create-panel__editors .checkbox input {
-  margin-top: var(--space-2xs);
+  /* centre the box on the label's first line: half the leading minus the box, no magic number */
+  margin-block: calc((1lh - 1em) / 2) 0;
+  flex: none;
 }
 .create-panel__editors [data-part="text"] {
   display: grid;

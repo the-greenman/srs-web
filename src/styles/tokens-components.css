@@ -197,6 +197,7 @@
   --source-row-muted-fg: var(--color-muted);
   --source-row-hint-fg: var(--color-muted);
   --source-chooser-gap: var(--space-sm);
+  --create-panel-rule: var(--rule-soft);
   --create-panel-gap: var(--space-sm);
   --create-panel-choice-pad: var(--space-sm) var(--space-xs);
 }

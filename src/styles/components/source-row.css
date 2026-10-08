@@ -10,6 +10,7 @@
   gap: var(--source-row-gap);
   width: 100%;
   box-sizing: border-box;
+  min-height: var(--hit-target);
   padding: var(--source-row-pad);
   border: 0;
   border-bottom: var(--source-row-rule);
@@ -53,6 +54,9 @@
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--source-row-hint-fg);
+}
+.source-row.is-unavailable [data-part="arrow"] {
+  display: none;
 }
 .source-row [data-part="arrow"] {
   display: inline-flex;
