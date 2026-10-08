@@ -228,8 +228,9 @@
       // Note: if loadContainerNav() refreshes selectedRecord's reference after a transition,
       // this effect fires a second time (one extra WASM call — harmless).
     } catch (e: unknown) {
-      // Non-LifecycleNotDefined WASM error: fail-closed — treat record as immutable so the
-      // user cannot directly edit a record whose lifecycle state is unknown.
+      // getAllowedLifecycleTransitions only re-throws here for a WASM error other than
+      // `lifecycle-not-defined` — fail-closed: treat the record as immutable so the user
+      // cannot directly edit a record whose lifecycle state is unknown.
       console.error("getAllowedLifecycleTransitions failed for", selectedRecord.instanceId, e);
       allowedTransitions = { currentState: "", isImmutable: true, transitions: [] };
     }

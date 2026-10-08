@@ -215,7 +215,10 @@ function makeBaseRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
     export_srsj: () => "{}",
     list_relation_types: () => [{ key: "supersedes", label: "Supersedes" }],
     get_allowed_lifecycle_transitions: () => {
-      throw new Error("LifecycleNotDefined");
+      // Real WASM throw shape (srs-rust#1338): a structured `.code`, not a message match.
+      throw Object.assign(new Error("record has no lifecycle defined on its Type"), {
+        code: "lifecycle-not-defined",
+      });
     },
     list_attachments: () => ({ sourceDocumentsPath: "source_documents", entries: [] }),
     ...overrides,
