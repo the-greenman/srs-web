@@ -31,6 +31,7 @@ import {
   getContainerOutline,
   getRecord,
   linkAttachment,
+  listAttachments,
   listContainers,
   listDocumentViews,
   listRecords,
@@ -85,7 +86,7 @@ export interface Reference {
   kind: string;
   /** A source's `source_url` ("" otherwise). */
   url: string;
-  /** The record's own text fields (title, kind and URL left out), blank-line joined. */
+  /** The record's description, citation and statement (those it has), blank-line joined. */
   text: string;
 }
 export interface EssayModel {
@@ -219,6 +220,7 @@ interface ParagraphContext {
   related: Record<string, Related[]>;
 }
 const PREVIEW_BYTES = 2048;
+const TEXT_FIELDS = ["description", "citation", "statement"];
 /** An attached file's text (first `max` bytes); "" when the core cannot read the bytes back (a `.srsj` as loaded). */
 function attachedText(repo: SrsRepository, documentId: string, max?: number): string {
   try {
@@ -418,11 +420,8 @@ export function loadEssay(
         typeName: r.typeName ?? "",
         kind: str(r.fieldValues.source_kind),
         url: str(r.fieldValues.source_url),
-        text: Object.entries(r.fieldValues)
-          .filter(
-            ([k, v]) => typeof v === "string" && !["title", "source_kind", "source_url"].includes(k)
-          )
-          .map(([, v]) => v)
+        text: TEXT_FIELDS.map((k) => str(r.fieldValues[k]))
+          .filter(Boolean)
           .join("\n\n"),
         paragraphIds: Object.keys(context.attachments).filter((pid) =>
           context.attachments[pid].some((a) => a.neighbourId === r.instanceId)
@@ -600,9 +599,10 @@ const kindOf = (name: string): string =>
 
 /**
  * Add references to the essay's pool (srs-web#519): every file is one `source` record (title = file
- * name, the file attached to it), every URL one `web` source. With `paragraphId` each also gets an
- * `evidences` relation to that paragraph. Sequential and not atomic: a failure (e.g. a duplicate file
- * name, which the core refuses before the record is made) stops there, earlier references stay.
+ * name, the file attached to it), every URL one `web` source (a URL a source already holds, or repeated
+ * in the batch, is skipped). With `paragraphId` each also gets an `evidences` relation to that paragraph.
+ * The whole batch is checked before the first write (pool, source type, file names); the writes are
+ * still sequential, so a failure part-way names how many references were already added.
  */
 export function addReferences(
   repo: SrsRepository,
@@ -618,25 +618,45 @@ export function addReferences(
   } catch {
     throw new Error("This repository has no source type (install the argument package)");
   }
+  const files = refs.files ?? [];
+  const taken = new Set(
+    listAttachments(repo).entries.flatMap((e) => [e.path.split("/").at(-1), e.title])
+  );
+  for (const f of files) {
+    if (taken.has(f.name)) throw new Error(`an attachment named ${f.name} already exists`);
+    taken.add(f.name);
+  }
+  const held = new Set(
+    listRecords(repo, { containerId: container }).map((r) => str(r.fieldValues.source_url))
+  );
+  const urls = (refs.urls ?? []).filter((u) => !held.has(u) && held.add(u));
+  const ids: string[] = [];
   const add = (fieldValues: Record<string, string>): string => {
     const id = createRecord(repo, SOURCE_TYPE_ID, version, { fieldValues }).instanceId;
     addContainerMember(repo, container, id);
     if (paragraphId) linkReference(repo, id, paragraphId);
     return id;
   };
-  const ids: string[] = [];
-  for (const f of refs.files ?? []) {
-    const { documentId } = addAttachment(
-      repo,
-      { fileName: f.name, ...(f.type ? { contentType: f.type } : {}) },
-      f.bytes
+  try {
+    for (const f of files) {
+      const { documentId } = addAttachment(
+        repo,
+        { fileName: f.name, ...(f.type ? { contentType: f.type } : {}) },
+        f.bytes
+      );
+      const id = add({ title: f.name, source_kind: kindOf(f.name) });
+      linkAttachment(repo, { instanceId: id, documentId });
+      ids.push(id);
+    }
+    for (const url of urls) ids.push(add({ title: url, source_kind: "web", source_url: url }));
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(
+      ids.length
+        ? `${msg} (${ids.length} reference${ids.length === 1 ? "" : "s"} already added)`
+        : msg
     );
-    const id = add({ title: f.name, source_kind: kindOf(f.name) });
-    linkAttachment(repo, { instanceId: id, documentId });
-    ids.push(id);
   }
-  for (const url of refs.urls ?? [])
-    ids.push(add({ title: url, source_kind: "web", source_url: url }));
   return ids;
 }
 

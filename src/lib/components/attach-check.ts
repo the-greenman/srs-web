@@ -93,7 +93,7 @@ export function asUrls(text: string): string[] | null {
     .filter((l) => l && !l.startsWith("#"));
   const ok = (l: string) => {
     try {
-      return /^https?:$/.test(new URL(l).protocol) && !/\s/.test(l);
+      return /^https?:$/.test(new URL(l).protocol);
     } catch {
       return false;
     }

@@ -43,7 +43,7 @@
   import LinkIcon from "@lucide/svelte/icons/link";
   import Notice from "$lib/components/Notice.svelte";
   import { notify } from "$lib/notices.svelte.js";
-  import { checkFiles, takeFiles } from "$lib/components/attach-check.js";
+  import { asUrls, checkFiles, takeFiles } from "$lib/components/attach-check.js";
   import type { AttachFile } from "$lib/components/attach-check.js";
   import { downloadAttachment } from "$lib/attachment-download.js";
   import Input from "$lib/components/Input.svelte";
@@ -234,7 +234,7 @@
       kind: r.typeName,
       relation: r.kind || undefined,
       title: r.label,
-      text: referenceText(repo, r.id) || r.text,
+      text: [r.text, referenceText(repo, r.id)].filter(Boolean).join("\n\n"),
       href: r.url || undefined,
       removable: false,
     })),
@@ -325,6 +325,10 @@
   }
   /** The repository's size against the browser budget: the check and the tray's meter share it. */
   const usedBytes = $derived(model ? repoBytes(repo) : 0);
+  /** The page background takes drops into the pool only when the essay has a pool. */
+  const poolDrop = $derived(!!model?.referencesContainerId);
+  const dropKinds = (e: DragEvent) =>
+    e.dataTransfer?.types.includes("Files") || e.dataTransfer?.types.includes("text/uri-list");
   /** Files or URLs into the references pool; with a paragraph also linked to it (`evidences`). */
   const addRefs = (refs: { files?: AttachFile[]; urls?: string[] }, paragraphId?: string) =>
     run(() => void addReferences(repo, model!, refs, paragraphId));
@@ -693,12 +697,16 @@
       <article
         class="essay-shell__page"
         aria-label={model.title}
-        ondragover={(e) => e.dataTransfer?.types.includes("Files") && e.preventDefault()}
-        ondrop={(e) => {
-          if (!e.dataTransfer?.files.length) return;
-          e.preventDefault();
-          void dropFiles(undefined, Array.from(e.dataTransfer.files));
-        }}
+        ondragover={poolDrop ? (e) => dropKinds(e) && e.preventDefault() : undefined}
+        ondrop={poolDrop
+          ? (e) => {
+              if (!dropKinds(e)) return;
+              e.preventDefault();
+              const urls = asUrls(e.dataTransfer?.getData("text/uri-list") ?? "");
+              if (e.dataTransfer?.files.length) void dropFiles(undefined, Array.from(e.dataTransfer.files));
+              else if (urls) void addRefs({ urls });
+            }
+          : undefined}
       >
         <InlineText
           as="h1"

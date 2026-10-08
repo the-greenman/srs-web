@@ -29,12 +29,12 @@
       ],
       "title": "Essay draft"
     },
-    "containers/on-small-democracy--comments--ba42b11c.json": {
-      "containerId": "ba42b11c-7467-5592-b8a3-d5d96a0ffc30",
+    "containers/on-small-democracy--comments--43602b01.json": {
+      "containerId": "43602b01-3df5-4eb0-9f43-4a3c915071d4",
       "title": "On small democracy (comments)"
     },
-    "containers/on-small-democracy--references--94615767.json": {
-      "containerId": "94615767-32a2-5c8d-aeff-fe749ab1cee6",
+    "containers/on-small-democracy--references--bee76ab7.json": {
+      "containerId": "bee76ab7-2fcf-4bb3-902a-5d9de5663acc",
       "title": "On small democracy (references)"
     },
     "containers/on-small-democracy-7a60ed6c.json": {
@@ -1307,15 +1307,15 @@
         "essay": "ef448418-d010-43bb-9c88-5b914df2cf48",
         "hidden_instance_ids": [],
         "draft_container_id": "d5426678-d6cb-4185-94d4-878c2e972fab",
-        "comments_container_id": "ba42b11c-7467-5592-b8a3-d5d96a0ffc30",
-        "references_container_id": "94615767-32a2-5c8d-aeff-fe749ab1cee6"
+        "comments_container_id": "43602b01-3df5-4eb0-9f43-4a3c915071d4",
+        "references_container_id": "bee76ab7-2fcf-4bb3-902a-5d9de5663acc"
       },
       "instanceId": "fb7c29e7-f04b-4209-a4d5-d976a9851736",
       "typeId": "9785968f-bdd4-4c91-81ef-0e62075f3503",
       "typeName": "document-state",
       "typeNamespace": "com.mudemocracy.essay",
       "typeVersion": 2,
-      "updatedAt": "2026-10-08T14:06:19.615+00:00"
+      "updatedAt": "2026-10-08T14:26:59.390+00:00"
     },
     "records/tier-2/essay-ef448418.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
@@ -1405,17 +1405,17 @@
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
       "createdAt": "2026-10-05T21:47:29.223306530+00:00",
       "fieldValues": {
-        "citation": "Elinor Ostrom, Governing the Commons, 1990.",
-        "description": "Polycentric governance.",
+        "title": "Ostrom, Governing the Commons",
         "source_kind": "book",
-        "title": "Ostrom, Governing the Commons"
+        "description": "Polycentric governance.",
+        "citation": "Elinor Ostrom, Governing the Commons, 1990."
       },
       "instanceId": "86c58319-9f52-4736-91ba-286de8542b87",
       "typeId": "36e85cff-989b-4c6d-9361-3c8906cff87b",
       "typeName": "source",
       "typeNamespace": "com.mudemocracy.argument",
       "typeVersion": 1,
-      "updatedAt": "2026-10-05T21:47:29.223310737+00:00"
+      "updatedAt": "2026-10-08T14:26:59.385+00:00"
     },
     "relations/005a6cba-0677-45d9-bbfc-e7473ecfd1c0.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
