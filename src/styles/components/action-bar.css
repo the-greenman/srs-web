@@ -1,0 +1,10 @@
+/* ============================================================================
+   component: action bar (.action-bar) — visible decision buttons, the rest in a ⋯ (ActionBar.svelte)
+   Wraps on narrow widths. Story: https://github.com/the-greenman/srs-web/issues/532
+   ========================================================================== */
+.action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+}

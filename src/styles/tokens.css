@@ -70,6 +70,8 @@
   --size-md: 20px;
   --size-lg: 28px;
   --size-xl: 42px;
+  --size-display: clamp(40px, 5vw, 80px); /* the landing headline (semanticops.com) */
+  --size-standfirst: clamp(18px, 2.4vw, 26px);
 
   --leading-solid: 1;
   --leading-tight: 1.1;
@@ -80,11 +82,13 @@
   --tracking-eyebrow: 0.14em; /* loudest mono lockup */
 
   /* ── Spacing scale ──────────────────────────────────────────────────────── */
+  --space-2xs: 4px;
   --space-xs: 8px;
   --space-sm: 16px;
   --space-md: 32px;
   --space-lg: 64px;
   --space-xl: 96px;
+  --space-gutter: clamp(16px, 4vw, 32px); /* page side gutter */
 
   /* ── Borders ────────────────────────────────────────────────────────────── */
   --rule: 1px solid var(--color-line);

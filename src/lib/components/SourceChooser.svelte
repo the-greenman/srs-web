@@ -25,6 +25,11 @@
   import Button from "./Button.svelte";
   import Input from "./Input.svelte";
   import SrsMark from "./SrsMark.svelte";
+  import SourceRow from "./SourceRow.svelte";
+  import Cloud from "@lucide/svelte/icons/cloud";
+  import FolderOpen from "@lucide/svelte/icons/folder-open";
+  import GitBranch from "@lucide/svelte/icons/git-branch";
+  import HardDrive from "@lucide/svelte/icons/hard-drive";
 
   interface Props {
     providers: StorageProviders;
@@ -272,8 +277,9 @@
 </script>
 
 <div class="source-chooser" data-testid="source-chooser">
-  <label class="source-chooser__local" class:is-busy={busy === "local"}>
-    <span>{busy === "local" ? "Opening…" : "From this device"}</span>
+  <label class="btn btn--primary source-chooser__primary">
+    <span>{busy === "local" ? "Opening…" : "Open a file…"}</span>
+    <span data-part="hint">.srs · .srsj</span>
     <input
       id="srsj-file"
       type="file"
@@ -283,55 +289,75 @@
     />
   </label>
 
-  {#if canPickLocalDirectory()}
-    <Button
-      variant="secondary"
-      data-testid="source-local-folder"
-      disabled={busy !== null}
-      title="Open an exploded SRS repository folder from this device"
-      onclick={handleLocalFolder}
-    >{busy === "local" ? "Opening…" : "Folder from this device"}</Button>
-  {:else}
-    <label
-      class="source-chooser__local"
-      class:is-busy={busy === "local"}
-      title="Read-only in this browser — changes must be saved via Export. Use Chrome or Edge to save back to a local folder."
-    >
-      <span>{busy === "local" ? "Opening…" : "Folder from this device"}</span>
-      <input
-        id="srs-folder"
-        type="file"
-        webkitdirectory
-        data-testid="source-local-folder-input"
-        onchange={handleLocalFolderInput}
+  <div class="source-chooser__rows">
+    {#if canPickLocalDirectory()}
+      <SourceRow
+        icon={FolderOpen}
+        label="Folder on this device"
+        busy={busy === "local"}
+        data-testid="source-local-folder"
         disabled={busy !== null}
+        title="Open an exploded SRS repository folder from this device"
+        onclick={handleLocalFolder}
       />
-    </label>
-  {/if}
+    {:else}
+      <SourceRow
+        as="label"
+        icon={FolderOpen}
+        label="Folder on this device"
+        busy={busy === "local"}
+        disabled={busy !== null}
+        title="Read-only in this browser — changes must be saved via Export. Use Chrome or Edge to save back to a local folder."
+      >
+        {#snippet control()}
+          <input
+            id="srs-folder"
+            type="file"
+            webkitdirectory
+            data-testid="source-local-folder-input"
+            onchange={handleLocalFolderInput}
+            disabled={busy !== null}
+          />
+        {/snippet}
+      </SourceRow>
+    {/if}
 
-  <Button
-    variant="secondary"
-    data-testid="source-dropbox"
-    disabled={!providers.dropbox.configured || busy !== null}
-    title={providers.dropbox.configured ? "Open from Dropbox" : "Dropbox is not configured"}
-    onclick={() => openBrowser("dropbox")}
-  >{busy === "dropbox" ? "Connecting…" : "Dropbox"}</Button>
+    <SourceRow
+      icon={GitBranch}
+      label="GitHub"
+      busy={busy === "github"}
+      busyLabel="Connecting…"
+      data-testid="source-github"
+      unavailable={!providers.github?.configured}
+      disabled={busy !== null}
+      title={providers.github?.configured ? "Open from GitHub" : "GitHub is not configured"}
+      onclick={() => openBrowser("github")}
+    />
 
-  <Button
-    variant="secondary"
-    data-testid="source-google-drive"
-    disabled={!providers.googleDrive.configured || busy !== null}
-    title={providers.googleDrive.configured ? "Open from Google Drive" : "Google Drive is not configured"}
-    onclick={openGoogleDrive}
-  >{busy === "google-drive" ? "Connecting…" : "Google Drive"}</Button>
+    <SourceRow
+      icon={Cloud}
+      label="Dropbox"
+      busy={busy === "dropbox"}
+      busyLabel="Connecting…"
+      data-testid="source-dropbox"
+      unavailable={!providers.dropbox.configured}
+      disabled={busy !== null}
+      title={providers.dropbox.configured ? "Open from Dropbox" : "Dropbox is not configured"}
+      onclick={() => openBrowser("dropbox")}
+    />
 
-  <Button
-    variant="secondary"
-    data-testid="source-github"
-    disabled={!providers.github?.configured || busy !== null}
-    title={providers.github?.configured ? "Open from GitHub" : "GitHub is not configured"}
-    onclick={() => openBrowser("github")}
-  >{busy === "github" ? "Connecting…" : "GitHub"}</Button>
+    <SourceRow
+      icon={HardDrive}
+      label="Google Drive"
+      busy={busy === "google-drive"}
+      busyLabel="Connecting…"
+      data-testid="source-google-drive"
+      unavailable={!providers.googleDrive.configured}
+      disabled={busy !== null}
+      title={providers.googleDrive.configured ? "Open from Google Drive" : "Google Drive is not configured"}
+      onclick={openGoogleDrive}
+    />
+  </div>
 
   {#if onOpenUrl}
     <form class="source-chooser__url" onsubmit={handleUrl}>
@@ -347,12 +373,11 @@
       />
       <Button
         variant="secondary"
-        size="sm"
         type="submit"
         data-testid="source-url"
         disabled={!urlValid || busy !== null}
         title="Open a link read-only"
-      >{busy === "url" ? "Opening…" : "From a URL"}</Button>
+      >{busy === "url" ? "Opening…" : "Open"}</Button>
     </form>
   {/if}
 </div>
@@ -460,55 +485,6 @@
 {/if}
 
 <style>
-  .source-chooser {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
-    gap: 0.75rem;
-    width: min(38rem, calc(100vw - 2rem));
-    margin-top: 1.5rem;
-  }
-
-  .source-chooser :global(.btn),
-  .source-chooser__local {
-    min-height: 3.25rem;
-    display: grid;
-    place-items: center;
-    padding: 0.75rem 1rem;
-    box-sizing: border-box;
-  }
-
-  .source-chooser__url {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 0.75rem;
-  }
-
-  .source-chooser__local {
-    border: 1px solid var(--color-text-strong);
-    background: var(--color-text-strong);
-    color: var(--color-on-dark);
-    cursor: pointer;
-    font-family: var(--font-sans);
-  }
-
-  .source-chooser__local:hover {
-    background: var(--color-muted-strong);
-  }
-
-  .source-chooser__local.is-busy {
-    opacity: 0.5;
-  }
-
-  .source-chooser__local input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-
   .cloud-browser {
     position: fixed;
     inset: 0;
@@ -673,12 +649,5 @@
   .cloud-browser__empty {
     padding: 2rem 1.5rem;
     color: var(--color-muted);
-  }
-
-  /* bp: form */
-  @media (max-width: 640px) {
-    .source-chooser {
-      grid-template-columns: 1fr;
-    }
   }
 </style>

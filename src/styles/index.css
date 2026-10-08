@@ -46,6 +46,7 @@
 @import url("./components/popover.css") layer(components);
 @import url("./components/modal.css") layer(components);
 @import url("./components/action-menu.css") layer(components);
+@import url("./components/action-bar.css") layer(components);
 @import url("./components/toolbar.css") layer(components);
 @import url("./components/tag.css") layer(components);
 @import url("./components/tag-chip.css") layer(components);
@@ -80,6 +81,12 @@
 @import url("./components/attachment.css") layer(components);
 @import url("./components/margin.css") layer(components);
 @import url("./components/agent-activity.css") layer(components);
+@import url("./components/method.css") layer(components);
+@import url("./components/landing.css") layer(components);
+@import url("./components/section-header.css") layer(components);
+@import url("./components/source-row.css") layer(components);
+@import url("./components/source-chooser.css") layer(components);
+@import url("./components/create-panel.css") layer(components);
 @import url("./components/styleguide.css") layer(components);
 
 /* Utilities — last word in the cascade */

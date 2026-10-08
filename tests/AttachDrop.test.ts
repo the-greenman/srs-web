@@ -40,6 +40,26 @@ describe("AttachDrop", () => {
     expect(file.name).not.toContain(":");
     expect(file.type).toBe("text/markdown");
   });
+  it("with onurls, a pasted bare URL or a dropped uri-list goes there; other text is still a file", async () => {
+    const onfiles = vi.fn();
+    const onurls = vi.fn();
+    render(AttachDrop, { onfiles, onurls });
+    await fireEvent.paste(zone(), { clipboardData: { files: [], getData: () => "https://example.org/p" } });
+    expect(onurls).toHaveBeenLastCalledWith(["https://example.org/p"]);
+    await fireEvent.drop(zone(), {
+      dataTransfer: { types: ["text/uri-list"], files: [], getData: () => "# c\nhttps://a.org\nhttps://b.org" },
+    });
+    expect(onurls).toHaveBeenLastCalledWith(["https://a.org", "https://b.org"]);
+    await fireEvent.paste(zone(), { clipboardData: { files: [], getData: () => "see https://a.org" } });
+    await waitFor(() => expect(onfiles).toHaveBeenCalledOnce());
+    expect(onurls).toHaveBeenCalledTimes(2);
+  });
+  it("without onurls, a pasted URL is just text", async () => {
+    const onfiles = vi.fn();
+    render(AttachDrop, { onfiles });
+    await fireEvent.paste(zone(), { clipboardData: { files: [], getData: () => "https://example.org" } });
+    await waitFor(() => expect(onfiles).toHaveBeenCalledOnce());
+  });
   it("ignores a drag carrying only the reorder type", async () => {
     render(AttachDrop, { onfiles: vi.fn() });
     const notPrevented = await fireEvent.dragOver(zone(), { dataTransfer: { types: [DRAG_MIME] } });

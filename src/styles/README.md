@@ -73,8 +73,10 @@ src/styles/
     popover.css        .popover      the one floating surface (native top-layer popover)
     modal.css          .modal        the titled native <dialog> (showModal; `inline` specimen)
     action-menu.css    .action-menu  the menu of rows (plain and checkable, grouped)
+    action-bar.css     .action-bar   visible decision buttons, the rest in a ⋯ (#532)
     toolbar.css        .toolbar      the generic document bar (#423): context row + grouped menus, three width tiers
     draft-tray.css     .tray         DraftTray, BinTray and ReferencesTray rows
+    landing.css        .landing      the front-page frame (Landing, LandingFrame); section-header.css, source-row.css, source-chooser.css, create-panel.css are its parts (#534)
     ... and one file per remaining block (see index.css)
   tokens-components.css  component tokens (--btn-*, --icon-btn-*, --popover-*, --hue-pill-*, --actor-*, --margin-*, --comment-*, --toolbar-*, --block-tools-*)
 ```

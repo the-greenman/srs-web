@@ -1,0 +1,45 @@
+/* ============================================================================
+   component: source-chooser (.source-chooser) — the "Open" column of the landing (#534)
+   One ink primary, then hairline source rows, then the link row. Tokens --source-chooser-*.
+   The cloud browser modal keeps its scoped styles in SourceChooser.svelte.
+   ========================================================================== */
+.source-chooser {
+  display: grid;
+  gap: var(--source-chooser-gap);
+  min-width: 0;
+}
+.source-chooser__rows {
+  border-top: var(--source-row-rule);
+}
+.source-chooser__primary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  width: 100%;
+  box-sizing: border-box;
+}
+.source-chooser__primary:has(input:disabled) {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.source-chooser__primary [data-part="hint"] {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.source-chooser__primary input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.source-chooser__url {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-xs);
+  padding-top: var(--source-chooser-gap);
+}

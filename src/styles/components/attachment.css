@@ -66,6 +66,11 @@
   margin: var(--space-xs) 0 0;
   overflow-wrap: anywhere;
 }
+.pinned__link {
+  display: block;
+  margin-top: var(--space-xs);
+  font-size: var(--size-sm);
+}
 .pinned__actions {
   display: flex;
   flex-wrap: wrap;

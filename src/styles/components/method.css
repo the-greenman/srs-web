@@ -1,0 +1,78 @@
+/* ============================================================================
+   component: method board (.method-board, .problem-card) — srs-web#526
+   Domains are sections, clusters are groups, problems are Cards. The card is one
+   stretched invoker (.problem-card__open) over the Card; chips stay readable above it.
+   ========================================================================== */
+
+.method-board__filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+.method-board__domain + .method-board__domain {
+  margin-top: var(--space-md);
+}
+.method-board__domain-title {
+  margin: 0 0 var(--space-xs);
+}
+.method-board__cluster-title {
+  margin: var(--space-sm) 0 var(--space-xs);
+  font-size: var(--size-sm);
+}
+.method-board__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: var(--space-sm);
+}
+
+.problem-card {
+  position: relative;
+}
+.problem-card .card {
+  margin: 0;
+  height: 100%;
+}
+.problem-card--selected .card {
+  outline: var(--focus-ring);
+}
+.problem-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+}
+.problem-card__statement {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.problem-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  align-items: center;
+}
+.problem-card__open {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.problem-card__open:focus-visible {
+  outline: var(--focus-ring);
+}
+
+.method-detail__links {
+  margin: 0;
+  padding-left: 1.2em;
+}
+.method-detail__statement {
+  margin: var(--space-sm) 0 var(--space-xs); /* clears the ActionBar above (#532) */
+}
+.problem-card .card__id {
+  white-space: nowrap;
+}

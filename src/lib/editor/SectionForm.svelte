@@ -52,7 +52,8 @@
       fields.map((f) => {
         const value = record?.fieldValues[f.name];
         if (value !== undefined) return [f.name, typeof value === "string" ? value : ""];
-        if (f.valueType === "select" && f.options?.length) return [f.name, f.options[0]];
+        // A new record defaults a select to its first option; editing never invents a value an optional field lacks (srs-web#526).
+        if (f.valueType === "select" && f.options?.length && (f.required || !record)) return [f.name, f.options[0]];
         return [f.name, ""];
       })
     );

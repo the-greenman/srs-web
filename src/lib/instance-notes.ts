@@ -7,7 +7,7 @@
  */
 import { STRUCTURAL_CATEGORIES, annotationsFor } from "$lib/annotations.js";
 import type { Annotation, Related } from "$lib/annotations.js";
-import { COMMENTS_ON, commentsAvailable, loadComments } from "$lib/comments.js";
+import { commentsAvailable, isCommentsOn, loadComments } from "$lib/comments.js";
 import type { Comment } from "$lib/comments.js";
 import { contextRecord, listRelationTypes, listTypes } from "$lib/srs-client.js";
 import type { ContextRelation, SrsRepository } from "$lib/srs-client.js";
@@ -33,7 +33,7 @@ const neighbourTitle = (r: ContextRelation): string => {
 export function loadInstanceNotes(repo: SrsRepository, instanceId: string): InstanceNotes {
   const labels = new Map(listRelationTypes(repo).map((t) => [t.key, t.label]));
   const related: Related[] = contextRecord(repo, instanceId, undefined, STRUCTURAL_CATEGORIES)
-    .relations.filter((r) => r.relationType !== COMMENTS_ON)
+    .relations.filter((r) => !isCommentsOn(r.relationType))
     .map((r) => ({
       id: r.relationId,
       relationType: labels.get(r.relationType) || r.relationType,

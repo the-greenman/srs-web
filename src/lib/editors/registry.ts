@@ -5,6 +5,8 @@ import { ESSAY_TYPE_ID } from "$lib/essay/type-registry.js";
 import GovernanceShell from "$lib/governance/GovernanceShell.svelte";
 import { DECISION_TYPE_ID } from "$lib/governance/type-registry.js";
 import GuidesShell from "$lib/guides/GuidesShell.svelte";
+import MethodShell from "$lib/method/MethodShell.svelte";
+import { PROBLEM_TYPE_ID } from "$lib/method/method-document.js";
 import { bundledPackage } from "$lib/packages/bundles.js";
 import {
   type AgentWriteGuard,
@@ -132,6 +134,15 @@ export const EDITORS: EditorDefinition[] = [
       newEssay(repo, "Untitled essay");
     },
     component: EssayShell,
+  },
+  {
+    id: "method",
+    label: "Method",
+    description: "Review and decide suggested problems.",
+    entryTypeId: PROBLEM_TYPE_ID,
+    // The method package has no pinned bundle yet: offered whenever the problem type is installed.
+    requires: [],
+    component: MethodShell,
   },
 ];
 

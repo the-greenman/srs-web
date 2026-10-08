@@ -103,3 +103,41 @@ export async function fetchArchiveFile(url: URL, fetchFn: typeof fetch = fetch):
     name = `${name.replace(/\.(srs|srsj|json)$/i, "")}.${kind}`;
   return new File([bytes as BlobPart], name);
 }
+
+/** `?repo=<owner>/<name>[&ref=<branch>][&path=<dir>][&editor=<id>]` (srs-web#530): a GitHub exploded tree. */
+export interface RepoLink {
+  owner: string;
+  name: string;
+  /** "" = the repository's default branch. */
+  ref: string;
+  /** Directory holding manifest.json; "" = the branch root. */
+  path: string;
+  /** Editor id to select once loaded, if usable; "" = the default shell. */
+  editor: string;
+}
+
+const GIT_NAME = /^[\w.-]+$/;
+
+/** The `repo` deep link in `search`, or null when absent; a malformed one throws OpenUrlError. */
+export function parseRepoLink(search: string): RepoLink | null {
+  const q = new URLSearchParams(search);
+  const repo = q.get("repo");
+  if (repo === null) return null;
+  const [owner = "", name = "", ...rest] = repo.split("/");
+  if (rest.length || !GIT_NAME.test(owner) || !GIT_NAME.test(name) || name === "." || name === "..")
+    throw new OpenUrlError(`"${repo}" is not a GitHub repository (owner/name).`);
+  const ref = q.get("ref")?.trim() ?? "";
+  // ":" delimits the branch in the GitHub browse path, and git refuses it in branch names.
+  if (ref.includes(":")) throw new OpenUrlError(`"${ref}" is not a branch name.`);
+  const path = (q.get("path") ?? "").replace(/^\/+|\/+$/g, "");
+  if (path.split("/").some((s) => s === ".."))
+    throw new OpenUrlError('The path may not contain "..".');
+  return { owner, name, ref, path, editor: q.get("editor")?.trim() ?? "" };
+}
+
+/** The address without the deep-link parameters (`repo`, `ref`, `path`, `editor`). */
+export function withoutRepoLink(href: string): string {
+  const url = new URL(href);
+  for (const k of ["repo", "ref", "path", "editor"]) url.searchParams.delete(k);
+  return url.pathname + url.search + url.hash;
+}
