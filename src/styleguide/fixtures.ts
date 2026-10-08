@@ -883,6 +883,7 @@ const problem = (p: Partial<MethodProblem> & { id: string; title: string }): Met
   personas: [],
   sources: [],
   status: "suggested",
+  commentCount: 0,
   ...p,
 });
 export const methodProblems: MethodProblem[] = [
@@ -896,6 +897,7 @@ export const methodProblems: MethodProblem[] = [
     personas: [{ id: "per-w", label: "Writer" }],
     sources: ["semanticops.com#21", "semanticops.com#29"],
     createdBy: agents[0],
+    commentCount: 3,
   }),
   problem({
     id: "mp2",

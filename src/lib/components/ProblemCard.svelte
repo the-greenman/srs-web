@@ -1,6 +1,6 @@
 <!--
   ProblemCard — one method problem on the board: id and title in the Card header, its status, the
-  statement, and chips for kind, persona, trade-off side, source count and who suggested it (the
+  statement, and chips for kind, persona, trade-off side, source count, comment count and who suggested it (the
   record's own engine-stamped createdBy, through ActorChip). The whole card is one button (a
   stretched invoker), so it opens the detail. Presentation only. Wraps Card + .problem-card (method.css).
   Issue: https://github.com/the-greenman/srs-web/issues/526
@@ -8,6 +8,7 @@
 <script lang="ts">
   import type { MethodProblem, ProblemStatus } from '$lib/method/method-document.js';
   import { STATUS_LABEL } from '$lib/method/method-document.js';
+  import MessageSquareQuote from '@lucide/svelte/icons/message-square-quote';
   import type { Status } from '../types';
   import ActorChip from './ActorChip.svelte';
   import Card from './Card.svelte';
@@ -35,6 +36,7 @@
         {#each problem.personas as p (p.id)}<TagChip label={p.label} />{/each}
         {#if problem.side}<TagChip label={problem.imbalance ? `${problem.side.label}: ${words(problem.imbalance)}` : problem.side.label} />{/if}
         {#if sources}<TagChip label={sources === 1 ? '1 source' : `${sources} sources`} />{/if}
+        {#if problem.commentCount > 0}<span class="tag-chip" role="img" aria-label={`${problem.commentCount} ${problem.commentCount === 1 ? 'comment' : 'comments'}`} data-testid="problem-comments"><MessageSquareQuote size={12} aria-hidden="true" />{problem.commentCount}</span>{/if}
         <ActorChip actor={problem.createdBy} />
       </div>
     </div>

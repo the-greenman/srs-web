@@ -1,7 +1,7 @@
 # Builds e2e/fixtures/method.srsj (srs-web#526): the srs-programme method package, 1 domain, 1 cluster,
 # 2 personas, 1 trade-off side and 3 agent-suggested problems in Suggestions, plus empty Affirmed and
 # Set aside containers. Built with the srs CLI (build.490), never by hand.
-# Usage: PKG=<path to srs-programme/packages/method> bash build-method-fixture.sh <out.srsj>
+# Usage: PKG=<srs-programme/packages/method> COMMENTS=<com.semanticops.comments-1.0.0.srspkg> bash build-method-fixture.sh <out.srsj>
 set -e
 rm -f "${1:?out.srsj}"
 OUT=${1:?out.srsj}; W=$(mktemp -d)/method
@@ -31,5 +31,9 @@ rel $N/concerns $P2 $POLE
 cont "{\"title\":\"Suggestions\",\"memberInstanceIds\":[{\"instanceId\":\"$P1\"},{\"instanceId\":\"$P2\"},{\"instanceId\":\"$P3\"}]}"
 cont "{\"title\":\"Affirmed\",\"memberInstanceIds\":[]}"
 cont "{\"title\":\"Set aside\",\"memberInstanceIds\":[]}"
+# one human comment on P2 (com.semanticops.comments), so the board card shows a comment chip
+srs package install --repo $W --bundle "${COMMENTS:?COMMENTS}" | ok
+CM=$(echo '{"fieldValues":{"comment_text":"Which queue, exactly?"}}' | srs record create --repo $W --type com.semanticops.comments/comment | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d["payload"]["record"]["instanceId"] if d.get("ok") else sys.exit(str(d)))')
+rel com.semanticops.comments/comments-on $CM $P2
 srs repo validate --repo $W | python3 -c "import sys,json; print(json.load(sys.stdin)[\"payload\"][\"summary\"])"
 srs repo copy --from $W --to "$OUT" >/dev/null
