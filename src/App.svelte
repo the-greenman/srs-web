@@ -1075,7 +1075,7 @@
             // of letting export_srsj() throw a raw WASM error.
             throw new StorageError(
               "unsupported",
-              "This repository has attachments, which GitHub commits to a single file can't store yet. Use “Export .srs” (Document menu) to download it, or save a copy to Dropbox or Google Drive instead."
+              "This repository has attachments, which GitHub commits to a single file can't store yet. Keep this repository as an exploded folder (one file per record, so attachments are stored with it) to commit it to GitHub, or use “Export .srs” (Document menu) to download it, or save a copy to Dropbox or Google Drive instead."
             );
           }
           await handle.saveToBranch(exportSrsj(repository), branchOpts);

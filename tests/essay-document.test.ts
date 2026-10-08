@@ -42,6 +42,8 @@ const m = vi.hoisted(() => ({
   copyContainer: vi.fn(),
   forkRecord: vi.fn(),
   createRelation: vi.fn(),
+  exportTree: vi.fn(),
+  getAttachmentBytes: vi.fn(),
   deleteRecord: vi.fn(),
   deleteRelation: vi.fn(),
   typeSchema: vi.fn(() => ({
@@ -66,16 +68,18 @@ import { essaySource } from "../src/lib/essay/annotation-source.js";
 import {
   addParagraph,
   agentHandoff,
-  attachFiles,
+  addReferences,
   binParagraph,
   deleteForever,
   essayWriteGuard,
+  linkReference,
   loadEssay,
   moveEntry,
   newEssay,
   refreshBundle,
   removeAttachment,
   removeReference,
+  repoBytes,
   setEssayPurpose,
   setEssayTitle,
   setHidden,
@@ -765,8 +769,24 @@ describe("comments and references containers (srs-web#494, #495, #496)", () => {
     m.getContainerOutline.mockReturnValue({ entries: [], body: [] });
     const model = loadEssay(repo(), "E");
     expect(model.references).toEqual([
-      { id: "s1", label: "Linked source", typeName: "source", paragraphIds: ["p1"] },
-      { id: "s2", label: "Loose claim", typeName: "claim", paragraphIds: [] },
+      {
+        id: "s1",
+        label: "Linked source",
+        typeName: "source",
+        kind: "",
+        url: "",
+        text: "",
+        paragraphIds: ["p1"],
+      },
+      {
+        id: "s2",
+        label: "Loose claim",
+        typeName: "claim",
+        kind: "",
+        url: "",
+        text: "",
+        paragraphIds: [],
+      },
     ]);
     removeReference({} as never, model, "s2");
     expect(m.removeContainerMember).toHaveBeenCalledWith(expect.anything(), "F", "s2");
@@ -847,30 +867,138 @@ describe("comments and references containers (srs-web#494, #495, #496)", () => {
   });
 });
 
-describe("file attachments (srs-web#506)", () => {
+describe("references pool (srs-web#519)", () => {
   const file = (name: string) => ({ name, type: "text/markdown", bytes: new Uint8Array([1]) });
+  const pool = { referencesContainerId: "F" };
+  const SOURCE = "36e85cff-989b-4c6d-9361-3c8906cff87b";
+  const baseTypes = m.listTypes(); // before any test changes it
+  beforeEach(() => {
+    m.listTypes.mockReturnValue([...baseTypes, { id: SOURCE, namespace: "n", name: "source", version: 3 }]);
+    m.createRecord.mockReset();
+    m.createRecord.mockReturnValueOnce({ instanceId: "s1" }).mockReturnValueOnce({ instanceId: "s2" });
+  });
 
-  it("attachFiles adds then links each file, in order", () => {
-    m.addAttachment
-      .mockReturnValueOnce({ documentId: "d1" })
-      .mockReturnValueOnce({ documentId: "d2" });
-    attachFiles({} as never, "p1", [file("a.md"), file("b.md")]);
-    expect(m.addAttachment.mock.calls.map((c) => c[1])).toEqual([
-      { fileName: "a.md", contentType: "text/markdown" },
-      { fileName: "b.md", contentType: "text/markdown" },
-    ]);
-    expect(m.linkAttachment.mock.calls.map((c) => c[1])).toEqual([
-      { instanceId: "p1", documentId: "d1" },
-      { instanceId: "p1", documentId: "d2" },
+  it("a file becomes a source record in the pool with the file attached to it", () => {
+    m.addAttachment.mockReturnValueOnce({ documentId: "d1" });
+    const ids = addReferences({} as never, pool, { files: [file("call-transcript.md")] });
+    expect(ids).toEqual(["s1"]);
+    expect(m.createRecord).toHaveBeenCalledWith(expect.anything(), SOURCE, 3, {
+      fieldValues: { title: "call-transcript.md", source_kind: "transcript" },
+    });
+    expect(m.addContainerMember).toHaveBeenCalledWith(expect.anything(), "F", "s1");
+    expect(m.addAttachment.mock.calls[0][1]).toEqual({
+      fileName: "call-transcript.md",
+      contentType: "text/markdown",
+    });
+    expect(m.linkAttachment).toHaveBeenCalledWith(expect.anything(), {
+      instanceId: "s1",
+      documentId: "d1",
+    });
+    expect(m.createRelation).not.toHaveBeenCalled(); // not dropped on a paragraph
+  });
+
+  it("guesses the kind from the name: transcript, report, else document", () => {
+    m.createRecord.mockReset();
+    m.createRecord.mockReturnValue({ instanceId: "x" });
+    addReferences({} as never, pool, { files: [file("a.srt"), file("Q3 report.md"), file("paper.md")] });
+    expect(m.createRecord.mock.calls.map((c) => c[3].fieldValues.source_kind)).toEqual([
+      "transcript",
+      "report",
+      "document",
     ]);
   });
 
-  it("surfaces the core's error (a duplicate name) and links nothing for that file", () => {
+  it("a URL becomes a web source with its url, and no attachment", () => {
+    const ids = addReferences({} as never, pool, { urls: ["https://example.org/p"] });
+    expect(ids).toEqual(["s1"]);
+    expect(m.createRecord.mock.calls[0][3]).toEqual({
+      fieldValues: { title: "https://example.org/p", source_kind: "web", source_url: "https://example.org/p" },
+    });
+    expect(m.addContainerMember).toHaveBeenCalledWith(expect.anything(), "F", "s1");
+    expect(m.addAttachment).not.toHaveBeenCalled();
+  });
+
+  it("dropped on a paragraph, the source also evidences it", () => {
+    m.addAttachment.mockReturnValueOnce({ documentId: "d1" });
+    addReferences({} as never, pool, { files: [file("a.md")], urls: ["https://example.org"] }, "p1");
+    expect(m.createRelation.mock.calls.map((c) => c[1])).toEqual([
+      { relationType: "evidences", sourceInstanceId: "s1", targetInstanceId: "p1" },
+      { relationType: "evidences", sourceInstanceId: "s2", targetInstanceId: "p1" },
+    ]);
+  });
+
+  it("linkReference files the same evidences relation later", () => {
+    linkReference({} as never, "s1", "p2");
+    expect(m.createRelation).toHaveBeenCalledWith(expect.anything(), {
+      relationType: "evidences",
+      sourceInstanceId: "s1",
+      targetInstanceId: "p2",
+    });
+  });
+
+  it("surfaces the core's error (a duplicate name) before any record is made", () => {
     m.addAttachment.mockImplementationOnce(() => {
       throw new Error("an attachment named a.md already exists");
     });
-    expect(() => attachFiles({} as never, "p1", [file("a.md")])).toThrow("already exists");
+    expect(() => addReferences({} as never, pool, { files: [file("a.md")] })).toThrow("already exists");
+    expect(m.createRecord).not.toHaveBeenCalled();
     expect(m.linkAttachment).not.toHaveBeenCalled();
+  });
+
+  it("says so when the repository has no source type or the essay no pool", () => {
+    m.listTypes.mockReturnValue(baseTypes);
+    expect(() => addReferences({} as never, pool, { urls: ["https://x.org"] })).toThrow(
+      "no source type"
+    );
+    expect(() => addReferences({} as never, { referencesContainerId: null }, {})).toThrow(
+      "no references container"
+    );
+  });
+
+  it("repoBytes sums the exploded tree and recomputes only when the write epoch moves", () => {
+    let epoch = 1;
+    const repo = { write_epoch: () => epoch } as never;
+    m.exportTree.mockReturnValue({ "a.json": new Uint8Array(10), "source-documents/b.md": new Uint8Array(5) });
+    expect(repoBytes(repo)).toBe(15);
+    expect(repoBytes(repo)).toBe(15);
+    expect(m.exportTree).toHaveBeenCalledTimes(1);
+    epoch = 2;
+    m.exportTree.mockReturnValue({ "a.json": new Uint8Array(7) });
+    expect(repoBytes(repo)).toBe(7);
+  });
+
+  it("a source's attached text previews on the paragraph's hover card (first 2 KB), else its fields", () => {
+    const src = { kind: "record", instanceId: "s1", typeId: SOURCE, typeName: "source", fieldValues: { title: "T" } };
+    m.contextRecord.mockImplementation((_r: unknown, id: string) => ({
+      relations:
+        id === "p1"
+          ? [{ direction: "in", relationId: "r1", relationType: "evidences", sourceId: "s1", targetId: "p1", neighbour: src }]
+          : [],
+    }));
+    m.resolveAttachments.mockImplementation((_r: unknown, ids: string[]) => ({
+      sourceDocumentsPath: "s",
+      records: ids.includes("s1") ? [{ instanceId: "s1", attachments: [{ documentId: "d1" }] }] : [],
+    }));
+    m.getAttachmentBytes.mockReturnValue(new TextEncoder().encode("x".repeat(5000)));
+    const model = loadEssay({ write_epoch: () => 11 } as never, "E");
+    expect(model.attachments.p1[0].text).toBe("x".repeat(2048));
+    m.getAttachmentBytes.mockImplementation(() => {
+      throw new Error("no bytes for a .srsj");
+    });
+    const again = loadEssay({ write_epoch: () => 12 } as never, "E");
+    expect(again.attachments.p1[0].text).toBe("T");
+    m.contextRecord.mockImplementation(() => ({ relations: [] }));
+  });
+
+  it("the agent handoff names the pool", () => {
+    expect(
+      agentHandoff({
+        repositoryId: "R",
+        essay: { id: "E", title: "T" },
+        containerId: "C",
+        referencesContainerId: "F",
+      })
+    ).toContain("source_url");
   });
 
   it("loads a paragraph's files with the size the core knows, and the margin shows them as a file annotation", () => {

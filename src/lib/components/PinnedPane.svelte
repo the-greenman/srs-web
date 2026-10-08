@@ -33,7 +33,8 @@
     onunpin,
     onremove,
   }: {
-    items: { id: string; kind: string; relation?: string; title: string; text: string }[];
+    /** `href`: an external link (a web source). `removable: false`: no "Remove link" (not a relation). */
+    items: { id: string; kind: string; relation?: string; title: string; text: string; href?: string; removable?: boolean }[];
     onunpin: (id: string) => void;
     onremove?: (id: string) => void;
   } = $props();
@@ -53,13 +54,14 @@
           {:else}
             <AttachmentPreview kind={it.kind} title={it.title} relation={it.relation} text={it.text} clamp />
           {/if}
-          {#if it.text || onremove}
+          {#if it.href}<a class="pinned__link" data-testid="pinned-url" href={it.href} target="_blank" rel="noopener noreferrer">{it.href}</a>{/if}
+          {#if it.text || (onremove && it.removable !== false)}
             <div class="pinned__actions" data-part="actions">
               {#if it.text}
                 <Button size="sm" variant="ghost" aria-expanded={open.has(it.id)} onclick={() => toggle(it.id)}>{open.has(it.id) ? 'Close' : 'Open'}</Button>
                 <Button size="sm" variant="ghost" onclick={() => copy(it.id, it.text)}>{copied === it.id ? 'Copied' : 'Copy'}</Button>
               {/if}
-              {#if onremove}<Button size="sm" variant="ghost" onclick={() => onremove(it.id)}>Remove link</Button>{/if}
+              {#if onremove && it.removable !== false}<Button size="sm" variant="ghost" onclick={() => onremove(it.id)}>Remove link</Button>{/if}
             </div>
           {/if}
         </li>

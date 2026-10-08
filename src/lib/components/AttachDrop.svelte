@@ -2,14 +2,15 @@
   AttachDrop — a focusable zone that takes text files by drop, paste or the file picker (#503).
   Every path goes through checkFiles; accepted files go to `onfiles`, rejections show in a warning
   Notice. A drag without Files (the paragraph reorder, DRAG_MIME) is ignored. Paste is handled only
-  while the zone has focus. `state` and `rejected` only force a look, for the styleguide. Extra
+  while the zone has focus. With `onurls`, a pasted bare URL or a dropped `text/uri-list` goes there
+  instead (a reference by URL, #519). `state` and `rejected` only force a look, for the styleguide. Extra
   attributes go to the root. Wraps .file-drop (file-drop.css); tokens `--file-drop-*`;
   parts `icon label hint input`.
 -->
 <script lang="ts">
   import Paperclip from '@lucide/svelte/icons/paperclip';
   import type { HTMLAttributes } from 'svelte/elements';
-  import { ACCEPT, takeFiles, type AttachFile, type AttachPolicy } from './attach-check.js';
+  import { ACCEPT, asUrls, takeFiles, type AttachFile, type AttachPolicy } from './attach-check.js';
   import { formatBytes } from '../format-bytes.js';
   import Notice from './Notice.svelte';
 
@@ -17,6 +18,7 @@
     policy,
     usedBytes = 0,
     onfiles,
+    onurls,
     busy = false,
     compact = false,
     label = 'Attach text files',
@@ -28,6 +30,7 @@
     policy?: AttachPolicy;
     usedBytes?: number;
     onfiles: (files: AttachFile[]) => void | Promise<void>;
+    onurls?: (urls: string[]) => void | Promise<void>;
     busy?: boolean;
     compact?: boolean;
     label?: string;
@@ -40,7 +43,7 @@
   let rejected = $state(initialRejected);
   let input: HTMLInputElement;
   const isOver = $derived(forced ? forced === 'over' : over);
-  const hint = $derived(`Drop, paste or choose text files · up to ${formatBytes(policy?.maxPerFileBytes ?? 1_048_576)} each`);
+  const hint = $derived(`Drop, paste or choose text files${onurls ? ' or a URL' : ''} · up to ${formatBytes(policy?.maxPerFileBytes ?? 1_048_576)} each`);
 
   async function take(files: File[]) {
     const result = await takeFiles(files, policy, usedBytes);
@@ -48,17 +51,21 @@
     if (result.accepted.length) await onfiles(result.accepted);
   }
   const hasFiles = (e: DragEvent) => e.dataTransfer?.types?.includes('Files') ?? false;
+  const hasUrls = (e: DragEvent) => !!onurls && (e.dataTransfer?.types?.includes('text/uri-list') ?? false);
   function drag(e: DragEvent) {
-    if (!hasFiles(e)) return;
+    if (!hasFiles(e) && !hasUrls(e)) return;
     e.preventDefault();
     over = true;
   }
   function drop(e: DragEvent) {
     over = false;
-    if (!hasFiles(e)) return;
+    const urls = hasUrls(e) ? asUrls(e.dataTransfer?.getData('text/uri-list') ?? '') : null;
+    if (!hasFiles(e) && !urls) return;
     e.preventDefault();
     e.stopPropagation(); // inside a paragraph: the row's own file drop must not take it again
-    if (!busy) void take(Array.from(e.dataTransfer?.files ?? []));
+    if (busy) return;
+    if (hasFiles(e)) void take(Array.from(e.dataTransfer?.files ?? []));
+    else void onurls?.(urls!);
   }
   function paste(e: ClipboardEvent) {
     if (busy) return;
@@ -66,6 +73,8 @@
     const text = e.clipboardData?.getData('text/plain') ?? '';
     if (!files.length && !text.trim()) return;
     e.preventDefault();
+    const urls = !files.length && onurls ? asUrls(text) : null;
+    if (urls) return void onurls?.(urls);
     const name = `pasted-${new Date().toISOString().replaceAll(':', '-')}.md`;
     void take(files.length ? files : [new File([text], name, { type: 'text/markdown' })]);
   }

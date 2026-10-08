@@ -130,8 +130,8 @@
   </Panel>
   <Panel title="Draft"><DraftTray items={[...fx.draftItems, ...fx.longDraftItems]} ondrop={noop} onputback={noop} /></Panel>
   <Panel title="Bin"><BinTray items={[...fx.binItems, ...fx.longBinItems]} onrestore={noop} onforget={noop} /></Panel>
-  <Panel title="References" aside={fx.referenceItems.length}><ReferencesTray items={fx.referenceItems} onopen={noop} onfocus={noop} onremove={noop} /></Panel>
-  {#snippet pinnedPane()}<PinnedPane items={[...fx.pinned, ...fx.longPinned]} onunpin={noop} onremove={noop} />{/snippet}
+  <Panel title="References" aside={fx.referenceItems.length}><ReferencesTray items={fx.referenceItems} paragraphs={fx.referenceParagraphs} usedBytes={2.3 * fx.MB} onopen={noop} onfocus={noop} onremove={noop} onfiles={noop} onurls={noop} onlink={noop} /></Panel>
+  {#snippet pinnedPane()}<PinnedPane items={[...fx.pinned, ...fx.urlPinned, ...fx.longPinned]} onunpin={noop} onremove={noop} />{/snippet}
   {@render gated(pinnedPane)}
   <Panel title="Agents">
     <AgentFeed status={fx.agentStatus} now={fx.NOW} paragraphLabel={fx.paragraphLabel} onselect={noop} />

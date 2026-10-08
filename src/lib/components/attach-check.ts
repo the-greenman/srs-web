@@ -22,6 +22,8 @@ const DEFAULT_TEXT = [
   "application/csv",
 ];
 const DEFAULT_MAX_FILE = 1_048_576;
+// ponytail: interim 5 MB total budget for a repository held in the browser (owner ruling); the policy binding (srs-rust#638) replaces it.
+export const DEFAULT_MAX_TOTAL = 5 * 1_048_576;
 const BY_EXT: Record<string, string> = {
   md: "text/markdown",
   txt: "text/plain",
@@ -57,6 +59,7 @@ export function checkFiles<T extends FileMeta>(
   const accepted: T[] = [];
   const rejected: { name: string; reason: string }[] = [];
   const maxFile = policy?.maxPerFileBytes ?? DEFAULT_MAX_FILE;
+  const maxTotal = policy?.maxTotalBytes ?? DEFAULT_MAX_TOTAL;
   let used = usedBytes;
   for (const f of files) {
     const mime = mimeOf(f);
@@ -64,11 +67,12 @@ export function checkFiles<T extends FileMeta>(
       ? policy.allowedMimeTypes.includes(mime)
       : mime.startsWith("text/") || DEFAULT_TEXT.includes(mime);
     let reason = "";
-    if (!typeOk) reason = mime ? `not a text file (${mime})` : "unknown file type";
+    if (mime === "application/pdf") reason = "PDF: paste the paper's text or add its URL";
+    else if (!typeOk) reason = mime ? `not a text file (${mime})` : "unknown file type";
     else if (f.size > maxFile)
       reason = `${formatBytes(f.size)} is over the ${formatBytes(maxFile)} limit`;
-    else if (policy?.maxTotalBytes !== undefined && used + f.size > policy.maxTotalBytes)
-      reason = `would take the repository past ${formatBytes(policy.maxTotalBytes)}`;
+    else if (used + f.size > maxTotal)
+      reason = `would take the repository past ${formatBytes(maxTotal)}`;
     if (reason) rejected.push({ name: f.name, reason });
     else {
       accepted.push(f);
@@ -76,6 +80,25 @@ export function checkFiles<T extends FileMeta>(
     }
   }
   return { accepted, rejected };
+}
+
+/**
+ * The http(s) URLs in pasted or dropped text (a bare URL, or a `text/uri-list`: one per line, `#` comments
+ * ignored); null when there is none or any other line is not a URL (then it is ordinary text).
+ */
+export function asUrls(text: string): string[] | null {
+  const lines = text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith("#"));
+  const ok = (l: string) => {
+    try {
+      return /^https?:$/.test(new URL(l).protocol) && !/\s/.test(l);
+    } catch {
+      return false;
+    }
+  };
+  return lines.length && lines.every(ok) ? lines : null;
 }
 
 export async function readFile(file: File): Promise<Uint8Array> {
