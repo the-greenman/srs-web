@@ -7,7 +7,7 @@
   import "./styles/themes/demo.css";
   import { onMount, type Snippet } from "svelte";
   import {
-    ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
+    ActionBar, ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, MarkdownHelp, MarkdownText, MethodBoard, AgentPanel, McpConnection, Panel, ProblemCard, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
     TagChip, Textarea, Notice, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
@@ -230,6 +230,10 @@
     <div class="sg__row">
       <ActionMenu actions={fx.menuActions} label="Opening" />
     </div>
+    <h3>ActionBar: the first action primary, the next ones secondary, the rest in the ⋯</h3>
+    <div class="sg__row"><ActionBar actions={fx.barActions} visible={3} label="Three actions" testid="sg-bar-three" /></div>
+    <div class="sg__row"><ActionBar actions={fx.barActionsMany} visible={3} label="Five actions" testid="sg-bar-five" /></div>
+    <Frame width="15rem" caption="ActionBar, narrow 15rem: wraps"><ActionBar actions={fx.barActionsMany} visible={3} label="Narrow" testid="sg-bar-narrow" /></Frame>
     <h3>Inside an overflow container (top layer, never clipped)</h3>
     <div class="sg__scroll" data-testid="sg-popover-scroll">
       <div class="sg__scroll-pad"></div>

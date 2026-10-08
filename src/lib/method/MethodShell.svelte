@@ -8,9 +8,8 @@
 -->
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
-  import Ellipsis from "@lucide/svelte/icons/ellipsis";
   import { commentsAvailable } from "$lib/comments.js";
-  import ActionMenu from "$lib/components/ActionMenu.svelte";
+  import ActionBar from "$lib/components/ActionBar.svelte";
   import ActorChip from "$lib/components/ActorChip.svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import CardField from "$lib/components/CardField.svelte";
@@ -169,16 +168,16 @@
     const id = selected.id;
     const canAffirm = selected.status !== "affirmed" && !!m.containers.affirmed;
     const why = m.containers.affirmed ? "Already affirmed" : "This repository has no Affirmed container";
-    const out: MenuAction[] = [
+    const affirmActs: MenuAction[] = [
       { id: "affirm", label: "Affirm", enabled: canAffirm, reason: why, run: () => affirm(m, id, false) },
       { id: "edit-affirm", label: "Edit and affirm", enabled: canAffirm, reason: why, run: () => affirm(m, id, true) },
-      { id: "edit", label: "Edit", enabled: true, run: () => beginEdit() },
     ];
+    const edit: MenuAction = { id: "edit", label: "Edit", enabled: true, run: () => beginEdit() };
+    // Order is the recommendation: the first is the primary button (ActionBar).
+    if (selected.status === "affirmed") return [edit, ...affirmActs];
     if (selected.status === "set-aside")
-      out.push({ id: "restore", label: "Restore", enabled: !!m.containers.suggestions, reason: "No Suggestions container", run: () => run(() => moveToContainer(repo, m, id, "suggestions")) });
-    else if (selected.status !== "affirmed")
-      out.push({ id: "set-aside", label: "Set aside", enabled: !!m.containers.setAside, reason: "This repository has no Set aside container", run: () => run(() => moveToContainer(repo, m, id, "setAside")) });
-    return out;
+      return [{ id: "restore", label: "Restore", enabled: !!m.containers.suggestions, reason: "No Suggestions container", run: () => run(() => moveToContainer(repo, m, id, "suggestions")) }, ...affirmActs, edit];
+    return [...affirmActs, { id: "set-aside", label: "Set aside", enabled: !!m.containers.setAside, reason: "This repository has no Set aside container", run: () => run(() => moveToContainer(repo, m, id, "setAside")) }, edit];
   });
 </script>
 
@@ -219,9 +218,7 @@
             />
           {:else}
             <Panel title={selected.problemId ? `${selected.problemId} ${selected.title}` : selected.title} collapsible={false} class="inspector__section">
-              {#snippet actions()}
-                <ActionMenu actions={menuActions} label={selected.title} title="Actions" triggerIcon={Ellipsis} testid="problem-menu" />
-              {/snippet}
+              <ActionBar actions={menuActions} visible={3} label={selected.title} testid="problem-actions" />
               <div data-testid="method-detail">
                 {#if selected.statement}<p class="method-detail__statement">{selected.statement}</p>{/if}
                 {#if editError}<Notice kind="error">{editError}</Notice>{/if}

@@ -71,7 +71,7 @@
   padding-left: 1.2em;
 }
 .method-detail__statement {
-  margin: 0 0 var(--space-xs);
+  margin: var(--space-sm) 0 var(--space-xs); /* clears the ActionBar above (#532) */
 }
 .problem-card .card__id {
   white-space: nowrap;

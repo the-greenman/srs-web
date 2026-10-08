@@ -73,6 +73,7 @@ src/styles/
     popover.css        .popover      the one floating surface (native top-layer popover)
     modal.css          .modal        the titled native <dialog> (showModal; `inline` specimen)
     action-menu.css    .action-menu  the menu of rows (plain and checkable, grouped)
+    action-bar.css     .action-bar   visible decision buttons, the rest in a ⋯ (#532)
     toolbar.css        .toolbar      the generic document bar (#423): context row + grouped menus, three width tiers
     draft-tray.css     .tray         DraftTray, BinTray and ReferencesTray rows
     ... and one file per remaining block (see index.css)
