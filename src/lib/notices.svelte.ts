@@ -145,12 +145,16 @@ export interface DiagnosticGroup {
 
 /**
  * The ONE adapter from the engine's shapes to the UI `Diagnostic`: the repository report's
- * `{severity: "warning"}` becomes `warn`; a plain string (render, find, navigation: no severity) is `warn`.
+ * `{severity: "warning"}` becomes `warn`. A plain string (render, find, navigation: no severity)
+ * is `info`, never `warn` — these are advisory notes from rendering/discovery, not findings from
+ * `repo.validate()`, and labelling them `warn` made a corpus's render-note count (e.g. one per
+ * out-of-range heading, easily in the hundreds) look like a validation-warning count the engine
+ * never reported (srs#907).
  */
 export function toUiDiagnostic(
   d: EngineDiagnostic | Diagnostic | { severity: string; message: string } | string
 ): Diagnostic {
-  if (typeof d === "string") return { severity: "warn", message: d };
+  if (typeof d === "string") return { severity: "info", message: d };
   const sev = d.severity as string;
   const severity: DiagnosticSeverity = sev === "error" ? "error" : sev === "info" ? "info" : "warn";
   const where = (d as Diagnostic).where;

@@ -99,11 +99,16 @@ describe("pinned notices", () => {
 });
 
 describe("toUiDiagnostic", () => {
-  it("maps the engine's warning to warn, keeps error and info, and a string is warn", () => {
+  it("maps the engine's warning to warn, keeps error and info", () => {
     expect(toUiDiagnostic({ severity: "warning", message: "w" }).severity).toBe("warn");
     expect(toUiDiagnostic({ severity: "error", message: "e" }).severity).toBe("error");
     expect(toUiDiagnostic({ severity: "info", message: "i" }).severity).toBe("info");
-    expect(toUiDiagnostic("plain")).toEqual({ severity: "warn", message: "plain" });
+  });
+
+  it("a plain string (render/find/navigation, no severity) is info, never warn (srs#907)", () => {
+    // Regression: these come from renderDocumentView/find, not repo.validate() — mislabelling
+    // them `warn` made a corpus's render-note count masquerade as a validation-warning count.
+    expect(toUiDiagnostic("plain")).toEqual({ severity: "info", message: "plain" });
   });
   it("diagnosticsFromStrings maps each", () => {
     expect(diagnosticsFromStrings(["a", "b"]).map((d) => d.message)).toEqual(["a", "b"]);
