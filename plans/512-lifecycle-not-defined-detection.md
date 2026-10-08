@@ -99,15 +99,15 @@ using the now-available structured error code, against the currently-published W
 
 #### Tasks
 
-- [ ] Fetch `v0.1.0-build.499`'s `srs-bindings-web.tar.gz.sha256` asset from srs-rust releases;
+- [x] Fetch `v0.1.0-build.499`'s `srs-bindings-web.tar.gz.sha256` asset from srs-rust releases;
       update `scripts/ensure-bindings.mjs` `DEFAULT_URL` and `SHA256` to that release.
-- [ ] Run `node scripts/ensure-bindings.mjs --force` to refresh local bindings against the new pin.
-- [ ] In `src/lib/srs-client.ts`, change `getAllowedLifecycleTransitions`'s catch branch (~line 971)
+- [x] Run `node scripts/ensure-bindings.mjs --force` to refresh local bindings against the new pin.
+- [x] In `src/lib/srs-client.ts`, change `getAllowedLifecycleTransitions`'s catch branch (~line 971)
       to `e instanceof Error && (e as { code?: unknown }).code === "lifecycle-not-defined"` instead
       of `e instanceof Error && e.message.includes("LifecycleNotDefined")`. Update the doc comment
       above the function (~lines 954-961) to reference the stable code instead of the Rust variant
       name/message text.
-- [ ] **Update the pre-existing test** `tests/srs-client.test.ts`, `describe("getAllowedLifecycleTransitions", ...)`,
+- [x] **Update the pre-existing test** `tests/srs-client.test.ts`, `describe("getAllowedLifecycleTransitions", ...)`,
       the case `"returns null when WASM throws LifecycleNotDefined"` (~lines 1645-1653): it
       currently mocks `throw new Error("LifecycleNotDefined: record has no lifecycle")`, which
       passes today only because of the old message-text match and does **not** reflect the real
@@ -116,7 +116,7 @@ using the now-available structured error code, against the currently-published W
       (the real Rust Display text + the `.code` field) so the test actually exercises the fix. Do
       not treat this test breaking as a pre-existing failure to work around — it is expected to
       need this update.
-- [ ] Add one more case to the same `describe` block: an error with an unrelated `.code` (e.g.
+- [x] Add one more case to the same `describe` block: an error with an unrelated `.code` (e.g.
       `"not-found"`) is still rethrown. Leave the existing `"re-throws errors that are not
       LifecycleNotDefined"` and `"re-throws non-Error throws"` cases as-is — they remain valid
       against the new guard unmodified.

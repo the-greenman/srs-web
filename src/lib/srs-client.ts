@@ -954,9 +954,9 @@ export function transitionRecord(
 /**
  * Query which lifecycle transitions are available for `instanceId` and whether the record is in
  * an immutable (final) state. Returns `null` when the record's type has no lifecycle defined
- * (`LifecycleNotDefined`). Re-throws all other WASM errors so callers can handle them
- * conservatively (fail-closed: treat the record as immutable rather than allowing edits when
- * the lifecycle state is unknown).
+ * (structured error code `lifecycle-not-defined`). Re-throws all other WASM errors so callers can
+ * handle them conservatively (fail-closed: treat the record as immutable rather than allowing
+ * edits when the lifecycle state is unknown).
  *
  * ADR-001: no transition-rule logic in TypeScript — this is a pure WASM pass-through.
  */
@@ -967,8 +967,8 @@ export function getAllowedLifecycleTransitions(
   try {
     return repo.get_allowed_lifecycle_transitions(instanceId) as AllowedLifecycleTransitionsResult;
   } catch (e: unknown) {
-    // Pinned to Rust error variant `record_store::LifecycleNotDefined` — update if renamed.
-    if (e instanceof Error && e.message.includes("LifecycleNotDefined")) {
+    // ADR-048 rule 6 (srs-rust): branch on the structured error code, not message text.
+    if (e instanceof Error && (e as { code?: unknown }).code === "lifecycle-not-defined") {
       return null;
     }
     throw e;

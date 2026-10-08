@@ -1642,14 +1642,27 @@ describe("getAllowedLifecycleTransitions", () => {
     expect(spy).toHaveBeenCalledWith("inst-abc");
   });
 
-  it("returns null when WASM throws LifecycleNotDefined", () => {
+  it("returns null when WASM throws an error coded lifecycle-not-defined", () => {
     const repo = mockRepo({
       get_allowed_lifecycle_transitions: () => {
-        throw new Error("LifecycleNotDefined: record has no lifecycle");
+        // Real WASM throw shape (srs-rust#1338): a js_sys::Error with a `.code` field, not a
+        // message containing the Rust variant name — the Rust Display text never does.
+        throw Object.assign(new Error("record 'x' has no lifecycle defined on its Type"), {
+          code: "lifecycle-not-defined",
+        });
       },
     });
     const result = getAllowedLifecycleTransitions(repo, "inst-2");
     expect(result).toBeNull();
+  });
+
+  it("re-throws errors coded with something other than lifecycle-not-defined", () => {
+    const repo = mockRepo({
+      get_allowed_lifecycle_transitions: () => {
+        throw Object.assign(new Error("record 'x' not found"), { code: "not-found" });
+      },
+    });
+    expect(() => getAllowedLifecycleTransitions(repo, "inst-2b")).toThrow("record 'x' not found");
   });
 
   it("re-throws errors that are not LifecycleNotDefined", () => {
