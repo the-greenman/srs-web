@@ -1642,25 +1642,30 @@ describe("getAllowedLifecycleTransitions", () => {
     expect(spy).toHaveBeenCalledWith("inst-abc");
   });
 
-  it("returns null when WASM throws LifecycleNotDefined", () => {
+  it("returns null when WASM throws a lifecycle-not-defined error (ADR-053 code, not message text)", () => {
     const repo = mockRepo({
       get_allowed_lifecycle_transitions: () => {
-        throw new Error("LifecycleNotDefined: record has no lifecycle");
+        // The real WASM throw (srs-rust#1338): a JS Error with a stable `.code`,
+        // whose message never contains the variant name — see error.rs's Display text
+        // ("record '…' has no lifecycle defined on its Type").
+        throw Object.assign(new Error("record 'inst-2' has no lifecycle defined on its Type"), {
+          code: "lifecycle-not-defined",
+        });
       },
     });
     const result = getAllowedLifecycleTransitions(repo, "inst-2");
     expect(result).toBeNull();
   });
 
-  it("re-throws errors that are not LifecycleNotDefined", () => {
+  it("re-throws errors whose code is not lifecycle-not-defined", () => {
     const repo = mockRepo({
       get_allowed_lifecycle_transitions: () => {
-        throw new Error("WASM panic: something went wrong");
+        throw Object.assign(new Error("record 'inst-3' not found"), {
+          code: "record-not-found",
+        });
       },
     });
-    expect(() => getAllowedLifecycleTransitions(repo, "inst-3")).toThrow(
-      "WASM panic: something went wrong"
-    );
+    expect(() => getAllowedLifecycleTransitions(repo, "inst-3")).toThrow("record 'inst-3' not found");
   });
 
   it("re-throws non-Error throws", () => {
