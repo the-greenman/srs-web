@@ -46,6 +46,7 @@
 @import url("./components/popover.css") layer(components);
 @import url("./components/modal.css") layer(components);
 @import url("./components/action-menu.css") layer(components);
+@import url("./components/action-bar.css") layer(components);
 @import url("./components/toolbar.css") layer(components);
 @import url("./components/tag.css") layer(components);
 @import url("./components/tag-chip.css") layer(components);

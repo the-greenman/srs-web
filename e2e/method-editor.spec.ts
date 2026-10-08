@@ -21,7 +21,8 @@ test("review suggested problems and set one aside", async ({ page }) => {
   const board = page.getByTestId("method-board");
   const cards = board.getByTestId("problem-card");
   await expect(cards).toHaveCount(3);
-  for (const card of await cards.all()) await expect(card.getByTestId("actor-kind")).toHaveText("ai");
+  for (const card of await cards.all())
+    await expect(card.getByTestId("actor-kind")).toHaveText("ai");
   await expect(cards.first()).toContainText("Writer");
   await expect(board.getByTestId("method-cluster")).toContainText("Leaving the editor");
 
@@ -31,9 +32,8 @@ test("review suggested problems and set one aside", async ({ page }) => {
   await expect(detail).toContainText("Testimony and authority");
   await expect(detail.getByRole("link", { name: "https://example.org/notes" })).toBeVisible();
 
-  await page.getByTestId("problem-menu").click();
-  await expect(page.getByTestId("problem-menu-affirm")).toBeEnabled();
-  await page.getByTestId("problem-menu-set-aside").click();
+  await expect(page.getByTestId("problem-actions-affirm")).toBeEnabled();
+  await page.getByTestId("problem-actions-set-aside").click();
 
   await expect(cards).toHaveCount(2);
   await page.getByRole("button", { name: "Set aside 1" }).click();
@@ -44,11 +44,16 @@ test("review suggested problems and set one aside", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test("affirm a suggested problem: the fork keeps its links and is the owner's", async ({ page }) => {
+test("affirm a suggested problem: the fork keeps its links and is the owner's", async ({
+  page,
+}) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.addInitScript(() =>
-    localStorage.setItem("srs-web.actor", JSON.stringify({ kind: "human", id: "local:owner", name: "Owner Person" }))
+    localStorage.setItem(
+      "srs-web.actor",
+      JSON.stringify({ kind: "human", id: "local:owner", name: "Owner Person" })
+    )
   );
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
@@ -59,8 +64,7 @@ test("affirm a suggested problem: the fork keeps its links and is the owner's", 
   const cards = board.getByTestId("problem-card");
   await page.getByRole("button", { name: "Open A document cannot leave and return" }).click();
   await openInspectorDrawer(page);
-  await page.getByTestId("problem-menu").click();
-  await page.getByTestId("problem-menu-affirm").click();
+  await page.getByTestId("problem-actions-affirm").click();
 
   await expect(cards).toHaveCount(2); // the suggestion is hidden behind its affirmed fork
   await expect(board).not.toContainText("A document cannot leave and return");
@@ -73,6 +77,8 @@ test("affirm a suggested problem: the fork keeps its links and is the owner's", 
   await expect(card.getByTestId("actor-kind")).toHaveText("human");
   await expect(board.getByTestId("method-cluster")).toContainText("Leaving the editor"); // contains carried
   await expect(page.getByTestId("method-detail")).toContainText("Owner Person");
+  await expect(page.getByTestId("problem-actions-affirm")).toHaveCount(0); // affirmed: just Edit
+  await expect(page.getByTestId("problem-actions-edit")).toBeVisible();
   await expect(page.getByTestId("document-dirty-status")).toBeVisible();
   expect(errors).toEqual([]);
 });

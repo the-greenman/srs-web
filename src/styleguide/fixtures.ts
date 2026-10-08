@@ -54,6 +54,21 @@ export const menuActions: MenuAction[] = [
   { id: "delete", label: "Delete", run: () => {}, enabled: false },
 ];
 
+const act = (label: string, enabled = true, reason?: string): MenuAction => ({
+  id: label.toLowerCase().replaceAll(" ", "-"),
+  label,
+  run: () => {},
+  enabled,
+  reason,
+});
+/** ActionBar (#532): three decisions, one disabled with its reason; and five, so two go in the ⋯. */
+export const barActions: MenuAction[] = [
+  act("Affirm"),
+  act("Edit and affirm"),
+  act("Set aside", false, "This repository has no Set aside container"),
+];
+export const barActionsMany: MenuAction[] = [...barActions, act("Edit"), act("Copy link")];
+
 export const annotations: Annotation[] = [
   { kind: "comments", key: "c", count: 3, label: "3 comments" },
   {
