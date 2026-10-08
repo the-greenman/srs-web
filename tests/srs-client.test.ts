@@ -17,6 +17,7 @@ import {
   initWasm,
   installBundles,
   installPackageBundle,
+  repositoryHasAttachments,
   repositoryId,
   upgradeBundles,
   type AddAttachmentInput,
@@ -2140,6 +2141,25 @@ describe("resolveContainerView members (srs-web#483)", () => {
     expect(members[0].record).toBeUndefined();
     expect(members[1].record?.instanceId).toBe("r1");
     expect(members[1].record?.displayLabel).toBe("R");
+  });
+});
+
+describe("repositoryHasAttachments (srs-web#507)", () => {
+  it("returns false when list_attachments has no entries", () => {
+    const repo = mockRepo({
+      list_attachments: () => ({ sourceDocumentsPath: "source_documents", entries: [] }),
+    });
+    expect(repositoryHasAttachments(repo)).toBe(false);
+  });
+
+  it("returns true when list_attachments has at least one entry", () => {
+    const repo = mockRepo({
+      list_attachments: () => ({
+        sourceDocumentsPath: "source_documents",
+        entries: [{ path: "source_documents/report.pdf", documentId: "doc-001" }],
+      }),
+    });
+    expect(repositoryHasAttachments(repo)).toBe(true);
   });
 });
 
