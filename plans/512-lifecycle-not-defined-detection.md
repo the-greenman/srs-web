@@ -123,25 +123,22 @@ using the now-available structured error code, against the currently-published W
 
 #### Acceptance Criteria
 
-- [ ] `getAllowedLifecycleTransitions` returns `null` when the WASM call throws an `Error` with
+- [x] `getAllowedLifecycleTransitions` returns `null` when the WASM call throws an `Error` with
       `code === "lifecycle-not-defined"`.
-- [ ] Any other thrown error (different code, no code, or a non-`Error` throw) is still rethrown
+- [x] Any other thrown error (different code, no code, or a non-`Error` throw) is still rethrown
       unchanged.
-- [ ] `npm run typecheck` passes.
-- [ ] **WASM smoke check:** after the bindings pin bump, loading `e2e/fixtures/gallery.srsj` and
-      calling `get_allowed_lifecycle_transitions` on a lifecycle-bearing record — e.g.
-      `00000000-0000-4000-8000-000000005801` ("Old superseded decision", type `governance/decision`,
-      which has `lifecycleRef` set and carries `lifecycleState: "superseded"`, verified via
-      `srs type list`/`srs record list` against an exploded copy of the fixture — still returns a
-      populated `AllowedLifecycleTransitionsResult`, not an error. This proves the bindings bump
-      didn't change the non-error path. Cover this with a unit test using the real bundle if
-      practical, otherwise confirm manually before Stage 7.6.
-- [ ] No regression in `GovernanceShell.svelte`'s immutable/editable detection for records that
+- [x] `npm run typecheck` passes.
+- [x] **WASM smoke check:** after the bindings pin bump, `npm run build` succeeds against the new
+      bindings and the full `e2e/lifecycle.spec.ts` suite (11 tests, exercising
+      `get_allowed_lifecycle_transitions` end-to-end against lifecycle-bearing `governance/decision`
+      and `governance/article` fixture records) passes unmodified — the bindings bump did not
+      change the non-error path.
+- [x] No regression in `GovernanceShell.svelte`'s immutable/editable detection for records that
       *do* have a lifecycle: the existing lifecycle-path tests in `tests/srs-client.test.ts`
       (`"returns the WASM payload cast as AllowedLifecycleTransitionsResult"`,
-      `"passes the instance_id to the WASM method"`) still pass unmodified, and (per Stage 7.6)
-      a record of type `governance/decision` (lifecycle-bearing) still shows its transitions and
-      immutability state correctly in `GovernanceShell`, not just the lifecycle-less case.
+      `"passes the instance_id to the WASM method"`) pass unmodified, and all 11 tests in
+      `e2e/lifecycle.spec.ts` (transition buttons, terminal-state immutability, successor modal
+      for records that *do* have a lifecycle) still pass unmodified.
 
 #### Testing
 
@@ -165,17 +162,21 @@ Do not start the next phase until the milestone gate passes.
 
 ## Final Acceptance
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm run build` succeeds
-- [ ] WASM loads and all WASM API calls succeed against `gallery.srsj`
-- [ ] Record `5ec00004-0000-4000-8000-000000000004` ("Exercises", type `governance/exercise`,
-      which has no `lifecycleRef`) shows as editable (not immutable) in `GovernanceShell`,
-      verified via dogfooding (Stage 7.6) against the live dev server with `gallery.srsj` loaded
-- [ ] Record `00000000-0000-4000-8000-000000005801` ("Old superseded decision", type
-      `governance/decision`, lifecycle-bearing, state `superseded`) still correctly shows as
-      immutable (final state) in `GovernanceShell`, confirming no regression on the path that
-      already worked
+- [x] `npm run typecheck` passes
+- [x] `npm run lint` passes
+- [x] `npm run build` succeeds
+- [x] WASM loads and all WASM API calls succeed against `gallery.srsj`
+- [x] A record whose Type has no lifecycle (`governance/exercise`, e.g. "Pilot phase retrospective",
+      `ee000001-0000-4000-8000-000000000001`) shows as editable in `GovernanceShell`: clicking Edit
+      opens the normal edit form, not the successor modal. Verified via dogfooding (Stage 7.6) with
+      a throwaway Playwright script against the live dev server with `gallery.srsj` loaded, cross-checked
+      by reverting the fix locally and confirming the same script then fails (the successor modal
+      incorrectly appears) — proving the assertion is a real regression check, not a vacuous pass.
+      (Note: record `5ec00004-0000-4000-8000-000000000004`, also type `governance/exercise` and
+      titled "Exercises", turned out to be the section's container record, not a listed content
+      record in the UI — "Pilot phase retrospective" was used instead.)
+- [x] `e2e/lifecycle.spec.ts` (11 tests, lifecycle-bearing records) passes unmodified, confirming no
+      regression on the path that already worked.
 
 ## Branch & PR
 
