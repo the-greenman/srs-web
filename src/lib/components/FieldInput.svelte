@@ -39,7 +39,8 @@
 {#if def.valueType === "text"}
   <Textarea {id} bind:value {disabled} {required} {rows} />
 {:else if def.valueType === "select" && def.options?.length}
-  <Select {id} bind:value options={def.options} {disabled} {required} />
+  <!-- An optional select can stay unset (srs-web#526): a blank first option, never a silent default. -->
+  <Select {id} bind:value options={required ? def.options : [{ value: "", label: "Not set" }, ...def.options]} {disabled} {required} />
 {:else if def.valueType === "url"}
   <Input type="url" {id} bind:value {disabled} {required} />
 {:else}

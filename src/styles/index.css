@@ -80,6 +80,7 @@
 @import url("./components/attachment.css") layer(components);
 @import url("./components/margin.css") layer(components);
 @import url("./components/agent-activity.css") layer(components);
+@import url("./components/method.css") layer(components);
 @import url("./components/styleguide.css") layer(components);
 
 /* Utilities — last word in the cascade */

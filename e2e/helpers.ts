@@ -13,7 +13,7 @@ import type { Page } from "@playwright/test";
  */
 export async function openPackageEditor(
   page: Page,
-  editor: "governance" | "guides" | "essay"
+  editor: "governance" | "guides" | "essay" | "method"
 ): Promise<void> {
   await openNavDrawer(page); // the picker is in the nav, a drawer on a phone; a no-op above 720px
   await page.getByTestId(`package-editor-${editor}`).click();

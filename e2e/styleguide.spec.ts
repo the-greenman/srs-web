@@ -169,7 +169,7 @@ test.describe("Styleguide", () => {
         await page.goto("/styleguide");
         await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
         await page.getByLabel("Theme").selectOption(theme);
-        await expect(page.getByTestId("sg-frame")).toHaveCount(2);
+        await expect(page.getByTestId("sg-frame")).toHaveCount(4); // two rails, two method boards (#526)
         const problems = await page.evaluate(() => {
           const out: string[] = [];
           for (const frame of document.querySelectorAll<HTMLElement>('[data-testid="sg-frame"]')) {
