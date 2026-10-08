@@ -8,12 +8,11 @@ import {
   POLE_TYPE_ID,
   PROBLEM_TYPE_ID,
   TENSION_TYPE_ID,
-  affirmSupported,
   buildBoard,
   methodWriteGuard,
   sourceHref,
 } from "../src/lib/method/method-document.js";
-import type { SrsRecord, SrsRelation, SrsRepository } from "../src/lib/srs-client.js";
+import type { SrsRecord, SrsRelation } from "../src/lib/srs-client.js";
 
 const rec = (instanceId: string, typeId: string, fieldValues: Record<string, unknown> = {}): SrsRecord =>
   ({ instanceId, typeId, typeVersion: 1, fieldValues, displayLabel: String(fieldValues.title ?? instanceId) }) as SrsRecord;
@@ -102,11 +101,17 @@ describe("sourceHref", () => {
   });
 });
 
-describe("affirmSupported", () => {
-  it("reads the fork binding's arity", () => {
-    const two = { fork_record: (_a: string, _b: string) => null } as unknown as SrsRepository;
-    const three = { fork_record: (_a: string, _b: string, _c: string) => null } as unknown as SrsRepository;
-    expect(affirmSupported(two)).toBe(false);
-    expect(affirmSupported(three)).toBe(true);
+describe("affirmed forks", () => {
+  it("hide a Suggested original an Affirmed record is derived-from; others stay", () => {
+    const b = buildBoard({
+      records: [...records, rec("f1", PROBLEM_TYPE_ID, { problem_id: "SP-2", title: "Two" }), rec("f9", PROBLEM_TYPE_ID, { title: "Draft" })],
+      relations: [...relations, rel("contains", "c1", "f1"), rel("derived-from", "f1", "p1"), rel("derived-from", "f9", "p4")],
+      containers: { suggestions: "S", affirmed: "A" },
+      members: { suggestions: ["p1", "p4"], affirmed: ["f1"] },
+    });
+    const ids = b.problems.map((p) => p.id);
+    expect(ids).not.toContain("p1");
+    expect(ids).toContain("p4"); // f9 is not in Affirmed
+    expect(b.problems.find((p) => p.id === "f1")).toMatchObject({ status: "affirmed", cluster: { id: "c1" } });
   });
 });

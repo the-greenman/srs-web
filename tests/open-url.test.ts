@@ -4,8 +4,10 @@ import {
   OpenUrlError,
   fetchArchiveFile,
   parseOpenUrl,
+  parseRepoLink,
   sniffArchive,
   withoutOpenParam,
+  withoutRepoLink,
 } from "../src/lib/open-url";
 
 const zip = new Uint8Array([0x50, 0x4b, 3, 4, 0, 0]);
@@ -111,5 +113,29 @@ describe("fetchArchiveFile", () => {
     ).rejects.toThrow(/50 MB/);
     const big = new Uint8Array(MAX_ARCHIVE_BYTES + 1);
     await expect(fetchArchiveFile(url, ok(big))).rejects.toThrow(/50 MB/);
+  });
+});
+
+describe("parseRepoLink", () => {
+  it("is null without repo", () => {
+    expect(parseRepoLink("?open=x")).toBeNull();
+  });
+  it("reads owner/name with optional ref, path and editor", () => {
+    expect(parseRepoLink("?repo=the-greenman/srs-programme&editor=method")).toEqual({
+      owner: "the-greenman", name: "srs-programme", ref: "", path: "", editor: "method",
+    });
+    expect(parseRepoLink("?repo=a/b.c&ref=feat/x&path=/srs/spec/")).toEqual({
+      owner: "a", name: "b.c", ref: "feat/x", path: "srs/spec", editor: "",
+    });
+  });
+  it("refuses a malformed repo, ref or path", () => {
+    for (const q of ["?repo=a", "?repo=a/b/c", "?repo=a/..", "?repo=a b/c", "?repo=a/b&ref=x:y", "?repo=a/b&path=x/../y"])
+      expect(() => parseRepoLink(q), q).toThrow(OpenUrlError);
+  });
+});
+
+describe("withoutRepoLink", () => {
+  it("drops only the deep-link parameters", () => {
+    expect(withoutRepoLink("https://app.test/?repo=a/b&ref=m&path=p&editor=method&theme=dark#h")).toBe("/?theme=dark#h");
   });
 });

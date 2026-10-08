@@ -37,7 +37,8 @@
   import { relays } from "$lib/relay-library.js";
   import { observeSession, pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
   import { reopenSaved } from "$lib/reopen.js";
-  import { fetchArchiveFile, parseOpenUrl, withoutOpenParam } from "$lib/open-url.js";
+  import { fetchArchiveFile, parseOpenUrl, parseRepoLink, withoutOpenParam, withoutRepoLink, type RepoLink } from "$lib/open-url.js";
+  import type { GitHubProvider } from "$lib/storage/github.js";
   import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
   import { listRelations, listTypes, repositoryId, resolveRepositoryTitle, type AgentWriteGuard, type McpSession, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
@@ -111,6 +112,12 @@
    * Cleared by every other load path, and by saving a copy to the user's own storage.
    */
   let readOnlyHost = $state<string | null>(null);
+  /** `?repo=` deep link (srs-web#530) waiting for the user's click: GitHub sign-in is a popup, so it needs a gesture. */
+  let repoLink = $state<RepoLink | null>(null);
+  let repoLinkBusy = $state(false);
+  let repoLinkError = $state<string | null>(null);
+  /** Editor to select once the next document has loaded (a deep link's `editor`); dropped if not usable. */
+  let pendingEditor = $state<string | null>(null);
   /** Host of a link being fetched at boot (#471), for the splash text. */
   let openingHost = $state<string | null>(null);
 
@@ -146,6 +153,11 @@
   // package install never flips the user back into it unasked.
   $effect(() => {
     if (!activeEditor && editorMode !== "generic") editorMode = "generic";
+  });
+  $effect(() => {
+    if (appState !== "loaded" || !pendingEditor) return;
+    editorMode = pendingEditor;
+    pendingEditor = null;
   });
 
   /**
@@ -212,6 +224,7 @@
 
   function cancelPendingMigration(): void {
     pendingMigration = null;
+    pendingEditor = null;
     repo = null;
     activeDocument = null;
     readOnlyHost = null;
@@ -596,6 +609,12 @@
           void openFromLink(link);
           return;
         }
+        try {
+          repoLink = parseRepoLink(location.search);
+        } catch (e: unknown) {
+          repoLinkError = e instanceof Error ? e.message : String(e);
+        }
+        if (repoLink || repoLinkError) history.replaceState(history.state, "", withoutRepoLink(location.href));
         return loadWorkingCopy().then((cached) => {
           if (cached !== null) {
             cachedSession = cached;
@@ -895,6 +914,34 @@
     }
   }
 
+  /**
+   * `?repo=owner/name[&ref][&path][&editor]` (srs-web#530): the GitHub exploded-tree open, as the picker's
+   * "Open as SRS repository" does, with sign-in first when needed; then the named editor if usable.
+   */
+  async function openRepoLink(link: RepoLink): Promise<void> {
+    const github = storageProviders.github as GitHubProvider | undefined;
+    if (!github?.configured) {
+      repoLinkError = "GitHub is not configured on this site.";
+      return;
+    }
+    repoLinkBusy = true;
+    repoLinkError = null;
+    try {
+      await github.authenticate();
+      const branch = link.ref || (await github.defaultBranchOf(link.owner, link.name));
+      const where = `${link.owner}/${link.name}:${branch}:${link.path}`;
+      const handle = await github.openTree({ id: `${where}#repo`, name: link.name, kind: "repository", path: where, revision: null });
+      pendingEditor = link.editor || null;
+      await loadDocument(handle);
+      repoLink = null;
+    } catch (e: unknown) {
+      pendingEditor = null;
+      repoLinkError = e instanceof Error ? e.message : String(e);
+    } finally {
+      repoLinkBusy = false;
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Export
   // ---------------------------------------------------------------------------
@@ -1186,6 +1233,21 @@
           }}>Restore session</button>
           <button class="restore-banner__dismiss" onclick={() => { void clearWorkingCopy(); cachedSession = null; restoreError = null; }}>Discard</button>
         </div>
+      </div>
+    {/if}
+    {#if repoLink || repoLinkError}
+      <div class="restore-banner" role="status" data-testid="repo-link">
+        {#if repoLink}
+          <p class="restore-banner__msg">Open <strong>{repoLink.owner}/{repoLink.name}</strong>{repoLink.ref ? ` (${repoLink.ref})` : ""} from GitHub. You sign in to GitHub first if you have not already.</p>
+        {/if}
+        {#if repoLinkError}<Notice kind="error" testid="repo-link-error">{repoLinkError}</Notice>{/if}
+        {#if repoLink}
+          {@const link = repoLink}
+          <div class="restore-banner__actions">
+            <button class="restore-banner__restore" data-testid="repo-link-open" disabled={repoLinkBusy} onclick={() => void openRepoLink(link)}>{repoLinkBusy ? "Opening…" : "Open from GitHub"}</button>
+            <button class="restore-banner__dismiss" onclick={() => { repoLink = null; repoLinkError = null; }}>Dismiss</button>
+          </div>
+        {/if}
       </div>
     {/if}
     <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} onOpenUrl={openFromUrl} />

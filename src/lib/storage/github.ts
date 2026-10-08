@@ -823,7 +823,7 @@ export class GitHubProvider implements StorageProvider {
   }
 
   /** Cached default branch, fetching repo metadata only when the cache is cold. */
-  private async defaultBranchOf(owner: string, repo: string): Promise<string> {
+  async defaultBranchOf(owner: string, repo: string): Promise<string> {
     const cached = this.defaultBranches.get(`${owner}/${repo}`);
     if (cached) return cached;
     const info = await this.api<GitHubRepo>(`/repos/${owner}/${repo}`);
