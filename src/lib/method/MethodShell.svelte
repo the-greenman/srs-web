@@ -2,8 +2,9 @@
   MethodShell — review and decide suggested method problems (srs-web#526). The board groups problems
   by domain and cluster (MethodBoard); the inspector shows one problem with its linked records,
   sources, edit form and comments. Decisions are container membership: Set aside and Restore move a
-  problem between Suggestions and Set aside and create nothing else. Affirm waits for the core fork
-  option (srs-rust#1354). Agents are guarded out of Affirmed and Set aside.
+  problem between Suggestions and Set aside and create nothing else. Affirm forks it into Affirmed with
+  its links (srs-rust#1354, one engine call); Edit and affirm then opens the form on the fork. Agents
+  are guarded out of Affirmed and Set aside.
 -->
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
@@ -34,6 +35,7 @@
   import {
     type MethodModel,
     type ProblemStatus,
+    affirmProblem,
     loadMethod,
     methodWriteGuard,
     moveToContainer,
@@ -126,8 +128,20 @@
     }
   }
 
-  function beginEdit(): void {
-    const record = selected && getRecord(repo, selected.id);
+  /** Affirm the selected problem and select its fork; `edit` then opens the form on the fork. */
+  function affirm(m: MethodModel, id: string, edit: boolean): void {
+    try {
+      selectedId = affirmProblem(repo, m, id);
+      error = null;
+    } catch (e) {
+      error = msg(e);
+      return;
+    }
+    if (edit) beginEdit(selectedId);
+  }
+
+  function beginEdit(id = selected?.id): void {
+    const record = id && getRecord(repo, id);
     if (!record) return;
     editError = null;
     try {
@@ -149,18 +163,16 @@
     }
   }
 
-  const NEEDS_ENGINE = "Needs the next engine build";
   const menuActions = $derived.by((): MenuAction[] => {
     if (!selected || !model) return [];
     const m = model;
     const id = selected.id;
-    // TODO(srs-rust#1354): enable both once affirmSupported(repo) (method-document.ts) is true and
-    // fork_record's options are wired; until then they show why they are off.
-    const canAffirm = false;
+    const canAffirm = selected.status !== "affirmed" && !!m.containers.affirmed;
+    const why = m.containers.affirmed ? "Already affirmed" : "This repository has no Affirmed container";
     const out: MenuAction[] = [
-      { id: "affirm", label: "Affirm", enabled: canAffirm, reason: NEEDS_ENGINE, run: () => {} },
-      { id: "edit-affirm", label: "Edit and affirm", enabled: canAffirm, reason: NEEDS_ENGINE, run: () => {} },
-      { id: "edit", label: "Edit", enabled: true, run: beginEdit },
+      { id: "affirm", label: "Affirm", enabled: canAffirm, reason: why, run: () => affirm(m, id, false) },
+      { id: "edit-affirm", label: "Edit and affirm", enabled: canAffirm, reason: why, run: () => affirm(m, id, true) },
+      { id: "edit", label: "Edit", enabled: true, run: () => beginEdit() },
     ];
     if (selected.status === "set-aside")
       out.push({ id: "restore", label: "Restore", enabled: !!m.containers.suggestions, reason: "No Suggestions container", run: () => run(() => moveToContainer(repo, m, id, "suggestions")) });
@@ -213,7 +225,7 @@
               <div data-testid="method-detail">
                 {#if selected.statement}<p class="method-detail__statement">{selected.statement}</p>{/if}
                 {#if editError}<Notice kind="error">{editError}</Notice>{/if}
-                <CardField label="Suggested by"><ActorChip actor={selected.createdBy} /></CardField>
+                <CardField label={selected.status === "affirmed" ? "Affirmed by" : "Suggested by"}><ActorChip actor={selected.createdBy} /></CardField>
                 <CardField label="Kind" empty={!selected.kind}>{selected.kind}</CardField>
                 <CardField label="Held by" empty={selected.personas.length === 0}>{selected.personas.map((p) => p.label).join(", ")}</CardField>
                 <CardField label="Trade-off" empty={!selected.side}>

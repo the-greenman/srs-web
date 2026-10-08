@@ -6,6 +6,7 @@
  */
 import {
   addContainerMember,
+  forkRecord,
   getContainer,
   listContainers,
   listRecords,
@@ -29,6 +30,7 @@ export const TENSION_TYPE_ID = "91bd6f8a-417c-4728-87d2-26991e451221";
 const METHOD_NAMESPACE = "com.semanticops.method";
 export const HELD_BY = "com.semanticops.method/held-by";
 export const CONCERNS = "com.semanticops.method/concerns";
+const DERIVED_FROM = "derived-from";
 
 /** The three decision containers, found by title (srs-programme names them; Set aside may be absent). */
 export const CONTAINER_TITLES = {
@@ -100,7 +102,10 @@ const byTitle = (a: { title: string }, b: { title: string }) => a.title.localeCo
 const groupOrder = (a: { id: string; title: string }, b: { id: string; title: string }) =>
   (a.id === "" ? 1 : 0) - (b.id === "" ? 1 : 0) || byTitle(a, b);
 
-/** Group method records for the board; pure. Affirmed beats Set aside beats Suggestions. */
+/**
+ * Group method records for the board; pure. Affirmed beats Set aside beats Suggestions. A suggestion an
+ * Affirmed record is `derived-from` (its affirmed fork) is left off: the fork stands for it.
+ */
 export function buildBoard(input: BoardInput): MethodModel {
   const records = new Map(input.records.map((r) => [r.instanceId, r]));
   const label = (id: string): string => {
@@ -111,6 +116,7 @@ export function buildBoard(input: BoardInput): MethodModel {
   const parentOf = new Map<string, string>(); // child -> first containing parent of the expected type
   const personas = new Map<string, Ref[]>();
   const side = new Map<string, string>();
+  const derivedFrom: [string, string][] = [];
   for (const rel of input.relations) {
     const { sourceInstanceId: s, targetInstanceId: t } = rel;
     if (rel.relationType === "contains") {
@@ -122,6 +128,7 @@ export function buildBoard(input: BoardInput): MethodModel {
     } else if (rel.relationType === HELD_BY) {
       personas.set(s, [...(personas.get(s) ?? []), { id: t, label: label(t) }]);
     } else if (rel.relationType === CONCERNS && !side.has(s)) side.set(s, t);
+    else if (rel.relationType === DERIVED_FROM) derivedFrom.push([s, t]);
   }
   const member = (k: ContainerKey) => new Set(input.members[k] ?? []);
   const affirmed = member("affirmed");
@@ -135,9 +142,16 @@ export function buildBoard(input: BoardInput): MethodModel {
         : suggested.has(id)
           ? "suggested"
           : null;
+  const affirmedOriginals = new Set(
+    derivedFrom.filter(([fork]) => affirmed.has(fork)).map(([, original]) => original)
+  );
 
   const problems: MethodProblem[] = input.records
-    .filter((r) => r.typeId === PROBLEM_TYPE_ID)
+    .filter(
+      (r) =>
+        r.typeId === PROBLEM_TYPE_ID &&
+        !(status(r.instanceId) === "suggested" && affirmedOriginals.has(r.instanceId))
+    )
     .map((r) => {
       const f = r.fieldValues;
       const clusterId = parentOf.get(r.instanceId);
@@ -193,7 +207,7 @@ export function buildBoard(input: BoardInput): MethodModel {
 /** Last board per repository handle, keyed on the engine write epoch (as essay-document.ts). */
 const boardCache = new WeakMap<object, { epoch: number; value: MethodModel }>();
 
-/** The board for `repo`: one record read, three relation reads and the decision containers. */
+/** The board for `repo`: one record read, four relation reads and the decision containers. */
 export function loadMethod(repo: SrsRepository): MethodModel {
   const epoch = repo.write_epoch();
   const hit = boardCache.get(repo);
@@ -213,6 +227,7 @@ export function loadMethod(repo: SrsRepository): MethodModel {
       ...listRelations(repo, { relationType: "contains" }),
       ...listRelations(repo, { relationType: HELD_BY }),
       ...listRelations(repo, { relationType: CONCERNS }),
+      ...listRelations(repo, { relationType: DERIVED_FROM }),
     ],
     containers,
     members,
@@ -275,11 +290,18 @@ export function sourceHref(ref: string): string | null {
 }
 
 /**
- * Affirm needs the core fork option (srs-rust#1354): fork into a container, carrying relations.
- * TODO(srs-rust#1354): wasm-bindgen keeps the declared arity, so a `fork_record` taking an options
- * argument reports length > 2. When this returns true, enable Affirm / Edit and affirm in
- * MethodShell and call fork_record(suggestions, id, { into: affirmed, carryRelations: "all" }).
+ * Affirm (srs-rust#1354): fork the problem into Affirmed, carrying all its relations (persona, side,
+ * cluster), as one engine call. The fork is stamped with the signed-in human; the suggestion stays in
+ * Suggestions and the board hides it behind the fork (`derived-from`). Returns the fork's id.
  */
-export function affirmSupported(repo: SrsRepository): boolean {
-  return (repo.fork_record as unknown as { length: number }).length > 2;
+export function affirmProblem(repo: SrsRepository, m: MethodModel, id: string): string {
+  const affirmed = m.containers.affirmed;
+  if (!affirmed) throw new Error(`This repository has no ${CONTAINER_TITLES.affirmed} container`);
+  const result = forkRecord(repo, affirmed, id, {
+    targetContainer: affirmed,
+    carryRelations: "all",
+  });
+  const fork = result.forks.find((f) => f.originalId === id);
+  if (!fork) throw new Error("The engine did not fork this problem");
+  return fork.forkId;
 }

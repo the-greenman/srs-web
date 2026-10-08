@@ -71,7 +71,7 @@ describe.skipIf(!haveBindings)("references pool on the real engine", () => {
     const tree = exportTree(repo);
     expect(Object.keys(tree).filter((k) => k.startsWith("source-documents/")).sort()).toEqual([
       "source-documents/paper.md",
-      "source-documents/paper.meta.json",
+      "source-documents/paper.md.meta.json", // srs-rust#1329: the sidecar keeps the full filename
     ]);
 
     const reopened = mod.SrsRepository.load_tree(tree);
