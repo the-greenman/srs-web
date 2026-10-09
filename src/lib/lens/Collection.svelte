@@ -1,12 +1,14 @@
 <!--
   Collection — pane 1: the set you move through. A header with "Tell apart by" (Nothing = label only,
   flat; Type, Nesting, Container, State, Created by = group headings with counts; Created by headings
-  are ActorChips). Two shapes: a list (on the dark nav rail or a light surface; depth indents only
-  under Nesting; a nested container expands one level) and a table (the ADR-010 list pane for Lenses:
-  columns are the given ColumnSpec / fixed columns, and a column no row has a value in is dropped).
+  are ActorChips) and a Select toggle that turns rows into checkboxes (shift-click for a range) for
+  drawing a set by hand; "Show as a set (N)" opens it as a lens ("Update the set (N)" once it exists). Two shapes: a list (on the dark nav
+  rail or a light surface; depth indents only under Nesting; a nested container expands one level) and
+  a table (the ADR-010 list pane for Lenses: columns are the given ColumnSpec / fixed columns, and a
+  column no row has a value in is dropped). In Select mode the set bar is pinned to the top of the pane.
   Presentation only: "Tell apart by" is grouping over loaded items (ADR-025, D7); items arrive loaded
   and grouped (lens-data.ts, lens-distinctions.ts). Wraps .lens-collection (lens.css).
-  Parts: head, by, group, row, toggle.
+  Parts: head, by, set-bar, group, row, toggle.
 -->
 <script lang="ts">
   import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -14,6 +16,7 @@
   import type { CollectionBy } from "$lib/address.js";
   import ActorChip from "$lib/components/ActorChip.svelte";
   import Button from "$lib/components/Button.svelte";
+  import Checkbox from "$lib/components/Checkbox.svelte";
   import IconButton from "$lib/components/IconButton.svelte";
   import LogTable from "$lib/components/LogTable.svelte";
   import Select from "$lib/components/Select.svelte";
@@ -32,6 +35,14 @@
     by = "nesting",
     byOptions = [],
     onBy,
+    picking = false,
+    checked = new Set<string>(),
+    setSize = 0,
+    setShown = false,
+    onPicking,
+    onCheck,
+    onShowSet,
+    onClearSet,
     onSelect,
     onExpand,
     onMore,
@@ -49,6 +60,17 @@
     by?: CollectionBy;
     byOptions?: ByOption[];
     onBy?: (by: CollectionBy) => void;
+    /** Rows show checkboxes for drawing a set by hand. */
+    picking?: boolean;
+    checked?: Set<string>;
+    /** Records in the working set (checked here or added from Context). */
+    setSize?: number;
+    /** "My set" exists: the set bar's button updates it ("Update the set (N)"). */
+    setShown?: boolean;
+    onPicking?: () => void;
+    onCheck?: (ids: string[], on: boolean) => void;
+    onShowSet?: () => void;
+    onClearSet?: () => void;
     onSelect: (item: Item) => void;
     onExpand?: (item: Item) => void;
     onMore?: () => void;
@@ -95,6 +117,14 @@
     data.items[i].group !== undefined && (i === 0 || data.items[i - 1].group !== data.items[i].group)
       ? data.items[i].group
       : undefined;
+
+  let last: number | null = null;
+  function check(i: number, shift: boolean): void {
+    const on = !checked.has(data.items[i].id);
+    const [a, b] = shift && last !== null ? [Math.min(last, i), Math.max(last, i)] : [i, i];
+    last = i;
+    onCheck?.(data.items.slice(a, b + 1).map((x) => x.id), on);
+  }
 </script>
 
 {#snippet groupLabel(item: Item, h: string)}
@@ -107,17 +137,28 @@
 {/snippet}
 
 <div class="lens-collection" class:lens-collection--dark={onDark} data-testid="lens-collection" data-mode={mode}>
-  {#if onBy && byOptions.length > 0}
+  {#if onBy || onPicking}
     <div class="lens-pane-head" data-part="head">
-      <label class="lens-by" data-part="by">
-        <span>Tell apart by</span>
-        <Select
-          value={by}
-          options={byOptions}
-          data-testid="lens-by"
-          onchange={(e) => onBy((e.currentTarget as HTMLSelectElement).value as CollectionBy)}
-        />
-      </label>
+      {#if onBy && byOptions.length > 0}
+        <label class="lens-by" data-part="by">
+          <span>Tell apart by</span>
+          <Select
+            value={by}
+            options={byOptions}
+            data-testid="lens-by"
+            onchange={(e) => onBy((e.currentTarget as HTMLSelectElement).value as CollectionBy)}
+          />
+        </label>
+      {/if}
+      {#if onPicking}
+        <Button size="sm" variant="mono" {onDark} active={picking} aria-pressed={picking} data-testid="lens-select-toggle" onclick={onPicking}>Select</Button>
+      {/if}
+    </div>
+  {/if}
+  {#if setSize > 0}
+    <div class="lens-pane-head lens-set-bar" class:lens-set-bar--pinned={picking} data-part="set-bar">
+      <Button size="sm" variant="primary" {onDark} data-testid="lens-show-set" onclick={onShowSet}>{setShown ? "Update the set" : "Show as a set"} ({setSize})</Button>
+      <Button size="sm" variant="ghost" {onDark} data-testid="lens-clear-set" onclick={onClearSet}>Clear</Button>
     </div>
   {/if}
   {#if note}<p class="lens-empty lens-collection__note" data-testid="lens-collection-note">{note}</p>{/if}
@@ -141,6 +182,17 @@
           {#each cols as c, ci (ci)}
             {#if c.kind === "label"}
               <td class="log-table__decision">
+                {#if picking}
+                  <Checkbox
+                    checked={checked.has(item.id)}
+                    aria-label={`Add ${item.label} to the set`}
+                    data-testid="lens-check"
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      check(i, e.shiftKey);
+                    }}
+                  />
+                {/if}
                 {item.label}
                 {#if item.createdBy && !plain && by !== "created-by"}<ActorChip actor={item.createdBy} />{/if}
               </td>
@@ -163,10 +215,20 @@
         <li
           class="lens-list__row"
           class:lens-list__row--selected={item.id === selectedId}
+          class:lens-list__row--picking={picking}
           aria-current={item.id === selectedId ? "true" : undefined}
           style:--lens-depth={by === "nesting" ? item.depth : 0}
           data-part="row"
         >
+          {#if picking}
+            <Checkbox
+              class="lens-list__check"
+              checked={checked.has(item.id)}
+              aria-label={`Add ${item.label} to the set`}
+              data-testid="lens-check"
+              onclick={(e) => check(i, e.shiftKey)}
+            />
+          {/if}
           <button type="button" class="lens-list__item" data-testid="lens-item" onclick={() => onSelect(item)}>
             <span class="lens-list__label">{item.label}</span>
             {#if !plain}

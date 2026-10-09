@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Item } from "../src/lib/lens/lens-data";
 import {
+  HUB_LINKS,
   NOT_SET,
   collectionOptions,
   groupItems,
+  skipHubs,
   splitByBoundary,
 } from "../src/lib/lens/lens-distinctions";
 
@@ -70,6 +72,14 @@ describe("lens distinctions", () => {
     expect(inside.map((e) => e.id)).toEqual(["a", "d", "a"]);
     expect(outside.map((e) => e.id)).toEqual(["x", "y"]);
     expect(inside.length + outside.length).toBe(edges.length);
+  });
+
+  it("skipHubs: records above HUB_LINKS are skipped, at HUB_LINKS added", () => {
+    expect(HUB_LINKS).toBe(50);
+    const links: Record<string, number> = { a: 3, owner: 495, b: HUB_LINKS, c: HUB_LINKS + 1 };
+    const { add, skipped } = skipHubs([{ id: "a" }, { id: "owner" }, { id: "b" }, { id: "c" }], (id) => links[id]);
+    expect(add.map((i) => i.id)).toEqual(["a", "b"]);
+    expect(skipped.map((i) => i.id)).toEqual(["owner", "c"]);
   });
 
   it("collectionOptions: Nesting only for outlines, State and Created by only when present, never a field option", () => {

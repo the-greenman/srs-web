@@ -10,6 +10,8 @@ export interface MapNeighbour {
   label: string;
   relationType: string;
   direction: "in" | "out";
+  /** Optional presentation tone for the edge (Lenses: inside vs leaving the shown set). */
+  tone?: "inside" | "leaving";
 }
 
 export interface PlacedNeighbour extends MapNeighbour {

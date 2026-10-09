@@ -55,6 +55,7 @@
           class="neighbour"
           data-direction={n.direction}
           data-relation={n.relationType}
+          data-tone={n.tone}
           role="button"
           tabindex="0"
           aria-label={`${n.direction === "in" ? "Inbound" : "Outbound"} ${n.relationType}: ${plainLabel(n.label)}`}

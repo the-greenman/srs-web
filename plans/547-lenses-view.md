@@ -382,8 +382,16 @@ export function loadCollection(repo: SrsRepository, lens: Lens, offset?: number)
 export function loadEdges(repo: SrsRepository, id: string): ContextItem[];
 /** Buckets `edges` by the defs (same relationType and direction); `total` = bucket size. No engine call. */
 export function groupEdges(edges: ContextItem[], defs: ContextGroupDef[]): ContextGroupData[];
-/** Edges for the graph: `edges` relabelled with the matching def's label. */
-export function graphEdges(edges: ContextItem[], defs: ContextGroupDef[]): (ContextItem & { label: string })[];
+/** The Context groups under a distinction: link-type (groupEdges over defaultContext), none ("Links"), boundary (splitByBoundary). No engine call. */
+export function contextGroups(edges: ContextItem[], by: ContextBy, inSet: ReadonlySet<string>, types: RelationTypeInfo[]): ContextGroupData[];
+/** A graph edge: the node keeps the neighbour's own displayLabel (`label`); the edge carries its Context group label. */
+export type GraphEdge = ContextItem & { edgeLabel: string; leaves: boolean };
+/**
+ * Edges for the graph, named by the Context group that holds each one (one naming source for list and graph);
+ * `leaves` when the other end is outside the shown set (splitByBoundary). No groups → every edge in `all`
+ * (edgeLabel humanise(relationType)), so the graph is never blank for a record with links.
+ */
+export function graphEdges(groups: ContextGroupData[], all: ContextItem[], inSet: ReadonlySet<string>): GraphEdge[];
 /** documentViewsForContainer over the given containers; nothing else (D10). */
 export function shownIn(repo: SrsRepository, containerIds: string[]): Shown[];
 /** A record, or undefined for a Tier 0 note (gap 3). */
@@ -969,15 +977,15 @@ Note (Stage 7 fix pass, 2026-10-09): the three PR A code reviews on #547 are ans
 **Write scope:** `src/lib/lens/LensShell.svelte`, `src/lib/lens/lens-data.ts` (`graphEdges` only), `src/styles/components/lens.css`, `src/Styleguide.svelte`, `src/styleguide/fixtures.ts`, `tests/lens-graph.test.ts` (new), `tests/lens-board.test.ts` (new), `e2e/lenses.spec.ts`.
 
 #### Tasks
-- [ ] **Start PR B by applying `plans/547-pr-b-carryover.patch`** (`git apply --3way plans/547-pr-b-carryover.patch`). It is the PR B code stripped from PR A at the Stage 7 fix pass (Architecture review finding 1): `Layout` "board"/"graph", `graphEdges`, the `ids` collection and `deriveLenses`'s `set` argument, `HUB_LINKS`/`skipHubs`, Collection set picking (Select toggle, checkboxes, set bar), Context add-to-set, Add everything and the skipped-hubs line, their CSS and specimens, and the tests that exercise only them. Later PR A commits touched the same files (Button/IconButton, `CollectionSource`), so expect 3-way merges there. Delete the patch file once applied.
-- [ ] Port the board and graph branches and the `graph` derivation from prototype LensShell. Columns: `ColumnSpec` on outline lenses, else label, type and state (D6 follow-up).
-- [ ] The graph legend uses the Context group labels (`ContextGroupDef.label`): one naming source for list and graph (answers critique round 2, "Depends On" vs "Required by").
-- [ ] When the selection's groups yield no edges in the chosen relation, the graph falls back to all of the record's edges (`loadEdges`).
-- [ ] Specimens: board with grouped rows; graph with the inside/leaving legend.
+- [x] **Start PR B by applying `plans/547-pr-b-carryover.patch`** (`git apply --3way plans/547-pr-b-carryover.patch`). It is the PR B code stripped from PR A at the Stage 7 fix pass (Architecture review finding 1): `Layout` "board"/"graph", `graphEdges`, the `ids` collection and `deriveLenses`'s `set` argument, `HUB_LINKS`/`skipHubs`, Collection set picking (Select toggle, checkboxes, set bar), Context add-to-set, Add everything and the skipped-hubs line, their CSS and specimens, and the tests that exercise only them. Later PR A commits touched the same files (Button/IconButton, `CollectionSource`), so expect 3-way merges there. Delete the patch file once applied.
+- [x] Port the board and graph branches and the `graph` derivation from prototype LensShell. Columns: `ColumnSpec` on outline lenses, else label, type and state (D6 follow-up).
+- [x] The graph legend uses the Context group labels (`ContextGroupDef.label`): one naming source for list and graph (answers critique round 2, "Depends On" vs "Required by").
+- [x] When the selection's groups yield no edges in the chosen relation, the graph falls back to all of the record's edges (`loadEdges`).
+- [x] Specimens: board with grouped rows; graph with the inside/leaving legend.
 
 #### Acceptance Criteria
-- [ ] The board never shows a column no row has a value in. On a nav lens, columns come from `ColumnSpec`; on every other lens they are label, type and state (gap 6).
-- [ ] The graph is never blank for a record with links.
+- [x] The board never shows a column no row has a value in. On a nav lens, columns come from `ColumnSpec`; on every other lens they are label, type and state (gap 6).
+- [x] The graph is never blank for a record with links.
 
 #### Testing (named)
 - `tests/lens-board.test.ts`:
@@ -987,12 +995,18 @@ Note (Stage 7 fix pass, 2026-10-09): the three PR A code reviews on #547 are ans
 - `tests/lens-graph.test.ts`:
   - "edge labels reuse the Context group label for that relation and direction";
   - "under inside/outside, edges are relabelled by set membership";
-  - "graph never blank for a record with links" (falls back to all edges).
+  - "graph never blank for a record with links" (falls back to all edges);
+  - "graph nodes keep the neighbour's name" (Phase 2's `graphEdges` overwrote it with the group label).
 - `e2e/lenses.spec.ts`: "board and graph layouts open on the decision type lens with no page error".
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
 npm run e2e -- e2e/lenses.spec.ts e2e/styleguide.spec.ts
 ```
+
+Note (carryover): `git apply --3way` applied every hunk cleanly (the later PR A commits had already renamed `CollectionSource`, so the patch's context matched). The semantic conflicts with the PR A fixes were resolved by hand: the three raw `<button class="lens-toggle">` the patch brought back (Collection's Select and Clear, Context's "Add everything") are shared `Button`s (Select is a `mono` toggle with `active`/`aria-pressed`); the patch's `.lens-context-add` overrides of the shared `IconButton` look are dropped; the patch's graph CSS keyed on a relation string (`data-relation="leaves the set"`) is replaced by a tone attribute (below). The patch file is deleted.
+Deviation: `graphEdges` takes the Context groups, not the defs: `graphEdges(groups, all, inSet)`. Its Phase 2 form overwrote each neighbour's `label` with the group label, so graph nodes showed "Depends on" instead of the record's name; now the node keeps `label` and the edge carries `edgeLabel` (test "graph nodes keep the neighbour's name"). Taking the groups makes Context the one naming source under every distinction (link type, Nothing, inside/outside), so LensShell's group building moved into `lens-data.ts` as `contextGroups` (pure, tested) rather than staying inline.
+Deviation (outside the write scope, three lines): `MapNeighbour` gains an optional `tone` (`"inside" | "leaving"`) and `RelationGraph` writes it as `data-tone`, so the graph colours edges inside vs leaving the set while the legend keeps the Context labels. Generic's map passes no tone and is unchanged.
+Note (run): srs-spec declares no ColumnSpec on any of its nine sections (`columns: []`), so "nav lens columns are the ColumnSpec" also checks gallery.srsj's Roles section (`b30db206-…`, three columns). On the board, the Explorer button at the top of the nav is absent (the board has no nav pane); Go > Explorer remains. e2e ran with `PLAYWRIGHT_PORT=5411`.
 
 #### Milestone gate
 All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): board and graph layouts (#547)`.

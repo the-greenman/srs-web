@@ -1,6 +1,9 @@
 <!--
   LensShell — the built-in Lenses view (ADR-022, ADR-025): the three panes (Collection | Focus |
-  Context) over derived lenses, in the trail or reader layout. Owns the selection, the Focus mode
+  Context) over derived lenses, in one of four layouts: trail (list | focus | context), reader (thin
+  outline | wide focus | Context as a collapsed right rail), board (the Collection as a table | focus and
+  context in the drawer) and graph (list | RelationGraph focused on the selection, edges named as
+  Context names them and told apart inside vs leaving the set | focus and context). Owns the selection, the Focus mode
   (read | document | published, + editing) and the distinction per pane ("Tell apart by").
   Address (ADR-023): App owns the one popstate listener and passes the parsed `address` and the history
   `addressState` (the link trail) as props; one $effect re-applies them. This shell adds no window
@@ -47,6 +50,8 @@
   import Notice from "$lib/components/Notice.svelte";
   import Select from "$lib/components/Select.svelte";
   import Toolbar from "$lib/components/Toolbar.svelte";
+  import RelationGraph from "$lib/generic/RelationGraph.svelte";
+  import { focusLayout } from "$lib/generic/map-layout.js";
   import { BASE_GROUPS } from "$lib/components/shell-actions.js";
   import type { EditorShellProps } from "$lib/editors/registry.js";
   import { ShellState } from "$lib/shell-context.svelte.js";
@@ -69,8 +74,9 @@
     type Item,
     type Shown,
     containersOf,
+    contextGroups,
     expandItem,
-    groupEdges,
+    graphEdges,
     loadBlocks,
     loadCollection,
     loadContainerBlocks,
@@ -80,8 +86,8 @@
     shownIn,
     tryRecord,
   } from "./lens-data.js";
-  import { collectionOptions, groupItems, splitByBoundary } from "./lens-distinctions.js";
-  import { type Layout, type Lens, defaultBy, defaultContext, deriveLenses } from "./lens.js";
+  import { collectionOptions, groupItems } from "./lens-distinctions.js";
+  import { type Layout, type Lens, defaultBy, deriveLenses } from "./lens.js";
   import { lensActions } from "./toolbar-actions.js";
 
   let {
@@ -462,19 +468,21 @@
       return [];
     }
   });
-  const groups = $derived.by<ContextGroupData[]>(() => {
-    const flat = (label: string, items: ContextItem[]): ContextGroupData => ({
-      def: { label, relationType: "", direction: "out" },
-      total: items.length,
-      items,
-    });
-    if (effectiveCtxBy === "none") return [flat("Links", edges)];
-    if (effectiveCtxBy === "boundary") {
-      const { inside, outside } = splitByBoundary(edges, inSet);
-      return [flat("Inside this set", inside), flat("Leaving this set", outside)];
-    }
-    return groupEdges(edges, defaultContext(edges, relationTypes));
-  });
+  const groups = $derived<ContextGroupData[]>(contextGroups(edges, effectiveCtxBy, inSet, relationTypes));
+  // The graph names each edge as Context names it, and tells it apart inside vs leaving the set.
+  const graph = $derived(
+    layout === "graph" && selectedId
+      ? focusLayout(
+          graphEdges(groups, edges, inSet).map((e) => ({
+            id: e.id,
+            label: e.label,
+            direction: e.direction,
+            relationType: e.edgeLabel,
+            tone: e.leaves ? ("leaving" as const) : ("inside" as const),
+          }))
+        )
+      : null
+  );
 
   const selectedLabel = $derived(
     collection.items.find((i) => i.id === selectedId)?.label ??
@@ -495,6 +503,8 @@
   const layouts: { value: Layout; label: string }[] = [
     { value: "trail", label: "Trail" },
     { value: "reader", label: "Reader" },
+    { value: "board", label: "Board" },
+    { value: "graph", label: "Graph" },
   ];
   const barActions = $derived(
     lensActions(
@@ -513,12 +523,13 @@
   );
 </script>
 
-{#snippet collectionPane()}
+{#snippet collectionPane(listMode: "list" | "table", onDark: boolean)}
   <Collection
     data={grouped}
+    mode={listMode}
     {selectedId}
     {expanded}
-    onDark
+    {onDark}
     note={outside}
     by={effectiveBy}
     {byOptions}
@@ -577,7 +588,7 @@
     <div class="lens-nav-head">
       <Button size="sm" variant="mono" onDark data-testid="lens-explorer" onclick={openExplorer}>Explorer</Button>
     </div>
-    {@render collectionPane()}
+    {@render collectionPane("list", true)}
   </Nav>
 {/snippet}
 
@@ -600,7 +611,26 @@
     {#if lens}<LensSwitcher {tabs} {more} active={lens.id} onPick={(id) => switchLens(id)} />{/if}
     {#if error}<Notice kind="error">{error}</Notice>{/if}
     <div class="workspace lens-main" data-layout={layout}>
-      {#if layout === "reader"}
+      {#if layout === "board"}
+        <div class="lens-board">{@render collectionPane("table", false)}</div>
+      {:else if layout === "graph"}
+        {#if graph && graph.placed.length > 0}
+          <div class="lens-graph" data-testid="lens-graph">
+            <p class="lens-empty" data-testid="lens-graph-key">Solid lines stay inside this set; dashed lines leave it.</p>
+            <RelationGraph
+              view="focus"
+              focus={{ id: selectedId ?? "", label: selectedLabel }}
+              layout={graph}
+              onOpen={(id) => {
+                const e = edges.find((x) => x.id === id);
+                if (e) follow(e);
+              }}
+            />
+          </div>
+        {:else}
+          <p class="lens-empty" data-testid="lens-graph-empty">{selectedId ? "No links." : "Select a record to see its links."}</p>
+        {/if}
+      {:else if layout === "reader"}
         <div class="lens-reader__focus">{@render focusPane()}</div>
         <aside class="lens-rail" class:lens-rail--open={railOpen} data-testid="lens-rail" aria-label="Links">
           {#if railOpen}
@@ -631,6 +661,9 @@
 
 {#snippet inspectorPane()}
   <Inspector label="Context">
+    {#if layout === "board" || layout === "graph"}
+      <div class="lens-inspector-focus">{@render focusPane()}</div>
+    {/if}
     {@render contextPane()}
   </Inspector>
 {/snippet}
@@ -638,7 +671,7 @@
 <div class="lens-shell" data-testid="lens-shell" data-layout={layout}>
   <AppShell
     {shell}
-    nav={navPane}
+    nav={layout === "board" ? undefined : navPane}
     main={mainPane}
     inspector={layout === "reader" ? undefined : inspectorPane}
     navLabel="Collection"

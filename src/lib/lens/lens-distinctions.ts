@@ -13,6 +13,9 @@ export interface ByOption {
 
 export const NOT_SET = "Not set";
 
+/** More links than this and a record is a hub: "Add everything" skips it unless added deliberately. */
+export const HUB_LINKS = 50;
+
 /**
  * The options the current set supports: Nesting only for outlines, State and Created by only when some
  * member carries them.
@@ -80,4 +83,16 @@ export function splitByBoundary<E extends { id: string }>(
     inside: edges.filter((e) => inSet.has(e.id)),
     outside: edges.filter((e) => !inSet.has(e.id)),
   };
+}
+
+/** Split records to add into those to add and the hubs to skip (more than `max` links). */
+export function skipHubs<T extends { id: string }>(
+  items: T[],
+  links: (id: string) => number,
+  max = HUB_LINKS
+): { add: T[]; skipped: T[] } {
+  const add: T[] = [];
+  const skipped: T[] = [];
+  for (const i of items) (links(i.id) > max ? skipped : add).push(i);
+  return { add, skipped };
 }

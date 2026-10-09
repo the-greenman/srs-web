@@ -1,7 +1,7 @@
 /* ============================================================================
    component: lens (.lens-*) — the three-pane lens shell (plans/ux-lenses.md)
    ----------------------------------------------------------------------------
-   LensSwitcher, Collection (list on the dark rail or a light surface, or a table), Focus,
+   LensSwitcher, Collection (list on the dark rail or a light surface; table for the board), Focus,
    Context, and RecordProse (.record-prose, src/rendering/RecordProse.svelte, ADR-024). Tokens only: semantic colours; --lens-depth is set per row by the
    Collection for outline indentation. The dark rail look follows nav.css (.nav__item).
    ========================================================================== */
@@ -39,6 +39,13 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   padding-left: calc(var(--lens-depth, 0) * var(--space-sm));
+}
+.lens-list__row--picking {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+}
+.lens-list__check {
+  margin-left: var(--space-sm);
 }
 .lens-list__group small,
 .lens-table__group small {
@@ -128,7 +135,12 @@
   color: var(--color-on-dark-muted);
 }
 
-/* ── Collection: table ────────────────────────────────────────────────────── */
+/* ── Collection: table (board) ────────────────────────────────────────────── */
+.lens-board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
 .lens-table__group td {
   padding-top: var(--space-sm);
   padding-bottom: var(--space-2xs);
@@ -202,7 +214,7 @@
   margin-bottom: var(--space-xs);
 }
 
-/* ── Pane headers: "Tell apart by" ─────────────────────────────────────── */
+/* ── Pane headers: "Tell apart by", Select, the working set ─────────────── */
 .lens-pane-head {
   display: flex;
   flex-wrap: wrap;
@@ -210,9 +222,33 @@
   gap: var(--space-xs);
   padding: var(--space-2xs) var(--space-sm) var(--space-xs);
 }
-.lens-context .lens-pane-head {
+.lens-context .lens-pane-head,
+.lens-board .lens-pane-head {
   padding-left: 0;
   padding-right: 0;
+}
+/* Select mode: "Show as a set" stays reachable while the list scrolls under it. */
+.lens-set-bar--pinned {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-surface);
+}
+.lens-collection--dark .lens-set-bar--pinned {
+  background: var(--color-text-strong);
+}
+.lens-skipped {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-xs);
+  padding-left: 0;
+  padding-right: 0;
+}
+.lens-skipped__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
 }
 .lens-by {
   display: inline-flex;
@@ -310,6 +346,12 @@ h3.record-prose__title {
 }
 .lens-doc__title {
   padding: 0 var(--space-sm);
+}
+
+/* Graph: edges that leave the set are dashed and coloured (inside stays muted, solid). */
+.lens-graph .generic-graph g[data-tone="leaving"] line {
+  stroke: var(--color-focus);
+  stroke-dasharray: 5 4;
 }
 
 /* ── Context ──────────────────────────────────────────────────────────────── */

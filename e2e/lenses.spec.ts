@@ -380,6 +380,38 @@ test.describe("lenses — shell and address", () => {
   });
 });
 
+test.describe("lenses — layouts", () => {
+  test("board and graph layouts open on the decision type lens with no page error", async ({ page }) => {
+    const errors = watchErrors(page);
+    await openSpec(page, lensHash(`type:${DECISION_TYPE}`));
+    const first = await title(page).textContent();
+
+    // Board: the Collection is a table in the main pane; Focus and Context sit in the inspector.
+    await page.getByTestId("lens-layout").selectOption("board");
+    const board = page.locator(".lens-board").getByTestId("lens-collection");
+    await expect(board).toHaveAttribute("data-mode", "table");
+    await expect(board.locator("thead th")).not.toHaveCount(0);
+    await expect(board.getByTestId("lens-item").first()).toBeVisible();
+    await expect(page.locator(".lens-inspector-focus").getByTestId("lens-focus")).toBeVisible();
+    await board.getByTestId("lens-item").nth(1).click();
+    await expect(title(page)).not.toHaveText(first ?? "");
+
+    // Graph: the selection's links, edges named as Context names its groups.
+    await page.getByTestId("lens-layout").selectOption("graph");
+    await pickPackage(page);
+    await expect(page.getByTestId("lens-graph").getByTestId("scoped-graph")).toBeVisible();
+    const legend = await page.getByTestId("graph-legend").locator("li").allTextContents();
+    const groups = await page.getByTestId("lens-context").locator(".lens-context-group").allTextContents();
+    expect(legend.some((l) => /Depends on/.test(l))).toBe(true);
+    for (const l of legend) {
+      const name = l.replace(/^[←→]\s*/, "").replace(/\s*\d+$/, "").trim();
+      expect(groups.some((g) => g.includes(name)), name).toBe(true);
+    }
+    await expect(page.getByTestId("lens-graph").locator('g.neighbour[data-tone="leaving"]').first()).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+});
+
 test.describe("lenses — phone (390 wide)", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 

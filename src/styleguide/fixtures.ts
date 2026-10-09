@@ -1273,6 +1273,21 @@ export const lensContextBoundary: ContextGroupData[] = [
     items: evidence,
   },
 ];
+/** The graph layout over the Context groups: each edge carries its group label, toned inside vs leaving. */
+export const lensGraph = {
+  focus: { id: "c-2", label: "Decision capacity is a muscle" },
+  layout: focusLayout(
+    lensContextGroups.flatMap((g) =>
+      g.items.map((e) => ({
+        id: e.id,
+        label: e.label,
+        direction: e.direction,
+        relationType: g.def.label,
+        tone: e.direction === "out" ? ("inside" as const) : ("leaving" as const),
+      }))
+    )
+  ),
+};
 export const lensContainers = [
   { containerId: "c1", title: "The case" },
   { containerId: "c2", title: "Spine 4 — Mechanism" },
