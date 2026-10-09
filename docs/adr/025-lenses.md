@@ -91,25 +91,24 @@ No second tree component is built.
 - Where the set has a container view, columns are its `ColumnSpec` (ADR-010
   unchanged). The Collection table is the ADR-010 list pane for Lenses: same column
   source, rendered with `LogTable`.
-- Elsewhere (type, composition, find and drawn sets), columns are the type schema's
-  first four short fields, in the author's declared order (`x-srs-order`), keyed by the
-  engine's `Field.name` (the schema exposes no field id; RFC-039). No field name is a
-  literal in client code; none is chosen by name.
+- Elsewhere (type, composition, find and drawn sets), columns are label, type and
+  state only, until the engine exposes field ids (gap 6). The owner's board-columns ruling (the
+  type schema's first four short fields, by field id) is the target once gap 6 lands.
+  No column is ever chosen by field name.
 - **Tell apart by "Nothing"** shows labels only. It is a valid first-class choice,
   not a fallback to shared fields.
 - The long-term home is an engine binding that returns default columns for a type.
-  The client choice is marked `ponytail:` naming that upgrade.
 
 ### "Tell apart by" is presentation
 
 - It groups only what the engine returned. It never filters, and never derives
   membership.
 - On a paged set it says so ("100 of N") and groups the loaded page only.
-- The field options come from the engine: `find(…, { facets: true })`'s
-  `facets.fields` (one facet per closed string field, keyed by `Field.name`) for type,
-  Everything and navigation-section collections. The engine returns at most 25 field
-  facets. Closed multiselect fields are included; a record with several values is
-  grouped under each. Composition and drawn-set collections offer no field option.
+- **No field option until the engine gives field ids** (gap 6). A field is named by
+  its id (`by=field:<fieldId>`, ADR-023), and no binding returns one for a schema
+  property or a `find` facet. `find`'s `facets.fields` is keyed by `Field.name`, so
+  it is not used. The option list carries a `ponytail:` citing gap 6. When field ids
+  arrive, field options come from the facets for every collection `find` can scope.
 - The type and Everything lenses load through `find` (paged); outline items carry the
   record the container view returns.
 - **Edge-to-set classification is presentation.** `splitByBoundary` is the one
@@ -146,7 +145,11 @@ The `lens=` key of the address ([ADR-023](./023-one-hash-address.md)) holds a le
   `poc/ux-lenses` and in `plans/ux-lenses.md` §3.
 - **A second navigation tree (#425 `NavTree`) beside Collection.** Two trees. Rejected.
 - **Strict ADR-010: title, type and state columns only.** The first review found such
-  boards useless. Rejected.
+  boards weak. It is the interim for sets with no container view until gap 6, not the
+  target.
+- **Name field options and columns by `Field.name`** (the key records and facets
+  share). Two Types can share a name for different Fields, and a name is not a stable
+  address. Rejected by the owner (2026-10-09): ask the engine for field ids (srs#931).
 - **Push "Tell apart by" into `find` before shipping.** One answer for every client,
   but it blocks #547 on srs-rust work. Deferred to the engine group-by.
 - **Client workarounds that compute relation results** (a repository-wide relation
@@ -183,6 +186,10 @@ These engine gaps limit Lenses. The numbers are canonical: every `ponytail:` in
    lenses call `getRecord` once per hit.
 5. **A Composition has no display title.** the-greenman/srs#928 (spec RFC needed).
    The client humanises the composition `name`.
+6. **No field id for a type-schema property or a `find` field facet.**
+   the-greenman/srs#931 (spec RFC needed: RFC-039 retired `x-srs-field-id`). "Tell
+   apart by" offers no field option, and boards outside a container view show label,
+   type and state only.
 
 Other trade-offs:
 - "Tell apart by" is not available to agents over MCP until the engine has a group-by.

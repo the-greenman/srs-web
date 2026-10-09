@@ -3,7 +3,7 @@
 > Stage 2 of /ship. Plan only. Worktree `~/dev/.wt/srs-web/547-lenses-view`, branch `feat/547-lenses-view`, off `origin/main` d067737 (0 commits behind at planning time).
 > Prototype: branch `poc/ux-lenses` (`/home/greenman/dev/semanticops/srs-web-wt-ux-lenses`, commits 32e87a0..f96ecc2 on d067737). Design: `plans/ux-lenses.md` there (§2, §7, §8), ported into this branch in Phase 0. Reviews: two fresh-eyes rounds (scratchpad `shots/critique.md`, `critique2/critique.md`); round 3 (f96ecc2) answered most round-2 findings.
 > Plan review round 1 (Architecture Reviewer 1–15, Plan Reviewer 1–15, comments on #547) is resolved in this revision, with owner ruling D10.
-> Plan review round 2 (Architecture Reviewer 1–10, Plan Reviewer 1–12) is resolved in this revision; one item awaits owner confirmation (the D6 note: fields keyed by `Field.name`, because the engine exposes no field id).
+> Plan review round 2 (Architecture Reviewer 1–10, Plan Reviewer 1–12) is resolved in this revision. The owner's D6 follow-up ruling (ask the engine for field ids) is applied: srs#931 filed, ADR-025 gap 6.
 > Answers: SP-47, SP-19 (SP-48 is suggested, not affirmed). Story: the-greenman/semanticops.com#22. Owner merges.
 
 ---
@@ -22,9 +22,10 @@
 | D8 | Back | One history: following a link pushes the address; the trail is `history.state`, shown with Breadcrumb; trail Back = browser Back | ADR-023 |
 | D9 | Lens ids | `nav:`, `comp:`, `type:`, `find`, `set`; `pkg:` reserved; prefixes never change; unknown id falls back without error | ADR-025 |
 | D10 | Engine gaps (2026-10-09) | "Remove the client workarounds that compute relation results; file the gaps now; no ADR-001 exception." Context groups come from the selected record's own edges; no type-filtered groups; "Shown in" lists only what `documentViewsForContainer` returns | ADR-025 |
+| D6 follow-up (2026-10-09) | Field ids | "Ask the engine for field ids." The request is the-greenman/srs#931 (RFC needed: RFC-039 retired `x-srs-field-id` from the type-schema projection as a spec decision). `by=field:<fieldId>` stays the grammar. Until the binding lands, "Tell apart by" offers no field option, and boards use `ColumnSpec` (which carries `fieldId`) where a container view exists, else label, type and state columns only | ADR-025 (gap 6) |
 | — | PR split | Two PRs: A = Phases 0–5 (`Refs #547`), B = Phases 6–8 (`Closes #547`) | — |
 
-**Note on D6 "by field id" (found in round 2; owner to confirm).** No binding returns a field id for a type-schema property: srs-rust retired `x-srs-field-id` (RFC-039, `type_schema_service.rs`), and the pinned build.502 does not emit it either. Records, schemas and `find` facets all key fields by `Field.name`. The plan therefore carries D6's intent ("never chosen by a name in code") as "keyed by the engine's `Field.name`, never a literal". `ColumnSpec` columns still carry the engine's `fieldId` where a container view exists. If the owner wants ids, that needs a new srs-rust binding first.
+**D6 follow-up, why srs and not srs-rust.** RFC-039 (Accepted, Rev 6) states "`x-srs-field-id` is retired … Phase B removes it from the editor-facing projection" (srs-rust 8e488bac). Bringing a field id back into the projection or the facets amends an accepted RFC, so it is a spec change (srs#931, `requires-spec-rfc`); no implementation issue follows until it is accepted. Until then the D6 schema-order columns (D6-A for sets with no container view) are suspended: those boards show label, type and state only.
 
 ## Decisions for the owner (as presented)
 
@@ -105,7 +106,7 @@ ADR-010: list columns come from `resolveContainerView(...).columns` (`ColumnSpec
 
 | Option | Trade-offs |
 |---|---|
-| **A. Presentation, recorded as such in ADR-025.** It groups only what the engine returned, never filters or derives membership. On a paged set it says it groups the loaded page ("100 of N"). | Ships now, and is the same class as ADR-018's presentation-layer filter. If agents need "tell apart by" over MCP, the engine needs a group-by. Field options already come from `find`'s `facets.fields` (D10 follow-through). |
+| **A. Presentation, recorded as such in ADR-025.** It groups only what the engine returned, never filters or derives membership. On a paged set it says it groups the loaded page ("100 of N"). | Ships now, and is the same class as ADR-018's presentation-layer filter. If agents need "tell apart by" over MCP, the engine needs a group-by. Field options wait for engine field ids (D6 follow-up, srs#931). |
 | B. Push grouping into `find` (group-by axis) before shipping. | One answer for every client, but it blocks this issue on srs-rust work. |
 
 **Recommendation: A.** The hub threshold is a presentation default, kept as a named constant (`HUB_LINKS`).
@@ -148,7 +149,7 @@ This plan ports it into the real app as an additive **Lenses** view beside the e
 - one hash address shared with Essay;
 - four layouts, specimens and tests.
 
-No WASM changes. No relation semantics in TypeScript (D10): the engine gaps are filed (ADR-025 gaps 1–5), and the client never computes a relation result.
+No WASM changes. No relation semantics in TypeScript (D10): the engine gaps are filed (ADR-025 gaps 1–6), and the client never computes a relation result.
 
 ## Agent Assignments
 
@@ -168,7 +169,7 @@ Every srs-web ADR (001–021) was read. Below: how each one bears on this plan.
 
 | ADR | Decision | Status |
 |---|---|---|
-| [ADR-001](../docs/adr/001-thin-client.md) | Hard constraint. Every read goes through existing `srs-client.ts` bindings; every write is `updateRecord` via `SectionForm`. No TypeScript relation semantics remain (D10): Context groups the engine's `neighbours` result, "Shown in" is `documentViewsForContainer`, and the gaps are filed issues (ADR-025 gaps 1–5). The one `srs-client.ts` change is a typed pass-through of `find`'s `facets.fields`. | accepted, governs |
+| [ADR-001](../docs/adr/001-thin-client.md) | Hard constraint. Every read goes through existing `srs-client.ts` bindings; every write is `updateRecord` via `SectionForm`. No TypeScript relation semantics remain (D10): Context groups the engine's `neighbours` result, "Shown in" is `documentViewsForContainer`, and the gaps are filed issues (ADR-025 gaps 1–6). `srs-client.ts` is unchanged. | accepted, governs |
 | [ADR-002](../docs/adr/002-editor-mode-selection.md) | Explicit mode selection, already replaced by the #338 editor registry. ADR-022 records the registry and adds built-in views (D1). | superseded by ADR-022 |
 | [ADR-003](../docs/adr/003-blueprint-schema-driven-guides-editor.md) | "As published" renders a Composition (document view); Edit uses the type schema, never the view. | accepted, respected |
 | ADR-004 / ADR-005 | Superseded; no bearing. | superseded |
@@ -176,7 +177,7 @@ Every srs-web ADR (001–021) was read. Below: how each one bears on this plan.
 | [ADR-007 CSS themes](../docs/adr/007-frontend-css-themes.md) | Preview CSS only; Focus "As published" renders markdown through `MarkdownView`, not the preview iframe. No bearing. | accepted |
 | [ADR-008](../docs/adr/008-rfc009-uuid-chain-join.md) | Composition ↔ container joins come from engine bindings (`documentViewsForContainer`), never string matching. The prototype's `namespace/name` type filter on Context groups is dropped (D10). | accepted, respected |
 | [ADR-009](../docs/adr/009-container-driven-nav.md) | Navigation-section lenses come from `repositoryNavigation`. Containers from data, never TS constants. | accepted, extended by ADR-025 |
-| [ADR-010](../docs/adr/010-view-driven-list-columns.md) | Board columns: `ColumnSpec` where a container view exists; schema-order extension elsewhere (D6). The Collection table is the ADR-010 list pane for Lenses. | accepted, extended by ADR-025 |
+| [ADR-010](../docs/adr/010-view-driven-list-columns.md) | Board columns: `ColumnSpec` (with its `fieldId`) where a container view exists; elsewhere label, type and state only until field ids are exposed (D6 follow-up, ADR-025 gap 6). The Collection table is the ADR-010 list pane for Lenses. | accepted, extended by ADR-025 |
 | ADR-011 / ADR-015 / ADR-016 / ADR-017 | OAuth worker, binary storage, exploded trees, refresh tokens: no bearing (Lenses never touches storage; Save stays App's). | accepted |
 | [ADR-012](../docs/adr/012-governance-status-via-lifecycle-binding.md) | Lifecycle is shown read-only as `Tag`. Lenses offers no transitions, and Edit never writes status as a field. | accepted, respected |
 | [ADR-013](../docs/adr/013-repo-context.md) | RecordProse takes props, not the repo context, so it renders outside GovernanceShell (D3). | accepted, respected |
@@ -198,23 +199,7 @@ Every srs-web ADR (001–021) was read. Below: how each one bears on this plan.
 
 **No new or changed WASM methods.** Every call exists on `origin/main`'s `src/lib/srs-client.ts`: `repositoryNavigation`, `getContainerOutline`, `resolveContainerView`, `getContainer`, `containersForInstance`, `listContainers`, `listDocumentViews`, `documentViewsForContainer`, `renderDocumentView`, `find`, `listTypes`, `getRecord`, `typeSchema`, `neighbours`, `listRelationTypes`, `updateRecord`. `listRelations` (D10) and `listRecords` (the type lens loads through `find`) are no longer used by Lenses.
 
-**One wrapper change (Phase 2), a typed pass-through with no logic.** The engine's `find` already returns `facets.fields` (srs-rust `discovery_service.rs` `FieldFacet`: one entry per closed string field, keyed by `Field.name`, with value counts; present in the pinned build.502). srs-web's `find()` drops it. Phase 2 adds:
-
-```ts
-// src/lib/srs-client.ts
-/** One closed string field in `facets.fields`, keyed by Field.name (srs-rust FieldFacet). */
-export interface FieldFacet {
-  field: string;
-  values: { value: string; count: number }[];
-  other: number;
-}
-export interface DiscoveryFacets {
-  byType: TypeFacet[];
-  otherTypes: number;
-  notes: number;
-  fields: FieldFacet[]; // new: raw.facets?.fields mapped to { field, values: values ?? [], other: other ?? 0 }
-}
-```
+**No `srs-client.ts` change.** The engine's `find` already returns `facets.fields`, but keyed by `Field.name` with no field id, so Lenses does not use it until ADR-025 gap 6 (srs#931) lands; the typed pass-through returns with that binding.
 
 `src/lib/read-only.ts` needs no change: Lenses adds no binding, and its only write is `update_record`, already classified.
 
@@ -233,7 +218,7 @@ export interface DiscoveryFacets {
 | Concept type / decision type | `2a000004-0000-4000-a000-000000000004` / `6a000004-0000-4000-a000-000000000004` (54 decisions) |
 | Journey concept | `006a853f-7e58-4842-85e4-ad75d4b0fe5d` "Package", in Part: Distribution (container `97838af7-…`); `depends-on` out to `873099c5-093d-4684-8c36-46f813847c1a` "Field" (in Part: Foundations) and `9bccaa53-6d98-4ca9-967b-fb27ec6e72d5` "Type" |
 | Hub record (most edges) | `580cfe0e-b23e-4215-a3c4-22cbd0526810` "Extensions" (concept), 41 edges: more than `NEIGHBOUR_PAGE` (20), fewer than `HUB_LINKS` (50). No record in the fixture exceeds `HUB_LINKS`, so the hub guard is unit-tested, not e2e-tested |
-| `find` `facets.fields` | whole repo: `project_phase`, `presentation_profile`, `artifact_kind`, `extension_status`, `status`; decision type: `project_phase` (`formation`, 53) |
+| `find` `facets.fields` | not used until gap 6 (keyed by `Field.name`, no field id) |
 | Relations | 941 files; 94 `depends-on` |
 | "Shown in" | `compositions_for_container` returns nothing for any of its 20 containers, so "Shown in" is empty here (D10) |
 
@@ -247,9 +232,9 @@ export interface DiscoveryFacets {
 
 The Lead Integrator freezes these before the phase that consumes them (Coordination Rules). Prototype names change where shown.
 
-**Imported types** (existing, unchanged): `SrsRepository`, `SrsRecord`, `Actor`, `TypeSummary`, `DocumentView`, `RelationTypeInfo`, `UpdateRecordInput`, `FieldFacet` (new in Phase 2) from `src/lib/srs-client.ts`; `ToolbarAction` from `src/lib/components/menu-action.ts`; `ShellState` from `src/lib/shell-context.svelte.ts`; `FieldFormDef` from `src/lib/governance/types.ts`; `CompositeFormDef` from `src/lib/editor/blueprint-fields.ts`; `BreadcrumbItem` from `src/lib/types.ts`.
+**Imported types** (existing, unchanged): `SrsRepository`, `SrsRecord`, `Actor`, `TypeSummary`, `DocumentView`, `RelationTypeInfo`, `UpdateRecordInput` from `src/lib/srs-client.ts`; `ToolbarAction` from `src/lib/components/menu-action.ts`; `ShellState` from `src/lib/shell-context.svelte.ts`; `FieldFormDef` from `src/lib/governance/types.ts`; `CompositeFormDef` from `src/lib/editor/blueprint-fields.ts`; `BreadcrumbItem` from `src/lib/types.ts`.
 
-**Fields are named by `Field.name`.** The engine retired `x-srs-field-id` from `type_schema` (RFC-039; `type_schema_service.rs`: "instance keys and schema keys are both `Field.name`"), and no binding returns a field id for a schema property. `Field.name` is the key records, schemas and `find` facets share, so `by=field:<name>` and board columns use it. No field name is ever a literal in client code; every one comes from engine output. (This corrects round 1, which asked for field ids; see the D6 note under the rulings table.)
+**Fields are named by field id, and none is offered yet.** The address grammar is `by=field:<fieldId>`. No binding returns a field id for a type-schema property or a `find` field facet (RFC-039 retired `x-srs-field-id`), so until ADR-025 gap 6 (srs#931) lands Lenses builds no field option, groups by no field, and selects no board column by field. No field name is used to select anything.
 
 **`src/lib/address.ts`** (moved from `src/lib/essay/address.ts`, Phase 1). It validates all three Lenses keys in one place:
 
@@ -313,13 +298,13 @@ LensShell takes `address: Address` and `addressState: unknown` as props and re-a
 **`src/lib/lens/lens-distinctions.ts`** (Phase 2; imports the grammar types from `address.ts`):
 
 ```ts
-export interface SelectField { name: string; label: string }
 export interface ByOption { value: CollectionBy; label: string }
 export const NOT_SET = "Not set";
 export const HUB_LINKS = 50;
 
-export function collectionOptions(items: Item[], fields: SelectField[], outline: boolean): ByOption[];
-/** Groups loaded items. field:<name> reads item.record.fieldValues[name]; an array value (multiselect / list) puts the item under each value. created-by groups by actor id. */
+/** No field options: ponytail: ADR-025 gap 6 (srs#931); field options come back with field ids. */
+export function collectionOptions(items: Item[], outline: boolean): ByOption[];
+/** Groups loaded items; created-by groups by actor id. A `field:<fieldId>` value is treated as the kind default until gap 6 (no field grouping). */
 export function groupItems(
   items: Item[],
   by: CollectionBy,
@@ -372,7 +357,8 @@ export const PAGE = 100;
 export const NEIGHBOUR_PAGE = 20;
 export interface Item { id: string; label: string; typeName?: string; typeId?: string; lifecycle?: string;
   createdBy?: Actor; depth: number; sectionContainerId?: string; group?: string; record?: SrsRecord }
-export interface Column { name: string; label: string }
+/** A board column: a ColumnSpec column (carries fieldId), or one of the fixed label/type/state columns. */
+export type Column = { kind: "field"; fieldId: string; label: string } | { kind: "label" | "type" | "state" };
 export interface CollectionData { items: Item[]; columns: Column[]; total: number }
 export interface ContextItem { id: string; label: string; typeName?: string; direction: "in" | "out"; relationType: string }
 export interface ContextGroupData { def: ContextGroupDef; total: number; items: ContextItem[] }
@@ -390,14 +376,8 @@ export type FocusData =
  * find → find({}, { limit: offset + PAGE }) then getRecord per hit (gap 4);
  * composition → the JSON render projection's ids then getRecord (gap 1); ids → getRecord.
  */
+/** columns: resolveContainerView(...).columns for outline lenses; [label, type, state] for every other kind (gap 6). */
 export function loadCollection(repo: SrsRepository, lens: Lens, offset?: number): CollectionData;
-/** The schema's first four non-markdown, non-text properties in x-srs-order, keyed by Field.name; labels via fieldLabel. */
-export function typeColumns(repo: SrsRepository, typeId: string): Column[];
-/**
- * find(q, { limit: 0, byTypeLimit: 0, facets: true }).facets.fields, with q = { typeId } (type), {} (find),
- * { containerId } (outline); [] for composition and ids. Labels from the type schema's title, else humanise(name).
- */
-export function selectFields(repo: SrsRepository, c: Collection): SelectField[];
 /** Every edge of the record: one neighbours(repo, id) call with no limit. */
 export function loadEdges(repo: SrsRepository, id: string): ContextItem[];
 /** Buckets `edges` by the defs (same relationType and direction); `total` = bucket size. No engine call. */
@@ -416,7 +396,7 @@ export function loadDocument(repo: SrsRepository, id: string, compositionId?: st
 export function containersOf(repo: SrsRepository, id: string, hint?: string): string[];
 ```
 
-Removed from the prototype: `compositionsByContainer`, `allEdges` (its 500 cap was its own), `loadGroup` (a group's "Show more" pages the edges already loaded, `NEIGHBOUR_PAGE` at a time), `listRecords` for the type lens (now `find({ typeId })`), and `graphEdges`' own neighbours call.
+Removed from the prototype: `compositionsByContainer`, `allEdges` (its 500 cap was its own), `loadGroup` (a group's "Show more" pages the edges already loaded, `NEIGHBOUR_PAGE` at a time), `listRecords` for the type lens (now `find({ typeId })`), `graphEdges`' own neighbours call, and `selectFields`/`typeColumns`/`sharedFields` (no name-keyed field selection; gap 6).
 
 **Pane props** (Phase 3; `src/lib/lens/*.svelte`, `src/rendering/RecordProse.svelte`):
 
@@ -507,9 +487,9 @@ export function lensActions(
 
 It composes `saveAction`, `exportActions`, `packagesAction`, `agentsAction`, `openAnotherAction` and `wideAction` from `shell-actions.ts`, plus `{ id: "explorer", group: "go", kind: "action", label: "Explorer" }` as Essay's `header-actions.ts` has it.
 
-### Field-label engine check (follow-up 5, run 2026-10-09)
+### Field-label engine check (follow-up 5, run 2026-10-09; filed as srs-rust#1382)
 
-srs-rust `origin/master` (8a977a99), `crates/srs-repository/src/type_schema_service.rs`: a property's `title` is the FieldAssignment `displayLabel`, **else the Field's `description`** ("title: displayLabel wins, else the field's description"); the description is also written to `x-srs-description`, and `aiGuidance.purpose` becomes `description`. The engine test asserts `properties.b.title == "b description"`. So a client cannot tell a real label from a copied description. This is an engine gap; follow-up 5 is now a ready-to-file srs-rust issue (see "Deferred follow-ups"). `fieldLabel` does not work around it.
+srs-rust `origin/master` (8a977a99), `crates/srs-repository/src/type_schema_service.rs`: a property's `title` is the FieldAssignment `displayLabel`, **else the Field's `description`** ("title: displayLabel wins, else the field's description"); the description is also written to `x-srs-description`, and `aiGuidance.purpose` becomes `description`. The engine test asserts `properties.b.title == "b description"`. So a client cannot tell a real label from a copied description. This is an engine gap, filed as srs-rust#1382. `fieldLabel` does not work around it.
 
 ---
 
@@ -538,7 +518,7 @@ Checked against `src/lib/components/` and `src/lib/essay/` (the essay directory 
 - A built-in **Lenses** view in App, reached from Generic (Explore > Lenses) and leaving by Go > Explorer. It works on editable and read-only documents (D1).
 - **Derived lenses only:** navigation sections, compositions, used types, Everything, and My set. No curated lenses, no per-lens defaults and no repository ids in code.
 - **Collection** (list/outline and table), **Focus** (Read via `RecordProse`, Document, Edit in place, As published), **Context** (groups by link type from the record's own edges, Nothing, inside/outside the set; In; Shown in; link trail with Back).
-- **Tell apart by** on Collection (none, type, nesting, container, state, created by, closed field) and Context (link type, none, inside/outside).
+- **Tell apart by** on Collection (none, type, nesting, container, state, created by; a field option waits for gap 6) and Context (link type, none, inside/outside).
 - **Draw a set:** Select mode with checkboxes and shift-range, "Show as a set", "Add everything these link to" with the hub guard and the skipped-hub list.
 - **One address:** `src/lib/address.ts` shared with Essay. Lens, selected instance and distinctions are in the hash. Back, reload (after restore) and an externally written hash all work through App's one `popstate` listener (D2, D8).
 - **One label module:** `src/lib/labels.ts` (`humanise`, `fieldLabel`) for forms, lenses and RecordProse.
@@ -558,7 +538,7 @@ Checked against `src/lib/components/` and `src/lib/essay/` (the essay directory 
 - `RecordDispatch` and the Generic inspector adopting `RecordProse` (#137 follow-up, D3).
 - Lifecycle transitions and relation creation from Lenses.
 - Type-filtered Context groups (D10).
-- A field-label fix for schema titles copied from descriptions (engine gap; follow-up 5).
+- A field-label fix for schema titles copied from descriptions (engine gap, srs-rust#1382).
 
 ### Engine gaps (filed; numbering canonical in ADR-025)
 
@@ -569,10 +549,11 @@ Checked against `src/lib/components/` and `src/lib/essay/` (the essay directory 
 | 3 | Tier 0 note read through WASM | srs-rust#1379 | SP-05 | semanticops.com#22 | `tryRecord` returns undefined for a note; Focus says "A note; its text is not shown here." |
 | 4 | `find` hits with field values | srs-rust#1380 | SP-05 | semanticops.com#22 | The Everything and type lenses call `getRecord` once per hit. |
 | 5 | Composition display title | the-greenman/srs#928 ("RFC needed", requires-spec-rfc) | SP-05 | semanticops.com#22 | Clients humanise the composition `name`. |
+| 6 | Field id for a type-schema property and a `find` field facet | the-greenman/srs#931 ("RFC needed", requires-spec-rfc; amends RFC-039) | SP-05 | semanticops.com#22 | "Tell apart by" offers no field option; boards outside a container view show label, type and state only. |
 
 **Not engine gaps** (client tasks in this plan):
 - `neighbours` returns every edge when no limit is passed. The prototype's 500 cap is removed (`loadEdges`); a group's "Show more" pages the edges already loaded (`groupEdges`, `NEIGHBOUR_PAGE` at a time); no second read.
-- `find` already returns `facets.fields`; srs-web's wrapper dropped it. Phase 2 exposes it and `selectFields` calls `find` with `facets: true`. Limits: at most 25 fields (srs-rust `FACET_MAX_FIELDS`) and 20 values per field (`FACET_TOP_N`) are returned; only the field list is used for options, and grouping reads each record's own value, so the value cap does not hide a group. Closed multiselect/list fields are counted per value and `groupItems` puts a record under each of its values.
+- `find` already returns `facets.fields`, but keyed by `Field.name` with no field id; it is not used until gap 6 (srs#931).
 - Relation usage counts: not needed (D10), not filed.
 
 ### Deferred srs-web follow-ups (ready to file at Phase 8, after owner sign-off)
@@ -598,13 +579,7 @@ Search first with each query (repo rule); comment instead of filing a duplicate.
    - Duplicate search: `gh search issues "default landing" --repo the-greenman/srs-web --state open && gh search issues "default landing" --repo the-greenman/srs-web --label parked`.
    - `Answers: No affirmed problem yet: a repository opens in a view that ignores what it holds.` (Related suggestion, not affirmed: SP-48.)
 4. **#426 narrowed** (in PR A's body, no new issue): "Narrows #426: address module, Lenses and Essay; Generic, Governance and Guides remain."
-5. **`type_schema` copies a field's description into `title`** (engine check done, see "Field-label engine check"; ready to file):
-   - Target: the-greenman/srs-rust. Parent: semanticops.com#22.
-   - Title: `type_schema: a property's title falls back to Field.description, so clients cannot tell a label from a description`.
-   - Problem: `type_schema_service.rs` sets `title` to the FieldAssignment `displayLabel`, else the Field's `description` (the test asserts `properties.b.title == "b description"`). Every client form then shows a sentence as a field label, and no client can tell the two apart without a heuristic over engine output.
-   - Acceptance: a property with no `displayLabel` carries no description-derived `title` (or carries an explicit `x-srs-label` the core resolves), the description stays in `x-srs-description`, and the CLI payload schema and WASM output agree; srs-web's `fieldLabel` (`title || humanise(name)`) then needs no change.
-   - Duplicate search: `gh search issues "type_schema title description" --repo the-greenman/srs-rust --state open`.
-   - `Answers: SP-05`.
+5. **`type_schema` copies a field's description into `title`**: filed as **the-greenman/srs-rust#1382** (Answers: SP-05, linked under semanticops.com#22; duplicate searches for "type_schema title description", "title falls back to description", "displayLabel description title schema", open, closed and parked, found nothing). srs-rust ADR-026 records the fallback, and no spec rule requires it, so it is an implementation issue. `fieldLabel` (`title || humanise(name)`) needs no change when it lands.
 
 ---
 
@@ -615,8 +590,8 @@ Search first with each query (repo rule); comment instead of filing a duplicate.
 | Prototype file | Fate | Changes on the way in |
 |---|---|---|
 | `src/lib/lens/lens.ts` | port | Contracts above. **Drop** `curatedLenses`, `problemContext`, `ctx`, `relationLabel`, `Collection` kinds `navigation` and `outline.also`, `Lens.columns`/`by`/`ctxBy`/`layout`/`context`, `ContextGroupDef.types`. `humanise` moves to `src/lib/labels.ts`. `defaultContext` takes the record's edges and `listRelationTypes()`; labels from `RelationTypeInfo.label`. Type lens labels from `listTypes` `name` via `humanise` (no `namespace/name` slicing). Comp lens label: `ponytail: ADR-025 gap 5 (srs#928)`. |
-| `src/lib/lens/lens-distinctions.ts` | port | Contracts above. Values renamed: `nothing` → `none`, `createdBy` → `created-by`, `link` → `link-type`, `nothing` (ctx) → `none`; `field:<name>` stays (Field.name is the engine key, RFC-039). Grammar types and validation move to `address.ts`; `By`/`CtxBy` are deleted. `created-by` groups by actor id. **Drop** `sharedFields` (D6-A). |
-| `src/lib/lens/lens-data.ts` | port | Contracts above. **Remove** `compositionsByContainer`, `allEdges`, `loadGroup` (D10; groups page loaded edges) and the type lens's `listRecords` (now `find({ typeId })`). `selectFields` reads `find` `facets.fields` with `facets: true`. `fieldLabel` moves to `src/lib/labels.ts`. `typeColumns(repo, typeId)` (no `names` argument) gets `ponytail: client picks columns; an engine default-columns binding is the upgrade (D6-C)`. Ponytails: composition stand-in → gap 1, `loadDocument`/`loadContainerBlocks` → gap 2, `tryRecord` → gap 3, `getRecord` per find hit → gap 4. |
+| `src/lib/lens/lens-distinctions.ts` | port | Contracts above. Values renamed: `nothing` → `none`, `createdBy` → `created-by`, `link` → `link-type`, `nothing` (ctx) → `none`; `field:<fieldId>` is the grammar, but no field option is built until gap 6. Grammar types and validation move to `address.ts`; `By`/`CtxBy` are deleted. `created-by` groups by actor id. **Drop** `sharedFields` and the `field:` grouping branch (gap 6). |
+| `src/lib/lens/lens-data.ts` | port | Contracts above. **Remove** `compositionsByContainer`, `allEdges`, `loadGroup` (D10; groups page loaded edges) and the type lens's `listRecords` (now `find({ typeId })`). **Drop** `selectFields` and `typeColumns`; non-outline boards show label, type and state (`ponytail: ADR-025 gap 6 (srs#931)` where columns are chosen). `fieldLabel` moves to `src/lib/labels.ts`. Ponytails: composition stand-in → gap 1, `loadDocument`/`loadContainerBlocks` → gap 2, `tryRecord` → gap 3, `getRecord` per find hit → gap 4. |
 | `src/lib/lens/Collection.svelte` | port | Raw `<select>` → `Select`. Checkbox → `Checkbox`. `+`/`−` toggles → `IconButton` (Lucide `chevron-right`/`chevron-down`, label "Expand …"/"Collapse …"). `data-part`s (`head`, `by`, `set-bar`, `group`, `row`, `toggle`). Header comment says "grouping over loaded items" (D7). |
 | `src/lib/lens/Focus.svelte` | port + extract | Move the `read` snippet and its `view()` helper to **`src/rendering/RecordProse.svelte`** (D3). Keep the "long field" `ponytail:` there (presentation limit). Focus keeps mode control, blocks, document and edit. `onEdit` is absent when `readOnly`. The "A note" text stays (gap 3). |
 | `src/lib/lens/Context.svelte`, `ContextGroup.svelte` | port | `+` (add to set) → `IconButton` (Lucide `plus`). In/out arrows → Lucide `arrow-left`/`arrow-right` (`aria-hidden`), text "links here"/"links out" as the accessible name. `Select` for "Tell apart by". `data-part`s. Groups from `groupEdges(edges, defaultContext(edges, listRelationTypes(repo)))` with `edges = loadEdges(repo, id)`; ContextGroup's "Show more" reveals the next `NEIGHBOUR_PAGE` of its items. |
@@ -634,7 +609,7 @@ Search first with each query (repo rule); comment instead of filing a duplicate.
 
 **`ponytail:` handling:**
 - Engine-gap ponytails cite `ADR-025 gap N (<issue>)`; a grep check enforces that every cited N exists in ADR-025.
-- Presentation limits, with no follow-up: RecordProse "long field" heuristic; `loadContainerBlocks` one level deep (also gap 2); `LensShell` `containersForInstance` per member while "Container" is chosen; `typeColumns` (D6-C); composition and drawn-set lenses offer no field option; `find` returns at most 25 field facets (`FACET_MAX_FIELDS`).
+- Presentation limits, with no follow-up: RecordProse "long field" heuristic; `loadContainerBlocks` one level deep (also gap 2); `LensShell` `containersForInstance` per member while "Container" is chosen; no field option and no schema-order board columns until gap 6.
 - The prototype's unmarked corner cut (hash replaceState-only, read only at mount) is **fixed** in Phase 4.
 
 ---
@@ -672,7 +647,7 @@ test -f docs/adr/025-lenses.md && test -z "$missing"
 #### Tasks
 - [x] Record the owner's answers (the rulings table at the top), D10 included.
 - [x] Write ADR-022, ADR-023, ADR-024 and ADR-025. Mark ADR-002 superseded by ADR-022.
-- [x] File the engine gaps (ADR-025 gaps 1–5) before any code (D10).
+- [x] File the engine gaps (ADR-025 gaps 1–6) before any code (D10).
 - [x] Resolve plan review round 1 (this revision).
 - [x] Port `plans/ux-lenses.md` from `poc/ux-lenses` with the status line.
 - [x] Resolve plan review round 2 (this revision).
@@ -714,7 +689,7 @@ All three commands exit 0. Commit `docs: lenses ADRs, plan review round 1, desig
 #### Testing (named)
 - `tests/address.test.ts`:
   - existing "round-trips" and "tolerates junk";
-  - "round-trips lens keys": `parseAddress(formatAddress(a))` equals `a` for `{ lens: "nav:97838af7-50f8-4da2-9d8f-d7dbf9296c80", instanceId: "006a853f-7e58-4842-85e4-ad75d4b0fe5d", by: "field:project_phase", ctxBy: "boundary" }` and for each `LensId` form;
+  - "round-trips lens keys": `parseAddress(formatAddress(a))` equals `a` for `{ lens: "nav:97838af7-50f8-4da2-9d8f-d7dbf9296c80", instanceId: "006a853f-7e58-4842-85e4-ad75d4b0fe5d", by: "field:00000000-0000-4000-8000-000000000001", ctxBy: "boundary" }` and for each `LensId` form;
   - "accepts a raw colon": `parseAddress("#lens=nav:abc&by=field:def")` gives `lens: "nav:abc"`, `by: "field:def"`;
   - "drops invalid lens, by and ctxby values": `#lens=bogus&by=colour&ctxby=x` parses to `{}`; each regex is tested on its valid forms;
   - "essay and lens keys coexist";
@@ -733,14 +708,13 @@ All pass. Mark tasks `[x]`. Commit `refactor(address): one hash address module s
 
 ### Phase 2: Lens model, data, labels (pure modules)
 
-**Goal:** Derived lenses, loaders, distinctions and the shared label module ported and tested against the real engine; `find` exposes `facets.fields`; no UI yet.
+**Goal:** Derived lenses, loaders, distinctions and the shared label module ported and tested against the real engine; no UI yet.
 
 **Agent:** Web App Worker.
-**Write scope:** `src/lib/lens/lens.ts`, `src/lib/lens/lens-data.ts`, `src/lib/lens/lens-distinctions.ts`, `src/lib/srs-client.ts` (`FieldFacet`, `DiscoveryFacets.fields`, the `find` mapping line only), `src/lib/labels.ts` (moved from `src/lib/generic/labels.ts`), the label importers listed in Contracts (import lines; `blueprint-fields.ts` label lines), `tests/lens-distinctions.test.ts` (new, ported), `tests/lens-model.wasm.test.ts` (new), `tests/labels.test.ts` (new), `tests/document-model.test.ts` and `tests/generic-records-map.test.ts` (import paths only), `tests/blueprint-fields.test.ts` (two cases). `src/lib/editor/blueprint-fields.ts` changes in a separate commit within this phase.
+**Write scope:** `src/lib/lens/lens.ts`, `src/lib/lens/lens-data.ts`, `src/lib/lens/lens-distinctions.ts`, `src/lib/labels.ts` (moved from `src/lib/generic/labels.ts`), the label importers listed in Contracts (import lines; `blueprint-fields.ts` label lines), `tests/lens-distinctions.test.ts` (new, ported), `tests/lens-model.wasm.test.ts` (new), `tests/labels.test.ts` (new), `tests/document-model.test.ts` and `tests/generic-records-map.test.ts` (import paths only), `tests/blueprint-fields.test.ts` (two cases). `src/lib/editor/blueprint-fields.ts` changes in a separate commit within this phase.
 
 #### Tasks
 - [ ] Port the three lens modules per the port map and contracts.
-- [ ] `find()`: add `fields: (raw.facets?.fields ?? []).map((f) => ({ field: f.field, values: f.values ?? [], other: f.other ?? 0 }))`. Nothing else in `srs-client.ts`.
 - [ ] `git mv src/lib/generic/labels.ts src/lib/labels.ts`; add `humanise` (the body of `typeNameLabel`) and `fieldLabel` (`title || humanise(name)`); delete `typeNameLabel` and update its importers.
 - [ ] Separate commit `refactor(forms): field labels humanise a bare name (#547)`: `blueprint-fields.ts` uses `fieldLabel({ name, title: prop.title })` at both sites; `tests/blueprint-fields.test.ts` gains "a titled field keeps its title" and "an untitled field shows its humanised name". PR A's body names this commit.
 - [ ] `lens-model.wasm.test.ts`: the `editor-install.wasm.test.ts` pattern (copy bindings aside, `initSync`), then `mod.SrsRepository.load_archive(readFileSync("e2e/fixtures/srs-spec.srs"))`. Skipped without bindings; fails in CI without them.
@@ -757,17 +731,15 @@ All pass. Mark tasks `[x]`. Commit `refactor(address): one hash address module s
   - "fieldLabel returns the title when present";
   - "fieldLabel humanises the name when the title is empty or absent".
 - `tests/lens-distinctions.test.ts` (ported):
-  - `groupItems` by none, type, `field:<name>`, a multiselect (array) value under each value, "Not set" last, `created-by` by actor id;
+  - `groupItems` by none, type, state, container, "Not set" last, `created-by` by actor id; a `field:<fieldId>` value falls back to the kind default;
   - "splitByBoundary is the one edge-to-set classifier": inside/outside for edges whose other end is in or out of the set, nothing dropped, order kept;
   - `skipHubs` at and above `HUB_LINKS`;
-  - `collectionOptions` offers Nesting only for outlines, State and Created by only when present, and one `field:<name>` option per `SelectField`.
+  - `collectionOptions` offers Nesting only for outlines, State and Created by only when present, and never a `field:` option (gap 6).
 - `tests/lens-model.wasm.test.ts`:
   - "derives one nav lens per depth-0 navigation section with a sectionContainerId (9)";
   - "derives one comp lens per composition": the comp lens ids equal `listDocumentViews(repo).map((c) => "comp:" + c.id)` in order, and on this fixture that is the six ids in "Bindings and fixture facts";
   - "derives type lenses ordered by record count";
   - "lens ids are prefixed engine ids";
-  - "find exposes facets.fields": `find(repo, { typeId: "6a000004-0000-4000-a000-000000000004" }, { limit: 0, facets: true })` has `project_phase` with `formation` = 53;
-  - "selectFields passes facets: true": for the decision type lens it returns `[{ name: "project_phase", … }]` (a spy on `find` sees `facets: true`);
   - "type lens loads through find": `loadCollection` on `type:2a000004-…` returns `total` equal to `find({ typeId }).total`, first page ≤ `PAGE`, each item with a `record`;
   - "defaultContext groups only the record's own edges": for `006a853f-7e58-4842-85e4-ad75d4b0fe5d` (Package) every group's relation type appears in `loadEdges` for it, `depends-on` out is present, and no group exists for a relation type with no edge at that record;
   - "an unlisted relation key sorts last with a humanised label" (unit case with a synthetic edge);
@@ -798,7 +770,6 @@ All pass, plus `no-literals` and `gap-cites`. Two commits: `refactor(forms): fie
 - [ ] Specimens (`#lenses` section):
   - switcher with nav tabs + More;
   - Collection outline under Nesting with Select on and a set of 2;
-  - Collection list told apart by a closed field;
   - Collection list told apart by Created by (ActorChip headings);
   - Collection table;
   - Focus Read (RecordProse);
@@ -935,7 +906,7 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): Lenses view in
   2. Pick the Distribution tab (`nav:97838af7-50f8-4da2-9d8f-d7dbf9296c80`), then the concept "Package" (`006a853f-7e58-4842-85e4-ad75d4b0fe5d`): Focus Read shows "Package"; Context shows a "Depends on →" group with a count.
   3. Follow the prerequisite "Field" (`873099c5-093d-4684-8c36-46f813847c1a`): the trail shows two items; browser Back returns to "Package" with the trail emptied.
   4. "Tell apart by" Type groups the Collection and the hash gains `by=type`.
-  5. On the decision type lens (`type:6a000004-0000-4000-a000-000000000004`), "Tell apart by" Project phase groups under "formation" and the hash gains `by=field%3Aproject_phase`.
+  5. On the decision type lens (`type:6a000004-0000-4000-a000-000000000004`), the "Tell apart by" select lists no field option (gap 6), and writing `#…&by=field:<uuid>` falls back to Type with no page error.
   6. Reader layout, then Document: the selected block is highlighted.
   7. Edit a concept's title in place, then Cancel: nothing is unsaved. Edit, then Save: "Unsaved changes" shows.
   8. Reload, then `restore-session`: Lenses reopens on the same lens and record.
@@ -972,19 +943,19 @@ All pass, plus `no-literals` and `gap-cites`. Commit `test(lens): end-to-end jou
 **Write scope:** `src/lib/lens/LensShell.svelte`, `src/lib/lens/lens-data.ts` (`graphEdges` only), `src/styles/components/lens.css`, `src/Styleguide.svelte`, `src/styleguide/fixtures.ts`, `tests/lens-graph.test.ts` (new), `tests/lens-board.test.ts` (new), `e2e/lenses.spec.ts`.
 
 #### Tasks
-- [ ] Port the board and graph branches and the `graph` derivation from prototype LensShell. Columns per D6-A.
+- [ ] Port the board and graph branches and the `graph` derivation from prototype LensShell. Columns: `ColumnSpec` on outline lenses, else label, type and state (D6 follow-up).
 - [ ] The graph legend uses the Context group labels (`ContextGroupDef.label`): one naming source for list and graph (answers critique round 2, "Depends On" vs "Required by").
 - [ ] When the selection's groups yield no edges in the chosen relation, the graph falls back to all of the record's edges (`loadEdges`).
 - [ ] Specimens: board with grouped rows; graph with the inside/leaving legend.
 
 #### Acceptance Criteria
-- [ ] The board never shows a column no row has a value in. On a type lens, columns come from the type schema; on a nav lens, from `ColumnSpec`.
+- [ ] The board never shows a column no row has a value in. On a nav lens, columns come from `ColumnSpec`; on every other lens they are label, type and state (gap 6).
 - [ ] The graph is never blank for a record with links.
 
 #### Testing (named)
 - `tests/lens-board.test.ts`:
   - "board omits columns no row fills";
-  - "type lens columns are the schema's first four short fields in x-srs-order, keyed by Field.name";
+  - "type, composition, find and set lenses show label, type and state columns only";
   - "nav lens columns are the ColumnSpec".
 - `tests/lens-graph.test.ts`:
   - "edge labels reuse the Context group label for that relation and direction";
@@ -1044,7 +1015,7 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): draw a set wit
   - draw a set on concepts;
   - a read-only `?open=` link to the spec fixture (Playwright with the `e2e/open-url.spec.ts` `serve()` route).
 - [ ] Fix blocking confusions in scope; record the rest as follow-ups.
-- [ ] File the deferred follow-ups 1, 3 and 5 (5 in srs-rust), after owner sign-off, each parented to semanticops.com#22.
+- [ ] File the deferred follow-ups 1 and 3, after owner sign-off, each parented to semanticops.com#22 (5 is already srs-rust#1382).
 - [ ] Record what was learned in srs-context (the `srs-context` skill) before finishing.
 
 #### Acceptance Criteria

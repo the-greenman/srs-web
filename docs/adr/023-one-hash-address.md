@@ -45,10 +45,10 @@ selects nothing; it never errors and never guesses a neighbour.
   (`/^(?:(?:nav|comp|type|pkg):[^\s&#=]+|find|set)$/`). A well-formed id that
   resolves to no lens falls back as ADR-025 says.
 - `by`: `none` | `type` | `nesting` | `container` | `state` | `created-by` |
-  `field:<name>`, where `<name>` is the engine's `Field.name`: the key records,
-  type schemas and `find` facets share (RFC-039). The engine exposes no field id for a
-  schema property, so the address uses the name it gives; no field name is ever a
-  literal in client code.
+  `field:<fieldId>`. A field is named by its **field id**, never its name. No binding
+  exposes a field id for a type-schema property or a `find` facet yet (RFC-039
+  retired `x-srs-field-id`; requested in srs#931), so until then no shell writes a
+  `field:` value, and one read from a link falls back to the default.
 - `ctxby`: `link-type` | `none` | `boundary`.
 - A missing or dropped `by`/`ctxby` means the default for the collection kind.
 
