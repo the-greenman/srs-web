@@ -1,0 +1,1769 @@
+{
+  "srsj": "2",
+  "manifest": {
+    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+    "container": {
+      "containerId": "948db2d7-9a41-4436-9287-13327a6fb5e7",
+      "identityInstanceId": "a6e4440a-b0d9-43dc-87d0-06d8e697f2e4",
+      "memberInstanceIds": [
+        {
+          "instanceId": "a6e4440a-b0d9-43dc-87d0-06d8e697f2e4"
+        }
+      ],
+      "title": "Method fixture"
+    },
+    "createdAt": "2026-10-08T17:41:01.513685017+00:00",
+    "dataModelRevision": 9,
+    "namespace": "com.semanticops.programme",
+    "packageRefs": [
+      {
+        "mode": "local",
+        "path": "packages/comments"
+      }
+    ],
+    "repositoryId": "948db2d7-9a41-4436-9287-13327a6fb5e7",
+    "srsVersion": "2.0-draft",
+    "title": "Method fixture"
+  },
+  "data": {
+    "containers/affirmed-863e3c83.json": {
+      "containerId": "863e3c83-a251-4efd-b8ad-fc4d2887a278",
+      "memberInstanceIds": [],
+      "title": "Affirmed"
+    },
+    "containers/set-aside-161bbeff.json": {
+      "containerId": "161bbeff-8536-47b7-8400-c31ebfee4b67",
+      "memberInstanceIds": [],
+      "title": "Set aside"
+    },
+    "containers/suggestions-eb513cf7.json": {
+      "containerId": "eb513cf7-16b0-4ddc-b77d-beb089b629cf",
+      "memberInstanceIds": [
+        {
+          "instanceId": "504c5a88-d2cb-4618-8992-16e5e6f52dfb"
+        },
+        {
+          "instanceId": "cc4ab221-f24b-40f8-8dcb-0cd12d70a774"
+        },
+        {
+          "instanceId": "216ec53a-75a4-4420-97ab-20f970df6b05"
+        }
+      ],
+      "title": "Suggestions"
+    },
+    "package/fields/actorid-94d587e4.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "Exactly the id string, 'agent:<name>'.",
+        "negativeGuidance": "No spaces; do not reuse another agent's id.",
+        "purpose": "The stable SRS_ACTOR id (for example agent:watcher) so a suggestion's createdBy traces to this agent record."
+      },
+      "createdAt": "2026-10-08T11:04:37.313Z",
+      "description": "The session actor id an agent runs with.",
+      "editorHint": "singleline",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "94d587e4-7f40-478b-af61-691fd5221882",
+      "name": "actor_id",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/boundaryclause-b681e85e.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "Start with the condition ('Unless ...' reading), verbatim from the ratifying source where one exists.",
+        "negativeGuidance": "If no source has ratified a boundary, write exactly 'None ratified yet: to be stated' and let a human fill it; never invent one.",
+        "purpose": "Public word: unless. Names when the opposite side wins over the principle's default. Required: a default without it is the bare 'A over B' slogan, not a principle."
+      },
+      "createdAt": "2026-10-08T11:04:37.066Z",
+      "description": "The condition under which the other side governs instead.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "b681e85e-567c-4309-8b46-16b1dba8cd93",
+      "name": "boundary_clause",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/brief-274fc803.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "One line, role only.",
+        "negativeGuidance": "No private content, no run rules.",
+        "purpose": "The agent's role in one line."
+      },
+      "createdAt": "2026-10-08T11:04:37.433Z",
+      "description": "One-line description of an agent's job.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "274fc803-3c56-432b-b061-bf24e93fca8c",
+      "name": "brief",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/context-dc262ba1.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "One short sentence.",
+        "negativeGuidance": "Not the boundary clause; that is the reverse case.",
+        "purpose": "The situation in which the principle's default (public word: default) is meant to be applied."
+      },
+      "createdAt": "2026-10-08T11:04:37.131Z",
+      "description": "Where a principle's leaning applies.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "dc262ba1-7c76-4b04-ae6b-0d20c67d1671",
+      "name": "context",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/description-a03abc28.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "One short paragraph naming the common thread.",
+        "negativeGuidance": "Do not list the member problems; they are linked by contains relations.",
+        "purpose": "Names the theme that binds a cluster's problems, so a reader can judge membership."
+      },
+      "createdAt": "2026-10-08T10:44:21.093394498+00:00",
+      "description": "What a cluster groups and why those problems belong together.",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "a03abc28-2b14-4690-a498-f2c7cb697c5f",
+      "name": "description",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/doesnotfix-9b8c0d2c.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "Name the residual problem plainly.",
+        "negativeGuidance": "Do not leave empty to look stronger, or restate the move.",
+        "purpose": "The honest limit of a remedy: problems it does not touch or may worsen. Aligned with muSrs remedy."
+      },
+      "createdAt": "2026-10-08T10:44:21.519955113+00:00",
+      "description": "What a remedy leaves unsolved.",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "9b8c0d2c-e688-4b01-a18d-5ca110ecb62b",
+      "name": "does_not_fix",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/falsifier-b8b1f078.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "Describe a concrete, observable result that would refute the remedy.",
+        "negativeGuidance": "Not a restatement of the move or a vague risk.",
+        "purpose": "An observation that would count against the remedy, so it can be tested. Aligned with muSrs remedy."
+      },
+      "createdAt": "2026-10-08T10:44:21.579760527+00:00",
+      "description": "What would show a remedy does not work.",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "b8b1f078-5b18-4d23-9015-37a3566e0e38",
+      "name": "falsifier",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/imbalance-191eb505.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "Pick the one term that describes the imbalance against the concerned side.",
+        "negativeGuidance": "Do not invent values.",
+        "purpose": "Closed: held-too-long, missing, collapsed. Used on a problem that concerns a pole (public word: side)."
+      },
+      "createdAt": "2026-10-08T11:04:37.191Z",
+      "description": "How a tension has gone out of balance in a problem.",
+      "editorHint": "dropdown",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "valueDomain": "closed",
+        "vocabularyRef": "cc6ffec6-3648-4cbf-8d68-21e6e9acd053"
+      },
+      "id": "191eb505-cdb3-4b09-ae2b-30585713c0fd",
+      "name": "imbalance",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/inscope-47f51f10.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "One or two sentences.",
+        "negativeGuidance": "Do not restate the purpose.",
+        "purpose": "The matters inside the domain's boundary. Tensions are relative to this boundary."
+      },
+      "createdAt": "2026-10-08T11:04:36.811Z",
+      "description": "What a domain covers.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "47f51f10-40c3-4ac2-9677-734d10be3701",
+      "name": "in_scope",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/jobs-fced003b.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "Three to five short phrases in the persona's own terms, one per entry.",
+        "negativeGuidance": "Do not list features, products or solutions.",
+        "purpose": "The tasks a persona turns to the system for, as short verb phrases. Problems are held when these jobs are blocked."
+      },
+      "createdAt": "2026-10-08T10:44:21.339518994+00:00",
+      "description": "Jobs a persona is trying to get done.",
+      "editorHint": "singleline",
+      "fieldType": {
+        "cardinality": "list",
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "fced003b-7144-4746-9f0f-bcbea055f717",
+      "name": "jobs",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/kind-50b17985.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "Pick the one term that best matches the statement; a consequence follows from other problems, a shift is a change in the world.",
+        "negativeGuidance": "Do not invent values; the domain is closed.",
+        "purpose": "Classifies a problem as belief, capability, condition, consequence or shift. Aligned with muSrs argument/kind."
+      },
+      "createdAt": "2026-10-08T10:44:21.280501565+00:00",
+      "description": "What sort of thing a problem is.",
+      "editorHint": "dropdown",
+      "fieldType": {
+        "datatype": "string",
+        "valueDomain": "closed",
+        "vocabularyRef": "7d21013f-bcc7-41e1-b929-774c7b632319"
+      },
+      "id": "50b17985-7eea-4ac5-886a-1408dab5d9e4",
+      "name": "kind",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/lookslike-d2f41e5b.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "One plain-English sentence in the third person (a team, a person, a document); rewrite first-person source text.",
+        "negativeGuidance": "Do not use first person, mystical or elemental terms, or praise the side over its opposite; both sides are legitimate.",
+        "purpose": "What it looks like in practice to lean on this side (public word: side; the record is a pole)."
+      },
+      "createdAt": "2026-10-08T11:04:36.936Z",
+      "description": "What holding one side of a trade-off looks like.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "d2f41e5b-e0de-46f5-b8bf-e2ca03155e40",
+      "name": "looks_like",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/move-e225fcbe.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "A single action sentence in the imperative or present tense.",
+        "negativeGuidance": "Do not bundle several moves or describe benefits instead of the move.",
+        "purpose": "What someone would do differently if this remedy were adopted: one concrete action or change."
+      },
+      "createdAt": "2026-10-08T10:44:21.461993643+00:00",
+      "description": "The single move a remedy proposes.",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "e225fcbe-ed18-4d6c-a917-5826997b73a6",
+      "name": "move",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/needs-c5106dcb.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "One short sentence or a few comma-separated needs.",
+        "negativeGuidance": "Do not describe how a product meets them.",
+        "purpose": "Short statement of the conditions the persona requires, which problems and remedies are judged against."
+      },
+      "createdAt": "2026-10-08T10:44:21.400549498+00:00",
+      "description": "What a persona needs in order to do its jobs.",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "c5106dcb-1d8b-4e67-848a-ae8c3dfed702",
+      "name": "needs",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/outofscope-c01b77c8.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "One or two sentences naming the neighbours.",
+        "negativeGuidance": "Do not list everything that is merely unrelated.",
+        "purpose": "The matters outside the domain's boundary, so a trade-off is not argued in the wrong domain."
+      },
+      "createdAt": "2026-10-08T11:04:36.873Z",
+      "description": "What a domain deliberately leaves to others.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "c01b77c8-c1d6-49fe-aa3f-020e469fc267",
+      "name": "out_of_scope",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/problemid-db7fa869.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "Format SP-nn (SP-01, SP-02, ...). Take the next unused number after searching existing problems.",
+        "negativeGuidance": "Never reuse or renumber an id, even for a withdrawn or superseded problem.",
+        "purpose": "Stable id by which a problem is cited in issues, plans and conversation. Aligned with muSrs argument/problem_id."
+      },
+      "createdAt": "2026-10-08T10:44:21.153050285+00:00",
+      "description": "Stable citation id for a problem, SP-nn.",
+      "editorHint": "singleline",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "db7fa869-1023-462b-8d64-acc149e67e45",
+      "name": "problem_id",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/purpose-7c405948.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "State the point of the domain, not its features.",
+        "negativeGuidance": "Not a list of products or tasks.",
+        "purpose": "One or two sentences saying what the domain is for; every tension and problem in it is judged against this."
+      },
+      "createdAt": "2026-10-08T11:04:36.748Z",
+      "description": "What a domain exists to do.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "7c405948-6db7-492c-ba12-e759c78781ad",
+      "name": "purpose",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/returnwhen-e7197a59.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "One short observable condition.",
+        "negativeGuidance": "Not a deadline.",
+        "purpose": "The signal that a remedy restoring one side has done its job and the trade-off should swing back."
+      },
+      "createdAt": "2026-10-08T11:04:37.251Z",
+      "description": "When a remedy hands back to the other side.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "e7197a59-e74b-45a5-9062-82f7ac9f23a4",
+      "name": "return_when",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/shadow-2030962b.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "One short plain-English sentence on how the side goes wrong when nothing balances it.",
+        "negativeGuidance": "Leave empty if no source says it; do not invent. It is never a reason to drop the side.",
+        "purpose": "The failure shape of leaning too hard on this side (public word: overdone)."
+      },
+      "createdAt": "2026-10-08T11:04:36.996Z",
+      "description": "What a side turns into when overdone.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "2030962b-8279-4345-9826-3e13f01cee4a",
+      "name": "shadow",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/sourceref-0c9743ed.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "One entry per source: repo-relative path with its repo, or an issue in repo#number form.",
+        "negativeGuidance": "Do not paste the source's text here.",
+        "purpose": "Points a record back to the plan, file, issue or conversation that states it, so the record is an index not a second copy. Defined in the method package so it stays self-contained."
+      },
+      "createdAt": "2026-10-08T10:44:21.641791065+00:00",
+      "description": "Where this record's wording or evidence comes from.",
+      "editorHint": "singleline",
+      "fieldType": {
+        "cardinality": "list",
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "0c9743ed-1d05-4b07-86c9-9bd89e0d60d1",
+      "name": "source_ref",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/statement-159222a6.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "State the problem, not the fix. Keep it falsifiable and specific to who is affected.",
+        "negativeGuidance": "Do not include the remedy, facet labels or a persona name as prose; the persona is a held-by relation.",
+        "purpose": "For a problem: the claim itself, one sentence or short paragraph, from the persona's point of view. For a principle: the default in 'X over Y' form (public word: default)."
+      },
+      "createdAt": "2026-10-08T10:44:21.215446825+00:00",
+      "description": "The claim a record makes: a problem's claim or a principle's default.",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "159222a6-8908-4aeb-a8db-64d1afea99b9",
+      "name": "statement",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/statement-3b000001.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Concisely state what this repository exists to do or achieve. This is the primary machine-readable identity text for the repository. Write one or two sentences in plain language; avoid jargon. The value must be non-empty."
+      },
+      "createdAt": "2026-07-08T00:00:00Z",
+      "description": "The purpose or mission statement of this repository. Must be non-empty.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "3b000001-0000-4000-a000-000000000001",
+      "name": "statement",
+      "namespace": "com.semanticops.core",
+      "version": 1
+    },
+    "package/fields/summary-0a273307.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "One or two plain sentences drawn from the record's own content.",
+        "negativeGuidance": "Do not restate the title or add claims the source does not make.",
+        "purpose": "A short orientation for a reader who will not open the record: what this is and why it matters."
+      },
+      "createdAt": "2026-10-08T10:44:21.034106286+00:00",
+      "description": "One or two sentences saying who or what this is.",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "0a273307-bfcf-4007-a4fc-dc6fe61e1e01",
+      "name": "summary",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/title-3b000002.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "An optional short label for the purpose record, for use in constrained UI contexts such as sidebars. Prefer the repository manifest title for primary display; use this only when the identity record itself needs a narrow-context label."
+      },
+      "createdAt": "2026-07-08T00:00:00Z",
+      "description": "Short human-readable label for the identity record. Optional. Distinct from the repository manifest title.",
+      "editorHint": "singleline",
+      "fieldType": {
+        "datatype": "string"
+      },
+      "id": "3b000002-0000-4000-a000-000000000002",
+      "name": "title",
+      "namespace": "com.semanticops.core",
+      "version": 1
+    },
+    "package/fields/title-7ccb4e5e.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "Compress the record's own subject; drop leading articles and verbs of intent. Distinct from sibling titles.",
+        "negativeGuidance": "Never a truncated statement, an id such as SP-12, or a generic phrase. Never overwrite a title a person set.",
+        "purpose": "The 3-8 word noun phrase a reader scans in a list to tell this record from its siblings."
+      },
+      "createdAt": "2026-10-08T10:44:20.972763554+00:00",
+      "description": "Short label naming a method record.",
+      "editorHint": "singleline",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+      "name": "title",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/fields/usewhen-8882824d.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "extraction": "One sentence beginning 'When ...' or 'The system ...'.",
+        "negativeGuidance": "No mystical or elemental terms.",
+        "purpose": "The situation that calls for this stance."
+      },
+      "createdAt": "2026-10-08T11:04:37.373Z",
+      "description": "When an archetype's stance is the one to bring in.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "8882824d-fe07-418f-aa43-3164356b9f29",
+      "name": "use_when",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/package.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
+      "blueprints": [],
+      "compositions": [],
+      "createdAt": "2026-10-08T10:43:50.708491250+00:00",
+      "description": "",
+      "fields": [
+        "fields/title-7ccb4e5e.json",
+        "fields/summary-0a273307.json",
+        "fields/description-a03abc28.json",
+        "fields/problemid-db7fa869.json",
+        "fields/statement-159222a6.json",
+        "fields/kind-50b17985.json",
+        "fields/jobs-fced003b.json",
+        "fields/needs-c5106dcb.json",
+        "fields/move-e225fcbe.json",
+        "fields/doesnotfix-9b8c0d2c.json",
+        "fields/falsifier-b8b1f078.json",
+        "fields/sourceref-0c9743ed.json",
+        "fields/purpose-7c405948.json",
+        "fields/inscope-47f51f10.json",
+        "fields/outofscope-c01b77c8.json",
+        "fields/lookslike-d2f41e5b.json",
+        "fields/shadow-2030962b.json",
+        "fields/boundaryclause-b681e85e.json",
+        "fields/context-dc262ba1.json",
+        "fields/imbalance-191eb505.json",
+        "fields/returnwhen-e7197a59.json",
+        "fields/actorid-94d587e4.json",
+        "fields/usewhen-8882824d.json",
+        "fields/brief-274fc803.json",
+        "fields/statement-3b000001.json",
+        "fields/title-3b000002.json"
+      ],
+      "id": "45c51908-183a-4cc5-a2b5-a0beb58bb366",
+      "lifecycles": [],
+      "name": "method",
+      "namespace": "com.semanticops.method",
+      "protocols": [],
+      "relationTypes": [
+        "relation-types/comsemanticopsmethodaddresses-50e4c271.json",
+        "relation-types/comsemanticopsmethodanswers-459e48ca.json",
+        "relation-types/comsemanticopsmethodconcerns-e1d12490.json",
+        "relation-types/comsemanticopsmethodextends-02998fc5.json",
+        "relation-types/comsemanticopsmethodgoverns-853aaad5.json",
+        "relation-types/comsemanticopsmethodheld-by-ec88d284.json",
+        "relation-types/comsemanticopsmethodimplements-b764c252.json",
+        "relation-types/comsemanticopsmethodinstantiates-5f121def.json",
+        "relation-types/comsemanticopsmethodleans-toward-2c3c4467.json",
+        "relation-types/comsemanticopsmethodrestores-5e582fc5.json",
+        "relation-types/comsemanticopsmethodrole-requires-a5b70fbb.json",
+        "relation-types/contains-3a1b2c4d.json",
+        "relation-types/depends-on-7f8e9d0c.json",
+        "relation-types/supersedes-c2d3e4f5.json",
+        "relation-types/refines-e5f6a7b8.json",
+        "relation-types/derived-from-b1c2d3e4.json",
+        "relation-types/evidences-d4e5f6a7.json",
+        "relation-types/precedes-f7a8b9c0.json"
+      ],
+      "status": "active",
+      "themes": [],
+      "title": "method",
+      "types": [
+        "types/problem-b7d15218.json",
+        "types/cluster-c6a8eab1.json",
+        "types/persona-c57aafdd.json",
+        "types/remedy-edd84bf8.json",
+        "types/domain-6e4d0e77.json",
+        "types/tension-91bd6f8a.json",
+        "types/pole-e3b62684.json",
+        "types/principle-eff00965.json",
+        "types/archetype-6ce9e193.json",
+        "types/agent-ba97e194.json",
+        "types/purpose-3c000001.json"
+      ],
+      "version": "1.0.0",
+      "views": [],
+      "vocabularies": [
+        "vocabularies/problem-kind-7d21013f.json",
+        "vocabularies/imbalance-cc6ffec6.json"
+      ]
+    },
+    "package/relation-types/comsemanticopsmethodaddresses-50e4c271.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the objective; target is the cluster of problems it addresses",
+      "category": "association",
+      "createdAt": "2026-10-08T10:44:32.666657477+00:00",
+      "description": "Objective addresses cluster.",
+      "id": "50e4c271-95a0-432f-bc22-d7dff638f0c3",
+      "key": "com.semanticops.method/addresses",
+      "label": "Addresses",
+      "namespace": "com.semanticops.method",
+      "status": "active",
+      "version": 1
+    },
+    "package/relation-types/comsemanticopsmethodanswers-459e48ca.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the remedy or epic; target is the problem it answers",
+      "category": "association",
+      "createdAt": "2026-10-08T10:44:32.607078529+00:00",
+      "description": "Remedy or epic answers problem.",
+      "id": "459e48ca-4d70-418e-9517-f8dd2200ec8d",
+      "key": "com.semanticops.method/answers",
+      "label": "Answers",
+      "namespace": "com.semanticops.method",
+      "status": "active",
+      "version": 1
+    },
+    "package/relation-types/comsemanticopsmethodconcerns-e1d12490.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the problem; target is the pole it concerns",
+      "category": "association",
+      "createdAt": "2026-10-08T11:04:58.612Z",
+      "description": "Problem concerns a pole (the side whose imbalance it describes; see the imbalance field). Endpoints: problem -> pole.",
+      "id": "e1d12490-53ee-4e58-84ba-b1fef3c7d9c9",
+      "key": "com.semanticops.method/concerns",
+      "label": "Concerns",
+      "namespace": "com.semanticops.method",
+      "status": "active",
+      "version": 1
+    },
+    "package/relation-types/comsemanticopsmethodextends-02998fc5.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the extending principle; target is the principle it builds on",
+      "category": "association",
+      "createdAt": "2026-10-08T11:04:58.488Z",
+      "description": "Principle extends another principle. Endpoints: principle -> principle.",
+      "id": "02998fc5-18d4-416e-96c3-0364367dc522",
+      "key": "com.semanticops.method/extends",
+      "label": "Extends",
+      "namespace": "com.semanticops.method",
+      "status": "active",
+      "version": 1
+    },
+    "package/relation-types/comsemanticopsmethodgoverns-853aaad5.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the principle; target is the tension it governs (exactly one)",
+      "category": "association",
+      "createdAt": "2026-10-08T11:04:58.304Z",
+      "description": "Principle governs tension. Endpoints: principle -> tension.",
+      "id": "853aaad5-57a3-47c3-b0b0-3eef1240f18e",
+      "key": "com.semanticops.method/governs",
+      "label": "Governs",
+      "namespace": "com.semanticops.method",
+      "status": "active",
+      "version": 1
+    },
+    "package/relation-types/comsemanticopsmethodheld-by-ec88d284.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the problem; target is the persona that holds it",
+      "category": "association",
+      "createdAt": "2026-10-08T10:44:32.544031810+00:00",
+      "description": "Problem is held by persona.",
+      "id": "ec88d284-c63c-41af-9331-893a587edb5a",
+      "key": "com.semanticops.method/held-by",
+      "label": "Held by",
+      "namespace": "com.semanticops.method",
+      "status": "active",
+      "version": 1
+    },
+    "package/relation-types/comsemanticopsmethodimplements-b764c252.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the epic; target is the remedy it implements",
+      "category": "association",
+      "createdAt": "2026-10-08T10:44:32.728886029+00:00",
+      "description": "Epic implements remedy.",
+      "id": "b764c252-23c2-4096-abd2-d03c2df3b1bf",
+      "key": "com.semanticops.method/implements",
+      "label": "Implements",
+      "namespace": "com.semanticops.method",
+      "status": "active",
+      "version": 1
+    },
+    "package/relation-types/comsemanticopsmethodinstantiates-5f121def.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the agent; target is the archetype whose stance it takes",
+      "category": "association",
+      "createdAt": "2026-10-08T11:04:58.549Z",
+      "description": "Agent instantiates archetype. Endpoints: agent -> archetype.",
+      "id": "5f121def-cc5e-4d68-9804-621716ef10be",
+      "key": "com.semanticops.method/instantiates",
+      "label": "Instantiates",
+      "namespace": "com.semanticops.method",
+      "status": "active",
+      "version": 1
+    },
+    "package/relation-types/comsemanticopsmethodleans-toward-2c3c4467.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the persona, agent, archetype or principle; target is the pole it leans toward",
+      "category": "association",
+      "createdAt": "2026-10-08T11:04:58.366Z",
+      "description": "Source leans toward a pole (public word: default side). Allowed sources: persona, agent, archetype, principle. Target: pole. No weights.",
+      "id": "2c3c4467-20b8-40fe-91d8-9f4cf4ec976a",
+      "key": "com.semanticops.method/leans-toward",
+      "label": "Leans toward",
+      "namespace": "com.semanticops.method",
+      "status": "active",
+      "version": 1
+    },
+    "package/relation-types/comsemanticopsmethodrestores-5e582fc5.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the remedy; target is the pole it restores",
+      "category": "association",
+      "createdAt": "2026-10-08T11:04:58.672Z",
+      "description": "Remedy restores a pole. Endpoints: remedy -> pole.",
+      "id": "5e582fc5-6ca9-44b2-8d3b-33d0ac37797a",
+      "key": "com.semanticops.method/restores",
+      "label": "Restores",
+      "namespace": "com.semanticops.method",
+      "status": "active",
+      "version": 1
+    },
+    "package/relation-types/comsemanticopsmethodrole-requires-a5b70fbb.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the persona, agent or archetype; target is the pole it requires",
+      "category": "association",
+      "createdAt": "2026-10-08T11:04:58.428Z",
+      "description": "Role needs a pole to be held. Allowed sources: persona, agent, archetype. Target: pole.",
+      "id": "a5b70fbb-c8ef-4248-a990-908ad19a0acd",
+      "key": "com.semanticops.method/role-requires",
+      "label": "Role requires",
+      "namespace": "com.semanticops.method",
+      "status": "active",
+      "version": 1
+    },
+    "package/relation-types/contains-3a1b2c4d.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the container; target is the contained member",
+      "category": "composition",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance contains or is composed of target instance. Defines structural membership or composition boundaries.",
+      "id": "3a1b2c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+      "inverseType": "part-of",
+      "irreflexive": true,
+      "key": "contains",
+      "label": "Contains",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/depends-on-7f8e9d0c.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source depends on target",
+      "category": "dependency",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance requires target instance to be complete, valid, or usable. Target is a prerequisite.",
+      "id": "7f8e9d0c-1b2a-4f3e-9d8c-7b6a5f4e3d2c",
+      "irreflexive": true,
+      "key": "depends-on",
+      "label": "Depends on",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/derived-from-b1c2d3e4.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the derived work; target is the source material",
+      "category": "derivation",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance was produced from or substantially informed by target instance. Provenance and derivation chain.",
+      "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",
+      "inverseType": "source-of",
+      "irreflexive": true,
+      "key": "derived-from",
+      "label": "Derived from",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/evidences-d4e5f6a7.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the evidence; target is the claim or content being supported",
+      "category": "evidence",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance is evidence for, supports, or substantiates the claim or content of target instance.",
+      "id": "d4e5f6a7-b8c9-4d0e-9f1a-2b3c4d5e6f7a",
+      "irreflexive": true,
+      "key": "evidences",
+      "label": "Evidences",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/precedes-f7a8b9c0.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source comes before target",
+      "category": "sequence",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance comes before target instance in a defined sequence or ordering.",
+      "id": "f7a8b9c0-d1e2-4f3a-8b4c-5d6e7f8a9b0c",
+      "inverseType": "follows",
+      "irreflexive": true,
+      "key": "precedes",
+      "label": "Precedes",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/refines-e5f6a7b8.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the more specific instance; target is the general instance",
+      "category": "refinement",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance is a more specific, detailed, or precise version of target instance. Does not replace or invalidate target.",
+      "id": "e5f6a7b8-c9d0-4e1f-8a2b-3c4d5e6f7a8b",
+      "irreflexive": true,
+      "key": "refines",
+      "label": "Refines",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/relation-types/supersedes-c2d3e4f5.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "source is the newer instance; target is the older instance being superseded",
+      "category": "governance",
+      "createdAt": "2026-05-29T00:00:00Z",
+      "description": "Source instance replaces or invalidates target instance. Source is newer; target is the older instance being superseded.",
+      "id": "c2d3e4f5-a6b7-4c8d-9e0f-1a2b3c4d5e6f",
+      "inverseType": "superseded-by",
+      "irreflexive": true,
+      "key": "supersedes",
+      "label": "Supersedes",
+      "namespace": "com.semanticops.srs",
+      "version": 1
+    },
+    "package/types/agent-ba97e194.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "extraction": "actor_id is exactly the SRS_ACTOR id; brief is one line of role only.",
+        "negativeGuidance": "No run rules or private content in the brief.",
+        "purpose": "Ties an SRS session actor id to a stance: the agent instantiates an archetype, so a suggestion's createdBy traces to a stance."
+      },
+      "createdAt": "2026-10-08T11:04:58.091Z",
+      "description": "A named AI agent role that works from an archetype's stance.",
+      "fields": [
+        {
+          "fieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+          "order": 0,
+          "required": true
+        },
+        {
+          "fieldId": "94d587e4-7f40-478b-af61-691fd5221882",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "274fc803-3c56-432b-b061-bf24e93fca8c",
+          "order": 2,
+          "required": false
+        }
+      ],
+      "id": "ba97e194-0530-4be3-9fc4-54a9ee81072c",
+      "identityFieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+      "name": "agent",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/types/archetype-6ce9e193.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "extraction": "Short title, a one-sentence summary, a use_when situation; the leanings are relations, not text.",
+        "negativeGuidance": "Do not copy symbolic, elemental or trigram terms from sources.",
+        "purpose": "A named stance defined by its leans-toward relations to poles (public word: sides), one per tension. Agents instantiate archetypes."
+      },
+      "createdAt": "2026-10-08T11:04:58.024Z",
+      "description": "A recurring stance: a pattern of leanings across several tensions.",
+      "fields": [
+        {
+          "fieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+          "order": 0,
+          "required": true
+        },
+        {
+          "fieldId": "0a273307-bfcf-4007-a4fc-dc6fe61e1e01",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "8882824d-fe07-418f-aa43-3164356b9f29",
+          "order": 2,
+          "required": false
+        }
+      ],
+      "id": "6ce9e193-b51f-4ef0-878f-de02bc8a2418",
+      "identityFieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+      "name": "archetype",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/types/cluster-c6a8eab1.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "extraction": "Group by shared cause or shared persona need, not by remedy.",
+        "purpose": "A theme under which problems are grouped; an objective addresses a cluster. Members are linked with contains (cluster to problem)."
+      },
+      "createdAt": "2026-10-08T10:44:32.349866775+00:00",
+      "description": "A named grouping of related problems.",
+      "fields": [
+        {
+          "fieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+          "order": 0,
+          "required": true
+        },
+        {
+          "fieldId": "a03abc28-2b14-4690-a498-f2c7cb697c5f",
+          "order": 1,
+          "required": false
+        }
+      ],
+      "id": "c6a8eab1-25bf-462c-8d48-6ea47c22f724",
+      "identityFieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+      "name": "cluster",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/types/domain-6e4d0e77.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "extraction": "Purpose is one or two sentences; in_scope and out_of_scope name the boundary.",
+        "purpose": "A domain draws the boundary that tensions are relative to. Clusters and problems belong to a domain (contains). Public word: none; keep 'domain'."
+      },
+      "createdAt": "2026-10-08T11:04:57.755Z",
+      "description": "A bounded area of work in which problems arise and tensions hold.",
+      "fields": [
+        {
+          "fieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+          "order": 0,
+          "required": true
+        },
+        {
+          "fieldId": "7c405948-6db7-492c-ba12-e759c78781ad",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "47f51f10-40c3-4ac2-9677-734d10be3701",
+          "order": 2,
+          "required": false
+        },
+        {
+          "fieldId": "c01b77c8-c1d6-49fe-aa3f-020e469fc267",
+          "order": 3,
+          "required": false
+        }
+      ],
+      "id": "6e4d0e77-b30a-47d5-a686-5a595a077d4c",
+      "identityFieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+      "name": "domain",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/types/persona-c57aafdd.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "extraction": "Keep it short: title, a two-sentence summary, three to five jobs, brief needs. No long generated profiles.",
+        "purpose": "A kind of user of the system with distinct jobs and needs. Problems are linked to it by held-by relations, never by a name in a text field."
+      },
+      "createdAt": "2026-10-08T10:44:32.413459157+00:00",
+      "description": "Someone, or something, that holds problems and has jobs to get done.",
+      "fields": [
+        {
+          "fieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+          "order": 0,
+          "required": true
+        },
+        {
+          "fieldId": "0a273307-bfcf-4007-a4fc-dc6fe61e1e01",
+          "order": 1,
+          "required": false
+        },
+        {
+          "fieldId": "fced003b-7144-4746-9f0f-bcbea055f717",
+          "order": 2,
+          "required": false
+        },
+        {
+          "fieldId": "c5106dcb-1d8b-4e67-848a-ae8c3dfed702",
+          "order": 3,
+          "required": false
+        }
+      ],
+      "id": "c57aafdd-d002-4ee6-9a2b-ff3805107580",
+      "identityFieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+      "name": "persona",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/types/pole-e3b62684.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "extraction": "Title is the side's short name; copy no first-person or mystical source wording.",
+        "negativeGuidance": "Both sides of a tension stay named and legitimate.",
+        "purpose": "Public word: side. looks_like is what leaning on it looks like in plain third-person English; shadow (public word: overdone) is how it goes wrong when nothing balances it. Contained by exactly one tension."
+      },
+      "createdAt": "2026-10-08T11:04:57.889Z",
+      "description": "One side of a tension.",
+      "fields": [
+        {
+          "fieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+          "order": 0,
+          "required": true
+        },
+        {
+          "fieldId": "d2f41e5b-e0de-46f5-b8bf-e2ca03155e40",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "2030962b-8279-4345-9826-3e13f01cee4a",
+          "order": 2,
+          "required": false
+        }
+      ],
+      "id": "e3b62684-70d8-403d-ac8f-164fcb4b60a9",
+      "identityFieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+      "name": "pole",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/types/principle-eff00965.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "extraction": "statement = the default 'X over Y'; boundary_clause = when Y governs; source_ref points to the ratifying record, never copies it.",
+        "negativeGuidance": "Never a replacement for the tension. If no boundary is ratified write 'None ratified yet: to be stated'.",
+        "purpose": "Public words: leaning is 'default', boundary clause is 'unless'. governs one tension and leans-toward one of that tension's poles; may extend another principle. The boundary clause is required: a bare 'A over B' is not enough."
+      },
+      "createdAt": "2026-10-08T11:04:57.957Z",
+      "description": "A leaning tied to a context: 'this over that', with the case where the other side governs.",
+      "fields": [
+        {
+          "fieldId": "159222a6-8908-4aeb-a8db-64d1afea99b9",
+          "order": 0,
+          "required": true
+        },
+        {
+          "fieldId": "b681e85e-567c-4309-8b46-16b1dba8cd93",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "dc262ba1-7c76-4b04-ae6b-0d20c67d1671",
+          "order": 2,
+          "required": false
+        },
+        {
+          "fieldId": "0c9743ed-1d05-4b07-86c9-9bd89e0d60d1",
+          "order": 3,
+          "required": false
+        }
+      ],
+      "id": "eff00965-e1f5-4da0-bdfd-c7c705c3b8ea",
+      "identityFieldId": "159222a6-8908-4aeb-a8db-64d1afea99b9",
+      "name": "principle",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/types/problem-b7d15218.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "extraction": "Suggestions are drafted by agents; the human layer adopts by record fork. Link the holding persona with held-by; never write a persona name into the statement.",
+        "purpose": "One problem in the SemanticOps method: a claim about what is wrong or missing, held by one or more personas (held-by), grouped into clusters (contains) and answered by remedies or epics (answers)."
+      },
+      "createdAt": "2026-10-08T10:44:32.283626893+00:00",
+      "description": "A problem that people or agents hold, stated as a claim.",
+      "fields": [
+        {
+          "fieldId": "db7fa869-1023-462b-8d64-acc149e67e45",
+          "order": 0,
+          "required": true
+        },
+        {
+          "fieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "159222a6-8908-4aeb-a8db-64d1afea99b9",
+          "order": 2,
+          "required": true
+        },
+        {
+          "fieldId": "50b17985-7eea-4ac5-886a-1408dab5d9e4",
+          "order": 3,
+          "required": false
+        },
+        {
+          "fieldId": "0c9743ed-1d05-4b07-86c9-9bd89e0d60d1",
+          "order": 4,
+          "required": false
+        },
+        {
+          "fieldId": "191eb505-cdb3-4b09-ae2b-30585713c0fd",
+          "order": 5,
+          "required": false
+        }
+      ],
+      "id": "b7d15218-cee6-4a58-8e2a-a4cb7f6ccf06",
+      "identityFieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+      "name": "problem",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/types/purpose-3c000001.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Use to express what a repository exists to do or achieve. The statement field is the primary, required field. The title field is optional and intended for constrained UI contexts."
+      },
+      "createdAt": "2026-07-08T00:00:00Z",
+      "description": "A Tier-2 typed record capturing the purpose or mission of a repository. Always available in every conforming SRS repository via the implicit core base package (RFC-029). identityInstanceId on the root container MUST reference a record of this type.",
+      "fields": [
+        {
+          "displayLabel": "Statement",
+          "fieldId": "3b000001-0000-4000-a000-000000000001",
+          "order": 0,
+          "required": true
+        },
+        {
+          "displayLabel": "Title",
+          "fieldId": "3b000002-0000-4000-a000-000000000002",
+          "order": 1,
+          "required": false
+        }
+      ],
+      "id": "3c000001-0000-4000-a000-000000000001",
+      "name": "purpose",
+      "namespace": "com.semanticops.core",
+      "version": 1
+    },
+    "package/types/remedy-edd84bf8.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "extraction": "Always state does_not_fix and falsifier where known.",
+        "purpose": "One remedy: a single move, with an honest statement of what it does not fix and what would show it does not work. Linked to problems with answers; epics implement it."
+      },
+      "createdAt": "2026-10-08T10:44:32.479635160+00:00",
+      "description": "A move that answers one or more problems.",
+      "fields": [
+        {
+          "fieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+          "order": 0,
+          "required": true
+        },
+        {
+          "fieldId": "e225fcbe-ed18-4d6c-a917-5826997b73a6",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "9b8c0d2c-e688-4b01-a18d-5ca110ecb62b",
+          "order": 2,
+          "required": false
+        },
+        {
+          "fieldId": "b8b1f078-5b18-4d23-9015-37a3566e0e38",
+          "order": 3,
+          "required": false
+        },
+        {
+          "fieldId": "0c9743ed-1d05-4b07-86c9-9bd89e0d60d1",
+          "order": 4,
+          "required": false
+        },
+        {
+          "fieldId": "e7197a59-e74b-45a5-9062-82f7ac9f23a4",
+          "order": 5,
+          "required": false
+        }
+      ],
+      "id": "edd84bf8-6c07-4133-87c6-4ab540ac2a14",
+      "identityFieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+      "name": "remedy",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/types/tension-91bd6f8a.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "extraction": "Title names the pair ('Action: Act / Observe'); description says what is being traded.",
+        "negativeGuidance": "Never rank one pole as the wrong one. Do not store the poles in a text field; they are pole records.",
+        "purpose": "Public word: trade-off. A tension contains exactly two poles (core contains), both legitimate; health is movement between them, failure is collapse onto one."
+      },
+      "createdAt": "2026-10-08T11:04:57.826Z",
+      "description": "Two legitimate sides pulling against each other inside a domain.",
+      "fields": [
+        {
+          "fieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+          "order": 0,
+          "required": true
+        },
+        {
+          "fieldId": "a03abc28-2b14-4690-a498-f2c7cb697c5f",
+          "order": 1,
+          "required": false
+        }
+      ],
+      "id": "91bd6f8a-417c-4728-87d2-26991e451221",
+      "identityFieldId": "7ccb4e5e-8e02-49d3-b51c-3bf3280616e0",
+      "name": "tension",
+      "namespace": "com.semanticops.method",
+      "version": 1
+    },
+    "package/vocabularies/imbalance-cc6ffec6.json": {
+      "createdAt": "2026-10-08T11:04:36.679Z",
+      "description": "How a tension has gone out of balance.",
+      "id": "cc6ffec6-3648-4cbf-8d68-21e6e9acd053",
+      "mode": "closed",
+      "name": "imbalance",
+      "namespace": "com.semanticops.method",
+      "terms": [
+        {
+          "description": "One side has been held past its useful moment.",
+          "id": "23793c25-cba3-4f6f-a254-0ca9b35e926e",
+          "key": "held-too-long",
+          "label": "Held too long",
+          "namespace": "com.semanticops.method",
+          "version": 1
+        },
+        {
+          "description": "One side is absent from the picture.",
+          "id": "b4592b7e-52a9-4514-88ff-c7ae1b40c853",
+          "key": "missing",
+          "label": "Missing",
+          "namespace": "com.semanticops.method",
+          "version": 1
+        },
+        {
+          "description": "The two sides have merged into one, so the trade-off is no longer visible.",
+          "id": "6cfd4b3e-be50-4c59-8527-d72addc22176",
+          "key": "collapsed",
+          "label": "Collapsed",
+          "namespace": "com.semanticops.method",
+          "version": 1
+        }
+      ],
+      "version": 1
+    },
+    "package/vocabularies/problem-kind-7d21013f.json": {
+      "createdAt": "2026-10-08T10:44:04.513482434+00:00",
+      "description": "What sort of thing a problem statement is.",
+      "id": "7d21013f-bcc7-41e1-b929-774c7b632319",
+      "mode": "closed",
+      "name": "problem-kind",
+      "namespace": "com.semanticops.method",
+      "terms": [
+        {
+          "description": "A held belief that stands in the way.",
+          "id": "d18fd3f9-a072-4344-ba1c-42464ada9b4d",
+          "key": "belief",
+          "label": "Belief",
+          "namespace": "com.semanticops.method",
+          "version": 1
+        },
+        {
+          "description": "Something people cannot yet do.",
+          "id": "04a96cf2-7f23-45e2-bbcc-9aec4f49fea7",
+          "key": "capability",
+          "label": "Capability",
+          "namespace": "com.semanticops.method",
+          "version": 1
+        },
+        {
+          "description": "A state of affairs that makes the work hard.",
+          "id": "eee81832-e5ac-46e5-9b53-1b054e4f0e47",
+          "key": "condition",
+          "label": "Condition",
+          "namespace": "com.semanticops.method",
+          "version": 1
+        },
+        {
+          "description": "A harm that follows from other problems.",
+          "id": "27614d5e-6732-41f1-89e0-05da1a322937",
+          "key": "consequence",
+          "label": "Consequence",
+          "namespace": "com.semanticops.method",
+          "version": 1
+        },
+        {
+          "description": "A change in the world that creates the problem.",
+          "id": "3a8b941e-0187-4379-b292-23ec59df305d",
+          "key": "shift",
+          "label": "Shift",
+          "namespace": "com.semanticops.method",
+          "version": 1
+        }
+      ],
+      "version": 1
+    },
+    "packages/comments/fields/commenttext-d34c8983.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Plain markdown text of one comment, and the comment identity (its label is the start of this text). Humans and agents may write comments. Create the comment as a record, then relate it comments-on (comment to the record it addresses). A comment never edits its target. Authorship is the engine-stamped createdBy (RFC-046); never write an author here."
+      },
+      "createdAt": "2026-10-08T15:16:01.308941412+00:00",
+      "description": "The text of a comment on a record.",
+      "editorHint": "textarea",
+      "fieldType": {
+        "cardinality": "single",
+        "datatype": "string",
+        "format": "markdown"
+      },
+      "id": "d34c8983-3b82-49b0-ac59-acd7ead5180a",
+      "name": "comment_text",
+      "namespace": "com.semanticops.comments",
+      "version": 1
+    },
+    "packages/comments/package.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
+      "blueprints": [],
+      "compositions": [],
+      "createdAt": "2026-10-08T17:41:01.226062728+00:00",
+      "description": "",
+      "fields": [
+        "fields/commenttext-d34c8983.json"
+      ],
+      "id": "9092f84e-fb94-4f81-a523-0f7ef5b02194",
+      "lifecycles": [],
+      "name": "comments",
+      "namespace": "com.semanticops.comments",
+      "protocols": [],
+      "relationTypes": [
+        "relation-types/comsemanticopscommentscomments-on-94dc4240.json"
+      ],
+      "status": "active",
+      "themes": [],
+      "title": "comments",
+      "types": [
+        "types/comment-11cd0a5f.json"
+      ],
+      "version": "1.0.0",
+      "views": [],
+      "vocabularies": []
+    },
+    "packages/comments/relation-types/comsemanticopscommentscomments-on-94dc4240.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "canonicalDirection": "Comment comments on Target",
+      "category": "association",
+      "createdAt": "2026-10-08T15:16:01.452332087+00:00",
+      "description": "Comment comments on any record (comment -> target).",
+      "id": "94dc4240-84d2-49c2-863a-6af431cd3fcb",
+      "irreflexive": true,
+      "key": "com.semanticops.comments/comments-on",
+      "label": "comments on",
+      "namespace": "com.semanticops.comments",
+      "version": 1
+    },
+    "packages/comments/types/comment-11cd0a5f.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "A comment is feedback on exactly one record, linked to it by a com.semanticops.comments/comments-on relation (comment to target). It never edits the target. Create the comment record, then relate it comments-on. Authorship is the engine-stamped createdBy (RFC-046), never a field; thread order is createdAt. Its label is the start of its text."
+      },
+      "createdAt": "2026-10-08T15:16:01.381068924+00:00",
+      "description": "Feedback on one record.",
+      "fields": [
+        {
+          "displayLabel": "Body",
+          "fieldId": "d34c8983-3b82-49b0-ac59-acd7ead5180a",
+          "order": 0,
+          "required": true
+        }
+      ],
+      "id": "11cd0a5f-8c3f-4ec2-a055-5b9f56c5b0bc",
+      "identityFieldId": "d34c8983-3b82-49b0-ac59-acd7ead5180a",
+      "name": "comment",
+      "namespace": "com.semanticops.comments",
+      "version": 1
+    },
+    "records/tier-2/cluster-ceef47e6.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-08T17:40:59.697833699+00:00",
+      "createdBy": {
+        "id": "agent:method-scout",
+        "kind": "ai",
+        "name": "Method scout"
+      },
+      "fieldValues": {
+        "title": "Leaving the editor",
+        "description": "Work cannot come back once it leaves."
+      },
+      "instanceId": "ceef47e6-27bc-4eb9-82d2-666861cc0af3",
+      "typeId": "c6a8eab1-25bf-462c-8d48-6ea47c22f724",
+      "typeName": "cluster",
+      "typeNamespace": "com.semanticops.method",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-08T17:40:59.697843974+00:00"
+    },
+    "records/tier-2/comment-5e10a385.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-08T17:41:01.235591027+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "fieldValues": {
+        "comment_text": "Which queue, exactly?"
+      },
+      "instanceId": "5e10a385-f84a-4367-99eb-4b0b20234eb2",
+      "typeId": "11cd0a5f-8c3f-4ec2-a055-5b9f56c5b0bc",
+      "typeName": "comment",
+      "typeNamespace": "com.semanticops.comments",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-08T17:41:01.235595333+00:00"
+    },
+    "records/tier-2/domain-ba6f42cd.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-08T17:40:59.621560740+00:00",
+      "createdBy": {
+        "id": "agent:method-scout",
+        "kind": "ai",
+        "name": "Method scout"
+      },
+      "fieldValues": {
+        "title": "Writing and review",
+        "purpose": "Writing in the editor and reviewing what agents suggest."
+      },
+      "instanceId": "ba6f42cd-4a11-415b-9bd7-34ca840d9404",
+      "typeId": "6e4d0e77-b30a-47d5-a686-5a595a077d4c",
+      "typeName": "domain",
+      "typeNamespace": "com.semanticops.method",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-08T17:40:59.621574168+00:00"
+    },
+    "records/tier-2/persona-5ff8e122.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-08T17:40:59.855900428+00:00",
+      "createdBy": {
+        "id": "agent:method-scout",
+        "kind": "ai",
+        "name": "Method scout"
+      },
+      "fieldValues": {
+        "title": "Writer",
+        "summary": "Writes essays in the editor."
+      },
+      "instanceId": "5ff8e122-215b-4b75-b13b-835487965afa",
+      "typeId": "c57aafdd-d002-4ee6-9a2b-ff3805107580",
+      "typeName": "persona",
+      "typeNamespace": "com.semanticops.method",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-08T17:40:59.855904527+00:00"
+    },
+    "records/tier-2/persona-fa6da632.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-08T17:40:59.772463269+00:00",
+      "createdBy": {
+        "id": "agent:method-scout",
+        "kind": "ai",
+        "name": "Method scout"
+      },
+      "fieldValues": {
+        "title": "Owner",
+        "summary": "Decides what the method affirms."
+      },
+      "instanceId": "fa6da632-0488-4f0b-82fd-d6f946b68394",
+      "typeId": "c57aafdd-d002-4ee6-9a2b-ff3805107580",
+      "typeName": "persona",
+      "typeNamespace": "com.semanticops.method",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-08T17:40:59.772470180+00:00"
+    },
+    "records/tier-2/pole-4656ec53.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-08T17:41:00.010440434+00:00",
+      "createdBy": {
+        "id": "agent:method-scout",
+        "kind": "ai",
+        "name": "Method scout"
+      },
+      "fieldValues": {
+        "title": "Testimony",
+        "looks_like": "Claims carry who made them."
+      },
+      "instanceId": "4656ec53-637a-4367-b858-c48a016149a1",
+      "typeId": "e3b62684-70d8-403d-ac8f-164fcb4b60a9",
+      "typeName": "pole",
+      "typeNamespace": "com.semanticops.method",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-08T17:41:00.010445274+00:00"
+    },
+    "records/tier-2/problem-216ec53a.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-08T17:41:00.375751707+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "fieldValues": {
+        "problem_id": "SP-3",
+        "title": "A brief replaces reading the source",
+        "statement": "Agents answer from the brief alone.",
+        "kind": "belief"
+      },
+      "instanceId": "216ec53a-75a4-4420-97ab-20f970df6b05",
+      "typeId": "b7d15218-cee6-4a58-8e2a-a4cb7f6ccf06",
+      "typeName": "problem",
+      "typeNamespace": "com.semanticops.method",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-08T17:41:00.375756058+00:00"
+    },
+    "records/tier-2/problem-504c5a88.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-08T17:41:00.224045324+00:00",
+      "createdBy": {
+        "id": "agent:rebel",
+        "kind": "ai",
+        "name": "Rebel scout"
+      },
+      "fieldValues": {
+        "problem_id": "SP-1",
+        "title": "A document cannot leave and return",
+        "statement": "Work edited elsewhere cannot come back.",
+        "kind": "condition",
+        "source_ref": [
+          "semanticops.com#21",
+          "muDemocracy.org#36"
+        ]
+      },
+      "instanceId": "504c5a88-d2cb-4618-8992-16e5e6f52dfb",
+      "typeId": "b7d15218-cee6-4a58-8e2a-a4cb7f6ccf06",
+      "typeName": "problem",
+      "typeNamespace": "com.semanticops.method",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-08T17:41:00.224049826+00:00"
+    },
+    "records/tier-2/problem-cc4ab221.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-08T17:41:00.298758679+00:00",
+      "createdBy": {
+        "id": "agent:rebel",
+        "kind": "ai",
+        "name": "Rebel scout"
+      },
+      "fieldValues": {
+        "problem_id": "SP-2",
+        "title": "Suggestions pile up unseen",
+        "statement": "Agent suggestions wait in a queue nobody reads.",
+        "kind": "consequence",
+        "source_ref": [
+          "https://example.org/notes"
+        ],
+        "imbalance": "missing"
+      },
+      "instanceId": "cc4ab221-f24b-40f8-8dcb-0cd12d70a774",
+      "typeId": "b7d15218-cee6-4a58-8e2a-a4cb7f6ccf06",
+      "typeName": "problem",
+      "typeNamespace": "com.semanticops.method",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-08T17:41:00.298762576+00:00"
+    },
+    "records/tier-2/purpose-a6e4440a.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-08T17:40:59.547313914+00:00",
+      "fieldValues": {
+        "statement": "",
+        "title": "Method fixture"
+      },
+      "instanceId": "a6e4440a-b0d9-43dc-87d0-06d8e697f2e4",
+      "typeId": "3c000001-0000-4000-a000-000000000001",
+      "typeName": "purpose",
+      "typeNamespace": "com.semanticops.core",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-08T17:40:59.547313914+00:00"
+    },
+    "records/tier-2/tension-c7bf7e01.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-10-08T17:40:59.936805750+00:00",
+      "createdBy": {
+        "id": "agent:method-scout",
+        "kind": "ai",
+        "name": "Method scout"
+      },
+      "fieldValues": {
+        "title": "Testimony and authority"
+      },
+      "instanceId": "c7bf7e01-c78e-4f5b-a121-476c1dba8fd5",
+      "typeId": "91bd6f8a-417c-4728-87d2-26991e451221",
+      "typeName": "tension",
+      "typeNamespace": "com.semanticops.method",
+      "typeVersion": 1,
+      "updatedAt": "2026-10-08T17:40:59.936810347+00:00"
+    },
+    "relations/1f2b4cac-86ee-4a19-927b-3475959541b6.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.443347973+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "relationId": "1f2b4cac-86ee-4a19-927b-3475959541b6",
+      "relationType": "contains",
+      "sourceInstanceId": "ceef47e6-27bc-4eb9-82d2-666861cc0af3",
+      "targetInstanceId": "504c5a88-d2cb-4618-8992-16e5e6f52dfb"
+    },
+    "relations/3a49dc7c-e282-47a2-8f5c-854229c541ac.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:01.305670136+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "relationId": "3a49dc7c-e282-47a2-8f5c-854229c541ac",
+      "relationType": "com.semanticops.comments/comments-on",
+      "sourceInstanceId": "5e10a385-f84a-4367-99eb-4b0b20234eb2",
+      "targetInstanceId": "cc4ab221-f24b-40f8-8dcb-0cd12d70a774"
+    },
+    "relations/5c17d685-5b8c-46b7-b57f-7e2b738e58d4.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.516567039+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "relationId": "5c17d685-5b8c-46b7-b57f-7e2b738e58d4",
+      "relationType": "contains",
+      "sourceInstanceId": "ceef47e6-27bc-4eb9-82d2-666861cc0af3",
+      "targetInstanceId": "cc4ab221-f24b-40f8-8dcb-0cd12d70a774"
+    },
+    "relations/5c53520c-eb69-48f2-92a7-622c434b3f30.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.661689649+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "relationId": "5c53520c-eb69-48f2-92a7-622c434b3f30",
+      "relationType": "com.semanticops.method/held-by",
+      "sourceInstanceId": "504c5a88-d2cb-4618-8992-16e5e6f52dfb",
+      "targetInstanceId": "5ff8e122-215b-4b75-b13b-835487965afa"
+    },
+    "relations/71e2d0f0-b000-4ae4-bd33-18d0ed0de1dd.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.886520424+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "relationId": "71e2d0f0-b000-4ae4-bd33-18d0ed0de1dd",
+      "relationType": "com.semanticops.method/concerns",
+      "sourceInstanceId": "cc4ab221-f24b-40f8-8dcb-0cd12d70a774",
+      "targetInstanceId": "4656ec53-637a-4367-b858-c48a016149a1"
+    },
+    "relations/84cc523e-f1ff-4169-81a7-eea30bec6d2c.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.733931361+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "relationId": "84cc523e-f1ff-4169-81a7-eea30bec6d2c",
+      "relationType": "com.semanticops.method/held-by",
+      "sourceInstanceId": "cc4ab221-f24b-40f8-8dcb-0cd12d70a774",
+      "targetInstanceId": "fa6da632-0488-4f0b-82fd-d6f946b68394"
+    },
+    "relations/86264ef1-b200-4287-b458-df77d6e2f3ce.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.809031184+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "relationId": "86264ef1-b200-4287-b458-df77d6e2f3ce",
+      "relationType": "com.semanticops.method/held-by",
+      "sourceInstanceId": "216ec53a-75a4-4420-97ab-20f970df6b05",
+      "targetInstanceId": "fa6da632-0488-4f0b-82fd-d6f946b68394"
+    },
+    "relations/91b2df9e-43ab-45d7-84c1-d5adb08c97d8.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.589163594+00:00",
+      "createdBy": {
+        "id": "agent:analyst",
+        "kind": "ai",
+        "name": "Analyst scout"
+      },
+      "relationId": "91b2df9e-43ab-45d7-84c1-d5adb08c97d8",
+      "relationType": "contains",
+      "sourceInstanceId": "ceef47e6-27bc-4eb9-82d2-666861cc0af3",
+      "targetInstanceId": "216ec53a-75a4-4420-97ab-20f970df6b05"
+    },
+    "relations/9b3bcd0d-15cc-45fa-9957-eab2b14c5506.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.082094121+00:00",
+      "createdBy": {
+        "id": "agent:method-scout",
+        "kind": "ai",
+        "name": "Method scout"
+      },
+      "relationId": "9b3bcd0d-15cc-45fa-9957-eab2b14c5506",
+      "relationType": "contains",
+      "sourceInstanceId": "ba6f42cd-4a11-415b-9bd7-34ca840d9404",
+      "targetInstanceId": "ceef47e6-27bc-4eb9-82d2-666861cc0af3"
+    },
+    "relations/b3a9e62b-3c10-4065-b4b8-db5a8640e91b.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-10-08T17:41:00.152891995+00:00",
+      "createdBy": {
+        "id": "agent:method-scout",
+        "kind": "ai",
+        "name": "Method scout"
+      },
+      "relationId": "b3a9e62b-3c10-4065-b4b8-db5a8640e91b",
+      "relationType": "contains",
+      "sourceInstanceId": "c7bf7e01-c78e-4f5b-a121-476c1dba8fd5",
+      "targetInstanceId": "4656ec53-637a-4367-b858-c48a016149a1"
+    }
+  }
+}

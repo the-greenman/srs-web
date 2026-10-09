@@ -32,6 +32,8 @@ export { default as Card } from "./Card.svelte";
 export { default as CardField } from "./CardField.svelte";
 export { default as LogTable } from "./LogTable.svelte";
 export { default as DecisionSummaryCard } from "./DecisionSummaryCard.svelte";
+export { default as MethodBoard } from "./MethodBoard.svelte";
+export { default as ProblemCard } from "./ProblemCard.svelte";
 export { default as DecisionLogView } from "./DecisionLogView.svelte";
 
 // Forms
@@ -89,6 +91,7 @@ export { default as Block } from "./Block.svelte";
 export { default as BlockStack } from "./BlockStack.svelte";
 export { default as LayersPanel } from "./LayersPanel.svelte";
 export { default as ActionMenu } from "./ActionMenu.svelte";
+export { default as ActionBar } from "./ActionBar.svelte";
 export { default as Toolbar } from "./Toolbar.svelte";
 export { default as BinTray } from "./BinTray.svelte";
 export { default as ReferencesTray } from "./ReferencesTray.svelte";
@@ -114,3 +117,5 @@ export { default as CommentBadge } from "./CommentBadge.svelte";
 export { default as AnnotationMargin } from "./AnnotationMargin.svelte";
 export { default as HoverCard } from "./HoverCard.svelte";
 export { default as PinnedPane } from "./PinnedPane.svelte";
+export { default as SectionHeader } from "./SectionHeader.svelte";
+export { default as SourceRow } from "./SourceRow.svelte";

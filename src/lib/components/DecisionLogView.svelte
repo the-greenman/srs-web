@@ -9,7 +9,7 @@
   import type { SrsRecord, SrsRepository } from "$lib/srs-client.js";
   import { listDocumentViews, renderDocumentView } from "$lib/srs-client.js";
   import { downloadText, wrapLogHtml } from "$lib/governance/decision-export-utils.js";
-  import { computeSearchHitIds, computeTagHitIds, computeLifecycleVisibleIds, sortByCreatedAt } from "./decision-log-utils.js";
+  import { computeSearchHitIds, computeTagHitIds, computeLifecycleVisibleIds, computeAttachmentsByInstance, sortByCreatedAt } from "./decision-log-utils.js";
   import LogTable from "./LogTable.svelte";
   import DecisionSummaryCard from "./DecisionSummaryCard.svelte";
   import TagChip from "./TagChip.svelte";
@@ -88,6 +88,11 @@
       sortOrder
     )
   );
+
+  // One batch WASM call for all displayed records (srs-web#232), not one per card.
+  const attachmentsById = $derived(
+    computeAttachmentsByInstance(repo, displayedRecords.map((r) => r.instanceId))
+  );
 </script>
 
 <div data-testid="decision-log-view">
@@ -154,6 +159,7 @@
         <DecisionSummaryCard
           {record}
           {repo}
+          attachments={attachmentsById.get(record.instanceId) ?? []}
           selected={selectedId === record.instanceId}
           onclick={() => onSelect(selectedId === record.instanceId ? null : record.instanceId)}
         />

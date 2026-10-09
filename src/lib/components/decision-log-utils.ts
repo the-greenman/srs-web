@@ -5,8 +5,8 @@
  * without mounting a Svelte component.
  */
 
-import type { SrsRecord, SrsRepository } from "$lib/srs-client.js";
-import { find } from "$lib/srs-client.js";
+import type { ResolvedAttachment, SrsRecord, SrsRepository } from "$lib/srs-client.js";
+import { find, resolveAttachments } from "$lib/srs-client.js";
 
 /**
  * Call WASM `find` and return the set of matching instance IDs.
@@ -69,4 +69,26 @@ export function sortByCreatedAt(records: SrsRecord[], order: "newest" | "oldest"
     if (order === "newest") return dateB < dateA ? -1 : dateB > dateA ? 1 : 0;
     return dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
   });
+}
+
+/**
+ * Resolve the attachments of every given instance in ONE WASM call (batch, not per-record).
+ * Returns a map instanceId → attachments (empty arrays omitted). A failed resolve yields an
+ * empty map: attachment chips are decoration and must never break the log.
+ * ADR-001: pure pass-through to `resolve_composition_attachments`.
+ */
+export function computeAttachmentsByInstance(
+  repo: SrsRepository | undefined,
+  instanceIds: string[]
+): Map<string, ResolvedAttachment[]> {
+  const out = new Map<string, ResolvedAttachment[]>();
+  if (!repo || instanceIds.length === 0) return out;
+  try {
+    for (const r of resolveAttachments(repo, instanceIds).records) {
+      if (r.attachments.length > 0) out.set(r.instanceId, r.attachments);
+    }
+  } catch {
+    return new Map();
+  }
+  return out;
 }

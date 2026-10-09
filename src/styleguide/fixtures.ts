@@ -10,11 +10,13 @@ import { headerActions } from "$lib/essay/header-actions";
 import type { GroupView } from "$lib/generic/RecordsView.svelte";
 import { containerGraph, focusLayout } from "$lib/generic/map-layout";
 import type { PairingResponse } from "$lib/mcp/relay-protocol";
+import type { MethodDomain, MethodProblem } from "$lib/method/method-document";
 import type { InstalledPackage } from "$lib/package-upgrade";
 import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor, UpgradePackageResult } from "$lib/srs-client";
 
 import type { DiscoveryHit } from "$lib/srs-client";
+import type { StorageProviders } from "$lib/storage/index";
 import type { Diagnostic, Status } from "$lib/types";
 
 export const NOW = Date.parse("2026-10-04T12:00:00Z");
@@ -52,6 +54,21 @@ export const menuActions: MenuAction[] = [
   { id: "hide", label: "Hide", run: () => {}, enabled: true },
   { id: "delete", label: "Delete", run: () => {}, enabled: false },
 ];
+
+const act = (label: string, enabled = true, reason?: string): MenuAction => ({
+  id: label.toLowerCase().replaceAll(" ", "-"),
+  label,
+  run: () => {},
+  enabled,
+  reason,
+});
+/** ActionBar (#532): three decisions, one disabled with its reason; and five, so two go in the ⋯. */
+export const barActions: MenuAction[] = [
+  act("Affirm"),
+  act("Edit and affirm"),
+  act("Set aside", false, "This repository has no Set aside container"),
+];
+export const barActionsMany: MenuAction[] = [...barActions, act("Edit"), act("Copy link")];
 
 export const annotations: Annotation[] = [
   { kind: "comments", key: "c", count: 3, label: "3 comments" },
@@ -282,9 +299,23 @@ export const referenceItems = [
       { id: "p1", label: "Opening" },
       { id: "p2", label: "The second claim" },
     ],
-    openable: true,
   },
-  { id: "r2", label: "Nobody owns the edge", type: "claim", paragraphs: [], openable: false },
+  { id: "r2", label: "Nobody owns the edge", type: "claim", paragraphs: [] },
+  // #519: a file row (kind, no link yet) and a URL row (kind + external link)
+  { id: "r3", label: "call-transcript.md", type: "source", kind: "transcript", paragraphs: [] },
+  {
+    id: "r4",
+    label: "https://example.org/small-democracy",
+    type: "source",
+    kind: "web",
+    url: "https://example.org/small-democracy",
+    paragraphs: [{ id: "p1", label: "Opening" }],
+  },
+];
+/** Paragraphs the tray can link a reference to (#519). */
+export const referenceParagraphs = [
+  { id: "p1", label: "Opening" },
+  { id: "p2", label: "The second claim" },
 ];
 
 export const pinned = [
@@ -470,6 +501,18 @@ export const longDraftItems = [
   { id: "ld2", label: "Short" },
 ];
 export const longBinItems = [{ id: "lx1", label: longLabel }];
+/** A web source in the pinned pane (#519): the URL as an external link, no relation to unlink. */
+export const urlPinned = [
+  {
+    id: "up1",
+    kind: "source",
+    relation: "web",
+    title: "https://example.org/small-democracy",
+    text: "",
+    href: "https://example.org/small-democracy",
+    removable: false,
+  },
+];
 export const longPinned = [
   {
     id: "lp1",
@@ -512,6 +555,22 @@ function fxLongLayers(): Layer[] {
 }
 
 /** Component tokens listed in the Tokens section (names only; values are read from the page). */
+/** Fake storage providers for the Landing specimens (#534); every handler is a no-op. */
+const provider = (label: string, configured: boolean) => ({
+  configured,
+  label,
+  authenticate: async () => {},
+  open: async () => {
+    throw new Error("Specimen only.");
+  },
+});
+export const landingProviders = (configured: boolean) =>
+  ({
+    dropbox: provider("Dropbox", configured),
+    googleDrive: provider("Google Drive", configured),
+    github: provider("GitHub", configured),
+  }) as unknown as StorageProviders;
+
 export const componentTokens = [
   "--agent-panel-gap",
   "--agent-panel-row-pad",
@@ -814,3 +873,62 @@ export const attachRejected = [
   { name: "transcript.txt", reason: "1.4 MB is over the 1 MB limit" },
 ];
 export const MB = 1024 * 1024;
+
+// Method board (srs-web#526): problems in each status, with and without links, one long title.
+const problem = (p: Partial<MethodProblem> & { id: string; title: string }): MethodProblem => ({
+  problemId: "",
+  statement: "",
+  kind: "",
+  imbalance: "",
+  personas: [],
+  sources: [],
+  status: "suggested",
+  commentCount: 0,
+  ...p,
+});
+export const methodProblems: MethodProblem[] = [
+  problem({
+    id: "mp1",
+    problemId: "SP-1",
+    title: "A document cannot leave the editor and return",
+    statement:
+      "Export gives the writer markdown and a snapshot, but nothing comes back. Work edited elsewhere cannot return, so leaving the editor is a one way door.",
+    kind: "condition",
+    personas: [{ id: "per-w", label: "Writer" }],
+    sources: ["semanticops.com#21", "semanticops.com#29"],
+    createdBy: agents[0],
+    commentCount: 3,
+  }),
+  problem({
+    id: "mp2",
+    problemId: "SP-2",
+    title: "Suggestions pile up unseen",
+    statement: "Agent suggestions wait in a queue nobody reads.",
+    kind: "consequence",
+    imbalance: "missing",
+    side: {
+      id: "pole",
+      label: "Testimony",
+      tradeOff: { id: "ten", label: "Testimony and authority" },
+    },
+    personas: [{ id: "per-o", label: "Owner" }],
+    sources: ["https://example.org/notes"],
+    createdBy: agents[1],
+    status: "affirmed",
+  }),
+  problem({
+    id: "mp3",
+    problemId: "SP-30",
+    title: "A very long problem title that wraps across two or three lines in a narrow column",
+    statement: "Unattributed and set aside.",
+    kind: "belief",
+    status: "set-aside",
+  }),
+];
+export const methodDomains: MethodDomain[] = [
+  {
+    id: "d1",
+    title: "Writing and review",
+    clusters: [{ id: "c1", title: "Leaving the editor", problems: methodProblems }],
+  },
+];

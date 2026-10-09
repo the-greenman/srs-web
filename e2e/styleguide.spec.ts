@@ -12,16 +12,36 @@ test.describe("Styleguide", () => {
     await expect.poll(() => page.locator("section h2").count()).toBeGreaterThanOrEqual(11);
     await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
     // (the AgentPanel specimens' inline error Notices are role="alert"; anything else is the gate)
-    await expect(page.locator('[role="alert"]:not(.agent-panel .notice):not([data-specimen])')).toHaveCount(0);
+    await expect(
+      page.locator('[role="alert"]:not(.agent-panel .notice):not([data-specimen])')
+    ).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBeUndefined();
     const bg = () =>
-      page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--color-bg"));
+      page.evaluate(() =>
+        getComputedStyle(document.documentElement).getPropertyValue("--color-bg")
+      );
     const before = await bg();
 
     await page.getByLabel("Theme").selectOption("Demo");
     await expect(page.locator("html")).toHaveAttribute("data-theme", "demo");
     expect(await bg()).not.toBe(before);
     expect(errors).toEqual([]);
+  });
+
+  test("ActionBar: the first action is primary, the rest past `visible` go in the ⋯ (#532)", async ({
+    page,
+  }) => {
+    await page.goto("/styleguide");
+    await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
+    await expect(page.getByTestId("sg-bar-three-affirm")).toHaveClass(/btn--primary/);
+    await expect(page.getByTestId("sg-bar-three-set-aside")).toBeDisabled();
+    await expect(page.getByTestId("sg-bar-three-set-aside")).toHaveAttribute(
+      "title",
+      /no Set aside container/
+    );
+    await expect(page.getByTestId("sg-bar-three-more")).toHaveCount(0);
+    await page.getByTestId("sg-bar-five-more").click();
+    await expect(page.getByRole("menuitem", { name: "Copy link" })).toBeVisible();
   });
 
   test("a trailing slash also renders the styleguide", async ({ page }) => {
@@ -81,7 +101,9 @@ test.describe("Styleguide", () => {
 
   // ── Toolbar and paragraph tool specimens (srs-web#423) ─────────────────────────────────────
   for (const theme of ["Default", "Demo"]) {
-    test(`toolbar tiers and paragraph tool states render without errors: ${theme} theme`, async ({ page }) => {
+    test(`toolbar tiers and paragraph tool states render without errors: ${theme} theme`, async ({
+      page,
+    }) => {
       const errors: string[] = [];
       page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
       page.on("pageerror", (e) => errors.push(e.message));
@@ -92,18 +114,19 @@ test.describe("Styleguide", () => {
 
       const frames = page.getByTestId("sg-toolbar-frame");
       await expect(frames).toHaveCount(3);
-      await expect(frames.evaluateAll((els) => els.map((e) => e.getAttribute("data-tier")))).resolves.toEqual([
-        "full",
-        "compact",
-        "narrow",
-      ]);
+      await expect(
+        frames.evaluateAll((els) => els.map((e) => e.getAttribute("data-tier")))
+      ).resolves.toEqual(["full", "compact", "narrow"]);
       // full: Document is pinned open and is a real menu; the lone Help is an icon, not a menu
       const full = frames.nth(0);
       await expect(full.getByRole("menu", { name: "Document" })).toBeVisible();
       await expect(full.getByRole("button", { name: "Markdown help", exact: true })).toBeVisible();
       // View opens on click and carries a mixed checkable row
       await full.getByRole("button", { name: "View", exact: true }).click();
-      await expect(page.getByRole("menuitemcheckbox", { name: "Comments" })).toHaveAttribute("aria-checked", "mixed");
+      await expect(page.getByRole("menuitemcheckbox", { name: "Comments" })).toHaveAttribute(
+        "aria-checked",
+        "mixed"
+      );
       await page.keyboard.press("Escape");
       // compact: icon-only triggers
       await expect(frames.nth(1).getByRole("button", { name: "Go", exact: true })).toBeVisible();
@@ -115,13 +138,16 @@ test.describe("Styleguide", () => {
       await page.keyboard.press("Escape");
 
       // paragraph states: idle shows no strip, hover/focus/hidden/long title do, touch hides it
-      const state = (n: number) => page.getByTestId("sg-paragraph-state").nth(n).getByTestId("block-strip");
+      const state = (n: number) =>
+        page.getByTestId("sg-paragraph-state").nth(n).getByTestId("block-strip");
       await expect(page.getByTestId("sg-paragraph-state")).toHaveCount(6);
       await expect(state(0)).toHaveCSS("opacity", "0");
       for (const n of [1, 2, 3, 4]) await expect(state(n)).toHaveCSS("opacity", "1");
       await expect(state(5)).toBeHidden();
       for (const n of [0, 1]) {
-        await expect(page.getByTestId("sg-paragraph-state").nth(n).getByTestId("paragraph-menu")).toBeVisible();
+        await expect(
+          page.getByTestId("sg-paragraph-state").nth(n).getByTestId("paragraph-menu")
+        ).toBeVisible();
       }
       expect(errors).toEqual([]);
     });
@@ -129,7 +155,9 @@ test.describe("Styleguide", () => {
 
   // ── Page frame specimen (srs-web#424) ──────────────────────────────────────────────────────
   for (const theme of ["Default", "Demo"]) {
-    test(`page frame specimen shows closed, nav open and inspector open states, and Wide off/on: ${theme} theme`, async ({ page }) => {
+    test(`page frame specimen shows closed, nav open and inspector open states, and Wide off/on: ${theme} theme`, async ({
+      page,
+    }) => {
       const errors: string[] = [];
       page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
       page.on("pageerror", (e) => errors.push(e.message));
@@ -139,7 +167,9 @@ test.describe("Styleguide", () => {
       await page.getByLabel("Theme").selectOption(theme);
       const shells = page.getByTestId("sg-shell");
       await expect(shells).toHaveCount(3);
-      await expect(shells.evaluateAll((els) => els.map((e) => e.getAttribute("data-open")))).resolves.toEqual(["none", "nav", "inspector"]);
+      await expect(
+        shells.evaluateAll((els) => els.map((e) => e.getAttribute("data-open")))
+      ).resolves.toEqual(["none", "nav", "inspector"]);
       for (const s of [0, 1, 2]) {
         await expect(shells.nth(s).getByTestId("nav-trigger")).toBeVisible();
         await expect(shells.nth(s).getByTestId("inspector-trigger")).toBeVisible();
@@ -155,7 +185,10 @@ test.describe("Styleguide", () => {
       }
       // Wide: the second cap bar is wider than the first when there is room
       await page.setViewportSize({ width: 1440, height: 900 });
-      const w = await page.getByTestId("sg-wide").locator(".sg__capbar").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().width));
+      const w = await page
+        .getByTestId("sg-wide")
+        .locator(".sg__capbar")
+        .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().width));
       expect(w[1]).toBeGreaterThan(w[0]);
       expect(errors).toEqual([]);
     });
@@ -169,13 +202,15 @@ test.describe("Styleguide", () => {
         await page.goto("/styleguide");
         await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
         await page.getByLabel("Theme").selectOption(theme);
-        await expect(page.getByTestId("sg-frame")).toHaveCount(2);
+        await expect(page.getByTestId("sg-frame")).toHaveCount(5); // two rails, two method boards (#526), the narrow ActionBar (#532)
         const problems = await page.evaluate(() => {
           const out: string[] = [];
           for (const frame of document.querySelectorAll<HTMLElement>('[data-testid="sg-frame"]')) {
             const caption = frame.dataset.caption;
             if (frame.scrollWidth > frame.clientWidth) {
-              out.push(`${caption}: frame scrollWidth ${frame.scrollWidth} > clientWidth ${frame.clientWidth}`);
+              out.push(
+                `${caption}: frame scrollWidth ${frame.scrollWidth} > clientWidth ${frame.clientWidth}`
+              );
             }
             const fr = frame.getBoundingClientRect();
             for (const el of frame.querySelectorAll<HTMLElement>("*")) {
@@ -186,7 +221,7 @@ test.describe("Styleguide", () => {
               if (r.width === 0 && r.height === 0) continue;
               if (r.right > fr.right + 0.5) {
                 out.push(
-                  `${caption}: <${el.tagName.toLowerCase()} class="${el.className}" data-part="${el.dataset.part ?? ""}"> right ${r.right.toFixed(1)} > ${fr.right.toFixed(1)}`,
+                  `${caption}: <${el.tagName.toLowerCase()} class="${el.className}" data-part="${el.dataset.part ?? ""}"> right ${r.right.toFixed(1)} > ${fr.right.toFixed(1)}`
                 );
               }
             }
@@ -199,12 +234,18 @@ test.describe("Styleguide", () => {
   }
 
   // ── SRS mark (srs-web#462): painted by --srs-mark-* tokens, so the demo theme reskins it ───
-  test("the SRS mark is drawn at three sizes and the demo theme reskins every paint", async ({ page }) => {
+  test("the SRS mark is drawn at three sizes and the demo theme reskins every paint", async ({
+    page,
+  }) => {
     await page.goto("/styleguide");
     await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
     const marks = page.getByTestId("sg-srs-mark").locator("svg.srs-mark");
     await expect(marks).toHaveCount(3);
-    expect(await marks.evaluateAll((els) => els.map((e) => e.getAttribute("width")))).toEqual(["16", "24", "96"]);
+    expect(await marks.evaluateAll((els) => els.map((e) => e.getAttribute("width")))).toEqual([
+      "16",
+      "24",
+      "96",
+    ]);
     const paints = () =>
       marks.last().evaluate((svg) => {
         const cs = (sel: string, prop: "fill" | "stroke") =>
@@ -228,7 +269,8 @@ test.describe("Styleguide", () => {
     await page.goto("/styleguide");
     await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
     await page.addStyleTag({
-      content: "*, *::before, *::after { transition: none !important; animation: none !important; }",
+      content:
+        "*, *::before, *::after { transition: none !important; animation: none !important; }",
     });
     await page.evaluate(() => document.fonts.ready);
 
@@ -240,7 +282,16 @@ test.describe("Styleguide", () => {
         probe.style.color = `var(${token})`;
         return getComputedStyle(probe).color;
       };
-      const names = ["--black", "--paper", "--grey-1", "--grey-2", "--grey-3", "--grey-4", "--ink", "--color-page"];
+      const names = [
+        "--black",
+        "--paper",
+        "--grey-1",
+        "--grey-2",
+        "--grey-3",
+        "--grey-4",
+        "--ink",
+        "--color-page",
+      ];
       const set = names.map((n) => rgb(n));
       probe.remove();
       return set;
@@ -261,7 +312,8 @@ test.describe("Styleguide", () => {
 
     const reports = await page.evaluate(
       ({ palette, allow, skip }) => {
-        const triple = (c: string) => (c.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number).join(",");
+        const triple = (c: string) =>
+          (c.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number).join(",");
         const isClear = (c: string) => {
           if (!c || c === "transparent") return true;
           const m = c.match(/rgba?\(([^)]+)\)/);
@@ -273,12 +325,14 @@ test.describe("Styleguide", () => {
         const out: string[] = [];
         const check = (el: Element, pseudo: string | null, prop: string, value: string) => {
           if (isClear(value) || !bad.has(triple(value))) return;
-          const sel = `${el.tagName.toLowerCase()}.${String(el.getAttribute("class") ?? "").split(" ").join(".")}${pseudo ?? ""}`;
+          const sel = `${el.tagName.toLowerCase()}.${String(el.getAttribute("class") ?? "")
+            .split(" ")
+            .join(".")}${pseudo ?? ""}`;
           if (allow.some((a) => el.matches(a.selector) && a.property === prop)) return;
           out.push(`${sel} ${prop}: ${value}`);
         };
         const scope = [...document.querySelectorAll("main.sg section *")].filter(
-          (el) => !skip.some((s) => el.matches(s) || el.closest(s)),
+          (el) => !skip.some((s) => el.matches(s) || el.closest(s))
         );
         for (const el of scope) {
           if (el.getClientRects().length === 0) continue;
@@ -288,18 +342,28 @@ test.describe("Styleguide", () => {
             check(el, pseudo, "color", cs.color);
             check(el, pseudo, "background-color", cs.backgroundColor);
             for (const side of ["top", "right", "bottom", "left"] as const) {
-              if (parseFloat(cs.getPropertyValue(`border-${side}-width`)) > 0 && cs.getPropertyValue(`border-${side}-style`) !== "none") {
-                check(el, pseudo, `border-${side}-color`, cs.getPropertyValue(`border-${side}-color`));
+              if (
+                parseFloat(cs.getPropertyValue(`border-${side}-width`)) > 0 &&
+                cs.getPropertyValue(`border-${side}-style`) !== "none"
+              ) {
+                check(
+                  el,
+                  pseudo,
+                  `border-${side}-color`,
+                  cs.getPropertyValue(`border-${side}-color`)
+                );
               }
             }
             if (cs.outlineStyle !== "none") check(el, pseudo, "outline-color", cs.outlineColor);
-            if (cs.textDecorationLine !== "none") check(el, pseudo, "text-decoration-color", cs.textDecorationColor);
-            for (const m of cs.boxShadow.matchAll(/rgba?\([^)]*\)/g)) check(el, pseudo, "box-shadow", m[0]);
+            if (cs.textDecorationLine !== "none")
+              check(el, pseudo, "text-decoration-color", cs.textDecorationColor);
+            for (const m of cs.boxShadow.matchAll(/rgba?\([^)]*\)/g))
+              check(el, pseudo, "box-shadow", m[0]);
           }
         }
         return [...new Set(out)].slice(0, 20);
       },
-      { palette, allow: ALLOW, skip: SKIP_SELECTORS },
+      { palette, allow: ALLOW, skip: SKIP_SELECTORS }
     );
     expect(reports, "elements painting a default palette colour under the demo theme").toEqual([]);
   });
@@ -319,9 +383,13 @@ test.describe("Styleguide records and map", () => {
       await expect(grouped.getByTestId("record-group")).toHaveCount(4);
       await expect(grouped.getByTestId("record-row")).toHaveCount(3);
       await expect(grouped.getByTestId("group-more")).toBeVisible();
-      await expect(page.getByTestId("sg-records-searched").getByTestId("records-count")).toHaveText("9 results");
+      await expect(page.getByTestId("sg-records-searched").getByTestId("records-count")).toHaveText(
+        "9 results"
+      );
       await expect(page.getByTestId("sg-map-focus").locator("g.neighbour")).toHaveCount(7);
-      await expect(page.getByTestId("sg-map-focus").getByTestId("graph-legend")).toContainText("depends-on");
+      await expect(page.getByTestId("sg-map-focus").getByTestId("graph-legend")).toContainText(
+        "depends-on"
+      );
       await expect(page.getByTestId("sg-map-container").locator("circle")).toHaveCount(24);
       expect(errors).toEqual([]);
     });
@@ -372,17 +440,31 @@ test.describe("Styleguide notices", () => {
 
   // ── Agent library specimens (srs-web#442) ──────────────────────────────────────────────────
   for (const width of [1280, 390]) {
-    test(`agent library specimens render at every width without overflow or headings: ${width}px`, async ({ page }) => {
+    test(`agent library specimens render at every width without overflow or headings: ${width}px`, async ({
+      page,
+    }) => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/styleguide");
       await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15000 });
       for (const g of ["none", "empty", "several", "errors", "pairing"]) {
-        await expect(page.getByTestId(`sg-agent-${g}`).getByTestId("sg-agent-frame")).toHaveCount(3);
+        await expect(page.getByTestId(`sg-agent-${g}`).getByTestId("sg-agent-frame")).toHaveCount(
+          3
+        );
       }
-      await expect(page.getByTestId("sg-agent-none").getByTestId("agent-panel-empty").first()).toBeVisible();
-      await expect(page.getByTestId("sg-agent-errors").getByTestId("mcp-connection").first()).toBeVisible();
-      await expect(page.getByTestId("sg-agent-pairing").getByTestId("pair-code").first()).toBeVisible();
-      await expect(page.locator(".agent-panel h1, .agent-panel h2, .agent-panel h3, .agent-panel h4, .agent-panel h5, .agent-panel h6, .agent-panel details")).toHaveCount(0);
+      await expect(
+        page.getByTestId("sg-agent-none").getByTestId("agent-panel-empty").first()
+      ).toBeVisible();
+      await expect(
+        page.getByTestId("sg-agent-errors").getByTestId("mcp-connection").first()
+      ).toBeVisible();
+      await expect(
+        page.getByTestId("sg-agent-pairing").getByTestId("pair-code").first()
+      ).toBeVisible();
+      await expect(
+        page.locator(
+          ".agent-panel h1, .agent-panel h2, .agent-panel h3, .agent-panel h4, .agent-panel h5, .agent-panel h6, .agent-panel details"
+        )
+      ).toHaveCount(0);
       const overflowing = await page.evaluate(() =>
         [...document.querySelectorAll<HTMLElement>('[data-testid="sg-agent-frame"]')]
           .filter((f) => f.scrollWidth > f.clientWidth)
@@ -408,12 +490,17 @@ test.describe("Styleguide notices", () => {
       await expect(plan.getByTestId("upgrade-conflicts")).toContainText("paragraph");
       const adopt = plan.getByTestId("upgrade-adopt-reference");
       await expect(adopt).not.toBeChecked();
-      await expect(plan).toContainText("Replace with the published definition (any local change to it is lost)");
+      await expect(plan).toContainText(
+        "Replace with the published definition (any local change to it is lost)"
+      );
       const packages = page.getByTestId("sg-packages-dialog");
       await expect(packages.getByTestId("package-upgrade-essay")).toBeVisible();
       await expect(packages.getByTestId("package-row-governance")).toContainText("up to date");
 
-      if (theme === "Demo") await plan.screenshot({ path: process.env.SHOT_SPECIMEN ?? "test-results/upgrade-specimen.png" });
+      if (theme === "Demo")
+        await plan.screenshot({
+          path: process.env.SHOT_SPECIMEN ?? "test-results/upgrade-specimen.png",
+        });
       const boxes = page.getByTestId("sg-checkbox").locator('input[type="checkbox"]');
       await expect(boxes.first()).toBeChecked();
       await expect(boxes.last()).not.toBeChecked();

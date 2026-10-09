@@ -142,7 +142,7 @@ export interface SrsRepository {
   /** RFC-026 slice (`.srs` ZIP bytes) of one container; refusals throw the service error (ADR-051). */
   export_slice(container_id: string): Uint8Array;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in forkRecord()
-  fork_record(container_id: string, instance_id: string): any;
+  fork_record(container_id: string, instance_id: string, options?: string | null): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainerOutline()
   get_container_outline(container_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getContainerArrangement()
@@ -951,9 +951,9 @@ export function transitionRecord(
 /**
  * Query which lifecycle transitions are available for `instanceId` and whether the record is in
  * an immutable (final) state. Returns `null` when the record's type has no lifecycle defined
- * (`LifecycleNotDefined`). Re-throws all other WASM errors so callers can handle them
- * conservatively (fail-closed: treat the record as immutable rather than allowing edits when
- * the lifecycle state is unknown).
+ * (`LifecycleNotDefined`, structured error code `lifecycle-not-defined` — ADR-053/srs-rust#1338).
+ * Re-throws all other WASM errors so callers can handle them conservatively (fail-closed: treat
+ * the record as immutable rather than allowing edits when the lifecycle state is unknown).
  *
  * ADR-001: no transition-rule logic in TypeScript — this is a pure WASM pass-through.
  */
@@ -964,8 +964,9 @@ export function getAllowedLifecycleTransitions(
   try {
     return repo.get_allowed_lifecycle_transitions(instanceId) as AllowedLifecycleTransitionsResult;
   } catch (e: unknown) {
-    // Pinned to Rust error variant `record_store::LifecycleNotDefined` — update if renamed.
-    if (e instanceof Error && e.message.includes("LifecycleNotDefined")) {
+    const code =
+      typeof e === "object" && e !== null && "code" in e ? (e as { code?: string }).code : null;
+    if (code === "lifecycle-not-defined") {
       return null;
     }
     throw e;
@@ -2525,13 +2526,24 @@ export function exportSlice(repo: SrsRepository, containerId: string): Uint8Arra
   return wasm<Uint8Array<ArrayBuffer>>(() => repo.export_slice(containerId));
 }
 
+/** srs-rust#1354 (ADR-054): fork into a container, carrying the original's relations onto the fork. */
+export interface ForkOptions {
+  /** Add the original to this container if absent, then fork there (one atomic op); else `containerId`. */
+  targetContainer?: string;
+  /** Re-create the original's relations on the fork (never `derived-from`); default "none". */
+  carryRelations?: "none" | "outgoing" | "all";
+}
+
 /** Fork `instanceId` and its nested children inside `containerId` only ("make local copy"). */
 export function forkRecord(
   repo: SrsRepository,
   containerId: string,
-  instanceId: string
+  instanceId: string,
+  options?: ForkOptions
 ): ForkResult & { containerId: string } {
-  return wasm(() => repo.fork_record(containerId, instanceId));
+  return wasm(() =>
+    repo.fork_record(containerId, instanceId, options ? JSON.stringify(options) : null)
+  );
 }
 
 // ---------------------------------------------------------------------------

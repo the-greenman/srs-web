@@ -249,6 +249,7 @@ async function installFakeProviders(
             };
           },
           openTree: async () => treeHandle(),
+          defaultBranchOf: async () => "main",
           // Native scan (ADR-018): at a branch root, discover the nested "governance"
           // exploded repo one request in, without the user navigating into it.
           scanForSrs: async (path?: string) => {
@@ -624,6 +625,19 @@ test.describe("Cloud storage sources", () => {
 
     await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 10000 });
     await expect(page.getByText(/records in this repository\./)).toBeVisible();
+    await expect(page.locator('[role="alert"]')).toHaveCount(0);
+  });
+
+  test("a ?repo= deep link offers the GitHub repository, opens it and selects the named editor", async ({
+    page,
+  }) => {
+    await installFakeProviders(page);
+    await page.goto("/?repo=octo/gov&path=governance&editor=governance");
+    await expect(page.getByTestId("repo-link")).toContainText("octo/gov");
+    expect(new URL(page.url()).search).toBe(""); // read once, cleared like ?open=
+    await page.getByTestId("repo-link-open").click();
+
+    await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 10000 }); // the governance shell, unasked
     await expect(page.locator('[role="alert"]')).toHaveCount(0);
   });
 

@@ -43,7 +43,7 @@
   import LinkIcon from "@lucide/svelte/icons/link";
   import Notice from "$lib/components/Notice.svelte";
   import { notify } from "$lib/notices.svelte.js";
-  import { takeFiles } from "$lib/components/attach-check.js";
+  import { asUrls, checkFiles, takeFiles } from "$lib/components/attach-check.js";
   import type { AttachFile } from "$lib/components/attach-check.js";
   import { downloadAttachment } from "$lib/attachment-download.js";
   import Input from "$lib/components/Input.svelte";
@@ -52,7 +52,7 @@
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
     addParagraph,
-    attachFiles,
+    addReferences,
     binParagraph,
     copyEssay,
     deleteForever,
@@ -67,7 +67,10 @@
     agentHandoff,
     shiftEntry,
     removeAttachment,
+    linkReference,
+    referenceText,
     removeReference,
+    repoBytes,
     setHidden,
     setTitle,
     transfer,
@@ -216,16 +219,30 @@
   // Drop pins whose attachment no longer exists, silently.
   $effect(() => {
     if (!model) return;
-    const live = new Set(Object.values(model.attachments).flat().map((a) => a.id));
+    const live = new Set([
+      ...Object.values(model.attachments).flat().map((a) => a.id),
+      ...model.references.map((r) => r.id),
+    ]);
     const kept = untrack(() => pinnedIds).filter((id) => live.has(id));
     if (kept.length !== untrack(() => pinnedIds).length) untrack(() => setPins(kept));
   });
-  const pinned = $derived(
-    Object.values(model?.attachments ?? {})
+  /** References pinned from the tray (by instance id, linked or not), then pinned margin attachments. */
+  const pinnedRefs = $derived((model?.references ?? []).filter((r) => pinnedIds.includes(r.id)));
+  const pinned = $derived([
+    ...pinnedRefs.map((r) => ({
+      id: r.id,
+      kind: r.typeName,
+      relation: r.kind || undefined,
+      title: r.label,
+      text: [r.text, referenceText(repo, r.id)].filter(Boolean).join("\n\n"),
+      href: r.url || undefined,
+      removable: false,
+    })),
+    ...Object.values(model?.attachments ?? {})
       .flat()
-      .filter((a) => pinnedIds.includes(a.id))
+      .filter((a) => pinnedIds.includes(a.id) && !pinnedRefs.some((r) => r.id === a.neighbourId))
       .map((a) => ({ id: a.id, kind: a.neighbourType, relation: a.relationLabel, title: a.label, text: a.text })),
-  );
+  ]);
 
   /** The frame's state: Wide is the one setter (`ShellState.toggleWide`, saved through `wide.ts`); `data-margin` on `.app` carries it. */
   const shell = new ShellState({ wideEnabled: true });
@@ -296,28 +313,44 @@
       id: r.id,
       label: r.label,
       type: r.typeName,
+      kind: r.kind,
+      url: r.url,
       paragraphs: r.paragraphIds.map((id) => ({ id, label: label(id) })),
-      openable: r.paragraphIds.length > 0,
     })),
   );
-  /** Open a reference: pin its attachment (its relation to a paragraph) in the pinned pane. */
+  const paragraphChoices = $derived((model?.entries ?? []).map((e) => ({ id: e.instanceId, label: label(e.instanceId) })));
+  /** Open a reference: pin it in the pinned pane by its own id, linked to a paragraph or not (#499). */
   function openReference(id: string) {
-    const att = Object.values(model?.attachments ?? {}).flat().find((a) => a.neighbourId === id);
-    if (att && !pinnedIds.includes(att.id)) togglePin(att.id);
+    if (!pinnedIds.includes(id)) togglePin(id);
   }
-  const attach = (paragraphId: string, files: AttachFile[]) => run(() => attachFiles(repo, paragraphId, files));
-  /** Files dropped on a paragraph: the same client check as the popover, rejections as a warning toast. */
-  async function dropFiles(paragraphId: string, files: File[]) {
-    const { accepted, rejected } = await takeFiles(files, undefined, 0);
-    if (rejected.length)
-      notify({
-        kind: "warning",
-        key: "attach-rejected",
-        text: rejected.map((r) => `${r.name}: ${r.reason}`).join("; "),
-        testid: "attach-rejected",
-      });
-    if (!accepted.length) return;
-    await attach(paragraphId, accepted);
+  /** The repository's size against the browser budget: the check and the tray's meter share it. */
+  const usedBytes = $derived(model ? repoBytes(repo) : 0);
+  /** The page background takes drops into the pool only when the essay has a pool. */
+  const poolDrop = $derived(!!model?.referencesContainerId);
+  const dropKinds = (e: DragEvent) =>
+    e.dataTransfer?.types.includes("Files") || e.dataTransfer?.types.includes("text/uri-list");
+  /** Files or URLs into the references pool; with a paragraph also linked to it (`evidences`). */
+  const addRefs = (refs: { files?: AttachFile[]; urls?: string[] }, paragraphId?: string) =>
+    run(() => void addReferences(repo, model!, refs, paragraphId));
+  const warnRejected = (rejected: { name: string; reason: string }[]) =>
+    rejected.length &&
+    notify({
+      kind: "warning",
+      key: "attach-rejected",
+      text: rejected.map((r) => `${r.name}: ${r.reason}`).join("; "),
+      testid: "attach-rejected",
+    });
+  /** The paragraph's ⋯ Attach file…: the same budget check as a drop, then the pool. */
+  async function attach(paragraphId: string, files: AttachFile[]) {
+    const { accepted, rejected } = checkFiles(files.map((f) => ({ ...f, size: f.bytes.length })), undefined, usedBytes);
+    warnRejected(rejected);
+    if (accepted.length) await addRefs({ files: accepted }, paragraphId);
+  }
+  /** Files dropped on a paragraph (or, with no id, on the page): checked before they are read, rejections as a warning toast. */
+  async function dropFiles(paragraphId: string | undefined, files: File[]) {
+    const { accepted, rejected } = await takeFiles(files, undefined, usedBytes);
+    warnRejected(rejected);
+    if (accepted.length) await addRefs({ files: accepted }, paragraphId);
   }
   function downloadFile(a: Annotation) {
     try {
@@ -659,7 +692,22 @@
       <Button variant="primary" onclick={createEssay}>New essay</Button>
     </div>
   {:else}
-      <article class="essay-shell__page" aria-label={model.title}>
+      <!-- A file dropped past the paragraphs goes to the references pool, linked to nothing. -->
+      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+      <article
+        class="essay-shell__page"
+        aria-label={model.title}
+        ondragover={poolDrop ? (e) => dropKinds(e) && e.preventDefault() : undefined}
+        ondrop={poolDrop
+          ? (e) => {
+              if (!dropKinds(e)) return;
+              e.preventDefault();
+              const urls = asUrls(e.dataTransfer?.getData("text/uri-list") ?? "");
+              if (e.dataTransfer?.files.length) void dropFiles(undefined, Array.from(e.dataTransfer.files));
+              else if (urls) void addRefs({ urls });
+            }
+          : undefined}
+      >
         <InlineText
           as="h1"
           value={model.title}
@@ -776,7 +824,17 @@
         </Panel>
         {#if model.referencesContainerId}
           <Panel title="References" aside={referenceItems.length} persistKey="essay.references" collapseWhen={NARROW}>
-            <ReferencesTray items={referenceItems} onopen={openReference} onfocus={(id) => focusParagraph(id)} onremove={dropReference} />
+            <ReferencesTray
+              items={referenceItems}
+              paragraphs={paragraphChoices}
+              {usedBytes}
+              onopen={openReference}
+              onfocus={(id) => focusParagraph(id)}
+              onremove={dropReference}
+              onfiles={(files) => addRefs({ files })}
+              onurls={(urls) => addRefs({ urls })}
+              onlink={(id, paragraphId) => run(() => linkReference(repo, id, paragraphId))}
+            />
           </Panel>
         {/if}
         <PinnedPane items={pinned} onunpin={togglePin} onremove={(id) => run(() => removeAttachment(repo, id))} />

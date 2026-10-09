@@ -37,7 +37,8 @@
   import { relays } from "$lib/relay-library.js";
   import { observeSession, pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
   import { reopenSaved } from "$lib/reopen.js";
-  import { fetchArchiveFile, parseOpenUrl, withoutOpenParam } from "$lib/open-url.js";
+  import { fetchArchiveFile, parseOpenUrl, parseRepoLink, withoutOpenParam, withoutRepoLink, type RepoLink } from "$lib/open-url.js";
+  import type { GitHubProvider } from "$lib/storage/github.js";
   import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
   import { listRelations, listTypes, repositoryId, resolveRepositoryTitle, type AgentWriteGuard, type McpSession, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
@@ -50,10 +51,9 @@
   import { installedPackages, upgradeNoticeText } from "$lib/package-upgrade.js";
   import { adoptByPackage } from "$lib/upgrade-plan.js";
   import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
-  import SourceChooser from "$lib/components/SourceChooser.svelte";
-  import SrsMark from "$lib/components/SrsMark.svelte";
-  import Wordmark from "$lib/components/Wordmark.svelte";
-  import CreateRepositoryPanel from "$lib/components/CreateRepositoryPanel.svelte";
+  import Landing from "$lib/components/Landing.svelte";
+  import LandingFrame from "$lib/components/LandingFrame.svelte";
+  import Button from "$lib/components/Button.svelte";
   import GitSaveModal from "$lib/components/GitSaveModal.svelte";
   import SaveToModal from "$lib/components/SaveToModal.svelte";
   import Panel from "$lib/components/Panel.svelte";
@@ -111,6 +111,12 @@
    * Cleared by every other load path, and by saving a copy to the user's own storage.
    */
   let readOnlyHost = $state<string | null>(null);
+  /** `?repo=` deep link (srs-web#530) waiting for the user's click: GitHub sign-in is a popup, so it needs a gesture. */
+  let repoLink = $state<RepoLink | null>(null);
+  let repoLinkBusy = $state(false);
+  let repoLinkError = $state<string | null>(null);
+  /** Editor to select once the next document has loaded (a deep link's `editor`); dropped if not usable. */
+  let pendingEditor = $state<string | null>(null);
   /** Host of a link being fetched at boot (#471), for the splash text. */
   let openingHost = $state<string | null>(null);
 
@@ -146,6 +152,11 @@
   // package install never flips the user back into it unasked.
   $effect(() => {
     if (!activeEditor && editorMode !== "generic") editorMode = "generic";
+  });
+  $effect(() => {
+    if (appState !== "loaded" || !pendingEditor) return;
+    editorMode = pendingEditor;
+    pendingEditor = null;
   });
 
   /**
@@ -212,6 +223,7 @@
 
   function cancelPendingMigration(): void {
     pendingMigration = null;
+    pendingEditor = null;
     repo = null;
     activeDocument = null;
     readOnlyHost = null;
@@ -596,6 +608,12 @@
           void openFromLink(link);
           return;
         }
+        try {
+          repoLink = parseRepoLink(location.search);
+        } catch (e: unknown) {
+          repoLinkError = e instanceof Error ? e.message : String(e);
+        }
+        if (repoLink || repoLinkError) history.replaceState(history.state, "", withoutRepoLink(location.href));
         return loadWorkingCopy().then((cached) => {
           if (cached !== null) {
             cachedSession = cached;
@@ -895,6 +913,34 @@
     }
   }
 
+  /**
+   * `?repo=owner/name[&ref][&path][&editor]` (srs-web#530): the GitHub exploded-tree open, as the picker's
+   * "Open as SRS repository" does, with sign-in first when needed; then the named editor if usable.
+   */
+  async function openRepoLink(link: RepoLink): Promise<void> {
+    const github = storageProviders.github as GitHubProvider | undefined;
+    if (!github?.configured) {
+      repoLinkError = "GitHub is not configured on this site.";
+      return;
+    }
+    repoLinkBusy = true;
+    repoLinkError = null;
+    try {
+      await github.authenticate();
+      const branch = link.ref || (await github.defaultBranchOf(link.owner, link.name));
+      const where = `${link.owner}/${link.name}:${branch}:${link.path}`;
+      const handle = await github.openTree({ id: `${where}#repo`, name: link.name, kind: "repository", path: where, revision: null });
+      pendingEditor = link.editor || null;
+      await loadDocument(handle);
+      repoLink = null;
+    } catch (e: unknown) {
+      pendingEditor = null;
+      repoLinkError = e instanceof Error ? e.message : String(e);
+    } finally {
+      repoLinkBusy = false;
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Export
   // ---------------------------------------------------------------------------
@@ -1075,7 +1121,7 @@
             // of letting export_srsj() throw a raw WASM error.
             throw new StorageError(
               "unsupported",
-              "This repository has attachments, which GitHub commits to a single file can't store yet. Use “Export .srs” (Document menu) to download it, or save a copy to Dropbox or Google Drive instead."
+              "This repository has attachments, which GitHub commits to a single file can't store yet. Keep this repository as an exploded folder (one file per record, so attachments are stored with it) to commit it to GitHub, or use “Export .srs” (Document menu) to download it, or save a copy to Dropbox or Google Drive instead."
             );
           }
           await handle.saveToBranch(exportSrsj(repository), branchOpts);
@@ -1114,53 +1160,65 @@
      Boot state
      ========================================================================= -->
 {#if appState === "boot"}
-  <div class="splash">
-    <p class="splash__status">{openingHost ? `Opening from ${openingHost}…` : "Loading engine…"}</p>
-  </div>
+  <LandingFrame>
+    <p class="landing__status">{openingHost ? `Opening from ${openingHost}…` : "Loading engine…"}</p>
+  </LandingFrame>
 
 <!-- =========================================================================
      Error state
      ========================================================================= -->
 {:else if appState === "error"}
-  <div class="splash">
-    <Notice kind="error">{errorMsg}</Notice>
-    <button
-      class="splash__retry"
-      onclick={() => {
-        errorMsg = null;
-        appState = "idle";
-      }}
-    >Try again</button>
-  </div>
+  <LandingFrame title="Something went wrong.">
+    {#snippet notices()}<Notice kind="error">{errorMsg}</Notice>{/snippet}
+    <div class="landing__actions">
+      <Button
+        onclick={() => {
+          errorMsg = null;
+          appState = "idle";
+        }}
+      >Try again</Button>
+    </div>
+  </LandingFrame>
 
 <!-- =========================================================================
-     Idle state — mode picker then file picker
+     Migrate state
      ========================================================================= -->
 {:else if appState === "migrate" && pendingMigration}
-  <div class="splash" data-testid="migration-prompt">
-    <h1 class="splash__title">Update needed</h1>
-    <p class="splash__sub">
-      <strong>{pendingMigration.name}</strong> uses an older SRS data model and cannot be
-      opened as-is. Migrating updates the working copy (<code>{pendingMigration.ids.join(", ")}</code>). Nothing is saved until you press Save.
+  <LandingFrame
+    title="Update needed"
+    standfirst="This repository uses an older SRS data model and cannot be opened as-is."
+    data-testid="migration-prompt"
+  >
+    {#snippet notices()}
+      {#if migrationError}<Notice kind="error" testid="migration-error">{migrationError}</Notice>{/if}
+    {/snippet}
+    <p class="landing__status">
+      <strong>{pendingMigration.name}</strong>: migrating updates the working copy (<code>{pendingMigration.ids.join(", ")}</code>). Nothing is saved until you press Save.
     </p>
-    {#if migrationError}<Notice kind="error" testid="migration-error">{migrationError}</Notice>{/if}
-    <div class="restore-banner__actions">
-      <button class="restore-banner__restore" data-testid="migration-apply" onclick={runPendingMigration}>Migrate and open</button>
-      <button class="restore-banner__dismiss" data-testid="migration-cancel" onclick={cancelPendingMigration}>Cancel</button>
+    <div class="landing__actions">
+      <Button variant="primary" data-testid="migration-apply" onclick={runPendingMigration}>Migrate and open</Button>
+      <Button data-testid="migration-cancel" onclick={cancelPendingMigration}>Cancel</Button>
     </div>
-  </div>
+  </LandingFrame>
 
+<!-- =========================================================================
+     Idle state — open a repository or start one
+     ========================================================================= -->
 {:else if appState === "idle"}
-  <div class="splash" data-testid="generic-file-picker">
-    <div class="splash__brand"><SrsMark size={28} /><Wordmark size="sm" /></div>
-    <h1 class="splash__title">SRS Viewer</h1>
-    <p class="splash__sub">Open any <code>.srs</code> or <code>.srsj</code> repository to read its documents, structure, and records.</p>
-    {#if cachedSession !== null}
-      <div class="restore-banner" role="status">
-        <p class="restore-banner__msg">Unsaved session: <strong>{cachedSession.name}</strong></p>
-        {#if restoreError}<Notice kind="error">{restoreError}</Notice>{/if}
-        <div class="restore-banner__actions">
-          <button class="restore-banner__restore" onclick={() => {
+  <Landing
+    data-testid="generic-file-picker"
+    providers={storageProviders}
+    onOpen={loadDocument}
+    onOpenArchive={loadArchiveDocument}
+    onOpenUrl={openFromUrl}
+    onCreate={createRepository}
+  >
+    {#snippet notices()}
+      {#if cachedSession !== null}
+        <Notice kind="info" testid="restore-notice">
+          Unsaved session: <strong>{cachedSession.name}</strong>
+          <div class="landing__actions">
+            <Button size="sm" variant="primary" data-testid="restore-session" onclick={() => {
             restoreError = null;
             const entry = cachedSession;
             if (!entry) return;
@@ -1183,15 +1241,27 @@
               void clearWorkingCopy();
               restoreError = `Could not restore session: ${e instanceof Error ? e.message : String(e)}`;
             }
-          }}>Restore session</button>
-          <button class="restore-banner__dismiss" onclick={() => { void clearWorkingCopy(); cachedSession = null; restoreError = null; }}>Discard</button>
-        </div>
-      </div>
-    {/if}
-    <SourceChooser providers={storageProviders} onOpen={loadDocument} onOpenArchive={loadArchiveDocument} onOpenUrl={openFromUrl} />
-    <p class="splash__divider">or start a new repository</p>
-    <CreateRepositoryPanel onCreate={createRepository} />
-  </div>
+          }}>Restore session</Button>
+            <Button size="sm" data-testid="restore-discard" onclick={() => { void clearWorkingCopy(); cachedSession = null; restoreError = null; }}>Discard</Button>
+          </div>
+        </Notice>
+        {#if restoreError}<Notice kind="error" testid="restore-error">{restoreError}</Notice>{/if}
+      {/if}
+      {#if repoLink}
+        {@const link = repoLink}
+        <Notice kind="info" testid="repo-link">
+          Open <strong>{link.owner}/{link.name}</strong>{link.ref ? ` (${link.ref})` : ""} from GitHub. You sign in to GitHub first if you have not already.
+          <div class="landing__actions">
+            <Button size="sm" variant="primary" data-testid="repo-link-open" disabled={repoLinkBusy} onclick={() => void openRepoLink(link)}>{repoLinkBusy ? "Opening…" : "Open from GitHub"}</Button>
+            <Button size="sm" onclick={() => { repoLink = null; repoLinkError = null; }}>Dismiss</Button>
+          </div>
+        </Notice>
+      {/if}
+      {#if repoLinkError}
+        <Notice kind="error" testid="repo-link-error">{repoLinkError}</Notice>
+      {/if}
+    {/snippet}
+  </Landing>
 
 <!-- =========================================================================
      Loaded state — generic shell
@@ -1349,95 +1419,3 @@
     }}
   />
 {/if}
-
-<style>
-  /* ---- Splash / idle ---- */
-  .splash {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100dvh;
-    gap: 1rem;
-    padding: 2rem;
-    text-align: center;
-    font-family: inherit;
-  }
-
-  .splash__brand {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-sm);
-  }
-
-  .splash__title {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-  }
-
-  .splash__sub {
-    margin: 0;
-    opacity: 0.65;
-    max-width: 28rem;
-  }
-
-  .splash__divider {
-    margin: 0.75rem 0 0;
-    opacity: 0.45;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  .splash__status {
-    opacity: 0.55;
-    margin: 0;
-  }
-
-  .splash__retry {
-    margin-top: 0.5rem;
-    cursor: pointer;
-  }
-
-  /* ---- Restore banner ---- */
-  .restore-banner {
-    border: 1px solid var(--accent, #0066cc);
-    border-radius: 6px;
-    padding: 0.75rem 1rem;
-    max-width: 28rem;
-    width: 100%;
-    text-align: left;
-    background: var(--color-surface-2, #f0f6ff);
-  }
-
-  .restore-banner__msg {
-    margin: 0 0 0.5rem;
-    font-size: 0.875rem;
-  }
-
-  .restore-banner__actions {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .restore-banner__restore {
-    font-size: 0.8rem;
-    padding: 0.3rem 0.75rem;
-    background: var(--accent, #0066cc);
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-
-  .restore-banner__dismiss {
-    font-size: 0.8rem;
-    padding: 0.3rem 0.75rem;
-    background: none;
-    border: 1px solid var(--color-border, #ddd);
-    border-radius: 4px;
-    cursor: pointer;
-  }
-</style>

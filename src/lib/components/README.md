@@ -58,8 +58,12 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `Tag` | `status` `onDark?` | `.tag` | B11 [#7](https://github.com/the-greenman/srs-web/issues/7) |
 | `Button` | `variant` `size?` (`md` \| `sm`; `sm` for rails, trays, panels: wraps its label) `onDark?` `active?` | `.btn` | B1 [#2](https://github.com/the-greenman/srs-web/issues/2), B10 [#6](https://github.com/the-greenman/srs-web/issues/6) |
 | `Diagnostics` | `diagnostics` `variant?` (`panel` \| `notice`) `documentKey?` `testid?` `expanded?` (grouped by identical message; the notice variant is collapsible and dismissible per document) | `.diag*` | B4 [#3](https://github.com/the-greenman/srs-web/issues/3), B13 [#9](https://github.com/the-greenman/srs-web/issues/9), #441 |
+| `SectionHeader` | `number` `label` (mono "01 OPEN" and a hairline filling the row; the label is an h2) | `.section-header` | #534 |
+| `SourceRow` | `icon` `label` `hint?` `busy?` `busyLabel?` `unavailable?` (muted, "Not set up" tag, disabled) `disabled?` `as?` (`button` \| `label`) `control?` (the hidden file input of a `label` row) | `.source-row` | #534 |
+| `LandingFrame` | `eyebrow?` `title?` `standfirst?` `notices?` (snippet) children (hairline header, left-aligned hero; boot, error and migrate reuse it) | `.landing` | #534 |
+| `Landing` | `providers` `onOpen` `onOpenArchive?` `onOpenUrl?` `onCreate` `notices?` (the idle page: `01 Open` SourceChooser, `02 Start new` CreateRepositoryPanel) | `.landing`, `.source-chooser`, `.create-panel` | #534 |
 | `Notice` | `kind?` (`info` \| `success` \| `warning` \| `error`) `onDismiss?` `action?` (`{label, onAction}`, one button beside the message) `testid?` (error is `role=alert`, the rest `role=status`) | `.notice` | #441, ADR-020 (j) |
-| `AttachDrop` | `policy?` (`AttachPolicy`) `usedBytes?` `onfiles` `busy?` `compact?` `label?` (drop, paste or pick text files; `checkFiles` gates them, rejections show in a warning Notice; `state` and `rejected` are styleguide-only) | `.file-drop` | #503 |
+| `AttachDrop` | `policy?` (`AttachPolicy`) `usedBytes?` `onfiles` `onurls?` (a pasted bare URL or dropped `text/uri-list`; #519) `busy?` `compact?` `label?` (drop, paste or pick text files; `checkFiles` gates them, rejections show in a warning Notice; `state` and `rejected` are styleguide-only) | `.file-drop` | #503 |
 | `RepoSize` | `totalBytes` `maxBytes?` `pendingBytes?` (a native `<meter>` and label; label only without a limit) | `.size-meter` | #503 |
 | `Toast` | `kind?` `text` `testid?` `onDismiss?` (one toast row; the text is aria-hidden) | `.toast` | #441 |
 | `ToastHost` | none (reads the notice store; mounted once by `Main`) | `.toast-host` | #441, ADR-020 (j) |
@@ -73,6 +77,8 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `TrayRow` | `label` `labelProps?` `actions?` snippet | `.tray__row` | #421 |
 | `MarkdownHelp` | `open?` (bindable) `id?` `anchor?` `onclose?` | `.md-help` | srs-web [#365](https://github.com/the-greenman/srs-web/issues/365) |
 | `ActorChip` | `actor?` | `.actor-chip` | srs-web [#330](https://github.com/the-greenman/srs-web/issues/330), [#372](https://github.com/the-greenman/srs-web/issues/372) |
+| `ProblemCard` | `problem` (MethodProblem) `selected?` `onopen?` | `.problem-card` (wraps `Card`, `Tag`, `TagChip`, `ActorChip`) | srs-web [#526](https://github.com/the-greenman/srs-web/issues/526) |
+| `MethodBoard` | `domains` `filter?` (bindable; default `suggested`) `selectedId?` `onopen?` | `.method-board` | srs-web [#526](https://github.com/the-greenman/srs-web/issues/526) |
 | `ActorMark` | `actor?` (none = Unattributed) `size?` (`sm` \| `md`) | `.actor-mark` | srs-web [#422](https://github.com/the-greenman/srs-web/issues/422) |
 | `ActorStack` | `actors` (`(Actor \| undefined)[]`) `max?` | `.actor-stack` | #422 |
 | `AgentPresence` | `status` (AgentStatus): an `ActorStack` of the connected agents | `.presence` | #422 |
@@ -83,7 +89,7 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `AnnotationMargin` | `annotations` (`Annotation[]`, src/lib/annotations.ts) `variant?` (`compact` \| `expanded`) `active?` `max?` `onopen` `onremove?` `ondownload?` (file annotations: kind `file`) | `.margin` | srs-web [#374](https://github.com/the-greenman/srs-web/issues/374) |
 | `BlockStack` | `items` `source` `ondrop` `row` snippet `nest?` `onfiles?` (a file drag over a row shows `is-drop-file`; absent = file drags ignored) | `.block-stack` | #328 |
 | `Panel` | `title` `aside?` `open?` `persistKey?` `collapsible?` `actions?` | `.panel` `.panel-rail` | srs-web [#362](https://github.com/the-greenman/srs-web/issues/362) |
-| `AttachmentGlyph` / `HoverCard` / `PinnedPane` | `kind` `title` `text?` `pinned?` `onpin?` `ondownload?` / `open?` `anchor?` `static?` `onremove?` `ondownload?` / `items` `onunpin` | `.glyph` `.hover-card` `.pinned` | srs-web [#329](https://github.com/the-greenman/srs-web/issues/329) |
+| `AttachmentGlyph` / `HoverCard` / `PinnedPane` | `kind` `title` `text?` `pinned?` `onpin?` `ondownload?` / `open?` `anchor?` `static?` `onremove?` `ondownload?` / `items` (`href?` `removable?`) `onunpin` | `.glyph` `.hover-card` `.pinned` | srs-web [#329](https://github.com/the-greenman/srs-web/issues/329) |
 | `AgentPanel` | `relays` `agents` (`PanelAgent[]`, agent-panel.ts) `ctx?` `now` + `onAddRelay/onUpdateRelay/onRemoveRelay/onSetDefault/onConnectNew/onConnect/onDisconnect/onForget/onRename/onRotate/onTakeover/pair` (the agent and relay library as rows; presentational, App owns the stores) | `.agent-panel` | srs-web [#442](https://github.com/the-greenman/srs-web/issues/442) |
 | Toolbar **Go > Agents…** | `agentsAction(run)` in `shell-actions.ts`, fed by `onopenagents` (all four shells; the essay hosts its own panel, the other three open the floating dock through `onOpenAgents`) | `toolbar-agents` | #442 |
 | `UpgradePlan` / `PackagesDialog` | `plans` `adopt?` (bindable ids of unproven definitions to replace, default none) `busy?` `error?` `onApply` `onCancel` / `packages` (`InstalledPackage[]`) `onUpgrade` `onClose` (App owns both; one upgrade flow for the pinned "Review upgrade" notice, Document > Packages…, and an outdated editor's Upgrade) | `.modal` | #450 |
@@ -94,8 +100,9 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `PairingLoader` | `pair` `now` `children(view, retry)` (headless: fetches the pairing code, refreshes at expiry, announces a new code) | none | #447 |
 | `LayersPanel` | `layers` `ondrop` `onhide` `onfold` `onkey` (touch: per-row ellipsis menu via `ActionMenu`) | `.layers` | #328, [#382](https://github.com/the-greenman/srs-web/issues/382) |
 | `ActionMenu` | `actions` (`MenuAction[]` from `menu-action.ts`, `icon` is a Lucide component; `essay/paragraph-actions.ts` builds the paragraph list) `label` `testid?` `focusKey?` `placement?` (a `Popover role="menu"`) | `.action-menu` | srs-web [#382](https://github.com/the-greenman/srs-web/issues/382) |
+| `ActionBar` | `actions` (the same `MenuAction[]` as `ActionMenu`; order marks the recommended one) `visible?` (default 2 buttons; the first is primary) `label` `testid?`; the rest in an `ActionMenu` ⋯, disabled ones keep their reason as the title | `.action-bar` | srs-web [#532](https://github.com/the-greenman/srs-web/issues/532) |
 | `DraftTray` / `BinTray` | `items` `available?` `ondrop` `onputback` / `items` `onrestore` `onforget` | `.tray` `.draft-tray` `.bin-tray` | #328, #397 |
-| `ReferencesTray` | `items` `onopen` `onfocus` `onremove` | `.tray` `.refs-tray` `.tray__chip` | #495 |
+| `ReferencesTray` | `items` (`kind?` `url?`) `paragraphs?` `usedBytes?` `maxBytes?` `onopen` `onfocus` `onremove` `onfiles?` `onurls?` `onlink?` (the pool: a compact `AttachDrop` + `RepoSize` on top, a kind and a link per row, Open for every row, Link to paragraph menu) | `.tray` `.refs-tray` `.tray__chip` | #495, #519 |
 | `EyeToggle` | `hidden?` `label?` | `.eye` | #328 |
 
 ## Icons, popovers, `data-part`

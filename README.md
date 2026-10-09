@@ -191,6 +191,13 @@ consoles before production deployment.
    then commits only the files that actually changed, in one commit, scoped to
    that directory; everything else in the repo is left byte-identical. See
    [ADR-016](docs/adr/016-exploded-repo-tree-storage.md).
+8. **Deep link:** `/?repo=<owner>/<name>[&ref=<branch>][&path=<dir>][&editor=<id>]`
+   offers to open that exploded repository (the default branch and the branch
+   root when `ref` / `path` are omitted). One click signs in to GitHub if needed
+   (a popup needs the click) and opens it; `editor` (e.g. `method`) is selected
+   when it is usable for the repository. Example:
+   `/?repo=the-greenman/srs-programme&editor=method`. See
+   [ADR-021](docs/adr/021-open-from-url.md).
 
 GitHub's token endpoint requires a client secret and has no browser CORS, so the
 browser cannot exchange the auth code directly. A same-origin Worker route,

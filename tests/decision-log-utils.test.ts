@@ -9,6 +9,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 import {
+  computeAttachmentsByInstance,
   computeLifecycleVisibleIds,
   computeSearchHitIds,
   computeTagHitIds,
@@ -394,5 +395,39 @@ describe("sortByCreatedAt", () => {
     ];
     const sorted = sortByCreatedAt(equalDates, "newest");
     expect(sorted.map((r) => r.instanceId)).toEqual(["inst-x", "inst-y"]);
+  });
+});
+
+describe("computeAttachmentsByInstance", () => {
+  it("makes ONE batch call and omits records without attachments", () => {
+    const spy = vi.fn().mockReturnValue({
+      sourceDocumentsPath: "source_documents",
+      records: [
+        { instanceId: "a", attachments: [{ documentId: "d1", title: "Minutes" }] },
+        { instanceId: "b", attachments: [] },
+      ],
+    });
+    const repo = mockRepo({ resolve_composition_attachments: spy });
+    const m = computeAttachmentsByInstance(repo, ["a", "b"]);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(spy.mock.calls[0][0])).toEqual({ instanceIds: ["a", "b"] });
+    expect([...m.keys()]).toEqual(["a"]);
+  });
+
+  it("returns an empty map without calling WASM for no ids or no repo", () => {
+    const spy = vi.fn();
+    const repo = mockRepo({ resolve_composition_attachments: spy });
+    expect(computeAttachmentsByInstance(repo, []).size).toBe(0);
+    expect(computeAttachmentsByInstance(undefined, ["a"]).size).toBe(0);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("swallows a WASM failure into an empty map", () => {
+    const repo = mockRepo({
+      resolve_composition_attachments: () => {
+        throw new Error("boom");
+      },
+    });
+    expect(computeAttachmentsByInstance(repo, ["a"]).size).toBe(0);
   });
 });

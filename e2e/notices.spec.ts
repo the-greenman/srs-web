@@ -28,7 +28,8 @@ test.describe("Grouped diagnostics", () => {
     await open(page, R23);
     const notice = page.getByTestId("document-diagnostics");
     await expect(notice).toBeVisible();
-    await expect(notice).toContainText("10 warnings");
+    // A render diagnostic (plain string, no engine severity) is info, not warn (srs#907).
+    await expect(notice).toContainText("10 info");
     await expect(notice.locator(".diag-list")).toBeHidden();
 
     await notice.getByRole("button", { name: "Show diagnostics" }).click();
