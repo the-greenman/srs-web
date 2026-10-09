@@ -28,12 +28,21 @@ export const PROBLEM_TYPE_ID = "b7d15218-cee6-4a58-8e2a-a4cb7f6ccf06";
 export const CLUSTER_TYPE_ID = "c6a8eab1-25bf-462c-8d48-6ea47c22f724";
 export const DOMAIN_TYPE_ID = "6e4d0e77-b30a-47d5-a686-5a595a077d4c";
 export const PERSONA_TYPE_ID = "c57aafdd-d002-4ee6-9a2b-ff3805107580";
+export const REMEDY_TYPE_ID = "edd84bf8-6c07-4133-87c6-4ab540ac2a14";
 export const POLE_TYPE_ID = "e3b62684-70d8-403d-ac8f-164fcb4b60a9";
 export const TENSION_TYPE_ID = "91bd6f8a-417c-4728-87d2-26991e451221";
 const METHOD_NAMESPACE = "com.semanticops.method";
 export const HELD_BY = "com.semanticops.method/held-by";
 export const CONCERNS = "com.semanticops.method/concerns";
+export const ANSWERS = "com.semanticops.method/answers";
 const DERIVED_FROM = "derived-from";
+/** Relations a fork carries (srs-rust#1354). Revisit with srs-rust#1377 (engine re-pointing). */
+const CARRY: Record<Entity, "outgoing" | "all"> = {
+  problem: "all",
+  remedy: "outgoing",
+  cluster: "all",
+  persona: "all",
+};
 
 /** The three decision containers, found by title (srs-programme names them; Set aside may be absent). */
 export const CONTAINER_TITLES = {
@@ -55,7 +64,31 @@ export interface Ref {
   id: string;
   label: string;
 }
+/** The kinds of record the owner decides on. */
+export type Entity = "problem" | "remedy" | "cluster" | "persona";
+/** A linked record (persona or cluster) with its decision state; opens in the inspector. */
+export interface MethodLink extends Ref {
+  entity?: "cluster" | "persona";
+  status?: ProblemStatus | null;
+  createdBy?: Actor;
+}
+/** A remedy, listed under each problem it `answers` (one record, never copied). */
+export interface MethodRemedy {
+  entity: "remedy";
+  id: string;
+  title: string;
+  move: string;
+  doesNotFix: string;
+  falsifier: string;
+  returnWhen: string;
+  sources: string[];
+  answers: Ref[];
+  createdBy?: Actor;
+  status: ProblemStatus | null;
+  commentCount: number;
+}
 export interface MethodProblem {
+  entity?: "problem";
   id: string;
   problemId: string;
   title: string;
@@ -64,8 +97,10 @@ export interface MethodProblem {
   /** The pole (public word: side) the problem concerns, with the tension (trade-off) holding it. */
   side?: Ref & { tradeOff?: Ref };
   imbalance: string;
-  personas: Ref[];
-  cluster?: Ref;
+  personas: MethodLink[];
+  cluster?: MethodLink;
+  /** Remedies that answer this problem. */
+  remedies?: MethodRemedy[];
   sources: string[];
   createdBy?: Actor;
   /** null: in none of the decision containers. */
@@ -76,6 +111,8 @@ export interface MethodProblem {
 export interface MethodCluster {
   id: string;
   title: string;
+  status?: ProblemStatus | null;
+  createdBy?: Actor;
   problems: MethodProblem[];
 }
 export interface MethodDomain {
@@ -86,6 +123,10 @@ export interface MethodDomain {
 export interface MethodModel {
   domains: MethodDomain[];
   problems: MethodProblem[];
+  /** Every remedy, personas and clusters that can be opened and decided on (forks stand for originals). */
+  remedies: MethodRemedy[];
+  personas: MethodLink[];
+  clusters: MethodLink[];
   containers: MethodContainers;
 }
 
@@ -121,7 +162,8 @@ export function buildBoard(input: BoardInput): MethodModel {
   };
   const isType = (id: string, typeId: string) => records.get(id)?.typeId === typeId;
   const parentOf = new Map<string, string>(); // child -> first containing parent of the expected type
-  const personas = new Map<string, Ref[]>();
+  const personaIds = new Map<string, string[]>();
+  const answersOf: [string, string][] = [];
   const side = new Map<string, string>();
   const derivedFrom: [string, string][] = [];
   for (const rel of input.relations) {
@@ -133,7 +175,9 @@ export function buildBoard(input: BoardInput): MethodModel {
         (isType(s, TENSION_TYPE_ID) && isType(t, POLE_TYPE_ID));
       if (ok && !parentOf.has(t)) parentOf.set(t, s);
     } else if (rel.relationType === HELD_BY) {
-      personas.set(s, [...(personas.get(s) ?? []), { id: t, label: label(t) }]);
+      personaIds.set(s, [...(personaIds.get(s) ?? []), t]);
+    } else if (rel.relationType === ANSWERS && isType(s, REMEDY_TYPE_ID) && isType(t, PROBLEM_TYPE_ID)) {
+      answersOf.push([s, t]);
     } else if (rel.relationType === CONCERNS && !side.has(s)) side.set(s, t);
     else if (rel.relationType === DERIVED_FROM) derivedFrom.push([s, t]);
   }
@@ -149,19 +193,53 @@ export function buildBoard(input: BoardInput): MethodModel {
         : suggested.has(id)
           ? "suggested"
           : null;
-  const affirmedOriginals = new Set(
-    derivedFrom.filter(([fork]) => affirmed.has(fork)).map(([, original]) => original)
-  );
+  const affirmedForks = derivedFrom.filter(([fork]) => affirmed.has(fork));
+  const affirmedOriginals = new Set(affirmedForks.map(([, original]) => original));
+  const forkOf = new Map(affirmedForks.map(([fork, original]) => [original, fork]));
+  const originalOf = new Map(affirmedForks);
+  /** The affirmed fork stands for its suggested original everywhere it is linked. */
+  const canon = (id: string): string => forkOf.get(id) ?? id;
+  const shown = (id: string): boolean => !(status(id) === "suggested" && affirmedOriginals.has(id));
+  const link = (id: string, entity: "cluster" | "persona"): MethodLink => ({
+    id,
+    label: label(id),
+    entity,
+    status: status(id),
+    createdBy: records.get(id)?.createdBy,
+  });
+  const uniq = (ids: string[]): string[] => [...new Set(ids.map(canon))];
+  const commentCount = (id: string) => new Set((input.comments?.[id] ?? []).map((c) => c.id)).size;
+
+  const remedies: MethodRemedy[] = input.records
+    .filter((r) => r.typeId === REMEDY_TYPE_ID && shown(r.instanceId))
+    .map((r) => ({
+      entity: "remedy" as const,
+      id: r.instanceId,
+      title: str(r.fieldValues.title) || r.displayLabel || r.instanceId,
+      move: str(r.fieldValues.move),
+      doesNotFix: str(r.fieldValues.does_not_fix),
+      falsifier: str(r.fieldValues.falsifier),
+      returnWhen: str(r.fieldValues.return_when),
+      sources: list(r.fieldValues.source_ref),
+      answers: uniq(
+        answersOf.filter(([m]) => m === r.instanceId || m === originalOf.get(r.instanceId)).map(([, p]) => p)
+      ).map((id) => ({ id, label: label(id) })),
+      createdBy: r.createdBy,
+      status: status(r.instanceId),
+      commentCount: commentCount(r.instanceId),
+    }))
+    .sort(byTitle);
 
   const problems: MethodProblem[] = input.records
     .filter(
       (r) =>
         r.typeId === PROBLEM_TYPE_ID &&
-        !(status(r.instanceId) === "suggested" && affirmedOriginals.has(r.instanceId))
+        shown(r.instanceId)
     )
     .map((r) => {
       const f = r.fieldValues;
-      const clusterId = parentOf.get(r.instanceId);
+      const parent = parentOf.get(r.instanceId);
+      const clusterId = parent && canon(parent);
       const poleId = side.get(r.instanceId);
       const tensionId = poleId ? parentOf.get(poleId) : undefined;
       return {
@@ -178,12 +256,13 @@ export function buildBoard(input: BoardInput): MethodModel {
               tradeOff: tensionId ? { id: tensionId, label: label(tensionId) } : undefined,
             }
           : undefined,
-        personas: personas.get(r.instanceId) ?? [],
-        cluster: clusterId ? { id: clusterId, label: label(clusterId) } : undefined,
+        personas: uniq(personaIds.get(r.instanceId) ?? []).map((id) => link(id, "persona")),
+        cluster: clusterId ? link(clusterId, "cluster") : undefined,
+        remedies: remedies.filter((m) => m.answers.some((a) => a.id === r.instanceId)),
         sources: list(f.source_ref),
         createdBy: r.createdBy,
         status: status(r.instanceId),
-        commentCount: new Set((input.comments?.[r.instanceId] ?? []).map((c) => c.id)).size,
+        commentCount: commentCount(r.instanceId),
       };
     })
     .sort(
@@ -201,15 +280,28 @@ export function buildBoard(input: BoardInput): MethodModel {
   const clusterFor = (id: string): MethodCluster => {
     const hit = clusters.get(id);
     if (hit) return hit;
-    const c: MethodCluster = { id, title: id ? label(id) : NO_CLUSTER, problems: [] };
+    const c: MethodCluster = { id, title: id ? label(id) : NO_CLUSTER, problems: [], ...(id ? { status: status(id), createdBy: records.get(id)?.createdBy } : {}) };
     clusters.set(id, c);
-    domainFor(id ? (parentOf.get(id) ?? "") : "").clusters.push(c);
+    const up = id ? (parentOf.get(id) ?? parentOf.get(originalOf.get(id) ?? "")) : undefined;
+    domainFor(up ?? "").clusters.push(c);
     return c;
   };
   for (const p of problems) clusterFor(p.cluster?.id ?? "").problems.push(p);
   const out = [...domains.values()].sort(groupOrder);
   for (const d of out) d.clusters.sort(groupOrder);
-  return { domains: out, problems, containers: input.containers };
+  const ofType = (typeId: string, entity: "cluster" | "persona") =>
+    input.records
+      .filter((r) => r.typeId === typeId && shown(r.instanceId))
+      .map((r) => link(r.instanceId, entity))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  return {
+    domains: out,
+    problems,
+    remedies,
+    personas: ofType(PERSONA_TYPE_ID, "persona"),
+    clusters: ofType(CLUSTER_TYPE_ID, "cluster"),
+    containers: input.containers,
+  };
 }
 
 /** Last board per repository handle, keyed on the engine write epoch (as essay-document.ts). */
@@ -235,6 +327,7 @@ export function loadMethod(repo: SrsRepository): MethodModel {
       ...listRelations(repo, { relationType: "contains" }),
       ...listRelations(repo, { relationType: HELD_BY }),
       ...listRelations(repo, { relationType: CONCERNS }),
+      ...listRelations(repo, { relationType: ANSWERS }),
       ...listRelations(repo, { relationType: DERIVED_FROM }),
     ],
     containers,
@@ -299,18 +392,19 @@ export function sourceHref(ref: string): string | null {
 }
 
 /**
- * Affirm (srs-rust#1354): fork the problem into Affirmed, carrying all its relations (persona, side,
- * cluster), as one engine call. The fork is stamped with the signed-in human; the suggestion stays in
- * Suggestions and the board hides it behind the fork (`derived-from`). Returns the fork's id.
+ * Affirm (srs-rust#1354): fork a problem, remedy, cluster or persona into Affirmed, carrying its relations
+ * (`CARRY`), as one engine call. The fork is stamped with the signed-in human; the suggestion stays in
+ * Suggestions and the board hides it behind the fork (`derived-from`). Only that record is forked
+ * (Affirmed is flat). Returns the fork's id.
  */
-export function affirmProblem(repo: SrsRepository, m: MethodModel, id: string): string {
+export function affirmRecord(repo: SrsRepository, m: MethodModel, id: string, entity: Entity): string {
   const affirmed = m.containers.affirmed;
   if (!affirmed) throw new Error(`This repository has no ${CONTAINER_TITLES.affirmed} container`);
   const result = forkRecord(repo, affirmed, id, {
     targetContainer: affirmed,
-    carryRelations: "all",
+    carryRelations: CARRY[entity],
   });
   const fork = result.forks.find((f) => f.originalId === id);
-  if (!fork) throw new Error("The engine did not fork this problem");
+  if (!fork) throw new Error(`The engine did not fork this ${entity}`);
   return fork.forkId;
 }

@@ -24,19 +24,24 @@ No new or changed binding: `fork_record` (with `targetContainer`, `carryRelation
 ### TypeScript types
 `MethodRemedy`, `MethodLink`, `MethodProblem.remedies`, `MethodCluster.status/createdBy`, `MethodModel.remedies/clusters/personas` in `src/lib/method/method-document.ts`; presentation shapes only.
 
+Pinned build: the existing `affirmProblem` already calls `fork_record` with `targetContainer` + `carryRelations` (srs-rust#1354) on the pinned build, so no bump. ADR-011 (CLI payload contract) is N/A here. `createdBy` on clusters is presentation of engine-stamped testimony only. The CARRY table needs no ADR: it is a per-kind constant revisited by srs-rust#1377.
+
 ## Scope
 - `buildBoard`: remedies (type edd84bf8-..., relation `com.semanticops.method/answers`, remedy -> problem) listed under each problem, never copied; status per decision container; a Suggested original with an Affirmed fork (`derived-from`) is hidden behind the fork for remedies, clusters and personas (as problems); problem cluster/persona resolve to the affirmed fork.
+- Remedy-to-problem rule: a remedy's `answers` target is resolved through the Affirmed fork (`canon`), so after a problem is affirmed its remedies list under the fork; a vitest case pins it.
 - New components with styleguide specimens first: `LinkedRecord` (title + status + opener) and `RemedyCard` (title, status, move, does not fix, falsifier, return when).
 - MethodShell: select a remedy, cluster or persona (board cluster heading, problem detail "Held by", "Cluster", "Remedies"); inspector shows it with the same ActionBar menu (primary Affirm; Set aside / Edit in the menu), Discussion via InstanceNotes.
 - `affirmRecord` generalises `affirmProblem`. `methodWriteGuard` is container based, so it covers the new kinds; a test pins that.
 **Out of scope:** re-pointing links on affirm (srs-rust#1377, srs-web#546); linking as owner (slice 2); ranking; editing domains/trade-offs/principles; remedies answering no problem are not browsable in this slice.
 
 ## Phases
-### Phase 1: model
+Milestone gate for every phase: `npm run typecheck && npm run lint && npm run build && npm test`; Phase 3 adds `npm run e2e`. Verification role: Verification Agent (srs-web) in plans/agents.md.
+
+### Phase 1: model (src/lib/method/method-document.ts, tests/method-document.test.ts)
 - [ ] constants, buildBoard changes, `affirmRecord`, vitest cases (remedy under problem, no copy, hidden original, cluster/persona fork canonical, guard)
-### Phase 2: specimens and components
+### Phase 2: specimens and components (src/lib/components/LinkedRecord.svelte, RemedyCard.svelte, index.ts, README.md, src/styles/components/method.css, src/Styleguide.svelte, src/styleguide/fixtures.ts)
 - [ ] LinkedRecord, RemedyCard, css, index export, README rows, Styleguide section + fixtures
-### Phase 3: shell
-- [ ] MethodShell generalisation, board cluster heading, e2e in e2e/method-editor.spec.ts (remedy shown; affirm a remedy; negative: Affirm disabled without an Affirmed container)
+### Phase 3: shell (src/lib/method/MethodShell.svelte, src/lib/components/MethodBoard.svelte, e2e/method-editor.spec.ts)
+- [ ] MethodShell generalisation, board cluster heading, e2e in e2e/method-editor.spec.ts (remedy shown under its problem; affirm a remedy; set aside then Restore a cluster; affirm a persona; negative: with no container titled "Affirmed" the Affirm menu item is disabled with its reason)
 ### Acceptance
-- typecheck, lint, build, test, e2e pass; dogfood on a local copy of srs-programme.
+- Gate commands above pass. Dogfood on a local copy of srs-programme: remedies appear under problems; affirming a remedy, cluster and persona each adds exactly one record to Affirmed and none to the nested problems; Set aside then Restore round-trips; the real repo is not written.
