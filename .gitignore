@@ -37,3 +37,6 @@ e2e/fixtures/_*.srsj
 
 # pinned package bundles — fetched by scripts/ensure-packages.mjs
 src/lib/packages/*.srspkg
+
+# POC corpora (pack with: srs archive pack --repo <repo> --output public/poc/<name>.srs)
+public/poc/*.srs

@@ -27,12 +27,17 @@ const handledOAuth =
   }));
 
 // Hidden, unlinked live styleguide (ADR-019): lazy so it never reaches the app chunk.
-const isStyleguide = location.pathname.replace(/\/$/, "") === "/styleguide";
+const route = location.pathname.replace(/\/$/, "");
+const isStyleguide = route === "/styleguide";
+// Hidden UX proof of concept (plans/ux-lenses.md): the lens shell over any .srs, lazy like the styleguide.
+const isLens = route === "/lens";
 const Root = handledOAuth
   ? null
   : isStyleguide
     ? (await import("./Styleguide.svelte")).default
-    : App;
+    : isLens
+      ? (await import("./lib/lens/LensPoc.svelte")).default
+      : App;
 const app = Root ? mount(Root, { target }) : null;
 
 export default app;

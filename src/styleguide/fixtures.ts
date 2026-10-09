@@ -9,11 +9,13 @@ import type { MenuAction, ToolbarAction } from "$lib/components/menu-action";
 import { headerActions } from "$lib/essay/header-actions";
 import type { GroupView } from "$lib/generic/RecordsView.svelte";
 import { containerGraph, focusLayout } from "$lib/generic/map-layout";
+import type { Lens } from "$lib/lens/lens";
+import type { CollectionData, ContextGroupData, FocusData, Shown } from "$lib/lens/lens-data";
 import type { PairingResponse } from "$lib/mcp/relay-protocol";
 import type { MethodDomain, MethodProblem } from "$lib/method/method-document";
 import type { InstalledPackage } from "$lib/package-upgrade";
 import { ShellState } from "$lib/shell-context.svelte";
-import type { Actor, UpgradePackageResult } from "$lib/srs-client";
+import type { Actor, SrsRecord, UpgradePackageResult } from "$lib/srs-client";
 
 import type { DiscoveryHit } from "$lib/srs-client";
 import type { StorageProviders } from "$lib/storage/index";
@@ -931,4 +933,252 @@ export const methodDomains: MethodDomain[] = [
     title: "Writing and review",
     clusters: [{ id: "c1", title: "Leaving the editor", problems: methodProblems }],
   },
+];
+
+// ── Lenses (plans/ux-lenses.md): switcher, collection, focus, context ───────────────────────────
+export const lensCurated: Lens[] = [
+  {
+    id: "case",
+    label: "The case",
+    collection: { kind: "outline", containerId: "c1" },
+    focus: { kind: "reading" },
+    context: [],
+    layout: "trail",
+  },
+  {
+    id: "research",
+    label: "Research",
+    collection: { kind: "type", typeId: "t1" },
+    focus: { kind: "reading" },
+    context: [],
+    layout: "trail",
+  },
+  {
+    id: "grid",
+    label: "Problem grid",
+    collection: { kind: "composition", compositionId: "v1" },
+    focus: { kind: "reading" },
+    context: [],
+    layout: "board",
+  },
+];
+export const lensDerived: Lens[] = [
+  {
+    id: "type:claim",
+    label: "claim",
+    collection: { kind: "type", typeId: "t2" },
+    focus: { kind: "reading" },
+    context: [],
+    layout: "trail",
+  },
+  {
+    id: "find",
+    label: "Everything",
+    collection: { kind: "find" },
+    focus: { kind: "reading" },
+    context: [],
+    layout: "trail",
+  },
+];
+const lensRecord = (
+  id: string,
+  label: string,
+  fields: Record<string, unknown>,
+  lifecycle?: string,
+  createdBy?: Actor
+): SrsRecord => ({
+  instanceId: id,
+  typeId: "t1",
+  typeVersion: 1,
+  typeName: "claim",
+  displayLabel: label,
+  fieldValues: { title: label, ...fields },
+  lifecycle,
+  createdBy,
+});
+export const lensOutline: CollectionData = {
+  columns: [],
+  total: 6,
+  items: [
+    {
+      id: "c-1",
+      label: "The common question",
+      typeName: "section",
+      depth: 0,
+      sectionContainerId: "s1",
+    },
+    {
+      id: "c-2",
+      label: "Decision capacity is a muscle",
+      typeName: "claim",
+      lifecycle: "active",
+      depth: 1,
+      createdBy: human,
+    },
+    {
+      id: "c-3",
+      label: "It atrophies when choices are made elsewhere",
+      typeName: "claim",
+      lifecycle: "draft",
+      depth: 1,
+      createdBy: agents[0],
+    },
+    { id: "c-4", label: "Why it matters", typeName: "section", depth: 0, sectionContainerId: "s2" },
+    { id: "c-5", label: longLabel, typeName: "claim", lifecycle: "proposed", depth: 1 },
+    { id: "c-6", label: "What we are not claiming", typeName: "section", depth: 0 },
+  ],
+};
+export const lensTable: CollectionData = {
+  columns: [
+    { name: "persona", label: "Persona" },
+    { name: "scale", label: "Scale" },
+    { name: "kind", label: "Kind" },
+  ],
+  total: 4,
+  items: [
+    {
+      id: "p-1",
+      label: "Nobody knows who may decide",
+      group: "♈ Initiative",
+      typeName: "problem",
+      lifecycle: "active",
+      depth: 0,
+      createdBy: human,
+      record: lensRecord("p-1", "Nobody knows who may decide", {
+        persona: "participant",
+        scale: "group",
+        kind: "condition",
+      }),
+    },
+    {
+      id: "p-2",
+      label: "Proposals arrive fully formed",
+      group: "♈ Initiative",
+      typeName: "problem",
+      lifecycle: "draft",
+      depth: 0,
+      createdBy: agents[1],
+      record: lensRecord("p-2", "Proposals arrive fully formed", {
+        persona: "clerk",
+        scale: "group",
+        kind: "capability",
+      }),
+    },
+    {
+      id: "p-3",
+      label: "The record is nobody's job",
+      group: "♎ The Record",
+      typeName: "problem",
+      lifecycle: "active",
+      depth: 0,
+      record: lensRecord("p-3", "The record is nobody's job", {
+        persona: "clerk",
+        scale: "society",
+        kind: "consequence",
+      }),
+    },
+    {
+      id: "p-4",
+      label: longLabel,
+      group: "♎ The Record",
+      typeName: "problem",
+      depth: 0,
+      record: lensRecord("p-4", longLabel, { persona: "founder", scale: "group", kind: "belief" }),
+    },
+  ],
+};
+export const lensReading: FocusData = {
+  kind: "reading",
+  record: lensRecord(
+    "c-2",
+    "Decision capacity is a muscle",
+    {
+      statement: "A group's capacity to decide grows with use and atrophies without it.",
+      claim_kind: "mechanism",
+      warrant: Array.from(
+        { length: 9 },
+        (_, i) =>
+          `Paragraph ${i + 1} of the warrant: practice in small, reversible decisions builds the habits that larger, irreversible ones need. **Formation** precedes performance.`
+      ).join("\n\n"),
+      warrant_level: "observed",
+      tags_list: ["formation", "capacity", "practice"],
+      source_url: "https://example.org/evidence/decision-capacity",
+      tables: [
+        {
+          columns: ["Practice", "Effect"],
+          rows: [
+            { cells: ["Weekly small decisions", "Confidence"] },
+            { cells: ["Annual big decisions", "Avoidance"] },
+          ],
+        },
+      ],
+    },
+    "active",
+    human
+  ),
+  fields: [
+    { name: "title", label: "Title", valueType: "string", required: true },
+    {
+      name: "statement",
+      label: "Statement",
+      valueType: "text",
+      required: true,
+      description: "One sentence a reader can agree or disagree with.",
+    },
+    {
+      name: "claim_kind",
+      label: "Kind",
+      valueType: "select",
+      required: true,
+      options: ["constitutive", "mechanism", "stance"],
+    },
+    {
+      name: "warrant",
+      label: "Warrant",
+      valueType: "markdown",
+      required: false,
+      instructions: "Why we hold this: the reasoning and the evidence it rests on.",
+    },
+    { name: "warrant_level", label: "Warrant level", valueType: "select", required: false },
+    { name: "tags_list", label: "Themes", valueType: "string", required: false },
+    { name: "source_url", label: "Source", valueType: "url", required: false },
+    { name: "falsifier", label: "Falsifier", valueType: "text", required: false },
+  ],
+  composites: [
+    {
+      name: "tables",
+      label: "Tables",
+      order: 9,
+      fields: [
+        { name: "columns", label: "Columns", valueType: "string", required: false },
+        { name: "rows", label: "Rows", valueType: "string", required: false },
+      ],
+    },
+  ],
+};
+export const lensContextGroups: ContextGroupData[] = [
+  {
+    def: { label: "Evidence", relationType: "evidences", direction: "in" },
+    total: 23,
+    items: [
+      { id: "e-1", label: "Ostrom, Governing the Commons, ch. 3", typeName: "quotation" },
+      { id: "e-2", label: "LTH working group minutes, 2026-09-12", typeName: "source" },
+      { id: "e-3", label: longLabel, typeName: "source" },
+    ],
+  },
+  {
+    def: { label: "Challenged by", relationType: "challenges", direction: "in" },
+    total: 2,
+    items: [
+      { id: "ch-1", label: "Capacity can be bought in", typeName: "claim" },
+      { id: "ch-2", label: "Some groups decide well without practice", typeName: "claim" },
+    ],
+  },
+];
+export const lensContainers = [
+  { containerId: "c1", title: "The case" },
+  { containerId: "c2", title: "Spine 4 — Mechanism" },
+];
+export const lensShown: Shown[] = [
+  { compositionId: "v1", containerId: "c1", label: "The case, as a reader" },
 ];

@@ -27,6 +27,10 @@
   import Frame from "./styleguide/Frame.svelte";
   import RecordsView from "$lib/generic/RecordsView.svelte";
   import RelationGraph from "$lib/generic/RelationGraph.svelte";
+  import LensSwitcher from "$lib/lens/LensSwitcher.svelte";
+  import Collection from "$lib/lens/Collection.svelte";
+  import Focus from "$lib/lens/Focus.svelte";
+  import Context from "$lib/lens/Context.svelte";
   import Icons from "./styleguide/icons";
   import { initWasm } from "$lib/srs-client";
   import * as fx from "./styleguide/fixtures";
@@ -49,6 +53,7 @@
     ["agents", "Agent library"],
     ["shell", "Page frame"],
     ["records", "Records and map"],
+    ["lenses", "Lenses"],
     ["method", "Method board"],
     ["chooser", "Source chooser"],
     ["landing", "Landing"],
@@ -554,6 +559,34 @@
         <RelationGraph view="container" graph={fx.cappedContainerMap} onOpen={noop} />
       </figure>
     </div>
+  </section>
+
+  <section id="lenses">
+    <h2>Lenses</h2>
+    <p class="sg__note">The three-pane POC (plans/ux-lenses.md). Switcher: curated lenses as tabs, derived under More. Collection as an outline
+      (depth, type, lifecycle, author; sections expand) on the dark rail, and as a board table with grouped rows and engine columns. Focus
+      reading: typeSchema labels and help, long markdown clamped with "more", list strings as chips, a url as a link, an inline composite as a
+      table. Context: two groups with counts and paging, then In / Shown in.</p>
+    <div class="sg__shells">
+      <Frame width="var(--inspector-width)" caption="Switcher + outline, dark rail" testid="sg-lens-outline">
+        <div class="nav" style="padding: var(--space-xs) 0">
+          <LensSwitcher curated={fx.lensCurated} extra={fx.lensDerived} active="case" onPick={noop} />
+          <Collection data={fx.lensOutline} selectedId="c-2" expanded={new Set(["c-1"])} onDark onSelect={noop} onExpand={noop} />
+        </div>
+      </Frame>
+      <Frame width="var(--inspector-width)" caption="Context: two groups, In, Shown in" testid="sg-lens-context">
+        <Context groups={fx.lensContextGroups} containers={fx.lensContainers} shown={fx.lensShown} onPick={noop} onShow={noop} onMore={noop} />
+      </Frame>
+    </div>
+    <Frame width="100%" caption="Collection as a board table" testid="sg-lens-table">
+      <Collection data={fx.lensTable} mode="table" selectedId="p-3" onSelect={noop} />
+    </Frame>
+    {#snippet lensFocus()}
+      <Frame width="100%" caption="Focus, reading" testid="sg-lens-focus">
+        <Focus data={fx.lensReading} onEdit={noop} />
+      </Frame>
+    {/snippet}
+    {@render gated(lensFocus)}
   </section>
 
   <section id="method">

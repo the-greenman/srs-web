@@ -31,6 +31,7 @@ const SHELL_FILES = [
   ...svelteIn("src/lib/governance"),
   ...svelteIn("src/lib/guides"),
   ...svelteIn("src/lib/essay"),
+  ...svelteIn("src/lib/lens"),
 ];
 /** Editors whose controls moved onto Button/IconButton (#428): scanned for raw colour too. */
 const EDITOR_FILES = [
