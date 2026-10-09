@@ -7,8 +7,10 @@
   listener and writes the hash only through address.ts: picking or following a record and switching
   lens push, a distinction replaces, Go > Explorer pushes the address without the lens keys. Every trail
   move is history.go(-n), so the trail's Back and browser Back agree. An unknown lens falls back to the
-  first tab; an unresolvable id selects nothing. Edit is hidden while read-only. Sits on AppShell +
-  Toolbar; no scoped style (lens.css).
+  first tab; an unresolvable id selects nothing. Every lens opens on a record inside its set: entered with
+  no id, or switched to a set that lacks the selection, it selects its first member (a switch puts the old
+  selection on the trail). Edit is hidden while read-only. Sits on AppShell + Toolbar; no scoped style
+  (lens.css).
 -->
 <script lang="ts">
   import { untrack } from "svelte";
@@ -184,7 +186,9 @@
     by = a.by ?? null;
     ctxBy = a.ctxBy ?? null;
     trail = readTrail(state);
-    selectedId = a.instanceId && resolvable(a.instanceId) ? a.instanceId : null;
+    // An explicit id wins when it resolves and selects nothing when it does not; no id opens on the first member.
+    if (a.instanceId) selectedId = resolvable(a.instanceId) ? a.instanceId : null;
+    else selectedId = collection.items[0]?.id ?? null;
     picked = collection.items.find((i) => i.id === selectedId)?.label ?? "";
     if (selectedId) reveal(selectedId);
     editing = false;
@@ -342,19 +346,26 @@
   }
   /** Every trail move is history.go(-n); App's popstate re-applies the address it lands on. */
   const back = (n = 1) => history.go(-n);
+  /**
+   * Every lens opens on a record inside its set. The selection stays when the new set holds it (a nested
+   * section holding it expands); otherwise the set's first member is selected and the old selection goes
+   * onto the trail, one Back away. `keepSelection` ("Shown in") keeps it even outside the set.
+   */
   function switchLens(id: LensId, keepSelection = false): void {
     if (id === lens?.id) return;
+    const previous = selectedId ? { id: selectedId, label: selectedLabel } : null;
     lensId = id;
     load(lenses.find((l) => l.id === id));
     by = null;
     trail = [];
     editing = false;
-    if (selectedId && !collection.items.some((i) => i.id === selectedId)) {
-      if (keepSelection) reveal(selectedId);
-      else {
-        reveal(selectedId);
-        if (!collection.items.some((i) => i.id === selectedId)) selectedId = null;
-      }
+    if (selectedId) reveal(selectedId);
+    const held = !!selectedId && collection.items.some((i) => i.id === selectedId);
+    if (!held && !(keepSelection && selectedId)) {
+      const first = collection.items[0];
+      if (previous) trail = [previous];
+      if (first) select(first);
+      else selectedId = null;
     }
     pushAddress(current(), trail);
   }

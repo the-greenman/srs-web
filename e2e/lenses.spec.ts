@@ -14,8 +14,10 @@ const SPEC = fx("srs-spec.srs");
 const CORS = { "access-control-allow-origin": "*" };
 
 const READING = "2ea344e1-f64e-4817-99f7-fe1b1e4046ce"; // first navigation section
+const FOUNDATIONS = "752dad23-8a6d-44e5-98c9-f081d2cc634e";
 const DISTRIBUTION = "97838af7-50f8-4da2-9d8f-d7dbf9296c80";
 const PACKAGE = "006a853f-7e58-4842-85e4-ad75d4b0fe5d";
+const DECISION_TYPE = "6a000004-0000-4000-a000-000000000004";
 const tab = (id: string) => `lens-tab-nav:${id}`;
 const lensHash = (lens: string, id?: string) =>
   `#lens=${encodeURIComponent(lens)}${id ? `&id=${id}` : ""}`;
@@ -35,6 +37,7 @@ async function openSpec(page: Page, hash = ""): Promise<void> {
 const title = (page: Page) => page.getByTestId("lens-focus").locator('[data-part="title"]').first();
 const trailItems = (page: Page) => page.getByTestId("lens-trail").locator("li");
 const ctxItems = (page: Page) => page.getByTestId("lens-context").getByTestId("lens-context-item");
+const firstRow = (page: Page) => page.getByTestId("lens-collection").locator(".lens-list__row").first();
 const hashOf = (page: Page) => page.evaluate(() => decodeURIComponent(location.hash));
 
 /** Labels of the Context links, read from the item buttons (neighbour label only). */
@@ -69,13 +72,53 @@ test.describe("lenses — shell and address", () => {
     await openLenses(page);
     await expect(page.getByTestId("lens-switcher").getByRole("tab")).toHaveCount(9);
     await expect(page.getByTestId(tab(READING))).toHaveAttribute("aria-selected", "true");
-    expect(await hashOf(page)).toBe(`#lens=nav:${READING}`);
+    expect(await hashOf(page)).toMatch(new RegExp(`^#lens=nav:${READING}&id=[0-9a-f-]{36}$`));
 
     await openMenu(page, "Go");
     await page.getByTestId("toolbar-explorer").click();
     await expect(page.getByTestId("generic-srs-shell")).toBeVisible();
     expect(await hashOf(page)).toBe("");
     expect(errors).toEqual([]);
+  });
+
+  test("entering a lens selects its first member", async ({ page }) => {
+    const errors = watchErrors(page);
+    await openSpec(page);
+    await openLenses(page);
+    await expect(firstRow(page)).toHaveAttribute("aria-current", "true");
+    await expect(page.getByTestId("lens-focus")).not.toContainText("Select something to read it here.");
+    // a lens address with no id opens on its first member too
+    await page.evaluate((h) => {
+      location.hash = h;
+    }, lensHash(`nav:${DISTRIBUTION}`));
+    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
+    await expect(firstRow(page)).toHaveAttribute("aria-current", "true");
+    expect(await hashOf(page)).toMatch(new RegExp(`^#lens=nav:${DISTRIBUTION}&id=[0-9a-f-]{36}$`));
+    expect(errors).toEqual([]);
+  });
+
+  test("switching lens to a set that lacks the selection selects the new set's first member and Back returns to the old one", async ({
+    page,
+  }) => {
+    await openSpec(page);
+    await openLenses(page);
+    await pickPackage(page);
+    await page.getByTestId(tab(FOUNDATIONS)).click();
+    await expect(page.getByTestId(tab(FOUNDATIONS))).toHaveAttribute("aria-selected", "true");
+    await expect(firstRow(page)).toHaveAttribute("aria-current", "true");
+    await expect(trailItems(page)).toHaveCount(2);
+    await expect(trailItems(page).first()).toHaveText(/Package/);
+    // the trail's Back
+    await page.getByTestId("lens-back").click();
+    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
+    await expect(title(page)).toHaveText("Package");
+    // and browser Back, from a second switch
+    await page.getByTestId(tab(FOUNDATIONS)).click();
+    await expect(page.getByTestId(tab(FOUNDATIONS))).toHaveAttribute("aria-selected", "true");
+    await page.goBack();
+    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
+    await expect(title(page)).toHaveText("Package");
+    await expect(page.getByTestId("lens-trail")).toHaveCount(0);
   });
 
   test("read-only ?open= offers Lenses without Edit", async ({ page }) => {

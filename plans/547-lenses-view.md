@@ -864,6 +864,7 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): Collection, Fo
 
 #### Acceptance Criteria (each has a named e2e test below)
 - [x] Explore > Lenses opens the first navigation-section lens; Go > Explorer returns to Generic with the document still open.
+- [x] Every lens opens on a record inside its set: entering one with no selection (or a selection it lacks) selects its first member; a switch puts the old selection on the trail, one Back away. An explicit resolvable `id` wins; an unresolvable `id` selects nothing.
 - [x] Opening `/?open=<srs>` (read-only) still offers Lenses, and it has no Edit.
 - [x] Edit in place marks the document unsaved (`documentDirty`); Save works as in Generic.
 - [x] Browser Back after following two links returns through both, and the visible trail agrees.
@@ -891,7 +892,9 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): Collection, Fo
   - "reload then restore-session reopens the same lens, record and distinctions";
   - "editor=lenses on a repo link opens Lenses" (the `e2e/cloud-storage.spec.ts` `?repo=` route stub);
   - "Edit then Save marks the document unsaved";
-  - "My set is not offered".
+  - "My set is not offered";
+  - "entering a lens selects its first member" (added with the Phase 5 restore);
+  - "switching lens to a set that lacks the selection selects the new set's first member and Back returns to the old one" (added with the Phase 5 restore).
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
 npm run e2e -- lenses navigation editor-mode open-url shell-layout mobile-layout essay-editor
@@ -903,7 +906,7 @@ rc=0; grep -nE "svelte:window|addEventListener\\(.(popstate|hashchange)" src/lib
 Deviation: `address.ts` (`pushAddress`/`replaceAddress`) writes a plain copy of the trail. A Svelte `$state` array is a proxy, which `history.pushState` cannot structured-clone ("could not be cloned"); the copy is made once in the one writer, so no caller needs to know.
 Deviation: Explore > Lenses is the first item of Generic's Explore group, not the last. `shell-layout.spec.ts` ("clicking the last nav item…") clicks the last non-package-editor nav item and expects to stay in Generic; Lenses switches shells.
 Deviation: `ContextGroup.svelte` (Phase 3) wraps the neighbour label in `.lens-context-item__label`, a stable hook for the e2e trail tests.
-Note (behaviour): entering a lens selects nothing (Focus: "Select something to read it here."); the prototype auto-selected the first member. A lens switch keeps the selection when the new set holds it (or a nested section holding it expands), else clears it; the prototype selected the first member and put the old one on the trail. "As published" is offered when the lens names a composition or "Shown in" lists one.
+Note (behaviour, restored after Phase 4): every lens opens on a record inside its set, as the prototype did and the round-2 usability review required. Entering a lens (Explore > Lenses, a lens tab, a lens switch, or a lens address with no `id`) with no selection, or with a selection the new set does not hold, selects the set's first member. A switch keeps the selection when the new set holds it (or a nested section holding it expands); otherwise the previous selection goes onto the trail and the switch pushes (ADR-023), so the old selection is one Back away, by the trail's Back or browser Back. "Shown in" still keeps the selection outside the set. An explicit address with a resolvable `id` wins; an unresolvable `id` selects nothing (ADR-023). Phase 4 first shipped with entering a lens selecting nothing; the restore landed with Phase 5. "As published" is offered when the lens names a composition or "Shown in" lists one.
 Note (gate): in this worktree every Playwright filter is matched against the absolute path, which contains `547-lenses-view`, so `npm run e2e -- lenses …` selects all 435 tests. Run as written (`PLAYWRIGHT_PORT=5401`) it exits 1 with 1–3 `mobile-layout.spec.ts` failures that change from run to run (a phone-width race: `openNavDrawer` returns before the shell renders under full-suite load). The same command at the base commit 6cb223e also exits 1 with 3 `mobile-layout` failures, so they predate #547. The named specs pass on their own: `npm run e2e -- lenses.spec navigation editor-mode open-url shell-layout essay-editor` exit 0 (68 passed) and `npm run e2e -- mobile-layout` exit 0 (11 passed). The `?repo=&editor=lenses` test stubs the providers itself (cloud-storage.spec.ts's `installFakeProviders` is not exported).
 
 #### Milestone gate
