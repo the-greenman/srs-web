@@ -13,21 +13,26 @@ ADR-002 chose an explicit mode picker shown before the file picker, with two fix
 editors (Governance, Guides). That picker is gone. srs-web#338 replaced it with one
 editor registry, `src/lib/editors/registry.ts`, and no ADR recorded the change.
 
-What #338 established, as the code stands today:
+What #338 established, as the code stands today (`src/lib/editors/registry.ts`,
+`src/App.svelte`):
 
 - Every editor is one `EditorDefinition` entry in `EDITORS`: `id`, `label`,
-  `entryTypeId`, `requires` (package requirements), optional `create`, and a
-  `component` type-checked against `EditorShellProps`. Adding an editor means adding
-  one entry.
-- An editor is **offered** only when the repository's resolved types contain its
-  `entryTypeId` (a UUID, never a namespace or name). It is **usable** when its
-  `requires` are met by the core's RFC-044 check (`availableEditors`, `usableEditor`).
+  `description`, `entryTypeId`, `requires: PackageRequirement[]`, optional `create`,
+  `seed` and `hostsAgentPanel`, and `component: Component<EditorShellProps>`. Adding
+  an editor means adding one entry.
+- `availableEditors(repo, types)` returns `OfferedEditor[]` (`{editor, unmet}`). An
+  editor is **offered** when `types` contains its `entryTypeId` (a UUID, never a
+  namespace or name), or when its missing packages can be installed from a pinned
+  bundle. It is **usable** (`unmet === null`) when the core's RFC-044 check
+  (`checkPackageRequirements`) satisfies every `requires` entry.
+- `usableEditor(offered, mode)` is the one shell gate. It returns the
+  `EditorDefinition` App renders for `mode`, or `null`.
 - A document opens in the **Generic** explorer (`editorMode === "generic"`). Package
   editors are listed in the explorer's "Package editors" group and chosen from there.
-- App keeps `editorMode` as a string. An editor that stops being usable drops back to
-  `"generic"` and stays there.
-- While the document is read-only (ADR-021), `offeredEditors` is empty, so no package
-  editor is offered.
+- App keeps `editorMode` as a string (`type EditorMode = string`). The gating
+  `$effect` drops an editor that stops being usable back to `"generic"`.
+- While the document is read-only (ADR-021), App's `offeredEditors` is empty, so no
+  package editor is offered.
 
 srs-web#547 adds Lenses, a view that reads engine structures only (navigation,
 containers, compositions, types, relations). It needs no package and no entry type.
@@ -49,15 +54,19 @@ the rule #338 put in place, now recorded.
 - Built-in views are **not** registry entries. They do not appear in "Package editors".
 - They work on read-only documents. Editing controls inside them follow the document's
   read-only state, as Generic's do (ADR-021).
-- There are two today: the Generic explorer and Lenses ([ADR-025](./025-lenses.md)).
-- Each one has a **reserved `editorMode` value**: `"generic"` and `"lenses"`. These
-  values are exempt from the `usableEditor` gate. No registry entry may use a reserved
-  id.
+- Built-in views are listed in one constant in `registry.ts`:
+  `BUILT_IN_VIEWS = ["generic", "lenses"] as const`, with the guard
+  `isBuiltInView(mode)`. Each value is a **reserved `editorMode`**. App's gating
+  `$effect` exempts every value `isBuiltInView` accepts from the `usableEditor` gate.
+  No `EDITORS` id may equal a built-in view; a unit test enforces it.
+- A new built-in view is one more `BUILT_IN_VIEWS` entry plus its App branch.
 - Lenses is reached from the explorer's **Explore** group ("Lenses"). It returns with
-  **Go > Explorer**, as Essay does. A Lenses address in the hash
-  ([ADR-023](./023-one-hash-address.md)) also selects it after a load.
-- A built-in view's component takes `EditorShellProps` (plus the read-only props
-  Generic takes), so it is checked against the same contract as every editor.
+  **Go > Explorer**, as Essay does. App owns the one `hashchange` handler that chooses
+  the shell: an address with a `lens` key ([ADR-023](./023-one-hash-address.md))
+  selects Lenses after a load, and an address without one leaves Lenses for Generic.
+- A built-in view's component takes `EditorShellProps` plus the read-only props
+  `GenericSrsShell` takes (`readOnly?: boolean`, `onSaveCopy?: () => void`), so it is
+  checked against the same contract as every editor.
 
 ## Alternatives considered
 
@@ -77,7 +86,7 @@ the rule #338 put in place, now recorded.
 - ADR-001 holds: a built-in view adds presentation over existing engine bindings only.
 
 **Negative / trade-offs:**
-- App gains one branch per built-in view, and the gating `$effect` must know the
-  reserved values. A third built-in view needs this ADR amended.
+- App gains one branch per built-in view. The reserved values live in one place,
+  `BUILT_IN_VIEWS`, so the gating `$effect` and the collision test read the same list.
 - Making Lenses the default landing later is a one-line change (the initial
   `editorMode`). It still needs its own owner decision; this ADR does not grant it.

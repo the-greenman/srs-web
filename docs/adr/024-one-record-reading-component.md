@@ -34,6 +34,9 @@ prose**:
 - It never shows `aiGuidance`, required markers or empty fields.
 - It takes props only (record, fields, composites, heading). It depends on no shell
   context, so it renders in any shell.
+- Field and type labels come from the one shared label module, `src/lib/labels.ts`
+  (`fieldLabel`, `humanise`), which the editor forms and Lenses import too. A form and
+  a reading never label the same field differently.
 
 **Forms stay the editing component.** `SectionForm` edits; `RecordProse` reads.
 
