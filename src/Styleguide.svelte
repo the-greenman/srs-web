@@ -563,27 +563,34 @@
 
   <section id="lenses">
     <h2>Lenses</h2>
-    <p class="sg__note">The three-pane POC (plans/ux-lenses.md). Switcher: curated lenses as tabs, derived under More. Collection as an outline
-      (depth, type, lifecycle, author; sections expand) on the dark rail, and as a board table with grouped rows and engine columns. Focus
-      reading: typeSchema labels and help, long markdown clamped with "more", list strings as chips, a url as a link, an inline composite as a
-      table. Context: two groups with counts and paging, then In / Shown in.</p>
+    <p class="sg__note">The three-pane POC (plans/ux-lenses.md). Switcher: curated lenses as tabs, derived under More. Each pane has a
+      "Tell apart by" control: the Collection as an outline (Nesting) on the dark rail and as a board table grouped by a select field with
+      counts; Context grouped inside / outside the set, each link with an in/out arrow and a "+" to add it to a hand-drawn set. Focus read:
+      the title as the heading, the body with no label, other long fields under small labels, short values as one chip line, an inline
+      composite as a table. Focus document: the set as one read, the selected block highlighted.</p>
     <div class="sg__shells">
-      <Frame width="var(--inspector-width)" caption="Switcher (above the panes in every layout) + outline, dark rail" testid="sg-lens-outline">
+      <Frame width="var(--inspector-width)" caption="Switcher + outline told apart by Nesting, Select on, a working set of 2" testid="sg-lens-outline">
         <LensSwitcher curated={fx.lensCurated} extra={fx.lensDerived} active="case" onPick={noop} />
         <div class="nav" style="padding: var(--space-xs) 0">
-          <Collection data={fx.lensOutline} selectedId="c-2" expanded={new Set(["c-1"])} onDark onSelect={noop} onExpand={noop} />
+          <Collection data={fx.lensOutline} selectedId="c-2" expanded={new Set(["c-1"])} onDark by="nesting" byOptions={fx.lensByOptions} onBy={noop} picking checked={new Set(["c-2", "c-3"])} setSize={2} onPicking={noop} onCheck={noop} onShowSet={noop} onClearSet={noop} onSelect={noop} onExpand={noop} />
         </div>
       </Frame>
-      <Frame width="var(--inspector-width)" caption="Context: two groups, In, Shown in" testid="sg-lens-context">
-        <Context groups={fx.lensContextGroups} containers={fx.lensContainers} shown={fx.lensShown} onPick={noop} onShow={noop} onMore={noop} />
+      <Frame width="var(--inspector-width)" caption="Context told apart by inside or outside the set" testid="sg-lens-context">
+        <Context groups={fx.lensContextBoundary} by="boundary" onBy={noop} onPick={noop} onAdd={noop} onAddAll={noop} />
+      </Frame>
+      <Frame width="var(--inspector-width)" caption="Context by link type: two groups, In, Shown in" testid="sg-lens-context-link">
+        <Context groups={fx.lensContextGroups} containers={fx.lensContainers} shown={fx.lensShown} onBy={noop} onPick={noop} onShow={noop} onMore={noop} />
       </Frame>
     </div>
-    <Frame width="100%" caption="Collection as a board table" testid="sg-lens-table">
-      <Collection data={fx.lensTable} mode="table" selectedId="p-3" onSelect={noop} />
+    <Frame width="100%" caption="Collection as a board table, grouped rows with counts" testid="sg-lens-table">
+      <Collection data={fx.lensTable} mode="table" selectedId="p-3" by="nesting" byOptions={fx.lensByOptions} onBy={noop} onSelect={noop} />
     </Frame>
     {#snippet lensFocus()}
-      <Frame width="100%" caption="Focus, reading" testid="sg-lens-focus">
-        <Focus data={fx.lensReading} onEdit={noop} />
+      <Frame width="100%" caption="Focus, read" testid="sg-lens-focus">
+        <Focus data={fx.lensReading} onMode={noop} onEdit={noop} />
+      </Frame>
+      <Frame width="100%" caption="Focus, document: the set as one read, the selected block highlighted" testid="sg-lens-document">
+        <Focus data={fx.lensDocument} mode="document" selectedId="c-2" onMode={noop} onEdit={noop} onSelect={noop} />
       </Frame>
     {/snippet}
     {@render gated(lensFocus)}

@@ -10,7 +10,14 @@ import { headerActions } from "$lib/essay/header-actions";
 import type { GroupView } from "$lib/generic/RecordsView.svelte";
 import { containerGraph, focusLayout } from "$lib/generic/map-layout";
 import type { Lens } from "$lib/lens/lens";
-import type { CollectionData, ContextGroupData, FocusData, Shown } from "$lib/lens/lens-data";
+import type {
+  CollectionData,
+  ContextGroupData,
+  FocusData,
+  ReadData,
+  Shown,
+} from "$lib/lens/lens-data";
+import type { ByOption } from "$lib/lens/lens-distinctions";
 import type { PairingResponse } from "$lib/mcp/relay-protocol";
 import type { MethodDomain, MethodProblem } from "$lib/method/method-document";
 import type { InstalledPackage } from "$lib/package-upgrade";
@@ -941,7 +948,7 @@ export const lensCurated: Lens[] = [
     id: "case",
     label: "The case",
     collection: { kind: "outline", containerId: "c1" },
-    focus: { kind: "reading" },
+    focus: { kind: "read" },
     context: [],
     layout: "trail",
   },
@@ -949,7 +956,7 @@ export const lensCurated: Lens[] = [
     id: "research",
     label: "Research",
     collection: { kind: "type", typeId: "t1" },
-    focus: { kind: "reading" },
+    focus: { kind: "read" },
     context: [],
     layout: "trail",
   },
@@ -957,7 +964,7 @@ export const lensCurated: Lens[] = [
     id: "grid",
     label: "Problem grid",
     collection: { kind: "composition", compositionId: "v1" },
-    focus: { kind: "reading" },
+    focus: { kind: "read" },
     context: [],
     layout: "board",
   },
@@ -967,7 +974,7 @@ export const lensDerived: Lens[] = [
     id: "type:claim",
     label: "claim",
     collection: { kind: "type", typeId: "t2" },
-    focus: { kind: "reading" },
+    focus: { kind: "read" },
     context: [],
     layout: "trail",
   },
@@ -975,7 +982,7 @@ export const lensDerived: Lens[] = [
     id: "find",
     label: "Everything",
     collection: { kind: "find" },
-    focus: { kind: "reading" },
+    focus: { kind: "read" },
     context: [],
     layout: "trail",
   },
@@ -1087,8 +1094,9 @@ export const lensTable: CollectionData = {
     },
   ],
 };
-export const lensReading: FocusData = {
-  kind: "reading",
+const lensReadBlock: ReadData = {
+  id: "c-2",
+  label: "Decision capacity is a muscle",
   record: lensRecord(
     "c-2",
     "Decision capacity is a muscle",
@@ -1156,6 +1164,95 @@ export const lensReading: FocusData = {
     },
   ],
 };
+export const lensReading: FocusData = { kind: "read", block: lensReadBlock };
+const lensBlock = (id: string, label: string, statement: string, body: string): ReadData => ({
+  id,
+  label,
+  record: lensRecord(id, label, { statement, warrant: body, claim_kind: "mechanism" }, "draft"),
+  fields: lensReadBlock.fields,
+  composites: [],
+});
+export const lensDocument: FocusData = {
+  kind: "blocks",
+  title: "The case",
+  blocks: [
+    lensBlock(
+      "c-1",
+      "Groups decide less than they think",
+      "Most choices that shape a group are made before it meets.",
+      "Agendas, defaults and who drafts the proposal settle most of the outcome. The meeting **ratifies**."
+    ),
+    lensBlock(
+      "c-2",
+      "Decision capacity is a muscle",
+      "A group's capacity to decide grows with use and atrophies without it.",
+      "Practice in small, reversible decisions builds the habits that larger ones need.\n\n- formation precedes performance\n- the `record` carries what was learned"
+    ),
+    lensBlock(
+      "c-3",
+      "It atrophies when choices are made elsewhere",
+      "Delegating every decision trains the group to wait.",
+      "See [the minutes](https://example.org/minutes) for three cases."
+    ),
+  ],
+};
+export const lensByOptions: ByOption[] = [
+  { value: "nothing", label: "Nothing" },
+  { value: "type", label: "Type" },
+  { value: "nesting", label: "Nesting" },
+  { value: "container", label: "Container" },
+  { value: "state", label: "State" },
+  { value: "field:claim_kind", label: "Kind" },
+];
+export const lensContextBoundary: ContextGroupData[] = [
+  {
+    def: { label: "Inside this set", relationType: "*", direction: "out" },
+    total: 2,
+    items: [
+      {
+        id: "c-1",
+        label: "Groups decide less than they think",
+        typeName: "claim",
+        direction: "out",
+        relation: "Depends On",
+      },
+      {
+        id: "c-3",
+        label: "It atrophies when choices are made elsewhere",
+        typeName: "claim",
+        direction: "in",
+        relation: "Refines",
+      },
+    ],
+  },
+  {
+    def: { label: "Leaving this set", relationType: "*", direction: "out" },
+    total: 3,
+    items: [
+      {
+        id: "e-1",
+        label: "Ostrom, Governing the Commons, ch. 3",
+        typeName: "quotation",
+        direction: "in",
+        relation: "Evidences",
+      },
+      {
+        id: "p-1",
+        label: "Nobody knows who may decide",
+        typeName: "problem",
+        direction: "out",
+        relation: "Answers",
+      },
+      {
+        id: "a-1",
+        label: "Claude (analyst)",
+        typeName: "agent",
+        direction: "out",
+        relation: "Authored By",
+      },
+    ],
+  },
+];
 export const lensContextGroups: ContextGroupData[] = [
   {
     def: {

@@ -56,6 +56,18 @@
   grid-template-columns: minmax(0, 1fr) auto;
   padding-left: calc(var(--lens-depth, 0) * var(--space-sm));
 }
+.lens-list__row--picking {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+}
+.lens-list__check {
+  margin-left: var(--space-sm);
+}
+.lens-list__group small,
+.lens-table__group small {
+  margin-left: var(--space-2xs);
+  opacity: 0.8;
+}
 .lens-list__item {
   display: flex;
   flex-direction: column;
@@ -171,86 +183,6 @@
 .lens-main[data-layout="reader"] .lens-focus {
   max-width: none;
 }
-.lens-focus__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-xs);
-  margin-bottom: var(--space-sm);
-  padding-bottom: var(--space-xs);
-  border-bottom: var(--rule-strong);
-}
-.lens-focus__eyebrow {
-  display: flex;
-  flex-basis: 100%;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-xs);
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--color-muted);
-}
-.lens-focus__title {
-  flex: 1 1 auto;
-  margin: 0;
-  font-size: var(--size-lg);
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-.lens-focus__preview {
-  height: calc(100dvh - 12rem);
-  min-height: 24rem;
-}
-.lens-md--clamped {
-  position: relative;
-  max-height: 9.5em;
-  overflow: hidden;
-}
-.lens-md--clamped::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 3em;
-  background: linear-gradient(transparent, var(--color-surface));
-}
-.lens-more-link {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--color-muted);
-  font: inherit;
-  font-size: var(--size-xs);
-  text-decoration: underline;
-  cursor: pointer;
-}
-.lens-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2xs);
-}
-.lens-text {
-  white-space: pre-wrap;
-}
-.lens-composite {
-  margin: 0;
-  padding-left: 1.2em;
-}
-.lens-composite li {
-  margin-bottom: var(--space-2xs);
-}
-.lens-composite__field {
-  display: block;
-}
-.lens-composite__field small {
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--color-muted);
-}
 .lens-composite-table td,
 .lens-composite-table th {
   padding: 6px 12px 6px 0;
@@ -297,15 +229,216 @@
 .lens-collection__note {
   font-style: italic;
 }
+.lens-inspector-focus h1.lens-read__title {
+  font-size: var(--size-md);
+}
 .lens-inspector-focus {
   padding: var(--space-sm);
   border-bottom: var(--rule);
 }
-.lens-inspector-focus .lens-focus__title {
+/* Reader: Context as a narrow right rail, collapsed to a vertical tab with the link count. */
+.lens-main[data-layout="reader"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-sm);
+  align-items: start;
+}
+.lens-reader__focus {
+  min-width: 0;
+}
+.lens-rail {
+  position: sticky;
+  top: 0;
+}
+.lens-rail--open {
+  width: 20rem;
+  max-height: calc(100dvh - 8rem);
+  overflow-y: auto;
+  padding-left: var(--space-sm);
+  border-left: var(--rule);
+}
+.lens-rail__tab {
+  writing-mode: vertical-rl;
+  padding: var(--space-sm) 6px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-muted-strong);
+  font: inherit;
+  font-size: var(--size-xs);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.lens-rail__tab:hover {
+  color: var(--color-text-strong);
+  border-color: var(--color-text-strong);
+}
+.lens-rail__tab span {
+  margin-top: var(--space-2xs);
+  font-family: var(--font-mono);
+}
+.lens-rail__close {
+  margin-bottom: var(--space-xs);
+}
+
+/* ── Pane headers: "Tell apart by", Select, the working set ─────────────── */
+.lens-pane-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-2xs) var(--space-sm) var(--space-xs);
+}
+.lens-context .lens-pane-head,
+.lens-board .lens-pane-head {
+  padding-left: 0;
+  padding-right: 0;
+}
+.lens-by {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  max-width: 100%;
+  gap: var(--space-2xs);
+  font-size: var(--size-xs);
+  color: var(--color-muted);
+}
+.lens-by span {
+  white-space: nowrap;
+}
+.lens-by select {
+  max-width: 100%;
+  font: inherit;
+  color: var(--color-text);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+.lens-toggle {
+  padding: 2px 8px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-muted-strong);
+  font: inherit;
+  font-size: var(--size-xs);
+  cursor: pointer;
+}
+.lens-toggle:hover,
+.lens-toggle[aria-pressed="true"] {
+  color: var(--color-text-strong);
+  border-color: var(--color-text-strong);
+}
+.lens-collection--dark .lens-by {
+  color: var(--color-on-dark-muted);
+}
+.lens-collection--dark .lens-toggle {
+  border-color: var(--color-on-dark-line);
+  color: var(--color-on-dark-muted);
+}
+.lens-collection--dark .lens-toggle:hover,
+.lens-collection--dark .lens-toggle[aria-pressed="true"] {
+  border-color: var(--color-on-dark);
+  color: var(--color-on-dark);
+}
+
+/* ── Focus: mode control, read, document ─────────────────────────────────── */
+.lens-focus__bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--space-2xs) 0;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+/* In the main scroller (.workspace, padded): stick at its top edge, not inside the padding. */
+.lens-main .lens-focus__bar {
+  top: calc(-1 * var(--space-md));
+}
+.lens-seg {
+  display: inline-flex;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.lens-seg button {
+  padding: 3px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted-strong);
+  font: inherit;
+  font-size: var(--size-xs);
+  cursor: pointer;
+}
+.lens-seg button[aria-pressed="true"] {
+  background: var(--color-text-strong);
+  color: var(--color-on-dark);
+}
+.lens-read__title {
+  margin: 0 0 var(--space-2xs);
+  font-size: var(--size-lg);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+h2.lens-read__title {
   font-size: var(--size-md);
 }
-.lens-reader-context {
-  margin-top: var(--space-md);
+.lens-read__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin: 0 0 var(--space-xs);
+  font-size: var(--size-xs);
+}
+.lens-read__more {
+  margin-top: var(--space-sm);
+}
+.lens-read__label {
+  margin: 0 0 var(--space-2xs);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-muted);
+}
+.lens-block {
+  scroll-margin-top: 4rem;
+  padding: var(--space-sm);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+}
+.lens-block + .lens-block {
+  margin-top: var(--space-2xs);
+}
+.lens-focus[data-kind="blocks"] .lens-block {
+  cursor: pointer;
+}
+.lens-focus[data-kind="blocks"] .lens-block:hover {
+  background: var(--color-hover);
+}
+.lens-block--selected,
+.lens-focus[data-kind="blocks"] .lens-block--selected:hover {
+  border-left-color: var(--color-text-strong);
+  background: var(--color-hover);
+  cursor: auto;
+}
+.lens-block--single {
+  padding: 0;
+}
+.lens-doc__title {
+  padding: 0 var(--space-sm);
+}
+
+/* Graph: edges that leave the set are dashed and coloured (inside stays muted, solid). */
+.lens-main .generic-graph g[data-relation="leaves the set"] line {
+  stroke: var(--color-focus);
+  stroke-dasharray: 5 4;
 }
 
 /* ── Context ──────────────────────────────────────────────────────────────── */
@@ -334,6 +467,29 @@ button.lens-context-item {
 button.lens-context-item:hover {
   color: var(--color-text-strong);
   background: var(--color-hover);
+}
+.lens-context-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+.lens-context-item__dir {
+  margin-right: var(--space-2xs);
+  color: var(--color-muted);
+}
+.lens-context-add {
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-muted-strong);
+  font: inherit;
+  cursor: pointer;
+}
+.lens-context-add:hover {
+  color: var(--color-text-strong);
+  border-color: var(--color-text-strong);
 }
 .lens-context-item small {
   font-family: var(--font-mono);

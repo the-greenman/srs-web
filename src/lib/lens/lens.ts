@@ -11,6 +11,7 @@ import {
   listRelations,
   repositoryNavigation,
 } from "$lib/srs-client.js";
+import type { By, CtxBy } from "./lens-distinctions.js";
 
 export type Layout = "trail" | "reader" | "board" | "graph";
 
@@ -19,17 +20,21 @@ export type Collection =
   | { kind: "outline"; containerId: string; also?: string[] }
   /** A composition's sections, each listing its container's members. */
   | { kind: "composition"; compositionId: string }
-  /** Every record of a type, optionally grouped by a select field. */
-  | { kind: "type"; typeId: string; groupBy?: string }
+  /** Every record of a type. */
+  | { kind: "type"; typeId: string }
+  /** A hand-drawn set ("My set"): these records, in this order. */
+  | { kind: "ids"; ids: string[] }
   /** The root container's navigation sections. */
   | { kind: "navigation" }
   /** Everything: `find` over the repository. */
   | { kind: "find" };
 
-export type Focus =
-  | { kind: "reading" }
-  | { kind: "document"; compositionId?: string }
-  | { kind: "form" };
+/**
+ * How Focus starts (switchable in its header). "read" = one record as prose. "document" = the whole set
+ * as one continuous read: rendered from a composition when `compositionId` is set or the collection is
+ * the navigation (site pages, spec Parts), else composed from the Collection's records (highlightable).
+ */
+export type Focus = { kind: "read" } | { kind: "document"; compositionId?: string };
 
 export interface ContextGroupDef {
   label: string;
@@ -50,6 +55,10 @@ export interface Lens {
   layout: Layout;
   /** Table columns (board) by field name; else the container view's columns or the type's first fields. */
   columns?: string[];
+  /** Default "Tell apart by" for the Collection (lens-distinctions.ts); else nesting for outlines, type otherwise. */
+  by?: By;
+  /** Default "Tell apart by" for Context. */
+  ctxBy?: CtxBy;
 }
 
 const ctx = (
@@ -92,7 +101,7 @@ export function deriveLenses(repo: SrsRepository): Lens[] {
           id: `nav:${s.sectionContainerId}`,
           label: s.displayLabel,
           collection: { kind: "outline", containerId: s.sectionContainerId },
-          focus: { kind: "reading" },
+          focus: { kind: "read" },
           context: [],
           layout: "trail",
         });
@@ -114,7 +123,7 @@ export function deriveLenses(repo: SrsRepository): Lens[] {
       id: `type:${t.typeId}`,
       label: t.value.slice(t.value.lastIndexOf("/") + 1).replaceAll(/[-_]/g, " "),
       collection: { kind: "type", typeId: t.typeId },
-      focus: { kind: "reading" },
+      focus: { kind: "read" },
       context: [],
       layout: "trail",
     });
@@ -122,7 +131,7 @@ export function deriveLenses(repo: SrsRepository): Lens[] {
     id: "find",
     label: "Everything",
     collection: { kind: "find" },
-    focus: { kind: "reading" },
+    focus: { kind: "read" },
     context: [],
     layout: "trail",
   });
@@ -137,7 +146,7 @@ export const curatedLenses: Record<string, Lens[]> = {
       id: "case",
       label: "The case",
       collection: { kind: "outline", containerId: "4fd725af-72f2-45d8-8a95-14f0d22af181" },
-      focus: { kind: "reading" },
+      focus: { kind: "document" },
       context: [
         ctx("Evidence", "evidences", "in", [
           "com.mudemocracy.argument/source",
@@ -158,9 +167,9 @@ export const curatedLenses: Record<string, Lens[]> = {
       collection: {
         kind: "type",
         typeId: "36e85cff-989b-4c6d-9361-3c8906cff87b",
-        groupBy: "source_kind",
       },
-      focus: { kind: "reading" },
+      by: "field:source_kind",
+      focus: { kind: "read" },
       context: [
         ctx("Quotes pulled", "derived-from", "in", ["com.mudemocracy.argument/quotation"]),
         ctx("Supports", "evidences", "out", ["com.mudemocracy/claim"]),
@@ -173,7 +182,7 @@ export const curatedLenses: Record<string, Lens[]> = {
       id: "problem-grid",
       label: "Problem grid",
       collection: { kind: "composition", compositionId: "e0c42424-536c-466e-8586-1cb53144e0df" },
-      focus: { kind: "reading" },
+      focus: { kind: "read" },
       context: [
         ctx("Scoped by boundary", "com.mudemocracy.argument/scopes-problem", "in"),
         ctx("Answered by", "answers", "in", ["com.mudemocracy/claim"]),
@@ -186,7 +195,7 @@ export const curatedLenses: Record<string, Lens[]> = {
       id: "stewardship",
       label: "Stewardship",
       collection: { kind: "outline", containerId: "8c75d1ef-07f2-4b1c-99d3-fea93287b3a3" },
-      focus: { kind: "reading" },
+      focus: { kind: "read" },
       context: [
         ctx("Runs", "derived-from", "in", ["com.mudemocracy.stewardship/run-report"]),
         ctx("Authorised by", "com.mudemocracy.stewardship/authorised-by", "out"),
@@ -221,7 +230,7 @@ export const curatedLenses: Record<string, Lens[]> = {
       id: "concepts",
       label: "Concepts",
       collection: { kind: "type", typeId: "2a000004-0000-4000-a000-000000000004" },
-      focus: { kind: "reading" },
+      focus: { kind: "read" },
       context: [
         ctx("Depends on", "depends-on", "out"),
         ctx("Required by", "depends-on", "in"),
@@ -233,7 +242,7 @@ export const curatedLenses: Record<string, Lens[]> = {
       id: "decisions",
       label: "Decisions",
       collection: { kind: "type", typeId: "6a000004-0000-4000-a000-000000000004" },
-      focus: { kind: "reading" },
+      focus: { kind: "read" },
       context: [
         ctx("Refines", "refines", "out"),
         ctx("Supersedes", "supersedes", "out"),
@@ -250,7 +259,7 @@ export const curatedLenses: Record<string, Lens[]> = {
       id: "roadmap",
       label: "Roadmap",
       collection: { kind: "outline", containerId: "9de24607-812e-4ea0-ae52-089931da03ce" },
-      focus: { kind: "reading" },
+      focus: { kind: "read" },
       context: [
         ctx("Serves objective", "com.semanticops.programme/serves", "out"),
         ctx("Requires contract", "com.semanticops.programme/requires-contract", "out"),
@@ -266,7 +275,7 @@ export const curatedLenses: Record<string, Lens[]> = {
         containerId: "219dc999-b667-4088-aae6-4c180ad03c90",
         also: ["5e28aa7e-4b35-4474-8f62-cf8dcae1e506", "17006e00-6a2c-44ff-8565-047b57fb00da"],
       },
-      focus: { kind: "reading" },
+      focus: { kind: "read" },
       context: [
         ctx("Held by persona", "com.semanticops.method/held-by", "in"),
         ctx("Concerns pole", "com.semanticops.method/concerns", "out"),
@@ -290,7 +299,7 @@ export const curatedLenses: Record<string, Lens[]> = {
           "b12e33c2-c9ef-4de5-96e8-bb22a373502b",
         ],
       },
-      focus: { kind: "reading" },
+      focus: { kind: "read" },
       context: [
         ctx("Findings", "contains", "out"),
         ctx("Carried context", "contains", "out"),
@@ -313,7 +322,7 @@ export const curatedLenses: Record<string, Lens[]> = {
       id: "inventory",
       label: "Inventory",
       collection: { kind: "find" },
-      focus: { kind: "reading" },
+      focus: { kind: "read" },
       context: [],
       layout: "board",
     },
@@ -321,7 +330,7 @@ export const curatedLenses: Record<string, Lens[]> = {
       id: "concept-map",
       label: "Concept map",
       collection: { kind: "type", typeId: "0d32838e-6eef-4648-a5dd-3d16bd93c584" },
-      focus: { kind: "reading" },
+      focus: { kind: "read" },
       context: [ctx("Depends on", "depends-on", "out"), ctx("Required by", "depends-on", "in")],
       layout: "graph",
     },

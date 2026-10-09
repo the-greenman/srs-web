@@ -39,6 +39,7 @@ export interface Item {
   id: string;
   label: string;
   typeName?: string;
+  typeId?: string;
   lifecycle?: string;
   createdBy?: Actor;
   depth: number;
@@ -76,6 +77,7 @@ function memberItems(repo: SrsRepository, containerId: string, group?: string): 
       id: e.instanceId,
       label: m?.displayLabel || e.instanceId.slice(0, 8),
       typeName: typeLabel(m?.record?.typeName),
+      typeId: m?.record?.typeId,
       lifecycle: m?.record?.lifecycle,
       createdBy: m?.record?.createdBy,
       depth: e.depth,
@@ -91,6 +93,7 @@ function recordItem(r: SrsRecord, group?: string): Item {
     id: r.instanceId,
     label: r.displayLabel || r.instanceId.slice(0, 8),
     typeName: typeLabel(r.typeName),
+    typeId: r.typeId,
     lifecycle: r.lifecycle,
     createdBy: r.createdBy,
     depth: 0,
@@ -135,6 +138,7 @@ export function loadCollection(repo: SrsRepository, lens: Lens, offset = 0): Col
         typeName: typeLabel(s.typeName),
         depth: s.depth ?? 0,
         sectionContainerId: s.sectionContainerId,
+        record: tryRecord(repo, s.instanceId),
       }));
       return { items, columns: [], total: items.length };
     }
@@ -165,13 +169,9 @@ export function loadCollection(repo: SrsRepository, lens: Lens, offset = 0): Col
     case "type": {
       const t = listTypes(repo).find((x) => x.id === c.typeId);
       if (!t) return { items: [], columns: [], total: 0 };
-      const all = listRecords(repo, { typeNamespace: t.namespace, typeName: t.name });
-      const groupBy = c.groupBy;
-      const items = all.map((r) => {
-        const g = groupBy ? r.fieldValues[groupBy] : undefined;
-        return recordItem(r, typeof g === "string" ? g : groupBy ? "—" : undefined);
-      });
-      if (groupBy) items.sort((a, b) => (a.group ?? "").localeCompare(b.group ?? ""));
+      const items = listRecords(repo, { typeNamespace: t.namespace, typeName: t.name }).map((r) =>
+        recordItem(r)
+      );
       return {
         items: items.slice(0, offset + PAGE),
         columns: typeColumns(repo, c.typeId, lens.columns),
@@ -181,18 +181,63 @@ export function loadCollection(repo: SrsRepository, lens: Lens, offset = 0): Col
     case "find": {
       const r = find(repo, {}, { limit: offset + PAGE, offset: 0 });
       return {
+        // ponytail: one getRecord per hit so "Tell apart by" a field and board columns work; a find
+        // projection with field values would save the round trips.
         items: r.hits.map((h) => ({
           id: h.instanceId,
           label: h.label,
           typeName: typeLabel(h.typeName),
+          typeId: h.typeId,
           lifecycle: h.lifecycleState,
           depth: 0,
+          record: tryRecord(repo, h.instanceId),
         })),
         columns: [],
         total: r.total,
       };
     }
+    case "ids": {
+      const items = c.ids.map((id) => {
+        const r = tryRecord(repo, id);
+        return r ? recordItem(r) : { id, label: id.slice(0, 8), depth: 0 };
+      });
+      const first = items.find((i) => i.record);
+      const columns = first?.record ? typeColumns(repo, first.record.typeId, lens.columns) : [];
+      return { items, columns, total: items.length };
+    }
   }
+}
+
+/** A record, or undefined for a Tier 0 note (getRecord throws on one). */
+export function tryRecord(repo: SrsRepository, id: string): SrsRecord | undefined {
+  try {
+    return getRecord(repo, id) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * The closed select fields of the set's types (union by name, schema order), for "Tell apart by".
+ * ponytail: `find` facets only count types, not select values, so every collection kind reads the
+ * members' typeSchema; a select-value facet on `find` would make this one call.
+ */
+export function selectFields(
+  repo: SrsRepository,
+  items: Item[]
+): { name: string; label: string }[] {
+  const out = new Map<string, string>();
+  for (const typeId of new Set(items.flatMap((i) => (i.typeId ? [i.typeId] : [])))) {
+    try {
+      const def = typeSchema(repo, typeId).schema as unknown as SchemaDefinition;
+      for (const f of definitionToFields(def))
+        if (f.valueType === "select" && (f.options?.length ?? 0) > 0 && !out.has(f.name))
+          out.set(f.name, f.label);
+    } catch {
+      // A type whose schema does not project offers no fields.
+    }
+  }
+  return [...out].map(([name, label]) => ({ name, label }));
 }
 
 /** One level of a nested anchored container, placed under `parent`. */
@@ -204,43 +249,58 @@ export function expandItem(repo: SrsRepository, parent: Item): Item[] {
   }));
 }
 
+/** One record ready to read as prose (or edit): the record and its schema fields; no record = a note. */
+export interface ReadData {
+  id: string;
+  label: string;
+  record?: SrsRecord;
+  fields: FieldFormDef[];
+  composites: CompositeFormDef[];
+}
+
 export type FocusData =
-  | {
-      kind: "reading" | "form";
-      record: SrsRecord;
-      fields: FieldFormDef[];
-      composites: CompositeFormDef[];
-    }
-  | { kind: "document"; html: string; diagnostics: string[]; title: string; containerId: string }
-  | { kind: "note"; id: string; label: string }
+  | { kind: "read"; block: ReadData }
+  /** Document composed from the Collection's records, one read block each (highlightable). */
+  | { kind: "blocks"; title: string; blocks: ReadData[] }
+  /** Document rendered from a composition (markdown through the core renderMarkdown). */
+  | { kind: "document"; markdown: string; title: string; containerId: string }
   | { kind: "none" };
 
-export function loadReading(
+const schemaCache = new WeakMap<SrsRepository, Map<string, SchemaDefinition | null>>();
+function schemaOf(repo: SrsRepository, r: SrsRecord): SchemaDefinition | null {
+  const m = schemaCache.get(repo) ?? new Map<string, SchemaDefinition | null>();
+  schemaCache.set(repo, m);
+  const key = `${r.typeId}@${r.typeVersion}`;
+  if (!m.has(key)) {
+    try {
+      m.set(key, typeSchema(repo, r.typeId, r.typeVersion).schema as unknown as SchemaDefinition);
+    } catch {
+      m.set(key, null);
+    }
+  }
+  return m.get(key) ?? null;
+}
+
+export function loadRead(
   repo: SrsRepository,
   id: string,
-  kind: "reading" | "form",
-  label = ""
-): FocusData {
-  let record: SrsRecord | null;
-  try {
-    record = getRecord(repo, id);
-  } catch {
-    // ponytail: a Tier 0 note is not a record and getRecord throws; no note read binding is wired here.
-    return { kind: "note", id, label: label || id.slice(0, 8) };
-  }
-  if (!record) return { kind: "none" };
-  try {
-    const def = typeSchema(repo, record.typeId, record.typeVersion)
-      .schema as unknown as SchemaDefinition;
-    return {
-      kind,
-      record,
-      fields: definitionToFields(def),
-      composites: definitionToComposites(def),
-    };
-  } catch {
-    return { kind, record, fields: [], composites: [] };
-  }
+  label = "",
+  record = tryRecord(repo, id)
+): ReadData {
+  if (!record) return { id, label: label || id.slice(0, 8), fields: [], composites: [] };
+  const def = schemaOf(repo, record);
+  return {
+    id,
+    label: record.displayLabel || label || id.slice(0, 8),
+    record,
+    fields: def ? definitionToFields(def) : [],
+    composites: def ? definitionToComposites(def) : [],
+  };
+}
+
+/** The Collection as one document: every listed record as a read block, in collection order. */
+export function loadBlocks(repo: SrsRepository, items: Item[]): ReadData[] {
+  return items.map((i) => loadRead(repo, i.id, i.label, i.record ?? tryRecord(repo, i.id)));
 }
 
 /** The containers a record anchors, then the ones it is a member of, then a caller hint. */
@@ -301,7 +361,13 @@ export function shownIn(repo: SrsRepository, containerIds: string[]): Shown[] {
   });
 }
 
-/** Render the record's document: the lens composition if given, else the first that binds its container. */
+/**
+ * Render the record's document: the lens composition if given, else the first that binds its container.
+ * Markdown, not html: the html renderer leaves inline markdown in field values literal (backticks,
+ * fences, link markup); the core renderMarkdown renders the whole thing.
+ * ponytail: the rendered document carries no instance ids per block, so it cannot highlight or scroll to
+ * the selection; that needs an engine hook (block anchors in render_composition).
+ */
 export function loadDocument(
   repo: SrsRepository,
   id: string,
@@ -314,12 +380,11 @@ export function loadDocument(
     const pick = compositionId ?? views[0]?.compositionId;
     if (!pick) continue;
     try {
-      const r = renderDocumentView(repo, pick, "html", containerId);
+      const r = renderDocumentView(repo, pick, "markdown", containerId);
       if (r.rendered.trim())
         return {
           kind: "document",
-          html: r.rendered,
-          diagnostics: r.diagnostics,
+          markdown: r.rendered,
           title: getContainer(repo, containerId).title,
           containerId,
         };
@@ -327,13 +392,16 @@ export function loadDocument(
       // Try the next container; a record with no renderable container falls back to reading.
     }
   }
-  return loadReading(repo, id, "reading");
+  return { kind: "read", block: loadRead(repo, id) };
 }
 
 export interface ContextItem {
   id: string;
   label: string;
   typeName?: string;
+  /** Set on flat / inside-outside lists, where the group no longer says which link it is. */
+  direction?: "in" | "out";
+  relation?: string;
 }
 
 export interface ContextGroupData {
@@ -374,6 +442,20 @@ export function loadGroup(
       typeName: typeLabel(n.neighbour.typeName),
     })),
   };
+}
+
+/**
+ * Every link of the record, both ways, for the flat and inside/outside Context lists.
+ * ponytail: capped at 500 edges; a hub record beyond that needs paging per group.
+ */
+export function allEdges(repo: SrsRepository, id: string): ContextItem[] {
+  return neighbours(repo, id, { limit: 500 }).neighbours.map((n) => ({
+    id: n.neighbour.instanceId,
+    label: n.neighbour.label,
+    typeName: typeLabel(n.neighbour.typeName),
+    direction: n.direction,
+    relation: relationLabel(n.relationType),
+  }));
 }
 
 /** Both-direction edges of one relation type (or all), for the graph layout. */

@@ -1,50 +1,83 @@
 <!--
-  Context — pane 3: what is around the selected thing. One ContextGroup per lens context entry (or the
-  repository defaults), then "In" (the containers it belongs to) and "Shown in" (the compositions that
-  render those containers; picking one switches Focus to that document). Empty groups are hidden.
-  Presentation only. Wraps .lens-context (lens.css).
+  Context — pane 3: what links to the selected thing. A header with "Tell apart by": Link type (one
+  ContextGroup per lens context entry or the repository defaults, then "In" containers and "Shown in"
+  compositions), Nothing (one flat list, each with an in/out arrow), or Inside or outside the set (links
+  whose other end is in the Collection vs links that leave it). "+" on a linked record adds it to the
+  working set; "Add everything this links to" adds every linked record (one hop out). Empty groups are
+  hidden. Presentation only. Wraps .lens-context (lens.css).
 -->
 <script lang="ts">
   import Panel from "$lib/components/Panel.svelte";
   import type { ContextGroupData, ContextItem, Shown } from "./lens-data.js";
+  import type { CtxBy } from "./lens-distinctions.js";
   import ContextGroup from "./ContextGroup.svelte";
 
   let {
     groups,
     containers = [],
     shown = [],
+    by = "link",
+    onBy,
     onPick,
     onShow,
     onMore,
+    onAdd,
+    onAddAll,
   }: {
     groups: ContextGroupData[];
     containers?: { containerId: string; title: string }[];
     shown?: Shown[];
+    by?: CtxBy;
+    onBy?: (by: CtxBy) => void;
     onPick: (item: ContextItem) => void;
     onShow?: (s: Shown) => void;
     onMore?: (index: number) => void;
+    /** Add one linked record to the working set. */
+    onAdd?: (item: ContextItem) => void;
+    /** Add every linked record to the working set. */
+    onAddAll?: () => void;
   } = $props();
 
   const visible = $derived(groups.filter((g) => g.total > 0));
+  const options: { value: CtxBy; label: string }[] = [
+    { value: "link", label: "Link type" },
+    { value: "nothing", label: "Nothing" },
+    { value: "boundary", label: "Inside or outside the set" },
+  ];
 </script>
 
-<div class="lens-context" data-testid="lens-context">
-  {#if visible.length === 0 && containers.length === 0}
-    <p class="lens-empty">No relations.</p>
+<div class="lens-context" data-testid="lens-context" data-by={by}>
+  {#if onBy || onAddAll}
+    <div class="lens-pane-head">
+      {#if onBy}
+        <label class="lens-by">
+          <span>Tell apart by</span>
+          <select value={by} data-testid="lens-ctx-by" onchange={(e) => onBy((e.currentTarget as HTMLSelectElement).value as CtxBy)}>
+            {#each options as o (o.value)}<option value={o.value}>{o.label}</option>{/each}
+          </select>
+        </label>
+      {/if}
+      {#if onAddAll && visible.length > 0}
+        <button type="button" class="lens-toggle" data-testid="lens-add-all" onclick={onAddAll}>Add everything this links to</button>
+      {/if}
+    </div>
+  {/if}
+  {#if visible.length === 0 && (by !== "link" || containers.length === 0)}
+    <p class="lens-empty">No links.</p>
   {/if}
   {#each groups as g, i (`${g.def.relationType}:${g.def.direction}:${g.def.label}`)}
     {#if g.total > 0}
-      <ContextGroup label={g.def.label} total={g.total} items={g.items} {onPick} onMore={onMore ? () => onMore(i) : undefined} />
+      <ContextGroup label={g.def.label} total={g.total} items={g.items} {onPick} {onAdd} onMore={onMore ? () => onMore(i) : undefined} />
     {/if}
   {/each}
-  {#if containers.length > 0}
+  {#if by === "link" && containers.length > 0}
     <Panel title="In" aside={containers.length} class="lens-context-group">
       <ul class="lens-context-list">
         {#each containers as c (c.containerId)}<li><span class="lens-context-item">{c.title}</span></li>{/each}
       </ul>
     </Panel>
   {/if}
-  {#if shown.length > 0}
+  {#if by === "link" && shown.length > 0}
     <Panel title="Shown in" aside={shown.length} class="lens-context-group">
       <ul class="lens-context-list">
         {#each shown as s (`${s.compositionId}:${s.containerId}`)}
