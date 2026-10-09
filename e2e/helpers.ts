@@ -22,17 +22,22 @@ export async function openPackageEditor(
 /**
  * Open the nav drawer when the nav is one (<= 720px); a no-op above that, so one spec body works at any
  * width. A closed drawer's contents are not visible, so any spec at a drawer width reaches nav content
- * only through this (#424).
+ * only through this (#424). Waits for the AppShell to have mounted first (srs-web#552): hasNav/navDrawer
+ * are decided synchronously on mount, but a trigger.isVisible() taken before the shell exists at all
+ * (e.g. right after picking a file, while still on the Landing screen) reads as "not a drawer" rather
+ * than "not rendered yet", and silently no-ops.
  */
 export async function openNavDrawer(page: Page): Promise<void> {
+  await expect(page.getByTestId("app-shell")).toBeVisible({ timeout: 15000 });
   const trigger = page.getByTestId("nav-trigger");
   if (!(await trigger.isVisible())) return;
   await trigger.click();
   await expect(page.getByTestId("shell-drawer-nav")).toBeVisible();
 }
 
-/** Open the inspector drawer when the inspector is one (<= 1100px); a no-op above that. */
+/** Open the inspector drawer when the inspector is one (<= 1100px); a no-op above that. Same wait as openNavDrawer. */
 export async function openInspectorDrawer(page: Page): Promise<void> {
+  await expect(page.getByTestId("app-shell")).toBeVisible({ timeout: 15000 });
   const trigger = page.getByTestId("inspector-trigger");
   if (!(await trigger.isVisible())) return;
   await trigger.click();
