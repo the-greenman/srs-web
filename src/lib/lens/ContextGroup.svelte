@@ -3,16 +3,14 @@
   "Leaving this set" / "Links"), the count, and the linked records. The edges are already loaded
   (one neighbours read, lens-data.ts loadEdges); "Show more" reveals the next NEIGHBOUR_PAGE of them,
   with no second read. Each record shows an in/out arrow (Lucide, aria-hidden; "links here" / "links
-  out" is its accessible name) and its type. Clicking one selects it; the lens stays. "+" (IconButton)
-  adds the record to the working set. A Panel (collapsible, count aside). Presentation only.
-  Wraps .lens-context-group (lens.css). Parts: list, row, item, add.
+  out" is its accessible name) and its type. Clicking one selects it; the lens stays. A Panel
+  (collapsible, count aside). Presentation only. Wraps .lens-context-group (lens.css).
+  Parts: list, row, item.
 -->
 <script lang="ts">
   import ArrowLeft from "@lucide/svelte/icons/arrow-left";
   import ArrowRight from "@lucide/svelte/icons/arrow-right";
-  import Plus from "@lucide/svelte/icons/plus";
   import Button from "$lib/components/Button.svelte";
-  import IconButton from "$lib/components/IconButton.svelte";
   import Panel from "$lib/components/Panel.svelte";
   import { type ContextItem, NEIGHBOUR_PAGE } from "./lens-data.js";
 
@@ -21,14 +19,12 @@
     total,
     items,
     onPick,
-    onAdd,
     open = true,
   }: {
     label: string;
     total: number;
     items: ContextItem[];
     onPick: (item: ContextItem) => void;
-    onAdd?: (item: ContextItem) => void;
     open?: boolean;
   } = $props();
 
@@ -51,9 +47,6 @@
           </span>
           {#if item.typeName}<small>{item.typeName}</small>{/if}
         </button>
-        {#if onAdd}
-          <IconButton icon={Plus} size="sm" label={`Add ${item.label} to the set`} class="lens-context-add" data-part="add" data-testid="lens-ctx-add" onclick={() => onAdd(item)} />
-        {/if}
       </li>
     {/each}
   </ul>

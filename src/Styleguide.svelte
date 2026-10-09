@@ -570,23 +570,23 @@
       set as a document with the selected block highlighted, the composition as published, or Edit in place. Context groups the record's
       own links by the engine's relation label, flat (Nothing), or inside and outside the set. The link trail is a Breadcrumb with Back.</p>
     <div class="sg__shells">
-      <Frame width="var(--inspector-width)" caption="Switcher (section tabs + More) and the outline told apart by Nesting, Select on, a set of 2" testid="sg-lens-outline">
+      <Frame width="var(--inspector-width)" caption="Switcher (section tabs + More) and the outline told apart by Nesting" testid="sg-lens-outline">
         <LensSwitcher tabs={fx.lensTabs} more={fx.lensMore} active="nav:s-case" onPick={noop} />
         <div class="nav" style="padding: var(--space-xs) 0">
-          <Collection data={fx.lensOutline} selectedId="c-2" expanded={new Set(["c-1"])} onDark by="nesting" byOptions={fx.lensByOptions} onBy={noop} picking checked={new Set(["c-2", "c-3"])} setSize={2} onPicking={noop} onCheck={noop} onShowSet={noop} onClearSet={noop} onSelect={noop} onExpand={noop} />
+          <Collection data={fx.lensOutline} selectedId="c-2" expanded={new Set(["c-1"])} onDark by="nesting" byOptions={fx.lensByOptions} onBy={noop} onSelect={noop} onExpand={noop} />
         </div>
       </Frame>
       <Frame width="var(--inspector-width)" caption="A list told apart by Created by: ActorChip headings with counts" testid="sg-lens-created-by">
         <Collection data={fx.lensByCreator} by="created-by" byOptions={fx.lensByOptions} onBy={noop} onSelect={noop} />
       </Frame>
       <Frame width="var(--inspector-width)" caption="Context by link type: two groups, In, Shown in" testid="sg-lens-context-link">
-        <Context groups={fx.lensContextGroups} containers={fx.lensContainers} shown={fx.lensShown} onBy={noop} onPick={noop} onShow={noop} onAdd={noop} onAddAll={noop} />
+        <Context groups={fx.lensContextGroups} containers={fx.lensContainers} shown={fx.lensShown} onBy={noop} onPick={noop} onShow={noop} />
       </Frame>
       <Frame width="var(--inspector-width)" caption="Context told apart by Nothing: one flat list" testid="sg-lens-context-none">
         <Context groups={fx.lensContextFlat} by="none" onBy={noop} onPick={noop} />
       </Frame>
-      <Frame width="var(--inspector-width)" caption="Context told apart by inside or outside the set, with a skipped hub" testid="sg-lens-context">
-        <Context groups={fx.lensContextBoundary} by="boundary" onBy={noop} onPick={noop} onAdd={noop} onAddAll={noop} checkedCount={2} skipped={[{ id: "h-1", label: "Glossary" }]} onAddSkipped={noop} />
+      <Frame width="var(--inspector-width)" caption="Context told apart by inside or outside the set" testid="sg-lens-context">
+        <Context groups={fx.lensContextBoundary} by="boundary" onBy={noop} onPick={noop} />
       </Frame>
     </div>
     <Frame width="100%" caption="Collection as a table: ColumnSpec columns, grouped rows with counts" testid="sg-lens-table">

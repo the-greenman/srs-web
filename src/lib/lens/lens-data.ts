@@ -161,7 +161,7 @@ function hitItem(repo: SrsRepository, h: DiscoveryHit): Item {
  * Where each Item's `record` comes from: outline → resolveContainerView members' `record`;
  * type → find({ typeId }, { limit: offset + PAGE }) then getRecord per hit (gap 4);
  * find → find({}, { limit: offset + PAGE }) then getRecord per hit (gap 4);
- * composition → the JSON render projection's ids then getRecord (gap 1); ids → getRecord.
+ * composition → the JSON render projection's ids then getRecord (gap 1).
  * columns: resolveContainerView(...).columns for outline lenses; [label, type, state] for every other kind (gap 6).
  */
 export function loadCollection(repo: SrsRepository, lens: Lens, offset = 0): CollectionData {
@@ -208,13 +208,6 @@ export function loadCollection(repo: SrsRepository, lens: Lens, offset = 0): Col
     case "find": {
       const r = find(repo, {}, { limit: offset + PAGE, offset: 0 });
       return { items: r.hits.map((h) => hitItem(repo, h)), columns: FIXED_COLUMNS, total: r.total };
-    }
-    case "ids": {
-      const items = c.ids.map((id) => {
-        const r = tryRecord(repo, id);
-        return r ? recordItem(r) : { id, label: id.slice(0, 8), depth: 0 };
-      });
-      return { items, columns: FIXED_COLUMNS, total: items.length };
     }
   }
 }
@@ -361,12 +354,4 @@ export function groupEdges(edges: ContextItem[], defs: ContextGroupDef[]): Conte
     const items = edges.filter((e) => sameDef(e, def));
     return { def, total: items.length, items };
   });
-}
-
-/** Edges for the graph: `edges` relabelled with the matching def's label. */
-export function graphEdges(
-  edges: ContextItem[],
-  defs: ContextGroupDef[]
-): (ContextItem & { label: string })[] {
-  return edges.map((e) => ({ ...e, label: defs.find((d) => sameDef(e, d))?.label ?? e.label }));
 }

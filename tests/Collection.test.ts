@@ -40,17 +40,6 @@ describe("Collection", () => {
     expect(heads[2].textContent).toContain("Unattributed");
   });
 
-  it("shift-click checks a range", async () => {
-    const onCheck = vi.fn();
-    const { container } = render(Collection, { data: data(items), picking: true, onCheck, onSelect: () => {} });
-    const boxes = container.querySelectorAll<HTMLInputElement>('[data-testid="lens-check"]');
-    expect(boxes).toHaveLength(3);
-    await fireEvent.click(boxes[0]);
-    await fireEvent.click(boxes[2], { shiftKey: true });
-    expect(onCheck).toHaveBeenNthCalledWith(1, ["a"], true);
-    expect(onCheck).toHaveBeenNthCalledWith(2, ["a", "b", "c"], true);
-  });
-
   it("expand toggle is an IconButton with a name", async () => {
     const onExpand = vi.fn();
     const { container, getByRole } = render(Collection, { data: data(items), by: "nesting", onExpand, onSelect: () => {} });

@@ -965,6 +965,7 @@ All pass, plus `no-literals` and `gap-cites`. Commit `test(lens): end-to-end jou
 **Write scope:** `src/lib/lens/LensShell.svelte`, `src/lib/lens/lens-data.ts` (`graphEdges` only), `src/styles/components/lens.css`, `src/Styleguide.svelte`, `src/styleguide/fixtures.ts`, `tests/lens-graph.test.ts` (new), `tests/lens-board.test.ts` (new), `e2e/lenses.spec.ts`.
 
 #### Tasks
+- [ ] **Start PR B by applying `plans/547-pr-b-carryover.patch`** (`git apply --3way plans/547-pr-b-carryover.patch`). It is the PR B code stripped from PR A at the Stage 7 fix pass (Architecture review finding 1): `Layout` "board"/"graph", `graphEdges`, the `ids` collection and `deriveLenses`'s `set` argument, `HUB_LINKS`/`skipHubs`, Collection set picking (Select toggle, checkboxes, set bar), Context add-to-set, Add everything and the skipped-hubs line, their CSS and specimens, and the tests that exercise only them. Later PR A commits touched the same files (Button/IconButton, `CollectionSource`), so expect 3-way merges there. Delete the patch file once applied.
 - [ ] Port the board and graph branches and the `graph` derivation from prototype LensShell. Columns: `ColumnSpec` on outline lenses, else label, type and state (D6 follow-up).
 - [ ] The graph legend uses the Context group labels (`ContextGroupDef.label`): one naming source for list and graph (answers critique round 2, "Depends On" vs "Required by").
 - [ ] When the selection's groups yield no edges in the chosen relation, the graph falls back to all of the record's edges (`loadEdges`).
@@ -1000,6 +1001,7 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): board and grap
 **Write scope:** `src/lib/lens/working-set.ts` (new), `src/lib/lens/LensShell.svelte`, `src/lib/lens/LensSwitcher.svelte` (the `set` tab), `src/lib/lens/Collection.svelte`, `src/lib/lens/Context.svelte`, `e2e/lenses.spec.ts`, `tests/Context.test.ts`, `tests/working-set.test.ts` (new).
 
 #### Tasks
+- [ ] The set code (picking, add-to-set, Add everything, skipped hubs, `skipHubs`, the `ids` collection) arrives with `plans/547-pr-b-carryover.patch`, applied at the start of Phase 6.
 - [ ] `working-set.ts` per the contract (key `srs-web.lens-set.<repositoryId>`, every access in try/catch).
 - [ ] Port `addAll` (it works from the checked records, else the focused one), `skipHubs` with `links = (id) => neighbours(repo, id, { limit: 1 }).total`, the skipped list, and the `set` lens (`deriveLenses(repo, readSet(...))`).
 - [ ] Show the My set tab once a set exists.
