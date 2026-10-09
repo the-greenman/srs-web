@@ -89,11 +89,15 @@ describe.skipIf(!haveBindings)("lens model on the real engine (srs-spec.srs)", (
     expect(types.every((l) => !l.label.includes("/"))).toBe(true);
     expect(lenses.at(-1)?.id).toBe("find");
     expect(lenses.some((l) => l.id === "set")).toBe(false);
+    expect(lens.deriveLenses(repo, [PACKAGE]).at(-1)).toMatchObject({
+      id: "set",
+      collection: { kind: "ids", ids: [PACKAGE] },
+    });
   });
 
   it("lens ids are prefixed engine ids", async () => {
     const { LENS_ID } = await import("../src/lib/address.js");
-    for (const l of lens.deriveLenses(repo)) {
+    for (const l of lens.deriveLenses(repo, [PACKAGE])) {
       expect(LENS_ID.test(l.id)).toBe(true);
       const c = l.collection;
       const engineId =
@@ -189,15 +193,9 @@ describe.skipIf(!haveBindings)("lens model on the real engine (srs-spec.srs)", (
     expect(d.items.map((i) => [i.id, i.depth])).toEqual(outline.map((e) => [e.instanceId, e.depth]));
     expect(d.items.some((i) => i.id === PACKAGE)).toBe(true);
     expect(d.total).toBe(d.items.length);
-    const spec = [...client.resolveContainerView(repo, DISTRIBUTION).columns]
-      .sort((a, b) => a.order - b.order)
-      .slice(0, 4);
-    expect(d.columns).toEqual(spec.map((c) => ({
-        kind: "field",
-        fieldId: c.fieldId,
-        fieldName: c.fieldName,
-        label: c.displayLabel,
-      })));
+    // Distribution's ColumnSpec is empty, so the columns fall back to label, type and state (lens-board.test.ts).
+    expect(client.resolveContainerView(repo, DISTRIBUTION).columns).toHaveLength(0);
+    expect(d.columns).toEqual([{ kind: "label" }, { kind: "type" }, { kind: "state" }]);
   });
 
   it("item and link type names go through the shared humanise", async () => {

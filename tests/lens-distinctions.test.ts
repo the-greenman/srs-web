@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { Item } from "../src/lib/lens/lens-data";
 import {
+  HUB_LINKS,
   NOT_SET,
   collectionOptions,
   groupItems,
+  skipHubs,
   splitByBoundary,
+  splittingBy,
 } from "../src/lib/lens/lens-distinctions";
 
 const rec = (id: string, fieldValues: Record<string, unknown>) => ({
@@ -72,6 +75,14 @@ describe("lens distinctions", () => {
     expect(inside.length + outside.length).toBe(edges.length);
   });
 
+  it("skipHubs: records above HUB_LINKS are skipped, at HUB_LINKS added", () => {
+    expect(HUB_LINKS).toBe(50);
+    const links: Record<string, number> = { a: 3, owner: 495, b: HUB_LINKS, c: HUB_LINKS + 1 };
+    const { add, skipped } = skipHubs([{ id: "a" }, { id: "owner" }, { id: "b" }, { id: "c" }], (id) => links[id]);
+    expect(add.map((i) => i.id)).toEqual(["a", "b"]);
+    expect(skipped.map((i) => i.id)).toEqual(["owner", "c"]);
+  });
+
   it("collectionOptions: Nesting only for outlines, State and Created by only when present, never a field option", () => {
     const values = (xs: Item[], outline: boolean) => collectionOptions(xs, outline).map((o) => o.value);
     expect(values(items, true)).toEqual(["none", "type", "nesting", "container", "state", "created-by"]);
@@ -79,5 +90,20 @@ describe("lens distinctions", () => {
     const bare = items.map((i) => ({ ...i, lifecycle: undefined, createdBy: undefined }));
     expect(values(bare, false)).toEqual(["none", "type", "container"]);
     expect(collectionOptions(items, true).some((o) => o.value.startsWith("field:"))).toBe(false);
+  });
+
+  it("board defaults to the first option that splits the set", () => {
+    // One type throughout: Type gives one group, so the board takes State (the first that splits).
+    const problems: Item[] = [
+      { id: "p", label: "P", typeName: "problem", lifecycle: "draft", createdBy: human, depth: 0 },
+      { id: "q", label: "Q", typeName: "problem", lifecycle: "active", createdBy: ai, depth: 0 },
+    ];
+    const opts = collectionOptions(problems, false);
+    expect(splittingBy(problems, opts, "type")).toBe("state");
+    // The current choice stays when it already splits.
+    expect(splittingBy(items, collectionOptions(items, false), "type")).toBe("type");
+    // Nothing splits: no default, and the board says how it groups.
+    const same: Item[] = [problems[0], { ...problems[0], id: "r" }];
+    expect(splittingBy(same, collectionOptions(same, false), "type")).toBeUndefined();
   });
 });

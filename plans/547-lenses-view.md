@@ -186,10 +186,10 @@ Every srs-web ADR (001–021) was read. Below: how each one bears on this plan.
 | [ADR-019](../docs/adr/019-ui-theming-surface-and-live-styleguide.md) | Specimens for every pane on `/styleguide`, rendered in default and demo themes. `lens.css` in the `components` layer; no scoped `<style>`. | accepted, governs |
 | [ADR-020](../docs/adr/020-icon-set-and-component-token-api.md) | Glyph buttons become `IconButton` + Lucide. Component tokens on `:root`. `data-part` rows for the lens components. See "Reused components". | accepted, governs |
 | [ADR-021](../docs/adr/021-open-from-url.md) | Lenses is available on read-only documents; Edit is hidden and the read-only repo refuses writes underneath. Query-param clearing must keep the hash. | accepted, respected |
-| [ADR-022](../docs/adr/022-built-in-views-and-editor-registry.md) (new) | Built-in engine views sit outside the editor registry, listed in `BUILT_IN_VIEWS` (D1); supersedes ADR-002 | proposed |
-| [ADR-023](../docs/adr/023-one-hash-address.md) (new) | One hash address and one history for every shell; `id` is the shell-neutral selection key (D2, D8) | proposed |
-| [ADR-024](../docs/adr/024-one-record-reading-component.md) (new) | One component for reading a record as prose; one shared label module (D3) | proposed |
-| [ADR-025](../docs/adr/025-lenses.md) (new) | Lenses: one engine view of three panes over derived lenses; canonical engine-gap list (D4, D6, D7, D9, D10) | proposed |
+| [ADR-022](../docs/adr/022-built-in-views-and-editor-registry.md) (new) | Built-in engine views sit outside the editor registry, listed in `BUILT_IN_VIEWS` (D1); supersedes ADR-002 | accepted (srs-web#553) |
+| [ADR-023](../docs/adr/023-one-hash-address.md) (new) | One hash address and one history for every shell; `id` is the shell-neutral selection key (D2, D8) | accepted (srs-web#553) |
+| [ADR-024](../docs/adr/024-one-record-reading-component.md) (new) | One component for reading a record as prose; one shared label module (D3) | accepted (srs-web#553) |
+| [ADR-025](../docs/adr/025-lenses.md) (new) | Lenses: one engine view of three panes over derived lenses; canonical engine-gap list (D4, D6, D7, D9, D10) | accepted (srs-web#553) |
 
 ---
 
@@ -382,8 +382,16 @@ export function loadCollection(repo: SrsRepository, lens: Lens, offset?: number)
 export function loadEdges(repo: SrsRepository, id: string): ContextItem[];
 /** Buckets `edges` by the defs (same relationType and direction); `total` = bucket size. No engine call. */
 export function groupEdges(edges: ContextItem[], defs: ContextGroupDef[]): ContextGroupData[];
-/** Edges for the graph: `edges` relabelled with the matching def's label. */
-export function graphEdges(edges: ContextItem[], defs: ContextGroupDef[]): (ContextItem & { label: string })[];
+/** The Context groups under a distinction: link-type (groupEdges over defaultContext), none ("Links"), boundary (splitByBoundary). No engine call. */
+export function contextGroups(edges: ContextItem[], by: ContextBy, inSet: ReadonlySet<string>, types: RelationTypeInfo[]): ContextGroupData[];
+/** A graph edge: the node keeps the neighbour's own displayLabel (`label`); the edge carries its Context group label. */
+export type GraphEdge = ContextItem & { edgeLabel: string; leaves: boolean };
+/**
+ * Edges for the graph, named by the Context group that holds each one (one naming source for list and graph);
+ * `leaves` when the other end is outside the shown set (splitByBoundary). No groups → every edge in `all`
+ * (edgeLabel humanise(relationType)), so the graph is never blank for a record with links.
+ */
+export function graphEdges(groups: ContextGroupData[], all: ContextItem[], inSet: ReadonlySet<string>): GraphEdge[];
 /** documentViewsForContainer over the given containers; nothing else (D10). */
 export function shownIn(repo: SrsRepository, containerIds: string[]): Shown[];
 /** A record, or undefined for a Tier 0 note (gap 3). */
@@ -651,13 +659,13 @@ test -f docs/adr/025-lenses.md && test -z "$missing"
 - [x] Resolve plan review round 1 (this revision).
 - [x] Port `plans/ux-lenses.md` from `poc/ux-lenses` with the status line.
 - [x] Resolve plan review round 2 (this revision).
-- [ ] Add "Extended by: [ADR-025](./025-lenses.md)" to ADR-009 and ADR-010's header lists.
-- [ ] Architecture Reviewer pass over the ADRs (blocking / should-fix / nit).
+- [x] Add "Extended by: [ADR-025](./025-lenses.md)" to ADR-009 and ADR-010's header lists (PR B, after PR A merged).
+- [x] Architecture Reviewer pass over the ADRs (blocking / should-fix / nit): plan review rounds 1–2 and the PR A code review; ADR-022 to ADR-025 accepted with srs-web#553.
 
 #### Acceptance Criteria
-- [ ] Every Dn has an owner answer.
-- [ ] ADRs cite ADR-001 and state the rejected alternatives; ADR-025 states there is no ADR-001 exception.
-- [ ] `gap-cites` passes (no `ponytail:` exists yet); ADR-025 lists gaps 1–5 with issue numbers.
+- [x] Every Dn has an owner answer.
+- [x] ADRs cite ADR-001 and state the rejected alternatives; ADR-025 states there is no ADR-001 exception.
+- [x] `gap-cites` passes (no `ponytail:` exists yet); ADR-025 lists gaps 1–5 with issue numbers.
 
 #### Testing
 ```bash
@@ -959,7 +967,7 @@ Note (run): the journey's step 5 reaches the decision type lens by writing its a
 #### Milestone gate
 All pass, plus `no-literals` and `gap-cites`. Commit `test(lens): end-to-end journey on the spec fixture (#547)`. Push. Open PR A after review: `Refs #547`, "Narrows #426: …", the `refactor(forms)` commit named, the ADR-002/ADR-022 interim note, follow-up 2 (the #425 comment) posted.
 
-Note (Stage 7 fix pass, 2026-10-09): the three PR A code reviews on #547 are answered in four commits. PR B code (board/graph, set drawing, hub guard) is stripped and saved as `plans/547-pr-b-carryover.patch` (Phase 6 starts by applying it). Link groups name their direction: outgoing groups show the engine label, incoming ones the installed `inverseType`'s label, else the label plus " this", after the outgoing ones (ADR-025). One humaniser; `CollectionSource`; `tests/lens-guards.test.ts` commits no-literals and gap-cites; LensSwitcher is a `<nav>` of Buttons with `aria-current`; the rail uses Buttons. Fresh-eyes fixes: Explore > Lenses returns to the session's last lens address, an Explorer button tops the nav, phone picks close the drawers, a lens switch empties the visible trail (browser Back still returns), and the toolbar status never clips. Not changed: field labels (owner ruling, srs-rust#1382) and curated lenses (ADR-025). Gates, `PLAYWRIGHT_PORT=5401`: typecheck, lint, test (130 files, 1073 passed) and build exit 0. `npm run e2e -- e2e/lenses.spec.ts --repeat-each=2` exit 0 twice (38 passed each). The eleven regression specs listed in the Final Acceptance note exit 0 (118 passed), and `e2e/mobile-layout.spec.ts` alone exit 0 (11 passed).
+Note (Stage 7 fix pass, 2026-10-09): the three PR A code reviews on #547 are answered in four commits. PR B code (board/graph, set drawing, hub guard) is stripped and saved as `plans/547-pr-b-carryover.patch` (Phase 6 applied it and deleted the file). Link groups name their direction: outgoing groups show the engine label, incoming ones the installed `inverseType`'s label, else the label plus " this", after the outgoing ones (ADR-025). One humaniser; `CollectionSource`; `tests/lens-guards.test.ts` commits no-literals and gap-cites; LensSwitcher is a `<nav>` of Buttons with `aria-current`; the rail uses Buttons. Fresh-eyes fixes: Explore > Lenses returns to the session's last lens address, an Explorer button tops the nav, phone picks close the drawers, a lens switch empties the visible trail (browser Back still returns), and the toolbar status never clips. Not changed: field labels (owner ruling, srs-rust#1382) and curated lenses (ADR-025). Gates, `PLAYWRIGHT_PORT=5401`: typecheck, lint, test (130 files, 1073 passed) and build exit 0. `npm run e2e -- e2e/lenses.spec.ts --repeat-each=2` exit 0 twice (38 passed each). The eleven regression specs listed in the Final Acceptance note exit 0 (118 passed), and `e2e/mobile-layout.spec.ts` alone exit 0 (11 passed).
 
 ### Phase 6: Board and graph layouts (PR B)
 
@@ -969,15 +977,15 @@ Note (Stage 7 fix pass, 2026-10-09): the three PR A code reviews on #547 are ans
 **Write scope:** `src/lib/lens/LensShell.svelte`, `src/lib/lens/lens-data.ts` (`graphEdges` only), `src/styles/components/lens.css`, `src/Styleguide.svelte`, `src/styleguide/fixtures.ts`, `tests/lens-graph.test.ts` (new), `tests/lens-board.test.ts` (new), `e2e/lenses.spec.ts`.
 
 #### Tasks
-- [ ] **Start PR B by applying `plans/547-pr-b-carryover.patch`** (`git apply --3way plans/547-pr-b-carryover.patch`). It is the PR B code stripped from PR A at the Stage 7 fix pass (Architecture review finding 1): `Layout` "board"/"graph", `graphEdges`, the `ids` collection and `deriveLenses`'s `set` argument, `HUB_LINKS`/`skipHubs`, Collection set picking (Select toggle, checkboxes, set bar), Context add-to-set, Add everything and the skipped-hubs line, their CSS and specimens, and the tests that exercise only them. Later PR A commits touched the same files (Button/IconButton, `CollectionSource`), so expect 3-way merges there. Delete the patch file once applied.
-- [ ] Port the board and graph branches and the `graph` derivation from prototype LensShell. Columns: `ColumnSpec` on outline lenses, else label, type and state (D6 follow-up).
-- [ ] The graph legend uses the Context group labels (`ContextGroupDef.label`): one naming source for list and graph (answers critique round 2, "Depends On" vs "Required by").
-- [ ] When the selection's groups yield no edges in the chosen relation, the graph falls back to all of the record's edges (`loadEdges`).
-- [ ] Specimens: board with grouped rows; graph with the inside/leaving legend.
+- [x] **Start PR B by applying `plans/547-pr-b-carryover.patch`** (`git apply --3way plans/547-pr-b-carryover.patch`). It is the PR B code stripped from PR A at the Stage 7 fix pass (Architecture review finding 1): `Layout` "board"/"graph", `graphEdges`, the `ids` collection and `deriveLenses`'s `set` argument, `HUB_LINKS`/`skipHubs`, Collection set picking (Select toggle, checkboxes, set bar), Context add-to-set, Add everything and the skipped-hubs line, their CSS and specimens, and the tests that exercise only them. Later PR A commits touched the same files (Button/IconButton, `CollectionSource`), so expect 3-way merges there. Delete the patch file once applied.
+- [x] Port the board and graph branches and the `graph` derivation from prototype LensShell. Columns: `ColumnSpec` on outline lenses, else label, type and state (D6 follow-up).
+- [x] The graph legend uses the Context group labels (`ContextGroupDef.label`): one naming source for list and graph (answers critique round 2, "Depends On" vs "Required by").
+- [x] When the selection's groups yield no edges in the chosen relation, the graph falls back to all of the record's edges (`loadEdges`).
+- [x] Specimens: board with grouped rows; graph with the inside/leaving legend.
 
 #### Acceptance Criteria
-- [ ] The board never shows a column no row has a value in. On a nav lens, columns come from `ColumnSpec`; on every other lens they are label, type and state (gap 6).
-- [ ] The graph is never blank for a record with links.
+- [x] The board never shows a column no row has a value in. On a nav lens, columns come from `ColumnSpec`; on every other lens they are label, type and state (gap 6).
+- [x] The graph is never blank for a record with links.
 
 #### Testing (named)
 - `tests/lens-board.test.ts`:
@@ -987,12 +995,18 @@ Note (Stage 7 fix pass, 2026-10-09): the three PR A code reviews on #547 are ans
 - `tests/lens-graph.test.ts`:
   - "edge labels reuse the Context group label for that relation and direction";
   - "under inside/outside, edges are relabelled by set membership";
-  - "graph never blank for a record with links" (falls back to all edges).
+  - "graph never blank for a record with links" (falls back to all edges);
+  - "graph nodes keep the neighbour's name" (Phase 2's `graphEdges` overwrote it with the group label).
 - `e2e/lenses.spec.ts`: "board and graph layouts open on the decision type lens with no page error".
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
 npm run e2e -- e2e/lenses.spec.ts e2e/styleguide.spec.ts
 ```
+
+Note (carryover): `git apply --3way` applied every hunk cleanly (the later PR A commits had already renamed `CollectionSource`, so the patch's context matched). The semantic conflicts with the PR A fixes were resolved by hand: the three raw `<button class="lens-toggle">` the patch brought back (Collection's Select and Clear, Context's "Add everything") are shared `Button`s (Select is a `mono` toggle with `active`/`aria-pressed`); the patch's `.lens-context-add` overrides of the shared `IconButton` look are dropped; the patch's graph CSS keyed on a relation string (`data-relation="leaves the set"`) is replaced by a tone attribute (below). The patch file is deleted.
+Deviation: `graphEdges` takes the Context groups, not the defs: `graphEdges(groups, all, inSet)`. Its Phase 2 form overwrote each neighbour's `label` with the group label, so graph nodes showed "Depends on" instead of the record's name; now the node keeps `label` and the edge carries `edgeLabel` (test "graph nodes keep the neighbour's name"). Taking the groups makes Context the one naming source under every distinction (link type, Nothing, inside/outside), so LensShell's group building moved into `lens-data.ts` as `contextGroups` (pure, tested) rather than staying inline.
+Deviation (outside the write scope, three lines): `MapNeighbour` gains an optional `tone` (`"inside" | "leaving"`) and `RelationGraph` writes it as `data-tone`, so the graph colours edges inside vs leaving the set while the legend keeps the Context labels. Generic's map passes no tone and is unchanged.
+Note (run): srs-spec declares no ColumnSpec on any of its nine sections (`columns: []`), so "nav lens columns are the ColumnSpec" also checks gallery.srsj's Roles section (`b30db206-…`, three columns). On the board, the Explorer button at the top of the nav is absent (the board has no nav pane); Go > Explorer remains. e2e ran with `PLAYWRIGHT_PORT=5411`.
 
 #### Milestone gate
 All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): board and graph layouts (#547)`.
@@ -1005,17 +1019,17 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): board and grap
 **Write scope:** `src/lib/lens/working-set.ts` (new), `src/lib/lens/LensShell.svelte`, `src/lib/lens/LensSwitcher.svelte` (the `set` tab), `src/lib/lens/Collection.svelte`, `src/lib/lens/Context.svelte`, `e2e/lenses.spec.ts`, `tests/Context.test.ts`, `tests/working-set.test.ts` (new).
 
 #### Tasks
-- [ ] The set code (picking, add-to-set, Add everything, skipped hubs, `skipHubs`, the `ids` collection) arrives with `plans/547-pr-b-carryover.patch`, applied at the start of Phase 6.
-- [ ] `working-set.ts` per the contract (key `srs-web.lens-set.<repositoryId>`, every access in try/catch).
-- [ ] Port `addAll` (it works from the checked records, else the focused one), `skipHubs` with `links = (id) => neighbours(repo, id, { limit: 1 }).total`, the skipped list, and the `set` lens (`deriveLenses(repo, readSet(...))`).
-- [ ] Show the My set tab once a set exists.
-- [ ] Once shown, "Show as a set" reads "Update the set (N)". The set bar stays pinned while Select is on (critique round 2).
-- [ ] `lens=set` on a browser with no stored set falls back to the first tab with an info `Notice`.
+- [x] The set code (picking, add-to-set, Add everything, skipped hubs, `skipHubs`, the `ids` collection) arrives with `plans/547-pr-b-carryover.patch`, applied at the start of Phase 6.
+- [x] `working-set.ts` per the contract (key `srs-web.lens-set.<repositoryId>`, every access in try/catch).
+- [x] Port `addAll` (it works from the checked records, else the focused one), `skipHubs` with `links = (id) => neighbours(repo, id, { limit: 1 }).total`, the skipped list, and the `set` lens (`deriveLenses(repo, readSet(...))`).
+- [x] Show the My set tab once a set exists.
+- [x] Once shown, "Show as a set" reads "Replace My set with these (N)" (was "Update the set (N)", renamed at the PR B fix pass). The set bar stays reachable while the list scrolls (critique round 2; sticky in flow since the fix pass).
+- [x] `lens=set` on a browser with no stored set falls back to the first tab with an info `Notice`.
 
 #### Acceptance Criteria
-- [ ] "Add everything" never adds a record with more than `HUB_LINKS` links. Each skipped hub is listed with its own add control.
-- [ ] Context "Inside or outside the set" splits by the shown set.
-- [ ] A throwing `localStorage` never breaks Lenses.
+- [x] "Add everything" never adds a record with more than `HUB_LINKS` links. Each skipped hub is listed with its own add control.
+- [x] Context "Inside or outside the set" splits by the shown set.
+- [x] A throwing `localStorage` never breaks Lenses.
 
 #### Testing (named)
 - `tests/working-set.test.ts`: "round-trips ids under srs-web.lens-set.<id>"; "readSet returns [] when storage throws"; "writeSet does not throw when storage throws"; "readSet returns [] for junk".
@@ -1025,6 +1039,8 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): board and grap
 npm run typecheck && npm run lint && npm test && npm run build
 npm run e2e -- e2e/lenses.spec.ts
 ```
+
+Note (run): two sets, as the prototype had them. `working` is what is checked now (in memory; it starts as the stored set); `mySet` is the shown set, the only thing `working-set.ts` stores (`writeSet` removes the key when the set is emptied). "Show as a set" / "Update the set (N)" stores the checked records and opens My set; on My set, "+" and "Add everything" grow it in place. Unchecking never shrinks a shown set; "Clear" empties both and, on My set, returns to the first tab. (Superseded by the PR B fix pass: one set model, see the Phase 8 note.) "Add everything" reads each checked record's edges with `loadEdges` (the focused record's are already loaded) and counts each candidate's links with `neighbours(repo, id, { limit: 1 }).total`. `repositoryId(repo)` keys the storage, derived once per repository. The `lens=set` fallback notice is an info `Notice` (`lens-set-notice`); the Phase 4 test "My set is not offered" still holds with no stored set. The "draw a set" e2e test finds a record with both "Inside this set" and "Leaving this set" groups by walking the grown set (the checked records' own links are all inside after "Add everything"); no record in the fixture exceeds `HUB_LINKS`, so the skipped list is asserted only when present (the hub guard is unit-tested). The `Context` set controls are shared `Button`s (carryover resolution, Phase 6 note). e2e ran with `PLAYWRIGHT_PORT=5411`.
 
 #### Milestone gate
 All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): draw a set with the hub guard (#547)`.
@@ -1037,17 +1053,17 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): draw a set wit
 **Write scope:** `plans/ux-lenses.md`, `plans/547-lenses-view.md`, `src/lib/components/README.md` (a pointer row to `src/lib/lens` and `RecordProse` only), `docs/adr/025-lenses.md` (consequences only).
 
 #### Tasks
-- [ ] Fresh-eyes round (`npm run dev`; fixtures `e2e/fixtures/srs-spec.srs`, `e2e/fixtures/gallery.srsj`):
+- [x] Fresh-eyes round (`npm run dev`; fixtures `e2e/fixtures/srs-spec.srs`, `e2e/fixtures/gallery.srsj`):
   - board on the spec's decision type lens;
   - graph on concepts;
   - draw a set on concepts;
   - a read-only `?open=` link to the spec fixture (Playwright with the `e2e/open-url.spec.ts` `serve()` route).
-- [ ] Fix blocking confusions in scope; record the rest as follow-ups.
+- [x] Fix blocking confusions in scope; record the rest as follow-ups.
 - [ ] File the deferred follow-ups 1 and 3, after owner sign-off, each parented to semanticops.com#22 (5 is already srs-rust#1382).
 - [ ] Record what was learned in srs-context (the `srs-context` skill) before finishing.
 
 #### Acceptance Criteria
-- [ ] `gap-cites` passes and every other `ponytail:` in `src/lib/lens` and `RecordProse` names a port-map presentation limit.
+- [x] `gap-cites` passes and every other `ponytail:` in `src/lib/lens` and `RecordProse` names a port-map presentation limit.
 - [ ] PR body: `Closes #547`, the "Mode · Cell · Door" line if required, ADR links, follow-up list with issue numbers.
 
 #### Testing
@@ -1059,6 +1075,8 @@ npm run e2e -- e2e/large-repo.spec.ts e2e/styleguide.spec.ts e2e/navigation.spec
 
 #### Milestone gate
 All pass, plus `no-literals` and `gap-cites`. Commit `docs(lens): design reference, ADR consequences, follow-ups (#547)`. Push. Open PR B after review.
+
+Note (Stage 7 fix pass, PR B, 2026-10-09): the "Code review, PR B" (architecture 1–9) and "Fresh-eyes Reviewer, PR B" (1, 4–7; 2, 3 and 8 declined) comments on #547 are answered in one commit. One set model: pure `check`/`add`/`clear`/`commit`/`removeSet`/`pending` in `working-set.ts`; the checks are a draft on every lens and My set changes only by "Show as a set (N)" / "Replace My set with these (N)" or "Remove My set" (on My set); "Clear selection" drops checks only; the stored set is re-read on a repository change, dropping ids that no longer resolve. The graph carries `edgeLabel` (`relationType` stays the engine key), names the tone in `aria-label`, `<title>` and a legend line key, colours leaving edges with `--generic-graph-leaving`, and draws `GRAPH_LINKS` (12) a side with "N of M links". `linkCount` and `resolves` live in `lens-data.ts`. An empty `ColumnSpec` falls back to label, type and state. With no choice made, the board groups by the first option that splits the set (`splittingBy`), else says it groups by "Tell the set apart by". Labels: "Tell the set apart by", "Tell links apart by". Phone: a toggle with `aria-pressed` no longer closes a `closeOnPick` drawer (`Drawer.svelte`, the root fix for every drawer), checkboxes are 24px targets inside the 16px gutter, and the Lenses toolbar wraps its status to a second row. The set bar sticks in flow with an opaque background; the active on-dark mono toggle inverts for contrast (`button.css`). ADR-025's Decision gains the graph naming, the set model and the Clear rules; the board-column wording agrees. Deviation: outside Phase 8's write scope, `Drawer.svelte`, `button.css`, `generic-shell.css`, `tokens-components.css` and `map-layout.ts`/`RelationGraph.svelte` (each the shared layer the finding lands in). Gates, `PLAYWRIGHT_PORT=5411`: typecheck (0 errors), lint, test (134 files, 1099 passed), build and the lens guards exit 0; `e2e/lenses.spec.ts --repeat-each=2` exit 0 twice (44 passed each); `e2e/navigation.spec.ts e2e/editor-mode.spec.ts e2e/open-url.spec.ts e2e/shell-layout.spec.ts e2e/styleguide.spec.ts e2e/records-explorer.spec.ts e2e/large-repo.spec.ts e2e/essay-editor.spec.ts e2e/guides-editor.spec.ts` exit 0 (100 passed); `e2e/mobile-layout.spec.ts` alone exit 0 (11 passed). Not done here: filing follow-ups 1 and 3 (waits for owner sign-off) and the srs-context record.
 
 ---
 
@@ -1080,11 +1098,11 @@ Note (run, 2026-10-09): `git fetch origin && git rebase origin/main` was a no-op
 
 ### PR B (end of Phase 8)
 
-- [ ] Everything in PR A still holds
-- [ ] Board and graph layouts on every lens; board and graph specimens in both themes
-- [ ] Draw a set with the hub guard; `working-set.ts` survives throwing storage
-- [ ] Fresh-eyes round done; follow-ups filed with issue numbers in the PR body
-- [ ] `npm run e2e -- e2e/lenses.spec.ts --repeat-each=2` and `npm run e2e -- e2e/large-repo.spec.ts e2e/styleguide.spec.ts e2e/navigation.spec.ts e2e/editor-mode.spec.ts e2e/open-url.spec.ts e2e/essay-editor.spec.ts` green
+- [x] Everything in PR A still holds
+- [x] Board and graph layouts on every lens; board and graph specimens in both themes
+- [x] Draw a set with the hub guard; `working-set.ts` survives throwing storage
+- [ ] Fresh-eyes round done (done, answered at the PR B fix pass); follow-ups filed with issue numbers in the PR body (waits for owner sign-off and the PR)
+- [x] `npm run e2e -- e2e/lenses.spec.ts --repeat-each=2` and `npm run e2e -- e2e/large-repo.spec.ts e2e/styleguide.spec.ts e2e/navigation.spec.ts e2e/editor-mode.spec.ts e2e/open-url.spec.ts e2e/essay-editor.spec.ts` green
 
 ## Coordination Rules
 

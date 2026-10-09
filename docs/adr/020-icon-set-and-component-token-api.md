@@ -89,10 +89,10 @@ appended below as components gain parts.
 | `Notice` | `icon`, `body`, `dismiss` |
 | `ToastHost` | `host` |
 | `Diagnostics` (notice variant) | `summary`, `toggle`, `group`, `count` |
-| `Collection` (lens) | `head`, `by`, `group`, `row`, `toggle` |
+| `Collection` (lens) | `head`, `by`, `set-bar`, `group`, `row`, `toggle` |
 | `Focus` (lens) | `bar`, `mode`, `block` |
-| `Context` (lens) | `head`, `by`, `in`, `shown` |
-| `ContextGroup` (lens) | `list`, `row`, `item` |
+| `Context` (lens) | `head`, `by`, `skipped`, `in`, `shown` |
+| `ContextGroup` (lens) | `list`, `row`, `item`, `add` |
 | `LensSwitcher` | `tab`, `more` |
 | `RecordProse` | `title`, `meta`, `body`, `more`, `label`, `composite` |
 

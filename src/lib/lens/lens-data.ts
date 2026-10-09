@@ -4,6 +4,7 @@
  * labels, order, depth, columns and neighbours all come resolved from the core, and no relation
  * result is computed in TypeScript (ADR-025, D10).
  */
+import type { ContextBy } from "$lib/address.js";
 import { definitionToComposites, definitionToFields } from "$lib/editor/blueprint-fields.js";
 import type { CompositeFormDef } from "$lib/editor/blueprint-fields.js";
 import type { FieldFormDef } from "$lib/governance/types.js";
@@ -12,6 +13,7 @@ import {
   type Actor,
   type DiscoveryHit,
   type ProjectedRecord,
+  type RelationTypeInfo,
   type SchemaDefinition,
   type SrsRecord,
   type SrsRepository,
@@ -26,7 +28,8 @@ import {
   resolveContainerView,
   typeSchema,
 } from "$lib/srs-client.js";
-import type { ContextGroupDef, Lens } from "./lens.js";
+import { splitByBoundary } from "./lens-distinctions.js";
+import { type ContextGroupDef, type Lens, defaultContext } from "./lens.js";
 
 export const PAGE = 100;
 export const NEIGHBOUR_PAGE = 20;
@@ -162,8 +165,9 @@ function hitItem(repo: SrsRepository, h: DiscoveryHit): Item {
  * Where each Item's `record` comes from: outline → resolveContainerView members' `record`;
  * type → find({ typeId }, { limit: offset + PAGE }) then getRecord per hit (gap 4);
  * find → find({}, { limit: offset + PAGE }) then getRecord per hit (gap 4);
- * composition → the JSON render projection's ids then getRecord (gap 1).
- * columns: resolveContainerView(...).columns for outline lenses; [label, type, state] for every other kind (gap 6).
+ * composition → the JSON render projection's ids then getRecord (gap 1); ids → getRecord.
+ * columns: resolveContainerView(...).columns for outline lenses (an empty ColumnSpec falls back);
+ * [label, type, state] for every other kind (gap 6).
  */
 export function loadCollection(repo: SrsRepository, lens: Lens, offset = 0): CollectionData {
   const c = lens.collection;
@@ -179,7 +183,8 @@ export function loadCollection(repo: SrsRepository, lens: Lens, offset = 0): Col
           fieldName: col.fieldName,
           label: col.displayLabel,
         }));
-      return { items, columns, total: items.length };
+      // A container view with an empty ColumnSpec falls back to label, type and state.
+      return { items, columns: columns.length > 0 ? columns : FIXED_COLUMNS, total: items.length };
     }
     case "composition": {
       // ponytail: ADR-025 gap 1 (srs-rust#1378) — no binding reads one Composition by id with its
@@ -210,6 +215,13 @@ export function loadCollection(repo: SrsRepository, lens: Lens, offset = 0): Col
       const r = find(repo, {}, { limit: offset + PAGE, offset: 0 });
       return { items: r.hits.map((h) => hitItem(repo, h)), columns: FIXED_COLUMNS, total: r.total };
     }
+    case "ids": {
+      const items = c.ids.map((id) => {
+        const r = tryRecord(repo, id);
+        return r ? recordItem(r) : { id, label: id.slice(0, 8), depth: 0 };
+      });
+      return { items, columns: FIXED_COLUMNS, total: items.length };
+    }
   }
 }
 
@@ -221,6 +233,21 @@ export function tryRecord(repo: SrsRepository, id: string): SrsRecord | undefine
   } catch {
     return undefined;
   }
+}
+
+/** An id the engine can place: a record, or an instance some container holds (a Tier 0 note). */
+export function resolves(repo: SrsRepository, id: string): boolean {
+  if (tryRecord(repo, id)) return true;
+  try {
+    return containersForInstance(repo, id).length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/** How many links a record has (the hub guard's count): the engine's total, one item read. */
+export function linkCount(repo: SrsRepository, id: string): number {
+  return neighbours(repo, id, { limit: 1 }).total;
 }
 
 /** One level of a nested anchored container, placed under `parent`. */
@@ -355,4 +382,48 @@ export function groupEdges(edges: ContextItem[], defs: ContextGroupDef[]): Conte
     const items = edges.filter((e) => sameDef(e, def));
     return { def, total: items.length, items };
   });
+}
+
+/**
+ * The Context groups under a distinction: by link type (defaultContext's defs), one flat "Links" group
+ * (none), or inside vs leaving the shown set (boundary, splitByBoundary). No engine call.
+ */
+export function contextGroups(
+  edges: ContextItem[],
+  by: ContextBy,
+  inSet: ReadonlySet<string>,
+  types: RelationTypeInfo[]
+): ContextGroupData[] {
+  const flat = (label: string, items: ContextItem[]): ContextGroupData => ({
+    def: { label, relationType: "", direction: "out" },
+    total: items.length,
+    items,
+  });
+  if (by === "none") return [flat("Links", edges)];
+  if (by === "boundary") {
+    const { inside, outside } = splitByBoundary(edges, inSet);
+    return [flat("Inside this set", inside), flat("Leaving this set", outside)];
+  }
+  return groupEdges(edges, defaultContext(edges, types));
+}
+
+/** A graph edge: the node keeps the neighbour's own name (`label`); the edge carries its group label. */
+export type GraphEdge = ContextItem & { edgeLabel: string; leaves: boolean };
+
+/**
+ * Edges for the graph, named as Context names them: each edge carries the label of the Context group
+ * that holds it (one naming source for list and graph), and `leaves` when its other end is outside the
+ * shown set (splitByBoundary). Groups with no edges fall back to every edge of the record, so the graph
+ * is never blank for a record with links.
+ */
+export function graphEdges(
+  groups: ContextGroupData[],
+  all: ContextItem[],
+  inSet: ReadonlySet<string>
+): GraphEdge[] {
+  const named = groups.flatMap((g) => g.items.map((e) => ({ ...e, edgeLabel: g.def.label })));
+  const edges =
+    named.length > 0 ? named : all.map((e) => ({ ...e, edgeLabel: humanise(e.relationType) }));
+  const leaving = new Set(splitByBoundary(edges, inSet).outside);
+  return edges.map((e) => ({ ...e, leaves: leaving.has(e) }));
 }

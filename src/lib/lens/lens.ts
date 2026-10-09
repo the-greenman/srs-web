@@ -16,7 +16,7 @@ import {
 } from "$lib/srs-client.js";
 import type { ContextItem } from "./lens-data.js";
 
-export type Layout = "trail" | "reader";
+export type Layout = "trail" | "reader" | "board" | "graph";
 
 export type CollectionSource =
   /** A container's members in arranged order with depth. */
@@ -25,6 +25,8 @@ export type CollectionSource =
   | { kind: "composition"; compositionId: string }
   /** Every record of a type. */
   | { kind: "type"; typeId: string }
+  /** A hand-drawn set ("My set"): these records, in this order. */
+  | { kind: "ids"; ids: string[] }
   /** Everything: `find` over the repository. */
   | { kind: "find" };
 
@@ -86,9 +88,9 @@ export function defaultBy(c: CollectionSource): CollectionBy {
 
 /**
  * nav lenses (depth-0 sections with a sectionContainerId; the identity entry is not a section), comp lenses
- * (listDocumentViews order), type lenses (facets.byType by count), then find.
+ * (listDocumentViews order), type lenses (facets.byType by count), find; plus `set` when `set` is non-empty.
  */
-export function deriveLenses(repo: SrsRepository): Lens[] {
+export function deriveLenses(repo: SrsRepository, set: string[] = []): Lens[] {
   const out: Lens[] = [];
   try {
     for (const s of repositoryNavigation(repo).sections) {
@@ -128,5 +130,12 @@ export function deriveLenses(repo: SrsRepository): Lens[] {
     collection: { kind: "find" },
     focus: { kind: "read" },
   });
+  if (set.length > 0)
+    out.push({
+      id: "set",
+      label: "My set",
+      collection: { kind: "ids", ids: set },
+      focus: { kind: "read" },
+    });
   return out;
 }

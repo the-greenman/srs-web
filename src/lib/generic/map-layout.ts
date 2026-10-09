@@ -8,9 +8,18 @@ const CY = MAP_H / 2;
 export interface MapNeighbour {
   id: string;
   label: string;
+  /** The relation key the engine returned; never rewritten. */
   relationType: string;
   direction: "in" | "out";
+  /** Optional display name for the edge (Lenses: the Context group label); defaults to `relationType`. */
+  edgeLabel?: string;
+  /** Optional presentation tone for the edge (Lenses: inside vs leaving the shown set). */
+  tone?: "inside" | "leaving";
 }
+
+/** The name an edge shows: its display label, else its relation key. */
+export const edgeName = (n: Pick<MapNeighbour, "relationType" | "edgeLabel">): string =>
+  n.edgeLabel ?? n.relationType;
 
 export interface PlacedNeighbour extends MapNeighbour {
   x: number;
@@ -20,8 +29,8 @@ export interface PlacedNeighbour extends MapNeighbour {
 export interface FocusLayout {
   center: { x: number; y: number };
   placed: PlacedNeighbour[];
-  /** Relation types in first-seen order, with how many placed edges each has, per direction. */
-  legend: { relationType: string; direction: "in" | "out"; count: number }[];
+  /** Edge names (edgeName) in first-seen order, with how many placed edges each has, per direction. */
+  legend: { name: string; direction: "in" | "out"; count: number }[];
 }
 
 /**
@@ -34,7 +43,7 @@ export function focusLayout(neighbours: MapNeighbour[]): FocusLayout {
   const hasOut = neighbours.some((n) => n.direction === "out");
   const cx = hasIn && hasOut ? CX : hasOut ? 190 : MAP_W - 190;
   const place = (list: MapNeighbour[], side: 1 | -1): PlacedNeighbour[] => {
-    const sorted = [...list].sort((a, b) => a.relationType.localeCompare(b.relationType));
+    const sorted = [...list].sort((a, b) => edgeName(a).localeCompare(edgeName(b)));
     return sorted.map((n, i) => {
       const t = sorted.length === 1 ? 0 : (i / (sorted.length - 1) - 0.5) * 1.9;
       return { ...n, x: cx + side * Math.sqrt(1 - t * t) * 230, y: CY + t * 190 };
@@ -52,11 +61,10 @@ export function focusLayout(neighbours: MapNeighbour[]): FocusLayout {
   ];
   const legend: FocusLayout["legend"] = [];
   for (const n of placed) {
-    const row = legend.find(
-      (l) => l.relationType === n.relationType && l.direction === n.direction
-    );
+    const name = edgeName(n);
+    const row = legend.find((l) => l.name === name && l.direction === n.direction);
     if (row) row.count++;
-    else legend.push({ relationType: n.relationType, direction: n.direction, count: 1 });
+    else legend.push({ name, direction: n.direction, count: 1 });
   }
   return { center: { x: cx, y: CY }, placed, legend };
 }

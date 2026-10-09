@@ -6,7 +6,8 @@
   MODAL (trap, inert), which a popover is not; it is the only showModal user (the z-index modals stay
   with #428). Children are rendered ONCE and shown or hidden with showModal/close, so state inside
   survives open and close. `closeOnPick` closes it after choosing a link or button (not a disclosure
-  or a menu trigger, which carry aria-expanded, and not inside .nav__foot). happy-dom has no showModal:
+  or a menu trigger, which carry aria-expanded, not a toggle, which carries aria-pressed, and not inside
+  .nav__foot). happy-dom has no showModal:
   without it the dialog is toggled with a class and inline display. Parts: `scrim` (the dialog, the
   backdrop hit area), `panel`. Wraps .drawer (shell.css); tokens `--shell-*`.
 -->
@@ -56,7 +57,7 @@
     }
     if (!closeOnPick) return;
     const t = (e.target as Element).closest('a, button, [role="button"], [role="menuitem"]');
-    if (t && !t.hasAttribute('aria-expanded') && !t.closest('.nav__foot')) open = false;
+    if (t && !t.hasAttribute('aria-expanded') && !t.hasAttribute('aria-pressed') && !t.closest('.nav__foot')) open = false;
   }
 
   // Fallback has no Escape from the platform.

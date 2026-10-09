@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { fireEvent, render } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import Context from "../src/lib/lens/Context.svelte";
 import ContextGroup from "../src/lib/lens/ContextGroup.svelte";
 import { type ContextGroupData, type ContextItem, NEIGHBOUR_PAGE } from "../src/lib/lens/lens-data.js";
@@ -37,6 +37,39 @@ describe("Context", () => {
     });
     expect(labels(container)).toEqual(["Inside this set", "Leaving this set"]);
     expect(container.querySelector('[data-direction="in"]')?.textContent).toContain("links here");
+  });
+
+  it("add-to-set is an IconButton", async () => {
+    const onAdd = vi.fn();
+    const { getByRole } = render(Context, { groups: [group("Depends on", [edge("a")])], onPick: () => {}, onAdd });
+    const add = getByRole("button", { name: "Add Record a to the set" });
+    expect(add.classList.contains("icon-btn")).toBe(true);
+    await fireEvent.click(add);
+    expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ id: "a" }));
+  });
+
+  it("Add everything label names the checked count", async () => {
+    const onAddAll = vi.fn();
+    const groups = [group("Depends on", [edge("a")])];
+    const one = render(Context, { groups, onPick: () => {}, onAddAll });
+    expect(one.getByTestId("lens-add-all").textContent).toBe("Add everything this links to");
+    one.unmount();
+    const { getByTestId } = render(Context, { groups, onPick: () => {}, onAddAll, checkedCount: 3 });
+    const add = getByTestId("lens-add-all");
+    expect(add.textContent).toBe("Add everything the 3 checked link to");
+    expect(add.classList.contains("btn")).toBe(true);
+    await fireEvent.click(add);
+    expect(onAddAll).toHaveBeenCalledOnce();
+  });
+
+  it("skipped hubs listed with an add each", async () => {
+    const onAddSkipped = vi.fn();
+    const skipped = [{ id: "h1", label: "Glossary" }, { id: "h2", label: "Index" }];
+    const { container, getByRole } = render(Context, { groups: [], onPick: () => {}, skipped, onAddSkipped });
+    expect(container.querySelector('[data-testid="lens-skipped"]')?.textContent).toContain("Skipped 2 records");
+    expect(container.querySelectorAll('[data-testid="lens-skipped-add"]')).toHaveLength(2);
+    await fireEvent.click(getByRole("button", { name: "Add Index to the set" }));
+    expect(onAddSkipped).toHaveBeenCalledWith(skipped[1]);
   });
 
   it("Shown in lists only the given compositions", () => {

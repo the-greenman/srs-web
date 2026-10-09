@@ -13,6 +13,15 @@ export interface ByOption {
 
 export const NOT_SET = "Not set";
 
+/** More links than this and a record is a hub: "Add everything" skips it unless added deliberately. */
+export const HUB_LINKS = 50;
+
+/**
+ * The graph draws at most this many links per side (inbound, outbound) of the focused record and says
+ * "N of M links"; at 12 a side's two-line labels stay apart (focusLayout spacing).
+ */
+export const GRAPH_LINKS = 12;
+
 /**
  * The options the current set supports: Nesting only for outlines, State and Created by only when some
  * member carries them.
@@ -71,6 +80,28 @@ export function groupItems(
   return order.flatMap((k) => buckets.get(k) ?? []);
 }
 
+/** How many group headings `by` gives the items (0 for Nothing and for an outline with no sections). */
+export function groupCount(items: Item[], by: CollectionBy): number {
+  return new Set(groupItems(items, by).flatMap((i) => (i.group === undefined ? [] : [i.group])))
+    .size;
+}
+
+/**
+ * The board's presentation default (D7): `current` when it splits the set into more than one group, else
+ * the first option that does, else undefined. Container is not tried: it costs one engine read per
+ * member (see LensShell's containerTitles), so it is offered only when chosen.
+ */
+export function splittingBy(
+  items: Item[],
+  options: ByOption[],
+  current: CollectionBy
+): CollectionBy | undefined {
+  if (groupCount(items, current) > 1) return current;
+  return options.find(
+    (o) => o.value !== "none" && o.value !== "container" && groupCount(items, o.value) > 1
+  )?.value;
+}
+
 /** The one edge-to-set classifier (ADR-025): edges whose other end is in the set vs leaving it. */
 export function splitByBoundary<E extends { id: string }>(
   edges: E[],
@@ -80,4 +111,16 @@ export function splitByBoundary<E extends { id: string }>(
     inside: edges.filter((e) => inSet.has(e.id)),
     outside: edges.filter((e) => !inSet.has(e.id)),
   };
+}
+
+/** Split records to add into those to add and the hubs to skip (more than `max` links). */
+export function skipHubs<T extends { id: string }>(
+  items: T[],
+  links: (id: string) => number,
+  max = HUB_LINKS
+): { add: T[]; skipped: T[] } {
+  const add: T[] = [];
+  const skipped: T[] = [];
+  for (const i of items) (links(i.id) > max ? skipped : add).push(i);
+  return { add, skipped };
 }

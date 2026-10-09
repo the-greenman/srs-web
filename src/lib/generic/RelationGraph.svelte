@@ -1,12 +1,14 @@
 <!--
   RelationGraph — the relation map, presentation only. Two views over the same SVG:
   - focus: one record in the centre, inbound neighbours on the left arc, outbound on the right, grouped by
-    relation type; the relation type shows in the legend and on hover or focus of a node, never at edge midpoints;
+    edge name (`edgeLabel`, else the relation type); the name shows in the legend and on hover or focus of
+    a node, never at edge midpoints. A neighbour with a `tone` names it ("inside the set" / "leaving the
+    set") in its aria-label and <title>, its line is solid or dashed, and the legend gains a line key;
   - container: a capped ring of one container's records (the caller caps and says so).
   Labels wrap to two lines. Colours are the --generic-graph-* tokens (generic-shell.css).
 -->
 <script lang="ts">
-  import { type ContainerGraph, type FocusLayout, MAP_H, MAP_W } from "./map-layout.js";
+  import { type ContainerGraph, type FocusLayout, MAP_H, MAP_W, edgeName } from "./map-layout.js";
   import { plainLabel, wrapLabel } from "$lib/labels.js";
 
   type Props =
@@ -30,6 +32,10 @@
     const uy = (to.y - from.y) / len;
     return { x1: from.x + ux * padFrom, y1: from.y + uy * padFrom, x2: to.x - ux * padTo, y2: to.y - uy * padTo };
   };
+  const TONE = { inside: "inside the set", leaving: "leaving the set" } as const;
+  /** "Depends on", or "Depends on, leaving the set" when the neighbour carries a tone. */
+  const named = (n: { relationType: string; edgeLabel?: string; direction: "in" | "out"; tone?: keyof typeof TONE }) =>
+    n.tone ? `${edgeName(n)}, ${TONE[n.tone]}` : edgeName(n);
   const activate = (event: KeyboardEvent, id: string, open: (id: string) => void) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
@@ -55,19 +61,20 @@
           class="neighbour"
           data-direction={n.direction}
           data-relation={n.relationType}
+          data-tone={n.tone}
           role="button"
           tabindex="0"
-          aria-label={`${n.direction === "in" ? "Inbound" : "Outbound"} ${n.relationType}: ${plainLabel(n.label)}`}
+          aria-label={`${n.direction === "in" ? "Inbound" : "Outbound"} ${named(n)}: ${plainLabel(n.label)}`}
           onclick={() => onOpen(n.id)}
           onkeydown={(e) => activate(e, n.id, onOpen)}
         >
-          <title>{n.relationType} ({n.direction === "in" ? "inbound" : "outbound"}): {plainLabel(n.label)}</title>
+          <title>{named(n)} ({n.direction === "in" ? "inbound" : "outbound"}): {plainLabel(n.label)}</title>
           <line x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} marker-end="url(#generic-graph-arrow)" />
           <circle cx={n.x} cy={n.y} r="8" />
           <text class="node-label" x={n.x + side * 14} y={n.y - (lines.length - 1) * 6 + 4} text-anchor={side === 1 ? "start" : "end"}>
             {#each lines as line, li (li)}<tspan x={n.x + side * 14} dy={li === 0 ? 0 : 12}>{line}</tspan>{/each}
           </text>
-          <text class="edge-label" aria-hidden="true" x={(layout.center.x + n.x) / 2} y={(layout.center.y + n.y) / 2 - 6}>{n.relationType}</text>
+          <text class="edge-label" aria-hidden="true" x={(layout.center.x + n.x) / 2} y={(layout.center.y + n.y) / 2 - 6}>{edgeName(n)}</text>
         </g>
       {/each}
       <g
@@ -114,9 +121,17 @@
   </svg>
 </div>
 {#if props.view === "focus" && props.layout.legend.length > 0}
+  {@const tones = new Set(props.layout.placed.flatMap((n) => (n.tone ? [n.tone] : [])))}
   <ul class="generic-graph-legend" data-testid="graph-legend" aria-label="Relation types">
-    {#each props.layout.legend as row (`${row.direction}:${row.relationType}`)}
-      <li><span class="generic-graph-legend__dir" aria-hidden="true">{row.direction === "in" ? "←" : "→"}</span> {row.relationType} <small>{row.count}</small></li>
+    {#each props.layout.legend as row (`${row.direction}:${row.name}`)}
+      <li><span class="generic-graph-legend__dir" aria-hidden="true">{row.direction === "in" ? "←" : "→"}</span> {row.name} <small>{row.count}</small></li>
     {/each}
   </ul>
+  {#if tones.size > 0}
+    <ul class="generic-graph-legend" data-testid="graph-tone-key" aria-label="Lines">
+      {#each ["inside", "leaving"] as const as tone (tone)}
+        <li data-tone={tone}><svg class="generic-graph-key-line" data-tone={tone} viewBox="0 0 24 8" aria-hidden="true"><line x1="0" y1="4" x2="24" y2="4" /></svg> {tone === "inside" ? "Solid: inside the set" : "Dashed: leaving the set"}</li>
+      {/each}
+    </ul>
+  {/if}
 {/if}

@@ -15,7 +15,7 @@ afterEach(() => {
 
 const children = createRawSnippet(() => ({
   render: () =>
-    '<div><a href="#x" data-testid="pick">pick</a><button aria-expanded="false" data-testid="disclosure">d</button><div class="nav__foot"><button data-testid="foot">f</button></div></div>',
+    '<div><a href="#x" data-testid="pick">pick</a><button aria-expanded="false" data-testid="disclosure">d</button><button aria-pressed="false" data-testid="toggle">t</button><div class="nav__foot"><button data-testid="foot">f</button></div></div>',
 }));
 const mount = (props: object = {}) =>
   render(Drawer, { open: false, label: "Navigation", testid: "d", children, ...props });
@@ -59,10 +59,11 @@ it("native: a platform close (Escape) event syncs the bound state, so it can reo
   expect(dlg(r).open).toBe(true);
 });
 
-it("closeOnPick: a link closes it; a disclosure and the footer do not", async () => {
+it("closeOnPick: a link closes it; a disclosure, a toggle and the footer do not", async () => {
   const r = mount({ open: true, closeOnPick: true });
   await tick();
   await fireEvent.click(r.getByTestId("disclosure"));
+  await fireEvent.click(r.getByTestId("toggle"));
   await fireEvent.click(r.getByTestId("foot"));
   await tick();
   expect(dlg(r).open).toBe(true);
