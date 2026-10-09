@@ -2,6 +2,7 @@
 
 - **Status:** accepted
 - **Date:** 2026-07-06
+- **Extended by:** [ADR-025](./025-lenses.md)
 - **Issue:** [srs-web#94](https://github.com/the-greenman/srs-web/issues/94)
 - **Builds on:** [ADR-001](./001-thin-client.md) (thin client), [ADR-009](./009-container-driven-nav.md) (container-keyed nav)
 

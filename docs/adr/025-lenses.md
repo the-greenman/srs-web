@@ -1,6 +1,6 @@
 # ADR-025: Lenses, one engine view of three panes over derived lenses
 
-- **Status:** proposed
+- **Status:** Accepted (2026-10-09, with [srs-web#553](https://github.com/the-greenman/srs-web/pull/553))
 - **Date:** 2026-10-09
 - **Issue:** [srs-web#547](https://github.com/the-greenman/srs-web/issues/547), [srs-web#425](https://github.com/the-greenman/srs-web/issues/425) (navigation tree; re-scoped by this ADR)
 - **Extends:** [ADR-009](./009-container-driven-nav.md) (navigation sections become lenses), [ADR-010](./010-view-driven-list-columns.md) (columns for sets with no container view)

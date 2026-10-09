@@ -186,10 +186,10 @@ Every srs-web ADR (001–021) was read. Below: how each one bears on this plan.
 | [ADR-019](../docs/adr/019-ui-theming-surface-and-live-styleguide.md) | Specimens for every pane on `/styleguide`, rendered in default and demo themes. `lens.css` in the `components` layer; no scoped `<style>`. | accepted, governs |
 | [ADR-020](../docs/adr/020-icon-set-and-component-token-api.md) | Glyph buttons become `IconButton` + Lucide. Component tokens on `:root`. `data-part` rows for the lens components. See "Reused components". | accepted, governs |
 | [ADR-021](../docs/adr/021-open-from-url.md) | Lenses is available on read-only documents; Edit is hidden and the read-only repo refuses writes underneath. Query-param clearing must keep the hash. | accepted, respected |
-| [ADR-022](../docs/adr/022-built-in-views-and-editor-registry.md) (new) | Built-in engine views sit outside the editor registry, listed in `BUILT_IN_VIEWS` (D1); supersedes ADR-002 | proposed |
-| [ADR-023](../docs/adr/023-one-hash-address.md) (new) | One hash address and one history for every shell; `id` is the shell-neutral selection key (D2, D8) | proposed |
-| [ADR-024](../docs/adr/024-one-record-reading-component.md) (new) | One component for reading a record as prose; one shared label module (D3) | proposed |
-| [ADR-025](../docs/adr/025-lenses.md) (new) | Lenses: one engine view of three panes over derived lenses; canonical engine-gap list (D4, D6, D7, D9, D10) | proposed |
+| [ADR-022](../docs/adr/022-built-in-views-and-editor-registry.md) (new) | Built-in engine views sit outside the editor registry, listed in `BUILT_IN_VIEWS` (D1); supersedes ADR-002 | accepted (srs-web#553) |
+| [ADR-023](../docs/adr/023-one-hash-address.md) (new) | One hash address and one history for every shell; `id` is the shell-neutral selection key (D2, D8) | accepted (srs-web#553) |
+| [ADR-024](../docs/adr/024-one-record-reading-component.md) (new) | One component for reading a record as prose; one shared label module (D3) | accepted (srs-web#553) |
+| [ADR-025](../docs/adr/025-lenses.md) (new) | Lenses: one engine view of three panes over derived lenses; canonical engine-gap list (D4, D6, D7, D9, D10) | accepted (srs-web#553) |
 
 ---
 
@@ -651,13 +651,13 @@ test -f docs/adr/025-lenses.md && test -z "$missing"
 - [x] Resolve plan review round 1 (this revision).
 - [x] Port `plans/ux-lenses.md` from `poc/ux-lenses` with the status line.
 - [x] Resolve plan review round 2 (this revision).
-- [ ] Add "Extended by: [ADR-025](./025-lenses.md)" to ADR-009 and ADR-010's header lists.
-- [ ] Architecture Reviewer pass over the ADRs (blocking / should-fix / nit).
+- [x] Add "Extended by: [ADR-025](./025-lenses.md)" to ADR-009 and ADR-010's header lists (PR B, after PR A merged).
+- [x] Architecture Reviewer pass over the ADRs (blocking / should-fix / nit): plan review rounds 1–2 and the PR A code review; ADR-022 to ADR-025 accepted with srs-web#553.
 
 #### Acceptance Criteria
-- [ ] Every Dn has an owner answer.
-- [ ] ADRs cite ADR-001 and state the rejected alternatives; ADR-025 states there is no ADR-001 exception.
-- [ ] `gap-cites` passes (no `ponytail:` exists yet); ADR-025 lists gaps 1–5 with issue numbers.
+- [x] Every Dn has an owner answer.
+- [x] ADRs cite ADR-001 and state the rejected alternatives; ADR-025 states there is no ADR-001 exception.
+- [x] `gap-cites` passes (no `ponytail:` exists yet); ADR-025 lists gaps 1–5 with issue numbers.
 
 #### Testing
 ```bash

@@ -1,6 +1,6 @@
 # ADR-023: One hash address and one history for every shell
 
-- **Status:** proposed
+- **Status:** Accepted (2026-10-09, with [srs-web#553](https://github.com/the-greenman/srs-web/pull/553))
 - **Date:** 2026-10-09
 - **Issue:** [srs-web#547](https://github.com/the-greenman/srs-web/issues/547), [srs-web#426](https://github.com/the-greenman/srs-web/issues/426) (address for every shell; narrowed by #547)
 - **Builds on:** [ADR-001](./001-thin-client.md) (thin client), [ADR-021](./021-open-from-url.md) (query string is for boot links)

@@ -1,6 +1,6 @@
 # ADR-022: Built-in engine views sit outside the editor registry
 
-- **Status:** proposed
+- **Status:** Accepted (2026-10-09, with [srs-web#553](https://github.com/the-greenman/srs-web/pull/553))
 - **Date:** 2026-10-09
 - **Issue:** [srs-web#547](https://github.com/the-greenman/srs-web/issues/547) (Lenses); records [srs-web#338](https://github.com/the-greenman/srs-web/issues/338) (editor registry)
 - **Supersedes:** [ADR-002](./002-editor-mode-selection.md)

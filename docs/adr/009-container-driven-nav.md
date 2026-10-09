@@ -2,6 +2,7 @@
 
 - **Status:** accepted
 - **Date:** 2026-07-05
+- **Extended by:** [ADR-025](./025-lenses.md)
 - **Issue:** [srs-web#93](https://github.com/the-greenman/srs-web/issues/93) (interim); completed via [srs-web#98](https://github.com/the-greenman/srs-web/issues/98)
 - **Supersedes (partial):** [ADR-006](./006-dynamic-dispatch-replaces-sections.md) — the section-list portion (type-keyed nav) is replaced; the typeId-keyed view dispatch within a section is retained.
 - **Demotes:** [ADR-007](./007-unified-type-registry.md) — TYPE_REGISTRY is now presentation hints only; it no longer drives sidebar section appearance.

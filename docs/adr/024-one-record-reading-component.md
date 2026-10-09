@@ -1,6 +1,6 @@
 # ADR-024: One component for reading a record as prose
 
-- **Status:** proposed
+- **Status:** Accepted (2026-10-09, with [srs-web#553](https://github.com/the-greenman/srs-web/pull/553))
 - **Date:** 2026-10-09
 - **Issue:** [srs-web#547](https://github.com/the-greenman/srs-web/issues/547), [srs-web#137](https://github.com/the-greenman/srs-web/issues/137) (converge list and detail)
 - **Builds on:** [ADR-001](./001-thin-client.md) (thin client), [ADR-006](./006-dynamic-dispatch-replaces-sections.md) and [ADR-007](./007-unified-type-registry.md) (typeId-keyed view dispatch), [ADR-013](./013-repo-context.md) (repo context)
