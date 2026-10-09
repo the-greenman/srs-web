@@ -36,6 +36,8 @@ export interface ContextGroupDef {
   relationType: string;
   /** Relative to the selected record: "in" = the neighbour points at it. */
   direction: "in" | "out";
+  /** Only neighbours of these types, as `namespace/name` (presentation filter, see loadGroup). */
+  types?: string[];
 }
 
 export interface Lens {
@@ -50,11 +52,20 @@ export interface Lens {
   columns?: string[];
 }
 
-const ctx = (label: string, relationType: string, direction: "in" | "out"): ContextGroupDef => ({
-  label,
-  relationType,
-  direction,
-});
+const ctx = (
+  label: string,
+  relationType: string,
+  direction: "in" | "out",
+  types?: string[]
+): ContextGroupDef => ({ label, relationType, direction, types });
+
+/** A relation type key in user words: the `name` part, title-cased; never the namespace. */
+export const relationLabel = (key: string): string =>
+  key
+    .slice(key.lastIndexOf("/") + 1)
+    .split(/[-_]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 
 /** The repository defaults: every installed relation type with at least one relation, both ways. */
 export function defaultContext(repo: SrsRepository): ContextGroupDef[] {
@@ -65,7 +76,10 @@ export function defaultContext(repo: SrsRepository): ContextGroupDef[] {
   return listRelationTypes(repo)
     .filter((t) => (used.get(t.key) ?? 0) > 0)
     .sort((a, b) => (used.get(b.key) ?? 0) - (used.get(a.key) ?? 0))
-    .flatMap((t) => [ctx(`${t.label} →`, t.key, "out"), ctx(`← ${t.label}`, t.key, "in")]);
+    .flatMap((t) => {
+      const l = relationLabel(t.key);
+      return [ctx(`${l} →`, t.key, "out"), ctx(`← ${l}`, t.key, "in")];
+    });
 }
 
 /** One lens per navigation section, composition and used type, plus Everything. Labels are resolved titles. */
@@ -125,10 +139,13 @@ export const curatedLenses: Record<string, Lens[]> = {
       collection: { kind: "outline", containerId: "4fd725af-72f2-45d8-8a95-14f0d22af181" },
       focus: { kind: "reading" },
       context: [
-        ctx("Evidence", "evidences", "in"),
+        ctx("Evidence", "evidences", "in", [
+          "com.mudemocracy.argument/source",
+          "com.mudemocracy.argument/quotation",
+        ]),
         ctx("Challenged by", "challenges", "in"),
         ctx("Depends on", "depends-on", "out"),
-        ctx("Answers", "answers", "out"),
+        ctx("Answers", "answers", "out", ["com.mudemocracy.argument/problem"]),
         ctx("Refines", "refines", "out"),
         ctx("Refined by", "refines", "in"),
         ctx("Authored by", "com.mudemocracy.stewardship/authored-by", "out"),
@@ -145,10 +162,10 @@ export const curatedLenses: Record<string, Lens[]> = {
       },
       focus: { kind: "reading" },
       context: [
-        ctx("Quotes pulled", "derived-from", "in"),
-        ctx("Supports", "evidences", "out"),
+        ctx("Quotes pulled", "derived-from", "in", ["com.mudemocracy.argument/quotation"]),
+        ctx("Supports", "evidences", "out", ["com.mudemocracy/claim"]),
         ctx("Challenges", "challenges", "out"),
-        ctx("Problems raised", "derived-from", "in"),
+        ctx("Problems raised", "derived-from", "in", ["com.mudemocracy.argument/problem"]),
       ],
       layout: "trail",
     },
@@ -159,7 +176,7 @@ export const curatedLenses: Record<string, Lens[]> = {
       focus: { kind: "reading" },
       context: [
         ctx("Scoped by boundary", "com.mudemocracy.argument/scopes-problem", "in"),
-        ctx("Answered by", "answers", "in"),
+        ctx("Answered by", "answers", "in", ["com.mudemocracy/claim"]),
         ctx("Sources", "derived-from", "out"),
       ],
       layout: "board",
@@ -171,9 +188,9 @@ export const curatedLenses: Record<string, Lens[]> = {
       collection: { kind: "outline", containerId: "8c75d1ef-07f2-4b1c-99d3-fea93287b3a3" },
       focus: { kind: "reading" },
       context: [
-        ctx("Runs", "derived-from", "in"),
+        ctx("Runs", "derived-from", "in", ["com.mudemocracy.stewardship/run-report"]),
         ctx("Authorised by", "com.mudemocracy.stewardship/authorised-by", "out"),
-        ctx("Standing jobs", "contains", "out"),
+        ctx("Standing jobs", "contains", "out", ["com.mudemocracy.stewardship/standing-job"]),
       ],
       layout: "trail",
     },
@@ -196,7 +213,7 @@ export const curatedLenses: Record<string, Lens[]> = {
       context: [
         ctx("Prerequisites", "depends-on", "out"),
         ctx("Contains", "contains", "out"),
-        ctx("Invariants", "contains", "out"),
+        ctx("Invariants", "contains", "out", ["com.semanticops.spec/invariant"]),
       ],
       layout: "reader",
     },

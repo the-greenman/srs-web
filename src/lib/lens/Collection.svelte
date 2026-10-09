@@ -19,6 +19,7 @@
     selectedId = null,
     expanded = new Set<string>(),
     onDark = false,
+    note,
     onSelect,
     onExpand,
     onMore,
@@ -30,6 +31,8 @@
     expanded?: Set<string>;
     /** On the dark nav rail. */
     onDark?: boolean;
+    /** One line above the items, e.g. when the selection is outside this set. */
+    note?: string;
     onSelect: (item: Item) => void;
     onExpand?: (item: Item) => void;
     onMore?: () => void;
@@ -49,6 +52,7 @@
 </script>
 
 <div class="lens-collection" class:lens-collection--dark={onDark} data-testid="lens-collection" data-mode={mode}>
+  {#if note}<p class="lens-empty lens-collection__note" data-testid="lens-collection-note">{note}</p>{/if}
   {#if data.items.length === 0}
     <p class="lens-empty">Nothing here.</p>
   {:else if mode === "table"}

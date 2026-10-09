@@ -568,9 +568,9 @@
       reading: typeSchema labels and help, long markdown clamped with "more", list strings as chips, a url as a link, an inline composite as a
       table. Context: two groups with counts and paging, then In / Shown in.</p>
     <div class="sg__shells">
-      <Frame width="var(--inspector-width)" caption="Switcher + outline, dark rail" testid="sg-lens-outline">
+      <Frame width="var(--inspector-width)" caption="Switcher (above the panes in every layout) + outline, dark rail" testid="sg-lens-outline">
+        <LensSwitcher curated={fx.lensCurated} extra={fx.lensDerived} active="case" onPick={noop} />
         <div class="nav" style="padding: var(--space-xs) 0">
-          <LensSwitcher curated={fx.lensCurated} extra={fx.lensDerived} active="case" onPick={noop} />
           <Collection data={fx.lensOutline} selectedId="c-2" expanded={new Set(["c-1"])} onDark onSelect={noop} onExpand={noop} />
         </div>
       </Frame>

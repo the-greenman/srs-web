@@ -5,6 +5,8 @@
   holds it (containersForInstance ∩ collection), Focus re-renders in the new focus kind, Context swaps
   its groups. Layouts: trail (list | focus | context), reader (thin outline | wide document | context
   below), board (table | focus + context in the inspector), graph (list | RelationGraph | focus + context).
+  Following a link (Context, graph) keeps a short trail shown above Focus with Back; a selection outside
+  the collection gets a one-line note there. The switcher sits above the panes in every layout.
   Sits on AppShell + Toolbar; no scoped style (lens.css).
 -->
 <script lang="ts">
@@ -83,6 +85,8 @@
   let groups = $state<ContextGroupData[]>([]);
   let containers = $state<{ containerId: string; title: string }[]>([]);
   let shown = $state<Shown[]>([]);
+  /** Records left by following links (Context, graph), oldest first; cleared by a Collection pick. */
+  let trail = $state<{ id: string; label: string }[]>([]);
 
   const defaults = $derived(defaultContext(repo));
   const contextDefs = $derived(lens.context.length > 0 ? lens.context : defaults);
@@ -157,6 +161,25 @@
     }
   }
 
+  /** Follow a link: remember where we were, then select. */
+  function follow(item: Item | ContextItem): void {
+    if (selectedId && selectedId !== item.id)
+      trail = [...trail, { id: selectedId, label: selectedLabel }].slice(-5);
+    select(item);
+  }
+
+  /** Back to the record at `i` in the trail (default: the last one). */
+  function back(i = trail.length - 1): void {
+    const to = trail[i];
+    trail = trail.slice(0, i);
+    select(to);
+  }
+
+  function pick(item: Item): void {
+    trail = [];
+    select(item);
+  }
+
   function select(item: Item | ContextItem): void {
     selectedId = item.id;
     hint = "sectionContainerId" in item ? item.sectionContainerId : undefined;
@@ -189,6 +212,9 @@
             ? loadDocument(repo, id, f.compositionId, hint)
             : loadReading(repo, id, e ? "form" : "reading", picked);
         groups = defs.map((def) => loadGroup(repo, id, def));
+        // A record reached by a link may have none of this lens's relations: show the defaults instead.
+        if (defs !== defaults && groups.every((g) => g.total === 0))
+          groups = defaults.map((def) => loadGroup(repo, id, def));
         const cs = containersOf(repo, id);
         containers = cs.map((c) => ({ containerId: c, title: getContainer(repo, c).title }));
         shown = shownIn(repo, cs);
@@ -247,6 +273,11 @@
       selectedId?.slice(0, 8) ??
       ""
   );
+  const outside = $derived(
+    selectedId && collection.items.length > 0 && !collection.items.some((i) => i.id === selectedId)
+      ? `Not in this set — showing ${lens.label}`
+      : undefined
+  );
   const layouts: Layout[] = ["trail", "reader", "board", "graph"];
 </script>
 
@@ -255,20 +286,30 @@
 {/snippet}
 
 {#snippet list(onDark: boolean)}
-  <Collection data={collection} mode="list" {selectedId} {expanded} {onDark} onSelect={select} onExpand={expand} onMore={more} />
+  <Collection data={collection} mode="list" {selectedId} {expanded} {onDark} note={outside} onSelect={pick} onExpand={expand} onMore={more} />
 {/snippet}
 
 {#snippet focusPane()}
+  {#if trail.length > 0}
+    <nav class="lens-trail" aria-label="Path" data-testid="lens-trail">
+      <button type="button" class="lens-trail__back" data-testid="lens-back" onclick={() => back()}>Back</button>
+      <ol>
+        {#each trail as t, i (`${i}:${t.id}`)}
+          <li><button type="button" onclick={() => back(i)}>{t.label}</button></li>
+        {/each}
+        <li aria-current="page">{selectedLabel}</li>
+      </ol>
+    </nav>
+  {/if}
   <Focus data={focus} onEdit={focus.kind === "document" ? undefined : () => (editing = !editing)} onSave={save} {saving} {saveError} />
 {/snippet}
 
 {#snippet contextPane()}
-  <Context {groups} {containers} {shown} onPick={select} onShow={(s) => (doc = s)} onMore={moreNeighbours} />
+  <Context {groups} {containers} {shown} onPick={follow} onShow={(s) => (doc = s)} onMore={moreNeighbours} />
 {/snippet}
 
 {#snippet navPane()}
   <Nav repo={title} eyebrow={lens.label} wordmark>
-    {@render switcher()}
     {@render list(true)}
   </Nav>
 {/snippet}
@@ -289,16 +330,16 @@
         {/snippet}
       </Toolbar>
     {/snippet}
+    {@render switcher()}
     {#if error}<Notice kind="error">{error}</Notice>{/if}
     <div class="workspace lens-main" data-layout={layout}>
       {#if layout === "board"}
         <div class="lens-board">
-          {@render switcher()}
-          <Collection data={collection} mode="table" {selectedId} onSelect={select} onMore={more} />
+          <Collection data={collection} mode="table" {selectedId} note={outside} onSelect={pick} onMore={more} />
         </div>
       {:else if layout === "graph"}
         {#if graph && graph.placed.length > 0}
-          <RelationGraph view="focus" focus={{ id: selectedId ?? "", label: selectedLabel }} layout={graph} onOpen={(id) => select({ id, label: "" })} />
+          <RelationGraph view="focus" focus={{ id: selectedId ?? "", label: selectedLabel }} layout={graph} onOpen={(id) => follow({ id, label: "" })} />
         {:else}
           <p class="lens-empty">{selectedId ? "No relations of this kind." : "Select a record to see its relations."}</p>
         {/if}

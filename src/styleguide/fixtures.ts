@@ -1158,7 +1158,12 @@ export const lensReading: FocusData = {
 };
 export const lensContextGroups: ContextGroupData[] = [
   {
-    def: { label: "Evidence", relationType: "evidences", direction: "in" },
+    def: {
+      label: "Evidence",
+      relationType: "evidences",
+      direction: "in",
+      types: ["com.mudemocracy.argument/source", "com.mudemocracy.argument/quotation"],
+    },
     total: 23,
     items: [
       { id: "e-1", label: "Ostrom, Governing the Commons, ch. 3", typeName: "quotation" },
@@ -1180,5 +1185,5 @@ export const lensContainers = [
   { containerId: "c2", title: "Spine 4 — Mechanism" },
 ];
 export const lensShown: Shown[] = [
-  { compositionId: "v1", containerId: "c1", label: "The case, as a reader" },
+  { compositionId: "v1", containerId: "c1", label: "Case reader view" },
 ];

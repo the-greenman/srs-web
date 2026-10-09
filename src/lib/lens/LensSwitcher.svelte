@@ -1,6 +1,6 @@
 <!--
   LensSwitcher — the curated lenses as tabs at the top of the Collection pane; the derived lenses
-  (one per section, composition, type, plus Everything) under a "More…" menu (ActionMenu).
+  (one per section, composition, type, plus Everything) under a "More lenses" menu (ActionMenu). One row, in one place (above the panes) in every layout.
   Presentation only. Wraps .lens-switcher (src/styles/components/lens.css).
   POC: plans/ux-lenses.md §4.
 -->
@@ -43,7 +43,7 @@
       actions={menu}
       label=""
       title="More lenses"
-      triggerLabel={activeExtra ? activeExtra.label : "More…"}
+      triggerLabel={activeExtra ? `More lenses: ${activeExtra.label}` : "More lenses"}
       testid="lens-more"
       class="lens-switcher__more"
     />

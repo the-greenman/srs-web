@@ -1,7 +1,7 @@
 <!--
   Focus — pane 2: one thing, whole. Three kinds from the lens: reading (fields in typeSchema order with
   the schema's labels and help; long markdown collapsed to ~6 lines; list strings as chips; inline
-  composites as a table or list; urls as links), document (the rendered composition of the record's
+  composites as a table or list; urls as links; no "required" marker, that belongs to the form), document (the rendered composition of the record's
   container in a PreviewPane) and form (SectionForm). An Edit toggle switches reading ↔ form.
   Presentation only: the record and schema arrive loaded (lens-data.ts). Wraps .lens-focus (lens.css).
 -->
@@ -92,7 +92,6 @@
       {@const v = r.fieldValues[f.name]}
       <CardField
         label={f.label}
-        required={f.required}
         description={f.description}
         instructions={f.instructions ?? f.aiGuidance}
         id={`lens-f-${f.name}`}

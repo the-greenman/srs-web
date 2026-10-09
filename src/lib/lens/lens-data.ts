@@ -9,6 +9,7 @@ import type { FieldFormDef } from "$lib/governance/types.js";
 import {
   type Actor,
   type DocumentView,
+  type Neighbour,
   type ProjectedRecord,
   type SchemaDefinition,
   type SrsRecord,
@@ -29,7 +30,7 @@ import {
   resolveContainerView,
   typeSchema,
 } from "$lib/srs-client.js";
-import type { ContextGroupDef, Lens } from "./lens.js";
+import { type ContextGroupDef, type Lens, relationLabel } from "./lens.js";
 
 export const PAGE = 100;
 export const NEIGHBOUR_PAGE = 20;
@@ -60,6 +61,11 @@ export interface CollectionData {
 }
 
 const typeLabel = (name?: string) => name?.replaceAll(/[-_]/g, " ");
+/** A composition's name as a title ("guide-body-view" → "Guide body view"); never its description. */
+const compositionTitle = (v: { name: string }) => {
+  const t = v.name.replaceAll(/[-_]/g, " ");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
 
 function memberItems(repo: SrsRepository, containerId: string, group?: string): Item[] {
   const view = resolveContainerView(repo, containerId);
@@ -263,7 +269,7 @@ function compositionsByContainer(repo: SrsRepository): Map<string, Shown[]> {
       const containerId = renderDocumentView(repo, v.id, "json").projection?.containerId;
       if (!containerId) continue;
       const list = map.get(containerId) ?? [];
-      list.push({ compositionId: v.id, containerId, label: v.description || v.name });
+      list.push({ compositionId: v.id, containerId, label: compositionTitle(v) });
       map.set(containerId, list);
     } catch {
       // A composition that cannot render without a container is reachable through compositions_for_container.
@@ -286,7 +292,7 @@ export function shownIn(repo: SrsRepository, containerIds: string[]): Shown[] {
     const bound = documentViewsForContainer(repo, containerId).map((v: DocumentView) => ({
       compositionId: v.id,
       containerId,
-      label: v.description || v.name,
+      label: compositionTitle(v),
     }));
     const extra = (fixed.get(containerId) ?? []).filter(
       (f) => !bound.some((b) => b.compositionId === f.compositionId)
@@ -342,16 +348,27 @@ export function loadGroup(
   def: ContextGroupDef,
   offset = 0
 ): ContextGroupData {
-  const r = neighbours(repo, id, {
-    relationType: def.relationType,
-    direction: def.direction,
-    limit: NEIGHBOUR_PAGE,
-    offset,
-  });
+  const opts = { relationType: def.relationType, direction: def.direction };
+  let total: number;
+  let page: Neighbour[];
+  if (def.types) {
+    const types = def.types;
+    // ponytail: `neighbours` has no type axis, so a typed group reads every edge of the relation and
+    // filters here; a type filter on the binding would keep paging in the engine.
+    const all = neighbours(repo, id, { ...opts, limit: 10_000 }).neighbours.filter((n) =>
+      types.includes(`${n.neighbour.typeNamespace ?? ""}/${n.neighbour.typeName ?? ""}`)
+    );
+    total = all.length;
+    page = all.slice(offset, offset + NEIGHBOUR_PAGE);
+  } else {
+    const r = neighbours(repo, id, { ...opts, limit: NEIGHBOUR_PAGE, offset });
+    total = r.total;
+    page = r.neighbours;
+  }
   return {
     def,
-    total: r.total,
-    items: r.neighbours.map((n) => ({
+    total,
+    items: page.map((n) => ({
       id: n.neighbour.instanceId,
       label: n.neighbour.label,
       typeName: typeLabel(n.neighbour.typeName),
@@ -364,7 +381,7 @@ export function graphEdges(repo: SrsRepository, id: string, relationType?: strin
   return neighbours(repo, id, { relationType, limit: 40 }).neighbours.map((n) => ({
     id: n.neighbour.instanceId,
     label: n.neighbour.label,
-    relationType: n.relationType,
+    relationType: relationLabel(n.relationType),
     direction: n.direction,
   }));
 }
