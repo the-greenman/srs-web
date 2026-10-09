@@ -20,7 +20,7 @@ import type {
 } from "$lib/lens/lens-data";
 import type { ByOption } from "$lib/lens/lens-distinctions";
 import type { PairingResponse } from "$lib/mcp/relay-protocol";
-import type { MethodDomain, MethodProblem } from "$lib/method/method-document";
+import type { MethodDomain, MethodProblem, MethodRemedy } from "$lib/method/method-document";
 import type { InstalledPackage } from "$lib/package-upgrade";
 import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor, SrsRecord, UpgradePackageResult } from "$lib/srs-client";
@@ -1300,4 +1300,40 @@ export const lensTrail: BreadcrumbItem[] = [
   { label: "Decision capacity is a muscle", onclick: () => {} },
   { label: "Groups decide less than they think", onclick: () => {} },
   { label: "Formation precedes performance" },
+];
+
+// Remedies under a problem (srs-web#541): one with every field, one bare and set aside.
+export const methodRemedies: MethodRemedy[] = [
+  {
+    entity: "remedy",
+    id: "mr1",
+    title: "A return path for edited documents",
+    move: "Let a document edited elsewhere come back as a new version.",
+    doesNotFix: "Merging two people's edits to the same paragraph.",
+    falsifier: "Writers still export and never return after a month.",
+    returnWhen: "Round trips are routine and the next gap is conflicts.",
+    sources: [],
+    answers: [{ id: "mp1", label: "A document cannot leave the editor and return" }],
+    createdBy: agents[0],
+    status: "suggested",
+    commentCount: 0,
+  },
+  {
+    entity: "remedy",
+    id: "mr2",
+    title: "Weekly digest",
+    move: "",
+    doesNotFix: "",
+    falsifier: "",
+    returnWhen: "",
+    sources: [],
+    answers: [],
+    status: "set-aside",
+    commentCount: 0,
+  },
+];
+export const methodLinks = [
+  { id: "pc1", label: "Owner", entity: "persona" as const, status: "affirmed" as const },
+  { id: "pc2", label: "Writer", entity: "persona" as const, status: "suggested" as const },
+  { id: "pc3", label: "Reviewer", entity: "persona" as const, status: null },
 ];
