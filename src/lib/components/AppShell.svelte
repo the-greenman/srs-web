@@ -81,6 +81,7 @@
   class="app"
   class:app--no-nav={!nav || shell.navDrawer}
   class:app--no-inspector={!inspector || shell.inspectorDrawer}
+  data-testid="app-shell"
   data-margin={shell.wideEnabled && shell.wide ? 'expanded' : 'compact'}
   style:--nav-width="{shell.navWidth}px"
   style:--inspector-width="{shell.inspectorWidth}px"
