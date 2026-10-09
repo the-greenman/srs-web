@@ -34,6 +34,7 @@
   import type { CompositeFormDef } from "$lib/editor/blueprint-fields.js";
   import type { FieldFormDef } from "$lib/governance/types.js";
   import {
+    type MethodItem,
     type MethodModel,
     type MethodProblem,
     type MethodRemedy,
@@ -42,7 +43,6 @@
     entityOf,
     itemStatus,
     itemTitle,
-    type MethodItem,
     loadMethod,
     methodWriteGuard,
     moveToContainer,
@@ -95,6 +95,14 @@
   const problem = $derived(selected && entity === "problem" ? (selected as MethodProblem) : null);
   const remedy = $derived(selected && entity === "remedy" ? (selected as MethodRemedy) : null);
   const status = $derived(selected ? itemStatus(selected) : null);
+  /** The problems under the selected cluster, or held by the selected persona (what the owner is affirming). */
+  const members = $derived(
+    !selected || (entity !== "cluster" && entity !== "persona")
+      ? []
+      : (model?.problems ?? []).filter((p) =>
+          entity === "cluster" ? p.cluster?.id === selected.id : p.personas.some((x) => x.id === selected.id)
+        )
+  );
   const hasComments = $derived.by(() => {
     void documentRevision;
     try {
@@ -178,7 +186,6 @@
     if (!selected || !model) return [];
     const m = model;
     const id = selected.id;
-    const status = itemStatus(selected);
     const canAffirm = !!m.containers.affirmed;
     const why = "This repository has no Affirmed container";
     const affirmActs: MenuAction[] = [
@@ -260,6 +267,13 @@
                   <CardField label="Answers" empty={remedy.answers.length === 0}>
                     <ul class="method-detail__links" data-testid="remedy-answers">
                       {#each remedy.answers as a (a.id)}<li><LinkedRecord id={a.id} label={a.label} onopen={open} /></li>{/each}
+                    </ul>
+                  </CardField>
+                {/if}
+                {#if entity === "cluster" || entity === "persona"}
+                  <CardField label="Problems" empty={members.length === 0}>
+                    <ul class="method-detail__links" data-testid="method-members">
+                      {#each members as m (m.id)}<li><LinkedRecord id={m.id} label={m.title} status={m.status} onopen={open} /></li>{/each}
                     </ul>
                   </CardField>
                 {/if}

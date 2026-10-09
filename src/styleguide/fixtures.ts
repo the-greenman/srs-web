@@ -876,6 +876,7 @@ export const MB = 1024 * 1024;
 
 // Method board (srs-web#526): problems in each status, with and without links, one long title.
 const problem = (p: Partial<MethodProblem> & { id: string; title: string }): MethodProblem => ({
+  entity: "problem",
   problemId: "",
   statement: "",
   kind: "",
@@ -894,7 +895,7 @@ export const methodProblems: MethodProblem[] = [
     statement:
       "Export gives the writer markdown and a snapshot, but nothing comes back. Work edited elsewhere cannot return, so leaving the editor is a one way door.",
     kind: "condition",
-    personas: [{ id: "per-w", label: "Writer" }],
+    personas: [{ id: "per-w", label: "Writer", entity: "persona" }],
     sources: ["semanticops.com#21", "semanticops.com#29"],
     createdBy: agents[0],
     commentCount: 3,
@@ -911,7 +912,7 @@ export const methodProblems: MethodProblem[] = [
       label: "Testimony",
       tradeOff: { id: "ten", label: "Testimony and authority" },
     },
-    personas: [{ id: "per-o", label: "Owner" }],
+    personas: [{ id: "per-o", label: "Owner", entity: "persona" }],
     sources: ["https://example.org/notes"],
     createdBy: agents[1],
     status: "affirmed",
