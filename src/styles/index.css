@@ -87,6 +87,7 @@
 @import url("./components/source-row.css") layer(components);
 @import url("./components/source-chooser.css") layer(components);
 @import url("./components/create-panel.css") layer(components);
+@import url("./components/lens.css") layer(components);
 @import url("./components/styleguide.css") layer(components);
 
 /* Utilities — last word in the cascade */

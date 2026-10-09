@@ -169,8 +169,15 @@ describe.skipIf(!haveBindings)("lens model on the real engine (srs-spec.srs)", (
     expect(d.items.map((i) => [i.id, i.depth])).toEqual(outline.map((e) => [e.instanceId, e.depth]));
     expect(d.items.some((i) => i.id === PACKAGE)).toBe(true);
     expect(d.total).toBe(d.items.length);
-    const spec = client.resolveContainerView(repo, DISTRIBUTION).columns.slice(0, 4);
-    expect(d.columns).toEqual(spec.map((c) => ({ kind: "field", fieldId: c.fieldId, label: c.displayLabel })));
+    const spec = [...client.resolveContainerView(repo, DISTRIBUTION).columns]
+      .sort((a, b) => a.order - b.order)
+      .slice(0, 4);
+    expect(d.columns).toEqual(spec.map((c) => ({
+        kind: "field",
+        fieldId: c.fieldId,
+        fieldName: c.fieldName,
+        label: c.displayLabel,
+      })));
   });
 
   it("shownIn is empty on srs-spec", () => {

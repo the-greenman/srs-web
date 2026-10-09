@@ -46,9 +46,12 @@ export interface Item {
   record?: SrsRecord;
 }
 
-/** A board column: a ColumnSpec column (carries fieldId), or one of the fixed label/type/state columns. */
+/**
+ * A board column: a ColumnSpec column (carries fieldId; its cells are read by the core-provided
+ * `fieldName`, as the governance list pane reads them), or one of the fixed label/type/state columns.
+ */
 export type Column =
-  | { kind: "field"; fieldId: string; label: string }
+  | { kind: "field"; fieldId: string; fieldName: string; label: string }
   | { kind: "label" | "type" | "state" };
 
 export interface CollectionData {
@@ -166,9 +169,15 @@ export function loadCollection(repo: SrsRepository, lens: Lens, offset = 0): Col
   switch (c.kind) {
     case "outline": {
       const items = memberItems(repo, c.containerId);
-      const columns: Column[] = resolveContainerView(repo, c.containerId)
-        .columns.slice(0, 4)
-        .map((col) => ({ kind: "field", fieldId: col.fieldId, label: col.displayLabel }));
+      const columns: Column[] = [...resolveContainerView(repo, c.containerId).columns]
+        .sort((a, b) => a.order - b.order)
+        .slice(0, 4)
+        .map((col) => ({
+          kind: "field",
+          fieldId: col.fieldId,
+          fieldName: col.fieldName,
+          label: col.displayLabel,
+        }));
       return { items, columns, total: items.length };
     }
     case "composition": {

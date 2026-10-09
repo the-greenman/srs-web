@@ -770,9 +770,9 @@ All pass, plus `no-literals` and `gap-cites`. Two commits: `refactor(forms): fie
 **Write scope:** `src/lib/lens/{Collection,Focus,Context,ContextGroup,LensSwitcher}.svelte`, `src/rendering/RecordProse.svelte` (new), `src/styles/components/lens.css`, `src/styles/index.css`, `src/styles/tokens-components.css` (only if a token is needed), `src/Styleguide.svelte`, `src/styleguide/fixtures.ts`, `docs/adr/020-icon-set-and-component-token-api.md` (part table rows only), `tests/styles-tokens.test.ts`, `tests/Collection.test.ts`, `tests/Focus.test.ts`, `tests/Context.test.ts`, `tests/RecordProse.test.ts` (new).
 
 #### Tasks
-- [ ] Port the five components per the port map. Extract `RecordProse` (D3). Swap glyphs for `IconButton` + Lucide; verify each icon name exists in `node_modules/@lucide/svelte/dist/icons/`.
-- [ ] Port `lens.css` and the import. Add `src/lib/lens` to `SHELL_FILES`.
-- [ ] Specimens (`#lenses` section):
+- [x] Port the five components per the port map. Extract `RecordProse` (D3). Swap glyphs for `IconButton` + Lucide; verify each icon name exists in `node_modules/@lucide/svelte/dist/icons/`.
+- [x] Port `lens.css` and the import. Add `src/lib/lens` to `SHELL_FILES`.
+- [x] Specimens (`#lenses` section):
   - switcher with nav tabs + More;
   - Collection outline under Nesting with Select on and a set of 2;
   - Collection list told apart by Created by (ActorChip headings);
@@ -785,12 +785,12 @@ All pass, plus `no-literals` and `gap-cites`. Two commits: `refactor(forms): fie
   - Context by None;
   - Context inside/outside;
   - trail Breadcrumb with Back.
-- [ ] Add `data-part` rows for Collection, Focus, Context, LensSwitcher and RecordProse to ADR-020 (c).
+- [x] Add `data-part` rows for Collection, Focus, Context, LensSwitcher and RecordProse to ADR-020 (c).
 
 #### Acceptance Criteria
-- [ ] No `<style>` block in `src/lib/lens/*` or `RecordProse.svelte`; the tokens test passes.
-- [ ] No glyph-as-icon buttons remain. Every control has an accessible name.
-- [ ] The "Reused components" table holds both ways. Positive (each must print nothing):
+- [x] No `<style>` block in `src/lib/lens/*` or `RecordProse.svelte`; the tokens test passes.
+- [x] No glyph-as-icon buttons remain. Every control has an accessible name.
+- [x] The "Reused components" table holds both ways. Positive (each must print nothing):
   ```bash
   for pair in Collection:Tag Collection:ActorChip Collection:Select Collection:Checkbox Collection:IconButton Collection:LogTable \
               Focus:Tag Focus:ActorChip Focus:Select Context:Select Context:IconButton LensSwitcher:ActionMenu; do
@@ -799,7 +799,7 @@ All pass, plus `no-literals` and `gap-cites`. Two commits: `refactor(forms): fie
   done
   ```
   (Shell-level `Breadcrumb` and layout `Select` are checked in Phase 4 on `LensShell.svelte`.) Negative: `grep -rn "Block.svelte\|BlockStack\|Lifecycle.svelte\|Meta.svelte" src/lib/lens src/rendering/RecordProse.svelte` prints nothing.
-- [ ] Specimens render in default and demo themes with no console errors.
+- [x] Specimens render in default and demo themes with no console errors.
 
 #### Testing (named)
 - `tests/RecordProse.test.ts`:
@@ -832,6 +832,11 @@ npm run typecheck && npm run lint && npm test && npm run build
 npm run e2e -- styleguide
 LIT_PATHS="src/lib/lens src/rendering/RecordProse.svelte"   # then no-literals and gap-cites
 ```
+
+Deviation: a field `Column` also carries the core-provided `fieldName` (`{ kind: "field"; fieldId; fieldName; label }`). Records key `fieldValues` by name (RFC-039), so a cell is read by `ColumnSpec.fieldName`, as the governance list pane reads it; the column is still chosen by the ColumnSpec, never by a name. Outline columns are sorted by `ColumnSpec.order` before the four-column slice (the governance pane's order).
+Deviation: the lifecycle `Tag` and the `createdBy` `ActorChip` sit in Focus's header (as the Reused components table says: "header state", "header"), so `RecordProse` does not repeat them; RecordProse renders title, chips, body, labelled long fields and composite tables.
+Deviation: under Context "Nothing" and "Inside or outside the set" each link shows its in/out arrow and type, not its relation label: `ContextItem` carries only the relation key, and the client never turns a key into a label (the link-type groups carry the engine's label).
+Note (run): Focus's mode control is a `Select` (Reused components table) in place of the prototype's segmented buttons; lens.css drops the prototype's `.lens-seg`, `.lens-open` (LensPoc) and hand-built `.lens-trail` rules (the trail is `Breadcrumb`). The styleguide fixture field "Themes" was renamed "Topics" because `getByLabel("Theme")` in `styleguide.spec.ts` matched it. e2e ran with `PLAYWRIGHT_PORT=5401`.
 
 #### Milestone gate
 All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): Collection, Focus, Context panes and RecordProse with specimens (#547)`.

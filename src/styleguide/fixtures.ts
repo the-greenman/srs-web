@@ -9,15 +9,25 @@ import type { MenuAction, ToolbarAction } from "$lib/components/menu-action";
 import { headerActions } from "$lib/essay/header-actions";
 import type { GroupView } from "$lib/generic/RecordsView.svelte";
 import { containerGraph, focusLayout } from "$lib/generic/map-layout";
+import type { Lens } from "$lib/lens/lens";
+import type {
+  CollectionData,
+  ContextGroupData,
+  ContextItem,
+  FocusData,
+  ReadData,
+  Shown,
+} from "$lib/lens/lens-data";
+import type { ByOption } from "$lib/lens/lens-distinctions";
 import type { PairingResponse } from "$lib/mcp/relay-protocol";
 import type { MethodDomain, MethodProblem } from "$lib/method/method-document";
 import type { InstalledPackage } from "$lib/package-upgrade";
 import { ShellState } from "$lib/shell-context.svelte";
-import type { Actor, UpgradePackageResult } from "$lib/srs-client";
+import type { Actor, SrsRecord, UpgradePackageResult } from "$lib/srs-client";
 
 import type { DiscoveryHit } from "$lib/srs-client";
 import type { StorageProviders } from "$lib/storage/index";
-import type { Diagnostic, Status } from "$lib/types";
+import type { BreadcrumbItem, Diagnostic, Status } from "$lib/types";
 
 export const NOW = Date.parse("2026-10-04T12:00:00Z");
 
@@ -931,4 +941,347 @@ export const methodDomains: MethodDomain[] = [
     title: "Writing and review",
     clusters: [{ id: "c1", title: "Leaving the editor", problems: methodProblems }],
   },
+];
+
+// ── Lenses (ADR-025): switcher, collection, focus, context, trail ───────────────────────────────
+const navLens = (id: string, label: string): Lens => ({
+  id: `nav:${id}`,
+  label,
+  collection: { kind: "outline", containerId: id },
+  focus: { kind: "read" },
+});
+export const lensTabs: Lens[] = [
+  navLens("s-case", "The case"),
+  navLens("s-research", "Research"),
+  navLens("s-stewardship", "Stewardship"),
+];
+export const lensMore: Lens[] = [
+  {
+    id: "comp:v-1",
+    label: "Case reader view",
+    collection: { kind: "composition", compositionId: "v-1" },
+    focus: { kind: "published", compositionId: "v-1" },
+  },
+  {
+    id: "type:t-2",
+    label: "Claim",
+    collection: { kind: "type", typeId: "t-2" },
+    focus: { kind: "read" },
+  },
+  { id: "find", label: "Everything", collection: { kind: "find" }, focus: { kind: "read" } },
+];
+const lensRecord = (
+  id: string,
+  label: string,
+  fields: Record<string, unknown>,
+  lifecycle?: string,
+  createdBy?: Actor
+): SrsRecord => ({
+  instanceId: id,
+  typeId: "t1",
+  typeVersion: 1,
+  typeName: "claim",
+  displayLabel: label,
+  fieldValues: { title: label, ...fields },
+  lifecycle,
+  createdBy,
+});
+export const lensOutline: CollectionData = {
+  columns: [],
+  total: 6,
+  items: [
+    {
+      id: "c-1",
+      label: "The common question",
+      typeName: "section",
+      depth: 0,
+      sectionContainerId: "s1",
+    },
+    {
+      id: "c-2",
+      label: "Decision capacity is a muscle",
+      typeName: "claim",
+      lifecycle: "active",
+      depth: 1,
+      createdBy: human,
+    },
+    {
+      id: "c-3",
+      label: "It atrophies when choices are made elsewhere",
+      typeName: "claim",
+      lifecycle: "draft",
+      depth: 1,
+      createdBy: agents[0],
+    },
+    { id: "c-4", label: "Why it matters", typeName: "section", depth: 0, sectionContainerId: "s2" },
+    { id: "c-5", label: longLabel, typeName: "claim", lifecycle: "proposed", depth: 1 },
+    { id: "c-6", label: "What we are not claiming", typeName: "section", depth: 0 },
+  ],
+};
+/** The outline told apart by Created by: groups keyed by actor id, headed by ActorChips. */
+export const lensByCreator: CollectionData = {
+  columns: [],
+  total: 4,
+  items: [
+    {
+      id: "c-2",
+      label: "Decision capacity is a muscle",
+      typeName: "claim",
+      depth: 0,
+      createdBy: human,
+      group: human.id,
+    },
+    {
+      id: "c-7",
+      label: "Practice beats instruction",
+      typeName: "claim",
+      depth: 0,
+      createdBy: human,
+      group: human.id,
+    },
+    {
+      id: "c-3",
+      label: "It atrophies when choices are made elsewhere",
+      typeName: "claim",
+      depth: 0,
+      createdBy: agents[0],
+      group: agents[0].id,
+    },
+    { id: "c-5", label: longLabel, typeName: "claim", depth: 0, group: "Not set" },
+  ],
+};
+export const lensTable: CollectionData = {
+  columns: [
+    { kind: "field", fieldId: "f-persona", fieldName: "persona", label: "Persona" },
+    { kind: "field", fieldId: "f-scale", fieldName: "scale", label: "Scale" },
+    { kind: "field", fieldId: "f-kind", fieldName: "kind", label: "Kind" },
+    { kind: "state" },
+  ],
+  total: 4,
+  items: [
+    {
+      id: "p-1",
+      label: "Nobody knows who may decide",
+      group: "Initiative",
+      typeName: "problem",
+      lifecycle: "active",
+      depth: 0,
+      createdBy: human,
+      record: lensRecord("p-1", "Nobody knows who may decide", {
+        persona: "participant",
+        scale: "group",
+        kind: "condition",
+      }),
+    },
+    {
+      id: "p-2",
+      label: "Proposals arrive fully formed",
+      group: "Initiative",
+      typeName: "problem",
+      lifecycle: "draft",
+      depth: 0,
+      createdBy: agents[1],
+      record: lensRecord("p-2", "Proposals arrive fully formed", {
+        persona: "clerk",
+        scale: "group",
+        kind: "capability",
+      }),
+    },
+    {
+      id: "p-3",
+      label: "The record is nobody's job",
+      group: "The Record",
+      typeName: "problem",
+      lifecycle: "active",
+      depth: 0,
+      record: lensRecord("p-3", "The record is nobody's job", {
+        persona: "clerk",
+        scale: "society",
+        kind: "consequence",
+      }),
+    },
+    {
+      id: "p-4",
+      label: longLabel,
+      group: "The Record",
+      typeName: "problem",
+      depth: 0,
+      record: lensRecord("p-4", longLabel, { persona: "founder", scale: "group", kind: "belief" }),
+    },
+  ],
+};
+export const lensReadBlock: ReadData = {
+  id: "c-2",
+  label: "Decision capacity is a muscle",
+  record: lensRecord(
+    "c-2",
+    "Decision capacity is a muscle",
+    {
+      statement: "A group's capacity to decide grows with use and atrophies without it.",
+      claim_kind: "mechanism",
+      warrant: Array.from(
+        { length: 9 },
+        (_, i) =>
+          `Paragraph ${i + 1} of the warrant: practice in small, reversible decisions builds the habits that larger, irreversible ones need. **Formation** precedes performance.`
+      ).join("\n\n"),
+      warrant_level: "observed",
+      tags_list: ["formation", "capacity", "practice"],
+      source_url: "https://example.org/evidence/decision-capacity",
+      tables: [
+        {
+          columns: ["Practice", "Effect"],
+          rows: [
+            { cells: ["Weekly small decisions", "Confidence"] },
+            { cells: ["Annual big decisions", "Avoidance"] },
+          ],
+        },
+      ],
+    },
+    "active",
+    human
+  ),
+  fields: [
+    { name: "title", label: "Title", valueType: "string", required: true },
+    {
+      name: "statement",
+      label: "Statement",
+      valueType: "text",
+      required: true,
+      description: "One sentence a reader can agree or disagree with.",
+    },
+    {
+      name: "claim_kind",
+      label: "Kind",
+      valueType: "select",
+      required: true,
+      options: ["constitutive", "mechanism", "stance"],
+    },
+    {
+      name: "warrant",
+      label: "Warrant",
+      valueType: "markdown",
+      required: false,
+      instructions: "Why we hold this: the reasoning and the evidence it rests on.",
+    },
+    { name: "warrant_level", label: "Warrant level", valueType: "select", required: false },
+    { name: "tags_list", label: "Topics", valueType: "string", required: false },
+    { name: "source_url", label: "Source", valueType: "url", required: false },
+    { name: "falsifier", label: "Falsifier", valueType: "text", required: false },
+  ],
+  composites: [
+    {
+      name: "tables",
+      label: "Tables",
+      order: 9,
+      fields: [
+        { name: "columns", label: "Columns", valueType: "string", required: false },
+        { name: "rows", label: "Rows", valueType: "string", required: false },
+      ],
+    },
+  ],
+};
+export const lensReading: FocusData = { kind: "read", block: lensReadBlock };
+const lensBlock = (id: string, label: string, statement: string, body: string): ReadData => ({
+  id,
+  label,
+  record: lensRecord(id, label, { statement, warrant: body, claim_kind: "mechanism" }, "draft"),
+  fields: lensReadBlock.fields,
+  composites: [],
+});
+export const lensDocument: FocusData = {
+  kind: "blocks",
+  title: "The case",
+  blocks: [
+    lensBlock(
+      "c-1",
+      "Groups decide less than they think",
+      "Most choices that shape a group are made before it meets.",
+      "Agendas, defaults and who drafts the proposal settle most of the outcome. The meeting **ratifies**."
+    ),
+    lensBlock(
+      "c-2",
+      "Decision capacity is a muscle",
+      "A group's capacity to decide grows with use and atrophies without it.",
+      "Practice in small, reversible decisions builds the habits that larger ones need.\n\n- formation precedes performance\n- the `record` carries what was learned"
+    ),
+    lensBlock(
+      "c-3",
+      "It atrophies when choices are made elsewhere",
+      "Delegating every decision trains the group to wait.",
+      "See [the minutes](https://example.org/minutes) for three cases."
+    ),
+  ],
+};
+export const lensPublished: FocusData = {
+  kind: "document",
+  containerId: "s-case",
+  markdown:
+    "# The case\n\n## Groups decide less than they think\n\nMost choices that shape a group are made before it meets.\n\n## Decision capacity is a muscle\n\nA group's capacity to decide grows with use and atrophies without it.",
+};
+export const lensByOptions: ByOption[] = [
+  { value: "none", label: "Nothing" },
+  { value: "type", label: "Type" },
+  { value: "nesting", label: "Nesting" },
+  { value: "container", label: "Container" },
+  { value: "state", label: "State" },
+  { value: "created-by", label: "Created by" },
+];
+const edge = (
+  id: string,
+  label: string,
+  typeName: string,
+  direction: "in" | "out",
+  relationType: string
+): ContextItem => ({ id, label, typeName, direction, relationType });
+const evidence = [
+  edge("e-1", "Ostrom, Governing the Commons, ch. 3", "quotation", "in", "evidences"),
+  edge("e-2", "LTH working group minutes, 2026-09-12", "source", "in", "evidences"),
+  edge("e-3", longLabel, "source", "in", "evidences"),
+];
+const dependsOn = [
+  edge("d-1", "Groups decide less than they think", "claim", "out", "depends-on"),
+  edge("d-2", "Formation precedes performance", "claim", "out", "depends-on"),
+];
+export const lensContextGroups: ContextGroupData[] = [
+  {
+    def: { label: "Depends on", relationType: "depends-on", direction: "out" },
+    total: 2,
+    items: dependsOn,
+  },
+  {
+    def: { label: "Evidences", relationType: "evidences", direction: "in" },
+    total: 3,
+    items: evidence,
+  },
+];
+export const lensContextFlat: ContextGroupData[] = [
+  {
+    def: { label: "Links", relationType: "", direction: "out" },
+    total: 5,
+    items: [...dependsOn, ...evidence],
+  },
+];
+export const lensContextBoundary: ContextGroupData[] = [
+  {
+    def: { label: "Inside this set", relationType: "", direction: "out" },
+    total: 2,
+    items: dependsOn,
+  },
+  {
+    def: { label: "Leaving this set", relationType: "", direction: "out" },
+    total: 3,
+    items: evidence,
+  },
+];
+export const lensContainers = [
+  { containerId: "c1", title: "The case" },
+  { containerId: "c2", title: "Spine 4 — Mechanism" },
+];
+export const lensShown: Shown[] = [
+  { compositionId: "v1", containerId: "c1", label: "Case reader view" },
+];
+export const lensTrail: BreadcrumbItem[] = [
+  { label: "Decision capacity is a muscle", onclick: () => {} },
+  { label: "Groups decide less than they think", onclick: () => {} },
+  { label: "Formation precedes performance" },
 ];
