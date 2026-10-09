@@ -89,6 +89,12 @@ appended below as components gain parts.
 | `Notice` | `icon`, `body`, `dismiss` |
 | `ToastHost` | `host` |
 | `Diagnostics` (notice variant) | `summary`, `toggle`, `group`, `count` |
+| `Collection` (lens) | `head`, `by`, `group`, `row`, `toggle` |
+| `Focus` (lens) | `bar`, `mode`, `block` |
+| `Context` (lens) | `head`, `by`, `in`, `shown` |
+| `ContextGroup` (lens) | `list`, `row`, `item` |
+| `LensSwitcher` | `tab`, `more` |
+| `RecordProse` | `title`, `meta`, `body`, `more`, `label`, `composite` |
 
 ### (d) One breakpoint source
 

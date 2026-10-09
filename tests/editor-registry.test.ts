@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  BUILT_IN_VIEWS,
   EDITORS,
   availableEditors,
+  isBuiltInView,
   creatableEditors,
   usableEditor,
 } from "../src/lib/editors/registry.js";
@@ -228,5 +230,19 @@ describe("editor registry", () => {
     expect(creatableEditors().map((e) => e.id)).toEqual(["governance", "essay"]);
     bundled.mockReturnValue(undefined);
     expect(creatableEditors().map((e) => e.id)).toEqual(["governance"]);
+  });
+});
+
+describe("built-in views (ADR-022)", () => {
+  it("no EDITORS id is a built-in view", () => {
+    for (const e of EDITORS) expect(isBuiltInView(e.id), e.id).toBe(false);
+    expect(EDITORS.some((e) => (BUILT_IN_VIEWS as readonly string[]).includes(e.id))).toBe(false);
+  });
+
+  it("isBuiltInView accepts generic and lenses only", () => {
+    expect(BUILT_IN_VIEWS).toEqual(["generic", "lenses"]);
+    expect(isBuiltInView("generic")).toBe(true);
+    expect(isBuiltInView("lenses")).toBe(true);
+    for (const m of ["essay", "governance", "Lenses", "lens", "", "generic "]) expect(isBuiltInView(m)).toBe(false);
   });
 });

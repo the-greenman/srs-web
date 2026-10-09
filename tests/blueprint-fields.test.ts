@@ -40,3 +40,16 @@ describe("propertyToField markdown detection (srs-web#479)", () => {
     expect(field.valueType).toBe("text");
   });
 });
+
+describe("field labels (#547)", () => {
+  const def = (title?: string): SchemaDefinition => ({
+    type: "object",
+    properties: { source_kind: { type: "string", ...(title ? { title } : {}), "x-srs-order": 0 } },
+  });
+  it("a titled field keeps its title", () => {
+    expect(definitionToFields(def("Kind of source"))[0].label).toBe("Kind of source");
+  });
+  it("an untitled field shows its humanised name", () => {
+    expect(definitionToFields(def())[0].label).toBe("Source kind");
+  });
+});

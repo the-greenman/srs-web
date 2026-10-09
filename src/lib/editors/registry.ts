@@ -265,3 +265,13 @@ export function creatableEditors(): EditorDefinition[] {
 export function usableEditor(offered: OfferedEditor[], mode: string): EditorDefinition | null {
   return offered.find((o) => o.editor.id === mode && !o.unmet)?.editor ?? null;
 }
+
+/**
+ * Built-in engine views (ADR-022): reserved `editorMode` values that are not registry entries. They
+ * read engine structures only, work on every repository (read-only links included) and are exempt
+ * from the `usableEditor` gate. No `EDITORS` id may equal one.
+ */
+export const BUILT_IN_VIEWS = ["generic", "lenses"] as const;
+export type BuiltInView = (typeof BUILT_IN_VIEWS)[number];
+export const isBuiltInView = (mode: string): mode is BuiltInView =>
+  (BUILT_IN_VIEWS as readonly string[]).includes(mode);

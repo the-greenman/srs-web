@@ -78,7 +78,7 @@
   import { essayMarkdown, essayReferences, essaySnapshot, essayWriteGuard } from "./essay-document.js";
   import { downloadText, triggerDownload } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
-  import { formatAddress, parseAddress } from "./address.js";
+  import { formatAddress, parseAddress, pushAddress } from "$lib/address.js";
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
   import { canShow, isShown, setOpen, summary, toggle, toggleAll } from "./thread-visibility.js";
   import { addComment } from "$lib/comments.js";
@@ -406,10 +406,7 @@
    */
   let notice = $state<string | null>(null);
   let linkFallback = $state<string | null>(null);
-  const push = () => {
-    const h = formatAddress({ essayId: essayId ?? undefined, zoomId: zoomId ?? undefined });
-    if (h !== (location.hash === "#" ? "" : location.hash)) history.pushState(null, "", h || location.pathname + location.search);
-  };
+  const push = () => pushAddress({ essayId: essayId ?? undefined, zoomId: zoomId ?? undefined });
   function setZoom(id: string | null) {
     zoomId = id;
     if (id) openThreads = setOpen(openThreads, id, true);

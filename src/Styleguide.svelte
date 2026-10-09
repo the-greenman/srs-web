@@ -27,6 +27,11 @@
   import Frame from "./styleguide/Frame.svelte";
   import RecordsView from "$lib/generic/RecordsView.svelte";
   import RelationGraph from "$lib/generic/RelationGraph.svelte";
+  import Breadcrumb from "$lib/components/Breadcrumb.svelte";
+  import LensSwitcher from "$lib/lens/LensSwitcher.svelte";
+  import Collection from "$lib/lens/Collection.svelte";
+  import Focus from "$lib/lens/Focus.svelte";
+  import Context from "$lib/lens/Context.svelte";
   import Icons from "./styleguide/icons";
   import { initWasm } from "$lib/srs-client";
   import * as fx from "./styleguide/fixtures";
@@ -49,6 +54,7 @@
     ["agents", "Agent library"],
     ["shell", "Page frame"],
     ["records", "Records and map"],
+    ["lenses", "Lenses"],
     ["method", "Method board"],
     ["chooser", "Source chooser"],
     ["landing", "Landing"],
@@ -554,6 +560,59 @@
         <RelationGraph view="container" graph={fx.cappedContainerMap} onOpen={noop} />
       </figure>
     </div>
+  </section>
+
+  <section id="lenses">
+    <h2>Lenses</h2>
+    <p class="sg__note">The Lenses view (ADR-025): three panes over derived lenses. The switcher shows navigation sections as tabs and the
+      rest under More lenses. Each pane has a "Tell apart by" control. The Collection is an outline (Nesting) on the dark rail, a list told
+      apart by Created by (ActorChip headings) or a table (the ADR-010 list pane). Focus reads one record through RecordProse (ADR-024), the
+      set as a document with the selected block highlighted, the composition as published, or Edit in place. Context groups the record's
+      own links by the engine's relation label, flat (Nothing), or inside and outside the set. The link trail is a Breadcrumb with Back.</p>
+    <div class="sg__shells">
+      <Frame width="var(--inspector-width)" caption="Switcher (section tabs + More) and the outline told apart by Nesting" testid="sg-lens-outline">
+        <LensSwitcher tabs={fx.lensTabs} more={fx.lensMore} active="nav:s-case" onPick={noop} />
+        <div class="nav" style="padding: var(--space-xs) 0">
+          <Collection data={fx.lensOutline} selectedId="c-2" expanded={new Set(["c-1"])} onDark by="nesting" byOptions={fx.lensByOptions} onBy={noop} onSelect={noop} onExpand={noop} />
+        </div>
+      </Frame>
+      <Frame width="var(--inspector-width)" caption="A list told apart by Created by: ActorChip headings with counts" testid="sg-lens-created-by">
+        <Collection data={fx.lensByCreator} by="created-by" byOptions={fx.lensByOptions} onBy={noop} onSelect={noop} />
+      </Frame>
+      <Frame width="var(--inspector-width)" caption="Context by link type: two groups, In, Shown in" testid="sg-lens-context-link">
+        <Context groups={fx.lensContextGroups} containers={fx.lensContainers} shown={fx.lensShown} onBy={noop} onPick={noop} onShow={noop} />
+      </Frame>
+      <Frame width="var(--inspector-width)" caption="Context told apart by Nothing: one flat list" testid="sg-lens-context-none">
+        <Context groups={fx.lensContextFlat} by="none" onBy={noop} onPick={noop} />
+      </Frame>
+      <Frame width="var(--inspector-width)" caption="Context told apart by inside or outside the set" testid="sg-lens-context">
+        <Context groups={fx.lensContextBoundary} by="boundary" onBy={noop} onPick={noop} />
+      </Frame>
+    </div>
+    <Frame width="100%" caption="Collection as a table: ColumnSpec columns, grouped rows with counts" testid="sg-lens-table">
+      <Collection data={fx.lensTable} mode="table" selectedId="p-3" by="nesting" byOptions={fx.lensByOptions} onBy={noop} onSelect={noop} />
+    </Frame>
+    <Frame width="100%" caption="The link trail: Back and a Breadcrumb" testid="sg-lens-trail">
+      <nav class="lens-trail" aria-label="Link trail">
+        <Button size="sm" onclick={noop}>Back</Button>
+        <Breadcrumb items={fx.lensTrail} />
+      </nav>
+    </Frame>
+    {#snippet lensFocus()}
+      <Frame width="100%" caption="Focus, Read (RecordProse)" testid="sg-lens-focus">
+        <Focus data={fx.lensReading} onMode={noop} onEdit={noop} />
+      </Frame>
+      <Frame width="100%" caption="Focus, Document: the set as one read, the selected block highlighted" testid="sg-lens-document">
+        <Focus data={fx.lensDocument} mode="document" selectedId="c-2" onMode={noop} onEdit={noop} onSelect={noop} />
+      </Frame>
+      <Frame width="100%" caption="Focus, As published: the composition rendered" testid="sg-lens-published">
+        <Focus data={fx.lensPublished} mode="published" published onMode={noop} />
+      </Frame>
+      <Frame width="100%" caption="Focus, Edit in place (SectionForm)" testid="sg-lens-edit">
+        <Focus data={fx.lensReading} editing onMode={noop} onEdit={noop} onSave={noop} />
+      </Frame>
+    {/snippet}
+    {@render gated(lensFocus)}
   </section>
 
   <section id="method">

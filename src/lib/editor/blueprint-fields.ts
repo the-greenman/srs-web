@@ -9,6 +9,7 @@
  */
 
 import type { FieldFormDef } from "$lib/governance/types.js";
+import { fieldLabel } from "$lib/labels.js";
 import type { BlueprintSchema, SchemaDefinition, SchemaProperty } from "$lib/srs-client.js";
 
 /**
@@ -59,7 +60,7 @@ function propertyToField(name: string, prop: SchemaProperty, required: boolean):
   }
   return {
     fieldId: prop["x-srs-field-id"],
-    label: prop.title || name,
+    label: fieldLabel({ name, title: prop.title }),
     valueType,
     required,
     options: prop.enum,
@@ -91,7 +92,7 @@ export function definitionToComposites(def: SchemaDefinition): CompositeFormDef[
         .map(([fname, fprop]) => propertyToField(fname, fprop, itemRequired.includes(fname)));
       return {
         name,
-        label: prop.title || name,
+        label: fieldLabel({ name, title: prop.title }),
         order: prop["x-srs-order"] ?? 0,
         fields,
       };

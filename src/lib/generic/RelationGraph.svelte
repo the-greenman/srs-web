@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { type ContainerGraph, type FocusLayout, MAP_H, MAP_W } from "./map-layout.js";
-  import { plainLabel, wrapLabel } from "./labels.js";
+  import { plainLabel, wrapLabel } from "$lib/labels.js";
 
   type Props =
     | { view: "focus"; focus: { id: string; label: string }; layout: FocusLayout; onOpen: (id: string) => void }

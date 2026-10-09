@@ -40,7 +40,7 @@
   import InstanceNotes from "$lib/InstanceNotes.svelte";
   import RecordsExplorer from "./RecordsExplorer.svelte";
   import RelationMap from "./RelationMap.svelte";
-  import { plainLabel } from "./labels.js";
+  import { plainLabel } from "$lib/labels.js";
   import AppShell from "$lib/components/AppShell.svelte";
   import Inspector from "$lib/components/Inspector.svelte";
   import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
@@ -87,6 +87,8 @@
     onReviewUpgrade?: (id: string) => void;
     /** Open Document > Packages…; absent while the document is read-only. */
     onOpenPackages?: () => void;
+    /** Open the built-in Lenses view (ADR-022); absent = no Explore > Lenses item. */
+    onOpenLenses?: () => void;
   }
 
   let {
@@ -108,6 +110,7 @@
     onInstallEditor,
     onReviewUpgrade,
     onOpenPackages,
+    onOpenLenses,
   }: Props = $props();
 
   let installing = $state<string | null>(null);
@@ -464,6 +467,8 @@
 
     <section class="nav__group" data-part="explore">
       <h2 class="nav__group-label">Explore</h2>
+      <!-- First, not last: Lenses switches shells, Records and Map are surfaces of this one. -->
+      {#if onOpenLenses}<button class="nav__item" data-testid="open-lenses" onclick={onOpenLenses}>Lenses</button>{/if}
       <button class="nav__item" class:nav__item--active={surface === "records"} onclick={openRecords}>Records</button>
       <button class="nav__item" class:nav__item--active={surface === "map"} onclick={openMap}>Map</button>
     </section>

@@ -43,7 +43,8 @@
     type UpdateRecordInput,
   } from "$lib/srs-client.js";
   import type { FieldFormDef as GovFieldFormDef } from "$lib/governance/types.js";
-  import { type DocumentBlock, typeNameLabel } from "$lib/editor/document-model.js";
+  import type { DocumentBlock } from "$lib/editor/document-model.js";
+  import { humanise } from "$lib/labels.js";
 
   interface Props {
     repo: SrsRepository;
@@ -355,7 +356,7 @@
     const typeName = blockRecords[block.instanceId]?.typeName;
     return (
       availableTypes.find((t) => t.typeId === block.typeId)?.label ??
-      (typeName ? typeNameLabel(typeName) : block.label)
+      (typeName ? humanise(typeName) : block.label)
     );
   }
 

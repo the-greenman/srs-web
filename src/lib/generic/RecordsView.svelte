@@ -9,7 +9,7 @@
   import type { Snippet } from "svelte";
   import Button from "$lib/components/Button.svelte";
   import type { DiscoveryHit } from "$lib/srs-client.js";
-  import { plainLabel } from "./labels.js";
+  import { plainLabel } from "$lib/labels.js";
   import type { TypeGroup } from "./records-model.js";
 
   export interface GroupView extends TypeGroup {

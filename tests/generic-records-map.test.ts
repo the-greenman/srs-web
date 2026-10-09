@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { plainLabel, wrapLabel } from "../src/lib/generic/labels.js";
+import { plainLabel, wrapLabel } from "../src/lib/labels.js";
 import { CONTAINER_NODE_CAP, containerGraph, focusLayout } from "../src/lib/generic/map-layout.js";
 import { NOTES, typeGroups } from "../src/lib/generic/records-model.js";
 
