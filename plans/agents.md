@@ -49,3 +49,16 @@ Agent roles for use in srs-web plan files. For the shared Rust-side roles (Bindi
   3. Scope creep: work outside `srs-web/**`.
   4. Incomplete plans: missing acceptance criteria, missing tests, missing dependency declarations.
 - **Constraints:** Every finding cites the specific ADR or rule violated, with `blocking` / `should-fix` / `nit` severity.
+
+---
+
+## Fresh-eyes Reviewer (srs-web)
+
+- **Owns:** Judging a UI change as a first-time user. It reads no design intent: no plan, design doc, ADR or diff before the run. It runs the dev server and drives the running app with Playwright against named fixtures, through a list of user tasks written by the Lead Integrator. Screenshots go to the session scratchpad.
+- **Write scope:** None in the repo (scratchpad only). Read-only on code.
+- **Must not:** read the plan, design doc or diff before the run; propose code changes.
+- **Returns:** a critique with:
+  - per-task results: WORKED / PARTLY / FAILED, with screenshots and where it hesitated, got lost or saw engine vocabulary;
+  - a comparison with prior rounds' critiques, when there are any (what improved, what regressed, what is still open);
+  - the single biggest remaining confusion;
+  - console errors seen during the run.

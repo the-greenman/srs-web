@@ -21,8 +21,6 @@
 | D9 | Lens ids | `nav:`, `comp:`, `type:`, `find`, `set`; `pkg:` reserved; prefixes never change; unknown id falls back without error | ADR-025 |
 | — | PR split | Two PRs: A = Phases 0–5 (`Refs #547`), B = Phases 6–8 (`Closes #547`) | — |
 
-Where this plan's text below says "ADR-022 (Lenses)" or "ADR-023", read the table above: Lenses is ADR-025.
-
 ## Decisions for the owner (as presented)
 
 Each decision below would be painful to reverse once it ships. Each has a recommendation. Phase 0 records the answers before any code is written. Where you have not answered, the recommendation is the default.
@@ -37,7 +35,7 @@ Today App renders `GenericSrsShell` when `editorMode === "generic"`, and otherwi
 | B. An `EDITORS` entry with an optional `entryTypeId`, "always available". | One list of shells, but it breaks the registry's stated invariant (availability keyed on a type UUID). It also needs a special case to survive read-only, where `offeredEditors` is empty. The picker's "Package editors" group would list an engine view as a package editor. |
 | C. Lenses is the default landing (replaces Generic as first view). | Answers SP-48 fully, but the issue scopes it out ("No current shell is replaced"). It needs its own owner decision after use. |
 
-ADRs: ADR-002 (mode selection gains a built-in view), ADR-014 (precedent: static nav items for engine-level tools, not content), ADR-021 (read-only is a document state, not a shell mode), ADR-001.
+ADRs: ADR-002 (superseded by ADR-022, which records the registry and adds built-in views), ADR-014 (precedent: static nav items for engine-level tools, not content), ADR-021 (read-only is a document state, not a shell mode), ADR-001.
 **Recommendation: A.** The registry stays honest, and read-only links get Lenses too. C becomes a later one-line change (the initial `editorMode`) once the owner has used it.
 
 ### D2. Address: the prototype's own hash vs one shared address module (#426)
@@ -50,7 +48,7 @@ The prototype writes `#repo=&lens=&id=&by=&ctxby=` with `history.replaceState` a
 | B. Lenses keeps its own hash parser in `src/lib/lens/`; #426 unifies later. | Smallest diff now, but two address parsers is the drift the owner rule forbids, and agents learn two schemes. |
 | C. Close #426 here by also moving Generic, Governance and Guides onto the address. | Closes the issue, but adds four shells' selection rewiring to an already large PR, and the issue says no current shell is replaced. |
 
-ADRs: none govern the hash today (ADR-021 governs `?open=`/`?repo=` query params and must keep the hash intact). Proposed ADR-023 below.
+ADRs: none govern the hash today (ADR-021 governs `?open=`/`?repo=` query params and must keep the hash intact). Recorded as [ADR-023](../docs/adr/023-one-hash-address.md).
 **Recommendation: A, narrowing #426.** The PR body says "Narrows #426 (address module + Lenses + Essay); Generic/Governance/Guides remain." Hash keys stay readable so an agent can write them.
 
 ### D3. Focus "Read" vs the existing reading components (one way per goal)
@@ -82,7 +80,7 @@ ADRs: ADR-009 (nav from `repository_navigation`; Collection's navigation lenses 
 ### D5. A new ADR
 
 The work sets new constraints: a built-in engine view, derived-only lenses with no repository ids in client code, a lens id scheme that is part of a public address, and client-side "Tell apart by" over loaded sets. It also extends ADR-009 (sections become lenses) and ADR-010 (columns for sets with no container view).
-**Recommendation: two ADRs, drafted below:** ADR-022 (Lenses) and ADR-023 (one hash address). ADR-023 can be folded into ADR-022 if you want one file. It is separate because #426 and Essay depend on it, not on Lenses.
+**Ruled: four ADRs, one rule each** (D5 in the rulings table): ADR-022 built-in views and the editor registry, ADR-023 one hash address and one history, ADR-024 one record reading component, ADR-025 Lenses. The address is separate because #426 and Essay depend on it, not on Lenses.
 
 ### D6. Board columns for sets that have no container view (ADR-010)
 
@@ -90,7 +88,7 @@ ADR-010: list columns come from `resolveContainerView(...).columns` (`ColumnSpec
 
 | Option | Trade-offs |
 |---|---|
-| **A. `ColumnSpec` where a container view exists; elsewhere the type schema's first four short fields in schema order (author-declared order), recorded as an ADR-010 extension in ADR-022.** Drop `sharedFields`: "Nothing" means label only, which design §7 calls a valid first-class choice. | Every set gets a usable board. The choice is schema-driven, never name-based, so it keeps ADR-010's reason (no name-based semantics) even though the client picks the count. |
+| **A. `ColumnSpec` where a container view exists; elsewhere the type schema's first four short fields in schema order (author-declared order), recorded as an ADR-010 extension in ADR-025.** Drop `sharedFields`: "Nothing" means label only, which design §7 calls a valid first-class choice. | Every set gets a usable board. The choice is schema-driven, never name-based, so it keeps ADR-010's reason (no name-based semantics) even though the client picks the count. |
 | B. Strict ADR-010: title, type and state columns only, unless a container view exists. | Purest, but the review found boards of only TYPE and STATUS useless (critique round 1, "The case" board). |
 | C. A new engine binding: default columns for a type. | Right long-term home. Not needed to ship; can follow if two clients need it. |
 
@@ -102,7 +100,7 @@ ADR-010: list columns come from `resolveContainerView(...).columns` (`ColumnSpec
 
 | Option | Trade-offs |
 |---|---|
-| **A. Presentation, recorded as such in ADR-022.** It groups only what the engine returned, never filters or derives membership. On a paged set it says it groups the loaded page ("100 of N"). | Ships now, and is the same class as ADR-018's presentation-layer filter. If agents need "tell apart by" over MCP, the engine needs a group-by, so follow-up gap 7 (select facets) is the first step. |
+| **A. Presentation, recorded as such in ADR-025.** It groups only what the engine returned, never filters or derives membership. On a paged set it says it groups the loaded page ("100 of N"). | Ships now, and is the same class as ADR-018's presentation-layer filter. If agents need "tell apart by" over MCP, the engine needs a group-by, so follow-up gap 7 (select facets) is the first step. |
 | B. Push grouping into `find` (group-by axis) before shipping. | One answer for every client, but it blocks this issue on srs-rust work. |
 
 **Recommendation: A.** The hub threshold is a presentation default, kept as a named constant (`HUB_LINKS`).
@@ -121,7 +119,7 @@ The issue wants "a link trail with Back" and "Back and reload work". The prototy
 ### D9. Lens ids are a public contract
 
 The hash's `lens=` value is what links, reloads and agents use. Proposed scheme: `nav:<sectionContainerId>`, `comp:<compositionId>`, `type:<typeId>`, `find`, `set`. All are engine UUIDs or fixed words, with no repository ids in code. Package-defined lenses (a later RFC) take a new prefix, `pkg:<lensDefinitionId>`, so existing links never change meaning. `set` is the viewer's own drawn set, held in `localStorage` per repository id (per-viewer convenience). On another browser it falls back to the first tab and shows a notice.
-**Recommendation: adopt this scheme in ADR-022 and do not change prefixes later.** An unknown or unresolvable `lens=` falls back to the first lens without error.
+**Recommendation: adopt this scheme in ADR-025 and do not change prefixes later.** An unknown or unresolvable `lens=` falls back to the first lens without error.
 
 ---
 
@@ -164,14 +162,14 @@ Every srs-web ADR (001–021) was read. Below: how each one bears on this plan.
 | ADR | Bearing on this plan | Status |
 |---|---|---|
 | [ADR-001](../docs/adr/001-thin-client.md) | Hard constraint. Every read goes through existing `srs-client.ts` bindings, and every write is `updateRecord` via `SectionForm`. Eight engine gaps stay `ponytail:` workarounds, not TS semantics (see Out of scope). | accepted, governs |
-| [ADR-002](../docs/adr/002-editor-mode-selection.md) | Explicit mode selection. D1-A adds a built-in view reached explicitly; no auto-detection. | accepted, extended by ADR-022 |
+| [ADR-002](../docs/adr/002-editor-mode-selection.md) | Explicit mode selection, already replaced by the #338 editor registry. ADR-022 records the registry and adds built-in views (D1). | superseded by ADR-022 |
 | [ADR-003](../docs/adr/003-blueprint-schema-driven-guides-editor.md) | "As published" renders a Composition (document view); Edit uses the type schema, never the view. | accepted, respected |
 | ADR-004 / ADR-005 | Superseded; no bearing. | superseded |
-| [ADR-006](../docs/adr/006-dynamic-dispatch-replaces-sections.md) / [ADR-007 type registry](../docs/adr/007-unified-type-registry.md) | Lenses add no TYPE_REGISTRY entries. RecordProse is the fallback reader; a registered view can take over via RecordDispatch later (D3). | accepted, respected |
+| [ADR-006](../docs/adr/006-dynamic-dispatch-replaces-sections.md) / [ADR-007 type registry](../docs/adr/007-unified-type-registry.md) | Lenses add no TYPE_REGISTRY entries. RecordProse is the fallback reader; a registered view can take over via RecordDispatch later (D3, ADR-024). | accepted, respected |
 | [ADR-007 CSS themes](../docs/adr/007-frontend-css-themes.md) | Preview CSS only; Focus "As published" renders markdown through `MarkdownView`, not the preview iframe. No bearing. | accepted |
 | [ADR-008](../docs/adr/008-rfc009-uuid-chain-join.md) | Composition ↔ container joins come from engine bindings (`documentViewsForContainer`, render projection `containerId`), never string matching. | accepted, respected |
-| [ADR-009](../docs/adr/009-container-driven-nav.md) | Navigation-section lenses come from `repositoryNavigation`. Containers from data, never TS constants. | accepted, extended by ADR-022 |
-| [ADR-010](../docs/adr/010-view-driven-list-columns.md) | Board columns: `ColumnSpec` where a container view exists; schema-order extension elsewhere (D6). | accepted, extended by ADR-022 |
+| [ADR-009](../docs/adr/009-container-driven-nav.md) | Navigation-section lenses come from `repositoryNavigation`. Containers from data, never TS constants. | accepted, extended by ADR-025 |
+| [ADR-010](../docs/adr/010-view-driven-list-columns.md) | Board columns: `ColumnSpec` where a container view exists; schema-order extension elsewhere (D6). | accepted, extended by ADR-025 |
 | ADR-011 / ADR-015 / ADR-016 / ADR-017 | OAuth worker, binary storage, exploded trees, refresh tokens: no bearing (Lenses never touches storage; Save stays App's). | accepted |
 | [ADR-012](../docs/adr/012-governance-status-via-lifecycle-binding.md) | Lifecycle is shown read-only as `Tag`. Lenses offers no transitions, and Edit never writes status as a field. | accepted, respected |
 | [ADR-013](../docs/adr/013-repo-context.md) | RecordProse takes props, not the repo context, so it renders outside GovernanceShell (D3). | accepted, respected |
@@ -180,26 +178,17 @@ Every srs-web ADR (001–021) was read. Below: how each one bears on this plan.
 | [ADR-019](../docs/adr/019-ui-theming-surface-and-live-styleguide.md) | Specimens for every pane on `/styleguide`, rendered in default and demo themes. `lens.css` in the `components` layer; no scoped `<style>`. | accepted, governs |
 | [ADR-020](../docs/adr/020-icon-set-and-component-token-api.md) | The prototype's glyph buttons (`+`, `−`, `←`, `→`) become `IconButton` + Lucide. Component tokens on `:root`. `data-part` rows for the lens components. `Select`/`Checkbox`/`Breadcrumb`/`ActionMenu` reused. | accepted, governs |
 | [ADR-021](../docs/adr/021-open-from-url.md) | Lenses is available on read-only documents; Edit is hidden and the read-only repo refuses writes underneath. Query-param clearing must keep the hash. | accepted, respected |
-| ADR-022 (new) | Lenses: one engine view of three panes over derived lenses | proposed (Phase 0) |
-| ADR-023 (new, or folded into 022) | One hash address for every shell | proposed (Phase 0) |
+| [ADR-022](../docs/adr/022-built-in-views-and-editor-registry.md) (new) | Built-in engine views sit outside the editor registry (D1); supersedes ADR-002 | proposed |
+| [ADR-023](../docs/adr/023-one-hash-address.md) (new) | One hash address and one history for every shell (D2, D8) | proposed |
+| [ADR-024](../docs/adr/024-one-record-reading-component.md) (new) | One component for reading a record as prose (D3) | proposed |
+| [ADR-025](../docs/adr/025-lenses.md) (new) | Lenses: one engine view of three panes over derived lenses (D4, D6, D7, D9) | proposed |
 
-### Draft ADRs (for Phase 0; not written yet)
+### ADRs
 
-**ADR-022: Lenses — one engine view of three panes over derived lenses.**
-srs-web gains a built-in engine view, *Lenses*, beside the generic explorer. It is reached from Generic's Explore group and returns by Go > Explorer, and it is not a registry editor. It answers three questions in three panes, each built once: Collection (the set), Focus (one thing: Read, Document, Edit in place, read-only As published) and Context (the record's links, grouped).
-- A *lens* is presentation wiring, derived from engine data only: one per navigation section, composition and used type, plus Everything and the viewer's drawn set.
-- No repository ids, field names or relation keys appear in client code.
-- Lens ids are `nav:|comp:|type:<uuid>`, `find` and `set`; `pkg:` is reserved for package-defined lenses after an RFC.
-- "Tell apart by" and the inside/outside-the-set split are presentation over engine-returned items and edges. They never filter or derive membership.
-- Board columns are `ColumnSpec` where a container view exists, else the type schema's first short fields in schema order.
-
-Extends ADR-002, ADR-009 and ADR-010. Rejected: a registry entry with no entry type (breaks the registry invariant and vanishes on read-only), and curated per-repository lenses in client code (repository ids in the client).
-
-**ADR-023: One hash address for every shell.**
-- `src/lib/address.ts` is the only parser and formatter of the URL hash. It owns one `Address` with essay keys `e`, `p`, `z` and lens keys `lens`, `id`, `by`, `ctxby`.
-- A selection change pushes a history entry. A view-setting change (a distinction) replaces it. Shells react to `hashchange`, so Back, reload and an agent writing the hash all go through one path.
-- The query string stays reserved for boot links (ADR-021), which must preserve the hash when they clear themselves.
-- Shells not yet on the address (Generic, Governance, Guides) move to it under #426.
+- [ADR-022: Built-in engine views sit outside the editor registry](../docs/adr/022-built-in-views-and-editor-registry.md) (D1; supersedes ADR-002)
+- [ADR-023: One hash address and one history for every shell](../docs/adr/023-one-hash-address.md) (D2, D8)
+- [ADR-024: One component for reading a record as prose](../docs/adr/024-one-record-reading-component.md) (D3)
+- [ADR-025: Lenses, one engine view of three panes over derived lenses](../docs/adr/025-lenses.md) (D4, D6, D7, D9; extends ADR-009 and ADR-010)
 
 ---
 
@@ -302,15 +291,16 @@ PR split: see "Too big for one PR" at the end. Phases 0–5 are **PR A** (`Refs 
 
 ### Phase 0: Decisions, ADRs, role
 
-**Goal:** Owner answers to D1–D9 recorded; ADR-022/023 accepted as drafted or amended; the new role in `agents.md`.
+**Goal:** Owner answers to D1–D9 recorded; ADR-022 to ADR-025 written and reviewed; the new role in `agents.md`.
 
 **Agent:** Lead Integrator (writes); Architecture Reviewer (reviews the ADRs).
-**Write scope:** `plans/547-lenses-view.md`, `plans/agents.md`, `docs/adr/022-lenses.md`, `docs/adr/023-one-hash-address.md`.
+**Write scope:** `plans/547-lenses-view.md`, `plans/agents.md`, `docs/adr/002-editor-mode-selection.md` (Status line only), `docs/adr/022-built-in-views-and-editor-registry.md`, `docs/adr/023-one-hash-address.md`, `docs/adr/024-one-record-reading-component.md`, `docs/adr/025-lenses.md`.
 
 #### Tasks
-- [ ] Record the owner's answers inline under each Dn ("Owner: …").
-- [ ] Write ADR-022 (and ADR-023 unless folded) from the drafts above. Add "Extended by ADR-022" lines to ADR-002, ADR-009 and ADR-010.
-- [ ] Add "Fresh-eyes Reviewer (srs-web)" to `plans/agents.md`.
+- [x] Record the owner's answers (the rulings table at the top).
+- [x] Write ADR-022, ADR-023, ADR-024 and ADR-025. Mark ADR-002 superseded by ADR-022.
+- [ ] Add "Extended by ADR-025" lines to ADR-009 and ADR-010 when ADR-025 is accepted.
+- [x] Add "Fresh-eyes Reviewer (srs-web)" to `plans/agents.md`.
 - [ ] Architecture Reviewer pass over the ADRs (blocking / should-fix / nit).
 
 #### Acceptance Criteria
@@ -598,7 +588,7 @@ Pass. Commit `feat(lens): draw a set with the hub guard (#547)`.
 **Goal:** Docs current, a fresh-eyes round on all four layouts, follow-ups filed after owner sign-off, PR B pushed for review.
 
 **Agent:** Lead Integrator; Fresh-eyes Reviewer; Verification Agent; Architecture Reviewer.
-**Write scope:** `plans/ux-lenses.md`, `plans/547-lenses-view.md`, `src/lib/components/README.md` (a pointer row to `src/lib/lens` and `RecordProse` only), `docs/adr/022-lenses.md` (consequences only).
+**Write scope:** `plans/ux-lenses.md`, `plans/547-lenses-view.md`, `src/lib/components/README.md` (a pointer row to `src/lib/lens` and `RecordProse` only), `docs/adr/025-lenses.md` (consequences only).
 
 #### Tasks
 - [ ] Fresh-eyes round:

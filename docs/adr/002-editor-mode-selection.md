@@ -1,6 +1,6 @@
 # ADR-002: Explicit editor-mode selection
 
-**Status:** Accepted  
+**Status:** Superseded by [ADR-022](./022-built-in-views-and-editor-registry.md)  
 **Date:** 2026-06-08  
 **Issue:** [srs-web#25](https://github.com/the-greenman/srs-web/issues/25)
 
