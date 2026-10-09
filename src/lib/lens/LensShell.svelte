@@ -16,9 +16,12 @@
   selection, it selects its first member. Entering from the explorer returns to the last lens address of
   this session for the same repository (memory only). Drawing a set: Select checks records (shift for a
   range), Context's "+" adds a linked record, "Add everything" adds every record the checked ones (else
-  the focused one) link to and skips hubs (more than HUB_LINKS links, listed with a "+" each); "Show as a
-  set" opens them as "My set" (lens `set`), kept per repository in browser storage (working-set.ts). The
-  My set tab shows only once a set exists; `lens=set` with no stored set falls back to the first tab with
+  the focused one) link to and skips hubs (more than HUB_LINKS links, listed with a "+" each). Every one of
+  these changes the checks only (a draft, on every lens); "Show as a set" / "Replace My set with these"
+  makes them "My set" (lens `set`), kept per repository in browser storage (working-set.ts, re-read on a
+  repository change, ids that no longer resolve dropped). "Clear selection" drops the checks; "Remove My
+  set" (on My set) deletes the stored set. The board, with no "Tell the set apart by" chosen, groups by the
+  first option that splits the set (splittingBy). The graph draws GRAPH_LINKS a side. The My set tab shows only once a set exists; `lens=set` with no stored set falls back to the first tab with
   a notice. Edit is hidden while read-only. On a phone, picking
   or following a record closes the nav and inspector drawers. Sits on AppShell + Toolbar; no scoped style
   (lens.css).
@@ -65,7 +68,6 @@
     containersForInstance,
     getContainer,
     listRelationTypes,
-    neighbours,
     repositoryId,
     updateRecord,
   } from "$lib/srs-client.js";
@@ -84,19 +86,31 @@
     contextGroups,
     expandItem,
     graphEdges,
+    linkCount,
     loadBlocks,
     loadCollection,
     loadContainerBlocks,
     loadDocument,
     loadEdges,
     loadRead,
+    resolves,
     shownIn,
     tryRecord,
   } from "./lens-data.js";
-  import { collectionOptions, groupItems, skipHubs } from "./lens-distinctions.js";
+  import { GRAPH_LINKS, collectionOptions, groupItems, skipHubs, splittingBy } from "./lens-distinctions.js";
   import { type Layout, type Lens, defaultBy, deriveLenses } from "./lens.js";
   import { lensActions } from "./toolbar-actions.js";
-  import { readSet, writeSet } from "./working-set.js";
+  import {
+    type SetState,
+    add,
+    check as checkIds,
+    clear,
+    commit,
+    pending,
+    readSet,
+    removeSet,
+    writeSet,
+  } from "./working-set.js";
 
   let {
     repo,
@@ -131,10 +145,16 @@
   const shell = new ShellState({ wideEnabled: true });
   const EMPTY: CollectionData = { items: [], columns: [], total: 0 };
 
-  // ── The drawn set: `working` is what is checked now; `mySet` is the shown set ("My set"), stored ──
+  // ── The drawn set (working-set.ts): `working` is what is checked (a draft); `mySet` is the shown, stored set ──
   const repoId = $derived(repositoryId(repo));
-  let mySet = $state<string[]>(untrack(() => readSet(repoId)));
-  let working = $state<string[]>(untrack(() => [...mySet]));
+  /** The stored set, minus ids this repository no longer resolves; the checks start as it. */
+  const storedSets = (): SetState => {
+    const mySet = readSet(repoId).filter((id) => resolves(repo, id));
+    return { working: [...mySet], mySet };
+  };
+  let sets = $state<SetState>(untrack(storedSets));
+  const working = $derived(sets.working);
+  const mySet = $derived(sets.mySet);
   let picking = $state(false);
   /** Hubs the last "Add everything" left out, each addable by hand. */
   let skipped = $state<{ id: string; label: string }[]>([]);
@@ -262,6 +282,18 @@
     if (repo && lens) lastVisit.set(repo, current());
   });
 
+  // Another repository: re-read its stored set.
+  let seenRepo = untrack(() => repoId);
+  $effect(() => {
+    const id = repoId;
+    untrack(() => {
+      if (id === seenRepo) return;
+      seenRepo = id;
+      sets = storedSets();
+      skipped = [];
+    });
+  });
+
   // A write (Edit > Save, an agent) re-reads the set; selection and distinctions stay.
   let seenRevision = untrack(() => documentRevision);
   $effect(() => {
@@ -336,7 +368,10 @@
   const isOutline = $derived(lens?.collection.kind === "outline");
   const byOptions = $derived(collectionOptions(collection.items, isOutline));
   const kindBy = $derived(lens ? defaultBy(lens.collection) : "type");
-  const effectiveBy = $derived<CollectionBy>(by && byOptions.some((o) => o.value === by) ? by : kindBy);
+  const chosenBy = $derived(by && byOptions.some((o) => o.value === by) ? by : null);
+  /** The board's presentation default (D7): with no choice made, the first option that splits the set. */
+  const boardBy = $derived(layout === "board" && !chosenBy ? splittingBy(collection.items, byOptions, kindBy) : undefined);
+  const effectiveBy = $derived<CollectionBy>(chosenBy ?? boardBy ?? kindBy);
   const effectiveCtxBy = $derived<ContextBy>(ctxBy ?? "link-type");
   // ponytail: presentation limit, no ADR-025 gap — one containersForInstance per member, only while "Container" is chosen.
   const containerTitles = $derived.by(() => {
@@ -358,6 +393,13 @@
       kindDefault: kindBy,
     }),
   });
+  /** The board shows one group (or none): it says what splits it. */
+  const boardOneGroup = $derived(
+    layout === "board" &&
+      effectiveBy !== "none" &&
+      collection.items.length > 1 &&
+      new Set(grouped.items.flatMap((i) => (i.group === undefined ? [] : [i.group]))).size <= 1
+  );
   function setBy(b: CollectionBy): void {
     by = b;
     replaceAddress(current(), trail);
@@ -424,22 +466,18 @@
     onOpenExplorer?.();
   }
 
-  // ── Drawing a set ──
+  // ── Drawing a set: every change goes through the pure model (working-set.ts) ──
   const checked = $derived(new Set(working));
-  /** Store `ids` as My set; on the set lens, its Collection follows. */
-  function storeSet(ids: string[]): void {
-    mySet = ids;
-    writeSet(repoId, ids);
+  /** Take the model's next state; when My set changed, store it and, on the set lens, reload it. */
+  function setSets(next: SetState): void {
+    const stored = next.mySet !== sets.mySet;
+    sets = next;
+    if (!stored) return;
+    writeSet(repoId, next.mySet);
     if (lens?.id === "set") load(lens);
   }
-  function addToSet(ids: string[]): void {
-    working = [...new Set([...working, ...ids])];
-    if (lens?.id === "set") storeSet(working);
-  }
-  function check(ids: string[], on: boolean): void {
-    if (on) addToSet(ids);
-    else working = working.filter((w) => !ids.includes(w));
-  }
+  const addToSet = (ids: string[]) => setSets(add(sets, ids));
+  const check = (ids: string[], on: boolean) => setSets(checkIds(sets, ids, on));
   /** One hop out from the checked records (else the focused one), skipping hubs (skipHubs, HUB_LINKS). */
   function addAll(): void {
     const from = working.length > 0 ? working : selectedId ? [selectedId] : [];
@@ -449,26 +487,29 @@
       for (const id of from)
         for (const e of id === selectedId ? edges : loadEdges(repo, id))
           if (!have.has(e.id) && !found.has(e.id)) found.set(e.id, { id: e.id, label: e.label });
-      const { add, skipped: hubs } = skipHubs([...found.values()], (id) => neighbours(repo, id, { limit: 1 }).total);
-      addToSet([...from, ...add.map((m) => m.id)]);
+      const { add: adding, skipped: hubs } = skipHubs([...found.values()], (id) => linkCount(repo, id));
+      addToSet([...from, ...adding.map((m) => m.id)]);
       skipped = hubs;
     } catch (e) {
       fail(e);
     }
   }
+  /** "Show as a set" / "Replace My set with these": the checks become My set, shown. */
   function showSet(): void {
     picking = false;
-    storeSet([...working]);
+    setSets(commit(sets));
     switchLens("set");
   }
-  function clearSet(): void {
-    working = [];
+  /** "Clear selection": drops the checks only. */
+  function clearChecks(): void {
+    setSets(clear(sets));
     skipped = [];
-    if (lens?.id === "set") {
-      const first = tabs.find((l) => l.id !== "set");
-      if (first) switchLens(first.id);
-    }
-    storeSet([]);
+  }
+  /** "Remove My set": deletes the stored set and leaves its lens. */
+  function removeMySet(): void {
+    const first = tabs.find((l) => l.id !== "set");
+    if (lens?.id === "set" && first) switchLens(first.id);
+    setSets(removeSet(sets));
   }
 
   // ── Focus ──
@@ -542,15 +583,21 @@
     }
   });
   const groups = $derived<ContextGroupData[]>(contextGroups(edges, effectiveCtxBy, inSet, relationTypes));
-  // The graph names each edge as Context names it, and tells it apart inside vs leaving the set.
+  // The graph names each edge as Context names it, and tells it apart inside vs leaving the set; it
+  // draws at most GRAPH_LINKS a side and says "N of M links".
+  const graphAll = $derived(layout === "graph" && selectedId ? graphEdges(groups, edges, inSet) : []);
+  const graphShown = $derived(
+    (["in", "out"] as const).flatMap((d) => graphAll.filter((e) => e.direction === d).slice(0, GRAPH_LINKS))
+  );
   const graph = $derived(
-    layout === "graph" && selectedId
+    graphShown.length > 0
       ? focusLayout(
-          graphEdges(groups, edges, inSet).map((e) => ({
+          graphShown.map((e) => ({
             id: e.id,
             label: e.label,
             direction: e.direction,
-            relationType: e.edgeLabel,
+            relationType: e.relationType,
+            edgeLabel: e.edgeLabel,
             tone: e.leaves ? ("leaving" as const) : ("inside" as const),
           }))
         )
@@ -609,12 +656,14 @@
     onBy={setBy}
     {picking}
     {checked}
-    setSize={working.length}
+    checkedCount={working.length}
+    canShow={pending(sets)}
     setShown={mySet.length > 0}
     onPicking={() => (picking = !picking)}
     onCheck={check}
     onShowSet={showSet}
-    onClearSet={clearSet}
+    onClearChecks={clearChecks}
+    onRemoveSet={lens?.id === "set" ? removeMySet : undefined}
     onSelect={pick}
     onExpand={expand}
     onMore={more_}
@@ -702,11 +751,14 @@
     {#if error}<Notice kind="error">{error}</Notice>{/if}
     <div class="workspace lens-main" data-layout={layout}>
       {#if layout === "board"}
-        <div class="lens-board">{@render collectionPane("table", false)}</div>
+        <div class="lens-board">
+          {#if boardOneGroup}<p class="lens-empty" data-testid="lens-board-one-group">The board groups rows by "Tell the set apart by"; nothing there splits this set.</p>{/if}
+          {@render collectionPane("table", false)}
+        </div>
       {:else if layout === "graph"}
         {#if graph && graph.placed.length > 0}
           <div class="lens-graph" data-testid="lens-graph">
-            <p class="lens-empty" data-testid="lens-graph-key">Solid lines stay inside this set; dashed lines leave it.</p>
+            {#if graphShown.length < graphAll.length}<p class="lens-empty" data-testid="lens-graph-cap">{graphShown.length} of {graphAll.length} links</p>{/if}
             <RelationGraph
               view="focus"
               focus={{ id: selectedId ?? "", label: selectedLabel }}

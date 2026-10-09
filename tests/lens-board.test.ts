@@ -76,15 +76,20 @@ describe.skipIf(!haveBindings)("lens board columns on the real engine (srs-spec.
   });
 
   it("nav lens columns are the ColumnSpec", () => {
-    // srs-spec declares no ColumnSpec on its sections (columns: []); gallery's Roles section declares three.
+    // gallery's Roles section declares three columns.
     const gallery = mod.SrsRepository.load(readFileSync(path.resolve(__dirname, "../e2e/fixtures/gallery.srsj"), "utf8"));
-    for (const [r, containerId, n] of [[repo, DISTRIBUTION, 0], [gallery, ROLES, 3]] as const) {
-      const l = lens.deriveLenses(r).find((x) => x.id === `nav:${containerId}`)!;
-      const spec = [...client.resolveContainerView(r, containerId).columns].sort((a, b) => a.order - b.order).slice(0, 4);
-      expect(spec).toHaveLength(n);
-      expect(data.loadCollection(r, l).columns).toEqual(
-        spec.map((c) => ({ kind: "field", fieldId: c.fieldId, fieldName: c.fieldName, label: c.displayLabel }))
-      );
-    }
+    const l = lens.deriveLenses(gallery).find((x) => x.id === `nav:${ROLES}`)!;
+    const spec = [...client.resolveContainerView(gallery, ROLES).columns].sort((a, b) => a.order - b.order).slice(0, 4);
+    expect(spec).toHaveLength(3);
+    expect(data.loadCollection(gallery, l).columns).toEqual(
+      spec.map((c) => ({ kind: "field", fieldId: c.fieldId, fieldName: c.fieldName, label: c.displayLabel }))
+    );
+  });
+
+  it("a nav lens with an empty ColumnSpec falls back to label, type and state", () => {
+    // srs-spec declares no ColumnSpec on its sections (columns: []).
+    expect(client.resolveContainerView(repo, DISTRIBUTION).columns).toHaveLength(0);
+    const l = lens.deriveLenses(repo).find((x) => x.id === `nav:${DISTRIBUTION}`)!;
+    expect(data.loadCollection(repo, l).columns).toEqual(FIXED);
   });
 });

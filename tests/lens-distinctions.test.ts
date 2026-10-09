@@ -7,6 +7,7 @@ import {
   groupItems,
   skipHubs,
   splitByBoundary,
+  splittingBy,
 } from "../src/lib/lens/lens-distinctions";
 
 const rec = (id: string, fieldValues: Record<string, unknown>) => ({
@@ -89,5 +90,20 @@ describe("lens distinctions", () => {
     const bare = items.map((i) => ({ ...i, lifecycle: undefined, createdBy: undefined }));
     expect(values(bare, false)).toEqual(["none", "type", "container"]);
     expect(collectionOptions(items, true).some((o) => o.value.startsWith("field:"))).toBe(false);
+  });
+
+  it("board defaults to the first option that splits the set", () => {
+    // One type throughout: Type gives one group, so the board takes State (the first that splits).
+    const problems: Item[] = [
+      { id: "p", label: "P", typeName: "problem", lifecycle: "draft", createdBy: human, depth: 0 },
+      { id: "q", label: "Q", typeName: "problem", lifecycle: "active", createdBy: ai, depth: 0 },
+    ];
+    const opts = collectionOptions(problems, false);
+    expect(splittingBy(problems, opts, "type")).toBe("state");
+    // The current choice stays when it already splits.
+    expect(splittingBy(items, collectionOptions(items, false), "type")).toBe("type");
+    // Nothing splits: no default, and the board says how it groups.
+    const same: Item[] = [problems[0], { ...problems[0], id: "r" }];
+    expect(splittingBy(same, collectionOptions(same, false), "type")).toBeUndefined();
   });
 });

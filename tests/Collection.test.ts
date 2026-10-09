@@ -51,6 +51,21 @@ describe("Collection", () => {
     expect(onCheck).toHaveBeenNthCalledWith(2, ["a", "b", "c"], true);
   });
 
+  it("set bar: Show as a set first, then Replace My set with these; Clear selection and Remove My set apart", () => {
+    const first = render(Collection, { data: data(items), picking: true, checkedCount: 2, canShow: true, onSelect: () => {} });
+    expect(first.getByTestId("lens-show-set").textContent).toBe("Show as a set (2)");
+    expect(first.getByTestId("lens-clear-checks").textContent).toBe("Clear selection");
+    expect(first.queryByTestId("lens-remove-set")).toBeNull();
+    first.unmount();
+    const again = render(Collection, { data: data(items), checkedCount: 3, canShow: true, setShown: true, onRemoveSet: () => {}, onSelect: () => {} });
+    expect(again.getByTestId("lens-show-set").textContent).toBe("Replace My set with these (3)");
+    expect(again.getByTestId("lens-remove-set").textContent).toBe("Remove My set");
+    again.unmount();
+    // The checks already are My set: nothing to show.
+    const same = render(Collection, { data: data(items), checkedCount: 3, setShown: true, onRemoveSet: () => {}, onSelect: () => {} });
+    expect(same.queryByTestId("lens-show-set")).toBeNull();
+  });
+
   it("expand toggle is an IconButton with a name", async () => {
     const onExpand = vi.fn();
     const { container, getByRole } = render(Collection, { data: data(items), by: "nesting", onExpand, onSelect: () => {} });

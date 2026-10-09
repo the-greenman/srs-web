@@ -565,7 +565,7 @@
   <section id="lenses">
     <h2>Lenses</h2>
     <p class="sg__note">The Lenses view (ADR-025): three panes over derived lenses. The switcher shows navigation sections as tabs and the
-      rest under More lenses. Each pane has a "Tell apart by" control. The Collection is an outline (Nesting) on the dark rail, a list told
+      rest under More lenses. Each pane has its own "Tell apart by" control ("Tell the set apart by", "Tell links apart by"). The Collection is an outline (Nesting) on the dark rail, a list told
       apart by Created by (ActorChip headings) or a table (the ADR-010 list pane). Focus reads one record through RecordProse (ADR-024), the
       set as a document with the selected block highlighted, the composition as published, or Edit in place. Context groups the record's
       own links by the engine's relation label, flat (Nothing), or inside and outside the set. The link trail is a Breadcrumb with Back.</p>
@@ -573,7 +573,7 @@
       <Frame width="var(--inspector-width)" caption="Switcher (section tabs + More) and the outline told apart by Nesting, Select on, a set of 2" testid="sg-lens-outline">
         <LensSwitcher tabs={fx.lensTabs} more={fx.lensMore} active="nav:s-case" onPick={noop} />
         <div class="nav" style="padding: var(--space-xs) 0">
-          <Collection data={fx.lensOutline} selectedId="c-2" expanded={new Set(["c-1"])} onDark by="nesting" byOptions={fx.lensByOptions} onBy={noop} picking checked={new Set(["c-2", "c-3"])} setSize={2} onPicking={noop} onCheck={noop} onShowSet={noop} onClearSet={noop} onSelect={noop} onExpand={noop} />
+          <Collection data={fx.lensOutline} selectedId="c-2" expanded={new Set(["c-1"])} onDark by="nesting" byOptions={fx.lensByOptions} onBy={noop} picking checked={new Set(["c-2", "c-3"])} checkedCount={2} canShow onPicking={noop} onCheck={noop} onShowSet={noop} onClearChecks={noop} onSelect={noop} onExpand={noop} />
         </div>
       </Frame>
       <Frame width="var(--inspector-width)" caption="A list told apart by Created by: ActorChip headings with counts" testid="sg-lens-created-by">
@@ -592,9 +592,8 @@
     <Frame width="100%" caption="Board: the Collection as a table, ColumnSpec columns, grouped rows with counts" testid="sg-lens-table">
       <Collection data={fx.lensTable} mode="table" selectedId="p-3" by="nesting" byOptions={fx.lensByOptions} onBy={noop} onSelect={noop} />
     </Frame>
-    <Frame width="100%" caption="Graph: edges named as Context names them (legend), dashed where they leave the set" testid="sg-lens-graph">
+    <Frame width="100%" caption="Graph: edges named as Context names them (legend), a line key, dashed where they leave the set" testid="sg-lens-graph">
       <div class="lens-graph">
-        <p class="lens-empty">Solid lines stay inside this set; dashed lines leave it.</p>
         <RelationGraph view="focus" focus={fx.lensGraph.focus} layout={fx.lensGraph.layout} onOpen={noop} />
       </div>
     </Frame>

@@ -407,7 +407,17 @@ test.describe("lenses — layouts", () => {
       const name = l.replace(/^[←→]\s*/, "").replace(/\s*\d+$/, "").trim();
       expect(groups.some((g) => g.includes(name)), name).toBe(true);
     }
-    await expect(page.getByTestId("lens-graph").locator('g.neighbour[data-tone="leaving"]').first()).toBeVisible();
+    const leaving = page.getByTestId("lens-graph").locator('g.neighbour[data-tone="leaving"]').first();
+    await expect(leaving).toBeVisible();
+    // The tone is named, not only drawn: aria-label and the legend's line key.
+    await expect(leaving).toHaveAttribute("aria-label", /, leaving the set: /);
+    await expect(page.getByTestId("graph-tone-key")).toContainText("Solid: inside the set");
+    await expect(page.getByTestId("graph-tone-key")).toContainText("Dashed: leaving the set");
+    // At most GRAPH_LINKS (12) a side are drawn; when some are left out the graph says so.
+    const drawn = await page.getByTestId("lens-graph").locator("g.neighbour").count();
+    expect(drawn).toBeLessThanOrEqual(24);
+    const cap = page.getByTestId("lens-graph-cap");
+    if (await cap.count()) await expect(cap).toHaveText(new RegExp(`^${drawn} of \\d+ links$`));
     expect(errors).toEqual([]);
   });
 });
@@ -432,14 +442,30 @@ test("draw a set", async ({ page, browser }) => {
   expect(await hashOf(page)).toContain("lens=set");
   await expect(rows).toHaveCount(2);
 
-  // Add everything the two checked link to: the set grows; any skipped hub is listed with its own "+".
+  // Add everything the two checked link to: the checks grow (a draft), My set waits for "Replace My set
+  // with these"; any skipped hub is listed with its own "+".
   await expect(page.getByTestId("lens-add-all")).toHaveText("Add everything the 2 checked link to");
   await page.getByTestId("lens-add-all").click();
-  await expect.poll(() => rows.count()).toBeGreaterThan(2);
-  const grown = await rows.count();
+  const show = page.getByTestId("lens-show-set");
+  await expect(show).toHaveText(/^Replace My set with these \(\d+\)$/);
+  const grown = Number(/\((\d+)\)/.exec((await show.textContent()) ?? "")?.[1]);
+  expect(grown).toBeGreaterThan(2);
+  await expect(rows).toHaveCount(2);
   const skipped = page.getByTestId("lens-skipped");
   if (await skipped.count()) await expect(skipped.getByTestId("lens-skipped-add")).not.toHaveCount(0);
-  await expect(page.getByTestId("lens-show-set")).toHaveText(`Update the set (${grown})`);
+  await show.click();
+  await expect(rows).toHaveCount(grown);
+  await expect(show).toHaveCount(0);
+
+  // One rule on My set too: unchecking changes the draft only; Clear selection keeps My set.
+  await page.getByTestId("lens-select-toggle").click();
+  await checks.nth(0).click();
+  await expect(show).toHaveText(`Replace My set with these (${grown - 1})`);
+  await expect(rows).toHaveCount(grown);
+  await page.getByTestId("lens-clear-checks").click();
+  await expect(checks.nth(0)).not.toBeChecked();
+  await expect(page.getByTestId("lens-tab-set")).toHaveAttribute("aria-current", "true");
+  await expect(rows).toHaveCount(grown);
 
   // Tell apart by Type groups the set.
   await page.getByTestId("lens-by").selectOption("type");
@@ -457,6 +483,13 @@ test("draw a set", async ({ page, browser }) => {
     both = ls.includes("Inside this set") && ls.includes("Leaving this set");
   }
   expect(both).toBe(true);
+
+  // Remove My set deletes it: the tab goes and the first tab is shown.
+  await expect(page.getByTestId("lens-remove-set")).toHaveText("Remove My set");
+  await page.getByTestId("lens-remove-set").click();
+  await expect(page.getByTestId("lens-tab-set")).toHaveCount(0);
+  await expect(page.getByTestId(tab(READING))).toHaveAttribute("aria-current", "true");
+  expect(await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("srs-web.lens-set.")))).toEqual([]);
   expect(errors).toEqual([]);
 
   // A lens=set link opened in another browser (no stored set) falls back to the first tab with a notice.
@@ -484,6 +517,32 @@ test.describe("lenses — phone (390 wide)", () => {
     await followLink(page, ["Package"], "Field");
     await expect(page.getByTestId("shell-drawer-inspector")).toBeHidden();
     await expect(page.getByTestId("lens-back")).toBeVisible();
+  });
+
+  test("on a phone, Select keeps the drawer open, checkboxes are 24px targets inside the gutter, and the toolbar does not clip", async ({
+    page,
+  }) => {
+    await openSpec(page);
+    await openLenses(page);
+    // The toolbar: every control inside the viewport, nothing in the status clipped.
+    const bar = await page.locator(".lens-shell .toolbar").first().evaluate((t) => ({
+      overflow: t.scrollWidth - t.clientWidth,
+      outside: [...t.querySelectorAll("button, select")].filter((e) => e.getBoundingClientRect().right > innerWidth).length,
+      clipped: [...t.querySelectorAll(".toolbar__status > *")].filter((e) => e.scrollWidth > e.clientWidth).length,
+    }));
+    expect(bar).toEqual({ overflow: 0, outside: 0, clipped: 0 });
+    await page.getByTestId(tab(DISTRIBUTION)).click();
+    await openNavDrawer(page);
+    await page.getByTestId("lens-select-toggle").click();
+    await expect(page.getByTestId("shell-drawer-nav")).toBeVisible();
+    await expect(page.getByTestId("lens-select-toggle")).toHaveAttribute("aria-pressed", "true");
+    const target = await page.getByTestId("lens-check").first().locator("xpath=..").boundingBox();
+    expect(target?.width).toBeGreaterThanOrEqual(24);
+    expect(target?.height).toBeGreaterThanOrEqual(24);
+    expect(target?.x).toBeGreaterThanOrEqual(16);
+    await page.getByTestId("lens-check").first().click();
+    await expect(page.getByTestId("shell-drawer-nav")).toBeVisible();
+    await expect(page.getByTestId("lens-show-set")).toHaveText("Show as a set (1)");
   });
 });
 

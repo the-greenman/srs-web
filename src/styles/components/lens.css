@@ -44,8 +44,18 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
 }
-.lens-list__check {
+/* A row's checkbox: a 24px target, inside the pane's gutter. */
+.lens-collection .checkbox {
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+}
+.lens-list__row--picking > .checkbox {
   margin-left: var(--space-sm);
+}
+.lens-table__row .checkbox {
+  margin-right: var(--space-2xs);
+  vertical-align: middle;
 }
 .lens-list__group small,
 .lens-table__group small {
@@ -227,15 +237,22 @@
   padding-left: 0;
   padding-right: 0;
 }
-/* Select mode: "Show as a set" stays reachable while the list scrolls under it. */
-.lens-set-bar--pinned {
+/* The set bar: in flow above the rows, sticking to the top of the pane's scroller with an opaque
+   background and a rule, so rows pass under it and never show through. */
+.lens-set-bar {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--color-surface);
+  background: var(--color-bg);
+  border-bottom: var(--rule);
 }
-.lens-collection--dark .lens-set-bar--pinned {
-  background: var(--color-text-strong);
+.lens-collection--dark .lens-set-bar {
+  background: var(--color-nav-bg);
+  border-bottom-color: var(--color-on-dark-line);
+}
+/* In the main scroller (.workspace, padded): stick at its top edge, not inside the padding. */
+.lens-main .lens-set-bar {
+  top: calc(-1 * var(--space-md));
 }
 .lens-skipped {
   display: flex;
@@ -348,12 +365,6 @@ h3.record-prose__title {
   padding: 0 var(--space-sm);
 }
 
-/* Graph: edges that leave the set are dashed and coloured (inside stays muted, solid). */
-.lens-graph .generic-graph g[data-tone="leaving"] line {
-  stroke: var(--color-focus);
-  stroke-dasharray: 5 4;
-}
-
 /* ── Context ──────────────────────────────────────────────────────────────── */
 .lens-context-list {
   margin: 0;
@@ -434,6 +445,19 @@ button.lens-context-item:hover {
 }
 .lens-shell .toolbar__status > * {
   overflow: visible;
+}
+/* bp: phone — the bar wraps: "Unsaved changes" and Layout take a second row, so the title keeps its room */
+@media (max-width: 480px) {
+  .lens-shell .toolbar {
+    flex-wrap: wrap;
+  }
+  .lens-shell .toolbar__title {
+    flex-basis: 0;
+  }
+  .lens-shell .toolbar__status {
+    order: 1;
+    flex-basis: 100%;
+  }
 }
 /* bp: above phone (the phone bar keeps its one-row title) */
 @media (min-width: 481px) {

@@ -230,6 +230,21 @@
 .generic-graph-legend small {
   color: var(--color-muted);
 }
+/* Tone (Lenses): an edge leaving the shown set is dashed in its own colour; inside stays solid. */
+.generic-graph g[data-tone="leaving"] line,
+.generic-graph-key-line[data-tone="leaving"] line {
+  stroke: var(--generic-graph-leaving);
+  stroke-dasharray: 5 4;
+}
+.generic-graph-key-line {
+  width: 1.5rem;
+  height: 0.5rem;
+  vertical-align: middle;
+}
+.generic-graph-key-line line {
+  stroke: var(--generic-graph-line);
+  stroke-width: 1.5;
+}
 
 /* ── Records: type groups, paging and ranked snippets ─────────────────────── */
 .generic-groups {

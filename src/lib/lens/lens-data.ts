@@ -166,7 +166,8 @@ function hitItem(repo: SrsRepository, h: DiscoveryHit): Item {
  * type → find({ typeId }, { limit: offset + PAGE }) then getRecord per hit (gap 4);
  * find → find({}, { limit: offset + PAGE }) then getRecord per hit (gap 4);
  * composition → the JSON render projection's ids then getRecord (gap 1); ids → getRecord.
- * columns: resolveContainerView(...).columns for outline lenses; [label, type, state] for every other kind (gap 6).
+ * columns: resolveContainerView(...).columns for outline lenses (an empty ColumnSpec falls back);
+ * [label, type, state] for every other kind (gap 6).
  */
 export function loadCollection(repo: SrsRepository, lens: Lens, offset = 0): CollectionData {
   const c = lens.collection;
@@ -182,7 +183,8 @@ export function loadCollection(repo: SrsRepository, lens: Lens, offset = 0): Col
           fieldName: col.fieldName,
           label: col.displayLabel,
         }));
-      return { items, columns, total: items.length };
+      // A container view with an empty ColumnSpec falls back to label, type and state.
+      return { items, columns: columns.length > 0 ? columns : FIXED_COLUMNS, total: items.length };
     }
     case "composition": {
       // ponytail: ADR-025 gap 1 (srs-rust#1378) — no binding reads one Composition by id with its
@@ -231,6 +233,21 @@ export function tryRecord(repo: SrsRepository, id: string): SrsRecord | undefine
   } catch {
     return undefined;
   }
+}
+
+/** An id the engine can place: a record, or an instance some container holds (a Tier 0 note). */
+export function resolves(repo: SrsRepository, id: string): boolean {
+  if (tryRecord(repo, id)) return true;
+  try {
+    return containersForInstance(repo, id).length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/** How many links a record has (the hub guard's count): the engine's total, one item read. */
+export function linkCount(repo: SrsRepository, id: string): number {
+  return neighbours(repo, id, { limit: 1 }).total;
 }
 
 /** One level of a nested anchored container, placed under `parent`. */

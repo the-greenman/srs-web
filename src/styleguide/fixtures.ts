@@ -1282,7 +1282,8 @@ export const lensGraph = {
         id: e.id,
         label: e.label,
         direction: e.direction,
-        relationType: g.def.label,
+        relationType: e.relationType,
+        edgeLabel: g.def.label,
         tone: e.direction === "out" ? ("inside" as const) : ("leaving" as const),
       }))
     )

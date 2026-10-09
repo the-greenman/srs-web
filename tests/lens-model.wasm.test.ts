@@ -193,15 +193,9 @@ describe.skipIf(!haveBindings)("lens model on the real engine (srs-spec.srs)", (
     expect(d.items.map((i) => [i.id, i.depth])).toEqual(outline.map((e) => [e.instanceId, e.depth]));
     expect(d.items.some((i) => i.id === PACKAGE)).toBe(true);
     expect(d.total).toBe(d.items.length);
-    const spec = [...client.resolveContainerView(repo, DISTRIBUTION).columns]
-      .sort((a, b) => a.order - b.order)
-      .slice(0, 4);
-    expect(d.columns).toEqual(spec.map((c) => ({
-        kind: "field",
-        fieldId: c.fieldId,
-        fieldName: c.fieldName,
-        label: c.displayLabel,
-      })));
+    // Distribution's ColumnSpec is empty, so the columns fall back to label, type and state (lens-board.test.ts).
+    expect(client.resolveContainerView(repo, DISTRIBUTION).columns).toHaveLength(0);
+    expect(d.columns).toEqual([{ kind: "label" }, { kind: "type" }, { kind: "state" }]);
   });
 
   it("item and link type names go through the shared humanise", async () => {

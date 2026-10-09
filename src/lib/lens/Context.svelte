@@ -1,5 +1,5 @@
 <!--
-  Context — pane 3: what links to the selected thing. A header with "Tell apart by": Link type (one
+  Context — pane 3: what links to the selected thing. A header with "Tell links apart by": Link type (one
   ContextGroup per relation type and direction present at the record, labelled by the engine, then "In"
   containers and "Shown in" compositions), Nothing (one flat list, each link with an in/out arrow), or
   Inside or outside the set (links whose other end is in the set vs links that leave it). Groups arrive
@@ -64,7 +64,7 @@
     <div class="lens-pane-head" data-part="head">
       {#if onBy}
         <label class="lens-by" data-part="by">
-          <span>Tell apart by</span>
+          <span>Tell links apart by</span>
           <Select
             value={by}
             {options}

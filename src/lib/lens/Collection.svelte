@@ -1,11 +1,14 @@
 <!--
-  Collection — pane 1: the set you move through. A header with "Tell apart by" (Nothing = label only,
-  flat; Type, Nesting, Container, State, Created by = group headings with counts; Created by headings
-  are ActorChips) and a Select toggle that turns rows into checkboxes (shift-click for a range) for
-  drawing a set by hand; "Show as a set (N)" opens it as a lens ("Update the set (N)" once it exists). Two shapes: a list (on the dark nav
+  Collection — pane 1: the set you move through. A header with "Tell the set apart by" (Nothing = label
+  only, flat; Type, Nesting, Container, State, Created by = group headings with counts; Created by
+  headings are ActorChips) and a Select toggle that turns rows into checkboxes (shift-click for a range)
+  for drawing a set by hand. The set bar: "Show as a set (N)" the first time, "Replace My set with these
+  (N)" once My set exists (only while the checks differ from it), "Clear selection" (drops the checks)
+  and, on My set, "Remove My set" (deletes it). Two shapes: a list (on the dark nav
   rail or a light surface; depth indents only under Nesting; a nested container expands one level) and
   a table (the ADR-010 list pane for Lenses: columns are the given ColumnSpec / fixed columns, and a
-  column no row has a value in is dropped). In Select mode the set bar is pinned to the top of the pane.
+  column no row has a value in is dropped). The set bar sits in flow above the rows and sticks to the top
+  of the pane's scroller while it scrolls.
   Presentation only: "Tell apart by" is grouping over loaded items (ADR-025, D7); items arrive loaded
   and grouped (lens-data.ts, lens-distinctions.ts). Wraps .lens-collection (lens.css).
   Parts: head, by, set-bar, group, row, toggle.
@@ -37,12 +40,14 @@
     onBy,
     picking = false,
     checked = new Set<string>(),
-    setSize = 0,
+    checkedCount = 0,
+    canShow = false,
     setShown = false,
     onPicking,
     onCheck,
     onShowSet,
-    onClearSet,
+    onClearChecks,
+    onRemoveSet,
     onSelect,
     onExpand,
     onMore,
@@ -63,14 +68,19 @@
     /** Rows show checkboxes for drawing a set by hand. */
     picking?: boolean;
     checked?: Set<string>;
-    /** Records in the working set (checked here or added from Context). */
-    setSize?: number;
-    /** "My set" exists: the set bar's button updates it ("Update the set (N)"). */
+    /** Records checked (here or added from Context). */
+    checkedCount?: number;
+    /** The checks differ from My set: the bar offers to show them. */
+    canShow?: boolean;
+    /** "My set" exists: the show button reads "Replace My set with these (N)". */
     setShown?: boolean;
     onPicking?: () => void;
     onCheck?: (ids: string[], on: boolean) => void;
     onShowSet?: () => void;
-    onClearSet?: () => void;
+    /** "Clear selection": drop the checks. */
+    onClearChecks?: () => void;
+    /** "Remove My set": given only on the My set lens. */
+    onRemoveSet?: () => void;
     onSelect: (item: Item) => void;
     onExpand?: (item: Item) => void;
     onMore?: () => void;
@@ -141,7 +151,7 @@
     <div class="lens-pane-head" data-part="head">
       {#if onBy && byOptions.length > 0}
         <label class="lens-by" data-part="by">
-          <span>Tell apart by</span>
+          <span>Tell the set apart by</span>
           <Select
             value={by}
             options={byOptions}
@@ -155,10 +165,17 @@
       {/if}
     </div>
   {/if}
-  {#if setSize > 0}
-    <div class="lens-pane-head lens-set-bar" class:lens-set-bar--pinned={picking} data-part="set-bar">
-      <Button size="sm" variant="primary" {onDark} data-testid="lens-show-set" onclick={onShowSet}>{setShown ? "Update the set" : "Show as a set"} ({setSize})</Button>
-      <Button size="sm" variant="ghost" {onDark} data-testid="lens-clear-set" onclick={onClearSet}>Clear</Button>
+  {#if canShow || (picking && checkedCount > 0) || onRemoveSet}
+    <div class="lens-pane-head lens-set-bar" data-part="set-bar" data-testid="lens-set-bar">
+      {#if canShow}
+        <Button size="sm" variant="primary" {onDark} data-testid="lens-show-set" onclick={onShowSet}>{setShown ? "Replace My set with these" : "Show as a set"} ({checkedCount})</Button>
+      {/if}
+      {#if checkedCount > 0}
+        <Button size="sm" variant="ghost" {onDark} data-testid="lens-clear-checks" onclick={onClearChecks}>Clear selection</Button>
+      {/if}
+      {#if onRemoveSet}
+        <Button size="sm" variant="ghost" {onDark} data-testid="lens-remove-set" onclick={onRemoveSet}>Remove My set</Button>
+      {/if}
     </div>
   {/if}
   {#if note}<p class="lens-empty lens-collection__note" data-testid="lens-collection-note">{note}</p>{/if}
@@ -222,7 +239,6 @@
         >
           {#if picking}
             <Checkbox
-              class="lens-list__check"
               checked={checked.has(item.id)}
               aria-label={`Add ${item.label} to the set`}
               data-testid="lens-check"

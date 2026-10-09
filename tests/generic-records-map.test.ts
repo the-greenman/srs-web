@@ -62,9 +62,9 @@ describe("focusLayout", () => {
     expect(placed.filter((p) => p.direction === "out").every((p) => p.x > center.x)).toBe(true);
     expect(placed.filter((p) => p.direction === "out").map((p) => p.id)).toEqual(["c", "a"]);
     expect(legend).toEqual([
-      { relationType: "x", direction: "in", count: 2 },
-      { relationType: "a", direction: "out", count: 1 },
-      { relationType: "z", direction: "out", count: 1 },
+      { name: "x", direction: "in", count: 2 },
+      { name: "a", direction: "out", count: 1 },
+      { name: "z", direction: "out", count: 1 },
     ]);
   });
 

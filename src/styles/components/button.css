@@ -125,3 +125,11 @@
   --btn-hover-border: var(--color-on-dark-muted);
   --btn-hover-fg: var(--color-on-dark);
 }
+/* An active on-dark toggle inverts (ink on paper), hovered or not, so it keeps its contrast. */
+.btn--on-dark.btn--mono.is-active {
+  --btn-hover-fg: var(--color-text-strong);
+  --btn-hover-border: var(--color-on-dark);
+  color: var(--color-text-strong);
+  border-color: var(--color-on-dark);
+  background: var(--color-on-dark);
+}
