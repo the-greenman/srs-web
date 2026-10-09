@@ -98,7 +98,7 @@ button.linked-record:focus-visible {
   outline: var(--focus-ring);
 }
 .linked-record--selected [data-part="label"] {
-  font-weight: 600;
+  font-weight: var(--weight-bold);
 }
 .method-board__cluster-title .linked-record {
   font-size: inherit;

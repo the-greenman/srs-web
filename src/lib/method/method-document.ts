@@ -68,7 +68,7 @@ export interface Ref {
 export type Entity = "problem" | "remedy" | "cluster" | "persona";
 /** A linked record (persona or cluster) with its decision state; opens in the inspector. */
 export interface MethodLink extends Ref {
-  entity?: "cluster" | "persona";
+  entity: "cluster" | "persona";
   status?: ProblemStatus | null;
   createdBy?: Actor;
 }
@@ -88,7 +88,7 @@ export interface MethodRemedy {
   commentCount: number;
 }
 export interface MethodProblem {
-  entity?: "problem";
+  entity: "problem";
   id: string;
   problemId: string;
   title: string;
@@ -136,8 +136,7 @@ export type MethodItem = (MethodProblem | MethodRemedy | MethodLink) & {
   createdBy?: Actor;
 };
 /** The entity a method item is. */
-export const entityOf = (item: MethodItem): Entity =>
-  "entity" in item && item.entity ? item.entity : "problem";
+export const entityOf = (item: MethodItem): Entity => item.entity;
 
 /** Plain inputs to `buildBoard` (so grouping and status are testable without the engine). */
 export interface BoardInput {
@@ -254,6 +253,7 @@ export function buildBoard(input: BoardInput): MethodModel {
       const poleId = side.get(r.instanceId);
       const tensionId = poleId ? parentOf.get(poleId) : undefined;
       return {
+        entity: "problem" as const,
         id: r.instanceId,
         problemId: str(f.problem_id),
         title: str(f.title) || r.displayLabel || r.instanceId,
