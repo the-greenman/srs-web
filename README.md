@@ -52,10 +52,13 @@ lib/governance/        GovernanceShell + type-registry, sections, decision-expor
 lib/guides/            GuidesShell: blueprint-schema-driven guides editor (ADR-003)
 lib/essay/             EssayShell: essays as structured paragraphs
 lib/generic/           GenericSrsShell: the repository-first explorer
+lib/lens/              LensShell: the Lenses view (set, focus, links; ADR-025)
+lib/address.ts        the one URL-hash address for every shell (ADR-023)
+lib/labels.ts         shared label helpers (humanise, fieldLabel)
 lib/mcp/               the MCP relay host behind the Agents panel
 lib/storage/           pluggable providers: local, dropbox, google-drive, github, git-contents
 lib/srs_bindings/      generated WASM bindings + governance-seed.srsj (NOT committed)
-rendering/             read-only record renderers (RecordView, DecisionView, ...)
+rendering/             read-only record renderers (RecordProse, the one prose reader, ADR-024; RecordView, DecisionView, ...)
 styles/                CSS token / utility / layout system
 worker/index.ts        the only server code: GitHub OAuth token-exchange proxy (ADR-011)
 ```
@@ -68,6 +71,7 @@ A repository opens in the editor that matches its types, or in the generic explo
 - **Guides editor**: a blueprint-schema-driven editor whose forms are generated generically from `blueprintSchema()`.
 - **Essay editor**: essays as structured paragraphs, with the Agents panel in its rail and addressable paragraphs (see [Paragraph addresses](#paragraph-addresses)).
 - **Generic explorer**: a repository-first reader that renders only what the engine resolves (Compositions, navigation, container membership, discovery results) and works on any valid repository.
+- **Lenses** (Explore > Lenses in the explorer): any repository as three panes: the set you are working through, one record in focus, and its links grouped by direction. Lenses come from the repository's navigation sections, compositions and types. Each pane has a "Tell apart by" control, including links that stay inside the set or leave it. Focus reads a record as prose, reads the whole set as one document, or edits a block in place. Works on read-only links. See [ADR-025](docs/adr/025-lenses.md).
 
 ---
 
@@ -373,6 +377,11 @@ The SRS web editor is released under the [Apache License 2.0](LICENSE).
 
 Contributions to this repository are made under the terms of the [Developer Certificate of Origin](CONTRIBUTING.md#developer-certificate-of-origin). By submitting a pull request, you certify that you have the right to submit that work under the Apache License 2.0 by signing off your commits with `git commit -s`.
 
-## Paragraph addresses
+## Addresses in the URL hash
 
-The essay editor keeps its state in the URL hash: `#e=<essayId>&p=<paragraphId>` opens an essay and scrolls to and focuses a paragraph (rendered, not editing); `&z=<paragraphId>` zooms into it instead. Ids are instance UUIDs, so `#e=…&p=…` is the stable paragraph address (agents can cite it). Parsing lives in `src/lib/essay/address.ts`.
+Every shell's place lives in one URL-hash address, parsed and written only by `src/lib/address.ts` ([ADR-023](docs/adr/023-one-hash-address.md)). Ids are instance UUIDs, so an address is stable and an agent can write it.
+
+- **Essay:** `#e=<essayId>&p=<paragraphId>` opens an essay and scrolls to and focuses a paragraph (rendered, not editing); `&z=<paragraphId>` zooms into it instead.
+- **Lenses:** `#lens=<lensId>&id=<instanceId>` opens a lens on a record; `&by=` and `&ctxby=` keep the "Tell apart by" choices. Lens ids are `nav:<containerId>`, `comp:<compositionId>`, `type:<typeId>` or `find`.
+
+Selecting a record adds a browser history entry, so Back and reload work. Generic, Governance and Guides move onto the same address under #426.
