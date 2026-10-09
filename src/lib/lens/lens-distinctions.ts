@@ -102,3 +102,18 @@ export function splitByBoundary<E extends { id: string }>(
     outside: edges.filter((e) => !inSet.has(e.id)),
   };
 }
+
+/** More links than this and a record is a hub: "Add everything" skips it unless added deliberately. */
+export const HUB_LINKS = 50;
+
+/** Split records to add into those to add and the hubs to skip (more than `max` links). */
+export function skipHubs<T extends { id: string }>(
+  items: T[],
+  links: (id: string) => number,
+  max = HUB_LINKS
+): { add: T[]; skipped: T[] } {
+  const add: T[] = [];
+  const skipped: T[] = [];
+  for (const i of items) (links(i.id) > max ? skipped : add).push(i);
+  return { add, skipped };
+}

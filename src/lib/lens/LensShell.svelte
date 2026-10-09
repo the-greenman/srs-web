@@ -3,8 +3,9 @@
   Lens (plans/ux-lenses.md §2, §7). Owns the selection, the Focus mode (read | document, + editing), the
   distinction per pane ("Tell apart by") and the working set drawn by hand. Address:
   `#repo=&lens=&id=&by=&ctxby=` (the working set stays out of the hash: memory + localStorage).
-  Switching lens keeps the selection (the Collection re-roots to the entry whose nested container holds
-  it); switching a distinction keeps both set and selection. Layouts: trail (list | focus | context),
+  Switching lens keeps the selection when the new set holds it (the Collection re-roots to the entry whose
+  nested container holds it), else selects the set's first member with the old one in the Back trail;
+  switching a distinction keeps both set and selection. "Shown in" switches to that composition's lens. Layouts: trail (list | focus | context),
   reader (thin outline | wide focus | Context as a collapsed right rail), board (table | focus + context
   in the drawer), graph (list | RelationGraph, edges inside vs leaving the set | focus + context).
   Following a link keeps a short trail above Focus with Back. Sits on AppShell + Toolbar; no scoped
@@ -49,6 +50,7 @@
     graphEdges,
     loadBlocks,
     loadCollection,
+    loadContainerBlocks,
     loadDocument,
     loadGroup,
     loadRead,
@@ -61,9 +63,10 @@
     collectionOptions,
     groupItems,
     sharedFields,
+    skipHubs,
     splitByBoundary,
   } from "./lens-distinctions.js";
-  import { type Layout, type Lens, defaultContext } from "./lens.js";
+  import { type Layout, type Lens, defaultContext, relationLabel } from "./lens.js";
 
   let {
     repo,
@@ -131,15 +134,13 @@
   let selectedId = $state<string | null>(initial.get("id"));
   const lens = $derived(lenses.find((l) => l.id === lensId) ?? lenses[0]);
   let layout = $state<Layout>("trail");
-  let mode = $state<"read" | "document">("read");
+  let mode = $state<"read" | "document" | "published">("read");
   let by = $state(initial.get("by") ?? "");
   let ctxBy = $state<CtxBy>((initial.get("ctxby") as CtxBy) ?? "link");
-  /** The selected item's nested container, a hint for document focus (a navigation section). */
+  /** The container of the last picked navigation section: the page Document shows (site pages, spec Parts). */
   let hint = $state<string | undefined>();
   /** The selected item's label as the list showed it (a note has no record to read it from). */
   let picked = $state("");
-  /** "Shown in" pick: show this composition instead of the lens focus. */
-  let doc = $state<Shown | null>(null);
   let editing = $state(false);
   let saving = $state(false);
   let saveError = $state<string | null>(null);
@@ -159,10 +160,10 @@
 
   const defaults = $derived(defaultContext(repo));
   const contextDefs = $derived(lens.context.length > 0 ? lens.context : defaults);
-  /** Document source: a composition (site pages, spec Parts, any lens naming one) or the Collection itself. */
-  const docFromComposition = $derived(
-    lens.focus.kind === "document" && (!!lens.focus.compositionId || lens.collection.kind === "navigation")
-  );
+  /** Document from a section's container (navigation) rather than from the Collection's records. */
+  const fromNav = $derived(lens.collection.kind === "navigation");
+  /** "As published" applies: the lens names a composition, or its sections are rendered pages. */
+  const canPublish = $derived(lens.focus.kind !== "read" && (!!lens.focus.compositionId || fromNav));
   const inSet = $derived(new Set(collection.items.map((i) => i.id)));
 
   const fail = (e: unknown) => (error = e instanceof Error ? e.message : String(e));
@@ -181,20 +182,26 @@
       if (!firstLens || !by) by = defaultBy(lens);
       if (!firstLens || !initial.get("ctxby")) ctxBy = defaultCtxBy(lens);
       firstLens = false;
-      doc = null;
       editing = false;
       expanded = new Set();
     });
   });
 
+  /** The lens the Collection was last loaded for; a different one = a lens switch. */
+  let lastLens = "";
+  /** Set by "Shown in": the switch keeps the selection even when the new set lacks it. */
+  let keep = false;
   // The lens's set changes (a new lens, or "My set" grew): a fresh collection, re-rooted to the selection.
   $effect(() => {
     const l = lens;
     untrack(() => {
+      const switched = lastLens !== "" && lastLens !== l.id && !keep;
+      lastLens = l.id;
+      keep = false;
       try {
         collection = loadCollection(repo, l);
         error = null;
-        reroot();
+        reroot(switched);
       } catch (e) {
         collection = { items: [], columns: [], total: 0 };
         fail(e);
@@ -202,18 +209,32 @@
     });
   });
 
-  /** Expand the entry whose nested container holds the selection, so the list shows where it is. */
-  function reroot(): void {
+  /**
+   * Keep the selection when the set holds it (expanding the entry whose nested container holds it); on a
+   * lens switch to a set without it, select the first member and leave the old one in the Back trail.
+   */
+  function reroot(switched: boolean): void {
     const id = selectedId;
+    const first = collection.items[0];
     if (!id) {
-      const first = collection.items[0];
       if (first) select(first);
       return;
     }
-    if (collection.items.some((i) => i.id === id)) return;
+    const here = collection.items.find((i) => i.id === id);
+    if (here) {
+      if (here.sectionContainerId) hint = here.sectionContainerId;
+      return;
+    }
     const holders = new Set(containersForInstance(repo, id).map((c) => c.containerId));
     const parent = collection.items.find((i) => i.sectionContainerId && holders.has(i.sectionContainerId));
-    if (parent) expand(parent);
+    if (parent) {
+      hint = parent.sectionContainerId;
+      expand(parent);
+    } else if (switched && first) {
+      const label = tryRecord(repo, id)?.displayLabel || picked || id.slice(0, 8);
+      trail = [...trail, { id, label }].slice(-5);
+      select(first);
+    }
   }
 
   function expand(item: Item): void {
@@ -295,9 +316,8 @@
 
   function select(item: Item | ContextItem): void {
     selectedId = item.id;
-    hint = "sectionContainerId" in item ? item.sectionContainerId : undefined;
+    if ("sectionContainerId" in item && item.sectionContainerId) hint = item.sectionContainerId;
     picked = item.label;
-    doc = null;
     editing = false;
     if (shell.inspectorDrawer) setTimeout(() => (shell.inspectorOpen = true), 0);
   }
@@ -305,11 +325,21 @@
   // Document from the Collection: every listed record as a block, recomputed only when the set changes.
   const blocks = $derived.by(() => {
     version;
-    if (mode !== "document" || docFromComposition) return [];
+    if (mode !== "document" || fromNav) return [];
     try {
       return loadBlocks(repo, collection.items);
     } catch {
       return [];
+    }
+  });
+  // Document from the picked section's container: its anchor as the heading, then its entries in order.
+  const page = $derived.by(() => {
+    version;
+    if (mode !== "document" || !fromNav || !hint) return null;
+    try {
+      return loadContainerBlocks(repo, hint);
+    } catch {
+      return null;
     }
   });
 
@@ -318,11 +348,12 @@
     version;
     if (!id) return { kind: "none" };
     try {
-      if (doc) return loadDocument(repo, id, doc.compositionId, doc.containerId);
-      if (mode === "document" && !docFromComposition && inSet.has(id))
+      if (mode === "published")
+        return loadDocument(repo, id, lens.focus.kind !== "read" ? lens.focus.compositionId : undefined);
+      if (mode === "document" && page && (page.head?.id === id || page.blocks.some((b) => b.id === id)))
+        return { kind: "blocks", title: lens.label, head: page.head, blocks: page.blocks };
+      if (mode === "document" && !fromNav && inSet.has(id))
         return { kind: "blocks", title: lens.label, blocks };
-      if (mode === "document" && docFromComposition && !editing)
-        return loadDocument(repo, id, lens.focus.kind === "document" ? lens.focus.compositionId : undefined, hint);
       return { kind: "read", block: loadRead(repo, id, picked) };
     } catch {
       return { kind: "read", block: loadRead(repo, id, picked) };
@@ -367,7 +398,8 @@
         }
         const cs = containersOf(repo, id);
         containers = cs.map((c) => ({ containerId: c, title: getContainer(repo, c).title }));
-        shown = shownIn(repo, cs);
+        // Only compositions with a lens to switch to (every composition derives one).
+        shown = shownIn(repo, cs).filter((s) => lenses.some((l) => l.id === `comp:${s.compositionId}`));
         error = null;
       } catch (err) {
         fail(err);
@@ -420,9 +452,20 @@
     if (on) addToSet(ids.map((id) => ({ id, label: collection.items.find((i) => i.id === id)?.label ?? id })));
     else working = working.filter((w) => !ids.includes(w.id));
   }
+  /** Hubs "Add everything" left out, each addable by hand. */
+  let skipped = $state<Member[]>([]);
+  /** One hop out from the checked records (else the focused one), leaving out hubs (skipHubs). */
   function addAll(): void {
-    if (!selectedId) return;
-    addToSet([{ id: selectedId, label: selectedLabel }, ...allEdges(repo, selectedId)]);
+    const from: Member[] =
+      working.length > 0 ? working : selectedId ? [{ id: selectedId, label: selectedLabel }] : [];
+    const have = new Set(working.map((w) => w.id));
+    const found = new Map<string, Member>();
+    for (const f of from)
+      for (const e of allEdges(repo, f.id))
+        if (!have.has(e.id) && !found.has(e.id)) found.set(e.id, { id: e.id, label: e.label });
+    const { add, skipped: hubs } = skipHubs([...found.values()], (id) => neighbours(repo, id, { limit: 1 }).total);
+    addToSet([...(working.length > 0 ? [] : from), ...add]);
+    skipped = hubs;
   }
   function showSet(): void {
     mySet = working.map((w) => w.id);
@@ -434,9 +477,13 @@
     if (layout !== "graph" || !selectedId) return null;
     try {
       const first = lens.context[0]?.relationType;
-      let edges = graphEdges(repo, selectedId, first);
+      // Each direction named as Context names it ("Depends on" →, "Required by" ←); arrows come from the legend.
+      const name = (key: string, dir: "in" | "out") =>
+        contextDefs.find((d) => d.relationType === key && d.direction === dir && !d.types)?.label.replace(/^← |\s→$/, "") ??
+        relationLabel(key);
+      let edges = graphEdges(repo, selectedId, first, name);
       // The lens's first relation type, else every edge, so the graph is never blank for a related record.
-      if (edges.length === 0 && first) edges = graphEdges(repo, selectedId);
+      if (edges.length === 0 && first) edges = graphEdges(repo, selectedId, undefined, name);
       // Edges told apart by the set boundary unless Context tells links apart by type.
       if (ctxBy !== "link")
         edges = edges.map((e) => ({ ...e, relationType: inSet.has(e.id) ? "inside the set" : "leaves the set" }));
@@ -448,11 +495,11 @@
   const selectedLabel = $derived(
     collection.items.find((i) => i.id === selectedId)?.label ??
       (focus.kind === "read" ? focus.block.label : undefined) ??
-      selectedId?.slice(0, 8) ??
-      ""
+      (picked || selectedId?.slice(0, 8) || "")
   );
+  // Only after following a link out of the set; a lens switch never leaves the selection outside it.
   const outside = $derived(
-    selectedId && collection.items.length > 0 && !collection.items.some((i) => i.id === selectedId)
+    trail.length > 0 && selectedId && collection.items.length > 0 && !collection.items.some((i) => i.id === selectedId)
       ? `Not in this set — showing ${lens.label}`
       : undefined
   );
@@ -504,14 +551,17 @@
     {mode}
     {editing}
     {selectedId}
+    published={canPublish}
     onMode={(m) => {
       mode = m;
-      doc = null;
+      editing = false;
     }}
-    onEdit={canEdit ? () => (editing = !editing) : undefined}
+    onEdit={canEdit && mode !== "published" ? () => (editing = !editing) : undefined}
     onSelect={(id) => {
       const item = collection.items.find((i) => i.id === id);
-      if (item) pick(item);
+      trail = [];
+      if (item) select(item);
+      else if (focus.kind === "blocks") select({ id, label: [focus.head, ...focus.blocks].find((b) => b?.id === id)?.label ?? "" });
     }}
     onSave={save}
     {saving}
@@ -527,15 +577,26 @@
     by={ctxBy}
     onBy={(b) => (ctxBy = b)}
     onPick={follow}
-    onShow={(s) => (doc = s)}
+    onShow={(s) => {
+      const id = `comp:${s.compositionId}`;
+      if (id === lensId) return;
+      keep = true;
+      lensId = id;
+    }}
     onMore={moreNeighbours}
     onAdd={(item) => addToSet([item])}
     onAddAll={addAll}
+    checkedCount={working.length}
+    {skipped}
+    onAddSkipped={(m) => {
+      addToSet([m]);
+      skipped = skipped.filter((x) => x.id !== m.id);
+    }}
   />
 {/snippet}
 
 {#snippet navPane()}
-  <Nav repo={title} eyebrow={lens.label} wordmark>
+  <Nav repo={title} eyebrow={`Lens · ${lens.label}`} wordmark>
     {@render collectionPane("list", true)}
   </Nav>
 {/snippet}

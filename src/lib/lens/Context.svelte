@@ -3,7 +3,8 @@
   ContextGroup per lens context entry or the repository defaults, then "In" containers and "Shown in"
   compositions), Nothing (one flat list, each with an in/out arrow), or Inside or outside the set (links
   whose other end is in the Collection vs links that leave it). "+" on a linked record adds it to the
-  working set; "Add everything this links to" adds every linked record (one hop out). Empty groups are
+  working set; "Add everything" adds every record the checked records (else this one) link to, one hop
+  out, skipping hubs (more than 50 links), which are listed on one line with a "+" each. Empty groups are
   hidden. Presentation only. Wraps .lens-context (lens.css).
 -->
 <script lang="ts">
@@ -23,6 +24,9 @@
     onMore,
     onAdd,
     onAddAll,
+    checkedCount = 0,
+    skipped = [],
+    onAddSkipped,
   }: {
     groups: ContextGroupData[];
     containers?: { containerId: string; title: string }[];
@@ -36,6 +40,11 @@
     onAdd?: (item: ContextItem) => void;
     /** Add every linked record to the working set. */
     onAddAll?: () => void;
+    /** Records checked into the set; "Add everything" then works from them. */
+    checkedCount?: number;
+    /** Hubs the last "Add everything" left out. */
+    skipped?: { id: string; label: string }[];
+    onAddSkipped?: (m: { id: string; label: string }) => void;
   } = $props();
 
   const visible = $derived(groups.filter((g) => g.total > 0));
@@ -57,10 +66,18 @@
           </select>
         </label>
       {/if}
-      {#if onAddAll && visible.length > 0}
-        <button type="button" class="lens-toggle" data-testid="lens-add-all" onclick={onAddAll}>Add everything this links to</button>
+      {#if onAddAll && (visible.length > 0 || checkedCount > 0)}
+        <button type="button" class="lens-toggle" data-testid="lens-add-all" onclick={onAddAll}>{checkedCount > 0 ? `Add everything the ${checkedCount} checked link to` : "Add everything this links to"}</button>
       {/if}
     </div>
+  {/if}
+  {#if skipped.length > 0}
+    <p class="lens-empty lens-skipped" data-testid="lens-skipped">
+      Skipped {skipped.length} {skipped.length === 1 ? "record" : "records"} with many links:
+      {#each skipped as m (m.id)}
+        <span class="lens-skipped__item">{m.label}<button type="button" class="lens-context-add" data-testid="lens-skipped-add" aria-label={`Add ${m.label} to the set`} title="Add to the set" onclick={() => onAddSkipped?.(m)}>+</button></span>
+      {/each}
+    </p>
   {/if}
   {#if visible.length === 0 && (by !== "link" || containers.length === 0)}
     <p class="lens-empty">No links.</p>

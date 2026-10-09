@@ -1,11 +1,12 @@
 <!--
-  Focus — pane 2: what the centre IS, chosen by the lens and switchable in its header (Read | Document,
-  plus Edit). read: one record as prose — the title as the heading, the main body (first long markdown
+  Focus — pane 2: what the centre IS, chosen by the lens and switchable in its header (Read | Document |
+  As published when a composition applies, plus Edit). read: one record as prose — the title as the heading, the main body (first long markdown
   field) with no label, other long fields under small muted labels, short values as one meta line of
   chips, inline composites as tables; empty fields hidden, never aiGuidance or "required". blocks: the
-  Collection as one document, each record a read block; the selected one is highlighted and scrolled
-  into view, clicking a block selects it. document: a composition rendered to markdown, then through the
-  core renderMarkdown. Edit opens SectionForm in place: it replaces the record (read) or only the
+  Collection (or a section's container) as one document, each record a read block, the anchoring
+  record as the heading block; the selected one is highlighted and scrolled into view, clicking a block
+  selects it. document ("As published"): a composition rendered to markdown, then through the core
+  renderMarkdown; read-only. Edit opens SectionForm in place: it replaces the record (read) or only the
   selected block (blocks). Presentation only: data arrives loaded (lens-data.ts). Wraps .lens-focus.
 -->
 <script lang="ts">
@@ -25,6 +26,7 @@
     editing = false,
     selectedId = null,
     onMode,
+    published = false,
     onEdit,
     onSelect,
     onSave,
@@ -32,11 +34,13 @@
     saveError = null,
   }: {
     data: FocusData;
-    mode?: "read" | "document";
+    mode?: "read" | "document" | "published";
     editing?: boolean;
     selectedId?: string | null;
     /** Absent = no mode control. */
-    onMode?: (mode: "read" | "document") => void;
+    onMode?: (mode: "read" | "document" | "published") => void;
+    /** Offer "As published" (a composition applies). */
+    published?: boolean;
     /** Toggle the editor for the selected record; absent = read-only. */
     onEdit?: () => void;
     /** A document block was clicked. */
@@ -181,6 +185,9 @@
       <div class="lens-seg" role="group" aria-label="Show as">
         <button type="button" aria-pressed={mode === "read"} data-testid="lens-mode-read" onclick={() => onMode("read")}>Read</button>
         <button type="button" aria-pressed={mode === "document"} data-testid="lens-mode-document" onclick={() => onMode("document")}>Document</button>
+        {#if published}
+          <button type="button" aria-pressed={mode === "published"} data-testid="lens-mode-published" onclick={() => onMode("published")}>As published</button>
+        {/if}
       </div>
       {#if onEdit}
         <Button size="sm" data-testid="lens-edit" onclick={onEdit}>{editing ? "Close editor" : "Edit"}</Button>
@@ -190,11 +197,10 @@
   {#if data.kind === "none"}
     <p class="lens-empty">Select something to read it here.</p>
   {:else if data.kind === "document"}
-    <h1 class="lens-read__title">{data.title}</h1>
     <MarkdownView class="lens-doc" value={data.markdown} />
   {:else if data.kind === "blocks"}
-    <h1 class="lens-read__title lens-doc__title">{data.title}</h1>
-    {#each data.blocks as b, i (`${i}:${b.id}`)}
+    {#if !data.head}<h1 class="lens-read__title lens-doc__title">{data.title}</h1>{/if}
+    {#each data.head ? [data.head, ...data.blocks] : data.blocks as b, i (`${i}:${b.id}`)}
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions (the Collection is the keyboard path to a block) -->
       <article
         class="lens-block"
@@ -206,7 +212,7 @@
         {#if editing && b.id === selectedId && b.record}
           {@render form(b)}
         {:else}
-          {@render read(b, false)}
+          {@render read(b, i === 0 && !!data.head)}
         {/if}
       </article>
     {/each}

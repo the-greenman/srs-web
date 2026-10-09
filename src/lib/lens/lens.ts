@@ -30,11 +30,13 @@ export type Collection =
   | { kind: "find" };
 
 /**
- * How Focus starts (switchable in its header). "read" = one record as prose. "document" = the whole set
- * as one continuous read: rendered from a composition when `compositionId` is set or the collection is
- * the navigation (site pages, spec Parts), else composed from the Collection's records (highlightable).
+ * How Focus starts (switchable in its header). "read" = one record as prose. "document" = the set as one
+ * continuous read of record blocks (selectable, editable in place): the selected section's container for
+ * a navigation collection (site pages, spec Parts), else the Collection's records. "published" = the
+ * composition rendered by the engine (read-only; `compositionId`, else the first that shows the record),
+ * offered as "As published" whenever a composition applies.
  */
-export type Focus = { kind: "read" } | { kind: "document"; compositionId?: string };
+export type Focus = { kind: "read" } | { kind: "document" | "published"; compositionId?: string };
 
 export interface ContextGroupDef {
   label: string;
@@ -68,13 +70,14 @@ const ctx = (
   types?: string[]
 ): ContextGroupDef => ({ label, relationType, direction, types });
 
-/** A relation type key in user words: the `name` part, title-cased; never the namespace. */
-export const relationLabel = (key: string): string =>
-  key
-    .slice(key.lastIndexOf("/") + 1)
-    .split(/[-_]/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+/** An engine name in user words: "source_kind" → "Source kind". */
+export const humanise = (name: string): string => {
+  const t = name.replaceAll(/[-_]/g, " ");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
+
+/** A relation type key in user words: the `name` part, sentence case ("Depends on"); never the namespace. */
+export const relationLabel = (key: string): string => humanise(key.slice(key.lastIndexOf("/") + 1));
 
 /** The repository defaults: every installed relation type with at least one relation, both ways. */
 export function defaultContext(repo: SrsRepository): ContextGroupDef[] {
@@ -112,16 +115,19 @@ export function deriveLenses(repo: SrsRepository): Lens[] {
   for (const c of listDocumentViews(repo))
     out.push({
       id: `comp:${c.id}`,
-      label: c.description || c.name,
+      label: humanise(c.name),
       collection: { kind: "composition", compositionId: c.id },
-      focus: { kind: "document", compositionId: c.id },
+      focus: { kind: "published", compositionId: c.id },
       context: [],
       layout: "reader",
     });
-  for (const t of find(repo, {}, { limit: 0, byTypeLimit: 0 }).facets.byType)
+  const types = [...find(repo, {}, { limit: 0, byTypeLimit: 0 }).facets.byType].sort(
+    (a, b) => b.count - a.count
+  );
+  for (const t of types)
     out.push({
       id: `type:${t.typeId}`,
-      label: t.value.slice(t.value.lastIndexOf("/") + 1).replaceAll(/[-_]/g, " "),
+      label: humanise(t.value.slice(t.value.lastIndexOf("/") + 1)),
       collection: { kind: "type", typeId: t.typeId },
       focus: { kind: "read" },
       context: [],
@@ -137,6 +143,14 @@ export function deriveLenses(repo: SrsRepository): Lens[] {
   });
   return out;
 }
+
+const problemContext = [
+  ctx("Held by persona", "com.semanticops.method/held-by", "in"),
+  ctx("Concerns pole", "com.semanticops.method/concerns", "out"),
+  ctx("Comments", "com.semanticops.comments/comments-on", "in"),
+  ctx("Derived from", "derived-from", "out"),
+  ctx("Answered by", "com.semanticops.method/answers", "in"),
+];
 
 /** Hand-declared lenses for the four surveyed corpora (plans/ux-lenses.md §3), keyed by repositoryId. */
 export const curatedLenses: Record<string, Lens[]> = {
@@ -207,7 +221,7 @@ export const curatedLenses: Record<string, Lens[]> = {
       id: "guides",
       label: "Guides",
       collection: { kind: "outline", containerId: "a623c62d-794e-4e84-9732-a6076a768ec3" },
-      focus: { kind: "document", compositionId: "2aba4d85-317b-44e1-a600-d38a743b4cb4" },
+      focus: { kind: "published", compositionId: "2aba4d85-317b-44e1-a600-d38a743b4cb4" },
       context: [],
       layout: "reader",
     },
@@ -270,19 +284,20 @@ export const curatedLenses: Record<string, Lens[]> = {
     {
       id: "problems",
       label: "Problems",
-      collection: {
-        kind: "outline",
-        containerId: "219dc999-b667-4088-aae6-4c180ad03c90",
-        also: ["5e28aa7e-4b35-4474-8f62-cf8dcae1e506", "17006e00-6a2c-44ff-8565-047b57fb00da"],
-      },
+      // Consumers read Affirmed only (srs-programme CLAUDE.md); the agents' layer is the Suggestions lens.
+      collection: { kind: "outline", containerId: "5e28aa7e-4b35-4474-8f62-cf8dcae1e506" },
       focus: { kind: "read" },
-      context: [
-        ctx("Held by persona", "com.semanticops.method/held-by", "in"),
-        ctx("Concerns pole", "com.semanticops.method/concerns", "out"),
-        ctx("Comments", "com.semanticops.comments/comments-on", "in"),
-        ctx("Derived from", "derived-from", "out"),
-        ctx("Answered by", "com.semanticops.method/answers", "in"),
-      ],
+      context: problemContext,
+      layout: "board",
+      columns: ["kind", "imbalance"],
+    },
+    {
+      id: "suggestions",
+      label: "Suggestions",
+      collection: { kind: "outline", containerId: "219dc999-b667-4088-aae6-4c180ad03c90" },
+      by: "createdBy",
+      focus: { kind: "read" },
+      context: problemContext,
       layout: "board",
       columns: ["kind", "imbalance"],
     },

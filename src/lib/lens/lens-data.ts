@@ -30,7 +30,7 @@ import {
   resolveContainerView,
   typeSchema,
 } from "$lib/srs-client.js";
-import { type ContextGroupDef, type Lens, relationLabel } from "./lens.js";
+import { type ContextGroupDef, type Lens, humanise, relationLabel } from "./lens.js";
 
 export const PAGE = 100;
 export const NEIGHBOUR_PAGE = 20;
@@ -63,10 +63,10 @@ export interface CollectionData {
 
 const typeLabel = (name?: string) => name?.replaceAll(/[-_]/g, " ");
 /** A composition's name as a title ("guide-body-view" → "Guide body view"); never its description. */
-const compositionTitle = (v: { name: string }) => {
-  const t = v.name.replaceAll(/[-_]/g, " ");
-  return t.charAt(0).toUpperCase() + t.slice(1);
-};
+const compositionTitle = (v: { name: string }) => humanise(v.name);
+/** A field's display label, or its humanised name when the schema title is only its description. */
+const fieldLabel = (f: { name: string; label: string; description?: string }) =>
+  f.label && f.label !== f.name && f.label !== f.description ? f.label : humanise(f.name);
 
 function memberItems(repo: SrsRepository, containerId: string, group?: string): Item[] {
   const view = resolveContainerView(repo, containerId);
@@ -107,11 +107,14 @@ function typeColumns(repo: SrsRepository, typeId: string, names?: string[]): Col
   const def = typeSchema(repo, typeId).schema as unknown as SchemaDefinition;
   const fields = definitionToFields(def);
   if (names)
-    return names.map((n) => ({ name: n, label: fields.find((f) => f.name === n)?.label ?? n }));
+    return names.map((n) => {
+      const f = fields.find((x) => x.name === n);
+      return { name: n, label: f ? fieldLabel(f) : humanise(n) };
+    });
   return fields
     .filter((f) => f.valueType !== "markdown" && f.valueType !== "text")
     .slice(0, 4)
-    .map((f) => ({ name: f.name, label: f.label }));
+    .map((f) => ({ name: f.name, label: fieldLabel(f) }));
 }
 
 export function loadCollection(repo: SrsRepository, lens: Lens, offset = 0): CollectionData {
@@ -232,7 +235,7 @@ export function selectFields(
       const def = typeSchema(repo, typeId).schema as unknown as SchemaDefinition;
       for (const f of definitionToFields(def))
         if (f.valueType === "select" && (f.options?.length ?? 0) > 0 && !out.has(f.name))
-          out.set(f.name, f.label);
+          out.set(f.name, fieldLabel(f));
     } catch {
       // A type whose schema does not project offers no fields.
     }
@@ -260,10 +263,13 @@ export interface ReadData {
 
 export type FocusData =
   | { kind: "read"; block: ReadData }
-  /** Document composed from the Collection's records, one read block each (highlightable). */
-  | { kind: "blocks"; title: string; blocks: ReadData[] }
-  /** Document rendered from a composition (markdown through the core renderMarkdown). */
-  | { kind: "document"; markdown: string; title: string; containerId: string }
+  /**
+   * Document composed from records, one read block each (selectable, editable): `head` is the record
+   * that anchors the container, shown as the document's heading (else `title`).
+   */
+  | { kind: "blocks"; title: string; head?: ReadData; blocks: ReadData[] }
+  /** Document rendered from a composition (markdown through the core renderMarkdown), read-only. */
+  | { kind: "document"; markdown: string; containerId: string }
   | { kind: "none" };
 
 const schemaCache = new WeakMap<SrsRepository, Map<string, SchemaDefinition | null>>();
@@ -293,7 +299,7 @@ export function loadRead(
     id,
     label: record.displayLabel || label || id.slice(0, 8),
     record,
-    fields: def ? definitionToFields(def) : [],
+    fields: def ? definitionToFields(def).map((f) => ({ ...f, label: fieldLabel(f) })) : [],
     composites: def ? definitionToComposites(def) : [],
   };
 }
@@ -301,6 +307,24 @@ export function loadRead(
 /** The Collection as one document: every listed record as a read block, in collection order. */
 export function loadBlocks(repo: SrsRepository, items: Item[]): ReadData[] {
   return items.map((i) => loadRead(repo, i.id, i.label, i.record ?? tryRecord(repo, i.id)));
+}
+
+/**
+ * A container as one document: its anchor record as the heading block, then the body entries in
+ * arranged order (getContainerOutline's body excludes the anchor and identity).
+ * ponytail: one level only, and every block renders through the generic read block; a nested container's
+ * members and per-type rendering (a section's lede vs body as the site shows it) would re-implement the
+ * engine's view; block anchors in render_composition would let the published render be selectable instead.
+ */
+export function loadContainerBlocks(
+  repo: SrsRepository,
+  containerId: string
+): { head?: ReadData; blocks: ReadData[] } {
+  const anchor = getContainerOutline(repo, containerId).anchorInstanceId;
+  return {
+    head: anchor ? loadRead(repo, anchor) : undefined,
+    blocks: loadBlocks(repo, memberItems(repo, containerId)),
+  };
 }
 
 /** The containers a record anchors, then the ones it is a member of, then a caller hint. */
@@ -381,13 +405,7 @@ export function loadDocument(
     if (!pick) continue;
     try {
       const r = renderDocumentView(repo, pick, "markdown", containerId);
-      if (r.rendered.trim())
-        return {
-          kind: "document",
-          markdown: r.rendered,
-          title: getContainer(repo, containerId).title,
-          containerId,
-        };
+      if (r.rendered.trim()) return { kind: "document", markdown: r.rendered, containerId };
     } catch {
       // Try the next container; a record with no renderable container falls back to reading.
     }
@@ -458,12 +476,17 @@ export function allEdges(repo: SrsRepository, id: string): ContextItem[] {
   }));
 }
 
-/** Both-direction edges of one relation type (or all), for the graph layout. */
-export function graphEdges(repo: SrsRepository, id: string, relationType?: string) {
+/** Both-direction edges of one relation type (or all), for the graph layout; `name` labels each direction. */
+export function graphEdges(
+  repo: SrsRepository,
+  id: string,
+  relationType?: string,
+  name: (key: string, direction: "in" | "out") => string = relationLabel
+) {
   return neighbours(repo, id, { relationType, limit: 40 }).neighbours.map((n) => ({
     id: n.neighbour.instanceId,
     label: n.neighbour.label,
-    relationType: relationLabel(n.relationType),
+    relationType: name(n.relationType, n.direction),
     direction: n.direction,
   }));
 }

@@ -1,6 +1,7 @@
 <!--
   LensSwitcher — the curated lenses as tabs at the top of the Collection pane; the derived lenses
-  (one per section, composition, type, plus Everything) under a "More lenses" menu (ActionMenu). One row, in one place (above the panes) in every layout.
+  under a "More lenses" menu (ActionMenu) in groups: Sections, Documents (compositions), All records of a
+  type (folded behind one "Types…" row, most records first), then Everything. One row, in one place (above the panes) in every layout.
   Presentation only. Wraps .lens-switcher (src/styles/components/lens.css).
   POC: plans/ux-lenses.md §4.
 -->
@@ -21,8 +22,24 @@
     onPick: (id: string) => void;
   } = $props();
 
-  const menu = $derived(
-    extra.map((l) => ({ id: l.id, label: l.label, enabled: true, run: () => onPick(l.id) }))
+  let showTypes = $state(false);
+  const row = (l: Lens) => ({ id: l.id, label: l.label, enabled: true, run: () => onPick(l.id) });
+  const of = (prefix: string) => extra.filter((l) => l.id.startsWith(prefix)).map(row);
+  const sections = $derived(
+    [
+      { label: "Sections", items: of("nav:") },
+      { label: "Documents", items: of("comp:") },
+      {
+        label: "All records of a type",
+        items: of("type:").length
+          ? [
+              { id: "types", label: "Types…", enabled: true, checked: showTypes, run: () => (showTypes = !showTypes) },
+              ...(showTypes ? of("type:") : []),
+            ]
+          : [],
+      },
+      { label: "", items: of("find") },
+    ].filter((g) => g.items.length > 0)
   );
   const activeExtra = $derived(extra.find((l) => l.id === active));
 </script>
@@ -38,9 +55,10 @@
       onclick={() => onPick(lens.id)}
     >{lens.label}</button>
   {/each}
-  {#if menu.length > 0}
+  {#if extra.length > 0}
     <ActionMenu
-      actions={menu}
+      {sections}
+      keepOpenOnCheck
       label=""
       title="More lenses"
       triggerLabel={activeExtra ? `More lenses: ${activeExtra.label}` : "More lenses"}

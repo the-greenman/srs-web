@@ -3,8 +3,8 @@
   = label only, flat; Type, Nesting, Container, State, Created by, a select field = group headings with
   counts) and a Select toggle that turns rows into checkboxes (shift-click for a range) for drawing a set
   by hand; "Show as a set (N)" opens it as a lens. Two shapes: a list (on the dark nav rail or a light
-  surface; depth indents only under Nesting) and a table (board layout; Nothing drops the Type/Status
-  columns). Presentation only: items arrive loaded and grouped (lens-data.ts, lens-distinctions.ts).
+  surface; depth indents only under Nesting) and a table (board layout; a column no row has a value in
+  is dropped). In Select mode the set bar is pinned to the top of the pane. Presentation only: items arrive loaded and grouped (lens-data.ts, lens-distinctions.ts).
   Wraps .lens-collection (lens.css).
 -->
 <script lang="ts">
@@ -76,6 +76,10 @@
     if (Array.isArray(v)) return v.map((x) => (typeof x === "object" ? "…" : String(x))).join(", ");
     return typeof v === "object" ? "…" : String(v);
   };
+  /** Board columns: only those some row has a value in. */
+  const cols = $derived(data.columns.filter((c) => data.items.some((i) => cell(i, c.name) !== "")));
+  const typeCol = $derived(!plain && by !== "type" && data.items.some((i) => i.typeName));
+  const stateCol = $derived(!plain && by !== "state" && data.items.some((i) => i.lifecycle));
   // A heading each time the group changes; items of one group are contiguous.
   const heading = (i: number): string | undefined =>
     data.items[i].group !== undefined && (i === 0 || data.items[i - 1].group !== data.items[i].group)
@@ -108,7 +112,7 @@
     </div>
   {/if}
   {#if setSize > 0}
-    <div class="lens-pane-head lens-set-bar">
+    <div class="lens-pane-head lens-set-bar" class:lens-set-bar--pinned={picking}>
       <Button size="sm" variant="primary" {onDark} data-testid="lens-show-set" onclick={onShowSet}>Show as a set ({setSize})</Button>
       <button type="button" class="lens-toggle" data-testid="lens-clear-set" onclick={onClearSet}>Clear</button>
     </div>
@@ -117,11 +121,11 @@
   {#if data.items.length === 0}
     <p class="lens-empty">Nothing here.</p>
   {:else if mode === "table"}
-    <LogTable columns={["", ...data.columns.map((c) => c.label), ...(plain ? [] : ["Type", "Status"])]}>
+    <LogTable columns={["", ...cols.map((c) => c.label), ...(typeCol ? ["Type"] : []), ...(stateCol ? ["Status"] : [])]}>
       {#each data.items as item, i (`${i}:${item.id}`)}
         {@const h = heading(i)}
         {#if h !== undefined}
-          <tr class="lens-table__group" data-testid="lens-group"><td colspan={data.columns.length + 3}>{h || "Untitled"} <small>{counts.get(item.group)}</small></td></tr>
+          <tr class="lens-table__group" data-testid="lens-group"><td colspan={cols.length + 1 + Number(typeCol) + Number(stateCol)}>{h || "Untitled"} <small>{counts.get(item.group)}</small></td></tr>
         {/if}
         <tr
           class="lens-table__row"
@@ -135,11 +139,9 @@
             {item.label}
             {#if item.createdBy && !plain && by !== "createdBy"}<ActorChip actor={item.createdBy} />{/if}
           </td>
-          {#each data.columns as c (c.name)}<td>{cell(item, c.name)}</td>{/each}
-          {#if !plain}
-            <td class="log-table__nowrap">{by === "type" ? "" : (item.typeName ?? "")}</td>
-            <td>{#if item.lifecycle && by !== "state"}<Tag status={item.lifecycle as Status} />{/if}</td>
-          {/if}
+          {#each cols as c (c.name)}<td>{cell(item, c.name)}</td>{/each}
+          {#if typeCol}<td class="log-table__nowrap">{item.typeName ?? ""}</td>{/if}
+          {#if stateCol}<td>{#if item.lifecycle}<Tag status={item.lifecycle as Status} />{/if}</td>{/if}
         </tr>
       {/each}
     </LogTable>

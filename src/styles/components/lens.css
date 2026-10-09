@@ -294,6 +294,29 @@
   padding-left: 0;
   padding-right: 0;
 }
+/* Select mode: "Show as a set" stays reachable while the list scrolls under it. */
+.lens-set-bar--pinned {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-surface);
+}
+.lens-collection--dark .lens-set-bar--pinned {
+  background: var(--color-text-strong);
+}
+.lens-skipped {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-xs);
+  padding-left: 0;
+  padding-right: 0;
+}
+.lens-skipped__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
 .lens-by {
   display: inline-flex;
   flex-wrap: wrap;
