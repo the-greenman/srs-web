@@ -48,7 +48,12 @@ A lens is presentation wiring, derived from engine data:
 No repository id, field name, relation key or namespace appears in client code or
 decides behaviour. A lens carries no per-lens layout or "Tell apart by" default: the
 defaults follow the collection kind only (outline: Nesting; every other kind: Type;
-Context: Link type; layout: trail). Curated (hand-made) lenses wait for a
+Context: Link type; layout: trail). One presentation default follows the layout: on the
+board, with no choice made, the Collection takes the first option that splits the loaded
+set into more than one group (`splittingBy`; Container is not tried, it costs one engine
+read per member); when none does, the board says it groups by "Tell the set apart by".
+The two controls are labelled "Tell the set apart by" (Collection) and "Tell links apart
+by" (Context). Curated (hand-made) lenses wait for a
 package-level lens definition, which needs a future srs spec RFC.
 
 ### Labels come from the engine
@@ -103,8 +108,9 @@ No second tree component is built.
 - Where the set has a container view, columns are its `ColumnSpec` (ADR-010
   unchanged). The Collection table is the ADR-010 list pane for Lenses: same column
   source, rendered with `LogTable`.
-- Elsewhere (type, composition, find and drawn sets), columns are label, type and
-  state only, until the engine exposes field ids (gap 6). The owner's board-columns ruling (the
+- Elsewhere (type, composition, find and drawn sets), and where a container view's
+  `ColumnSpec` is empty, columns are label, type and state only: the interim until the
+  engine exposes field ids (gap 6). The owner's board-columns ruling (the
   type schema's first four short fields, by field id) is the target once gap 6 lands.
   No column is ever chosen by field name.
 - **Tell apart by "Nothing"** shows labels only. It is a valid first-class choice,
@@ -134,6 +140,31 @@ No second tree component is built.
 - Agents get "tell apart by" only when the engine gains a group-by. Until then it is
   a view setting, not a capability.
 
+### The graph names edges as Context does
+
+- A graph edge carries the label of the Context group that holds it (`edgeLabel` on
+  `MapNeighbour`, `graphEdges`), so the list and the graph have one naming source. Its
+  `relationType` stays the engine's relation key; the client never writes a label into it.
+- Each edge has a tone, inside or leaving the shown set (`splitByBoundary`). The tone is
+  named, not only drawn: in the edge's `aria-label` and `<title>` ("Depends on, leaving
+  the set"), and in a legend line key (solid: inside, dashed: leaving). Leaving edges use
+  their own graph token, `--generic-graph-leaving`. Generic's map passes no tone and is
+  unchanged.
+- The graph draws at most `GRAPH_LINKS` links a side (a named presentation default, so a
+  hub's labels stay apart) and says "N of M links" when it leaves some out.
+
+### Drawing a set: one model
+
+- Two lists, one rule on every lens (`working-set.ts`, pure functions): the checks
+  (`working`, a draft) and My set (`mySet`, shown and stored). Checking, unchecking,
+  Context's "+" and "Add everything" change the checks only, on the My set lens too.
+  My set changes only by `commit` ("Show as a set (N)" the first time, "Replace My set
+  with these (N)" after) or `removeSet`.
+- **Clear rules.** "Clear selection" drops the checks and keeps My set. "Remove My set"
+  (offered on the My set lens) deletes the stored set and keeps the checks.
+- The stored set is re-read when the repository changes, and ids that no longer
+  resolve are dropped.
+
 ### Lens ids are a public contract
 
 The `lens=` key of the address ([ADR-023](./023-one-hash-address.md)) holds a lens id:
@@ -157,9 +188,10 @@ The `lens=` key of the address ([ADR-023](./023-one-hash-address.md)) holds a le
   but they put repository ids in the client. Rejected; kept as reference on
   `poc/ux-lenses` and in `plans/ux-lenses.md` §3.
 - **A second navigation tree (#425 `NavTree`) beside Collection.** Two trees. Rejected.
-- **Strict ADR-010: title, type and state columns only.** The first review found such
-  boards weak. It is the interim for sets with no container view until gap 6, not the
-  target.
+- **Strict ADR-010 as the target: label, type and state columns only.** The first
+  review found such boards weak. Rejected as the target. It remains the interim, until
+  gap 6, for sets with no container view and for a container view with an empty
+  `ColumnSpec`.
 - **Name field options and columns by `Field.name`** (the key records and facets
   share). Two Types can share a name for different Fields, and a name is not a stable
   address. Rejected by the owner (2026-10-09): ask the engine for field ids (srs#931).
