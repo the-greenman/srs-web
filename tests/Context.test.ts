@@ -48,6 +48,20 @@ describe("Context", () => {
     expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ id: "a" }));
   });
 
+  it("Add everything label names the checked count", async () => {
+    const onAddAll = vi.fn();
+    const groups = [group("Depends on", [edge("a")])];
+    const one = render(Context, { groups, onPick: () => {}, onAddAll });
+    expect(one.getByTestId("lens-add-all").textContent).toBe("Add everything this links to");
+    one.unmount();
+    const { getByTestId } = render(Context, { groups, onPick: () => {}, onAddAll, checkedCount: 3 });
+    const add = getByTestId("lens-add-all");
+    expect(add.textContent).toBe("Add everything the 3 checked link to");
+    expect(add.classList.contains("btn")).toBe(true);
+    await fireEvent.click(add);
+    expect(onAddAll).toHaveBeenCalledOnce();
+  });
+
   it("skipped hubs listed with an add each", async () => {
     const onAddSkipped = vi.fn();
     const skipped = [{ id: "h1", label: "Glossary" }, { id: "h2", label: "Index" }];

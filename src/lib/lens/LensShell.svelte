@@ -14,7 +14,12 @@
   and empties the trail. An unknown lens falls back to the first tab; an unresolvable id selects nothing.
   Every lens opens on a record inside its set: entered with no id, or switched to a set that lacks the
   selection, it selects its first member. Entering from the explorer returns to the last lens address of
-  this session for the same repository (memory only). Edit is hidden while read-only. On a phone, picking
+  this session for the same repository (memory only). Drawing a set: Select checks records (shift for a
+  range), Context's "+" adds a linked record, "Add everything" adds every record the checked ones (else
+  the focused one) link to and skips hubs (more than HUB_LINKS links, listed with a "+" each); "Show as a
+  set" opens them as "My set" (lens `set`), kept per repository in browser storage (working-set.ts). The
+  My set tab shows only once a set exists; `lens=set` with no stored set falls back to the first tab with
+  a notice. Edit is hidden while read-only. On a phone, picking
   or following a record closes the nav and inspector drawers. Sits on AppShell + Toolbar; no scoped style
   (lens.css).
 -->
@@ -60,6 +65,8 @@
     containersForInstance,
     getContainer,
     listRelationTypes,
+    neighbours,
+    repositoryId,
     updateRecord,
   } from "$lib/srs-client.js";
   import Collection from "./Collection.svelte";
@@ -86,9 +93,10 @@
     shownIn,
     tryRecord,
   } from "./lens-data.js";
-  import { collectionOptions, groupItems } from "./lens-distinctions.js";
+  import { collectionOptions, groupItems, skipHubs } from "./lens-distinctions.js";
   import { type Layout, type Lens, defaultBy, deriveLenses } from "./lens.js";
   import { lensActions } from "./toolbar-actions.js";
+  import { readSet, writeSet } from "./working-set.js";
 
   let {
     repo,
@@ -123,21 +131,34 @@
   const shell = new ShellState({ wideEnabled: true });
   const EMPTY: CollectionData = { items: [], columns: [], total: 0 };
 
+  // ── The drawn set: `working` is what is checked now; `mySet` is the shown set ("My set"), stored ──
+  const repoId = $derived(repositoryId(repo));
+  let mySet = $state<string[]>(untrack(() => readSet(repoId)));
+  let working = $state<string[]>(untrack(() => [...mySet]));
+  let picking = $state(false);
+  /** Hubs the last "Add everything" left out, each addable by hand. */
+  let skipped = $state<{ id: string; label: string }[]>([]);
+  /** An info line: a `lens=set` link opened where no set is stored. */
+  let notice = $state<string | null>(null);
+
   // ── Lenses: derived from the engine, re-derived after a write ──
   const lenses = $derived.by(() => {
     void documentRevision;
     try {
-      return deriveLenses(repo);
+      return deriveLenses(repo, mySet);
     } catch {
       return [];
     }
   });
-  /** Navigation sections are the tabs; with none, the first composition or type lens is the only tab. */
+  /**
+   * Navigation sections are the tabs (with none, the first composition or type lens is the only tab),
+   * then My set once a set exists.
+   */
   const tabs = $derived.by(() => {
     const nav = lenses.filter((l) => l.id.startsWith("nav:"));
-    if (nav.length > 0) return nav;
     const first = lenses.find((l) => l.id.startsWith("comp:") || l.id.startsWith("type:"));
-    return first ? [first] : lenses.slice(0, 1);
+    const base = nav.length > 0 ? nav : first ? [first] : lenses.slice(0, 1);
+    return [...base, ...lenses.filter((l) => l.id === "set")];
   });
   const more = $derived(lenses.filter((l) => !tabs.includes(l)));
   const firstLens = (): Lens | undefined => tabs[0] ?? lenses[0];
@@ -199,6 +220,10 @@
     const a = (entering && lastVisit.get(repo)) || given;
     applied = true;
     const target = lenses.find((l) => l.id === a.lens) ?? firstLens();
+    notice =
+      a.lens === "set" && target?.id !== "set"
+        ? "My set is kept in the browser that drew it, and none is stored here, so the first lens is shown."
+        : null;
     lensId = target?.id ?? null;
     load(target);
     by = a.by ?? null;
@@ -378,6 +403,7 @@
    */
   function switchLens(id: LensId, keepSelection = false): void {
     if (id === lens?.id) return;
+    notice = null;
     lensId = id;
     load(lenses.find((l) => l.id === id));
     by = null;
@@ -396,6 +422,53 @@
     const a = parseAddress(location.hash);
     pushAddress({ essayId: a.essayId, paragraphId: a.paragraphId, zoomId: a.zoomId });
     onOpenExplorer?.();
+  }
+
+  // ── Drawing a set ──
+  const checked = $derived(new Set(working));
+  /** Store `ids` as My set; on the set lens, its Collection follows. */
+  function storeSet(ids: string[]): void {
+    mySet = ids;
+    writeSet(repoId, ids);
+    if (lens?.id === "set") load(lens);
+  }
+  function addToSet(ids: string[]): void {
+    working = [...new Set([...working, ...ids])];
+    if (lens?.id === "set") storeSet(working);
+  }
+  function check(ids: string[], on: boolean): void {
+    if (on) addToSet(ids);
+    else working = working.filter((w) => !ids.includes(w));
+  }
+  /** One hop out from the checked records (else the focused one), skipping hubs (skipHubs, HUB_LINKS). */
+  function addAll(): void {
+    const from = working.length > 0 ? working : selectedId ? [selectedId] : [];
+    const have = new Set([...working, ...from]);
+    const found = new Map<string, { id: string; label: string }>();
+    try {
+      for (const id of from)
+        for (const e of id === selectedId ? edges : loadEdges(repo, id))
+          if (!have.has(e.id) && !found.has(e.id)) found.set(e.id, { id: e.id, label: e.label });
+      const { add, skipped: hubs } = skipHubs([...found.values()], (id) => neighbours(repo, id, { limit: 1 }).total);
+      addToSet([...from, ...add.map((m) => m.id)]);
+      skipped = hubs;
+    } catch (e) {
+      fail(e);
+    }
+  }
+  function showSet(): void {
+    picking = false;
+    storeSet([...working]);
+    switchLens("set");
+  }
+  function clearSet(): void {
+    working = [];
+    skipped = [];
+    if (lens?.id === "set") {
+      const first = tabs.find((l) => l.id !== "set");
+      if (first) switchLens(first.id);
+    }
+    storeSet([]);
   }
 
   // ── Focus ──
@@ -534,6 +607,14 @@
     by={effectiveBy}
     {byOptions}
     onBy={setBy}
+    {picking}
+    {checked}
+    setSize={working.length}
+    setShown={mySet.length > 0}
+    onPicking={() => (picking = !picking)}
+    onCheck={check}
+    onShowSet={showSet}
+    onClearSet={clearSet}
     onSelect={pick}
     onExpand={expand}
     onMore={more_}
@@ -579,6 +660,14 @@
       onBy={setCtxBy}
       onPick={follow}
       onShow={(s) => switchLens(`comp:${s.compositionId}`, true)}
+      onAdd={(item) => addToSet([item.id])}
+      onAddAll={addAll}
+      checkedCount={working.length}
+      {skipped}
+      onAddSkipped={(m) => {
+        addToSet([m.id]);
+        skipped = skipped.filter((x) => x.id !== m.id);
+      }}
     />
   {/key}
 {/snippet}
@@ -609,6 +698,7 @@
     {/snippet}
     {#if !onSave && readOnlyReason}<Notice kind="info" testid="read-only-note">{readOnlyReason}</Notice>{/if}
     {#if lens}<LensSwitcher {tabs} {more} active={lens.id} onPick={(id) => switchLens(id)} />{/if}
+    {#if notice}<Notice kind="info" testid="lens-set-notice">{notice}</Notice>{/if}
     {#if error}<Notice kind="error">{error}</Notice>{/if}
     <div class="workspace lens-main" data-layout={layout}>
       {#if layout === "board"}

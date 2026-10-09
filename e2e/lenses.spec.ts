@@ -412,6 +412,63 @@ test.describe("lenses — layouts", () => {
   });
 });
 
+test("draw a set", async ({ page, browser }) => {
+  const errors = watchErrors(page);
+  await openSpec(page);
+  await openLenses(page);
+  await page.getByTestId(tab(DISTRIBUTION)).click();
+  const collection = page.getByTestId("lens-collection");
+  const rows = collection.getByTestId("lens-item");
+
+  // Check two concepts and show them as a set: the My set tab appears and is current.
+  await expect(page.getByTestId("lens-tab-set")).toHaveCount(0);
+  await page.getByTestId("lens-select-toggle").click();
+  const checks = collection.getByTestId("lens-check");
+  await checks.nth(0).click();
+  await checks.nth(1).click();
+  await expect(page.getByTestId("lens-show-set")).toHaveText("Show as a set (2)");
+  await page.getByTestId("lens-show-set").click();
+  await expect(page.getByTestId("lens-tab-set")).toHaveAttribute("aria-current", "true");
+  expect(await hashOf(page)).toContain("lens=set");
+  await expect(rows).toHaveCount(2);
+
+  // Add everything the two checked link to: the set grows; any skipped hub is listed with its own "+".
+  await expect(page.getByTestId("lens-add-all")).toHaveText("Add everything the 2 checked link to");
+  await page.getByTestId("lens-add-all").click();
+  await expect.poll(() => rows.count()).toBeGreaterThan(2);
+  const grown = await rows.count();
+  const skipped = page.getByTestId("lens-skipped");
+  if (await skipped.count()) await expect(skipped.getByTestId("lens-skipped-add")).not.toHaveCount(0);
+  await expect(page.getByTestId("lens-show-set")).toHaveText(`Update the set (${grown})`);
+
+  // Tell apart by Type groups the set.
+  await page.getByTestId("lens-by").selectOption("type");
+  await expect(collection.getByTestId("lens-group").first()).toBeVisible();
+
+  // Context inside/outside: a record added from the links has links inside the set and links leaving it.
+  await page.getByTestId("lens-ctx-by").selectOption("boundary");
+  const groupLabels = () =>
+    page.getByTestId("lens-context").getByTestId("lens-context-group").evaluateAll((gs) => gs.map((g) => g.getAttribute("data-label")));
+  let both = false;
+  for (let i = 0; i < grown && !both; i++) {
+    await rows.nth(i).click();
+    await expect(page.getByTestId("lens-context")).toHaveAttribute("data-by", "boundary");
+    const ls = await groupLabels();
+    both = ls.includes("Inside this set") && ls.includes("Leaving this set");
+  }
+  expect(both).toBe(true);
+  expect(errors).toEqual([]);
+
+  // A lens=set link opened in another browser (no stored set) falls back to the first tab with a notice.
+  const other = await browser.newContext();
+  const fresh = await other.newPage();
+  await openSpec(fresh, "#lens=set");
+  await expect(fresh.getByTestId("lens-set-notice")).toBeVisible();
+  await expect(fresh.getByTestId(tab(READING))).toHaveAttribute("aria-current", "true");
+  await expect(fresh.getByTestId("lens-tab-set")).toHaveCount(0);
+  await other.close();
+});
+
 test.describe("lenses — phone (390 wide)", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 

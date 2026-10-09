@@ -1019,17 +1019,17 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): board and grap
 **Write scope:** `src/lib/lens/working-set.ts` (new), `src/lib/lens/LensShell.svelte`, `src/lib/lens/LensSwitcher.svelte` (the `set` tab), `src/lib/lens/Collection.svelte`, `src/lib/lens/Context.svelte`, `e2e/lenses.spec.ts`, `tests/Context.test.ts`, `tests/working-set.test.ts` (new).
 
 #### Tasks
-- [ ] The set code (picking, add-to-set, Add everything, skipped hubs, `skipHubs`, the `ids` collection) arrives with `plans/547-pr-b-carryover.patch`, applied at the start of Phase 6.
-- [ ] `working-set.ts` per the contract (key `srs-web.lens-set.<repositoryId>`, every access in try/catch).
-- [ ] Port `addAll` (it works from the checked records, else the focused one), `skipHubs` with `links = (id) => neighbours(repo, id, { limit: 1 }).total`, the skipped list, and the `set` lens (`deriveLenses(repo, readSet(...))`).
-- [ ] Show the My set tab once a set exists.
-- [ ] Once shown, "Show as a set" reads "Update the set (N)". The set bar stays pinned while Select is on (critique round 2).
-- [ ] `lens=set` on a browser with no stored set falls back to the first tab with an info `Notice`.
+- [x] The set code (picking, add-to-set, Add everything, skipped hubs, `skipHubs`, the `ids` collection) arrives with `plans/547-pr-b-carryover.patch`, applied at the start of Phase 6.
+- [x] `working-set.ts` per the contract (key `srs-web.lens-set.<repositoryId>`, every access in try/catch).
+- [x] Port `addAll` (it works from the checked records, else the focused one), `skipHubs` with `links = (id) => neighbours(repo, id, { limit: 1 }).total`, the skipped list, and the `set` lens (`deriveLenses(repo, readSet(...))`).
+- [x] Show the My set tab once a set exists.
+- [x] Once shown, "Show as a set" reads "Update the set (N)". The set bar stays pinned while Select is on (critique round 2).
+- [x] `lens=set` on a browser with no stored set falls back to the first tab with an info `Notice`.
 
 #### Acceptance Criteria
-- [ ] "Add everything" never adds a record with more than `HUB_LINKS` links. Each skipped hub is listed with its own add control.
-- [ ] Context "Inside or outside the set" splits by the shown set.
-- [ ] A throwing `localStorage` never breaks Lenses.
+- [x] "Add everything" never adds a record with more than `HUB_LINKS` links. Each skipped hub is listed with its own add control.
+- [x] Context "Inside or outside the set" splits by the shown set.
+- [x] A throwing `localStorage` never breaks Lenses.
 
 #### Testing (named)
 - `tests/working-set.test.ts`: "round-trips ids under srs-web.lens-set.<id>"; "readSet returns [] when storage throws"; "writeSet does not throw when storage throws"; "readSet returns [] for junk".
@@ -1039,6 +1039,8 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): board and grap
 npm run typecheck && npm run lint && npm test && npm run build
 npm run e2e -- e2e/lenses.spec.ts
 ```
+
+Note (run): two sets, as the prototype had them. `working` is what is checked now (in memory; it starts as the stored set); `mySet` is the shown set, the only thing `working-set.ts` stores (`writeSet` removes the key when the set is emptied). "Show as a set" / "Update the set (N)" stores the checked records and opens My set; on My set, "+" and "Add everything" grow it in place. Unchecking never shrinks a shown set; "Clear" empties both and, on My set, returns to the first tab. "Add everything" reads each checked record's edges with `loadEdges` (the focused record's are already loaded) and counts each candidate's links with `neighbours(repo, id, { limit: 1 }).total`. `repositoryId(repo)` keys the storage, derived once per repository. The `lens=set` fallback notice is an info `Notice` (`lens-set-notice`); the Phase 4 test "My set is not offered" still holds with no stored set. The "draw a set" e2e test finds a record with both "Inside this set" and "Leaving this set" groups by walking the grown set (the checked records' own links are all inside after "Add everything"); no record in the fixture exceeds `HUB_LINKS`, so the skipped list is asserted only when present (the hub guard is unit-tested). The `Context` set controls are shared `Button`s (carryover resolution, Phase 6 note). e2e ran with `PLAYWRIGHT_PORT=5411`.
 
 #### Milestone gate
 All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): draw a set with the hub guard (#547)`.
