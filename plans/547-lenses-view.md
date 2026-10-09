@@ -1060,15 +1060,17 @@ All pass, plus `no-literals` and `gap-cites`. Commit `docs(lens): design referen
 
 ### PR A (end of Phase 5)
 
-- [ ] `npm run typecheck`, `npm run lint`, `npm test` (including `lens-model.wasm.test.ts` on the real bindings) and `npm run build` pass
-- [ ] `npm run e2e -- e2e/lenses.spec.ts --repeat-each=2` green; `npm run e2e -- e2e/large-repo.spec.ts e2e/styleguide.spec.ts e2e/navigation.spec.ts e2e/editor-mode.spec.ts e2e/open-url.spec.ts e2e/essay-editor.spec.ts e2e/essay-comments.spec.ts e2e/guides-editor.spec.ts e2e/records-explorer.spec.ts` green
-- [ ] `no-literals` and `gap-cites` pass
-- [ ] Lenses is reachable from Generic, returns by Go > Explorer, and works read-only without Edit
-- [ ] Back, reload-after-restore and an externally written hash land on the same lens, record and distinctions; Back from Generic into a lens hash reopens Lenses
-- [ ] Trail and reader layouts; Collection, Focus and Context specimens in both themes
-- [ ] Essay deep links unchanged; no other shell's behaviour changed (beyond Generic's one nav item and the shared label helper)
-- [ ] No TypeScript computes a relation result (D10). The one permitted edge classifier is `splitByBoundary` (inside vs leaving the set, presentation per D7 and ADR-025), tested by "splitByBoundary is the one edge-to-set classifier"; `groupEdges` only buckets engine edges by their own `relationType` and `direction`
+- [x] `npm run typecheck`, `npm run lint`, `npm test` (including `lens-model.wasm.test.ts` on the real bindings) and `npm run build` pass
+- [x] `npm run e2e -- e2e/lenses.spec.ts --repeat-each=2` green; `npm run e2e -- e2e/large-repo.spec.ts e2e/styleguide.spec.ts e2e/navigation.spec.ts e2e/editor-mode.spec.ts e2e/open-url.spec.ts e2e/essay-editor.spec.ts e2e/essay-comments.spec.ts e2e/guides-editor.spec.ts e2e/records-explorer.spec.ts` green
+- [x] `no-literals` and `gap-cites` pass
+- [x] Lenses is reachable from Generic, returns by Go > Explorer, and works read-only without Edit
+- [x] Back, reload-after-restore and an externally written hash land on the same lens, record and distinctions; Back from Generic into a lens hash reopens Lenses
+- [x] Trail and reader layouts; Collection, Focus and Context specimens in both themes
+- [x] Essay deep links unchanged; no other shell's behaviour changed (beyond Generic's one nav item and the shared label helper)
+- [x] No TypeScript computes a relation result (D10). The one permitted edge classifier is `splitByBoundary` (inside vs leaving the set, presentation per D7 and ADR-025), tested by "splitByBoundary is the one edge-to-set classifier"; `groupEdges` only buckets engine edges by their own `relationType` and `direction`
 - [ ] PR A's body names the `refactor(forms)` commit (form labels) and notes that ADR-002 reads "Superseded" while ADR-022 is still proposed (interim until the owner accepts ADR-022)
+
+Note (run, 2026-10-09): `git fetch origin && git rebase origin/main` was a no-op (origin/main still d067737, the planning base). Gates after it, `PLAYWRIGHT_PORT=5401`: typecheck, lint, test (1071 passed), build, `no-literals`, `gap-cites` all exit 0; `npm run e2e -- e2e/lenses.spec.ts e2e/navigation.spec.ts e2e/editor-mode.spec.ts e2e/open-url.spec.ts e2e/shell-layout.spec.ts e2e/essay-editor.spec.ts e2e/essay-comments.spec.ts e2e/styleguide.spec.ts e2e/guides-editor.spec.ts e2e/blueprint-document-editor.spec.ts e2e/records-explorer.spec.ts` exit 0 (127 passed); `npm run e2e -- e2e/mobile-layout.spec.ts` exit 0 (11 passed); the large-repo set ran in the Phase 5 gate (62 passed). The PR body box waits for the PR.
 
 ### PR B (end of Phase 8)
 
