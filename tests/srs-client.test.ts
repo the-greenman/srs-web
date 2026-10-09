@@ -360,9 +360,9 @@ describe("listPackages", () => {
         namespace: "com.mudemocracy.governance",
         name: "governance",
         version: "1.0.0",
-        boundary_path: "packages/governance",
-        field_count: 12,
-        type_count: 4,
+        boundaryPath: "packages/governance",
+        fieldCount: 12,
+        typeCount: 4,
       },
     ]);
 
@@ -685,24 +685,6 @@ describe("listRecords", () => {
     expect(result[0].fieldValues).toEqual({ f1: "hello" });
   });
 
-  it("accepts display_label snake_case (defensive dual-lookup, consistent with normalizeRecord convention)", () => {
-    // RecordSummary uses #[serde(rename_all = "camelCase")] so real WASM always emits displayLabel.
-    // The snake_case branch exists defensively, consistent with the dual-lookup pattern in normalizeRecord.
-    const summaries = [
-      {
-        instanceId: "r2",
-        display_label: "Snake Label",
-        record: { ...baseInner, instanceId: "r2" },
-      },
-    ];
-    const repo = mockRepo({ list_records: () => summaries });
-
-    const result = listRecords(repo, {});
-
-    expect(result[0].instanceId).toBe("r2");
-    expect(result[0].displayLabel).toBe("Snake Label");
-  });
-
   it("falls back gracefully for a bare Record shape (no wrapper); displayLabel is undefined", () => {
     const bare = [{ instanceId: "r3", typeId: "t1", typeVersion: 1, fieldValues: {}, tags: [] }];
     const repo = mockRepo({ list_records: () => bare });
@@ -753,25 +735,6 @@ describe("listRelations", () => {
     expect(result[0].relationType).toBe("supersedes");
     expect(result[0].sourceInstanceId).toBe("inst-a");
     expect(result[0].targetInstanceId).toBe("inst-b");
-  });
-
-  it("normalises snake_case fields from WASM (dual-lookup: relation_id, source_instance_id, target_instance_id)", () => {
-    const raw = [
-      {
-        relation_id: "rel-002",
-        relation_type: "depends-on",
-        source_instance_id: "inst-c",
-        target_instance_id: "inst-d",
-      },
-    ];
-    const repo = mockRepo({ list_relations: () => raw });
-
-    const result = listRelations(repo, { target: "inst-d" });
-
-    expect(result[0].relationId).toBe("rel-002");
-    expect(result[0].relationType).toBe("depends-on");
-    expect(result[0].sourceInstanceId).toBe("inst-c");
-    expect(result[0].targetInstanceId).toBe("inst-d");
   });
 
   it("accepts RelationSummary sourceId / targetId aliases", () => {
@@ -835,27 +798,6 @@ describe("createRelation", () => {
     expect(result.relationType).toBe("supersedes");
     expect(result.sourceInstanceId).toBe("inst-src");
     expect(result.targetInstanceId).toBe("inst-tgt");
-  });
-
-  it("normalises snake_case fields from WASM (relation_id, relation_type, source_instance_id, target_instance_id)", () => {
-    const raw = {
-      relation_id: "rel-new-002",
-      relation_type: "depends-on",
-      source_instance_id: "inst-x",
-      target_instance_id: "inst-y",
-    };
-    const repo = mockRepo({ create_relation: () => raw });
-
-    const result = createRelation(repo, {
-      relationType: "depends-on",
-      sourceInstanceId: "inst-x",
-      targetInstanceId: "inst-y",
-    });
-
-    expect(result.relationId).toBe("rel-new-002");
-    expect(result.relationType).toBe("depends-on");
-    expect(result.sourceInstanceId).toBe("inst-x");
-    expect(result.targetInstanceId).toBe("inst-y");
   });
 
   it("propagates WASM throw when the relation cannot be created", () => {
@@ -972,32 +914,6 @@ describe("find", () => {
     const repo = mockRepo({ find: () => ({ hits: [], total: 0, facets: {} }) });
 
     expect(find(repo, {}).facets).toEqual({ byType: [], otherTypes: 0, notes: 0 });
-  });
-
-  it("returns a DiscoveryResult with normalised camelCase hit fields", () => {
-    const rawResult = {
-      hits: [
-        {
-          instance_id: "inst-001",
-          label: "Decision 1",
-          type_namespace: "com.test",
-          type_name: "decision",
-          matched_fields: ["title"],
-        },
-      ],
-      total: 1,
-      diagnostics: [],
-    };
-    const repo = mockRepo({ find: () => rawResult });
-
-    const result = find(repo, { contentMatch: "foo" });
-
-    expect(result.total).toBe(1);
-    expect(result.hits).toHaveLength(1);
-    expect(result.hits[0].instanceId).toBe("inst-001");
-    expect(result.hits[0].typeNamespace).toBe("com.test");
-    expect(result.hits[0].typeName).toBe("decision");
-    expect(result.hits[0].matchedFields).toEqual(["title"]);
   });
 
   it("also normalises camelCase hits (serde_wasm_bindgen honours camelCase)", () => {
@@ -1172,24 +1088,6 @@ describe("resolveContainerView", () => {
     expect(result.diagnostics).toEqual(["warn: no view found"]);
   });
 
-  it("normalises snake_case ContainerView fields", () => {
-    const rawView = {
-      container_id: "c2",
-      composition_id: "dv-002",
-      members: [],
-      columns: [],
-      exclude_lifecycle_states: ["draft"],
-      diagnostics: [],
-    };
-    const repo = mockRepo({ resolve_container_view: () => rawView });
-
-    const result = resolveContainerView(repo, "c2");
-
-    expect(result.containerId).toBe("c2");
-    expect(result.documentViewId).toBe("dv-002");
-    expect(result.excludeLifecycleStates).toEqual(["draft"]);
-  });
-
   it("normalises camelCase ResolvedMember fields including nested record", () => {
     const rawView = {
       containerId: "c1",
@@ -1210,30 +1108,6 @@ describe("resolveContainerView", () => {
     expect(result.members[0].record.typeId).toBe("t1");
   });
 
-  it("normalises snake_case ResolvedMember fields", () => {
-    const rawMemberSnake = {
-      instance_id: "m2",
-      tier: 1,
-      display_label: "Root Guide",
-      record: { instance_id: "r2", type_id: "t2", type_version: 1, field_values: {}, tags: [] },
-    };
-    const rawView = {
-      containerId: "c1",
-      members: [rawMemberSnake],
-      columns: [],
-      excludeLifecycleStates: [],
-      diagnostics: [],
-    };
-    const repo = mockRepo({ resolve_container_view: () => rawView });
-
-    const result = resolveContainerView(repo, "c1");
-
-    expect(result.members[0].instanceId).toBe("m2");
-    expect(result.members[0].displayLabel).toBe("Root Guide");
-    expect(result.members[0].record.instanceId).toBe("r2");
-    expect(result.members[0].record.typeId).toBe("t2");
-  });
-
   it("normalises camelCase ColumnSpec fields", () => {
     const rawView = {
       containerId: "c1",
@@ -1252,30 +1126,6 @@ describe("resolveContainerView", () => {
     expect(result.columns[0].displayLabel).toBe("Title");
     expect(result.columns[0].order).toBe(0);
     expect(result.columns[0].required).toBe(true);
-  });
-
-  it("normalises snake_case ColumnSpec fields", () => {
-    const rawColumnSnake = {
-      field_id: "f2",
-      field_name: "Heading",
-      display_label: "Heading",
-      order: 1,
-      required: false,
-    };
-    const rawView = {
-      containerId: "c1",
-      members: [],
-      columns: [rawColumnSnake],
-      excludeLifecycleStates: [],
-      diagnostics: [],
-    };
-    const repo = mockRepo({ resolve_container_view: () => rawView });
-
-    const result = resolveContainerView(repo, "c1");
-
-    expect(result.columns[0].fieldId).toBe("f2");
-    expect(result.columns[0].fieldName).toBe("Heading");
-    expect(result.columns[0].required).toBe(false);
   });
 
   it("sets root to undefined when absent from WASM response", () => {
@@ -1372,41 +1222,6 @@ describe("repositoryNavigation", () => {
     expect(result.sections[0].sectionContainerId).toBe("c-articles");
     expect(result.sections[1].displayLabel).toBe("Decision Log");
     expect(result.diagnostics).toHaveLength(0);
-  });
-
-  it("normalises snake_case NavigationNode fields from WASM", () => {
-    const rawNav = {
-      root_container_id: "root-c-2",
-      identity: {
-        instance_id: "id-2",
-        type_id: "type-id-2",
-        type_version: 1,
-        type_namespace: "com.test",
-        type_name: "gov-repo",
-        display_label: "Governance Repo",
-      },
-      sections: [
-        {
-          instance_id: "s-3",
-          type_id: "type-s-3",
-          type_version: 1,
-          type_namespace: "com.test",
-          type_name: "Articles",
-          display_label: "Articles",
-          section_container_id: "c-articles-2",
-        },
-      ],
-      diagnostics: [],
-    };
-    const repo = mockRepo({ repository_navigation: () => rawNav });
-
-    const result = repositoryNavigation(repo);
-
-    expect(result.rootContainerId).toBe("root-c-2");
-    expect(result.identity.instanceId).toBe("id-2");
-    expect(result.identity.displayLabel).toBe("Governance Repo");
-    expect(result.sections[0].instanceId).toBe("s-3");
-    expect(result.sections[0].sectionContainerId).toBe("c-articles-2");
   });
 
   it("returns empty sections and diagnostic for pre-RFC-013 repo (no manifest.container)", () => {
@@ -1579,26 +1394,6 @@ describe("scaffoldGovernanceDocument", () => {
       title: "My Org",
       namespace: "com.example.myorg",
     });
-  });
-
-  it("normalises snake_case result keys", () => {
-    const repo = mockRepo({
-      scaffold_new_repository: () => ({
-        repository_id: "repo-2",
-        identity_record_id: "identity-2",
-        decision_log_container_id: "dlc-2",
-        decision_log_root_id: "dlr-2",
-        root_container_id: "root-2",
-      }),
-    });
-
-    const result = scaffoldGovernanceDocument(repo, "Snake Org");
-
-    expect(result.repositoryId).toBe("repo-2");
-    expect(result.identityRecordId).toBe("identity-2");
-    expect(result.decisionLogContainerId).toBe("dlc-2");
-    expect(result.decisionLogRootId).toBe("dlr-2");
-    expect(result.rootContainerId).toBe("root-2");
   });
 
   it("throws on an empty or whitespace title without touching WASM", () => {
