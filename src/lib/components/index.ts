@@ -34,6 +34,8 @@ export { default as LogTable } from "./LogTable.svelte";
 export { default as DecisionSummaryCard } from "./DecisionSummaryCard.svelte";
 export { default as MethodBoard } from "./MethodBoard.svelte";
 export { default as ProblemCard } from "./ProblemCard.svelte";
+export { default as LinkedRecord } from "./LinkedRecord.svelte";
+export { default as RemedyCard } from "./RemedyCard.svelte";
 export { default as DecisionLogView } from "./DecisionLogView.svelte";
 
 // Forms

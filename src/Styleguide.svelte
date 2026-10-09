@@ -9,7 +9,7 @@
   import {
     ActionBar, ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
-    LayersPanel, MarkdownHelp, MarkdownText, MethodBoard, AgentPanel, McpConnection, Panel, ProblemCard, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
+    LayersPanel, LinkedRecord, RemedyCard, MarkdownHelp, MarkdownText, MethodBoard, AgentPanel, McpConnection, Panel, ProblemCard, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
     TagChip, Textarea, Notice, SectionHeader, SourceRow, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
   } from "$lib/components";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
@@ -568,6 +568,18 @@
     </Frame>
     <Frame width="20rem" caption="Board, narrow 20rem">
       <MethodBoard domains={fx.methodDomains} onopen={noop} />
+    </Frame>
+    <h3>Linked records and remedies (#541)</h3>
+    <p class="sg__note">A persona, cluster or remedy named inside a problem opens in the inspector with the same decide actions as a problem.
+      A remedy is listed under every problem it answers and is never copied.</p>
+    <div class="stack" data-testid="sg-linked-records">
+      {#each fx.methodLinks as l (l.id)}<LinkedRecord id={l.id} label={l.label} status={l.status} selected={l.id === "pc2"} onopen={noop} />{/each}
+    </div>
+    <Frame width="100%" caption="Remedies, full and bare">
+      {#each fx.methodRemedies as r (r.id)}<RemedyCard remedy={r} onopen={noop} />{/each}
+    </Frame>
+    <Frame width="20rem" caption="Remedy, narrow 20rem">
+      <RemedyCard remedy={fx.methodRemedies[0]} onopen={noop} />
     </Frame>
   </section>
 

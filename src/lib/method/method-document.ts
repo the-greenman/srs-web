@@ -127,8 +127,17 @@ export interface MethodModel {
   remedies: MethodRemedy[];
   personas: MethodLink[];
   clusters: MethodLink[];
+  /** Every openable item by id (problem, remedy, cluster, persona). */
+  byId: Map<string, MethodItem>;
   containers: MethodContainers;
 }
+export type MethodItem = (MethodProblem | MethodRemedy | MethodLink) & {
+  id: string;
+  createdBy?: Actor;
+};
+/** The entity a method item is. */
+export const entityOf = (item: MethodItem): Entity =>
+  "entity" in item && item.entity ? item.entity : "problem";
 
 /** Plain inputs to `buildBoard` (so grouping and status are testable without the engine). */
 export interface BoardInput {
@@ -294,12 +303,17 @@ export function buildBoard(input: BoardInput): MethodModel {
       .filter((r) => r.typeId === typeId && shown(r.instanceId))
       .map((r) => link(r.instanceId, entity))
       .sort((a, b) => a.label.localeCompare(b.label));
+  const personaList = ofType(PERSONA_TYPE_ID, "persona");
+  const clusterList = ofType(CLUSTER_TYPE_ID, "cluster");
   return {
     domains: out,
     problems,
     remedies,
-    personas: ofType(PERSONA_TYPE_ID, "persona"),
-    clusters: ofType(CLUSTER_TYPE_ID, "cluster"),
+    personas: personaList,
+    clusters: clusterList,
+    byId: new Map<string, MethodItem>(
+      [...problems, ...remedies, ...personaList, ...clusterList].map((i) => [i.id, i])
+    ),
     containers: input.containers,
   };
 }
@@ -408,3 +422,8 @@ export function affirmRecord(repo: SrsRepository, m: MethodModel, id: string, en
   if (!fork) throw new Error(`The engine did not fork this ${entity}`);
   return fork.forkId;
 }
+
+/** The title of an item (problems and remedies carry `title`, links `label`). */
+export const itemTitle = (item: MethodItem): string => ("title" in item ? item.title : item.label);
+/** The item's decision state (null: in none of the decision containers). */
+export const itemStatus = (item: MethodItem): ProblemStatus | null => item.status ?? null;
