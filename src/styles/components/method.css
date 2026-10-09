@@ -76,3 +76,57 @@
 .problem-card .card__id {
   white-space: nowrap;
 }
+
+/* LinkedRecord and RemedyCard (srs-web#541): a record named inside another, and a remedy under its problem. */
+.linked-record {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+button.linked-record {
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+button.linked-record:focus-visible {
+  outline: var(--focus-ring);
+}
+.linked-record--selected [data-part="label"] {
+  font-weight: var(--weight-bold);
+}
+.method-board__cluster-title .linked-record {
+  font-size: inherit;
+  font-weight: inherit;
+}
+.remedy-card {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-sm) 0;
+}
+.remedy-card + .remedy-card {
+  border-top: var(--rule-soft);
+}
+.remedy-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  justify-content: space-between;
+}
+.remedy-card__move,
+.remedy-card__rows {
+  margin: 0;
+}
+.remedy-card__rows dt {
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+}
+.remedy-card__rows dd {
+  margin: 0 0 var(--space-xs);
+}
