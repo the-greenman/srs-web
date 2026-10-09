@@ -185,7 +185,11 @@ export function buildBoard(input: BoardInput): MethodModel {
       if (ok && !parentOf.has(t)) parentOf.set(t, s);
     } else if (rel.relationType === HELD_BY) {
       personaIds.set(s, [...(personaIds.get(s) ?? []), t]);
-    } else if (rel.relationType === ANSWERS && isType(s, REMEDY_TYPE_ID) && isType(t, PROBLEM_TYPE_ID)) {
+    } else if (
+      rel.relationType === ANSWERS &&
+      isType(s, REMEDY_TYPE_ID) &&
+      isType(t, PROBLEM_TYPE_ID)
+    ) {
       answersOf.push([s, t]);
     } else if (rel.relationType === CONCERNS && !side.has(s)) side.set(s, t);
     else if (rel.relationType === DERIVED_FROM) derivedFrom.push([s, t]);
@@ -231,7 +235,9 @@ export function buildBoard(input: BoardInput): MethodModel {
       returnWhen: str(r.fieldValues.return_when),
       sources: list(r.fieldValues.source_ref),
       answers: uniq(
-        answersOf.filter(([m]) => m === r.instanceId || m === originalOf.get(r.instanceId)).map(([, p]) => p)
+        answersOf
+          .filter(([m]) => m === r.instanceId || m === originalOf.get(r.instanceId))
+          .map(([, p]) => p)
       ).map((id) => ({ id, label: label(id) })),
       createdBy: r.createdBy,
       status: status(r.instanceId),
@@ -240,11 +246,7 @@ export function buildBoard(input: BoardInput): MethodModel {
     .sort(byTitle);
 
   const problems: MethodProblem[] = input.records
-    .filter(
-      (r) =>
-        r.typeId === PROBLEM_TYPE_ID &&
-        shown(r.instanceId)
-    )
+    .filter((r) => r.typeId === PROBLEM_TYPE_ID && shown(r.instanceId))
     .map((r) => {
       const f = r.fieldValues;
       const parent = parentOf.get(r.instanceId);
@@ -289,7 +291,12 @@ export function buildBoard(input: BoardInput): MethodModel {
   const clusterFor = (id: string): MethodCluster => {
     const hit = clusters.get(id);
     if (hit) return hit;
-    const c: MethodCluster = { id, title: id ? label(id) : NO_CLUSTER, problems: [], ...(id ? { status: status(id), createdBy: records.get(id)?.createdBy } : {}) };
+    const c: MethodCluster = {
+      id,
+      title: id ? label(id) : NO_CLUSTER,
+      problems: [],
+      ...(id ? { status: status(id), createdBy: records.get(id)?.createdBy } : {}),
+    };
     clusters.set(id, c);
     const up = id ? (parentOf.get(id) ?? parentOf.get(originalOf.get(id) ?? "")) : undefined;
     domainFor(up ?? "").clusters.push(c);
@@ -411,7 +418,12 @@ export function sourceHref(ref: string): string | null {
  * Suggestions and the board hides it behind the fork (`derived-from`). Only that record is forked
  * (Affirmed is flat). Returns the fork's id.
  */
-export function affirmRecord(repo: SrsRepository, m: MethodModel, id: string, entity: Entity): string {
+export function affirmRecord(
+  repo: SrsRepository,
+  m: MethodModel,
+  id: string,
+  entity: Entity
+): string {
   const affirmed = m.containers.affirmed;
   if (!affirmed) throw new Error(`This repository has no ${CONTAINER_TITLES.affirmed} container`);
   const result = forkRecord(repo, affirmed, id, {
