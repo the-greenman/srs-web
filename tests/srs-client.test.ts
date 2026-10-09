@@ -1642,20 +1642,27 @@ describe("getAllowedLifecycleTransitions", () => {
     expect(spy).toHaveBeenCalledWith("inst-abc");
   });
 
-  it("returns null when WASM throws LifecycleNotDefined", () => {
+  it("returns null when WASM throws the structured lifecycle-not-defined error (srs-rust#1338)", () => {
+    // Real shape thrown by srs-bindings' report_to_js: a js_sys::Error whose message is
+    // "record '<id>' has no lifecycle defined on its Type" (no "LifecycleNotDefined" substring)
+    // with a `.code` property set to the stable RepositoryError::code().
     const repo = mockRepo({
       get_allowed_lifecycle_transitions: () => {
-        throw new Error("LifecycleNotDefined: record has no lifecycle");
+        const err = new Error("record 'inst-2' has no lifecycle defined on its Type");
+        (err as Error & { code: string }).code = "lifecycle-not-defined";
+        throw err;
       },
     });
     const result = getAllowedLifecycleTransitions(repo, "inst-2");
     expect(result).toBeNull();
   });
 
-  it("re-throws errors that are not LifecycleNotDefined", () => {
+  it("re-throws errors whose code is not lifecycle-not-defined", () => {
     const repo = mockRepo({
       get_allowed_lifecycle_transitions: () => {
-        throw new Error("WASM panic: something went wrong");
+        const err = new Error("WASM panic: something went wrong");
+        (err as Error & { code: string }).code = "unclassified";
+        throw err;
       },
     });
     expect(() => getAllowedLifecycleTransitions(repo, "inst-3")).toThrow(
