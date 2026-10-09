@@ -139,3 +139,19 @@ Mapping onto the lens model, to carry into the next iteration (not the current b
 | **Relationship** — what crosses or stays inside the boundary | Context pane and graph layout; edges are shown as inside the set vs crossing out of it | `lens.context`, layout `graph` |
 
 Consequences: (1) "no distinction" must be a first-class choice — a flat list of things with their fields, no type chips, is a valid lens, not a degraded one; (2) the same set under two distinctions is the "same data, different view" the owner asked for, so switching distinction keeps boundary and selection; (3) a boundary should be drawable ad hoc (multi-select → "treat as a set"), and saving one is how a curated lens is born; (4) the graph layout should colour edges by inside/crossing rather than by relation type by default. Public-facing copy stays in plain words (set, tell apart, links), per the project's vocabulary rule.
+
+## 8. Programme integration (2026-10-09)
+
+Recorded in srs-programme (PR the-greenman/srs-programme#34, Suggestions layer, awaiting owner affirmation):
+- **SP-48** (suggested, agent:analyst): every repository opens as the same engine view. Cluster "Seeing and arranging the group's meaning"; concerns the Perspective tension, pole Zoom out held too long.
+- **Remedy** (suggested, agent:remedy-scout): open every repository through lenses. Answers SP-48 and the affirmed SP-47 (boundaries fixed by where files sit) and SP-19 (writers see structure agents need, not their own).
+- Evidence comments on SP-47, SP-19, SP-14, SP-05. Source: `source-documents/srs-web-lenses-2026-10-09/assessment.md`.
+
+Path into the roadmap once affirmed (Focus 1 ranks objective 1, agent-supported writing, P0, epic semanticops.com#29):
+1. A new story under #29, "Work in any repository through lenses", answering SP-48. It takes over two open pieces of story #22 (srs-web#425 NavTree becomes the Collection outline; srs-web#426 selection address is the lens address), one way per goal.
+2. srs-web issues per pane, each `Answers: SP-48`: shell + Collection, Focus modes, Context, distinction control, landing on a lens. srs-web#137 (converge Governance and Guides) is answered by making them curated lenses.
+3. srs-rust issues for the six engine gaps, each `Answers: SP-05` (gaps 1 and 2 also SP-24), parented to the same story so they inherit its priority.
+4. Parked muDemocracy.org#83 (generic semantic content editor) is a source, not an import: the site lens is its answer once the story exists.
+5. Later, an RFC for lens definitions in packages (Door 2), only after Focus modes are proven.
+
+Dogfood target inside the programme itself: a "Problems" board lens over Suggestions, Affirmed and Set aside, told apart by createdBy, with the owner's fork-to-Affirmed as its one action. That surface answers SP-48 and the affirmed "Agent feedback accumulates faster than it can be read".
