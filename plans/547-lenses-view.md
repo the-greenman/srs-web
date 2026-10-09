@@ -677,14 +677,14 @@ All three commands exit 0. Commit `docs: lenses ADRs, plan review round 1, desig
 **Write scope:** `src/lib/address.ts` (moved), `src/lib/essay/address.ts` (deleted), `src/lib/essay/EssayShell.svelte` (import path, and `push` calls `pushAddress`), `tests/address.test.ts`.
 
 #### Tasks
-- [ ] `git mv src/lib/essay/address.ts src/lib/address.ts`. Implement the `address.ts` contract: `LensId`, `CollectionBy`, `ContextBy`, `LENS_ID`, `COLLECTION_BY`, `CONTEXT_BY`, `Address`, `parseAddress`, `formatAddress`, `pushAddress`, `replaceAddress`, `readTrail`.
-- [ ] EssayShell: import from `$lib/address.js`; its `push` helper calls `pushAddress({ essayId, zoomId })` (the unchanged-hash guard moves into `pushAddress`). No behaviour change.
-- [ ] `tests/address.test.ts`: import from `$lib/address.js`.
+- [x] `git mv src/lib/essay/address.ts src/lib/address.ts`. Implement the `address.ts` contract: `LensId`, `CollectionBy`, `ContextBy`, `LENS_ID`, `COLLECTION_BY`, `CONTEXT_BY`, `Address`, `parseAddress`, `formatAddress`, `pushAddress`, `replaceAddress`, `readTrail`.
+- [x] EssayShell: import from `$lib/address.js`; its `push` helper calls `pushAddress({ essayId, zoomId })` (the unchanged-hash guard moves into `pushAddress`). No behaviour change.
+- [x] `tests/address.test.ts`: import from `$lib/address.js`.
 
 #### Acceptance Criteria
-- [ ] `grep -rn "essay/address" src tests` is empty.
-- [ ] `grep -rnE "history\.(push|replace)State" src/lib/essay src/lib/lens` is empty.
-- [ ] Essay deep links (`#e=&p=&z=`) behave as before.
+- [x] `grep -rn "essay/address" src tests` is empty.
+- [x] `grep -rnE "history\.(push|replace)State" src/lib/essay src/lib/lens` is empty.
+- [x] Essay deep links (`#e=&p=&z=`) behave as before.
 
 #### Testing (named)
 - `tests/address.test.ts`:
@@ -702,6 +702,8 @@ All three commands exit 0. Commit `docs: lenses ADRs, plan review round 1, desig
 npm run typecheck && npm run lint && npm test && npm run build
 npm run e2e -- essay-editor essay-comments
 ```
+
+Note (run): the e2e gate ran with `PLAYWRIGHT_PORT=5401` because port 5173 was held by an unrelated dev server on the machine; `src/lib/lens` does not exist yet, so the second grep checks `src/lib/essay` only (empty).
 
 #### Milestone gate
 All pass. Mark tasks `[x]`. Commit `refactor(address): one hash address module shared by essay and lenses (#547, #426)`.
