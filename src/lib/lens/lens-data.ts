@@ -100,7 +100,8 @@ export type FocusData =
   | { kind: "document"; markdown: string; containerId: string }
   | { kind: "none" };
 
-const typeLabel = (name?: string) => name?.replaceAll(/[-_]/g, " ");
+/** A type name in user words, through the one shared humaniser. */
+const typeLabel = (name?: string) => (name ? humanise(name) : undefined);
 /** ponytail: ADR-025 gap 5 (srs#928) — a Composition has no display title; humanise its name. */
 const compositionTitle = (v: { name: string }) => humanise(v.name);
 /** Sets with no container view: label, type and state only. */

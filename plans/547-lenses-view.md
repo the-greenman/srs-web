@@ -326,14 +326,14 @@ export function skipHubs<T extends { id: string }>(
 
 ```ts
 export type Layout = "trail" | "reader" | "board" | "graph";
-export type Collection =
+export type CollectionSource =
   | { kind: "outline"; containerId: string }
   | { kind: "composition"; compositionId: string }
   | { kind: "type"; typeId: string }
   | { kind: "ids"; ids: string[] }
   | { kind: "find" };
 export type Focus = { kind: "read" } | { kind: "document" | "published"; compositionId?: string };
-export interface Lens { id: LensId; label: string; collection: Collection; focus: Focus }
+export interface Lens { id: LensId; label: string; collection: CollectionSource; focus: Focus }
 export interface ContextGroupDef { relationType: string; direction: "in" | "out"; label: string }
 
 /** nav lenses (depth-0 sections with a sectionContainerId; the identity entry is not a section), comp lenses (listDocumentViews order), type lenses (facets.byType by count), find; plus `set` when `set` is non-empty. */
@@ -345,7 +345,7 @@ export function deriveLenses(repo: SrsRepository, set?: string[]): Lens[];
  */
 export function defaultContext(edges: ContextItem[], types: RelationTypeInfo[]): ContextGroupDef[];
 /** Kind-derived defaults only (outline → "nesting", else "type"). */
-export function defaultBy(c: Collection): CollectionBy;
+export function defaultBy(c: CollectionSource): CollectionBy;
 ```
 
 Dropped from the prototype: `curatedLenses`, `problemContext`, `ctx`, `relationLabel`, `humanise` (moves to `src/lib/labels.ts`), `Collection` kind `navigation` and `outline.also`, `Lens.columns`/`by`/`ctxBy`/`layout`/`context`, `ContextGroupDef.types`, `By`, `CtxBy`.

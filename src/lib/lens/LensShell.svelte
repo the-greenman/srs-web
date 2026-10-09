@@ -291,7 +291,7 @@
   const kindBy = $derived(lens ? defaultBy(lens.collection) : "type");
   const effectiveBy = $derived<CollectionBy>(by && byOptions.some((o) => o.value === by) ? by : kindBy);
   const effectiveCtxBy = $derived<ContextBy>(ctxBy ?? "link-type");
-  // ponytail: one containersForInstance per member, only while "Container" is chosen (presentation limit).
+  // ponytail: presentation limit, no ADR-025 gap — one containersForInstance per member, only while "Container" is chosen.
   const containerTitles = $derived.by(() => {
     if (effectiveBy !== "container") return new Map<string, string[]>();
     return new Map(

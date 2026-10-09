@@ -18,7 +18,7 @@ import type { ContextItem } from "./lens-data.js";
 
 export type Layout = "trail" | "reader";
 
-export type Collection =
+export type CollectionSource =
   /** A container's members in arranged order with depth. */
   | { kind: "outline"; containerId: string }
   /** A composition's sections, each listing its container's members. */
@@ -38,7 +38,7 @@ export type Focus = { kind: "read" } | { kind: "document" | "published"; composi
 export interface Lens {
   id: LensId;
   label: string;
-  collection: Collection;
+  collection: CollectionSource;
   focus: Focus;
 }
 
@@ -80,7 +80,7 @@ export function defaultContext(edges: ContextItem[], types: RelationTypeInfo[]):
 }
 
 /** Kind-derived defaults only (outline → "nesting", else "type"). */
-export function defaultBy(c: Collection): CollectionBy {
+export function defaultBy(c: CollectionSource): CollectionBy {
   return c.kind === "outline" ? "nesting" : "type";
 }
 

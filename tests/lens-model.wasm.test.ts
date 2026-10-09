@@ -200,6 +200,18 @@ describe.skipIf(!haveBindings)("lens model on the real engine (srs-spec.srs)", (
       })));
   });
 
+  it("item and link type names go through the shared humanise", async () => {
+    const { humanise } = await import("../src/lib/labels.js");
+    const l = lens.deriveLenses(repo).find((x) => x.id === `nav:${DISTRIBUTION}`)!;
+    const typed = data.loadCollection(repo, l).items.filter((i) => i.record?.typeName);
+    expect(typed.length).toBeGreaterThan(0);
+    for (const i of typed) expect(i.typeName).toBe(humanise(i.record!.typeName!));
+    const raw = client.neighbours(repo, PACKAGE).neighbours;
+    data.loadEdges(repo, PACKAGE).forEach((e, n) =>
+      expect(e.typeName).toBe(raw[n].neighbour.typeName ? humanise(raw[n].neighbour.typeName!) : undefined)
+    );
+  });
+
   it("shownIn is empty on srs-spec", () => {
     const containers = client.listContainers(repo).map((c) => c.containerId);
     expect(containers.length).toBeGreaterThan(0);

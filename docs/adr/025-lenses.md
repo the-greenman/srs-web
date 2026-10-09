@@ -126,7 +126,8 @@ No second tree component is built.
 - **Edge-to-set classification is presentation.** `splitByBoundary` is the one
   classifier: it splits edges the engine returned by whether their other end is in a
   set the viewer drew or the engine returned. It asserts no new relation fact, never
-  filters or hides an edge, and is the only edge classifier in client code. (The owner
+  filters or hides an edge, and is the only classifier by set membership in client code
+  (`groupEdges` only buckets engine edges by their own relation type and direction). (The owner
   ruled this presentation with "Tell apart by" on 2026-10-09; the question included
   "splits links into inside or leaving the set".)
 - The hub guard's threshold is a named presentation default, `HUB_LINKS`.

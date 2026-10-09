@@ -46,8 +46,9 @@
             .filter((name) => !composite.has(name))
             .map((name) => ({ name, label: fieldLabel({ name }), valueType: "string" }));
     const shown = all.filter((f) => has(vals[f.name]) && vals[f.name] !== record.displayLabel);
-    // ponytail: "long" = a markdown field, a text field over 40 characters, any other value over 80, or a
-    // line break (a short plain-text id like "C-08" stays a chip); a presentation heuristic, not a schema fact.
+    // ponytail: presentation limit, no ADR-025 gap — "long" = a markdown field, a text field over 40
+    // characters, any other value over 80, or a line break (a short plain-text id like "C-08" stays a
+    // chip); a presentation heuristic, not a schema fact.
     const isLong = (f: (typeof shown)[number]) => {
       const v = vals[f.name];
       return (
