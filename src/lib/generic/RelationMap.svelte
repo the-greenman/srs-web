@@ -10,7 +10,7 @@
   import Button from "$lib/components/Button.svelte";
   import Notice from "$lib/components/Notice.svelte";
   import RelationGraph from "./RelationGraph.svelte";
-  import { plainLabel } from "./labels.js";
+  import { plainLabel } from "$lib/labels.js";
   import { CONTAINER_NODE_CAP, containerGraph, focusLayout } from "./map-layout.js";
 
   let {

@@ -23,6 +23,7 @@
 
 import { documentViewsForBlueprint } from "$lib/discovery.js";
 import { rootTypeId } from "$lib/editor/blueprint-fields.js";
+import { humanise } from "$lib/labels.js";
 import {
   type BlueprintSummary,
   type DocumentView,
@@ -200,15 +201,6 @@ export interface ComponentTypeDescriptor {
   description?: string;
 }
 
-/** "homepage-hero" → "Homepage hero", "section.text" → "Section text". */
-export function typeNameLabel(name: string): string {
-  const words = name
-    .split(/[.\-_]+/)
-    .filter(Boolean)
-    .join(" ");
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
 /** `typeId` plus every type that (transitively) `extendsTypeId`s it — the RFC-032 inheritance chain, walked forward. */
 function typeAndSubtypes(
   repo: SrsRepository,
@@ -275,7 +267,7 @@ export function componentTypes(
       seen.set(typeId, {
         typeId,
         typeVersion: versionByTypeId.get(typeId) ?? 1,
-        label: type ? typeNameLabel(type.name) : `Type (${typeId.slice(0, 8)})`,
+        label: type ? humanise(type.name) : `Type (${typeId.slice(0, 8)})`,
         description: type?.description,
       });
     }
@@ -327,7 +319,7 @@ export function childTypes(
       seen.set(typeId, {
         typeId,
         typeVersion: versionByTypeId.get(typeId) ?? 1,
-        label: type ? typeNameLabel(type.name) : `Type (${typeId.slice(0, 8)})`,
+        label: type ? humanise(type.name) : `Type (${typeId.slice(0, 8)})`,
         description: type?.description,
       });
     }

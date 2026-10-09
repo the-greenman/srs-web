@@ -40,7 +40,7 @@
   import InstanceNotes from "$lib/InstanceNotes.svelte";
   import RecordsExplorer from "./RecordsExplorer.svelte";
   import RelationMap from "./RelationMap.svelte";
-  import { plainLabel } from "./labels.js";
+  import { plainLabel } from "$lib/labels.js";
   import AppShell from "$lib/components/AppShell.svelte";
   import Inspector from "$lib/components/Inspector.svelte";
   import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";

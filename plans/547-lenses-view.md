@@ -716,16 +716,16 @@ All pass. Mark tasks `[x]`. Commit `refactor(address): one hash address module s
 **Write scope:** `src/lib/lens/lens.ts`, `src/lib/lens/lens-data.ts`, `src/lib/lens/lens-distinctions.ts`, `src/lib/labels.ts` (moved from `src/lib/generic/labels.ts`), the label importers listed in Contracts (import lines; `blueprint-fields.ts` label lines), `tests/lens-distinctions.test.ts` (new, ported), `tests/lens-model.wasm.test.ts` (new), `tests/labels.test.ts` (new), `tests/document-model.test.ts` and `tests/generic-records-map.test.ts` (import paths only), `tests/blueprint-fields.test.ts` (two cases). `src/lib/editor/blueprint-fields.ts` changes in a separate commit within this phase.
 
 #### Tasks
-- [ ] Port the three lens modules per the port map and contracts.
-- [ ] `git mv src/lib/generic/labels.ts src/lib/labels.ts`; add `humanise` (the body of `typeNameLabel`) and `fieldLabel` (`title || humanise(name)`); delete `typeNameLabel` and update its importers.
-- [ ] Separate commit `refactor(forms): field labels humanise a bare name (#547)`: `blueprint-fields.ts` uses `fieldLabel({ name, title: prop.title })` at both sites; `tests/blueprint-fields.test.ts` gains "a titled field keeps its title" and "an untitled field shows its humanised name". PR A's body names this commit.
-- [ ] `lens-model.wasm.test.ts`: the `editor-install.wasm.test.ts` pattern (copy bindings aside, `initSync`), then `mod.SrsRepository.load_archive(readFileSync("e2e/fixtures/srs-spec.srs"))`. Skipped without bindings; fails in CI without them.
+- [x] Port the three lens modules per the port map and contracts.
+- [x] `git mv src/lib/generic/labels.ts src/lib/labels.ts`; add `humanise` (the body of `typeNameLabel`) and `fieldLabel` (`title || humanise(name)`); delete `typeNameLabel` and update its importers.
+- [x] Separate commit `refactor(forms): field labels humanise a bare name (#547)`: `blueprint-fields.ts` uses `fieldLabel({ name, title: prop.title })` at both sites; `tests/blueprint-fields.test.ts` gains "a titled field keeps its title" and "an untitled field shows its humanised name". PR A's body names this commit.
+- [x] `lens-model.wasm.test.ts`: the `editor-install.wasm.test.ts` pattern (copy bindings aside, `initSync`), then `mod.SrsRepository.load_archive(readFileSync("e2e/fixtures/srs-spec.srs"))`. Skipped without bindings; fails in CI without them.
 
 #### Acceptance Criteria
-- [ ] `no-literals` passes.
-- [ ] `gap-cites` passes.
-- [ ] `grep -rn "typeNameLabel\|generic/labels" src tests` and `grep -rn "listRelations(\|listRecords(\|loadGroup" src/lib/lens` are empty.
-- [ ] Every `ponytail:` in `src/lib/lens` cites `ADR-025 gap N (<issue>)` or names a presentation limit from the port map.
+- [x] `no-literals` passes.
+- [x] `gap-cites` passes.
+- [x] `grep -rn "typeNameLabel\|generic/labels" src tests` and `grep -rn "listRelations(\|listRecords(\|loadGroup" src/lib/lens` are empty.
+- [x] Every `ponytail:` in `src/lib/lens` cites `ADR-025 gap N (<issue>)` or names a presentation limit from the port map.
 
 #### Testing (named)
 - `tests/labels.test.ts`:
@@ -755,6 +755,9 @@ npm run typecheck && npm run lint && npm test && npm run build
 npm run e2e -- guides-editor blueprint-document-editor records-explorer
 LIT_PATHS="src/lib/lens"   # then no-literals and gap-cites
 ```
+
+Deviation: `groupItems`'s `opts` gains an optional `kindDefault?: CollectionBy`. The contract says a `field:<fieldId>` value "is treated as the kind default", but `groupItems` cannot see the collection kind; the caller passes `defaultBy(collection)` (absent: "type"). No other signature changed.
+Note (run): `lens-data.ts` keeps the prototype's `expandItem` (Collection's one-level expand) and `loadBlocks` (Document over a non-outline set); neither is on the contract's removal list. The two commits land feat first, then `refactor(forms)`, because the forms commit imports `fieldLabel` from the moved `src/lib/labels.ts`. e2e ran with `PLAYWRIGHT_PORT=5401` (5173 held by an unrelated dev server).
 
 #### Milestone gate
 All pass, plus `no-literals` and `gap-cites`. Two commits: `refactor(forms): field labels humanise a bare name (#547)` and `feat(lens): derived lenses, loaders, distinctions and shared labels (#547)`.

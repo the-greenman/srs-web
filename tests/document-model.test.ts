@@ -13,8 +13,8 @@ import {
   childTypes,
   componentTypes,
   loadDocument,
-  typeNameLabel,
 } from "../src/lib/editor/document-model.js";
+import { humanise } from "../src/lib/labels.js";
 import type {
   BlueprintListResult,
   BlueprintSummary,
@@ -224,8 +224,8 @@ describe("componentTypes", () => {
   });
 
   it("humanises dotted and kebab type names", () => {
-    expect(typeNameLabel("homepage-hero")).toBe("Homepage hero");
-    expect(typeNameLabel("section.text")).toBe("Section text");
+    expect(humanise("homepage-hero")).toBe("Homepage hero");
+    expect(humanise("section.text")).toBe("Section text");
   });
 
   it("hides an abstract base that an offered type extends", () => {

@@ -1,4 +1,7 @@
-/** Display-only label helpers for the Records and Map surfaces. Real markdown rendering is #479. */
+/**
+ * Display-only label helpers, shared by forms, the Records and Map surfaces, Lenses and RecordProse
+ * (ADR-024). Real markdown rendering is #479.
+ */
 
 /** A core label with its markdown backticks removed (display only; the record is unchanged). */
 export function plainLabel(label: string | undefined | null, fallback = ""): string {
@@ -26,4 +29,18 @@ export function wrapLabel(label: string, width = 18, lines = 2): string[] {
   }
   if (rest) out[out.length - 1] = `${out[out.length - 1].slice(0, width - 1).trimEnd()}…`;
   return out;
+}
+
+/** An engine name in user words: "section.text" / "source_kind" / "depends-on" → "Section text" / "Source kind" / "Depends on". */
+export function humanise(name: string): string {
+  const words = name
+    .split(/[.\-_]+/)
+    .filter(Boolean)
+    .join(" ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** A field's label: its schema title, else its humanised name. */
+export function fieldLabel(f: { name: string; title?: string }): string {
+  return f.title || humanise(f.name);
 }
