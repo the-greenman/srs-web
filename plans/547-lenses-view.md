@@ -624,7 +624,7 @@ Every milestone gate runs, in order, and each must exit 0:
 npm run typecheck && npm run lint && npm test && npm run build
 ```
 
-plus the phase's named e2e specs. The two checks below run from the worktree root. Each names only paths that exist at that phase, and each fails on grep's exit 2 (a missing path or bad pattern) instead of passing:
+plus the phase's named e2e specs. **e2e specs are always named by file path** (`npm run e2e -- e2e/lenses.spec.ts`), never by a bare name: Playwright matches a name filter against the absolute path, and in this worktree that path contains `547-lenses-view`, so `npm run e2e -- lenses` selects every spec in the suite (srs-web#552). `e2e/mobile-layout.spec.ts` runs on its own: under full-suite load it flakes (srs-web#552), which predates #547. The two checks below run from the worktree root. Each names only paths that exist at that phase, and each fails on grep's exit 2 (a missing path or bad pattern) instead of passing:
 
 ```bash
 # no-literals: no UUID, namespace or core relation key literal in lens code (and RecordProse from Phase 3).
@@ -700,7 +700,7 @@ All three commands exit 0. Commit `docs: lenses ADRs, plan review round 1, desig
   - "readTrail returns [] for null, junk and a missing trail".
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
-npm run e2e -- essay-editor essay-comments
+npm run e2e -- e2e/essay-editor.spec.ts e2e/essay-comments.spec.ts
 ```
 
 Note (run): the e2e gate ran with `PLAYWRIGHT_PORT=5401` because port 5173 was held by an unrelated dev server on the machine; `src/lib/lens` does not exist yet, so the second grep checks `src/lib/essay` only (empty).
@@ -752,7 +752,7 @@ All pass. Mark tasks `[x]`. Commit `refactor(address): one hash address module s
   - "shownIn lists a bound composition (gallery)": on `gallery.srsj`, `shownIn(repo, containersOf(repo, "ad159754-2edd-4bf8-a70f-a29a617e5809"))` contains `{ compositionId: "78b11038-e5d8-4269-9982-fe5c459802b2", containerId: "f7562aa3-98c7-44be-b4c5-5474df6441f2" }`.
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
-npm run e2e -- guides-editor blueprint-document-editor records-explorer
+npm run e2e -- e2e/guides-editor.spec.ts e2e/blueprint-document-editor.spec.ts e2e/records-explorer.spec.ts
 LIT_PATHS="src/lib/lens"   # then no-literals and gap-cites
 ```
 
@@ -829,7 +829,7 @@ All pass, plus `no-literals` and `gap-cites`. Two commits: `refactor(forms): fie
   - "Show more reveals the next NEIGHBOUR_PAGE of a 41-item group" (ContextGroup, no callback).
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
-npm run e2e -- styleguide
+npm run e2e -- e2e/styleguide.spec.ts
 LIT_PATHS="src/lib/lens src/rendering/RecordProse.svelte"   # then no-literals and gap-cites
 ```
 
@@ -897,7 +897,8 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): Collection, Fo
   - "switching lens to a set that lacks the selection selects the new set's first member and Back returns to the old one" (added with the Phase 5 restore).
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
-npm run e2e -- lenses navigation editor-mode open-url shell-layout mobile-layout essay-editor
+npm run e2e -- e2e/lenses.spec.ts e2e/navigation.spec.ts e2e/editor-mode.spec.ts e2e/open-url.spec.ts e2e/shell-layout.spec.ts e2e/essay-editor.spec.ts
+npm run e2e -- e2e/mobile-layout.spec.ts   # separately: its full-suite flake is srs-web#552
 LIT_PATHS="src/lib/lens src/rendering/RecordProse.svelte"   # then no-literals and gap-cites
 grep -q "components/Breadcrumb.svelte" src/lib/lens/LensShell.svelte && grep -q "components/Select.svelte" src/lib/lens/LensShell.svelte
 rc=0; grep -nE "svelte:window|addEventListener\\(.(popstate|hashchange)" src/lib/lens/LensShell.svelte || rc=$?; test $rc -eq 1   # LensShell owns no listener
@@ -920,7 +921,7 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): Lenses view in
 **Write scope:** `e2e/lenses.spec.ts`.
 
 #### Tasks
-- [ ] `e2e/lenses.spec.ts`, `test("journey — srs-spec")`:
+- [x] `e2e/lenses.spec.ts`, `test("journey — srs-spec")`:
   1. Explore > Lenses shows `lens-shell` with 9 section tabs.
   2. Pick the Distribution tab (`nav:97838af7-50f8-4da2-9d8f-d7dbf9296c80`), then the concept "Package" (`006a853f-7e58-4842-85e4-ad75d4b0fe5d`): Focus Read shows "Package"; Context shows a "Depends on →" group with a count.
   3. Follow the prerequisite "Field" (`873099c5-093d-4684-8c36-46f813847c1a`): the trail shows two items; browser Back returns to "Package" with the trail emptied.
@@ -940,16 +941,18 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): Lenses view in
 - [ ] Architecture review of the diff, then the Lead Integrator reviews it (DRY at the right layer first) and pushes the branch.
 
 #### Acceptance Criteria
-- [ ] `npm run e2e -- lenses --repeat-each=2` green (each test runs twice; no flake).
-- [ ] `npm run e2e -- large-repo` still green.
+- [x] `npm run e2e -- e2e/lenses.spec.ts --repeat-each=2` green (each test runs twice; no flake).
+- [x] `npm run e2e -- e2e/large-repo.spec.ts` still green.
 - [ ] No blocking findings open.
 
 #### Testing
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
-npm run e2e -- lenses --repeat-each=2
-npm run e2e -- large-repo styleguide navigation editor-mode open-url essay-editor
+npm run e2e -- e2e/lenses.spec.ts --repeat-each=2
+npm run e2e -- e2e/large-repo.spec.ts e2e/styleguide.spec.ts e2e/navigation.spec.ts e2e/editor-mode.spec.ts e2e/open-url.spec.ts e2e/essay-editor.spec.ts
 ```
+
+Note (run): the journey's step 5 reaches the decision type lens by writing its address (the agent path), since type lenses sit behind "More lenses > Types". Step 7 edits the form's first text box, as the Phase 4 Edit test does, rather than a field picked by name. `npm run e2e -- e2e/lenses.spec.ts --repeat-each=2` ran twice in a row, exit 0 both times (32 passed each); the second command, exit 0 (62 passed); `PLAYWRIGHT_PORT=5401`. The Phase 4 behaviour "every lens opens on a record inside its set" was restored before the journey (see the Phase 4 note). The fresh-eyes run and the reviews are separate steps, not yet run.
 
 #### Milestone gate
 All pass, plus `no-literals` and `gap-cites`. Commit `test(lens): end-to-end journey on the spec fixture (#547)`. Push. Open PR A after review: `Refs #547`, "Narrows #426: …", the `refactor(forms)` commit named, the ADR-002/ADR-022 interim note, follow-up 2 (the #425 comment) posted.
@@ -983,7 +986,7 @@ All pass, plus `no-literals` and `gap-cites`. Commit `test(lens): end-to-end jou
 - `e2e/lenses.spec.ts`: "board and graph layouts open on the decision type lens with no page error".
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
-npm run e2e -- lenses styleguide
+npm run e2e -- e2e/lenses.spec.ts e2e/styleguide.spec.ts
 ```
 
 #### Milestone gate
@@ -1014,7 +1017,7 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): board and grap
 - `e2e/lenses.spec.ts`, `test("draw a set")`: check two concepts and show the set; Add everything grows it and lists any skipped hubs; "Tell apart by" Type groups it; Context inside/outside shows both groups; `lens=set` in a fresh context falls back with a notice.
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
-npm run e2e -- lenses
+npm run e2e -- e2e/lenses.spec.ts
 ```
 
 #### Milestone gate
@@ -1044,8 +1047,8 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): draw a set wit
 #### Testing
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
-npm run e2e -- lenses --repeat-each=2
-npm run e2e -- large-repo styleguide navigation editor-mode open-url essay-editor
+npm run e2e -- e2e/lenses.spec.ts --repeat-each=2
+npm run e2e -- e2e/large-repo.spec.ts e2e/styleguide.spec.ts e2e/navigation.spec.ts e2e/editor-mode.spec.ts e2e/open-url.spec.ts e2e/essay-editor.spec.ts
 ```
 
 #### Milestone gate
@@ -1058,7 +1061,7 @@ All pass, plus `no-literals` and `gap-cites`. Commit `docs(lens): design referen
 ### PR A (end of Phase 5)
 
 - [ ] `npm run typecheck`, `npm run lint`, `npm test` (including `lens-model.wasm.test.ts` on the real bindings) and `npm run build` pass
-- [ ] `npm run e2e -- lenses --repeat-each=2` green; `npm run e2e -- large-repo styleguide navigation editor-mode open-url essay-editor essay-comments guides-editor records-explorer` green
+- [ ] `npm run e2e -- e2e/lenses.spec.ts --repeat-each=2` green; `npm run e2e -- e2e/large-repo.spec.ts e2e/styleguide.spec.ts e2e/navigation.spec.ts e2e/editor-mode.spec.ts e2e/open-url.spec.ts e2e/essay-editor.spec.ts e2e/essay-comments.spec.ts e2e/guides-editor.spec.ts e2e/records-explorer.spec.ts` green
 - [ ] `no-literals` and `gap-cites` pass
 - [ ] Lenses is reachable from Generic, returns by Go > Explorer, and works read-only without Edit
 - [ ] Back, reload-after-restore and an externally written hash land on the same lens, record and distinctions; Back from Generic into a lens hash reopens Lenses
@@ -1073,7 +1076,7 @@ All pass, plus `no-literals` and `gap-cites`. Commit `docs(lens): design referen
 - [ ] Board and graph layouts on every lens; board and graph specimens in both themes
 - [ ] Draw a set with the hub guard; `working-set.ts` survives throwing storage
 - [ ] Fresh-eyes round done; follow-ups filed with issue numbers in the PR body
-- [ ] `npm run e2e -- lenses --repeat-each=2` and `npm run e2e -- large-repo styleguide navigation editor-mode open-url essay-editor` green
+- [ ] `npm run e2e -- e2e/lenses.spec.ts --repeat-each=2` and `npm run e2e -- e2e/large-repo.spec.ts e2e/styleguide.spec.ts e2e/navigation.spec.ts e2e/editor-mode.spec.ts e2e/open-url.spec.ts e2e/essay-editor.spec.ts` green
 
 ## Coordination Rules
 

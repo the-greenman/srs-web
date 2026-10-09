@@ -342,3 +342,79 @@ test.describe("lenses — shell and address", () => {
     expect(errors).toEqual([]);
   });
 });
+
+test("journey — srs-spec", async ({ page }) => {
+  const errors = watchErrors(page);
+  // 1. Explore > Lenses: nine section tabs
+  await openSpec(page);
+  await openLenses(page);
+  await expect(page.getByTestId("lens-switcher").getByRole("tab")).toHaveCount(9);
+
+  // 2. Distribution, then the concept Package: Read shows it; Context has a "Depends on" group with a count
+  await pickPackage(page);
+  await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId("lens-context")).toContainText(/Depends on/);
+  await expect(page.getByTestId("lens-context")).toContainText(/Depends on[^\n]*\d/);
+
+  // 3. Follow the prerequisite Field: two trail items; browser Back returns to Package, trail empty
+  await followLink(page, ["Package"], "Field");
+  await expect(trailItems(page)).toHaveCount(2);
+  await page.goBack();
+  await expect(title(page)).toHaveText("Package");
+  await expect(page.getByTestId("lens-trail")).toHaveCount(0);
+
+  // 4. Tell apart by Type groups the Collection; the hash gains by=type
+  await page.getByTestId("lens-by").selectOption("type");
+  await expect(page.getByTestId("lens-collection").getByTestId("lens-group").first()).toBeVisible();
+  expect(await hashOf(page)).toContain("by=type");
+
+  // 5. The decision type lens offers no field option (gap 6); a by=field: address falls back to Type
+  await page.evaluate((h) => {
+    location.hash = h;
+  }, `${lensHash(`type:${DECISION_TYPE}`)}&by=field%3A00000000-0000-4000-8000-000000000001`);
+  await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "false");
+  expect(await hashOf(page)).toContain(`lens=type:${DECISION_TYPE}`);
+  const options = await page.getByTestId("lens-by").locator("option").evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value));
+  expect(options.some((v) => v.startsWith("field:"))).toBe(false);
+  await expect(page.getByTestId("lens-by")).toHaveValue("type");
+
+  // 6. Back on Package: Reader layout, then Document highlights the selected block
+  await page.evaluate((h) => {
+    location.hash = h;
+  }, lensHash(`nav:${DISTRIBUTION}`, PACKAGE));
+  await expect(title(page)).toHaveText("Package");
+  await page.getByTestId("lens-layout").selectOption("reader");
+  await page.getByTestId("lens-mode").selectOption("document");
+  const selected = page.locator(`[data-testid="lens-block"][data-instance-id="${PACKAGE}"]`);
+  await expect(selected).toHaveClass(/lens-block--selected/);
+
+  // 7. Edit in place, Cancel: nothing unsaved; Edit, Save: unsaved
+  await page.getByTestId("lens-edit").click();
+  const form = page.getByTestId("section-form");
+  const box = form.getByRole("textbox").first();
+  await box.fill(`${await box.inputValue()} (edited)`);
+  await form.getByRole("button", { name: "Cancel" }).click();
+  await expect(form).toHaveCount(0);
+  await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
+  await page.getByTestId("lens-edit").click();
+  await form.getByRole("textbox").first().fill(`${await form.getByRole("textbox").first().inputValue()} (edited)`);
+  await form.locator("button[type=submit]", { hasText: "Save" }).click();
+  await expect(page.getByTestId("document-dirty-status")).toHaveText("Unsaved changes");
+  await waitForRecoveryCopy(page);
+
+  // 8. Reload, restore: the same lens and record
+  await page.reload();
+  await page.getByTestId("restore-session").click();
+  await expect(page.getByTestId("lens-shell")).toBeVisible({ timeout: 30000 });
+  await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId("lens-collection").locator('.lens-list__row[aria-current="true"]')).toContainText("Package");
+  expect(await hashOf(page)).toContain(`id=${PACKAGE}`);
+
+  // 9. Go > Explorer
+  await openMenu(page, "Go");
+  await page.getByTestId("toolbar-explorer").click();
+  await expect(page.getByTestId("generic-srs-shell")).toBeVisible();
+
+  // 10. No page errors
+  expect(errors).toEqual([]);
+});
