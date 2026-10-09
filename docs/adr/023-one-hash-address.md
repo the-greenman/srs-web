@@ -82,6 +82,10 @@ an event); they call:
 - The link trail lives in `history.state`. Every trail move is `history.go(-n)`, `n`
   being the entries between the current one and the target; the trail's Back is
   `n = 1`, so the visible Back and browser Back always agree. Reload keeps the trail.
+- The visible trail holds only links followed inside the current lens. Switching lens
+  still pushes, so browser Back returns to the old lens and record, but the new entry's
+  trail is empty: no breadcrumb points at the previous lens's record. (Fresh-eyes
+  review, 2026-10-09: a trail carried across a switch read as a stray trail.)
 - Opening another repository clears the lens keys (`lens`, `id`, `by`, `ctxby`) with
   `replaceAddress`, so a stale lens never applies to a different repository.
 

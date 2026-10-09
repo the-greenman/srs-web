@@ -14,24 +14,8 @@
   gap: var(--space-2xs);
   padding: var(--space-xs) var(--space-sm);
 }
-.lens-switcher__tab {
-  padding: 4px 10px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--color-muted);
-  font: inherit;
-  font-size: var(--size-xs);
-  cursor: pointer;
-}
-.lens-switcher__tab:hover {
-  color: var(--color-text-strong);
-  border-color: var(--color-text-strong);
-}
-.lens-switcher__tab[aria-selected="true"] {
-  background: var(--color-text-strong);
-  border-color: var(--color-text-strong);
-  color: var(--color-on-dark);
+.lens-switcher__tabs {
+  display: contents;
 }
 
 /* ── Collection: list ─────────────────────────────────────────────────────── */
@@ -209,18 +193,6 @@
 .lens-rail__tab {
   writing-mode: vertical-rl;
   padding: var(--space-sm) 6px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-muted-strong);
-  font: inherit;
-  font-size: var(--size-xs);
-  letter-spacing: 0.08em;
-  cursor: pointer;
-}
-.lens-rail__tab:hover {
-  color: var(--color-text-strong);
-  border-color: var(--color-text-strong);
 }
 .lens-rail__tab span {
   margin-top: var(--space-2xs);
@@ -262,32 +234,8 @@
   border-radius: var(--radius-sm);
   background: var(--color-surface);
 }
-.lens-toggle {
-  padding: 2px 8px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--color-muted-strong);
-  font: inherit;
-  font-size: var(--size-xs);
-  cursor: pointer;
-}
-.lens-toggle:hover,
-.lens-toggle[aria-pressed="true"] {
-  color: var(--color-text-strong);
-  border-color: var(--color-text-strong);
-}
 .lens-collection--dark .lens-by {
   color: var(--color-on-dark-muted);
-}
-.lens-collection--dark .lens-toggle {
-  border-color: var(--color-on-dark-line);
-  color: var(--color-on-dark-muted);
-}
-.lens-collection--dark .lens-toggle:hover,
-.lens-collection--dark .lens-toggle[aria-pressed="true"] {
-  border-color: var(--color-on-dark);
-  color: var(--color-on-dark);
 }
 
 /* ── Focus: mode control, read, document ─────────────────────────────────── */
@@ -430,4 +378,29 @@ button.lens-context-item:hover {
   align-items: center;
   gap: var(--space-xs);
   margin-bottom: var(--space-xs);
+}
+
+/* ── Nav head: the way back to the explorer, above the Collection ─────────── */
+.lens-nav-head {
+  padding: var(--space-2xs) var(--space-sm) var(--space-xs);
+}
+
+/* ── Toolbar in Lenses: the status never clips; a long title wraps to two lines first ── */
+/* "Unsaved changes" and the Layout control stay whole; the record title takes the rest. */
+.lens-shell .toolbar__status {
+  flex: none;
+}
+.lens-shell .toolbar__status > * {
+  overflow: visible;
+}
+/* bp: above phone (the phone bar keeps its one-row title) */
+@media (min-width: 481px) {
+  .lens-shell .toolbar__name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    line-height: var(--leading-tight);
+    white-space: normal;
+  }
 }

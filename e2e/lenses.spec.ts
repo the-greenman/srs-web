@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
-import { openLenses, openMenu, waitForRecoveryCopy } from "./helpers.js";
+import { openInspectorDrawer, openLenses, openMenu, openNavDrawer, waitForRecoveryCopy } from "./helpers.js";
 
 /**
  * lenses.spec.ts — srs-web#547: the built-in Lenses view (ADR-022, ADR-025) and its one hash address
@@ -14,7 +14,6 @@ const SPEC = fx("srs-spec.srs");
 const CORS = { "access-control-allow-origin": "*" };
 
 const READING = "2ea344e1-f64e-4817-99f7-fe1b1e4046ce"; // first navigation section
-const FOUNDATIONS = "752dad23-8a6d-44e5-98c9-f081d2cc634e";
 const DISTRIBUTION = "97838af7-50f8-4da2-9d8f-d7dbf9296c80";
 const PACKAGE = "006a853f-7e58-4842-85e4-ad75d4b0fe5d";
 const DECISION_TYPE = "6a000004-0000-4000-a000-000000000004";
@@ -70,8 +69,8 @@ test.describe("lenses — shell and address", () => {
     const errors = watchErrors(page);
     await openSpec(page);
     await openLenses(page);
-    await expect(page.getByTestId("lens-switcher").getByRole("tab")).toHaveCount(9);
-    await expect(page.getByTestId(tab(READING))).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByTestId("lens-switcher").getByRole("navigation", { name: "Lenses" }).getByRole("button")).toHaveCount(9);
+    await expect(page.getByTestId(tab(READING))).toHaveAttribute("aria-current", "true");
     expect(await hashOf(page)).toMatch(new RegExp(`^#lens=nav:${READING}&id=[0-9a-f-]{36}$`));
 
     await openMenu(page, "Go");
@@ -91,7 +90,7 @@ test.describe("lenses — shell and address", () => {
     await page.evaluate((h) => {
       location.hash = h;
     }, lensHash(`nav:${DISTRIBUTION}`));
-    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-current", "true");
     await expect(firstRow(page)).toHaveAttribute("aria-current", "true");
     expect(await hashOf(page)).toMatch(new RegExp(`^#lens=nav:${DISTRIBUTION}&id=[0-9a-f-]{36}$`));
     expect(errors).toEqual([]);
@@ -103,22 +102,46 @@ test.describe("lenses — shell and address", () => {
     await openSpec(page);
     await openLenses(page);
     await pickPackage(page);
-    await page.getByTestId(tab(FOUNDATIONS)).click();
-    await expect(page.getByTestId(tab(FOUNDATIONS))).toHaveAttribute("aria-selected", "true");
-    await expect(firstRow(page)).toHaveAttribute("aria-current", "true");
+    await followLink(page, ["Package"], "Field");
     await expect(trailItems(page)).toHaveCount(2);
-    await expect(trailItems(page).first()).toHaveText(/Package/);
-    // the trail's Back
-    await page.getByTestId("lens-back").click();
-    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
-    await expect(title(page)).toHaveText("Package");
-    // and browser Back, from a second switch
-    await page.getByTestId(tab(FOUNDATIONS)).click();
-    await expect(page.getByTestId(tab(FOUNDATIONS))).toHaveAttribute("aria-selected", "true");
-    await page.goBack();
-    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
-    await expect(title(page)).toHaveText("Package");
+    await page.getByTestId(tab(READING)).click(); // holds neither Package nor Field
+    await expect(page.getByTestId(tab(READING))).toHaveAttribute("aria-current", "true");
+    await expect(firstRow(page)).toHaveAttribute("aria-current", "true");
+    // the visible trail holds only links followed inside the current lens: empty after a switch
     await expect(page.getByTestId("lens-trail")).toHaveCount(0);
+    // the switch is still history: browser Back returns to the old lens, record and trail
+    await page.goBack();
+    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-current", "true");
+    await expect(title(page)).toHaveText("Field");
+    await expect(trailItems(page)).toHaveCount(2);
+  });
+
+  test("Explore > Lenses returns to the last lens address of this session", async ({ page }) => {
+    const errors = watchErrors(page);
+    await openSpec(page);
+    await openLenses(page);
+    await pickPackage(page);
+    await page.getByTestId("lens-by").selectOption("type");
+    await page.getByTestId("lens-ctx-by").selectOption("none");
+    const before = await hashOf(page);
+    await openMenu(page, "Go");
+    await page.getByTestId("toolbar-explorer").click();
+    await expect(page.getByTestId("generic-srs-shell")).toBeVisible();
+    await openLenses(page);
+    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-current", "true");
+    await expect(title(page)).toHaveText("Package");
+    await expect(page.getByTestId("lens-by")).toHaveValue("type");
+    await expect(page.getByTestId("lens-ctx-by")).toHaveValue("none");
+    expect(await hashOf(page)).toBe(before);
+    expect(errors).toEqual([]);
+  });
+
+  test("the Explorer button at the top of the Lenses nav returns to the explorer", async ({ page }) => {
+    await openSpec(page);
+    await openLenses(page);
+    await page.getByTestId("lens-explorer").click();
+    await expect(page.getByTestId("generic-srs-shell")).toBeVisible();
+    expect(await hashOf(page)).toBe("");
   });
 
   test("read-only ?open= offers Lenses without Edit", async ({ page }) => {
@@ -141,7 +164,7 @@ test.describe("lenses — shell and address", () => {
     await page.goto(`/?open=${encodeURIComponent(link)}${lensHash(`nav:${DISTRIBUTION}`, PACKAGE)}`);
     await expect(page.getByTestId("lens-shell")).toBeVisible({ timeout: 30000 });
     await expect(title(page)).toHaveText("Package");
-    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-current", "true");
     expect(new URL(page.url()).search).toBe("");
   });
 
@@ -152,7 +175,7 @@ test.describe("lenses — shell and address", () => {
       location.hash = h;
     }, lensHash(`nav:${DISTRIBUTION}`, PACKAGE));
     await expect(page.getByTestId("lens-shell")).toBeVisible();
-    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-current", "true");
     await expect(title(page)).toHaveText("Package");
     expect(errors).toEqual([]);
   });
@@ -161,12 +184,12 @@ test.describe("lenses — shell and address", () => {
     const errors = watchErrors(page);
     await openSpec(page, lensHash(`nav:${DISTRIBUTION}`, "00000000-0000-4000-8000-000000000000"));
     await expect(page.getByTestId("lens-focus")).toContainText("Select something to read it here.");
-    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-current", "true");
     // an unknown lens falls back to the first tab, also without an error
     await page.evaluate(() => {
       location.hash = "#lens=nav%3Anowhere";
     });
-    await expect(page.getByTestId(tab(READING))).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByTestId(tab(READING))).toHaveAttribute("aria-current", "true");
     expect(errors).toEqual([]);
   });
 
@@ -257,7 +280,7 @@ test.describe("lenses — shell and address", () => {
     await page.reload();
     await page.getByTestId("restore-session").click();
     await expect(page.getByTestId("lens-shell")).toBeVisible({ timeout: 30000 });
-    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-current", "true");
     await expect(title(page)).toHaveText("Package");
     await expect(page.getByTestId("lens-by")).toHaveValue("type");
     await expect(page.getByTestId("lens-ctx-by")).toHaveValue("none");
@@ -314,6 +337,7 @@ test.describe("lenses — shell and address", () => {
   });
 
   test("Edit then Save marks the document unsaved", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await openSpec(page);
     await openLenses(page);
     await pickPackage(page);
@@ -325,6 +349,19 @@ test.describe("lenses — shell and address", () => {
     await expect(page.getByTestId("section-form")).toHaveCount(0);
     await expect(page.getByTestId("document-dirty-status")).toHaveText("Unsaved changes");
     await expect(page.getByTestId("save-document")).toBeEnabled();
+    // at 1440, on the record with the longest label: "Unsaved changes" and Layout stay whole, and the
+    // title keeps its room (it wraps to two lines before it ellipsises)
+    const labels = await page.getByTestId("lens-collection").locator(".lens-list__label").allTextContents();
+    const longest = labels.reduce((a, b) => (b.length > a.length ? b : a));
+    await page.getByTestId("lens-collection").getByTestId("lens-item").filter({ hasText: longest }).first().click();
+    const size = async (sel: string) =>
+      page.locator(sel).first().evaluate((e) => ({ w: e.clientWidth, sw: e.scrollWidth, h: e.clientHeight }));
+    for (const sel of ["[data-testid=document-dirty-status]", ".lens-shell .lens-layout"]) {
+      const b = await size(sel);
+      expect(b.sw, sel).toBeLessThanOrEqual(b.w);
+    }
+    const name = await size(".lens-shell .toolbar__name");
+    expect(name.w).toBeGreaterThan(200);
   });
 
   test("My set is not offered", async ({ page }) => {
@@ -338,8 +375,26 @@ test.describe("lenses — shell and address", () => {
     await page.evaluate(() => {
       location.hash = "#lens=set";
     });
-    await expect(page.getByTestId(tab(READING))).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByTestId(tab(READING))).toHaveAttribute("aria-current", "true");
     expect(errors).toEqual([]);
+  });
+});
+
+test.describe("lenses — phone (390 wide)", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test("on a phone, following a link or picking a record closes the drawer", async ({ page }) => {
+    await openSpec(page);
+    await openLenses(page);
+    await page.getByTestId(tab(DISTRIBUTION)).click();
+    await openNavDrawer(page);
+    await page.getByTestId("lens-collection").getByTestId("lens-item").filter({ hasText: /^Package/ }).first().click();
+    await expect(page.getByTestId("shell-drawer-nav")).toBeHidden();
+    await expect(title(page)).toHaveText("Package");
+    await openInspectorDrawer(page);
+    await followLink(page, ["Package"], "Field");
+    await expect(page.getByTestId("shell-drawer-inspector")).toBeHidden();
+    await expect(page.getByTestId("lens-back")).toBeVisible();
   });
 });
 
@@ -348,11 +403,11 @@ test("journey — srs-spec", async ({ page }) => {
   // 1. Explore > Lenses: nine section tabs
   await openSpec(page);
   await openLenses(page);
-  await expect(page.getByTestId("lens-switcher").getByRole("tab")).toHaveCount(9);
+  await expect(page.getByTestId("lens-switcher").getByRole("navigation", { name: "Lenses" }).getByRole("button")).toHaveCount(9);
 
   // 2. Distribution, then the concept Package: Read shows it; Context has a "Depends on" group with a count
   await pickPackage(page);
-  await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-current", "true");
   await expect(page.getByTestId("lens-context")).toContainText(/Depends on/);
   await expect(page.getByTestId("lens-context")).toContainText(/Depends on[^\n]*\d/);
 
@@ -372,7 +427,7 @@ test("journey — srs-spec", async ({ page }) => {
   await page.evaluate((h) => {
     location.hash = h;
   }, `${lensHash(`type:${DECISION_TYPE}`)}&by=field%3A00000000-0000-4000-8000-000000000001`);
-  await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "false");
+  await expect(page.getByTestId(tab(DISTRIBUTION))).not.toHaveAttribute("aria-current", "true");
   expect(await hashOf(page)).toContain(`lens=type:${DECISION_TYPE}`);
   const options = await page.getByTestId("lens-by").locator("option").evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value));
   expect(options.some((v) => v.startsWith("field:"))).toBe(false);
@@ -406,7 +461,7 @@ test("journey — srs-spec", async ({ page }) => {
   await page.reload();
   await page.getByTestId("restore-session").click();
   await expect(page.getByTestId("lens-shell")).toBeVisible({ timeout: 30000 });
-  await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId(tab(DISTRIBUTION))).toHaveAttribute("aria-current", "true");
   await expect(page.getByTestId("lens-collection").locator('.lens-list__row[aria-current="true"]')).toContainText("Package");
   expect(await hashOf(page)).toContain(`id=${PACKAGE}`);
 

@@ -6,16 +6,26 @@
   `addressState` (the link trail) as props; one $effect re-applies them. This shell adds no window
   listener and writes the hash only through address.ts: picking or following a record and switching
   lens push, a distinction replaces, Go > Explorer pushes the address without the lens keys. Every trail
-  move is history.go(-n), so the trail's Back and browser Back agree. An unknown lens falls back to the
-  first tab; an unresolvable id selects nothing. Every lens opens on a record inside its set: entered with
-  no id, or switched to a set that lacks the selection, it selects its first member (a switch puts the old
-  selection on the trail). Edit is hidden while read-only. Sits on AppShell + Toolbar; no scoped style
+  move is history.go(-n), so the trail's Back and browser Back agree. The trail holds only links followed
+  inside the current lens: a lens switch pushes history (browser Back returns to the old lens and record)
+  and empties the trail. An unknown lens falls back to the first tab; an unresolvable id selects nothing.
+  Every lens opens on a record inside its set: entered with no id, or switched to a set that lacks the
+  selection, it selects its first member. Entering from the explorer returns to the last lens address of
+  this session for the same repository (memory only). Edit is hidden while read-only. On a phone, picking
+  or following a record closes the nav and inspector drawers. Sits on AppShell + Toolbar; no scoped style
   (lens.css).
 -->
+<script lang="ts" module>
+  import type { Address } from "$lib/address.js";
+  import type { SrsRepository } from "$lib/srs-client.js";
+
+  /** The last lens address of this session, per loaded repository: memory only, no storage. */
+  const lastVisit = new WeakMap<SrsRepository, Address>();
+</script>
+
 <script lang="ts">
-  import { untrack } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import {
-    type Address,
     type CollectionBy,
     type ContextBy,
     type LensId,
@@ -175,10 +185,12 @@
   });
 
   let applied = false;
-  function apply(a: Address, state: unknown): void {
+  function apply(given: Address, state: unknown): void {
     // An address without a lens after mount means App is leaving Lenses: nothing to apply.
-    if (applied && !a.lens) return;
-    const first = !applied;
+    if (applied && !given.lens) return;
+    // Entering from the explorer returns to where this session last left Lenses on this repository.
+    const entering = !applied && !given.lens;
+    const a = (entering && lastVisit.get(repo)) || given;
     applied = true;
     const target = lenses.find((l) => l.id === a.lens) ?? firstLens();
     lensId = target?.id ?? null;
@@ -193,7 +205,7 @@
     if (selectedId) reveal(selectedId);
     editing = false;
     // Entering from the explorer is a navigation (Back returns there); a link is only normalised.
-    if (first && !a.lens) pushAddress(current(), trail);
+    if (entering) pushAddress(current(), trail);
     else if (formatAddress(current()) !== formatAddress(a)) replaceAddress(current(), trail);
   }
 
@@ -214,6 +226,10 @@
       fail(e);
     }
   }
+
+  onDestroy(() => {
+    if (repo && lens) lastVisit.set(repo, current());
+  });
 
   // A write (Edit > Save, an agent) re-reads the set; selection and distinctions stay.
   let seenRevision = untrack(() => documentRevision);
@@ -321,8 +337,10 @@
   }
 
   // ── Selection and the link trail (one history, ADR-023) ──
-  const closeNav = () => {
+  /** On a phone, a pick or a followed link shows its result: the nav and inspector drawers close. */
+  const closeDrawers = () => {
     if (shell.navDrawer) shell.navOpen = false;
+    if (shell.inspectorDrawer) shell.inspectorOpen = false;
   };
   function select(item: { id: string; label: string; sectionContainerId?: string }): void {
     selectedId = item.id;
@@ -330,7 +348,7 @@
     picked = item.label;
     editing = false;
     saveError = null;
-    closeNav();
+    closeDrawers();
   }
   /** A pick from the Collection or a Document block starts a new walk: the trail clears. */
   function pick(item: { id: string; label: string; sectionContainerId?: string }): void {
@@ -348,12 +366,12 @@
   const back = (n = 1) => history.go(-n);
   /**
    * Every lens opens on a record inside its set. The selection stays when the new set holds it (a nested
-   * section holding it expands); otherwise the set's first member is selected and the old selection goes
-   * onto the trail, one Back away. `keepSelection` ("Shown in") keeps it even outside the set.
+   * section holding it expands); otherwise the set's first member is selected. `keepSelection` ("Shown
+   * in") keeps it even outside the set. The switch pushes, so browser Back returns to the old lens and
+   * record; the visible trail starts empty in the new lens (it holds links followed inside one lens).
    */
   function switchLens(id: LensId, keepSelection = false): void {
     if (id === lens?.id) return;
-    const previous = selectedId ? { id: selectedId, label: selectedLabel } : null;
     lensId = id;
     load(lenses.find((l) => l.id === id));
     by = null;
@@ -363,7 +381,6 @@
     const held = !!selectedId && collection.items.some((i) => i.id === selectedId);
     if (!held && !(keepSelection && selectedId)) {
       const first = collection.items[0];
-      if (previous) trail = [previous];
       if (first) select(first);
       else selectedId = null;
     }
@@ -557,6 +574,9 @@
 
 {#snippet navPane()}
   <Nav repo={documentTitle} eyebrow={`Lens · ${lens?.label ?? ""}`} wordmark>
+    <div class="lens-nav-head">
+      <Button size="sm" variant="mono" onDark data-testid="lens-explorer" onclick={openExplorer}>Explorer</Button>
+    </div>
     {@render collectionPane()}
   </Nav>
 {/snippet}
@@ -584,13 +604,23 @@
         <div class="lens-reader__focus">{@render focusPane()}</div>
         <aside class="lens-rail" class:lens-rail--open={railOpen} data-testid="lens-rail" aria-label="Links">
           {#if railOpen}
-            <button type="button" class="lens-toggle lens-rail__close" aria-expanded="true" onclick={() => (railOpen = false)}>Hide links</button>
-            {@render contextPane()}
+            <Button size="sm" class="lens-rail__close" aria-expanded="true" aria-controls="lens-rail-panel" onclick={() => (railOpen = false)}>Hide links</Button>
           {:else}
-            <button type="button" class="lens-rail__tab" data-testid="lens-rail-tab" aria-expanded="false" onclick={() => (railOpen = true)}>
+            <Button
+              size="sm"
+              class="lens-rail__tab"
+              data-testid="lens-rail-tab"
+              aria-label={`Show links (${edges.length})`}
+              aria-expanded="false"
+              aria-controls="lens-rail-panel"
+              onclick={() => (railOpen = true)}
+            >
               Links <span data-testid="lens-rail-count">{edges.length}</span>
-            </button>
+            </Button>
           {/if}
+          <div id="lens-rail-panel" hidden={!railOpen}>
+            {#if railOpen}{@render contextPane()}{/if}
+          </div>
         </aside>
       {:else}
         {@render focusPane()}
