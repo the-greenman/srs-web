@@ -65,14 +65,17 @@ package-level lens definition, which needs a future srs spec RFC.
 ### Context shows the record's own links
 
 - Context reads the selected record's edges once with `neighbours` and no limit (the
-  engine returns every edge), then groups them by relation type and direction. Which
-  groups exist is decided by that record's edges, never by a repository-wide count.
-- A group pages through `neighbours` (`relationType`, `direction`, `limit`, `offset`)
-  only where the UI pages it ("Show more").
+  engine returns every edge), then buckets them by each edge's own relation type and
+  direction. Which groups exist is decided by that record's edges, never by a
+  repository-wide count. Installed types come in `listRelationTypes` order; a key the
+  engine does not list sorts last, labelled `humanise(key)`.
+- A group's "Show more" reveals the next page of the edges already loaded. There is no
+  second read.
 - There is no type-filtered group. A typed group would need the engine to filter by
   neighbour type; until then Context shows every neighbour of a link type.
 - "In" lists the containers that hold the record (`containersForInstance`).
-- "Shown in" lists only what `documentViewsForContainer` returns for those containers.
+- "Shown in" lists only what `documentViewsForContainer` returns for those containers
+  (on `gallery.srsj`, an Articles record shows `articles-and-roles`).
   A composition whose container section is fixed is not returned by that binding, so
   it is missing from "Shown in" until gap 1 (srs-rust#1378) lands. The client never
   renders compositions to find their containers.
@@ -89,8 +92,9 @@ No second tree component is built.
   unchanged). The Collection table is the ADR-010 list pane for Lenses: same column
   source, rendered with `LogTable`.
 - Elsewhere (type, composition, find and drawn sets), columns are the type schema's
-  first four short fields, in the author's declared order, matched by field id. No
-  field is chosen by name.
+  first four short fields, in the author's declared order (`x-srs-order`), keyed by the
+  engine's `Field.name` (the schema exposes no field id; RFC-039). No field name is a
+  literal in client code; none is chosen by name.
 - **Tell apart by "Nothing"** shows labels only. It is a valid first-class choice,
   not a fallback to shared fields.
 - The long-term home is an engine binding that returns default columns for a type.
@@ -101,12 +105,19 @@ No second tree component is built.
 - It groups only what the engine returned. It never filters, and never derives
   membership.
 - On a paged set it says so ("100 of N") and groups the loaded page only.
-- The field options come from the engine: `find`'s `facets.fields` (one facet per
-  closed string field) for type, Everything and navigation-section collections. Each
-  facet's `Field.name` is resolved to its field id through the type schema
-  (`x-srs-field-id`); a name that maps to more than one field id is not offered.
-  Composition and drawn-set collections offer no field option.
-- The inside/outside-the-set split works the same way over returned edges.
+- The field options come from the engine: `find(…, { facets: true })`'s
+  `facets.fields` (one facet per closed string field, keyed by `Field.name`) for type,
+  Everything and navigation-section collections. The engine returns at most 25 field
+  facets. Closed multiselect fields are included; a record with several values is
+  grouped under each. Composition and drawn-set collections offer no field option.
+- The type and Everything lenses load through `find` (paged); outline items carry the
+  record the container view returns.
+- **Edge-to-set classification is presentation.** `splitByBoundary` is the one
+  classifier: it splits edges the engine returned by whether their other end is in a
+  set the viewer drew or the engine returned. It asserts no new relation fact, never
+  filters or hides an edge, and is the only edge classifier in client code. (The owner
+  ruled this presentation with "Tell apart by" on 2026-10-09; the question included
+  "splits links into inside or leaving the set".)
 - The hub guard's threshold is a named presentation default, `HUB_LINKS`.
 - Agents get "tell apart by" only when the engine gains a group-by. Until then it is
   a view setting, not a capability.
@@ -168,8 +179,8 @@ These engine gaps limit Lenses. The numbers are canonical: every `ponytail:` in
    its own blocks one level deep.
 3. **A Tier 0 note cannot be read through WASM.** srs-rust#1379. Focus says "A note;
    its text is not shown here."
-4. **`find` hits carry no field values.** srs-rust#1380. The Everything lens calls
-   `getRecord` once per hit.
+4. **`find` hits carry no field values.** srs-rust#1380. The Everything and type
+   lenses call `getRecord` once per hit.
 5. **A Composition has no display title.** the-greenman/srs#928 (spec RFC needed).
    The client humanises the composition `name`.
 

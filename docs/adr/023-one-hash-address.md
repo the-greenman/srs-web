@@ -37,17 +37,20 @@ writes the URL hash. It owns one `Address` type:
 #426 reuses it rather than adding a key per shell. A shell that cannot resolve `id`
 selects nothing; it never errors and never guesses a neighbour.
 
-**Value grammar.**
+**Value grammar.** `address.ts` validates all three Lenses keys in one place
+(`LENS_ID`, `COLLECTION_BY`, `CONTEXT_BY`) and drops a value that does not match.
 
 - `lens`: `nav:<sectionContainerId>` | `comp:<compositionId>` | `type:<typeId>` |
-  `pkg:<lensDefinitionId>` (reserved) | `find` | `set`. `parseAddress` drops a value
-  that does not match; an unresolvable id falls back as ADR-025 says.
+  `pkg:<lensDefinitionId>` (reserved) | `find` | `set`
+  (`/^(?:(?:nav|comp|type|pkg):[^\s&#=]+|find|set)$/`). A well-formed id that
+  resolves to no lens falls back as ADR-025 says.
 - `by`: `none` | `type` | `nesting` | `container` | `state` | `created-by` |
-  `field:<fieldId>`. A field is named by its **field id** (UUID), never its name.
+  `field:<name>`, where `<name>` is the engine's `Field.name`: the key records,
+  type schemas and `find` facets share (RFC-039). The engine exposes no field id for a
+  schema property, so the address uses the name it gives; no field name is ever a
+  literal in client code.
 - `ctxby`: `link-type` | `none` | `boundary`.
-- `parseAddress` keeps `by` and `ctxby` as strings. The Lenses module that owns each
-  grammar (`src/lib/lens/lens-distinctions.ts`) parses it, and an unknown value means
-  the default.
+- A missing or dropped `by`/`ctxby` means the default for the collection kind.
 
 **Encoding.** `formatAddress` uses `URLSearchParams`, so `:` is written as `%3A`.
 `parseAddress` accepts both a raw `:` and `%3A`. A person or an agent may write either
@@ -55,7 +58,8 @@ form; `parseAddress(formatAddress(a))` equals `a` for every valid `a`.
 
 **Writing.** `formatAddress` writes keys in the fixed order of the table and omits
 empty ones. `parseAddress` ignores unknown keys and tolerates junk. Shells never call
-`history.pushState` or `history.replaceState` for the hash themselves; they call:
+`history.pushState` or `history.replaceState` for the hash themselves (neither fires
+an event); they call:
 
 - `pushAddress(a, trail?)` for a selection change (picking a record, following a link,
   switching lens or essay, leaving Lenses by Go > Explorer);
@@ -63,13 +67,21 @@ empty ones. `parseAddress` ignores unknown keys and tolerates junk. Shells never
   lens keys when the repository changes;
 - `readTrail()` to read the link trail kept in `history.state`.
 
-**One history.**
-- Back, reload, a pasted link and an agent writing the hash all arrive as one
-  `hashchange`. App owns the one handler that **chooses the shell** (ADR-022): a `lens`
-  key selects Lenses, no `lens` key leaves Lenses for Generic. A shell's own listener
-  only re-applies **selection** within that shell.
-- The link trail lives in `history.state`. The trail's Back calls `history.back()`, so
-  the visible Back and browser Back always agree. Reload keeps the trail.
+**One history, one listener.**
+- Back, Forward, a pasted link and a script writing `location.hash` all fire
+  `popstate` (a fragment navigation fires `popstate`, then `hashchange`; Back between
+  two entries with the same hash fires only `popstate`). So `popstate` is the one event.
+- **App owns the one listener.** It parses the address, keeps it with `history.state`,
+  and **chooses the shell** (ADR-022): a `lens` key selects Lenses, no `lens` key
+  leaves Lenses for Generic. It passes the parsed address and the history state to the
+  shell as props; a shell re-applies them and adds no window listener of its own.
+  Only if a supported browser proves not to fire `popstate` on a direct hash write does
+  App also route `hashchange` to the same handler.
+- EssayShell's existing `onpopstate` stays until #426 moves it onto App's props; until
+  then that is the one stated exception.
+- The link trail lives in `history.state`. Every trail move is `history.go(-n)`, `n`
+  being the entries between the current one and the target; the trail's Back is
+  `n = 1`, so the visible Back and browser Back always agree. Reload keeps the trail.
 - Opening another repository clears the lens keys (`lens`, `id`, `by`, `ctxby`) with
   `replaceAddress`, so a stale lens never applies to a different repository.
 

@@ -61,12 +61,14 @@ the rule #338 put in place, now recorded.
   No `EDITORS` id may equal a built-in view; a unit test enforces it.
 - A new built-in view is one more `BUILT_IN_VIEWS` entry plus its App branch.
 - Lenses is reached from the explorer's **Explore** group ("Lenses"). It returns with
-  **Go > Explorer**, as Essay does. App owns the one `hashchange` handler that chooses
+  **Go > Explorer**, as Essay does. App owns the one `popstate` listener that chooses
   the shell: an address with a `lens` key ([ADR-023](./023-one-hash-address.md))
   selects Lenses after a load, and an address without one leaves Lenses for Generic.
-- A built-in view's component takes `EditorShellProps` plus the read-only props
-  `GenericSrsShell` takes (`readOnly?: boolean`, `onSaveCopy?: () => void`), so it is
-  checked against the same contract as every editor.
+- A new built-in view's component annotates its `$props()` with `EditorShellProps`
+  plus the read-only props Generic takes (`readOnly?: boolean`,
+  `onSaveCopy?: () => void`) and its own props, so `svelte-check` holds it to the
+  editor contract. Lenses does this. `GenericSrsShell` predates the rule and keeps its
+  own `Props` interface; aligning it is not part of #547.
 
 ## Alternatives considered
 
