@@ -16,6 +16,8 @@
   import Inspector from "$lib/components/Inspector.svelte";
   import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
   import Main from "$lib/components/Main.svelte";
+  import LinkedRecord from "$lib/components/LinkedRecord.svelte";
+  import RemedyCard from "$lib/components/RemedyCard.svelte";
   import MethodBoard from "$lib/components/MethodBoard.svelte";
   import type { MenuAction } from "$lib/components/menu-action.js";
   import Notice from "$lib/components/Notice.svelte";
@@ -33,8 +35,14 @@
   import type { FieldFormDef } from "$lib/governance/types.js";
   import {
     type MethodModel,
+    type MethodProblem,
+    type MethodRemedy,
     type ProblemStatus,
-    affirmProblem,
+    affirmRecord,
+    entityOf,
+    itemStatus,
+    itemTitle,
+    type MethodItem,
     loadMethod,
     methodWriteGuard,
     moveToContainer,
@@ -82,7 +90,11 @@
   let lastGuard: AgentWriteGuard | undefined;
 
   const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
-  const selected = $derived(model?.problems.find((p) => p.id === selectedId) ?? null);
+  const selected = $derived<MethodItem | null>((selectedId && model?.byId.get(selectedId)) || null);
+  const entity = $derived(selected ? entityOf(selected) : "problem");
+  const problem = $derived(selected && entity === "problem" ? (selected as MethodProblem) : null);
+  const remedy = $derived(selected && entity === "remedy" ? (selected as MethodRemedy) : null);
+  const status = $derived(selected ? itemStatus(selected) : null);
   const hasComments = $derived.by(() => {
     void documentRevision;
     try {
@@ -127,10 +139,10 @@
     }
   }
 
-  /** Affirm the selected problem and select its fork; `edit` then opens the form on the fork. */
+  /** Affirm the selected item and select its fork; `edit` then opens the form on the fork. */
   function affirm(m: MethodModel, id: string, edit: boolean): void {
     try {
-      selectedId = affirmProblem(repo, m, id);
+      selectedId = affirmRecord(repo, m, id, entity);
       error = null;
     } catch (e) {
       error = msg(e);
@@ -145,7 +157,7 @@
     editError = null;
     try {
       const definition = typeSchema(repo, record.typeId, record.typeVersion).schema as unknown as SchemaDefinition;
-      editing = { label: "problem", fields: definitionToFields(definition), composites: definitionToComposites(definition) };
+      editing = { label: entity, fields: definitionToFields(definition), composites: definitionToComposites(definition) };
     } catch (e) {
       editError = msg(e);
     }
@@ -166,6 +178,7 @@
     if (!selected || !model) return [];
     const m = model;
     const id = selected.id;
+    const status = itemStatus(selected);
     const canAffirm = !!m.containers.affirmed;
     const why = "This repository has no Affirmed container";
     const affirmActs: MenuAction[] = [
@@ -174,8 +187,8 @@
     ];
     const edit: MenuAction = { id: "edit", label: "Edit", enabled: true, run: () => beginEdit() };
     // Order is the recommendation: the first is the primary button (ActionBar).
-    if (selected.status === "affirmed") return [edit];
-    if (selected.status === "set-aside")
+    if (status === "affirmed") return [edit];
+    if (status === "set-aside")
       return [{ id: "restore", label: "Restore", enabled: !!m.containers.suggestions, reason: "No Suggestions container", run: () => run(() => moveToContainer(repo, m, id, "suggestions")) }, ...affirmActs, edit];
     return [...affirmActs, { id: "set-aside", label: "Set aside", enabled: !!m.containers.setAside, reason: "This repository has no Set aside container", run: () => run(() => moveToContainer(repo, m, id, "setAside")) }, edit];
   });
@@ -217,28 +230,59 @@
               saveError={editError}
             />
           {:else}
-            <Panel title={selected.problemId ? `${selected.problemId} ${selected.title}` : selected.title} collapsible={false} class="inspector__section">
-              <ActionBar actions={menuActions} visible={3} label={selected.title} testid="problem-actions" />
-              <div data-testid="method-detail">
-                {#if selected.statement}<p class="method-detail__statement">{selected.statement}</p>{/if}
+            <Panel title={problem?.problemId ? `${problem.problemId} ${problem.title}` : itemTitle(selected)} collapsible={false} class="inspector__section">
+              <ActionBar actions={menuActions} visible={3} label={itemTitle(selected)} testid="problem-actions" />
+              <div data-testid="method-detail" data-entity={entity}>
                 {#if editError}<Notice kind="error">{editError}</Notice>{/if}
-                <CardField label={selected.status === "affirmed" ? "Affirmed by" : "Suggested by"}><ActorChip actor={selected.createdBy} /></CardField>
-                <CardField label="Kind" empty={!selected.kind}>{selected.kind}</CardField>
-                <CardField label="Held by" empty={selected.personas.length === 0}>{selected.personas.map((p) => p.label).join(", ")}</CardField>
-                <CardField label="Trade-off" empty={!selected.side}>
-                  {#if selected.side}{selected.side.tradeOff ? `${selected.side.tradeOff.label}, side ` : "Side "}{selected.side.label}{selected.imbalance ? `: ${selected.imbalance.replaceAll("-", " ")}` : ""}{/if}
-                </CardField>
-                <CardField label="Cluster" empty={!selected.cluster}>{selected.cluster?.label}</CardField>
-                <CardField label="Sources" empty={selected.sources.length === 0}>
-                  <ul class="method-detail__links" data-testid="method-sources">
-                    {#each selected.sources as ref (ref)}
-                      {@const href = sourceHref(ref)}
-                      <li>{#if href}<a {href} target="_blank" rel="noopener noreferrer">{ref}</a>{:else}{ref}{/if}</li>
-                    {/each}
-                  </ul>
-                </CardField>
+                {#if problem}
+                  {#if problem.statement}<p class="method-detail__statement">{problem.statement}</p>{/if}
+                {:else if remedy}
+                  {#if remedy.move}<p class="method-detail__statement">{remedy.move}</p>{/if}
+                {/if}
+                <CardField label={status === "affirmed" ? "Affirmed by" : "Suggested by"}><ActorChip actor={selected.createdBy} /></CardField>
+                {#if problem}
+                  <CardField label="Kind" empty={!problem.kind}>{problem.kind}</CardField>
+                  <CardField label="Held by" empty={problem.personas.length === 0}>
+                    <ul class="method-detail__links" data-testid="method-personas">
+                      {#each problem.personas as p (p.id)}<li><LinkedRecord id={p.id} label={p.label} status={p.status} onopen={open} /></li>{/each}
+                    </ul>
+                  </CardField>
+                  <CardField label="Trade-off" empty={!problem.side}>
+                    {#if problem.side}{problem.side.tradeOff ? `${problem.side.tradeOff.label}, side ` : "Side "}{problem.side.label}{problem.imbalance ? `: ${problem.imbalance.replaceAll("-", " ")}` : ""}{/if}
+                  </CardField>
+                  <CardField label="Cluster" empty={!problem.cluster}>
+                    {#if problem.cluster}<LinkedRecord id={problem.cluster.id} label={problem.cluster.label} status={problem.cluster.status} onopen={open} />{/if}
+                  </CardField>
+                {:else if remedy}
+                  <CardField label="Does not fix" empty={!remedy.doesNotFix}>{remedy.doesNotFix}</CardField>
+                  <CardField label="Falsifier" empty={!remedy.falsifier}>{remedy.falsifier}</CardField>
+                  <CardField label="Return when" empty={!remedy.returnWhen}>{remedy.returnWhen}</CardField>
+                  <CardField label="Answers" empty={remedy.answers.length === 0}>
+                    <ul class="method-detail__links" data-testid="remedy-answers">
+                      {#each remedy.answers as a (a.id)}<li><LinkedRecord id={a.id} label={a.label} onopen={open} /></li>{/each}
+                    </ul>
+                  </CardField>
+                {/if}
+                {#if problem || remedy}
+                  {@const sources = (problem ?? remedy)!.sources}
+                  <CardField label="Sources" empty={sources.length === 0}>
+                    <ul class="method-detail__links" data-testid="method-sources">
+                      {#each sources as ref (ref)}
+                        {@const href = sourceHref(ref)}
+                        <li>{#if href}<a {href} target="_blank" rel="noopener noreferrer">{ref}</a>{:else}{ref}{/if}</li>
+                      {/each}
+                    </ul>
+                  </CardField>
+                {/if}
               </div>
             </Panel>
+            {#if problem}
+              <Panel title="Remedies" collapsible={false} class="inspector__section">
+                <div data-testid="problem-remedies">
+                  {#each problem.remedies ?? [] as r (r.id)}<RemedyCard remedy={r} onopen={open} />{:else}<p class="t-muted">No remedy answers this problem yet.</p>{/each}
+                </div>
+              </Panel>
+            {/if}
             {#if hasComments}
               <Panel title="Discussion" collapsible={false} class="inspector__section">
                 {#key selected.id}<InstanceNotes {repo} instanceId={selected.id} revision={documentRevision} />{/key}
