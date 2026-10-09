@@ -2614,6 +2614,8 @@ export interface RelationTypeInfo {
   key: string;
   label: string;
   category?: string;
+  /** The key of the relation type that reads this one backwards (e.g. `precedes` → `follows`), when the definition declares one. */
+  inverseType?: string;
 }
 
 /** Installed relation types with the core's `category` (structural, never by name). Pure WASM pass-through. */

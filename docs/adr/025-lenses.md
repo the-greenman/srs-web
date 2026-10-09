@@ -56,6 +56,17 @@ package-level lens definition, which needs a future srs spec RFC.
 - Relation group labels are the engine's `RelationTypeInfo.label`
   (`listRelationTypes`). The client never parses a relation key into a label; it
   humanises the key only when the engine label is empty.
+- **Link direction is in the label (presentation).** The engine gives one label per
+  relation type, written for the source side, and no incoming label. A
+  definition's `inverseType` names a key, and on the core package those keys
+  (`part-of`, `source-of`, `follows`, `superseded-by`) are not installed types, so they
+  carry no label. One generic, data-free rule therefore names the direction:
+  - an outgoing group shows the engine label as is ("Depends on");
+  - an incoming group shows the label of the installed type its `inverseType` names,
+    when there is one, and otherwise the engine label followed by " this"
+    ("Depends on this");
+  - outgoing groups come first, then incoming ones.
+  No per-relation wording is written in client code.
 - Record labels are the core-resolved `displayLabel`. Type and field labels go through
   the shared `src/lib/labels.ts` (`humanise`, `fieldLabel`), the same module the editor
   forms use ([ADR-024](./024-one-record-reading-component.md)).
@@ -67,8 +78,9 @@ package-level lens definition, which needs a future srs spec RFC.
 - Context reads the selected record's edges once with `neighbours` and no limit (the
   engine returns every edge), then buckets them by each edge's own relation type and
   direction. Which groups exist is decided by that record's edges, never by a
-  repository-wide count. Installed types come in `listRelationTypes` order; a key the
-  engine does not list sorts last, labelled `humanise(key)`.
+  repository-wide count. Outgoing groups come before incoming ones. Within each,
+  installed types come in `listRelationTypes` order; a key the engine does not list
+  sorts last, labelled `humanise(key)`.
 - A group's "Show more" reveals the next page of the edges already loaded. There is no
   second read.
 - There is no type-filtered group. A typed group would need the engine to filter by

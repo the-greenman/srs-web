@@ -50,9 +50,11 @@ export interface ContextGroupDef {
 }
 
 /**
- * One group per (relationType, direction) present in `edges`: installed types in listRelationTypes order,
- * out before in, labelled from RelationTypeInfo.label (humanise(key) when empty); a key listRelationTypes
- * does not return sorts last, labelled humanise(key).
+ * One group per (relationType, direction) present in `edges`: every outgoing group, then every incoming
+ * one; within each, installed types in listRelationTypes order and a key listRelationTypes does not
+ * return last. An outgoing group is labelled RelationTypeInfo.label (humanise(key) when empty). An
+ * incoming group is labelled by the installed type its `inverseType` names, else by the one generic
+ * phrasing rule: the outgoing label followed by " this" ("Depends on this"; ADR-025, presentation).
  */
 export function defaultContext(edges: ContextItem[], types: RelationTypeInfo[]): ContextGroupDef[] {
   const present = new Set(edges.map((e) => `${e.direction} ${e.relationType}`));
@@ -60,12 +62,21 @@ export function defaultContext(edges: ContextItem[], types: RelationTypeInfo[]):
     ...types.map((t) => t.key),
     ...new Set(edges.map((e) => e.relationType).filter((k) => !types.some((t) => t.key === k))),
   ];
-  return keys.flatMap((key) => {
-    const label = types.find((t) => t.key === key)?.label || humanise(key);
-    return (["out", "in"] as const)
-      .filter((direction) => present.has(`${direction} ${key}`))
-      .map((direction) => ({ relationType: key, direction, label }));
-  });
+  const info = (key?: string) => types.find((t) => t.key === key);
+  const label = (key: string) => info(key)?.label || humanise(key);
+  const incoming = (key: string) => {
+    const inverse = info(info(key)?.inverseType);
+    return inverse ? label(inverse.key) : `${label(key)} this`;
+  };
+  return (["out", "in"] as const).flatMap((direction) =>
+    keys
+      .filter((key) => present.has(`${direction} ${key}`))
+      .map((key) => ({
+        relationType: key,
+        direction,
+        label: direction === "out" ? label(key) : incoming(key),
+      }))
+  );
 }
 
 /** Kind-derived defaults only (outline → "nesting", else "type"). */

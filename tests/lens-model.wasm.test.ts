@@ -130,7 +130,7 @@ describe.skipIf(!haveBindings)("lens model on the real engine (srs-spec.srs)", (
       { id: "y", label: "Y", direction: "out" as const, relationType: "depends-on" },
     ];
     const defs = lens.defaultContext(edges, client.listRelationTypes(repo));
-    expect(defs.at(-1)).toEqual({ relationType: "ex.ample/made-up_key", direction: "in", label: "Ex ample/made up key" });
+    expect(defs.at(-1)).toEqual({ relationType: "ex.ample/made-up_key", direction: "in", label: "Ex ample/made up key this" });
     expect(defs[0].relationType).toBe("depends-on");
   });
 
@@ -144,6 +144,30 @@ describe.skipIf(!haveBindings)("lens model on the real engine (srs-spec.srs)", (
     // A synthetic engine label wins over the key.
     expect(lens.defaultContext([{ id: "y", label: "Y", direction: "out", relationType: "depends-on" }], [{ key: "depends-on", label: "Needs" }])[0].label).toBe("Needs");
     expect(lens.defaultContext([{ id: "y", label: "Y", direction: "out", relationType: "depends-on" }], [{ key: "depends-on", label: "" }])[0].label).toBe("Depends on");
+  });
+
+  it("link groups name their direction: outgoing first as the engine label, incoming after as label + this", () => {
+    const edges = [
+      { id: "a", label: "A", direction: "in" as const, relationType: "depends-on" },
+      { id: "b", label: "B", direction: "out" as const, relationType: "contains" },
+      { id: "c", label: "C", direction: "out" as const, relationType: "depends-on" },
+      { id: "d", label: "D", direction: "in" as const, relationType: "contains" },
+    ];
+    const defs = lens.defaultContext(edges, client.listRelationTypes(repo));
+    expect(defs.map((d) => [d.direction, d.label])).toEqual([
+      ["out", "Contains"],
+      ["out", "Depends on"],
+      ["in", "Contains this"],
+      ["in", "Depends on this"],
+    ]);
+    // An inverseType naming an installed type labels the incoming group by that type's engine label.
+    const types = [
+      { key: "precedes", label: "Precedes", inverseType: "follows" },
+      { key: "follows", label: "Follows" },
+    ];
+    expect(lens.defaultContext([{ id: "x", label: "X", direction: "in", relationType: "precedes" }], types)[0].label).toBe("Follows");
+    // An inverseType the engine does not install falls back to the generic rule.
+    expect(lens.defaultContext([{ id: "x", label: "X", direction: "in", relationType: "precedes" }], types.slice(0, 1))[0].label).toBe("Precedes this");
   });
 
   it("hub record: loadEdges returns every edge and groups page it", () => {
