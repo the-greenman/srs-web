@@ -47,7 +47,7 @@
               {#if item.direction === "in"}<ArrowLeft size={12} aria-hidden="true" />{:else}<ArrowRight size={12} aria-hidden="true" />{/if}
               <span class="sr-only">{item.direction === "in" ? "links here" : "links out"}</span>
             </span>
-            {item.label}
+            <span class="lens-context-item__label">{item.label}</span>
           </span>
           {#if item.typeName}<small>{item.typeName}</small>{/if}
         </button>

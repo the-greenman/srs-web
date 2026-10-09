@@ -45,7 +45,9 @@
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
-  import { EDITORS, availableEditors, installEditor as installEditorPackages, usableEditor } from "$lib/editors/registry.js";
+  import { EDITORS, availableEditors, installEditor as installEditorPackages, isBuiltInView, usableEditor } from "$lib/editors/registry.js";
+  import { type Address, parseAddress, replaceAddress } from "$lib/address.js";
+  import LensShell from "$lib/lens/LensShell.svelte";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
   import { installedPackages, upgradeNoticeText } from "$lib/package-upgrade.js";
@@ -88,7 +90,7 @@
   // ---------------------------------------------------------------------------
 
   type AppState = "boot" | "idle" | "migrate" | "loaded" | "error";
-  /** "generic" or an EditorDefinition id from $lib/editors/registry. */
+  /** A built-in view ("generic", "lenses": BUILT_IN_VIEWS) or an EditorDefinition id from $lib/editors/registry. */
   type EditorMode = string;
 
   let appState = $state<AppState>("boot");
@@ -151,7 +153,45 @@
   // An editor that stops being usable drops back to the generic shell for good, so a later
   // package install never flips the user back into it unasked.
   $effect(() => {
-    if (!activeEditor && editorMode !== "generic") editorMode = "generic";
+    if (!activeEditor && !isBuiltInView(editorMode)) editorMode = "generic";
+  });
+
+  /**
+   * The one hash address and its one listener (ADR-023). Back, Forward, a pasted link and a script
+   * writing location.hash all fire popstate; App keeps the parsed address and history.state (the link
+   * trail) and chooses the shell: a `lens` key selects Lenses, none leaves Lenses for the explorer.
+   * Shells receive both as props and add no listener of their own (Essay's onpopstate is the one
+   * stated exception until #426).
+   */
+  let address = $state<Address>(parseAddress(location.hash));
+  let addressState = $state<unknown>(history.state);
+  function readAddress(): void {
+    address = parseAddress(location.hash);
+    addressState = history.state;
+  }
+  function chooseShellForAddress(): void {
+    if (address.lens) editorMode = "lenses";
+    else if (editorMode === "lenses") editorMode = "generic";
+  }
+  function onPopState(): void {
+    readAddress();
+    if (appState !== "loaded") return;
+    chooseShellForAddress();
+  }
+  /** Opening another repository: a stale lens never applies to a different one. */
+  function clearLensAddress(): void {
+    const { essayId, paragraphId, zoomId } = parseAddress(location.hash);
+    replaceAddress({ essayId, paragraphId, zoomId });
+    readAddress();
+  }
+  // The same lens check runs once after every successful load.
+  let addressCheckedFor: SrsRepository | null = null;
+  $effect(() => {
+    if (appState !== "loaded" || !repo || repo === addressCheckedFor) return;
+    addressCheckedFor = repo;
+    untrack(() => {
+      if (address.lens) editorMode = "lenses";
+    });
   });
   $effect(() => {
     if (appState !== "loaded" || !pendingEditor) return;
@@ -1156,6 +1196,8 @@
   }
 </script>
 
+<svelte:window onpopstate={onPopState} />
+
 <!-- =========================================================================
      Boot state
      ========================================================================= -->
@@ -1264,6 +1306,45 @@
   </Landing>
 
 <!-- =========================================================================
+     Loaded state — the built-in Lenses view (ADR-022, ADR-025)
+     ========================================================================= -->
+{:else if editorMode === "lenses"}
+  <LensShell
+    repo={repo!}
+    repoName={repoName}
+    documentTitle={documentTitle}
+    documentProvider={activeDocument?.provider ?? "local"}
+    onExport={handleExportArchive}
+    onExportSrsj={handleExport}
+    onSave={readOnlyHost ? undefined : activeDocument === null || activeDocument.capabilities.write ? handleSave : undefined}
+    readOnly={readOnlyHost !== null}
+    onSaveCopy={readOnlyHost ? saveCopy : undefined}
+    readOnlyReason={readOnlyHost ? `Opened from ${readOnlyHost}, read-only. Use Document > Save a copy… to keep an editable copy.` : activeDocument?.readOnlyReason ?? null}
+    {saving}
+    documentDirty={documentDirty}
+    documentRevision={documentRevision}
+    onDocumentMutation={syncDocument}
+    onOpenAgents={openDock}
+    onOpenPackages={canUpgrade ? () => (packagesOpen = true) : undefined}
+    onOpenExplorer={() => {
+      readAddress();
+      editorMode = "generic";
+    }}
+    onOpenAnother={() => {
+      void clearWorkingCopy();
+      cachedSession = null;
+      clearNotices();
+      clearLensAddress();
+      repo = null;
+      activeDocument = null;
+      editorMode = "generic";
+      appState = "idle";
+    }}
+    {address}
+    {addressState}
+  />
+
+<!-- =========================================================================
      Loaded state — generic shell
      ========================================================================= -->
 {:else if !activeEditor}
@@ -1285,10 +1366,15 @@
     onReviewUpgrade={canUpgrade ? reviewEditorUpgrade : undefined}
     onOpenPackages={canUpgrade ? () => (packagesOpen = true) : undefined}
     onOpenAgents={openDock}
+    onOpenLenses={() => {
+      readAddress();
+      editorMode = "lenses";
+    }}
     onOpenAnother={() => {
       void clearWorkingCopy();
       cachedSession = null;
       clearNotices();
+      clearLensAddress();
       repo = null;
       activeDocument = null;
       appState = "idle";
@@ -1328,6 +1414,7 @@
     onOpenAnother={() => {
       void clearWorkingCopy();
       cachedSession = null;
+      clearLensAddress();
       repo = null;
       beginDocument();
       activeDocument = null;

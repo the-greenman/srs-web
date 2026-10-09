@@ -93,7 +93,9 @@ function write(method: "pushState" | "replaceState", a: Address, trail?: TrailEn
     const same = JSON.stringify(readTrail()) === JSON.stringify(trail ?? []);
     if (h === current && same) return;
   }
-  history[method](trail ? { trail } : null, "", h || location.pathname + location.search);
+  // A plain copy: history.state is structured-cloned, and a reactive proxy (Svelte $state) cannot be.
+  const state = trail ? { trail: trail.map(({ id, label }) => ({ id, label })) } : null;
+  history[method](state, "", h || location.pathname + location.search);
 }
 
 /** history.pushState({ trail } | null, …); a no-op when hash and trail are unchanged. Fires no event. */

@@ -849,30 +849,30 @@ All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): Collection, Fo
 **Write scope:** `src/lib/lens/LensShell.svelte`, `src/lib/lens/toolbar-actions.ts` (new), `src/lib/editors/registry.ts` (`BUILT_IN_VIEWS`, `isBuiltInView` only), `src/App.svelte`, `src/lib/generic/GenericSrsShell.svelte` (one nav item and one prop), `e2e/lenses.spec.ts` (new), `e2e/helpers.ts` (`openLenses(page)` only), `tests/lens-toolbar-actions.test.ts` (new), `tests/editor-registry.test.ts` (existing; two cases added), `tests/GenericSrsShell.test.ts` (one case).
 
 #### Tasks
-- [ ] Port LensShell per the port map without board, graph or set code; `layouts` is `["trail", "reader"]` in this phase. The My set tab is **hidden** until Phase 7 (`LensSwitcher` gets no `set` tab; `lens=set` falls back like any unknown id).
-- [ ] `lensActions` per the contract.
-- [ ] Registry: `BUILT_IN_VIEWS` and `isBuiltInView`.
-- [ ] App wiring:
+- [x] Port LensShell per the port map without board, graph or set code; `layouts` is `["trail", "reader"]` in this phase. The My set tab is **hidden** until Phase 7 (`LensSwitcher` gets no `set` tab; `lens=set` falls back like any unknown id).
+- [x] `lensActions` per the contract.
+- [x] Registry: `BUILT_IN_VIEWS` and `isBuiltInView`.
+- [x] App wiring:
   - the gating `$effect` uses `isBuiltInView`;
   - a new `{:else if editorMode === "lenses"}` branch, before `{:else if !activeEditor}`, mounts LensShell with Generic's props plus `onDocumentMutation`, `documentProvider` and `onOpenExplorer`;
   - **one** `popstate` listener in App (`onPopState`, Contracts) keeps `address`/`addressState` and chooses the shell: while loaded, a `lens` → `editorMode = "lenses"`; no `lens` while `editorMode === "lenses"` → `"generic"`. The same check runs once after every successful load. LensShell receives `address` and `addressState` as props;
   - opening another repository calls `replaceAddress` without the lens keys;
   - `?repo=…&editor=lenses` works through `pendingEditor`.
-- [ ] Generic: `onOpenLenses?: () => void` prop and an Explore-group item "Lenses" (`data-testid="open-lenses"`).
-- [ ] Address behaviour (D8): picking or following → `pushAddress`; a distinction → `replaceAddress`; LensShell's one `$effect` re-applies the `address`/`addressState` props (lens, `instanceId`, distinctions, `readTrail(addressState)`) and it adds no window listener; every trail move is `history.go(-n)` (Back = `n = 1`); Go > Explorer → `pushAddress` of the address without lens keys.
-- [ ] Read-only: no Edit, `onSaveCopy` in Document. The read-only line reuses Generic's `Notice` (`testid="read-only-note"`).
+- [x] Generic: `onOpenLenses?: () => void` prop and an Explore-group item "Lenses" (`data-testid="open-lenses"`).
+- [x] Address behaviour (D8): picking or following → `pushAddress`; a distinction → `replaceAddress`; LensShell's one `$effect` re-applies the `address`/`addressState` props (lens, `instanceId`, distinctions, `readTrail(addressState)`) and it adds no window listener; every trail move is `history.go(-n)` (Back = `n = 1`); Go > Explorer → `pushAddress` of the address without lens keys.
+- [x] Read-only: no Edit, `onSaveCopy` in Document. The read-only line reuses Generic's `Notice` (`testid="read-only-note"`).
 
 #### Acceptance Criteria (each has a named e2e test below)
-- [ ] Explore > Lenses opens the first navigation-section lens; Go > Explorer returns to Generic with the document still open.
-- [ ] Opening `/?open=<srs>` (read-only) still offers Lenses, and it has no Edit.
-- [ ] Edit in place marks the document unsaved (`documentDirty`); Save works as in Generic.
-- [ ] Browser Back after following two links returns through both, and the visible trail agrees.
-- [ ] Writing `#lens=…&id=…` to `location.hash` selects that lens and record (the agent path); an unresolvable `id` selects nothing.
-- [ ] Back from Generic into a lens hash reopens Lenses.
-- [ ] `?repo=…&editor=lenses` opens Lenses.
-- [ ] A hash given with `?open=` survives the parameter clearing.
-- [ ] My set is not offered.
-- [ ] No regression in Generic, editor mode and open-url behaviour.
+- [x] Explore > Lenses opens the first navigation-section lens; Go > Explorer returns to Generic with the document still open.
+- [x] Opening `/?open=<srs>` (read-only) still offers Lenses, and it has no Edit.
+- [x] Edit in place marks the document unsaved (`documentDirty`); Save works as in Generic.
+- [x] Browser Back after following two links returns through both, and the visible trail agrees.
+- [x] Writing `#lens=…&id=…` to `location.hash` selects that lens and record (the agent path); an unresolvable `id` selects nothing.
+- [x] Back from Generic into a lens hash reopens Lenses.
+- [x] `?repo=…&editor=lenses` opens Lenses.
+- [x] A hash given with `?open=` survives the parameter clearing.
+- [x] My set is not offered.
+- [x] No regression in Generic, editor mode and open-url behaviour.
 
 #### Testing (named)
 - `tests/lens-toolbar-actions.test.ts`: "Explorer is in Go"; "Save absent when read-only"; "Save a copy present only when read-only"; "Wide toggles shell".
@@ -899,6 +899,12 @@ LIT_PATHS="src/lib/lens src/rendering/RecordProse.svelte"   # then no-literals a
 grep -q "components/Breadcrumb.svelte" src/lib/lens/LensShell.svelte && grep -q "components/Select.svelte" src/lib/lens/LensShell.svelte
 rc=0; grep -nE "svelte:window|addEventListener\\(.(popstate|hashchange)" src/lib/lens/LensShell.svelte || rc=$?; test $rc -eq 1   # LensShell owns no listener
 ```
+
+Deviation: `address.ts` (`pushAddress`/`replaceAddress`) writes a plain copy of the trail. A Svelte `$state` array is a proxy, which `history.pushState` cannot structured-clone ("could not be cloned"); the copy is made once in the one writer, so no caller needs to know.
+Deviation: Explore > Lenses is the first item of Generic's Explore group, not the last. `shell-layout.spec.ts` ("clicking the last nav item…") clicks the last non-package-editor nav item and expects to stay in Generic; Lenses switches shells.
+Deviation: `ContextGroup.svelte` (Phase 3) wraps the neighbour label in `.lens-context-item__label`, a stable hook for the e2e trail tests.
+Note (behaviour): entering a lens selects nothing (Focus: "Select something to read it here."); the prototype auto-selected the first member. A lens switch keeps the selection when the new set holds it (or a nested section holding it expands), else clears it; the prototype selected the first member and put the old one on the trail. "As published" is offered when the lens names a composition or "Shown in" lists one.
+Note (gate): in this worktree every Playwright filter is matched against the absolute path, which contains `547-lenses-view`, so `npm run e2e -- lenses …` selects all 435 tests. Run as written (`PLAYWRIGHT_PORT=5401`) it exits 1 with 1–3 `mobile-layout.spec.ts` failures that change from run to run (a phone-width race: `openNavDrawer` returns before the shell renders under full-suite load). The same command at the base commit 6cb223e also exits 1 with 3 `mobile-layout` failures, so they predate #547. The named specs pass on their own: `npm run e2e -- lenses.spec navigation editor-mode open-url shell-layout essay-editor` exit 0 (68 passed) and `npm run e2e -- mobile-layout` exit 0 (11 passed). The `?repo=&editor=lenses` test stubs the providers itself (cloud-storage.spec.ts's `installFakeProviders` is not exported).
 
 #### Milestone gate
 All pass, plus `no-literals` and `gap-cites`. Commit `feat(lens): Lenses view in the app — trail and reader, one address (#547)`.

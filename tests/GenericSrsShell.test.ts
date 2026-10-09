@@ -480,3 +480,21 @@ describe("GenericSrsShell note members (srs-web#483)", () => {
     expect(screen.getByRole("button", { name: "A record" })).toBeTruthy();
   });
 });
+
+describe("GenericSrsShell built-in views (ADR-022)", () => {
+  it("Explore group offers Lenses when onOpenLenses is given", async () => {
+    const props = { repo: {} as never, repoName: "Example repository", onExport: vi.fn(), onOpenAnother: vi.fn() };
+    const without = render(GenericSrsShell, { props });
+    await screen.findByText("Explore");
+    expect(screen.queryByTestId("open-lenses")).toBeNull();
+    without.unmount();
+
+    const onOpenLenses = vi.fn();
+    render(GenericSrsShell, { props: { ...props, onOpenLenses } });
+    const item = await screen.findByTestId("open-lenses");
+    expect(item.closest('[data-part="explore"]')).not.toBeNull();
+    expect(item.textContent).toBe("Lenses");
+    await fireEvent.click(item);
+    expect(onOpenLenses).toHaveBeenCalledOnce();
+  });
+});

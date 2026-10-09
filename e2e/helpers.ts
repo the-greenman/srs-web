@@ -313,3 +313,10 @@ export async function waitForRecoveryCopy(page: Page): Promise<void> {
     )
     .toBe(true);
 }
+
+/** Explore > Lenses from the generic explorer (srs-web#547): the nav item, then the Lenses view. */
+export async function openLenses(page: Page): Promise<void> {
+  await openNavDrawer(page);
+  await page.getByTestId("open-lenses").click();
+  await expect(page.getByTestId("lens-shell")).toBeVisible();
+}
