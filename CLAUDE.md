@@ -9,19 +9,12 @@ monorepo.
 
 ## Project & priority management
 
-Issues across the ecosystem are tracked on **Project #5 "SRS"** and prioritised **top-down from
-user stories**. The authoritative process lives in the `srs-rust` repo:
-**`docs/project-management.md`** (canonical).
+Programme, queue, board and priority tooling live in **the-greenman/clerk** (`docs/tools.md`; locally `~/dev/semanticops/clerk`): `clerk board` (story-driven priority on Project #6; stories and epics in `the-greenman/semanticops.com`), `clerk roadmap` (derives epic priority from the srs-programme period ranking; the only writer of epic priority), `clerk queue`. The slash commands `/triage`, `/stories`, `/roadmap` are canonical in clerk `.claude/commands/`. Programme data (roadmap, problems, sessions) is **the-greenman/srs-programme**.
 
-Quick rules:
-- **Never hand-set an implementation issue's priority.** It is derived from the user stories it
-  serves (as native GitHub sub-issues): humans set **MoSCoW** on stories; `gh-project rollup`
-  derives `priority: Pn` (Must→P0, Should→P1, Could→P2).
-- **Bugs** floor at `priority: P1` (fixed ASAP, even without a story); **unlinked non-bug** work
-  is flagged ("could get lost"), never dropped — link it to a story.
-- Skills here: `/triage`, `/stories`, `/roadmap`. They fetch the released tool (works in an
-  isolated checkout):
-  `gh release download --repo the-greenman/srs-rust --pattern gh-project.mjs --output /tmp/gh-project.mjs --clobber`.
+Rules that still hold here:
+- **Never hand-set an implementation issue's priority**; it is derived from the stories it serves. Epic priority is never set by hand.
+- **File issues linked**: parent every new implementation issue under the story or epic it serves (`clerk board link <parent-repo>#<n> <child-repo>#<n>`).
+- **Bugs** floor at `priority: P1`; unlinked non-bug work is flagged, never dropped.
 
 ## Branch & PR hygiene
 
