@@ -45,7 +45,7 @@ test.describe("Record edit forms (B9)", () => {
   });
 
   // --------------------------------------------------------------------------
-  // Test 2: Clicking "New Article" shows the form
+  // Test 2: Clicking "New article" shows the form
   // --------------------------------------------------------------------------
   test("Clicking 'New Article' shows a form with Title field", async ({ page }) => {
     await newRecord(page);

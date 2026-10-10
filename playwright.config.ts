@@ -14,7 +14,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   // CI runs the suite in parallel with a single retry. Serial (workers: 1) plus
   // retries: 2 meant every failing test burned its timeout three times in a row,
-  // dragging the job past 20 minutes while the suite has known drift (#173).
+  // dragging the job past 20 minutes on a flaky run.
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? "50%" : undefined,
   reporter: "html",
