@@ -113,11 +113,11 @@ Check the existing WASM surface in `srs-web/src/wasm/` or the current `srs-rust`
    ```
    If the deferred item requires a WASM binding change, add `--label "requires-wasm-binding"`.
 
-   **Immediately link each filed issue under the epic or story it serves** — an issue under no epic and no story is orphaned and gets no derived priority (per `srs-rust/docs/project-management.md`, referenced from `srs-web/CLAUDE.md`). Fetch the tool once (`gh release download --repo the-greenman/srs-rust --pattern gh-project.mjs --output /tmp/gh-project.mjs --clobber`) and, for each follow-up:
+   **Immediately link each filed issue under the epic or story it serves** — an issue under no epic and no story is orphaned and gets no derived priority (see the-greenman/clerk `docs/tools.md`). Use the clerk copy of the tool (`clerk board`, or `node ~/dev/semanticops/clerk/scripts/gh-project.mjs`) and, for each follow-up:
    ```bash
-   node /tmp/gh-project.mjs link <parent-repo>#<epic-or-story-N> <child-repo>#<filed-N>
+   node ~/dev/semanticops/clerk/scripts/gh-project.mjs link <parent-repo>#<epic-or-story-N> <child-repo>#<filed-N>
    ```
-   The natural parent is the **same epic the current issue sits under** (most deferred items serve the same epic as the work that spawned them; cross-repo parents are fine — e.g. an `srs`/`srs-rust` follow-up parented under an `srs-web` epic). If a follow-up genuinely belongs to no epic (e.g. unrelated CI/infra), leave it unparented and say so explicitly — it will surface in `gh-project coverage` as unlinked-non-bug, flagged not dropped. Post a comment on the current issue listing all newly filed deferred issues **and the epic each was linked under**.
+   The natural parent is the **same epic the current issue sits under** (most deferred items serve the same epic as the work that spawned them; cross-repo parents are fine — e.g. an `srs`/`srs-rust` follow-up parented under an `srs-web` epic). If a follow-up genuinely belongs to no epic (e.g. unrelated CI/infra), leave it unparented and say so explicitly — it will surface in `clerk board coverage` as unlinked-non-bug, flagged not dropped. Post a comment on the current issue listing all newly filed deferred issues **and the epic each was linked under**.
 5. **Loop:** if the plan is large (≥ 3 phases or touches ≥ 3 components) **and** the last review produced any `blocking` finding, re-run the review on the updated plan. Repeat until a review pass yields **zero** blocking findings.
 
 ## Stage 4 — Branch & worktree
@@ -243,7 +243,7 @@ This runs **before** the PR, on the rebased feature branch (Stage 6 already sync
    - The feature behaves as specified.
    - No regressions are visible in adjacent features.
 
-4. **File issues:** `bug` for anything not working as designed (patch immediately if trivial); `enhancement` for workflow gaps that required workarounds. No cosmetic/hypothetical issues. **Parent every non-bug issue you file here under its epic/story** with `node /tmp/gh-project.mjs link <parent-repo>#<epic-N> <child-repo>#<filed-N>`, exactly as in Stage 3.4 — don't leave dogfood-surfaced follow-ups orphaned.
+4. **File issues:** `bug` for anything not working as designed (patch immediately if trivial); `enhancement` for workflow gaps that required workarounds. No cosmetic/hypothetical issues. **Parent every non-bug issue you file here under its epic/story** with `node ~/dev/semanticops/clerk/scripts/gh-project.mjs link <parent-repo>#<epic-N> <child-repo>#<filed-N>`, exactly as in Stage 3.4 — don't leave dogfood-surfaced follow-ups orphaned.
 
 5. **Summarise:** scenarios run, components exercised, bugs filed, feature gaps filed.
 
