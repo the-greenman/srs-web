@@ -36,18 +36,16 @@ test.describe("Record edit forms (B9)", () => {
   });
 
   // --------------------------------------------------------------------------
-  // Test 1: "New Article" button is visible after loading
+  // Test 1: "New article" is offered in the Document menu after loading
   // --------------------------------------------------------------------------
-  // Quarantined (#173): the "New Article" topbar button no longer exists —
-  // RecordForm/topbar was redesigned. Rewrite against the current flow.
-  test.fixme('"New Article" button is visible after loading', async ({ page }) => {
+  test('"New article" is offered in the Document menu after loading', async ({ page }) => {
     await openMenu(page, "Document");
-    await expect(page.getByTestId("governance-new-record")).toContainText("New Article");
+    await expect(page.getByTestId("governance-new-record")).toContainText("New article");
     await closeMenus(page);
   });
 
   // --------------------------------------------------------------------------
-  // Test 2: Clicking "New Article" shows the form
+  // Test 2: Clicking "New article" shows the form
   // --------------------------------------------------------------------------
   test("Clicking 'New Article' shows a form with Title field", async ({ page }) => {
     await newRecord(page);
@@ -105,44 +103,6 @@ test.describe("Record edit forms (B9)", () => {
     await page.getByTestId("record-reading-back").click();
     await expect(page.locator(".record-list")).toBeVisible({ timeout: 3000 });
     await expect(page.locator(".record-list")).toContainText("Test Article E2E");
-  });
-
-  // --------------------------------------------------------------------------
-  // Test 5: Create decision successfully
-  // --------------------------------------------------------------------------
-  // Quarantined (#173): flow depends on a removed "Quick Capture" mode in the
-  // decision RecordForm (#103). Rewrite against the current create flow.
-  test.fixme("Create decision successfully — appears in list", async ({ page }) => {
-    // Navigate to Decision Log
-    await navItem(page, /Decision Log/).click();
-    await expect(page.getByRole("heading", { name: "Decision Log", level: 2 })).toBeVisible();
-
-    // New Decision opens the DecisionFlow mode chooser (B12)
-    await newRecord(page);
-
-    // Select Quick Capture mode
-    await page.getByRole("button", { name: "Quick Capture" }).click();
-
-    // Fill Title
-    await page.locator(".field").filter({ hasText: "Title" }).locator("input").fill("Test Decision E2E");
-
-    // Fill Decision Statement
-    await page.locator(".field").filter({ hasText: "Decision Statement" }).locator("textarea").fill("We decided to test");
-
-    // Select Status "draft"
-    await page.locator(".field").filter({ hasText: "Status" }).locator("select").selectOption("draft");
-
-    // Submit
-    await page.locator("button[type=submit]", { hasText: "Save" }).click();
-
-    // After save, the new record is auto-selected and the reading view opens.
-    await expect(page.getByTestId("record-reading")).toBeVisible({ timeout: 3000 });
-    await expect(page.getByTestId("record-reading")).toContainText("Test Decision E2E");
-
-    // Click back — decision log view should contain the new decision.
-    await page.getByTestId("record-reading-back").click();
-    await expect(page.getByTestId("decision-log-view")).toBeVisible({ timeout: 3000 });
-    await expect(page.getByTestId("decision-log-view")).toContainText("Test Decision E2E");
   });
 
   // --------------------------------------------------------------------------

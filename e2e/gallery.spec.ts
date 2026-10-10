@@ -192,10 +192,8 @@ test.describe("Gallery fixture — real records render", () => {
     await expect(page.locator(".inspector__section").filter({ hasText: "Validation" })).toBeVisible();
   });
 
-  // Quarantined (#173): .topbar__repo was replaced by the Breadcrumb component
-  // (.breadcrumb__*). Rewrite against the current breadcrumb.
-  test.fixme("repo filename shown in topbar", async ({ page }) => {
-    await expect(page.locator(".topbar__repo")).toContainText("gallery");
+  test("repo filename shown in toolbar", async ({ page }) => {
+    await expect(page.locator(".toolbar__title")).toContainText("gallery");
   });
 });
 

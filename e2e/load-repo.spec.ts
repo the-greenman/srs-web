@@ -66,14 +66,12 @@ test.describe("Load repository", () => {
     });
   });
 
-  // Quarantined (#173): .topbar__repo was replaced by the Breadcrumb component
-  // (.breadcrumb__*). Rewrite against the current breadcrumb.
-  test.fixme("shows the repo filename in the topbar after loading", async ({ page }) => {
+  test("shows the repo filename in the toolbar after loading", async ({ page }) => {
     const fileInput = page.locator('input[type="file"]#srsj-file');
     await fileInput.setInputFiles(FIXTURE_PATH);
     await openPackageEditor(page, "governance");
 
-    // Filename without extension is shown as repo name in .topbar__repo span
-    await expect(page.locator(".topbar__repo")).toContainText("gallery", { timeout: 5000 });
+    // Filename without extension is shown as the document title in the toolbar
+    await expect(page.locator(".toolbar__title")).toContainText("gallery", { timeout: 5000 });
   });
 });
