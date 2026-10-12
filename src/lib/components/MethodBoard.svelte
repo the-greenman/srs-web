@@ -7,6 +7,7 @@
 <script lang="ts">
   import type { MethodDomain, ProblemStatus } from '$lib/method/method-document.js';
   import { STATUS_LABEL } from '$lib/method/method-document.js';
+  import LinkedRecord from './LinkedRecord.svelte';
   import ProblemCard from './ProblemCard.svelte';
   import TagChip from './TagChip.svelte';
 
@@ -52,7 +53,7 @@
       <h2 class="method-board__domain-title">{d.title}</h2>
       {#each d.clusters as c (c.id)}
         <div class="method-board__cluster" data-testid="method-cluster">
-          <h3 class="method-board__cluster-title">{c.title} <span class="t-muted">{c.problems.length}</span></h3>
+          <h3 class="method-board__cluster-title">{#if c.id}<LinkedRecord id={c.id} label={c.title} status={c.status} selected={c.id === selectedId} {onopen} />{:else}{c.title}{/if} <span class="t-muted">{c.problems.length}</span></h3>
           <div class="method-board__cards">
             {#each c.problems as p (p.id)}<ProblemCard problem={p} selected={p.id === selectedId} {onopen} />{/each}
           </div>

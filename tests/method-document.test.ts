@@ -69,7 +69,7 @@ describe("buildBoard", () => {
 
   it("carries persona, side with its trade-off, sources and createdBy", () => {
     const p1 = board.problems.find((p) => p.id === "p1")!;
-    expect(p1.personas).toEqual([{ id: "per", label: "Owner" }]);
+    expect(p1.personas).toMatchObject([{ id: "per", label: "Owner" }]);
     expect(p1.side).toEqual({ id: "pole", label: "Testimony", tradeOff: { id: "ten", label: "Testimony and authority" } });
     expect(p1.imbalance).toBe("missing");
     const p2 = board.problems.find((p) => p.id === "p2")!;
@@ -131,5 +131,57 @@ describe("commentCount", () => {
     expect(count("a")).toBe(1);
     expect(count("b2")).toBe(2);
     expect(count("c")).toBe(0);
+  });
+});
+
+describe("remedies, clusters and personas", () => {
+  const REMEDY = "edd84bf8-6c07-4133-87c6-4ab540ac2a14";
+  const answers = "com.semanticops.method/answers";
+  const recs = [
+    ...records,
+    rec("r1", REMEDY, { title: "Fix", move: "M", does_not_fix: "D", falsifier: "F", return_when: "R" }),
+    { ...rec("r2", REMEDY, { title: "Other" }), createdBy: agent },
+  ];
+  const base = [...relations, rel(answers, "r1", "p1"), rel(answers, "r1", "p3"), rel(answers, "r2", "p1")];
+
+  it("lists a remedy under each problem it answers, one record", () => {
+    const b = buildBoard({ records: recs, relations: base, containers: { suggestions: "S", affirmed: "A" }, members: { suggestions: ["p1", "p3", "r1", "r2"] } });
+    const under = (id: string) => b.problems.find((p) => p.id === id)?.remedies?.map((r) => r.id);
+    expect(under("p1")).toEqual(["r1", "r2"]);
+    expect(under("p3")).toEqual(["r1"]);
+    expect(b.remedies.find((r) => r.id === "r1")).toMatchObject({ move: "M", doesNotFix: "D", falsifier: "F", returnWhen: "R", status: "suggested" });
+    expect(b.remedies).toHaveLength(2);
+    expect(b.byId.get("r2")).toMatchObject({ createdBy: agent });
+  });
+
+  it("follows the Affirmed fork of the problem and hides an affirmed remedy's original", () => {
+    const b = buildBoard({
+      records: [...recs, rec("f1", PROBLEM_TYPE_ID, { problem_id: "SP-2", title: "Two" }), rec("fr", REMEDY, { title: "Fix" })],
+      relations: [...base, rel("derived-from", "f1", "p1"), rel("derived-from", "fr", "r1"), rel(answers, "fr", "p1")],
+      containers: { suggestions: "S", affirmed: "A" },
+      members: { suggestions: ["p1", "r1", "r2"], affirmed: ["f1", "fr"] },
+    });
+    expect(b.problems.find((p) => p.id === "f1")?.remedies?.map((r) => r.id)).toEqual(["fr", "r2"]);
+    expect(b.remedies.map((r) => r.id)).not.toContain("r1");
+    expect(b.remedies.find((r) => r.id === "fr")?.answers.map((a) => a.id)).toEqual(["f1", "p3"]); // the original's other answers stand until the engine re-points (srs-rust#1377)
+  });
+
+  it("an affirmed cluster and persona stand for their originals; set aside hides only that record", () => {
+    const b = buildBoard({
+      records: [...recs, rec("fc", CLUSTER_TYPE_ID, { title: "Leaving the editor" }), rec("fp", PERSONA_TYPE_ID, { title: "Owner" })],
+      relations: [...relations, rel("contains", "d1", "fc"), rel("contains", "fc", "p1"), rel("derived-from", "fc", "c1"), rel("derived-from", "fp", "per"), rel(HELD_BY, "p1", "fp")],
+      containers: { suggestions: "S", affirmed: "A", setAside: "X" },
+      members: { suggestions: ["c1", "per", "p1", "p2", "c2"], affirmed: ["fc", "fp"], setAside: ["c2"] },
+    });
+    const p1 = b.problems.find((p) => p.id === "p1");
+    expect(p1?.cluster).toMatchObject({ id: "fc", status: "affirmed" });
+    expect(p1?.personas.map((p) => [p.id, p.status])).toEqual([["fp", "affirmed"]]);
+    expect(b.clusters.map((c) => c.id)).not.toContain("c1");
+    expect(b.byId.get("c2")).toMatchObject({ status: "set-aside" });
+    expect(b.problems.find((p) => p.id === "p3")).toBeDefined(); // its cluster c2 is set aside; the problem is not
+  });
+
+  it("the write guard covers Affirmed and Set aside whatever the kind", () => {
+    expect(methodWriteGuard({ containers: { suggestions: "S", affirmed: "A", setAside: "X" } } as never)?.containerIds).toEqual(["A", "X"]);
   });
 });
