@@ -6,10 +6,9 @@
   Issue: https://github.com/the-greenman/srs-web/issues/526
 -->
 <script lang="ts">
-  import type { MethodProblem, ProblemStatus } from '$lib/method/method-document.js';
-  import { STATUS_LABEL } from '$lib/method/method-document.js';
+  import type { MethodProblem } from '$lib/method/method-document.js';
+  import { STATUS_LABEL, STATUS_TAG } from '$lib/method/method-document.js';
   import MessageSquareQuote from '@lucide/svelte/icons/message-square-quote';
-  import type { Status } from '../types';
   import ActorChip from './ActorChip.svelte';
   import Card from './Card.svelte';
   import Tag from './Tag.svelte';
@@ -21,7 +20,6 @@
     onopen,
   }: { problem: MethodProblem; selected?: boolean; onopen?: (id: string) => void } = $props();
 
-  const TAG: Record<ProblemStatus, Status> = { suggested: 'proposed', affirmed: 'ratified', 'set-aside': 'deferred' };
   const words = (s: string) => s.replaceAll('-', ' ');
   const sources = $derived(problem.sources.length);
 </script>
@@ -29,7 +27,7 @@
 <div class="problem-card" class:problem-card--selected={selected} data-testid="problem-card" data-status={problem.status ?? 'none'}>
   <Card id={problem.problemId || undefined} title={problem.title}>
     <div class="problem-card__body">
-      {#if problem.status}<span class="problem-card__status" data-testid="problem-status"><Tag status={TAG[problem.status]}>{STATUS_LABEL[problem.status]}</Tag></span>{/if}
+      {#if problem.status}<span class="problem-card__status" data-testid="problem-status"><Tag status={STATUS_TAG[problem.status]}>{STATUS_LABEL[problem.status]}</Tag></span>{/if}
       {#if problem.statement}<p class="problem-card__statement">{problem.statement}</p>{/if}
       <div class="problem-card__chips">
         {#if problem.kind}<TagChip label={words(problem.kind)} />{/if}

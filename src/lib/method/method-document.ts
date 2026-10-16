@@ -23,6 +23,7 @@ import type {
   SrsRelation,
   SrsRepository,
 } from "$lib/srs-client.js";
+import type { Status } from "../types.js";
 
 export const PROBLEM_TYPE_ID = "b7d15218-cee6-4a58-8e2a-a4cb7f6ccf06";
 export const CLUSTER_TYPE_ID = "c6a8eab1-25bf-462c-8d48-6ea47c22f724";
@@ -58,6 +59,12 @@ export const STATUS_LABEL: Record<ProblemStatus, string> = {
   suggested: "Suggested",
   affirmed: "Affirmed",
   "set-aside": "Set aside",
+};
+/** Tag variant for a decision status, shared by ProblemCard and LinkedRecord. */
+export const STATUS_TAG: Record<ProblemStatus, Status> = {
+  suggested: "proposed",
+  affirmed: "ratified",
+  "set-aside": "deferred",
 };
 
 export interface Ref {
