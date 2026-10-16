@@ -80,6 +80,7 @@
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { formatAddress, parseAddress, pushAddress } from "$lib/address.js";
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
+  import { EssayHistory, snapshotEssay } from "./essay-history.js";
   import { canShow, isShown, setOpen, summary, toggle, toggleAll } from "./thread-visibility.js";
   import { addComment } from "$lib/comments.js";
   import { annotationsFor } from "$lib/annotations.js";
@@ -186,6 +187,34 @@
     untrack(reload);
   });
 
+  /** The writer's undo history (srs-web#570): one per essay, for this browser session. */
+  const histories = new Map<string, EssayHistory>();
+  const history = (): EssayHistory | undefined => {
+    if (!essayId) return undefined;
+    const h = histories.get(essayId) ?? new EssayHistory();
+    histories.set(essayId, h);
+    return h;
+  };
+  /** The essay's own state now; null when there is no essay (or no engine to read it from). */
+  function snapshot() {
+    const m = model;
+    if (!m) return null;
+    try {
+      return snapshotEssay(repo, { essayId: m.essayId, containerId: m.containerId, stateId: m.stateId });
+    } catch {
+      return null;
+    }
+  }
+  /** Ctrl-Z / Ctrl-Shift-Z: write the previous (or next) state back as a normal edit. */
+  async function stepHistory(redo: boolean): Promise<void> {
+    const h = history();
+    try {
+      if (redo ? h?.redo(repo) : h?.undo(repo)) await tick();
+    } catch (e) {
+      error = msg(e);
+    }
+  }
+
   /**
    * Run a mutation and keep keyboard focus where the writer was. No reload here: the write
    * bumps `documentRevision` (observeWrites, a microtask queued before `tick()` flushes), and
@@ -193,8 +222,11 @@
    */
   async function run(fn: () => string | void): Promise<void> {
     const key = (document.activeElement as HTMLElement | null)?.dataset?.focusKey;
+    const before = snapshot();
     try {
       const focusKey = fn() ?? key;
+      const after = before && snapshot();
+      if (before && after) history()?.push(before, after);
       await tick();
       if (focusKey) document.querySelector<HTMLElement>(`[data-focus-key="${focusKey}"]`)?.focus();
     } catch (e) {
@@ -570,7 +602,7 @@
     run(() => transfer(repo, model!.binContainerId!, model!.containerId, id));
   function forget(id: string) {
     if (confirm(`Delete "${label(id)}" permanently? This cannot be undone.`))
-      void run(() => deleteForever(repo, model!, id));
+      void run(() => deleteForever(repo, model!, id)).then(() => history()?.clear()); // a deleted record cannot come back under its id
   }
 
   function toggleFold(id: string, on: boolean) {
@@ -632,6 +664,11 @@
 <!-- Esc leaves zoom, except while typing (Esc there cancels the field's own edit). -->
 <svelte:window
   onkeydown={(e) => {
+    // Typing inside a paragraph keeps the browser's own text undo; the history takes over everywhere else.
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "z" && !(e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]")) {
+      e.preventDefault();
+      void stepHistory(e.shiftKey);
+    }
     if (e.key === "Escape" && zoomId && !(e.target as HTMLElement | null)?.closest?.("input, textarea, [contenteditable]")) setZoom(null);
   }}
   onpopstate={applyAddress}
