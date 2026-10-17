@@ -86,6 +86,8 @@ export interface Reference {
   kind: string;
   /** A source's `source_url` ("" otherwise). */
   url: string;
+  /** A context document (srs-web#568): the source marked `source_kind: context`, read by every agent. */
+  context: boolean;
   /** The record's description, citation and statement (those it has), blank-line joined. */
   text: string;
 }
@@ -420,6 +422,7 @@ export function loadEssay(
         typeName: r.typeName ?? "",
         kind: str(r.fieldValues.source_kind),
         url: str(r.fieldValues.source_url),
+        context: str(r.fieldValues.source_kind) === CONTEXT_KIND,
         text: TEXT_FIELDS.map((k) => str(r.fieldValues[k]))
           .filter(Boolean)
           .join("\n\n"),
@@ -589,6 +592,9 @@ export function setEssayTitle(
 export const setTitle = (repo: SrsRepository, id: string, title: string): void =>
   patchRecord(repo, id, { paragraph_title: title });
 
+/** The `source_kind` that marks a context document: what the essay answers (the funding call), not what it cites. */
+export const CONTEXT_KIND = "context";
+
 /** `source_kind` guessed from a file name (editable later): transcripts, reports, else a document. */
 const kindOf = (name: string): string =>
   /transcript|\.(srt|vtt)$/i.test(name)
@@ -607,8 +613,9 @@ const kindOf = (name: string): string =>
 export function addReferences(
   repo: SrsRepository,
   m: Pick<EssayModel, "referencesContainerId">,
-  refs: { files?: AttachFile[]; urls?: string[] },
-  paragraphId?: string
+  refs: { files?: AttachFile[]; urls?: string[]; texts?: { title: string; body: string }[] },
+  paragraphId?: string,
+  context = false
 ): string[] {
   const container = m.referencesContainerId;
   if (!container) throw new Error("This essay has no references container");
@@ -630,6 +637,9 @@ export function addReferences(
     listRecords(repo, { containerId: container }).map((r) => str(r.fieldValues.source_url))
   );
   const urls = (refs.urls ?? []).filter((u) => !held.has(u) && held.add(u));
+  const texts = refs.texts ?? [];
+  if (texts.length && !context)
+    throw new Error("Pasted text can only be added as a context document");
   const ids: string[] = [];
   const add = (fieldValues: Record<string, string>): string => {
     const id = createRecord(repo, SOURCE_TYPE_ID, version, { fieldValues }).instanceId;
@@ -644,11 +654,15 @@ export function addReferences(
         { fileName: f.name, ...(f.type ? { contentType: f.type } : {}) },
         f.bytes
       );
-      const id = add({ title: f.name, source_kind: kindOf(f.name) });
+      const id = add({ title: f.name, source_kind: context ? CONTEXT_KIND : kindOf(f.name) });
       linkAttachment(repo, { instanceId: id, documentId });
       ids.push(id);
     }
-    for (const url of urls) ids.push(add({ title: url, source_kind: "web", source_url: url }));
+    for (const url of urls)
+      ids.push(add({ title: url, source_kind: context ? CONTEXT_KIND : "web", source_url: url }));
+    // Pasted text lives in the record's own description, so an agent reads it with the record.
+    for (const t of texts)
+      ids.push(add({ title: t.title, source_kind: CONTEXT_KIND, description: t.body }));
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     throw new Error(
@@ -659,6 +673,13 @@ export function addReferences(
   }
   return ids;
 }
+
+/** Add context documents (srs-web#568): references marked `source_kind: context`, by file, URL or pasted text. */
+export const addContextDocuments = (
+  repo: SrsRepository,
+  m: Pick<EssayModel, "referencesContainerId">,
+  docs: { files?: AttachFile[]; urls?: string[]; texts?: { title: string; body: string }[] }
+): string[] => addReferences(repo, m, docs, undefined, true);
 
 /** Link a reference to a paragraph: the source `evidences` it (the relation the margin glyph and agents already read). */
 export const linkReference = (repo: SrsRepository, sourceId: string, paragraphId: string): void => {

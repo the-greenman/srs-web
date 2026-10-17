@@ -24,8 +24,7 @@ async function engine() {
   mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
   return mod;
 }
-const fixture = () =>
-  readFileSync(path.join(__dirname, "../e2e/fixtures/essay-pool.srsj"), "utf8");
+const fixture = () => readFileSync(path.join(__dirname, "../e2e/fixtures/essay-pool.srsj"), "utf8");
 
 describe.skipIf(!haveBindings)("references pool on the real engine", () => {
   it("adds files and URLs as sources, links them to a paragraph, reads the text back, validates clean", async () => {
@@ -46,17 +45,52 @@ describe.skipIf(!haveBindings)("references pool on the real engine", () => {
     const after = doc.loadEssay(repo, m.essayId);
     expect(after.references).toHaveLength(before + 2);
     const file = after.references.find((r) => r.id === pooled);
-    expect(file).toMatchObject({ label: "call-transcript.md", kind: "transcript", paragraphIds: [p1] });
+    expect(file).toMatchObject({
+      label: "call-transcript.md",
+      kind: "transcript",
+      paragraphIds: [p1],
+    });
     const web = after.references.find((r) => r.id === linked);
-    expect(web).toMatchObject({ kind: "web", url: "https://example.org/paper", paragraphIds: [p1] });
+    expect(web).toMatchObject({
+      kind: "web",
+      url: "https://example.org/paper",
+      paragraphIds: [p1],
+    });
     // the hover card previews the attached text; the pinned pane reads all of it
-    expect(after.attachments[p1].find((a) => a.neighbourId === pooled)?.text).toContain("We agreed to meet.");
+    expect(after.attachments[p1].find((a) => a.neighbourId === pooled)?.text).toContain(
+      "We agreed to meet."
+    );
     expect(doc.referenceText(repo, pooled)).toBe("# Call notes\nWe agreed to meet.\n");
     expect(doc.referenceText(repo, linked)).toBe("");
     expect(doc.repoBytes(repo)).toBeGreaterThan(bytes.length);
 
     const report = repo.validate();
-    expect(report.diagnostics.filter((d: { severity: string }) => d.severity === "error")).toEqual([]);
+    expect(report.diagnostics.filter((d: { severity: string }) => d.severity === "error")).toEqual(
+      []
+    );
+  });
+
+  it("context documents are kept apart: pasted text reads back from the record, a URL is marked context, validates clean", async () => {
+    const doc = await import("../src/lib/essay/essay-document.js");
+    const repo = (await engine()).SrsRepository.load(fixture());
+    const m = doc.loadEssay(repo, doc.listEssays(repo)[0].id, { repair: true });
+    const before = m.references.filter((r) => r.context).length;
+    const [url, pasted] = doc.addContextDocuments(repo, m, {
+      texts: [{ title: "Funding call", body: "Applicants must show a working prototype." }],
+      urls: ["https://example.org/call"],
+    });
+    const after = doc.loadEssay(repo, m.essayId);
+    expect(after.references.filter((r) => r.context)).toHaveLength(before + 2);
+    expect(after.references.find((r) => r.id === pasted)).toMatchObject({
+      label: "Funding call",
+      context: true,
+      text: expect.stringContaining("working prototype"),
+    });
+    expect(after.references.find((r) => r.id === url)).toMatchObject({ context: true });
+    const report = repo.validate();
+    expect(report.diagnostics.filter((d: { severity: string }) => d.severity === "error")).toEqual(
+      []
+    );
   });
 
   it("an exploded tree with an attachment survives exportTree -> load_tree (source-documents/ included)", async () => {
@@ -66,10 +100,16 @@ describe.skipIf(!haveBindings)("references pool on the real engine", () => {
     const repo = mod.SrsRepository.load(fixture());
     const m = doc.loadEssay(repo, doc.listEssays(repo)[0].id, { repair: true });
     const [id] = doc.addReferences(repo, m, {
-      files: [{ name: "paper.md", type: "text/markdown", bytes: new TextEncoder().encode("the text") }],
+      files: [
+        { name: "paper.md", type: "text/markdown", bytes: new TextEncoder().encode("the text") },
+      ],
     });
     const tree = exportTree(repo);
-    expect(Object.keys(tree).filter((k) => k.startsWith("source-documents/")).sort()).toEqual([
+    expect(
+      Object.keys(tree)
+        .filter((k) => k.startsWith("source-documents/"))
+        .sort()
+    ).toEqual([
       "source-documents/paper.md",
       "source-documents/paper.md.meta.json", // srs-rust#1329: the sidecar keeps the full filename
     ]);
