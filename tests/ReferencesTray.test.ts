@@ -29,10 +29,12 @@ it("a chip focuses its paragraph; Remove and Open call back with the reference i
   const onfocus = vi.fn();
   const onremove = vi.fn();
   const onopen = vi.fn();
-  const { getByTestId, getByLabelText, rerender, getByText } = render(
-    ReferencesTray,
-    { items, onopen, onfocus, onremove }
-  );
+  const { getByTestId, getByLabelText, rerender, getByText } = render(ReferencesTray, {
+    items,
+    onopen,
+    onfocus,
+    onremove,
+  });
   await fireEvent.click(getByTestId("reference-chip"));
   expect(onfocus).toHaveBeenCalledWith("p1");
   await fireEvent.click(getByLabelText("Remove Loose claim from references"));
@@ -46,7 +48,16 @@ it("a chip focuses its paragraph; Remove and Open call back with the reference i
 
 it("shows a source's kind and a link when it has a URL", () => {
   const { getByText, getByTestId } = render(ReferencesTray, {
-    items: [{ id: "w", label: "A page", type: "source", kind: "web", url: "https://example.org/p", paragraphs: [] }],
+    items: [
+      {
+        id: "w",
+        label: "A page",
+        type: "source",
+        kind: "web",
+        url: "https://example.org/p",
+        paragraphs: [],
+      },
+    ],
     onopen: vi.fn(),
     onfocus: vi.fn(),
     onremove: vi.fn(),
@@ -79,4 +90,40 @@ it("with a drop zone: shows the repository size against the budget; Link to para
   expect(queryByTestId("reference-link-p1")).toBeNull(); // r1 is linked to p1 already
   await fireEvent.click(getByTestId("reference-link-p2"));
   expect(onlink).toHaveBeenCalledWith("r1", "p2");
+});
+
+it("lists context documents apart from references and adds pasted text and a URL as context", async () => {
+  const oncontext = vi.fn();
+  const { getByTestId, getAllByTestId } = render(ReferencesTray, {
+    items: [
+      {
+        id: "c1",
+        label: "Funding call",
+        type: "source",
+        kind: "context",
+        context: true,
+        paragraphs: [],
+      },
+      ...items,
+    ],
+    onopen: vi.fn(),
+    onfocus: vi.fn(),
+    onremove: vi.fn(),
+    oncontext,
+  });
+  const ctx = getByTestId("context-documents");
+  expect(ctx.textContent).toContain("Funding call");
+  expect(getAllByTestId("reference-row")).toHaveLength(3);
+  expect(getByTestId("context-file-note").textContent).toContain("srs-rust#1333");
+
+  await fireEvent.input(getByTestId("context-title"), { target: { value: "Call" } });
+  await fireEvent.input(getByTestId("context-text"), { target: { value: "Scope text" } });
+  await fireEvent.submit(getByTestId("context-text").closest("form")!);
+  expect(oncontext).toHaveBeenCalledWith({ texts: [{ title: "Call", body: "Scope text" }] });
+
+  await fireEvent.input(getByTestId("context-url"), {
+    target: { value: "https://example.org/call" },
+  });
+  await fireEvent.submit(getByTestId("context-url").closest("form")!);
+  expect(oncontext).toHaveBeenCalledWith({ urls: ["https://example.org/call"] });
 });

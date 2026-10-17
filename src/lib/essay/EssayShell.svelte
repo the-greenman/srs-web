@@ -52,6 +52,7 @@
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
     addParagraph,
+    addContextDocuments,
     addReferences,
     binParagraph,
     copyEssay,
@@ -315,6 +316,7 @@
       type: r.typeName,
       kind: r.kind,
       url: r.url,
+      context: r.context,
       paragraphs: r.paragraphIds.map((id) => ({ id, label: label(id) })),
     })),
   );
@@ -332,6 +334,8 @@
   /** Files or URLs into the references pool; with a paragraph also linked to it (`evidences`). */
   const addRefs = (refs: { files?: AttachFile[]; urls?: string[] }, paragraphId?: string) =>
     run(() => void addReferences(repo, model!, refs, paragraphId));
+  const addContext = (docs: Parameters<typeof addContextDocuments>[2]) =>
+    run(() => void addContextDocuments(repo, model!, docs));
   const warnRejected = (rejected: { name: string; reason: string }[]) =>
     rejected.length &&
     notify({
@@ -830,6 +834,7 @@
               onremove={dropReference}
               onfiles={(files) => addRefs({ files })}
               onurls={(urls) => addRefs({ urls })}
+              oncontext={addContext}
               onlink={(id, paragraphId) => run(() => linkReference(repo, id, paragraphId))}
             />
           </Panel>

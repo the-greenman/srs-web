@@ -311,6 +311,15 @@ export const referenceItems = [
     ],
   },
   { id: "r2", label: "Nobody owns the edge", type: "claim", paragraphs: [] },
+  // #568: a context document, listed apart from the references
+  {
+    id: "r5",
+    label: "Funding call 2026",
+    type: "source",
+    kind: "context",
+    context: true,
+    paragraphs: [],
+  },
   // #519: a file row (kind, no link yet) and a URL row (kind + external link)
   { id: "r3", label: "call-transcript.md", type: "source", kind: "transcript", paragraphs: [] },
   {

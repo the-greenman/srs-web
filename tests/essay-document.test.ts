@@ -70,9 +70,10 @@ vi.mock("../src/lib/srs-client.js", () => m);
 import { annotationsFor } from "../src/lib/annotations.js";
 import { essaySource } from "../src/lib/essay/annotation-source.js";
 import {
+  addContextDocuments,
   addParagraph,
-  agentHandoff,
   addReferences,
+  agentHandoff,
   binParagraph,
   deleteForever,
   essayWriteGuard,
@@ -782,6 +783,7 @@ describe("comments and references containers (srs-web#494, #495, #496)", () => {
         typeName: "source",
         kind: "",
         url: "",
+        context: false,
         text: "",
         paragraphIds: ["p1"],
       },
@@ -791,6 +793,7 @@ describe("comments and references containers (srs-web#494, #495, #496)", () => {
         typeName: "claim",
         kind: "",
         url: "",
+        context: false,
         text: "",
         paragraphIds: [],
       },
@@ -934,6 +937,32 @@ describe("references pool (srs-web#519)", () => {
     });
     expect(m.addContainerMember).toHaveBeenCalledWith(expect.anything(), "F", "s1");
     expect(m.addAttachment).not.toHaveBeenCalled();
+  });
+
+  it("context documents are sources marked context: URL, file and pasted text", () => {
+    m.createRecord.mockReset();
+    m.createRecord.mockReturnValue({ instanceId: "x" });
+    m.addAttachment.mockReturnValueOnce({ documentId: "d1" });
+    addContextDocuments({} as never, pool, {
+      files: [file("call.md")],
+      urls: ["https://example.org/call"],
+      texts: [{ title: "Call", body: "Scope: ..." }],
+    });
+    expect(m.createRecord.mock.calls.map((c) => c[3].fieldValues)).toEqual([
+      { title: "call.md", source_kind: "context" },
+      {
+        title: "https://example.org/call",
+        source_kind: "context",
+        source_url: "https://example.org/call",
+      },
+      { title: "Call", source_kind: "context", description: "Scope: ..." },
+    ]);
+  });
+
+  it("pasted text is refused as an ordinary reference", () => {
+    expect(() => addReferences({} as never, pool, { texts: [{ title: "t", body: "b" }] })).toThrow(
+      /context/
+    );
   });
 
   it("dropped on a paragraph, the source also evidences it", () => {

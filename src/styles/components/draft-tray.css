@@ -20,6 +20,16 @@
   font-size: var(--size-sm);
   color: var(--color-muted);
 }
+.tray__subhead {
+  margin: var(--space-xs) 0 4px;
+  font-size: var(--size-sm);
+  font-weight: var(--weight-bold);
+}
+.refs-tray__form {
+  display: grid;
+  gap: 4px;
+  margin-bottom: var(--space-xs);
+}
 .tray__row {
   display: flex;
   flex-wrap: wrap;
