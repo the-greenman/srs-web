@@ -521,3 +521,17 @@ test("Delete permanently removes the paragraph and its comment, after a confirm"
   await expect(page.getByText("Doomed.")).toHaveCount(0);
   await expect(page.getByText("First paragraph.")).toHaveCount(0);
 });
+
+test("Ctrl+Z undoes and Ctrl+Shift+Z redoes a structure edit (srs-web#570)", async ({ page }) => {
+  await open(page);
+  const claimHandle = page.getByRole("button", { name: /^Move Claim\./ });
+  await claimHandle.focus();
+  await page.keyboard.press("Alt+ArrowUp");
+  await expect(bodies(page).first()).toHaveText("Second paragraph.");
+
+  // focus is on a handle, not a text field, so the editor history takes the shortcut
+  await page.keyboard.press("Control+z");
+  await expect(bodies(page).first()).toHaveText("First paragraph.");
+  await page.keyboard.press("Control+Shift+z");
+  await expect(bodies(page).first()).toHaveText("Second paragraph.");
+});
