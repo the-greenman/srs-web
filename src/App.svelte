@@ -29,18 +29,18 @@
     createBlankRepository,
     installBundles,
     neededMigrationIds,
-    RFC046_MIGRATION_ID,
     applyMigration,
   } from "$lib/srs-client.js";
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
   import { acquireChannelLock, releaseChannelLock, channelsInUseElsewhere, connections, credsKey, type AgentConnection } from "$lib/agent-connections.js";
   import { relays } from "$lib/relay-library.js";
-  import { observeSession, pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
+  import { pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
+  import { applyAgentGuard, openAgentSession as openAgentHostSession, type AgentHostEntry } from "$lib/agent-host.js";
   import { reopenSaved } from "$lib/reopen.js";
   import { fetchArchiveFile, parseOpenUrl, parseRepoLink, withoutOpenParam, withoutRepoLink, type RepoLink } from "$lib/open-url.js";
   import type { GitHubProvider } from "$lib/storage/github.js";
   import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
-  import { listRelations, listTypes, repositoryId, resolveRepositoryTitle, type AgentWriteGuard, type McpSession, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
+  import { listTypes, repositoryId, resolveRepositoryTitle, type AgentWriteGuard, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
@@ -435,7 +435,7 @@
       inUseElsewhere: inUse.has(conn.id),
     }))
   );
-  const hosts = new Map<string, { host: RelayHost; session: McpSession | null }>();
+  const hosts = new Map<string, AgentHostEntry>();
   // Reopen after a reload (#418): ids mid-open (a Connect click must not duplicate them), and ids
   // allowed exactly one automatic takeover if the relay still holds the dead page's socket.
   const opening = new Set<string>();
@@ -469,64 +469,23 @@
   let agentGuard: AgentWriteGuard | null = null;
   // Tied to the repository it was declared for, so one repo's ids are never applied to another's session.
   let agentGuardRepo: SrsRepository | null = null;
-  /** Fail closed: if the guard cannot be applied, detach the agent and surface the error. */
-  function applyGuard(id: string): boolean {
-    const h = hosts.get(id);
-    try {
-      // Read-only (#471): the core guard over the whole repository, in place of any shell's own.
-      const guard = readOnlyHost && repo ? readOnlyGuard(repo) : agentGuard && agentGuardRepo === repo ? agentGuard : null;
-      if (guard) h?.session?.set_write_guard(JSON.stringify(guard));
-      else h?.session?.clear_write_guard();
-      return true;
-    } catch (e) {
-      console.error("MCP write guard could not be applied", e);
-      // fail closed; recovery is the next repo change (openAgentSession re-applies the guard)
-      h?.host.detach();
-      setAgentState(id, { status: "error", callerUrl: null, error: `Write guard failed: ${e instanceof Error ? e.message : String(e)}` });
-      return false;
-    }
-  }
-  const applyGuards = () => hosts.forEach((_, id) => applyGuard(id));
+  /** The guard in force now: the core's read-only guard, else the active shell's, for this repository only. */
+  const currentGuard = (): AgentWriteGuard | null =>
+    readOnlyHost && repo ? readOnlyGuard(repo) : agentGuard && agentGuardRepo === repo ? agentGuard : null;
+  const guardError = (id: string) => (error: string) => setAgentState(id, { status: "error", callerUrl: null, error });
+  /** Fail closed (see `applyAgentGuard`): a failure detaches the agent and surfaces the error. */
+  const applyGuards = () =>
+    hosts.forEach((entry, id) => applyAgentGuard(entry, { guard: currentGuard, onGuardError: guardError(id) }));
 
-  /**
-   * Agent actor (RFC-046): the host assigns the id; the name is the user's label if set, else
-   * the engine fills it from the client's initialize clientInfo. Only on a revision-9 corpus:
-   * below it an actor would refuse writes, so a repo whose migration was declined keeps its
-   * agent writes unattributed.
-   */
-  function applyAgentActor(session: McpSession, forRepo: SrsRepository, conn: AgentConnection): void {
-    try {
-      if (neededMigrationIds(forRepo).includes(RFC046_MIGRATION_ID)) return;
-    } catch (e) {
-      console.error("Agent actor not set: migration state unknown", e);
-      return;
-    }
-    session.set_actor(JSON.stringify({ kind: "ai", id: conn.id, ...(conn.label ? { name: conn.label } : {}) }));
-  }
-
-  /** The one place a connection's session is opened and configured (guard, actor) before attach. */
   function openAgentSession(conn: AgentConnection, current: SrsRepository | null): void {
-    const h = hostFor(conn);
-    const entry = hosts.get(conn.id) as { host: RelayHost; session: McpSession | null };
-    h.detach();
-    entry.session?.free(); // release the previous repo's WASM session
-    entry.session = current ? current.open_mcp_session() : null;
-    if (entry.session) {
-      if (applyGuard(conn.id)) {
-        applyAgentActor(entry.session, current as SrsRepository, conn);
-        void h.attach(observeSession(entry.session, conn.id, {
-          onWrite: (w) => (agentWrites = pushWrite(agentWrites, w)),
-          // a replayed initialize only fills a missing name; it never flips one client's name to another's
-          onClientName: (n, replayed) => { if (!replayed || !clientNames[conn.id]) clientNames = { ...clientNames, [conn.id]: n }; },
-          relationTarget: (id) => listRelations(current as SrsRepository, {}).find((r) => r.relationId === id)?.targetInstanceId,
-          initStore: {
-            load: () => connections.loadInit(conn.id),
-            save: (i) => connections.saveInit(conn.id, i),
-            clear: () => connections.clearInit(conn.id),
-          },
-        }));
-      }
-    } else h.detach();
+    hostFor(conn);
+    openAgentHostSession(hosts.get(conn.id) as AgentHostEntry, conn, current, {
+      guard: currentGuard,
+      onGuardError: guardError(conn.id),
+      onWrite: (w) => (agentWrites = pushWrite(agentWrites, w)),
+      // a replayed initialize only fills a missing name; it never flips one client's name to another's
+      onClientName: (n, replayed) => { if (!replayed || !clientNames[conn.id]) clientNames = { ...clientNames, [conn.id]: n }; },
+    });
   }
 
   /** Open a saved channel in this tab, only if no other tab holds it. */
