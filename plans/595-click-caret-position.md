@@ -50,46 +50,133 @@ None — no WASM output shape changes.
 
 ## Scope
 
+> **Revised after plan review** (two findings changed the design; see "Plan review
+> findings and responses" below for the full list):
+> the mapper is a one-sided tokenizer over the *source* (not a two-pointer match against a
+> separately-supplied rendered string), and the click point is captured on **mousedown**,
+> not `click`.
+
 - A new pure helper, `src/lib/components/markdown-caret.ts`:
-  - `mapRenderedOffsetToSource(source: string, renderedText: string, renderedOffset: number): number`
-    — two-pointer walk matching `renderedText` characters against `source` characters in
-    order; a source character that doesn't match the next expected rendered character is
-    treated as stripped markup and skipped. Handles bold/italic markers, inline code
-    backticks, and link syntax (`[text](url)` — url and brackets skipped, link text matched).
-  - `renderedOffsetAtPoint(container: HTMLElement, x: number, y: number): number | null`
-    — uses `document.caretRangeFromPoint` (Chromium/WebKit) with a
-    `caretPositionFromPoint` fallback (Firefox) to find the DOM position under a click,
-    then measures the rendered-text length from the start of `container` to that point.
-    Returns `null` if the point can't be resolved inside `container`.
+  - `stripInlineMarkdown(source: string): { text: string; sourceOffsets: number[] }` — scans
+    `source` once, recognising `**bold**`/`__bold__`, `*italic*`/`_italic_`, `` `code` ``,
+    `[text](url "title")`, and backslash escapes; emits the plain text those constructs
+    render as, and, in a parallel array, the source index each emitted character came from.
+    Nested constructs (e.g. a bold link) recurse over the inner span. Anything unrecognised
+    (including block-level markdown — headings, lists, blockquotes) passes through literally
+    as its own characters, which is the documented degradation (see Out of scope).
+  - `mapRenderedOffsetToSource(source: string, renderedOffset: number): number` — clamps
+    `renderedOffset` into `[0, text.length]` and returns `sourceOffsets[clamped]` (or
+    `source.length` at the very end). Deterministic and total: every offset in range maps to
+    a valid source index, there is no "degraded match" state to handle.
+  - `renderedOffsetAtPoint(container: HTMLElement, x: number, y: number): number | null` —
+    uses `document.caretRangeFromPoint` (Chromium/WebKit) with a `caretPositionFromPoint`
+    fallback (Firefox) to find the DOM position under a point, checks `container.contains`
+    on the resolved node, then returns `Range.toString().length` from the start of
+    `container` to that point. Returns `null` if the point can't be resolved inside
+    `container` — the caller's fallback is the existing end-of-text caret (no pending offset
+    is set, so the entry effect's `else` branch runs unchanged).
 - `MarkdownText.svelte`:
-  - `renderClick` captures the click point (before `editing = true`) and computes a pending
-    source offset via the two helpers above; stores it in a module-local `$state`.
-  - The entry `$effect` consumes a pending offset if present (placing the caret there via a
-    `Range` on the single text node `el.textContent = value` produces) instead of always
-    calling `collapseToEnd()`; clears the pending offset after use. Keyboard entry (no
-    pending offset) keeps today's `collapseToEnd()` behaviour.
+  - A new `onmousedown={renderMouseDown}` handler on the `__render` div, which runs *before*
+    the browser's default mousedown action focuses the element (and `onfocus` flips `editing`
+    to true, swapping the div out of the DOM — this happens before `click` would ever fire on
+    it, which is also srs-web#596's root cause). For a Ctrl/Cmd+click on a link it
+    `preventDefault()`s so focus never happens and `renderClick`'s existing link-opening logic
+    still runs on the subsequent `click`; otherwise it resolves the point to a source offset
+    via the two helpers above and stores it in component-instance state, `pendingCaret:
+    number | null` (an ordinary `$state` field on the component, not `<script module>`).
+  - The entry `$effect` reads `pendingCaret` through `untrack()` (matching the existing
+    `untrack(() => value)` pattern) so clearing it back to `null` at the end of the effect
+    does not register as a dependency and re-trigger the effect — re-running would reset
+    `el.textContent` and recompute the caret from scratch, undoing the placement. If
+    `pendingCaret` is non-null, it places the caret there (clamped to `[0, value.length]`)
+    via a `Range` on the single text node `el.textContent = value` produces; otherwise it
+    keeps today's `selectAllChildren` + `collapseToEnd()`. Keyboard entry (`renderKeydown`'s
+    Enter path) never sets `pendingCaret`, so it is unaffected.
 - Regression coverage:
-  - `tests/markdown-caret.test.ts` — unit tests for `mapRenderedOffsetToSource` (plain
-    text, bold, link, inline code, click past the end, click at 0).
-  - `e2e/essay-editor.spec.ts` — a new test: click mid-paragraph (plain text and a
-    paragraph containing `**bold**`/a link), then Ctrl-Enter, asserts the split happens at
-    the clicked point, not at the end.
+  - `tests/markdown-caret.test.ts` — unit tests for `stripInlineMarkdown`/
+    `mapRenderedOffsetToSource`: plain text identity, bold, italic, code, a link (confirming
+    URL characters are never mistaken for content — the case the original two-pointer design
+    got wrong), backslash-escaped delimiters, literal `&`/`<`, an unterminated construct,
+    offset 0 / past-the-end / negative clamping, and a round-trip monotonicity check across a
+    mixed-markdown paragraph.
+  - `e2e/essay-editor.spec.ts` — a new test using a helper that resolves a character offset
+    to a live on-screen point (via `Range.getClientRects()` in `page.evaluate`, then
+    `page.mouse.click`) so the click lands at an exact, deterministic character position
+    regardless of font metrics: click mid-paragraph (plain text and a paragraph containing
+    `**bold**`/a link), then Ctrl-Enter, asserting the split happens at the clicked point;
+    plus a check that Enter-to-edit still lands the caret at the end, and that typing after a
+    click inserts at the click point.
 
 **Out of scope:**
 
-- Multi-line (soft-break / `\n`) click mapping. CommonMark soft breaks render as a literal
-  newline character inside the `<p>`, which browsers collapse visually to whitespace, so a
-  click inside a wrapped multi-line *single* paragraph is not pixel-distinguishable from
-  index-based mapping edge cases beyond what two-pointer matching already handles for
-  plain runs of text; no acceptance criterion in #595 covers it, and the existing
-  Ctrl-Enter multi-line e2e coverage (`essay-editor.spec.ts:562-575`) exercises typing, not
-  clicking, so it is unaffected. If a real gap surfaces here later, file a follow-up issue
-  rather than widening this PR.
+- Block-level markdown (headings, lists, blockquotes, code fences) inside a paragraph body.
+  `stripInlineMarkdown` only recognises inline constructs; an unrecognised block prefix (e.g.
+  `# `, `- `, `> `) passes through as literal text, which can offset the mapped caret by the
+  prefix's length. This never throws and never lands outside the clicked paragraph — it is a
+  bounded, accepted degradation, not a crash risk — and the issue's acceptance criteria only
+  require bold/link fidelity. File a follow-up issue if this proves to matter in practice.
+- Hard line breaks (`<br>` from a trailing double-space or backslash before `\n`). A
+  **soft** break (plain `\n` inside one paragraph) needs no special handling: pulldown-cmark
+  renders it as a literal `\n` character, which is also what `stripInlineMarkdown` emits for
+  an unrecognised character, so it maps 1:1 for free. A **hard** break becomes a `<br>`
+  element with no corresponding character in the rendered DOM text, which this mapper does
+  not model; clicking the line after a hard break can therefore be off by the dropped
+  newline. No acceptance criterion in #595 covers this; the existing Ctrl-Enter multi-line
+  e2e coverage (`essay-editor.spec.ts:562-575`) exercises typing, not clicking, so it is
+  unaffected either way.
 - `AnnotationMargin` / other contenteditable surfaces that are not `MarkdownText.svelte`.
 - Firefox-specific `caretPositionFromPoint` exact pixel semantics (Playwright's default
   Chromium path uses `caretRangeFromPoint`; the Firefox branch is defensive, not tested
   in CI, since the project's e2e suite runs on Chromium — consistent with the rest of the
   suite).
+
+### Plan review findings and responses
+
+Two reviewers ran in parallel on the original draft (two-pointer matcher, click-time
+capture). Blocking/should-fix findings and how each was resolved:
+
+1. **Blocking (Plan Reviewer): mouse entry may bypass `renderClick`.** The render div's
+   `onfocus` flips `editing` to true on the browser's default mousedown-triggered focus,
+   before `click` fires — so capturing the point in `renderClick` is unreliable (and is
+   srs-web#596's root cause for the same reason). **Resolved:** capture on `mousedown`
+   instead (`renderMouseDown`); see Scope above.
+2. **Blocking (Plan Reviewer): effect self-retrigger.** Reading `pendingCaret` as a tracked
+   dependency inside the entry `$effect` and then clearing it would re-run the effect,
+   undoing the placement. **Resolved:** read it through `untrack()`.
+3. **Blocking (Plan Reviewer): the two-pointer mapper's "skip on mismatch" rule lets URL
+   characters coincidentally match upcoming rendered text**, e.g. `[a](xc)c` could map into
+   the URL. **Resolved:** replaced the two-pointer matcher with the one-sided
+   `stripInlineMarkdown` tokenizer, which never looks at an externally-supplied rendered
+   string at all — it only ever walks its own recognised constructs in `source`, so there is
+   no coincidental-match failure mode. Covered by a dedicated unit test.
+4. **Should-fix (both): contract gaps / instance-vs-module state.** Resolved by the
+   redesign above — `mapRenderedOffsetToSource` no longer takes a separate `renderedText`
+   parameter (removing the ambiguity about which "rendered text" definition it meant), and
+   `pendingCaret` is explicit component-instance `$state`.
+5. **Should-fix (Plan Reviewer): Final Acceptance criteria had no corresponding task/test.**
+   Resolved: added explicit e2e tasks (Scope above) for "typing after a click inserts at the
+   click point" and "Enter still lands at end".
+6. **Should-fix (Plan Reviewer): multi-line rationale was imprecise** — soft breaks map fine;
+   the real gap is hard breaks (`<br>`). Resolved: Out of scope section above now says this
+   precisely.
+7. **Should-fix (Plan Reviewer): e2e spec needed a precise click mechanism.** Resolved:
+   Scope above specifies the `Range.getClientRects()` + `page.mouse.click` helper.
+8. **Nit (Plan Reviewer): add `&`/escape unit cases.** Added.
+9. **Should-fix (Architecture Reviewer): maintenance-risk note.** `markdown-caret.ts`
+   re-derives knowledge of the same inline syntax the Rust core's markdown parser already
+   fully implements; if that grammar grows (footnotes, strikethrough, etc.) this heuristic
+   can silently drift. Noted here (and in the module's own doc comment) as a maintenance
+   risk parallel to ADR-001's "Residual TypeScript-semantics debt" section — not a blocker
+   for this fix, since it only needs to agree on the handful of constructs #595's acceptance
+   criteria name (bold, a link), but a reason to prefer small, explicit construct handling
+   (as implemented) over cleverness that would make a future drift harder to spot.
+- **Should-fix (Architecture Reviewer): e2e click-positioning mechanism was unspecified.**
+  Same resolution as item 7 above.
+- **Should-fix (Architecture Reviewer): untested block-level markdown.** Resolved by the
+  explicit Out of scope entry above (block-level markdown).
+- **Should-fix (Architecture Reviewer): no stated fallback for a degraded mid-walk match.**
+  Resolved by the redesign in item 3: `stripInlineMarkdown`/`mapRenderedOffsetToSource` are
+  total functions with no partial/degraded state to fall back from.
 
 ---
 
@@ -104,17 +191,19 @@ markdown offset, covering bold/link/code stripping.
 
 #### Tasks
 
-- [ ] Add `src/lib/components/markdown-caret.ts` with `mapRenderedOffsetToSource` and
-  `renderedOffsetAtPoint`.
-- [ ] Add `tests/markdown-caret.test.ts` covering: identical plain text, `**bold**`,
-  `[text](url)`, `` `code` ``, offset 0, offset at/past the end, offset inside the markup
-  run itself (e.g. right after the closing `**`).
+- [x] Add `src/lib/components/markdown-caret.ts` with `stripInlineMarkdown`,
+  `mapRenderedOffsetToSource`, and `renderedOffsetAtPoint` (tokenizer-based design — see
+  "Plan review findings and responses" above).
+- [x] Add `tests/markdown-caret.test.ts` covering: identical plain text, `**bold**`,
+  `*italic*`/`_italic_`, `` `code` ``, a link (including the URL-bleed regression case),
+  backslash escapes, literal `&`/`<`, an unterminated construct, offset 0 / negative /
+  past-the-end clamping, and a monotonicity round-trip over mixed markdown.
 
 #### Acceptance Criteria
 
-- [ ] `mapRenderedOffsetToSource` returns the correct source index for each covered case.
-- [ ] `npm run typecheck` passes
-- [ ] `npm test` passes (new file only touched so far)
+- [x] `mapRenderedOffsetToSource` returns the correct source index for each covered case.
+- [x] `npm run typecheck` passes
+- [x] `npm test` passes (new file only touched so far)
 
 #### Testing
 
@@ -142,23 +231,30 @@ point (mapped through markdown); pressing Enter still goes to the end.
 
 #### Tasks
 
-- [ ] In `renderClick`, before setting `editing = true`, resolve the click point to a
-  rendered-text offset (`renderedOffsetAtPoint` against `e.currentTarget`) and map it to a
-  source offset (`mapRenderedOffsetToSource`); stash it in a `$state` field (e.g.
-  `pendingCaret: number | null`).
-- [ ] In the entry `$effect`, if `pendingCaret !== null`, place the caret there (clamp to
-  `[0, el.firstChild?.length ?? 0]`) via a `Range`/`Selection`, then clear `pendingCaret`;
-  otherwise keep the existing `selectAllChildren` + `collapseToEnd()`.
-- [ ] Keep `renderKeydown`'s Enter path untouched — it never sets `pendingCaret`, so it
+- [x] Add `renderMouseDown`, wired as `onmousedown` on the `__render` div — runs before the
+  default mousedown-triggered focus (see finding #1 above). Ctrl/Cmd+click on a link
+  `preventDefault()`s to keep focus from happening; otherwise resolves the point via
+  `renderedOffsetAtPoint`/`mapRenderedOffsetToSource` and stores it in `pendingCaret:
+  number | null` (component-instance `$state`).
+- [x] In the entry `$effect`, read `pendingCaret` via `untrack()` (finding #2 above); if
+  non-null, place the caret there (clamped to `[0, value.length]`) via a `Range`/`Selection`
+  on `el.firstChild`, then clear `pendingCaret`; otherwise keep the existing
+  `selectAllChildren` + `collapseToEnd()`.
+- [x] Left `renderKeydown`'s Enter path untouched — it never sets `pendingCaret`, so it
   keeps landing at the end.
+- [x] Left `renderClick`'s Ctrl/Cmd-click-opens-link branch in place — it still runs on
+  `click`, now reachable because `renderMouseDown` kept focus (and the DOM swap) from
+  happening first.
 
 #### Acceptance Criteria
 
-- [ ] Clicking mid-paragraph, then Ctrl-Enter, splits at the clicked point (not the end).
-- [ ] Pressing Enter on a rendered paragraph still lands the caret at the end.
-- [ ] Ctrl/Cmd+click on a link still opens the link (unchanged `renderClick` early return).
-- [ ] `npm run typecheck` passes
-- [ ] No regression in the existing Ctrl+Enter / Ctrl+Z e2e test (`essay-editor.spec.ts:539`).
+- [x] Clicking mid-paragraph, then Ctrl-Enter, splits at the clicked point (not the end).
+- [x] Pressing Enter on a rendered paragraph still lands the caret at the end.
+- [x] Ctrl/Cmd+click on a link still opens the link (now via `renderMouseDown` keeping focus
+  from pre-empting `click`).
+- [x] `npm run typecheck` passes
+- [ ] No regression in the existing Ctrl+Enter / Ctrl+Z e2e test (`essay-editor.spec.ts:539`)
+  — verified in Phase 3's e2e run (`npm run e2e` touches the whole file).
 
 #### Testing
 
