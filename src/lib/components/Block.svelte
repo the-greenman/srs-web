@@ -4,7 +4,7 @@
   (core renderMarkdown, already sanitized) until focused, then a plain-text source editor
   (`contenteditable="plaintext-only"`, no rich-text dependency). Hidden = collapsed in place.
   Presentation + events only; the shell commits through the engine.
-    Ctrl/Cmd+Enter  new block after this one     Alt+Arrows  move / change level
+    Ctrl/Cmd+Enter  split at the caret (at the end: new block after this one)     Alt+Arrows  move / change level
     Tab at start    indent (Shift+Tab outdent)   F2 on the handle / click title  rename
   Wraps .block (src/styles/components/block.css).
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
@@ -35,6 +35,7 @@
     ontitle,
     onhide,
     onnew,
+    onsplit,
     onindent,
     onmove,
     onnavigate,
@@ -58,6 +59,8 @@
     ontitle: (value: string) => void;
     onhide: (hidden: boolean) => void;
     onnew: () => void;
+    /** Ctrl/Cmd+Enter mid-text: keep `before` here, `after` goes to a new block below; false = not written. Absent = always `onnew`. */
+    onsplit?: (before: string, after: string) => Promise<boolean>;
     onindent: (delta: 1 | -1) => void;
     onmove: (dir: 'up' | 'down') => void;
     /** Caret left the first/last line: focus the neighbouring paragraph (the shell owns the order). */
@@ -108,13 +111,42 @@
       : caret.bottom > box.bottom - parseFloat(cs.paddingBottom) - caret.height / 2;
   }
 
+  /** The body text before and from the caret (a selection start), or null unless both have text. */
+  function caretSplit(el: HTMLElement | undefined): [string, string] | null {
+    const sel = getSelection();
+    if (!el || !sel?.rangeCount || !el.contains(sel.anchorNode)) return null;
+    const r = sel.getRangeAt(0);
+    const head = document.createRange();
+    head.setStart(el, 0);
+    head.setEnd(r.startContainer, r.startOffset);
+    const tail = document.createRange();
+    tail.setStart(r.startContainer, r.startOffset);
+    tail.setEnd(el, el.childNodes.length);
+    // ponytail: Range text, not innerText; fine while the plaintext-only body holds text nodes only.
+    const before = head.toString().trimEnd();
+    // Drop blank lines and an indent markdown ignores; four spaces (code) stay.
+    const after = tail.toString().replace(/^\s*\n/, '').replace(/^ {1,3}(?=\S)/, '').trimEnd();
+    return before.trim() && after.trim() ? [before, after] : null;
+  }
+
+  async function split(el: HTMLElement, [before, after]: [string, string], { replace, flush }: { replace: (v: string) => void; flush: () => void }) {
+    const whole = el.innerText;
+    replace(before); // the blur that follows must not commit the whole text back
+    if (await onsplit!(before, after)) return;
+    el.textContent = whole; // not written: put the text back and commit it
+    flush();
+  }
+
   function applyMove(m: KeyMove) {
     if (m === 'up' || m === 'down') onmove(m);
     else onindent(m === 'in' ? 1 : -1);
   }
 
   /** Paragraph shortcuts, for both the rendered and the editing state of the body. */
-  function bodyKeydown(e: KeyboardEvent, { flush, el, rendered }: { flush: () => void; el?: HTMLElement; rendered: boolean }) {
+  function bodyKeydown(
+    e: KeyboardEvent,
+    { flush, replace, el, rendered }: { flush: () => void; replace: (v: string) => void; el?: HTMLElement; rendered: boolean },
+  ) {
     if (rendered && plainArrow(e)) {
       e.preventDefault();
       onnavigate?.(e.key === 'ArrowUp' ? 'prev' : 'next');
@@ -123,7 +155,9 @@
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       flush();
-      onnew();
+      const cut = !rendered && onsplit && caretSplit(el);
+      if (cut && el) void split(el, cut, { replace, flush });
+      else onnew();
       return;
     }
     const m = keyMove(e);

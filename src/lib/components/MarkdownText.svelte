@@ -26,18 +26,21 @@
     placeholder?: string;
     focusKey?: string;
     oncommit: (value: string) => void;
-    onkeydown?: (e: KeyboardEvent, api: { flush: () => void; el?: HTMLElement; rendered: boolean }) => void;
+    onkeydown?: (e: KeyboardEvent, api: { flush: () => void; replace: (v: string) => void; el?: HTMLElement; rendered: boolean }) => void;
   } = $props();
 
   let el = $state<HTMLElement>();
   let editing = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
   let committed = '';
+  /** Nothing typed since editing began: the essay history, not the browser, owns Ctrl-Z here. */
+  let typed = $state(false);
   const html = $derived(value ? renderMarkdown(value) : '');
 
   // Entering edit: show the source, keep focus, caret at the end.
   $effect(() => {
     if (!el) return;
+    typed = false;
     el.textContent = untrack(() => value);
     el.focus();
     getSelection()?.selectAllChildren(el);
@@ -50,6 +53,12 @@
     committed = v;
     if (el && document.activeElement !== el && el.innerText !== v) el.textContent = v;
   });
+
+  /** Show `v` and take it as already committed: the caller writes it (a split's first half). */
+  function replace(v: string) {
+    if (el) el.textContent = v;
+    committed = v;
+  }
 
   function flush() {
     clearTimeout(timer);
@@ -77,7 +86,7 @@
     if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
       editing = true;
-    } else onkeydown?.(e, { flush, el, rendered: true });
+    } else onkeydown?.(e, { flush, replace, el, rendered: true });
   }
 </script>
 
@@ -92,7 +101,9 @@
     aria-label={label}
     data-placeholder={placeholder}
     data-focus-key={focusKey}
+    data-pristine={!typed || undefined}
     oninput={() => {
+      typed = true;
       clearTimeout(timer);
       timer = setTimeout(flush, 400);
     }}
@@ -100,7 +111,7 @@
       flush();
       editing = false;
     }}
-    onkeydown={(e) => onkeydown?.(e, { flush, el, rendered: false })}
+    onkeydown={(e) => onkeydown?.(e, { flush, replace, el, rendered: false })}
   ></div>
 {:else}
   <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->

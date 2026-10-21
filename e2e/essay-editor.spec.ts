@@ -535,3 +535,41 @@ test("Ctrl+Z undoes and Ctrl+Shift+Z redoes a structure edit (srs-web#570)", asy
   await page.keyboard.press("Control+Shift+z");
   await expect(bodies(page).first()).toHaveText("Second paragraph.");
 });
+
+test("Ctrl+Enter mid-paragraph splits it at the caret, and Ctrl+Z joins it again", async ({ page }) => {
+  await open(page);
+  await bodies(page).first().click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.type("One sentence. Another sentence.");
+  for (let i = 0; i < "Another sentence.".length; i++) await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("Control+Enter");
+  await expect(bodies(page)).toHaveCount(4);
+  await expect(bodies(page).nth(0)).toHaveText("One sentence.");
+  await expect(bodies(page).nth(1)).toHaveText("Another sentence.");
+  await expect(bodies(page).nth(1)).toBeFocused();
+
+  // nothing typed in the new half yet, so Ctrl+Z is the essay's undo, not the browser's
+  await page.keyboard.press("Control+z");
+  await expect(bodies(page)).toHaveCount(3);
+  await expect(bodies(page).first()).toHaveText("One sentence. Another sentence.");
+  await page.keyboard.press("Control+Shift+z");
+  await expect(bodies(page)).toHaveCount(4);
+  await expect(bodies(page).nth(0)).toHaveText("One sentence.");
+  await expect(bodies(page).nth(1)).toHaveText("Another sentence.");
+  await page.keyboard.press("Control+z");
+  await expect(bodies(page)).toHaveCount(3);
+
+  // line breaks survive the split; at the very start Ctrl+Enter only adds a paragraph after
+  await bodies(page).first().click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.type("Line one\nLine two\n\nNext part");
+  for (let i = 0; i < "Next part".length; i++) await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("Control+Enter");
+  await expect(bodies(page).nth(1)).toHaveText("Next part");
+  await bodies(page).first().click();
+  await expect(bodies(page).first()).toHaveText("Line one\nLine two");
+  await page.keyboard.press("Control+Home");
+  await page.keyboard.press("Control+Enter");
+  await expect(bodies(page)).toHaveCount(5);
+  await expect(bodies(page).first()).toHaveText("Line one\nLine two");
+});
