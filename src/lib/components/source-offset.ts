@@ -5,17 +5,26 @@
  * ignored on both sides, because rendering collapses it. A closing emphasis marker right after
  * the match is stepped over, so the caret lands outside `**bold**`, not inside it; so is a
  * space when the rendered prefix ends in one.
- * ponytail: a greedy match, exact for prose; a caret inside a link's text can land in its URL.
+ * ponytail: a greedy match, exact for prose; markup that looks like prose (a code fence's
+ * language, list digits) can still be matched as text.
  */
 export function sourceOffset(source: string, renderedPrefix: string): number {
   const want = renderedPrefix.replace(/\s+/g, "");
   if (!want) return 0;
   let j = 0;
   for (let i = 0; i < source.length; i++) {
+    // A link target is never rendered: jump from `](` past its closing `)`.
+    if (source.startsWith("](", i)) {
+      const close = source.indexOf(")", i);
+      if (close > 0) i = close;
+      continue;
+    }
     if (/\s/.test(source[i]) || source[i] !== want[j]) continue;
     if (++j < want.length) continue;
     let end = i + 1;
-    while (end < source.length && "*_~`".includes(source[end])) end++;
+    // A closing marker, not one inside a word (snake_case, 2*3).
+    while (end < source.length && "*_~`".includes(source[end]) && !/\w/.test(source[end + 1] ?? ""))
+      end++;
     // The caret sat after rendered whitespace: put it after the source's too.
     if (/\s$/.test(renderedPrefix)) while (end < source.length && /[ \t]/.test(source[end])) end++;
     return end;

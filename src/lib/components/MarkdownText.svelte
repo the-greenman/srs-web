@@ -151,6 +151,7 @@
     data-focus-key={focusKey}
     onfocus={() => (editing = true)}
     onpointerdown={renderPointerdown}
+    onpointercancel={() => (clickedAt = null)}
     onclick={renderClick}
     onkeydown={renderKeydown}
   >{@html html}</div>

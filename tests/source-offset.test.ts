@@ -13,6 +13,11 @@ describe('sourceOffset (srs-web#595)', () => {
     expect(sourceOffset('# Title\n\nBody text', 'TitleBody')).toBe(13);
     expect(sourceOffset('- one\n- two', 'one tw')).toBe(10);
   });
+  it('never lands in a link target, nor steps over a marker inside a word', () => {
+    expect(sourceOffset('See [docs](http://x.com/docs) here', 'See docs h')).toBe(31);
+    expect(sourceOffset('a snake_case name', 'a snake')).toBe(7);
+    expect(sourceOffset('*em* text', 'em')).toBe(4);
+  });
   it('ignores whitespace the renderer collapsed', () => {
     expect(sourceOffset('Line one\nLine two', 'Line one Line')).toBe(13);
   });
