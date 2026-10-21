@@ -549,7 +549,7 @@ export function agentHandoff(a: {
     `- The text is the writer's. Never edit a paragraph body, the essay title or purpose, or any container except comments and references: the engine refuses these writes.`,
     `- Comment: record_create com.mudemocracy.essay/comment {comment_text}${c ? ` with containerId ${c}` : ""}, then relation_create com.mudemocracy.essay/comments-on from the comment to the paragraph. One comment per paragraph per point. Don't write an author: your session's identity is stamped.`,
     `- Gather: a source, claim or problem worth having for this essay goes in references: create it${r ? ` with containerId ${r}` : ""}, or container_member_add an existing one. Read references first so you don't duplicate.`,
-    `- The writer's own material is in references too: com.mudemocracy.argument/source records (a source_url for a web page; a text file attached to the record, e.g. a transcript or paper). The record fields are readable now; attached text is not yet (srs-rust#1333).`,
+    `- The writer's own material is in references too: com.mudemocracy.argument/source records (a source_url for a web page; a text file attached to the record, e.g. a transcript or paper). To read attached text: for each sourceRefs entry with sourceType repository-document, read ${uri}/attachment/<its sourceId>.`,
     "- Attach: link a reference to a paragraph with com.mudemocracy.essay/bears-on (paragraph → problem), evidences (source or claim → paragraph, supports) or com.mudemocracy.essay/counters (source or claim → paragraph, opposes).",
     "- Titles: you may set paragraph_title only where it is empty.",
     "- Before creating a record of any type, read its type_schema; the aiGuidance there is authoritative.",

@@ -93,6 +93,42 @@ describe.skipIf(!haveBindings)("references pool on the real engine", () => {
     );
   });
 
+  it("a connected agent reads an attached context file's text through the MCP attachment resource (srs-web#593)", async () => {
+    const doc = await import("../src/lib/essay/essay-document.js");
+    const { repositoryId } = await import("../src/lib/srs-client.js");
+    const repo = (await engine()).SrsRepository.load(fixture());
+    const m = doc.loadEssay(repo, doc.listEssays(repo)[0].id, { repair: true });
+    const bytes = new TextEncoder().encode("Applicants must show a prototype.");
+    const [id] = doc.addContextDocuments(repo, m, {
+      files: [{ name: "call.md", type: "text/markdown", bytes }],
+    });
+    const session = repo.open_mcp_session();
+    let n = 0;
+    const rpc = (method: string, params?: unknown) =>
+      JSON.parse(
+        session.handle(JSON.stringify({ jsonrpc: "2.0", id: ++n, method, params })) ?? "null"
+      );
+    rpc("initialize", {
+      protocolVersion: "2025-06-18",
+      capabilities: {},
+      clientInfo: { name: "t", version: "0" },
+    });
+    session.handle(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }));
+    const uri = `srs://${repositoryId(repo)}`;
+    const read = (u: string) => rpc("resources/read", { uri: u });
+
+    // the path the agent brief describes: the record's repository-document sourceRef, then the resource
+    const record = JSON.parse(read(`${uri}/record/${id}`).result.contents[0].text);
+    const ref = record.sourceRefs.find(
+      (r: { sourceType: string }) => r.sourceType === "repository-document"
+    );
+    const file = read(`${uri}/attachment/${ref.sourceId}`).result.contents[0];
+    expect(file.mimeType).toBe("text/plain");
+    expect(file.text).toBe("Applicants must show a prototype.");
+    const missing = read(`${uri}/attachment/00000000-0000-4000-8000-000000000000`);
+    expect(missing.error.code).toBe(-32002);
+  });
+
   it("an exploded tree with an attachment survives exportTree -> load_tree (source-documents/ included)", async () => {
     const doc = await import("../src/lib/essay/essay-document.js");
     const { exportTree } = await import("../src/lib/srs-client.js");
