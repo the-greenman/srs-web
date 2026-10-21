@@ -573,3 +573,35 @@ test("Ctrl+Enter mid-paragraph splits it at the caret, and Ctrl+Z joins it again
   await expect(bodies(page)).toHaveCount(5);
   await expect(bodies(page).first()).toHaveText("Line one\nLine two");
 });
+
+/** Click just before the first occurrence of `text` in a rendered paragraph (a real pointer click, srs-web#595). */
+async function clickBefore(page: Page, index: number, text: string) {
+  const pt = await bodies(page).nth(index).evaluate((el, t) => {
+    const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      const i = n.textContent!.indexOf(t);
+      if (i < 0) continue;
+      const r = document.createRange();
+      r.setStart(n, i);
+      r.setEnd(n, i + 1);
+      const b = r.getBoundingClientRect();
+      return { x: b.left + 1, y: b.top + b.height / 2 };
+    }
+    return null;
+  }, text);
+  await page.mouse.click(pt!.x, pt!.y);
+}
+
+test("a click puts the caret where it lands: Ctrl+Enter splits there, typing inserts there (srs-web#595)", async ({ page }) => {
+  await open(page);
+  await clickBefore(page, 0, "paragraph");
+  await page.keyboard.press("Control+Enter");
+  await expect(bodies(page)).toHaveCount(4);
+  await expect(bodies(page).nth(0)).toHaveText("First");
+  await expect(bodies(page).nth(1)).toHaveText("paragraph.");
+
+  await clickBefore(page, 2, "paragraph");
+  await page.keyboard.type("short ");
+  await bodies(page).nth(0).click();
+  await expect(bodies(page).nth(2)).toHaveText("Second short paragraph.");
+});
