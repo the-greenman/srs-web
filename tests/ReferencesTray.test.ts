@@ -94,7 +94,7 @@ it("with a drop zone: shows the repository size against the budget; Link to para
 
 it("lists context documents apart from references and adds pasted text and a URL as context", async () => {
   const oncontext = vi.fn();
-  const { getByTestId, getAllByTestId } = render(ReferencesTray, {
+  const { getByTestId, getAllByTestId, queryByTestId } = render(ReferencesTray, {
     items: [
       {
         id: "c1",
@@ -114,7 +114,7 @@ it("lists context documents apart from references and adds pasted text and a URL
   const ctx = getByTestId("context-documents");
   expect(ctx.textContent).toContain("Funding call");
   expect(getAllByTestId("reference-row")).toHaveLength(3);
-  expect(getByTestId("context-file-note").textContent).toContain("srs-rust#1333");
+  expect(queryByTestId("context-file-note")).toBeNull();
 
   await fireEvent.input(getByTestId("context-title"), { target: { value: "Call" } });
   await fireEvent.input(getByTestId("context-text"), { target: { value: "Scope text" } });

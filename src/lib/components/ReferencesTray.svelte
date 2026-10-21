@@ -65,7 +65,7 @@
     onfiles?: (files: AttachFile[]) => void | Promise<void>;
     onurls?: (urls: string[]) => void | Promise<void>;
     onlink?: (referenceId: string, paragraphId: string) => void;
-    /** Absent: no context-document form. File text is not readable by agents yet (srs-rust#1333). */
+    /** Absent: no context-document form. */
     oncontext?: (docs: { files?: AttachFile[]; urls?: string[]; texts?: { title: string; body: string }[] }) => void | Promise<void>;
   } = $props();
 
@@ -145,7 +145,6 @@
       <p class="tray__empty">Documents this essay answers, such as the funding call. Every connected agent reads them.</p>
       {@render rows(contextItems)}
       <AttachDrop compact label="Add a context file" {usedBytes} onfiles={(f) => oncontext({ files: f })} data-testid="context-drop" />
-      <p class="tray__empty" data-testid="context-file-note">Agents can read a file's text once srs-rust#1333 lands. Pasted text and URLs are readable now.</p>
       <form class="refs-tray__form" onsubmit={(e) => { e.preventDefault(); addUrl(); }}>
         <Input type="url" bind:value={ctxUrl} aria-label="Context URL" placeholder="Context URL" data-testid="context-url" />
         <Button type="submit" size="sm" disabled={!ctxUrl.trim()}>Add URL</Button>
