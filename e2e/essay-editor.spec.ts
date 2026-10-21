@@ -552,6 +552,12 @@ test("Ctrl+Enter mid-paragraph splits it at the caret, and Ctrl+Z joins it again
   await page.keyboard.press("Control+z");
   await expect(bodies(page)).toHaveCount(3);
   await expect(bodies(page).first()).toHaveText("One sentence. Another sentence.");
+  await page.keyboard.press("Control+Shift+z");
+  await expect(bodies(page)).toHaveCount(4);
+  await expect(bodies(page).nth(0)).toHaveText("One sentence.");
+  await expect(bodies(page).nth(1)).toHaveText("Another sentence.");
+  await page.keyboard.press("Control+z");
+  await expect(bodies(page)).toHaveCount(3);
 
   // line breaks survive the split; at the very start Ctrl+Enter only adds a paragraph after
   await bodies(page).first().click();
