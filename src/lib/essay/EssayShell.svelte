@@ -209,6 +209,9 @@
   /** Ctrl-Z / Ctrl-Shift-Z: write the previous (or next) state back as a normal edit. */
   async function stepHistory(redo: boolean): Promise<void> {
     const h = history();
+    // An untyped paragraph editor shows external changes only once blurred: leave it first.
+    const active = document.activeElement as HTMLElement | null;
+    if (active?.isContentEditable) active.blur();
     try {
       if (redo ? h?.redo(repo) : h?.undo(repo)) await tick();
     } catch (e) {
@@ -578,6 +581,20 @@
   const newParagraphAfter = (id: string): string =>
     `body:${addParagraph(repo, model!, { id, zone: "after" })}`;
 
+  /** Ctrl-Enter mid-paragraph: one history step, caret at the start of the new half. False = not written. */
+  async function splitParagraph(id: string, before: string, after: string): Promise<boolean> {
+    let key = ""; // set only once both writes are done; run() swallows a throw
+    await run(() => {
+      setBody(repo, id, before);
+      return (key = `body:${addParagraph(repo, model!, { id, zone: "after" }, after)}`);
+    });
+    const ok = key !== "";
+    await tick();
+    const el = document.activeElement as HTMLElement | null;
+    if (ok && el?.isContentEditable && el.dataset.focusKey === key) getSelection()?.collapse(el, 0);
+    return ok;
+  }
+
   const SHIFT = { up: "up", down: "down", in: "indent", out: "outdent" } as const;
   function onKey(id: string, m: KeyMove) {
     void run(() => shiftEntry(repo, model!.containerId, id, SHIFT[m]));
@@ -669,7 +686,7 @@
 <svelte:window
   onkeydown={(e) => {
     // Typing inside a paragraph keeps the browser's own text undo; the history takes over everywhere else.
-    if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "z" && !(e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]")) {
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "z" && !(e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]:not([data-pristine])")) {
       e.preventDefault();
       void stepHistory(e.shiftKey);
     }
@@ -804,6 +821,7 @@
                 ontitle={(v) => run(() => setTitle(repo, p.id, v))}
                 onhide={(h) => run(() => setHidden(repo, model!, p.id, h))}
                 onnew={() => run(() => newParagraphAfter(p.id))}
+                onsplit={(before, after) => splitParagraph(p.id, before, after)}
                 onindent={(d) => onKey(p.id, d === 1 ? "in" : "out")}
                 onmove={(dir) => onKey(p.id, dir)}
                 onnavigate={(dir) => navigate(p.id, dir)}

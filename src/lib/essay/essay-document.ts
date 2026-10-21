@@ -472,9 +472,9 @@ function place(repo: SrsRepository, container: string, id: string, t?: Target): 
 }
 
 /** Create a paragraph and add it at `t` (default: append). Returns its id. */
-export function addParagraph(repo: SrsRepository, m: EssayModel, t?: Target): string {
+export function addParagraph(repo: SrsRepository, m: EssayModel, t?: Target, body = ""): string {
   const rec = createRecord(repo, PARAGRAPH_TYPE_ID, typeVersion(repo, PARAGRAPH_TYPE_ID), {
-    fieldValues: { body: "" },
+    fieldValues: { body },
   });
   place(repo, m.containerId, rec.instanceId, t);
   return rec.instanceId;
