@@ -10,6 +10,13 @@
  * line breaks are untouched passthrough, which can offset the mapped caret by the length of
  * an unrecognised block prefix. That is an accepted, documented degradation (plans/595-click-
  * caret-position.md) — it never throws and never lands outside the clicked paragraph.
+ *
+ * Maintenance note: this must stay a *subset* of what the actual renderer
+ * (srs-rust/crates/srs-core/src/markdown.rs, pulldown-cmark with
+ * `ENABLE_TABLES | ENABLE_STRIKETHROUGH`) does, including its CommonMark delimiter rules
+ * (e.g. `_` disallowed intraword, unlike `*` — see below). If that renderer's config grows
+ * (strikethrough, footnotes, …), this has no compiler-level link to it and can silently
+ * drift; re-check this file against it when `markdown.rs` changes.
  */
 
 /** One `**x**` / `__x__` style delimiter pair. */
@@ -22,6 +29,8 @@ const EMPHASIS: Pairing[] = [
   { open: "**", close: "**" },
   { open: "__", close: "__" },
 ];
+
+const isAlnum = (c: string | undefined): boolean => !!c && /[A-Za-z0-9]/.test(c);
 
 /**
  * The rendered plain text `renderMarkdown` would produce from `source`'s recognised inline
@@ -65,9 +74,16 @@ export function stripInlineMarkdown(source: string): { text: string; sourceOffse
     }
 
     // *italic* / _italic_ — a single delimiter not immediately followed by a space.
-    if ((ch === "*" || ch === "_") && i + 1 < n && source[i + 1] !== " ") {
+    // CommonMark disables `_` (but not `*`) as an emphasis delimiter when it is intraword
+    // (alphanumeric on the flanking side) — without this, a snake_case identifier like
+    // `data_model_revision`, common in this very spec-authoring domain, would be misread
+    // as italic and desync the mapping (reviewer finding).
+    const opensHere = ch === "*" || ch === "_";
+    const canOpen = ch !== "_" || !isAlnum(source[i - 1]);
+    if (opensHere && i + 1 < n && source[i + 1] !== " " && canOpen) {
       const close = source.indexOf(ch, i + 1);
-      if (close !== -1 && close > i + 1) {
+      const canClose = close !== -1 && (ch !== "_" || !isAlnum(source[close + 1]));
+      if (close !== -1 && close > i + 1 && canClose) {
         emitInner(stripInlineMarkdown(source.slice(i + 1, close)), i + 1);
         i = close + 1;
         continue;

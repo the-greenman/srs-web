@@ -19,6 +19,21 @@ describe("stripInlineMarkdown", () => {
     expect(stripInlineMarkdown("a _x_ b").text).toBe("a x b");
   });
 
+  it("leaves an intraword underscore literal, never as italic (CommonMark rule; code-review finding)", () => {
+    // snake_case identifiers are everywhere in this spec-authoring domain; pulldown-cmark
+    // (the actual renderer) renders every underscore here literally, not as emphasis.
+    expect(stripInlineMarkdown("data_model_revision").text).toBe("data_model_revision");
+    expect(stripInlineMarkdown("see field_name_here now").text).toBe("see field_name_here now");
+  });
+
+  it("still treats * as emphasis even when intraword (CommonMark allows this for *, unlike _)", () => {
+    expect(stripInlineMarkdown("snake*case*word").text).toBe("snakecaseword");
+  });
+
+  it("treats _ as italic when not intraword, even right next to punctuation", () => {
+    expect(stripInlineMarkdown("say _this_, now").text).toBe("say this, now");
+  });
+
   it("strips backtick code markers", () => {
     expect(stripInlineMarkdown("a `code` b").text).toBe("a code b");
   });
