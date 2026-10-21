@@ -458,6 +458,8 @@ describe("agentHandoff (srs-web#411, #498)", () => {
     expect(t).toContain("create it with containerId F, or container_member_add");
     expect(t).toContain("paragraph_title only where it is empty");
     expect(t).toContain("read its type_schema");
+    expect(t).toContain("read srs://R/attachment/<its sourceId>"); // srs-web#593
+    expect(t).not.toContain("1333");
     expect(t).not.toContain("Focus:");
     expect(t).not.toContain("\u2014"); // no em dashes
   });
