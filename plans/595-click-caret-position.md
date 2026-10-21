@@ -283,17 +283,26 @@ through markdown (bold, a link).
 
 #### Tasks
 
-- [ ] Add a test in `e2e/essay-editor.spec.ts` near the existing Ctrl-Enter test: type a
-  paragraph, click mid-text in its **rendered** form (not via keyboard caret movement),
-  Ctrl-Enter, assert the split point matches the click.
-- [ ] Add a variant where the paragraph contains `**bold**` text and/or a markdown link,
-  clicking inside/after the bold/link span, asserting the split lands at the matching
-  source position.
+- [x] Added `clickAtTextOffset`/`caretOffset` helpers to `e2e/essay-editor.spec.ts`
+  (`Range.getClientRects()` + `page.mouse.click`, and a selection-to-offset readback).
+- [x] Added "clicking a rendered paragraph splits at the click point via Ctrl+Enter, not
+  the end" — plain text, the headline regression from #595.
+- [x] Added "typing after a click inserts at the click point, not the end".
+- [x] Added "clicking rendered bold or link text places the caret at the matching source
+  position" — direct caret-offset assertions for both `**bold**` and `[a link](url)`,
+  verified by hand-tracing `stripInlineMarkdown` and confirmed by the test run.
+- [x] Added "focusing a rendered paragraph without a click still lands the caret at the
+  end" — regression check for the `pendingCaret === null` path (programmatic `.focus()`,
+  which never goes through `renderMouseDown`).
 
 #### Acceptance Criteria
 
-- [ ] `npm run e2e` passes, including the new tests.
-- [ ] Existing `essay-editor.spec.ts` tests still pass (no regression).
+- [x] `npm run e2e` passes for `essay-editor.spec.ts` (16/16, including the 4 new tests and
+  the pre-existing Ctrl+Enter/Ctrl+Z test unaffected).
+- [x] Existing `essay-editor.spec.ts` tests still pass (no regression).
+- [x] Manually verified (scratch spec, not committed) that the `mousedown`-based
+  restructuring also fixes srs-web#596 (Ctrl/Cmd+click on a link no longer enters edit
+  mode) as a side effect of the required #595 fix — see the comment left on #596.
 
 #### Testing
 

@@ -1,8 +1,8 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { menuItem, routeRelayChannels } from "./helpers";
-import type { Page } from "@playwright/test";
 
 /**
  * essay-editor.spec.ts — srs-web#328: the essay writing surface on a fixture repo built with
@@ -28,6 +28,46 @@ const depthOf = (page: Page, text: string) =>
     .locator(".essay-shell__page .block-stack__item", { hasText: text })
     .first()
     .evaluate((el) => (el as HTMLElement).style.getPropertyValue("--depth"));
+
+/**
+ * Clicks `locator`'s rendered text at `charOffset` characters in, computed via
+ * `Range.getClientRects()` so the click lands on the exact character regardless of font
+ * metrics (srs-web#595).
+ */
+async function clickAtTextOffset(page: Page, locator: Locator, charOffset: number) {
+  const point = await locator.evaluate((el, offset) => {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode() as Text | null;
+    let remaining = offset;
+    while (node) {
+      const len = node.textContent?.length ?? 0;
+      if (remaining <= len) break;
+      remaining -= len;
+      node = walker.nextNode() as Text | null;
+    }
+    if (!node) throw new Error(`offset ${offset} is past the end of "${el.textContent}"`);
+    const range = document.createRange();
+    range.setStart(node, remaining);
+    range.setEnd(node, remaining);
+    const rect = range.getClientRects()[0];
+    if (!rect) throw new Error(`no client rect at offset ${offset} in "${el.textContent}"`);
+    return { x: rect.left, y: (rect.top + rect.bottom) / 2 };
+  }, charOffset);
+  await page.mouse.click(point.x + 1, point.y);
+}
+
+/** The caret's offset into `locator`'s text content (characters preceding the selection start). */
+async function caretOffset(locator: Locator): Promise<number> {
+  return await locator.evaluate((el) => {
+    const sel = el.ownerDocument.getSelection();
+    if (!sel || sel.rangeCount === 0) return -1;
+    const r = sel.getRangeAt(0);
+    const pre = document.createRange();
+    pre.setStart(el, 0);
+    pre.setEnd(r.startContainer, r.startOffset);
+    return pre.toString().length;
+  });
+}
 
 test("typing alone marks the document unsaved after the commit debounce (srs-web#345)", async ({
   page,
@@ -302,9 +342,9 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
   await expect(page.locator(".panel-rail .pinned__item .attachment-preview__kind")).toContainText(
     "note · "
   );
-  await expect(page.locator(".panel-rail .pinned__item .attachment-preview__kind")).not.toContainText(
-    "evidences"
-  );
+  await expect(
+    page.locator(".panel-rail .pinned__item .attachment-preview__kind")
+  ).not.toContainText("evidences");
   await glyph.hover();
   await page.locator(".essay-shell__page .hover-card__remove").click();
   await expect(page.locator(".essay-shell__page .glyph")).toHaveCount(0);
@@ -380,9 +420,13 @@ test("the main column is the one scroll surface (superseding #363: the window no
   await page.setViewportSize({ width: 1200, height: 360 });
   // #424: the window never scrolls; the main column (.workspace) is the single scroll surface for the
   // page, and no block scrolls inside itself.
-  expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(
+    true
+  );
   expect(
-    await page.locator(".app__main > .workspace").evaluate((el) => el.scrollHeight > el.clientHeight)
+    await page
+      .locator(".app__main > .workspace")
+      .evaluate((el) => el.scrollHeight > el.clientHeight)
   ).toBe(true);
   expect(
     await page
@@ -536,7 +580,9 @@ test("Ctrl+Z undoes and Ctrl+Shift+Z redoes a structure edit (srs-web#570)", asy
   await expect(bodies(page).first()).toHaveText("Second paragraph.");
 });
 
-test("Ctrl+Enter mid-paragraph splits it at the caret, and Ctrl+Z joins it again", async ({ page }) => {
+test("Ctrl+Enter mid-paragraph splits it at the caret, and Ctrl+Z joins it again", async ({
+  page,
+}) => {
   await open(page);
   await bodies(page).first().click();
   await page.keyboard.press("Control+a");
@@ -572,4 +618,93 @@ test("Ctrl+Enter mid-paragraph splits it at the caret, and Ctrl+Z joins it again
   await page.keyboard.press("Control+Enter");
   await expect(bodies(page)).toHaveCount(5);
   await expect(bodies(page).first()).toHaveText("Line one\nLine two");
+});
+
+test("clicking a rendered paragraph splits at the click point via Ctrl+Enter, not the end (srs-web#595)", async ({
+  page,
+}) => {
+  await open(page);
+  await bodies(page).first().click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.type("One sentence. Another sentence.");
+  await bodies(page).last().click(); // blur: flush and render
+  const rendered = page.locator(".essay-shell__page .block__render").first();
+  await expect(rendered).toHaveText("One sentence. Another sentence.");
+
+  await clickAtTextOffset(page, rendered, "One sentence. ".length); // right before "Another"
+  const body = page.locator(".essay-shell__page .block__body").first();
+  await expect(body).toBeFocused();
+  expect(await caretOffset(body)).toBe("One sentence. ".length);
+
+  await page.keyboard.press("Control+Enter");
+  await expect(bodies(page)).toHaveCount(4);
+  await expect(bodies(page).nth(0)).toHaveText("One sentence.");
+  await expect(bodies(page).nth(1)).toHaveText("Another sentence.");
+});
+
+test("typing after a click inserts at the click point, not the end (srs-web#595)", async ({
+  page,
+}) => {
+  await open(page);
+  await bodies(page).first().click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.type("One sentence. Another sentence.");
+  await bodies(page).last().click(); // blur: flush and render
+  const rendered = page.locator(".essay-shell__page .block__render").first();
+
+  await clickAtTextOffset(page, rendered, "One sentence. ".length);
+  await page.keyboard.type("Yet ");
+  await bodies(page).last().click(); // blur: flush and render
+  await expect(bodies(page).first()).toHaveText("One sentence. Yet Another sentence.");
+});
+
+test("clicking rendered bold or link text places the caret at the matching source position (srs-web#595)", async ({
+  page,
+}) => {
+  await open(page);
+
+  await bodies(page).first().click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.type("One **bold** sentence.");
+  await bodies(page).last().click(); // blur: flush and render
+  const boldRendered = page.locator(".essay-shell__page .block__render").first();
+  await expect(boldRendered.locator("strong")).toHaveText("bold");
+  // "One bold|" — right after "bold", before the trailing space, in the *rendered* text.
+  await clickAtTextOffset(page, boldRendered, "One bold".length);
+  const boldBody = page.locator(".essay-shell__page .block__body").first();
+  await expect(boldBody).toBeFocused();
+  // the matching point in the *source* is right after the closing "**".
+  expect(await caretOffset(boldBody)).toBe("One **bold**".length);
+  await bodies(page).last().click(); // blur
+
+  await bodies(page).first().click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.type("See [a link](https://example.com) now.");
+  await bodies(page).last().click(); // blur: flush and render
+  const linkRendered = page.locator(".essay-shell__page .block__render").first();
+  await expect(linkRendered.locator("a")).toHaveText("a link");
+  // "See a |link now." — right before "link", in the rendered text.
+  await clickAtTextOffset(page, linkRendered, "See a ".length);
+  const linkBody = page.locator(".essay-shell__page .block__body").first();
+  await expect(linkBody).toBeFocused();
+  // the matching point in the source is right before "link" inside "[a link](...)".
+  expect(await caretOffset(linkBody)).toBe("See [a ".length);
+});
+
+test("focusing a rendered paragraph without a click still lands the caret at the end (srs-web#595)", async ({
+  page,
+}) => {
+  await open(page);
+  await bodies(page).first().click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.type("One sentence. Another sentence.");
+  await bodies(page).last().click(); // blur: flush and render
+  const rendered = page.locator(".essay-shell__page .block__render").first();
+
+  // programmatic focus, not a click: never goes through renderMouseDown, so pendingCaret
+  // stays null and the entry effect's default (collapse to end) applies.
+  await rendered.focus();
+  const body = page.locator(".essay-shell__page .block__body").first();
+  await expect(body).toBeFocused();
+  expect(await caretOffset(body)).toBe("One sentence. Another sentence.".length);
 });
