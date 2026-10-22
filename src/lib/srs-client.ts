@@ -296,6 +296,8 @@ export interface SrsRecord {
   typeName?: string;
   fieldValues: FieldValues;
   fieldMeta?: FieldMeta;
+  /** Instance metadata owned by a client domain (for example editor annotations). */
+  meta?: unknown;
   lifecycle?: LifecycleState;
   createdAt?: string;
   updatedAt?: string;
@@ -684,6 +686,7 @@ function normalizeRecord(raw: any): SrsRecord {
     typeName: raw.typeName,
     fieldValues: raw.fieldValues ?? {},
     ...(fieldMeta != null && { fieldMeta }),
+    ...(raw.meta != null && { meta: raw.meta }),
     lifecycle: raw.lifecycleState ?? raw.lifecycle,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
