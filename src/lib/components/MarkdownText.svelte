@@ -9,6 +9,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { renderMarkdown } from '$lib/srs-client.js';
+  import { sourceOffset } from './source-offset.js';
 
   let {
     value = '',
@@ -37,15 +38,41 @@
   let typed = $state(false);
   const html = $derived(value ? renderMarkdown(value) : '');
 
-  // Entering edit: show the source, keep focus, caret at the end.
+  /** Source offset of the point the writer clicked, taken on pointerdown (focus enters edit before click fires). */
+  let clickedAt: number | null = null;
+
+  // Entering edit: show the source, keep focus; caret where the writer clicked, else at the end.
   $effect(() => {
     if (!el) return;
     typed = false;
     el.textContent = untrack(() => value);
     el.focus();
-    getSelection()?.selectAllChildren(el);
-    getSelection()?.collapseToEnd();
+    const sel = getSelection();
+    if (clickedAt !== null && el.firstChild) sel?.collapse(el.firstChild, Math.min(clickedAt, el.textContent.length));
+    else {
+      sel?.selectAllChildren(el);
+      sel?.collapseToEnd();
+    }
+    clickedAt = null;
   });
+
+  /** The caret position under a pointer: the standard API, or WebKit's older one. */
+  function caretAtPoint(x: number, y: number): { node: Node; offset: number } | null {
+    const p = document.caretPositionFromPoint?.(x, y);
+    if (p) return { node: p.offsetNode, offset: p.offset };
+    const r = document.caretRangeFromPoint?.(x, y);
+    return r ? { node: r.startContainer, offset: r.startOffset } : null;
+  }
+
+  function renderPointerdown(e: PointerEvent) {
+    const root = e.currentTarget as HTMLElement;
+    const at = e.button === 0 ? caretAtPoint(e.clientX, e.clientY) : null;
+    if (!at || !root.contains(at.node)) return;
+    const before = document.createRange();
+    before.setStart(root, 0);
+    before.setEnd(at.node, at.offset);
+    clickedAt = sourceOffset(value, before.toString());
+  }
 
   // Show external changes (agent writes) unless the writer is mid-edit here.
   $effect(() => {
@@ -123,6 +150,8 @@
     data-placeholder={placeholder}
     data-focus-key={focusKey}
     onfocus={() => (editing = true)}
+    onpointerdown={renderPointerdown}
+    onpointercancel={() => (clickedAt = null)}
     onclick={renderClick}
     onkeydown={renderKeydown}
   >{@html html}</div>
