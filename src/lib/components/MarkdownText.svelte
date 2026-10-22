@@ -35,16 +35,49 @@
   let committed = '';
   /** Nothing typed since editing began: the essay history, not the browser, owns Ctrl-Z here. */
   let typed = $state(false);
+  /** Set by a click just before `editing` flips true; consumed once by the entering-edit effect. */
+  let clickPoint: { x: number; y: number } | null = null;
   const html = $derived(value ? renderMarkdown(value) : '');
 
-  // Entering edit: show the source, keep focus, caret at the end.
+  /** Collapse the selection to the document position under (x, y), if one exists inside `target`. */
+  function placeCaretAtPoint(target: HTMLElement, x: number, y: number): boolean {
+    const doc = document as Document & {
+      caretRangeFromPoint?: (x: number, y: number) => Range | null;
+      caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null;
+    };
+    let range: Range | null = null;
+    if (doc.caretRangeFromPoint) {
+      range = doc.caretRangeFromPoint(x, y);
+    } else if (doc.caretPositionFromPoint) {
+      const pos = doc.caretPositionFromPoint(x, y);
+      if (pos) {
+        range = document.createRange();
+        range.setStart(pos.offsetNode, pos.offset);
+        range.collapse(true);
+      }
+    }
+    if (!range || !target.contains(range.startContainer)) return false;
+    const sel = getSelection();
+    if (!sel) return false;
+    sel.removeAllRanges();
+    sel.addRange(range);
+    return true;
+  }
+
+  // Entering edit: show the source, keep focus. A click carries the point it landed on — put
+  // the caret there instead of forcing it to the end (srs-web#595); Enter/focus has no point,
+  // so the end remains the right default there.
   $effect(() => {
     if (!el) return;
     typed = false;
     el.textContent = untrack(() => value);
     el.focus();
-    getSelection()?.selectAllChildren(el);
-    getSelection()?.collapseToEnd();
+    const point = clickPoint;
+    clickPoint = null;
+    if (!point || !placeCaretAtPoint(el, point.x, point.y)) {
+      getSelection()?.selectAllChildren(el);
+      getSelection()?.collapseToEnd();
+    }
   });
 
   // Show external changes (agent writes) unless the writer is mid-edit here.
@@ -68,6 +101,14 @@
       committed = v;
       oncommit(v);
     }
+  }
+
+  // mousedown precedes the browser's own focus shift (which flips `editing` via onfocus,
+  // below) — capture the point here so it's already set by the time the entering-edit effect
+  // reads it. A plain click handler is too late: focus (and the effect it triggers) has
+  // already run by then.
+  function renderMouseDown(e: MouseEvent) {
+    clickPoint = { x: e.clientX, y: e.clientY };
   }
 
   // Plain click edits; Ctrl/Cmd+click on a rendered link opens it instead.
@@ -123,6 +164,7 @@
     data-placeholder={placeholder}
     data-focus-key={focusKey}
     onfocus={() => (editing = true)}
+    onmousedown={renderMouseDown}
     onclick={renderClick}
     onkeydown={renderKeydown}
   >{@html html}</div>

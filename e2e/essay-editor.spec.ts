@@ -573,3 +573,36 @@ test("Ctrl+Enter mid-paragraph splits it at the caret, and Ctrl+Z joins it again
   await expect(bodies(page)).toHaveCount(5);
   await expect(bodies(page).first()).toHaveText("Line one\nLine two");
 });
+
+test("clicking into a rendered paragraph puts the caret at the click, so Ctrl+Enter splits there (srs-web#595)", async ({
+  page,
+}) => {
+  await open(page);
+  await bodies(page).first().click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.type("Alpha bravo charlie delta echo foxtrot golf hotel.");
+  await bodies(page).last().click(); // blur: flush and render
+
+  const rendered = page.locator(".essay-shell__page .block__render").first();
+  const box = await rendered.boundingBox();
+  if (!box) throw new Error("rendered paragraph has no bounding box");
+  // A couple of pixels into the first word — nowhere near the end of the sentence. Before
+  // srs-web#595 the caret was always forced to the end on entering edit mode, so Ctrl+Enter
+  // right after a click could never split mid-paragraph.
+  await page.mouse.click(box.x + 6, box.y + box.height / 2);
+  await expect(page.locator(".essay-shell__page .block__body").first()).toBeFocused();
+
+  await page.keyboard.press("Control+Enter");
+  await expect(bodies(page)).toHaveCount(4);
+  const [first, second] = await Promise.all([
+    bodies(page).nth(0).innerText(),
+    bodies(page).nth(1).innerText(),
+  ]);
+  expect(first + second).toBe("Alpha bravo charlie delta echo foxtrot golf hotel.");
+  expect(first.length).toBeGreaterThan(0);
+  // The click landed near the very start of the sentence, so the first half must be short —
+  // nowhere close to the whole sentence (which is what the end-forced bug produced instead,
+  // via the onnew() fallback leaving the original paragraph untouched).
+  expect(first.length).toBeLessThan(10);
+  expect(second.length).toBeGreaterThan(first.length);
+});
