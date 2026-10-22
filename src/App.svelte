@@ -32,15 +32,12 @@
     applyMigration,
   } from "$lib/srs-client.js";
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
-  import { acquireChannelLock, releaseChannelLock, channelsInUseElsewhere, connections, credsKey, type AgentConnection } from "$lib/agent-connections.js";
-  import { relays } from "$lib/relay-library.js";
-  import { pushWrite, type AgentPanelCtx, type AgentStatus, type AgentWrite } from "$lib/agent-activity.js";
-  import { applyAgentGuard, openAgentSession as openAgentHostSession, type AgentHostEntry } from "$lib/agent-host.js";
-  import { reopenSaved } from "$lib/reopen.js";
+  import type { AgentPanelCtx } from "$lib/agent-activity.js";
+  import { AgentLibrary } from "$lib/agent-library.svelte.js";
   import { fetchArchiveFile, parseOpenUrl, parseRepoLink, withoutOpenParam, withoutRepoLink, type RepoLink } from "$lib/open-url.js";
   import type { GitHubProvider } from "$lib/storage/github.js";
   import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
-  import { listTypes, repositoryId, resolveRepositoryTitle, type AgentWriteGuard, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
+  import { listTypes, resolveRepositoryTitle, type AgentWriteGuard, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
@@ -61,8 +58,6 @@
   import Panel from "$lib/components/Panel.svelte";
   import AgentPresence from "$lib/components/AgentPresence.svelte";
   import AgentPanel from "$lib/components/AgentPanel.svelte";
-  import type { PanelAgent } from "$lib/components/agent-panel.js";
-  import { RelayHost, type HostState } from "$lib/mcp/relay-host.js";
   import { tick, untrack } from "svelte";
   import { notify, pinNotice, resetNotices, toUiDiagnostic, unpinNotice, type NoticeKind } from "$lib/notices.svelte.js";
   import { slugifyFilename } from "$lib/slug.js";
@@ -371,99 +366,6 @@
   // a storage provider — persistence stays an explicit Save/Export.
   // ---------------------------------------------------------------------------
 
-  // Relays are a user-managed library (srs-web#442, relay-library.ts); each agent is bound to one.
-  let relayList = $state(relays.list());
-  /** Bind agents that predate the library to the default relay (called after every relay change). */
-  function adoptRelays() {
-    const d = relayList.find((r) => r.isDefault);
-    if (d) library = [...connections.adoptRelay(d.id)];
-  }
-  const relayError = (r: { relays: typeof relayList } | { error: string }, done?: string): string | null => {
-    if ("error" in r) return r.error;
-    relayList = r.relays;
-    adoptRelays();
-    if (done) notify({ kind: "info", key: "agents", text: done });
-    return null;
-  };
-  const addRelay = (label: string, url: string) => relayError(relays.add(label, url), "Relay added");
-  const updateRelay = (id: string, patch: { label?: string; url?: string }) => relayError(relays.update(id, patch));
-  const removeRelay = (id: string) => relayError(relays.remove(id), "Relay removed");
-  function setDefaultRelay(id: string) {
-    relayList = relays.setDefault(id);
-  }
-  // One relay channel + MCP session per agent connection (srs-web#358), each with its own
-  // host-minted actor id. `agents` is the reactive view; hosts/sessions are managed here only.
-  type Agent = { conn: AgentConnection; state: HostState };
-  let agents = $state<Agent[]>([]);
-  /** Agent writes observed at each session boundary (agent-activity.ts), newest first. */
-  let agentWrites = $state<AgentWrite[]>([]);
-  /** Client-reported names (MCP initialize clientInfo); the engine's actor name is label, else this. */
-  let clientNames = $state<Record<string, string>>({});
-  const agentName = (conn: AgentConnection) => conn.label ?? clientNames[conn.id] ?? `Agent ${conn.id.slice(6, 12)}`;
-  const agentStatus = $derived<AgentStatus>({
-    connected: agents.filter((a) => a.state.status === "online").length,
-    total: agents.length,
-    agents: agents.map((a) => ({ id: a.conn.id, name: agentName(a.conn), status: a.state.status })),
-    writes: agentWrites,
-  });
-  /** Saved channels (the library) and those held by another tab (Web Locks). */
-  let library = $state<AgentConnection[]>(connections.list());
-  connections.sweepInits(connections.list().map((c) => c.id));
-  adoptRelays();
-  let inUse = $state<Set<string>>(new Set());
-  const refreshInUse = () => void channelsInUseElsewhere().then((s) => (inUse = s));
-  /** The floating dock starts open only once a relay exists: with none it would sit over the page's own controls. */
-  let dockOpen = $state(relays.list().length > 0);
-  /** Go > Agents…: expand the dock and focus its first control. */
-  async function openDock() {
-    dockOpen = true;
-    await tick();
-    document.querySelector<HTMLElement>('.mcp-dock [data-testid="agent-panel"] button, .mcp-dock [data-testid="agent-panel"] input')?.focus();
-  }
-  /** The 15 s clock for "Connected 2 min ago" (EssayShell keeps its own). */
-  let agentNow = $state(Date.now());
-  $effect(() => {
-    const t = setInterval(() => (agentNow = Date.now()), 15000);
-    return () => clearInterval(t);
-  });
-  const panelAgents = $derived<PanelAgent[]>(
-    library.map((conn) => ({
-      conn,
-      name: agentName(conn),
-      relayLabel: relayList.find((r) => r.id === conn.relayId)?.label ?? "Relay missing",
-      state: agents.find((a) => a.conn.id === conn.id)?.state ?? null,
-      inUseElsewhere: inUse.has(conn.id),
-    }))
-  );
-  const hosts = new Map<string, AgentHostEntry>();
-  // Reopen after a reload (#418): ids mid-open (a Connect click must not duplicate them), and ids
-  // allowed exactly one automatic takeover if the relay still holds the dead page's socket.
-  const opening = new Set<string>();
-  const autoTakeover = new Set<string>();
-  const setAgentState = (id: string, state: HostState) => {
-    if (state.status === "online") autoTakeover.delete(id);
-    else if (state.status === "rejected" && autoTakeover.delete(id)) void hosts.get(id)?.host.takeover();
-    if (state.status === "online" && agents.find((a) => a.conn.id === id)?.state.status !== "online")
-      library = [...connections.touch(id)];
-    agents = agents.map((a) => (a.conn.id === id ? { ...a, state } : a));
-  };
-  function hostFor(conn: AgentConnection): RelayHost {
-    let h = hosts.get(conn.id);
-    if (!h) {
-      h = {
-        host: new RelayHost({
-          relayUrl: relays.get(conn.relayId)?.url ?? "",
-          storageKey: credsKey(conn.id),
-          onHandled: () => void syncDocument(),
-          onChange: (s) => setAgentState(conn.id, s),
-        }),
-        session: null,
-      };
-      hosts.set(conn.id, h);
-    }
-    return h.host;
-  }
-
   // The active shell declares the agent write guard (policy); the engine enforces it. Kept here
   // so it is also applied to a session attached after the guard was set.
   let agentGuard: AgentWriteGuard | null = null;
@@ -472,128 +374,20 @@
   /** The guard in force now: the core's read-only guard, else the active shell's, for this repository only. */
   const currentGuard = (): AgentWriteGuard | null =>
     readOnlyHost && repo ? readOnlyGuard(repo) : agentGuard && agentGuardRepo === repo ? agentGuard : null;
-  const guardError = (id: string) => (error: string) => setAgentState(id, { status: "error", callerUrl: null, error });
-  /** Fail closed (see `applyAgentGuard`): a failure detaches the agent and surfaces the error. */
-  const applyGuards = () =>
-    hosts.forEach((entry, id) => applyAgentGuard(entry, { guard: currentGuard, onGuardError: guardError(id) }));
-
-  function openAgentSession(conn: AgentConnection, current: SrsRepository | null): void {
-    hostFor(conn);
-    openAgentHostSession(hosts.get(conn.id) as AgentHostEntry, conn, current, {
-      guard: currentGuard,
-      onGuardError: guardError(conn.id),
-      onWrite: (w) => (agentWrites = pushWrite(agentWrites, w)),
-      // a replayed initialize only fills a missing name; it never flips one client's name to another's
-      onClientName: (n, replayed) => { if (!replayed || !clientNames[conn.id]) clientNames = { ...clientNames, [conn.id]: n }; },
-    });
-  }
-
-  /** Open a saved channel in this tab, only if no other tab holds it. */
-  async function openChannel(conn: AgentConnection, reopening = false): Promise<boolean> {
-    if (agents.some((a) => a.conn.id === conn.id) || opening.has(conn.id)) return true;
-    if (!relays.get(conn.relayId)) return true; // unbound or relay missing: cannot connect
-    opening.add(conn.id);
-    try {
-      if (!(await acquireChannelLock(conn.id))) {
-        refreshInUse();
-        return false;
-      }
-      agents = [...agents, { conn, state: { status: "idle", callerUrl: null, error: null } }];
-      if (repo) library = [...connections.setReopen(conn.id, repositoryId(repo))];
-      if (reopening) autoTakeover.add(conn.id); // only a reopen that really opened may take over
-      openAgentSession(conn, repo);
-      return true;
-    } finally {
-      opening.delete(conn.id);
-    }
-  }
-  function connectAgent(label: string | undefined, relayId: string) {
-    library = [...connections.add(label, relayId)];
-    void openChannel(library[library.length - 1]);
-  }
-  /** Disconnected agents only: the actor name is fixed when a session opens. */
-  function renameAgent(id: string, label: string) {
-    library = [...connections.rename(id, label)];
-  }
-  /** Detach in this tab; the channel and its credentials stay in the library. */
-  async function disconnectAgent(id: string) {
-    const h = hosts.get(id);
-    h?.host.detach();
-    h?.session?.free();
-    library = [...connections.setReopen(id, null)];
-    hosts.delete(id);
-    autoTakeover.delete(id);
-    const released = releaseChannelLock(id);
-    agents = agents.filter((a) => a.conn.id !== id);
-    await released; // the in-use query must not still see our own lock
-    refreshInUse();
-  }
-  async function forgetAgent(id: string) {
-    // Defence in depth: the menu disables Forget, but the in-use set can be stale. Ask the locks now.
-    if ((await channelsInUseElsewhere()).has(id)) {
-      refreshInUse();
-      return;
-    }
-    disconnectAgent(id);
-    library = [...connections.remove(id)];
-    notify({ kind: "info", key: "agents", text: "Agent forgotten" });
-  }
-
+  // Relays, saved agents and their sessions (srs-web#603): one controller in $lib for every app.
+  const agentLib = new AgentLibrary({ guard: currentGuard, onHandled: () => void syncDocument() });
   $effect(() => {
     const current = repo;
-    untrack(() => {
-      agentWrites = []; // a new repository: earlier writes name instances that are gone
-      const rid = current && agents.length ? repositoryId(current) : null;
-      for (const { conn } of agents) {
-        openAgentSession(conn, current);
-        if (rid) library = [...connections.setReopen(conn.id, rid)];
-      }
-    });
+    untrack(() => agentLib.setRepository(current));
   });
-
-  // Once per page load, the first repository reopens the agents that were open on it. After a tick,
-  // so the shell has declared its write guard before any agent can write.
-  let reopened = false;
-  $effect(() => {
-    const r = repo;
-    if (!r || reopened) return;
-    reopened = true;
-    void tick().then(() => {
-      if (repo !== r) {
-        reopened = false; // the repo effect reruns for the new repository
-        return;
-      }
-      void reopenSaved(
-        library,
-        repositoryId(r),
-        (c) => openChannel(c, true),
-        { stillValid: () => repo === r }
-      );
-    });
-  });
-
-  // Another tab changed the stored lists: re-read what is displayed. Never touches open agents
-  // (`agents`/`hosts` are separate state), and `storage` never fires in the tab that wrote.
-  $effect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.storageArea !== localStorage) return;
-      if (relays.reload(e.key)) relayList = relays.list();
-      if (connections.reload(e.key)) library = [...connections.list()];
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  });
-
-  $effect(() => {
-    if (library.length === 0) return;
-    refreshInUse();
-    window.addEventListener("focus", refreshInUse);
-    document.addEventListener("visibilitychange", refreshInUse);
-    return () => {
-      window.removeEventListener("focus", refreshInUse);
-      document.removeEventListener("visibilitychange", refreshInUse);
-    };
-  });
+  /** The floating dock starts open only once a relay exists: with none it would sit over the page's own controls. */
+  let dockOpen = $state(agentLib.relayList.length > 0);
+  /** Go > Agents…: expand the dock and focus its first control. */
+  async function openDock() {
+    dockOpen = true;
+    await tick();
+    document.querySelector<HTMLElement>('.mcp-dock [data-testid="agent-panel"] button, .mcp-dock [data-testid="agent-panel"] input')?.focus();
+  }
 
   // ---------------------------------------------------------------------------
   // WASM initialisation
@@ -1033,7 +827,7 @@
         // The copy is the user's own file: edit it from here on (a downloaded copy leaves this one read-only).
         if (readOnlyHost) {
           readOnlyHost = null;
-          applyGuards();
+          agentLib.applyGuards();
         }
         saveToast(...savedMessage(completeDocumentSave(saveSnapshot), `Saved as ${handle.name}.`));
       }
@@ -1362,11 +1156,11 @@
       if (g === null && replacing && agentGuard !== replacing) return; // a newer guard owns it
       agentGuard = g;
       agentGuardRepo = repo;
-      applyGuards();
+      agentLib.applyGuards();
     }}
     workingCopySaved={workingCopySaved}
     agentPanel={agentLibrary}
-    agentStatus={relayList.length > 0 ? agentStatus : undefined}
+    agentStatus={agentLib.relayList.length > 0 ? agentLib.status : undefined}
     onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAgents={activeEditor!.hostsAgentPanel ? undefined : openDock}
     onOpenPackages={canUpgrade ? () => (packagesOpen = true) : undefined}
@@ -1399,32 +1193,22 @@
 
 {#snippet agentLibrary(ctx?: AgentPanelCtx)}
   <AgentPanel
-    relays={relayList}
-    agents={panelAgents}
+    relays={agentLib.relayList}
+    agents={agentLib.panelAgents}
     {ctx}
-    now={agentNow}
-    onAddRelay={addRelay}
-    onUpdateRelay={updateRelay}
-    onRemoveRelay={removeRelay}
-    onSetDefault={setDefaultRelay}
-    onConnectNew={connectAgent}
-    onConnect={(id) => { const c = library.find((x) => x.id === id); if (c) void openChannel(c); }}
-    onDisconnect={disconnectAgent}
-    onForget={forgetAgent}
-    onRename={renameAgent}
-    onRotate={(id) => {
-      // a new channel means new clients
-      connections.clearInit(id);
-      const { [id]: _gone, ...rest } = clientNames;
-      clientNames = rest;
-      void hosts.get(id)?.host.rotate();
-    }}
-    onTakeover={(id) => void hosts.get(id)?.host.takeover()}
-    pair={async (id) => {
-      const e = hosts.get(id);
-      if (!e) throw new Error("No channel yet: connect the agent first.");
-      return e.host.pair();
-    }}
+    now={agentLib.now}
+    onAddRelay={agentLib.addRelay}
+    onUpdateRelay={agentLib.updateRelay}
+    onRemoveRelay={agentLib.removeRelay}
+    onSetDefault={agentLib.setDefaultRelay}
+    onConnectNew={agentLib.connectNew}
+    onConnect={agentLib.connect}
+    onDisconnect={agentLib.disconnect}
+    onForget={agentLib.forget}
+    onRename={agentLib.rename}
+    onRotate={agentLib.rotate}
+    onTakeover={agentLib.takeover}
+    pair={agentLib.pair}
   />
 {/snippet}
 
@@ -1432,7 +1216,7 @@
 {#if repo && !activeEditor?.hostsAgentPanel}
   <div class="mcp-dock">
     <Panel title="Agents" persistKey="dock.agents" bind:open={dockOpen}>
-      {#snippet actions()}<AgentPresence status={agentStatus} />{/snippet}
+      {#snippet actions()}<AgentPresence status={agentLib.status} />{/snippet}
       {#if dockOpen}{@render agentLibrary()}{/if}
     </Panel>
   </div>
