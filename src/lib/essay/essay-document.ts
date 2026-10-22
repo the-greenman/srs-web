@@ -3,6 +3,14 @@ import type { Attachment, FileAttachment, Related } from "$lib/annotations.js";
 import { COMMENTS_ON, isCommentsOn, loadComments } from "$lib/comments.js";
 import type { Comment } from "$lib/comments.js";
 import type { AttachFile } from "$lib/components/attach-check.js";
+import {
+  type Target,
+  areaId,
+  deleteFromBin,
+  ensureContainer,
+  place,
+  transfer,
+} from "$lib/document.js";
 /**
  * Essay document operations: a thin composition of srs-client calls (no SRS semantics here —
  * validation, ordering and depth rules are the engine's). The shell calls these and reloads.
@@ -14,14 +22,12 @@ import type { AttachFile } from "$lib/components/attach-check.js";
 import {
   addAttachment,
   addContainerMember,
-  addContainerMemberRelative,
   containersForInstance,
   contextRecord,
   copyContainer,
   createContainer,
   createRecord,
   createRelation,
-  deleteRecord,
   deleteRelation,
   exportSlice,
   exportTree,
@@ -38,7 +44,6 @@ import {
   listRelationTypes,
   listRelations,
   listTypes,
-  moveContainerMemberRelative,
   removeContainerMember,
   renderDocumentView,
   resolveAttachments,
@@ -50,15 +55,15 @@ import type {
   AgentWriteGuard,
   ContextRelation,
   OutlineEntry,
-  OutlineShift,
   SrsRecord,
   SrsRepository,
   TypeSummary,
 } from "$lib/srs-client.js";
 import { recordsOfType, typeVersion } from "$lib/type-version.js";
-import { uuid5 } from "$lib/uuid5.js";
-import type { Zone } from "./essay-model.js";
 import { hiddenByAncestor, toggled } from "./essay-model.js";
+
+// The document foundation, re-exported where the essay shell and tests already import it from.
+export { type Target, moveEntry, shiftEntry, transfer } from "$lib/document.js";
 import {
   DOCUMENT_STATE_TYPE_ID,
   ESSAY_TYPE_ID,
@@ -148,12 +153,6 @@ export function essayWriteGuard(m: EssayModel): AgentWriteGuard {
     instanceIds: [m.essayId, ...(m.stateId ? [m.stateId] : [])],
     fillOnlyFields: ["paragraph_title"],
   };
-}
-
-/** A drop / insert position: before / after / into `id` (null = the end, depth 0). */
-export interface Target {
-  id: string | null;
-  zone: Zone;
 }
 
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
@@ -465,12 +464,6 @@ export function loadEssay(
   };
 }
 
-/** Add `id` to `container` at `t` (core resolves the position); no target = append. */
-function place(repo: SrsRepository, container: string, id: string, t?: Target): void {
-  if (t?.id) addContainerMemberRelative(repo, container, id, t.id, t.zone);
-  else addContainerMember(repo, container, id);
-}
-
 /** Create a paragraph and add it at `t` (default: append). Returns its id. */
 export function addParagraph(repo: SrsRepository, m: EssayModel, t?: Target, body = ""): string {
   const rec = createRecord(repo, PARAGRAPH_TYPE_ID, typeVersion(repo, PARAGRAPH_TYPE_ID), {
@@ -718,69 +711,6 @@ export function setHidden(repo: SrsRepository, m: EssayModel, id: string, hidden
   patchRecord(repo, m.stateId, { hidden_instance_ids: toggled(m.hidden, id, hidden) });
 }
 
-/** Move a run within a container (`container` is the essay's or the draft's) to `t`. */
-export function moveEntry(repo: SrsRepository, container: string, id: string, t: Target): void {
-  // No target = the end: after the last top-level run (a no-op when that run is `id`'s own).
-  const target =
-    t.id ??
-    getContainerOutline(repo, container)
-      .entries.filter((e) => e.depth === 0)
-      .pop()?.instanceId;
-  if (!target || target === id) return;
-  moveContainerMemberRelative(repo, container, id, {
-    relativeTo: target,
-    placement: t.id ? t.zone : "after",
-  });
-}
-/** Alt+Arrow / Tab: indent, outdent or swap with the neighbouring sibling (clamped by the core). */
-export const shiftEntry = (
-  repo: SrsRepository,
-  container: string,
-  id: string,
-  shift: OutlineShift
-): void => {
-  moveContainerMemberRelative(repo, container, id, { shift });
-};
-
-/** `id` and its descendants in `container`, in outline order with depth relative to `id`. */
-function runOf(repo: SrsRepository, container: string, id: string): OutlineEntry[] {
-  const body = getContainerOutline(repo, container).body;
-  const at = body.findIndex((e) => e.instanceId === id);
-  if (at < 0) return [];
-  const rest = body.slice(at + 1);
-  const end = rest.findIndex((e) => e.depth <= body[at].depth);
-  return [body[at], ...(end < 0 ? rest : rest.slice(0, end))].map((e) => ({
-    ...e,
-    depth: e.depth - body[at].depth,
-  }));
-}
-
-/** Move a paragraph and its subtree between the essay, its draft and its bin (remove + add). */
-export function transfer(
-  repo: SrsRepository,
-  from: string,
-  to: string,
-  id: string,
-  t?: Target
-): void {
-  const run = runOf(repo, from, id);
-  for (const e of [...run].reverse()) removeContainerMember(repo, from, e.instanceId);
-  place(repo, to, id, t);
-  const last: string[] = [id]; // last added entry per relative depth
-  for (const e of run.slice(1)) {
-    const sib = last[e.depth];
-    addContainerMemberRelative(
-      repo,
-      to,
-      e.instanceId,
-      sib ?? last[e.depth - 1],
-      sib ? "after" : "into"
-    );
-    last.length = e.depth;
-    last[e.depth] = e.instanceId;
-  }
-}
-
 /** Delete = move into the Bin, creating it (and upgrading a v1 state record) on first use. */
 export function binParagraph(repo: SrsRepository, m: EssayModel, id: string): void {
   if (!m.stateId) throw new Error("This essay has no document-state record");
@@ -803,15 +733,12 @@ export function binParagraph(repo: SrsRepository, m: EssayModel, id: string): vo
  * records. A paragraph another document holds is only taken out of the Bin, never deleted.
  */
 export function deleteForever(repo: SrsRepository, m: EssayModel, id: string): void {
-  const bin = m.binContainerId;
-  if (!bin) throw new Error("This essay has no Bin");
-  for (const e of [...runOf(repo, bin, id)].reverse()) {
-    removeContainerMember(repo, bin, e.instanceId);
-    if (m.sharedIn[e.instanceId]) continue;
-    for (const r of listRelations(repo, { relationType: COMMENTS_ON, target: e.instanceId }))
-      deleteRecord(repo, r.sourceInstanceId, true);
-    deleteRecord(repo, e.instanceId, true);
-  }
+  if (!m.binContainerId) throw new Error("This essay has no Bin");
+  deleteFromBin(repo, m.binContainerId, id, {
+    keep: (e) => !!m.sharedIn[e],
+    alsoDelete: (e) =>
+      listRelations(repo, { relationType: COMMENTS_ON, target: e }).map((r) => r.sourceInstanceId),
+  });
 }
 
 /** Essays already repaired (or attempted) per repository handle, so a failing repair is not retried by the reload it causes. */
@@ -821,32 +748,6 @@ const repairTried = (repo: SrsRepository): Set<string> => {
   repairedCache.set(repo, hit);
   return hit;
 };
-
-/** Namespace of the deterministic area-container ids (UUIDv5 of `<essayId>:<area>`). */
-const AREA_NS = "5d1f3c0e-8f0a-4b8e-9a53-2d6c1e7b4a90";
-
-/**
- * The container with this deterministic id: created if absent, re-read if a second tab (or an
- * earlier partial repair) already made it. Same id on every client = no duplicate containers.
- */
-function ensureContainer(repo: SrsRepository, containerId: string, title: string): string {
-  try {
-    getContainer(repo, containerId);
-    return containerId;
-  } catch {
-    /* absent: create it */
-  }
-  try {
-    return createContainer(repo, { containerId, title }).containerId;
-  } catch (e) {
-    try {
-      getContainer(repo, containerId); // lost a race: it exists now
-      return containerId;
-    } catch {
-      throw e;
-    }
-  }
-}
 
 /**
  * Create the comments / references containers the installed document-state type can record
@@ -866,11 +767,7 @@ function newAreas(
     ["references_container_id", "references"],
   ] as const)
     if (!str(have[field]) && hasField(repo, types, DOCUMENT_STATE_TYPE_ID, field))
-      out[field] = ensureContainer(
-        repo,
-        uuid5(AREA_NS, `${essayId}:${area}`),
-        areaTitle(title, area)
-      );
+      out[field] = ensureContainer(repo, areaId(essayId, area), areaTitle(title, area));
   return out;
 }
 

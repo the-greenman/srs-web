@@ -140,4 +140,28 @@ describe.skipIf(!haveBindings)("essay history on the real engine", () => {
     expect(load().paragraphs[a].body).toBe("");
     expect(load().comments[a]?.length).toBe(1);
   });
+
+  it("document history brings a record back with its own type, not as a paragraph (#602)", async () => {
+    const { repo } = await setup();
+    const { DocumentHistory, snapshotDocument } = await import("../src/lib/document.js");
+    const client = await import("../src/lib/srs-client.js");
+    const { ESSAY_TYPE_ID } = await import("../src/lib/essay/type-registry.js");
+    const { typeVersion } = await import("../src/lib/type-version.js");
+    const page = client.createContainer(repo, { title: "A page" }).containerId;
+    const block = client.createRecord(repo, ESSAY_TYPE_ID, typeVersion(repo, ESSAY_TYPE_ID), {
+      fieldValues: { title: "Not a paragraph" },
+    }).instanceId;
+    client.addContainerMember(repo, page, block);
+    const history = new DocumentHistory();
+    const before = snapshotDocument(repo, [page]);
+    client.removeContainerMember(repo, page, block);
+    client.deleteRecord(repo, block, true);
+    history.push(before, snapshotDocument(repo, [page]));
+
+    expect(history.undo(repo)).toBe(true);
+    const [back] = client.getContainerOutline(repo, page).body;
+    const rec = client.getRecord(repo, back.instanceId);
+    expect(rec?.typeId).toBe(ESSAY_TYPE_ID);
+    expect(rec?.fieldValues.title).toBe("Not a paragraph");
+  });
 });
