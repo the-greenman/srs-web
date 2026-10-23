@@ -64,7 +64,9 @@ test("Export snapshot: a valid slice with every paragraph, the comment and the e
   expect(containers).toHaveLength(3);
   const manifest = JSON.parse(unzip("manifest.json"));
   expect(manifest.declaredExtensions).toContain("ext:slices");
-  expect(manifest.container.childContainerIds).toHaveLength(3);
+  // RFC-052: the root lives in the container set, named by manifest.rootContainerId.
+  const root = containers.map((n) => JSON.parse(unzip(n))).find((c) => c.containerId === manifest.rootContainerId);
+  expect(root.childContainerIds).toHaveLength(3);
 });
 
 async function collect(download: import("@playwright/test").Download): Promise<Buffer[]> {

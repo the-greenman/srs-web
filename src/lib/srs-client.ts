@@ -1264,7 +1264,7 @@ export interface NavigationNode {
 /**
  * Full repository navigation result from `repositoryNavigation()`.
  * `sections` follow the root container's entry order (RFC-043 [R12]) with `depth`.
- * `diagnostics` is non-empty when `manifest.container` is absent (pre-RFC-013 repo).
+ * `diagnostics` is non-empty when the manifest names no root container (`rootContainerId`, RFC-052).
  * Mirrors `RepositoryNavigation` in srs-rust `repository_navigation_service.rs`.
  */
 export interface RepositoryNavigation {
@@ -2158,9 +2158,9 @@ function normalizeRepositoryNavigation(raw: any): RepositoryNavigation {
 /**
  * Return the repository identity record and precedes-ordered section nodes.
  * Sources from `repository_navigation_service` (srs-rust#268), which reads the
- * RFC-013 root container from `manifest.container`.
+ * RFC-013 root container named by `manifest.rootContainerId` (RFC-052).
  *
- * When `diagnostics` is non-empty, `manifest.container` is absent (pre-RFC-013 repo)
+ * When `diagnostics` is non-empty, the manifest names no root container
  * and `sections` is empty. Callers should fall back to `listContainers()` in that case.
  *
  * ADR-001: pure WASM pass-through — section ordering is computed in the Rust service.
@@ -2177,7 +2177,7 @@ export function repositoryNavigation(repo: SrsRepository): RepositoryNavigation 
  * `default_repository_container` falls back to the namespace when no title was given
  * at creation, so this is still a meaningful improvement over the opened file/URL name),
  * else `fallback` (the caller's opened file/URL name, pre-stripped of its extension).
- * A repository predating RFC-013 (no `manifest.container`) or a WASM read failure also
+ * A repository with no root container (no `manifest.rootContainerId`) or a WASM read failure also
  * falls back — this must never block opening the document.
  */
 export function resolveRepositoryTitle(repo: SrsRepository, fallback: string): string {
@@ -2450,9 +2450,10 @@ export function moveInPrecedesChain(
   return normalizeChainSpliceResult(raw);
 }
 
-/** Registry ids of the revision migrations the load gate offers (RFC-043 7 -> 8, RFC-046 8 -> 9). */
+/** Registry ids of the revision migrations the load gate offers (RFC-043 7 -> 8, RFC-046 8 -> 9, RFC-052 9 -> 10). */
 export const RFC043_MIGRATION_ID = "rfc043-container-entries";
 export const RFC046_MIGRATION_ID = "rfc046-actor-provenance";
+export const RFC052_MIGRATION_ID = "rfc052-root-container";
 
 /**
  * Revision migrations the load gate offers, in order, when the engine reports them needed.
@@ -2464,7 +2465,9 @@ export function neededMigrationIds(repo: SrsRepository): string[] {
       .filter((m) => m.status.needed)
       .map((m) => m.id)
   );
-  return [RFC043_MIGRATION_ID, RFC046_MIGRATION_ID].filter((id) => needed.has(id));
+  return [RFC043_MIGRATION_ID, RFC046_MIGRATION_ID, RFC052_MIGRATION_ID].filter((id) =>
+    needed.has(id)
+  );
 }
 
 // ---------------------------------------------------------------------------

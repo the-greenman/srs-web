@@ -2,7 +2,20 @@
   "srsj": "2",
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
+    "createdAt": "2026-10-02T22:18:37.783080561+00:00",
+    "dataModelRevision": 10,
+    "declaredExtensions": [
+      "ext:type-inheritance"
+    ],
+    "description": "muDemocracy content repository: guides, personas, and more",
+    "namespace": "com.mudemocracy",
+    "repositoryId": "9aa1d3bf-8988-4f38-a380-aa188ef8e443",
+    "rootContainerId": "a61d0eff-9b8f-4126-95cd-1412ce178fb0",
+    "srsVersion": "2.0-draft",
+    "title": "muDemocracy"
+  },
+  "data": {
+    "containers/a61d0eff-9b8f-4126-95cd-1412ce178fb0.json": {
       "containerId": "a61d0eff-9b8f-4126-95cd-1412ce178fb0",
       "createdAt": "2026-06-04T00:00:00Z",
       "identityInstanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
@@ -13,18 +26,6 @@
       ],
       "title": "muDemocracy"
     },
-    "createdAt": "2026-10-02T22:18:37.783080561+00:00",
-    "dataModelRevision": 9,
-    "declaredExtensions": [
-      "ext:type-inheritance"
-    ],
-    "description": "muDemocracy content repository: guides, personas, and more",
-    "namespace": "com.mudemocracy",
-    "repositoryId": "9aa1d3bf-8988-4f38-a380-aa188ef8e443",
-    "srsVersion": "2.0-draft",
-    "title": "muDemocracy"
-  },
-  "data": {
     "containers/deciding-which-decisions-to-record-7989545d.json": {
       "anchorInstanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
       "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
@@ -856,7 +857,7 @@
         "compositions/guide-body-view-2aba4d85.json"
       ],
       "createdAt": "2026-01-01T00:00:00Z",
-      "dataModelRevision": 8,
+      "dataModelRevision": 10,
       "description": "",
       "fields": [
         "fields/slug-2e3be0f8.json",

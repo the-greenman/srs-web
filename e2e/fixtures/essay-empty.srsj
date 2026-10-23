@@ -1,5 +1,26 @@
 {
+  "srsj": "2",
+  "manifest": {
+    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+    "createdAt": "2026-10-02T22:01:12.761374019+00:00",
+    "dataModelRevision": 10,
+    "namespace": "com.mudemocracy.essay",
+    "repositoryId": "1a325932-2e05-4638-a846-3c676af90e0c",
+    "rootContainerId": "1a325932-2e05-4638-a846-3c676af90e0c",
+    "srsVersion": "2.0-draft",
+    "title": "Essay fixture"
+  },
   "data": {
+    "containers/1a325932-2e05-4638-a846-3c676af90e0c.json": {
+      "containerId": "1a325932-2e05-4638-a846-3c676af90e0c",
+      "identityInstanceId": "71e70294-ee3f-452d-9332-46a4d2d7001b",
+      "memberInstanceIds": [
+        {
+          "instanceId": "71e70294-ee3f-452d-9332-46a4d2d7001b"
+        }
+      ],
+      "title": "Essay fixture"
+    },
     "package/compositions/essay-79b8c032.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/composition.json",
       "createdAt": "2026-10-02T00:00:00Z",
@@ -666,25 +687,5 @@
       "typeVersion": 1,
       "updatedAt": "2026-10-02T22:01:12.634329976+00:00"
     }
-  },
-  "manifest": {
-    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
-      "containerId": "1a325932-2e05-4638-a846-3c676af90e0c",
-      "identityInstanceId": "71e70294-ee3f-452d-9332-46a4d2d7001b",
-      "memberInstanceIds": [
-        {
-          "instanceId": "71e70294-ee3f-452d-9332-46a4d2d7001b"
-        }
-      ],
-      "title": "Essay fixture"
-    },
-    "createdAt": "2026-10-02T22:01:12.761374019+00:00",
-    "dataModelRevision": 9,
-    "namespace": "com.mudemocracy.essay",
-    "repositoryId": "1a325932-2e05-4638-a846-3c676af90e0c",
-    "srsVersion": "2.0-draft",
-    "title": "Essay fixture"
-  },
-  "srsj": "2"
+  }
 }

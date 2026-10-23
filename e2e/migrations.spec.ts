@@ -10,7 +10,7 @@ import { openPackageEditor, navItem } from "./helpers.js";
  * in `status: needed` state. Verifies the Repository → Migrations panel,
  * the apply flow, and that governance nav is unaffected after apply.
  *
- * sample.srsj is deliberately left without manifest.container.identityInstanceId
+ * sample.srsj is deliberately left without the root container's identityInstanceId
  * set so `migrate-identity` has something to report as "needed" — do not
  * "fix" the fixture by migrating it.
  *

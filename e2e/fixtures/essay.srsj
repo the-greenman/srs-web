@@ -1,5 +1,26 @@
 {
+  "srsj": "2",
+  "manifest": {
+    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+    "createdAt": "2026-10-02T22:01:12.625704949+00:00",
+    "dataModelRevision": 10,
+    "namespace": "com.mudemocracy.essay",
+    "repositoryId": "4cd37b83-6625-40ed-abad-31dea5a77800",
+    "rootContainerId": "4cd37b83-6625-40ed-abad-31dea5a77800",
+    "srsVersion": "2.0-draft",
+    "title": "Essay fixture"
+  },
   "data": {
+    "containers/4cd37b83-6625-40ed-abad-31dea5a77800.json": {
+      "containerId": "4cd37b83-6625-40ed-abad-31dea5a77800",
+      "identityInstanceId": "0889e3d4-b259-4735-a439-d7216cee1956",
+      "memberInstanceIds": [
+        {
+          "instanceId": "0889e3d4-b259-4735-a439-d7216cee1956"
+        }
+      ],
+      "title": "Essay fixture"
+    },
     "containers/essay-draft-de837958.json": {
       "containerId": "de837958-0af1-4b67-8245-df7a46706b76",
       "memberInstanceIds": [
@@ -779,25 +800,5 @@
       "typeVersion": 1,
       "updatedAt": "2026-10-02T22:01:11.887494754+00:00"
     }
-  },
-  "manifest": {
-    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
-      "containerId": "4cd37b83-6625-40ed-abad-31dea5a77800",
-      "identityInstanceId": "0889e3d4-b259-4735-a439-d7216cee1956",
-      "memberInstanceIds": [
-        {
-          "instanceId": "0889e3d4-b259-4735-a439-d7216cee1956"
-        }
-      ],
-      "title": "Essay fixture"
-    },
-    "createdAt": "2026-10-02T22:01:12.625704949+00:00",
-    "dataModelRevision": 9,
-    "namespace": "com.mudemocracy.essay",
-    "repositoryId": "4cd37b83-6625-40ed-abad-31dea5a77800",
-    "srsVersion": "2.0-draft",
-    "title": "Essay fixture"
-  },
-  "srsj": "2"
+  }
 }

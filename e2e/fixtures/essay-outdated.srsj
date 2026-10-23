@@ -2,7 +2,22 @@
   "srsj": "2",
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
+    "createdAt": "2026-10-05T18:03:08.470+00:00",
+    "dataModelRevision": 10,
+    "namespace": "com.example.outdated-essays",
+    "packageRefs": [
+      {
+        "mode": "local",
+        "path": "packages/essay"
+      }
+    ],
+    "repositoryId": "d4c7a83c-9529-4255-8dce-2cfba266ad3e",
+    "rootContainerId": "d4c7a83c-9529-4255-8dce-2cfba266ad3e",
+    "srsVersion": "2.0-draft",
+    "title": "Outdated Essays"
+  },
+  "data": {
+    "containers/d4c7a83c-9529-4255-8dce-2cfba266ad3e.json": {
       "containerId": "d4c7a83c-9529-4255-8dce-2cfba266ad3e",
       "identityInstanceId": "0e4107c3-a0d9-4dd0-be51-a0b7872226b7",
       "memberInstanceIds": [
@@ -12,20 +27,6 @@
       ],
       "title": "Outdated Essays"
     },
-    "createdAt": "2026-10-05T18:03:08.470+00:00",
-    "dataModelRevision": 9,
-    "namespace": "com.example.outdated-essays",
-    "packageRefs": [
-      {
-        "mode": "local",
-        "path": "packages/essay"
-      }
-    ],
-    "repositoryId": "d4c7a83c-9529-4255-8dce-2cfba266ad3e",
-    "srsVersion": "2.0-draft",
-    "title": "Outdated Essays"
-  },
-  "data": {
     "package/package.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
       "blueprints": [],

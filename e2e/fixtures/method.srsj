@@ -2,18 +2,8 @@
   "srsj": "2",
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
-      "containerId": "e0187c2a-c499-4c80-8d68-0a0bba549cb6",
-      "identityInstanceId": "f6ea924f-1a1d-4b2e-a30c-d226c733658b",
-      "memberInstanceIds": [
-        {
-          "instanceId": "f6ea924f-1a1d-4b2e-a30c-d226c733658b"
-        }
-      ],
-      "title": "Method fixture"
-    },
     "createdAt": "2026-10-09T10:40:52.166246276+00:00",
-    "dataModelRevision": 9,
+    "dataModelRevision": 10,
     "namespace": "com.semanticops.programme",
     "packageRefs": [
       {
@@ -22,6 +12,7 @@
       }
     ],
     "repositoryId": "e0187c2a-c499-4c80-8d68-0a0bba549cb6",
+    "rootContainerId": "e0187c2a-c499-4c80-8d68-0a0bba549cb6",
     "srsVersion": "2.0-draft",
     "title": "Method fixture"
   },
@@ -30,6 +21,16 @@
       "containerId": "f2ec5a54-498b-45d3-a2ab-146560ca5147",
       "memberInstanceIds": [],
       "title": "Affirmed"
+    },
+    "containers/e0187c2a-c499-4c80-8d68-0a0bba549cb6.json": {
+      "containerId": "e0187c2a-c499-4c80-8d68-0a0bba549cb6",
+      "identityInstanceId": "f6ea924f-1a1d-4b2e-a30c-d226c733658b",
+      "memberInstanceIds": [
+        {
+          "instanceId": "f6ea924f-1a1d-4b2e-a30c-d226c733658b"
+        }
+      ],
+      "title": "Method fixture"
     },
     "containers/set-aside-4052dcd3.json": {
       "containerId": "4052dcd3-6309-4739-bb90-834a3d82a6da",

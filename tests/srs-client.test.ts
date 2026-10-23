@@ -1224,7 +1224,7 @@ describe("repositoryNavigation", () => {
     expect(result.diagnostics).toHaveLength(0);
   });
 
-  it("returns empty sections and diagnostic for pre-RFC-013 repo (no manifest.container)", () => {
+  it("returns empty sections and diagnostic for pre-RFC-013 repo (no manifest.rootContainerId)", () => {
     const rawNav = {
       rootContainerId: "",
       identity: {
@@ -1237,7 +1237,7 @@ describe("repositoryNavigation", () => {
       },
       sections: [],
       diagnostics: [
-        "repository-navigation: manifest.container is absent; repo predates RFC-013 root container (epic #95)",
+        "repository-navigation: manifest.rootContainerId is absent; repo predates RFC-013 root container (epic #95)",
       ],
     };
     const repo = mockRepo({ repository_navigation: () => rawNav });
@@ -1246,7 +1246,7 @@ describe("repositoryNavigation", () => {
 
     expect(result.sections).toHaveLength(0);
     expect(result.diagnostics).toHaveLength(1);
-    expect(result.diagnostics[0]).toContain("manifest.container is absent");
+    expect(result.diagnostics[0]).toContain("manifest.rootContainerId is absent");
   });
 
   it("sectionContainerId is undefined when absent on a section node", () => {
@@ -1315,12 +1315,12 @@ describe("resolveRepositoryTitle", () => {
     expect(resolveRepositoryTitle(repo, "fallback-name")).toBe("Governance Charter");
   });
 
-  it("falls back to the caller's name for a pre-RFC-013 repo (no manifest.container)", () => {
+  it("falls back to the caller's name for a pre-RFC-013 repo (no manifest.rootContainerId)", () => {
     const rawNav = {
       rootContainerId: "",
       identity: { instanceId: "", typeId: "", typeVersion: 0, typeNamespace: "", typeName: "", displayLabel: "" },
       sections: [],
-      diagnostics: ["repository-navigation: manifest.container is absent; repo predates RFC-013 root container (epic #95)"],
+      diagnostics: ["repository-navigation: manifest.rootContainerId is absent; repo predates RFC-013 root container (epic #95)"],
     };
     const repo = mockRepo({
       repository_navigation: () => rawNav,

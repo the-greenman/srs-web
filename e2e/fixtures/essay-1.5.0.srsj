@@ -2,7 +2,22 @@
   "srsj": "2",
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
+    "createdAt": "2026-10-07T14:11:44.430+00:00",
+    "dataModelRevision": 10,
+    "namespace": "com.example.essay-150-fixture",
+    "packageRefs": [
+      {
+        "mode": "local",
+        "path": "packages/essay"
+      }
+    ],
+    "repositoryId": "47eb0df3-b039-46d9-861a-198ac3e23e2d",
+    "rootContainerId": "47eb0df3-b039-46d9-861a-198ac3e23e2d",
+    "srsVersion": "2.0-draft",
+    "title": "Essay 1.5.0 fixture"
+  },
+  "data": {
+    "containers/47eb0df3-b039-46d9-861a-198ac3e23e2d.json": {
       "containerId": "47eb0df3-b039-46d9-861a-198ac3e23e2d",
       "identityInstanceId": "19b28684-eebf-442c-a000-fa7e1c97abfd",
       "memberInstanceIds": [
@@ -12,20 +27,6 @@
       ],
       "title": "Essay 1.5.0 fixture"
     },
-    "createdAt": "2026-10-07T14:11:44.430+00:00",
-    "dataModelRevision": 9,
-    "namespace": "com.example.essay-150-fixture",
-    "packageRefs": [
-      {
-        "mode": "local",
-        "path": "packages/essay"
-      }
-    ],
-    "repositoryId": "47eb0df3-b039-46d9-861a-198ac3e23e2d",
-    "srsVersion": "2.0-draft",
-    "title": "Essay 1.5.0 fixture"
-  },
-  "data": {
     "package/package.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
       "blueprints": [],

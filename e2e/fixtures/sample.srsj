@@ -2,7 +2,16 @@
   "srsj": "2",
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
+    "createdAt": "2026-10-02T22:18:45.296230013+00:00",
+    "dataModelRevision": 10,
+    "namespace": "test",
+    "repositoryId": "00000000-0000-0000-0000-000000000001",
+    "rootContainerId": "00000000-0000-4000-8000-000000000000",
+    "srsVersion": "2.0-draft",
+    "title": "Test Governance"
+  },
+  "data": {
+    "containers/00000000-0000-4000-8000-000000000000.json": {
       "anchorInstanceId": "11000000-0000-4000-8000-000000000001",
       "containerId": "00000000-0000-4000-8000-000000000000",
       "memberInstanceIds": [
@@ -24,14 +33,6 @@
       ],
       "title": "Test Governance"
     },
-    "createdAt": "2026-10-02T22:18:45.296230013+00:00",
-    "dataModelRevision": 9,
-    "namespace": "test",
-    "repositoryId": "00000000-0000-0000-0000-000000000001",
-    "srsVersion": "2.0-draft",
-    "title": "Test Governance"
-  },
-  "data": {
     "containers/articles-aa000001.json": {
       "anchorInstanceId": "11000000-0000-4000-8000-000000000002",
       "containerId": "aa000001-0000-4000-8000-000000000001",
@@ -110,7 +111,7 @@
       "blueprints": [],
       "compositions": [],
       "createdAt": "2026-01-01T00:00:00Z",
-      "dataModelRevision": 8,
+      "dataModelRevision": 10,
       "description": "",
       "fields": [
         "fields/statement-3b000001.json",

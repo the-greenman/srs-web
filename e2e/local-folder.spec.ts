@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
-import { openPackageEditor, navItem } from "./helpers.js";
+import { acceptMigration, openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * local-folder.spec.ts — opening an exploded SRS repository from the local
@@ -20,6 +20,8 @@ import { openPackageEditor, navItem } from "./helpers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const EXPLODED_DIR = path.join(__dirname, "fixtures", "exploded");
+/** The same tree at revision 9 (root container inline in the manifest), before RFC-052. */
+const REV9_DIR = path.join(__dirname, "fixtures", "rev9", "exploded");
 
 /** Read every file under a directory into a { relativePath: base64 } map. */
 function readTreeFixture(dir: string): Record<string, string> {
@@ -129,6 +131,14 @@ test.describe("Open a folder from this device", () => {
     await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 15000 });
     // No catalog-diagnostics banner: every object in the tree was catalogued.
     await expect(page.locator('[data-testid="catalog-diagnostics"]')).toHaveCount(0);
+  });
+
+  test("a revision-9 folder offers the RFC-052 migration, then opens (srs-web#583)", async ({ page }) => {
+    await page.getByTestId("source-local-folder-input").setInputFiles(REV9_DIR);
+    await acceptMigration(page, "rfc052-root-container");
+    await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
+    await openPackageEditor(page, "governance");
+    await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 15000 });
   });
 
   test("a folder opened read-only offers no Save, and explains why (srs-web#317)", async ({
