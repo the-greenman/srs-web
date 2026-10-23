@@ -141,6 +141,13 @@ test.describe("Open a folder from this device", () => {
     await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 15000 });
   });
 
+  test("cancelling the revision-9 migration returns to the picker without opening", async ({ page }) => {
+    await page.getByTestId("source-local-folder-input").setInputFiles(REV9_DIR);
+    await page.getByTestId("migration-cancel").click();
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible();
+    await expect(page.getByTestId("generic-srs-shell")).toHaveCount(0);
+  });
+
   test("a folder opened read-only offers no Save, and explains why (srs-web#317)", async ({
     page,
   }) => {
