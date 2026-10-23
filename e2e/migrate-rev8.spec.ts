@@ -1,13 +1,12 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { acceptMigration } from "./helpers.js";
 
 /**
- * migrate-rev8.spec.ts — RFC-046 revision gate (srs-web#359). A revision-8 essay (built with the
- * build.425 CLI) offers the 8 -> 9 migration; after accepting, a reply is written with an
- * attributed actor (the engine refuses actor writes below revision 9), and an agent comment
- * keeps its own author next to the human's.
+ * migrate-rev8.spec.ts — a revision-8 essay (built with the build.425 CLI). Since build.545
+ * (RFC-052, srs-web#583) the engine migrates a pre-10 .srsj in memory on open, with no prompt;
+ * a reply is still written with an attributed actor (the engine refuses actor writes below
+ * revision 9), so the 8 -> 9 step did run.
  */
 const FIXTURE = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -16,11 +15,10 @@ const FIXTURE = path.join(
   "essay-rev8.srsj"
 );
 
-test("a rev-8 essay offers 8 -> 9, then takes an attributed human reply", async ({ page }) => {
+test("a rev-8 essay opens migrated in memory and takes an attributed human reply", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page.locator('input[type="file"]#srsj-file').setInputFiles(FIXTURE);
-  await acceptMigration(page, "rfc046-actor-provenance");
   await page.getByTestId("package-editor-essay").click();
   const first = page.locator(".essay-shell__page .block-stack__item").first();
   await first.getByTestId("comment-badge").click();

@@ -365,7 +365,7 @@
 
   /**
    * Load container nav from repositoryNavigation() (RFC-013 primary path).
-   * Falls back to listContainers() for pre-RFC-013 repos without manifest.container.
+   * Falls back to listContainers() when the manifest names no root container (navigation diagnostics).
    * ADR-009: this completes the migration from listContainers() to repository_navigation.
    */
   function loadContainerNav(): void {
@@ -375,7 +375,7 @@
     }
 
     if (nav.diagnostics.length === 0) {
-      // RFC-013 path: manifest.container present; sections ordered by precedes.
+      // RFC-013 path: the root container (manifest.rootContainerId, RFC-052) orders the sections.
       const allRecords = listRecords(repo, {});
       const recordMap = new Map<string, SrsRecord>(allRecords.map((r) => [r.instanceId, r]));
       const navEntries: ContainerNavEntry[] = [];
@@ -411,7 +411,7 @@
       containers = navEntries;
       containerRecords = recordsByContainer;
     } else {
-      // Pre-RFC-013 fallback: manifest.container is absent; use listContainers() (ADR-009 interim).
+      // Fallback: no root container resolved; use listContainers() (ADR-009 interim).
       buildContainerNavFromListContainers();
     }
 
@@ -422,7 +422,7 @@
   }
 
   /**
-   * Fallback nav builder for pre-RFC-013 repos (no manifest.container).
+   * Fallback nav builder when no root container resolves (navigation diagnostics).
    * Used by loadContainerNav() when repository_navigation returns empty sections.
    */
   function buildContainerNavFromListContainers(): void {

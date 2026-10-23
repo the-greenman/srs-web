@@ -61,10 +61,12 @@ test("Export snapshot: a valid slice with every paragraph, the comment and the e
   // The source ids survive, and the three containers are carried (bundle = the slice's root container).
   expect(records.map((r) => r.instanceId).some((id: string) => id.startsWith("d37f5c95-"))).toBe(true);
   const containers = names.filter((n) => /^containers\/.*\.json$/.test(n));
-  expect(containers).toHaveLength(3);
+  expect(containers).toHaveLength(4); // the three, plus the root (RFC-052: stored in the container set)
   const manifest = JSON.parse(unzip("manifest.json"));
   expect(manifest.declaredExtensions).toContain("ext:slices");
-  expect(manifest.container.childContainerIds).toHaveLength(3);
+  // RFC-052: the root lives in the container set, named by manifest.rootContainerId.
+  const root = containers.map((n) => JSON.parse(unzip(n))).find((c) => c.containerId === manifest.rootContainerId);
+  expect(root.childContainerIds).toHaveLength(3);
 });
 
 async function collect(download: import("@playwright/test").Download): Promise<Buffer[]> {

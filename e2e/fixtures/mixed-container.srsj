@@ -2,7 +2,16 @@
   "srsj": "2",
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
+    "createdAt": "2026-10-07T08:58:31.784116930+00:00",
+    "dataModelRevision": 10,
+    "namespace": "com.mudemocracy.essay",
+    "repositoryId": "0716386b-4c8a-431a-8a49-641de348adaf",
+    "rootContainerId": "0716386b-4c8a-431a-8a49-641de348adaf",
+    "srsVersion": "2.0-draft",
+    "title": "Mixed container fixture"
+  },
+  "data": {
+    "containers/0716386b-4c8a-431a-8a49-641de348adaf.json": {
       "containerId": "0716386b-4c8a-431a-8a49-641de348adaf",
       "identityInstanceId": "5add2b7f-94bd-42bc-bb5a-76936208e041",
       "memberInstanceIds": [
@@ -12,14 +21,6 @@
       ],
       "title": "Mixed container fixture"
     },
-    "createdAt": "2026-10-07T08:58:31.784116930+00:00",
-    "dataModelRevision": 9,
-    "namespace": "com.mudemocracy.essay",
-    "repositoryId": "0716386b-4c8a-431a-8a49-641de348adaf",
-    "srsVersion": "2.0-draft",
-    "title": "Mixed container fixture"
-  },
-  "data": {
     "containers/mixed-bag-f41c598b.json": {
       "containerId": "f41c598b-697b-46f3-b72d-5a39d68928d3",
       "memberInstanceIds": [

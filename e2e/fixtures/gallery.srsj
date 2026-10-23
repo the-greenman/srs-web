@@ -1,5 +1,39 @@
 {
+  "srsj": "2",
+  "manifest": {
+    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+    "createdAt": "2026-10-02T22:18:37.653412796+00:00",
+    "dataModelRevision": 10,
+    "namespace": "com.limoma",
+    "repositoryId": "8ae058dc-b52d-4e52-8e7e-969018532a04",
+    "rootContainerId": "4e4c9501-2709-4220-bb47-486f6f78a937",
+    "srsVersion": "2.0-draft",
+    "title": "Limoma"
+  },
   "data": {
+    "containers/4e4c9501-2709-4220-bb47-486f6f78a937.json": {
+      "anchorInstanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809",
+      "containerId": "4e4c9501-2709-4220-bb47-486f6f78a937",
+      "identityInstanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809",
+      "memberInstanceIds": [
+        {
+          "instanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809"
+        },
+        {
+          "instanceId": "5ec00001-0000-4000-8000-000000000001"
+        },
+        {
+          "instanceId": "5ec00002-0000-4000-8000-000000000002"
+        },
+        {
+          "instanceId": "5ec00003-0000-4000-8000-000000000003"
+        },
+        {
+          "instanceId": "5ec00004-0000-4000-8000-000000000004"
+        }
+      ],
+      "title": "Limoma"
+    },
     "containers/articles-f7562aa3.json": {
       "anchorInstanceId": "5ec00001-0000-4000-8000-000000000001",
       "containerId": "f7562aa3-98c7-44be-b4c5-5474df6441f2",
@@ -898,7 +932,7 @@
         "compositions/articles-and-roles-78b11038.json"
       ],
       "createdAt": "2026-01-01T00:00:00Z",
-      "dataModelRevision": 8,
+      "dataModelRevision": 10,
       "description": "",
       "fields": [
         "fields/alternativesconsidered-636ce948.json",
@@ -1941,38 +1975,5 @@
       "sourceInstanceId": "0482c489-37b4-4342-adaa-36e69dc6f780",
       "targetInstanceId": "8ed62308-f7b4-47e1-b1a2-5490908efd86"
     }
-  },
-  "manifest": {
-    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
-      "anchorInstanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809",
-      "containerId": "4e4c9501-2709-4220-bb47-486f6f78a937",
-      "identityInstanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809",
-      "memberInstanceIds": [
-        {
-          "instanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809"
-        },
-        {
-          "instanceId": "5ec00001-0000-4000-8000-000000000001"
-        },
-        {
-          "instanceId": "5ec00002-0000-4000-8000-000000000002"
-        },
-        {
-          "instanceId": "5ec00003-0000-4000-8000-000000000003"
-        },
-        {
-          "instanceId": "5ec00004-0000-4000-8000-000000000004"
-        }
-      ],
-      "title": "Limoma"
-    },
-    "createdAt": "2026-10-02T22:18:37.653412796+00:00",
-    "dataModelRevision": 9,
-    "namespace": "com.limoma",
-    "repositoryId": "8ae058dc-b52d-4e52-8e7e-969018532a04",
-    "srsVersion": "2.0-draft",
-    "title": "Limoma"
-  },
-  "srsj": "2"
+  }
 }

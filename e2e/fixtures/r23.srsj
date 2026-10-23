@@ -2,7 +2,16 @@
   "srsj": "2",
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
+    "createdAt": "2026-10-04T23:06:32.904828405+00:00",
+    "dataModelRevision": 10,
+    "namespace": "com.example.r23",
+    "repositoryId": "9f811731-0634-40e6-9bb1-9c41cdfa56ee",
+    "rootContainerId": "9f811731-0634-40e6-9bb1-9c41cdfa56ee",
+    "srsVersion": "2.0-draft",
+    "title": "R23 fixture"
+  },
+  "data": {
+    "containers/9f811731-0634-40e6-9bb1-9c41cdfa56ee.json": {
       "containerId": "9f811731-0634-40e6-9bb1-9c41cdfa56ee",
       "identityInstanceId": "b875f026-c894-4da7-b989-33fe6c009322",
       "memberInstanceIds": [
@@ -12,14 +21,6 @@
       ],
       "title": "R23 fixture"
     },
-    "createdAt": "2026-10-04T23:06:32.904828405+00:00",
-    "dataModelRevision": 9,
-    "namespace": "com.example.r23",
-    "repositoryId": "9f811731-0634-40e6-9bb1-9c41cdfa56ee",
-    "srsVersion": "2.0-draft",
-    "title": "R23 fixture"
-  },
-  "data": {
     "package/compositions/tree-document-a2000000.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/composition.json",
       "createdAt": "2026-10-04T23:06:27.907026970+00:00",
