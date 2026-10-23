@@ -45,7 +45,7 @@ export async function openInspectorDrawer(page: Page): Promise<void> {
 }
 
 /**
- * The revision migration prompt must appear (the document is below revision 9); accept it.
+ * The revision migration prompt must appear (a tree below revision 10); accept it.
  * Use only where a migration is expected — a missing prompt fails the test.
  */
 export async function acceptMigration(page: Page, ...ids: string[]): Promise<void> {

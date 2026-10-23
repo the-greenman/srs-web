@@ -206,9 +206,11 @@
   let restoreError = $state<string | null>(null);
 
   /**
-   * RFC-043 revision gate (srs-web#334). A rev-7 repository loads but the rev-8
-   * engine refuses every read until `rfc043-container-entries` is applied, so the
-   * load is held here and the user is asked — never opened empty. `finish(dirty)`
+   * Revision gate (srs-web#334, #583). A repository below the engine's revision loads but
+   * the engine refuses every read until the revision migrations are applied, so the
+   * load is held here and the user is asked — never opened empty. Since build.545 a
+   * pre-10 .srsj/.srs is migrated in memory on open; only a tree (folder, GitHub,
+   * Dropbox) still reaches this prompt. `finish(dirty)`
    * is the load path's own completion step; it runs after migrate (dirty=true,
    * the migrated working copy is unsaved until Save) or immediately when no
    * migration is needed.
@@ -217,7 +219,7 @@
   let migrationError = $state<string | null>(null);
 
   function gateOnMigration(loaded: SrsRepository, name: string, finish: (dirty: boolean) => void): void {
-    // rfc043 (7 -> 8) and rfc046 (8 -> 9): attribution (RFC-046) needs revision 9.
+    // rfc043 (7 -> 8), rfc046 (8 -> 9) and rfc052 (9 -> 10).
     let ids: string[];
     try {
       ids = neededMigrationIds(loaded);
@@ -447,7 +449,9 @@
         }
       }
       const loaded = repo;
-      gateOnMigration(loaded, handle.name, (dirty) => {
+      gateOnMigration(loaded, handle.name, (migrated) => {
+        // A handle that cannot save back (e.g. a folder from <input webkitdirectory>) is never dirty.
+        const dirty = migrated && !handle.readOnlyReason;
         repo = loaded;
         activeDocument = handle;
         beginDocument({ dirty });

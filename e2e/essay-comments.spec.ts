@@ -6,7 +6,7 @@ import type { Page } from "@playwright/test";
 
 /**
  * essay-comments.spec.ts — srs-web#359: per-paragraph comment threads with RFC-046 authors.
- * The engine stamps `createdBy`; the UI only displays it. Fixture: essay.srsj (revision 9).
+ * The engine stamps `createdBy`; the UI only displays it. Fixture: essay.srsj (revision 10).
  */
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
 const items = (page: Page) => page.locator(".essay-shell__page .block-stack__item");

@@ -41,6 +41,7 @@ function readTreeFixture(dir: string): Record<string, string> {
   return files;
 }
 const EXPLODED_TREE = readTreeFixture(EXPLODED_DIR);
+const REV9_TREE = readTreeFixture(REV9_DIR);
 
 /**
  * Install a fake File System Access picker over an in-page directory backed by
@@ -137,6 +138,8 @@ test.describe("Open a folder from this device", () => {
     await page.getByTestId("source-local-folder-input").setInputFiles(REV9_DIR);
     await acceptMigration(page, "rfc052-root-container");
     await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
+    // Read-only (no Save): migrated in memory, never dirty.
+    await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
     await openPackageEditor(page, "governance");
     await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 15000 });
   });
@@ -220,4 +223,27 @@ test.describe("Save a folder back to disk (File System Access)", () => {
     // route this handle at GitHub.
     await expect(page.getByTestId("git-save-modal")).toHaveCount(0);
   });
+});
+
+test("a writable revision-9 folder is migrated unsaved, and Save writes the revision-10 root (srs-web#583)", async ({
+  page,
+}) => {
+  await installFakeDirectoryPicker(page, REV9_TREE);
+  await page.goto("/");
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+  await page.getByTestId("source-local-folder").click();
+  await acceptMigration(page, "rfc052-root-container");
+  await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(/Unsaved/i).first()).toBeVisible();
+
+  await page.getByTestId("save-document").click();
+  await expect(page.getByTestId("save-status")).toContainText("Saved.");
+  const disk = await page.evaluate(() => {
+    const d = (window as unknown as { __DISK__: Map<string, Uint8Array> }).__DISK__;
+    return Object.fromEntries([...d].map(([p, b]) => [p, new TextDecoder().decode(b)]));
+  });
+  const manifest = JSON.parse(disk["manifest.json"]);
+  expect(manifest.dataModelRevision).toBe(10);
+  expect(manifest).not.toHaveProperty("container");
+  expect(JSON.parse(disk[`containers/${manifest.rootContainerId}.json`]).containerId).toBe(manifest.rootContainerId);
 });
