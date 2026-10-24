@@ -8,6 +8,7 @@ import { listContainers, listRecords } from "./srs-client.js";
 
 /** Every `SrsRepository` method that changes the repository. */
 export const MUTATING_METHODS: ReadonlySet<string> = new Set([
+  "accept_migration", // enables writes on an in-memory migrated document
   "add_attachment",
   "add_container_member",
   "add_container_member_relative",
@@ -101,6 +102,7 @@ export const NON_MUTATING_METHODS: ReadonlySet<string> = new Set([
   "list_terms",
   "list_types",
   "list_views",
+  "migration_notice",
   "neighbours",
   "open_mcp_session",
   "order_by_precedes",

@@ -205,6 +205,10 @@ export interface SrsRepository {
   available_migrations(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in applyMigration()
   apply_migration(id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in migrationNotice()
+  migration_notice(): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in acceptMigration()
+  accept_migration(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in orderByPrecedes()
   order_by_precedes(input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listAttachments()
@@ -602,7 +606,11 @@ export function loadRepo(srsj: string): SrsRepository {
  * microtask, so a multi-call action reports once. MCP writes go through `McpSession`, not
  * this handle; the relay host reports those via its own `onHandled`.
  */
-export function observeWrites(repo: SrsRepository, onWrite: () => void): SrsRepository {
+export function observeWrites(
+  repo: SrsRepository,
+  onWrite: () => void,
+  onMigrationRequired?: () => void
+): SrsRepository {
   let seen = repo.write_epoch();
   let pending = false;
   return new Proxy(repo, {
@@ -612,6 +620,10 @@ export function observeWrites(repo: SrsRepository, onWrite: () => void): SrsRepo
       return (...args: unknown[]) => {
         try {
           return value.apply(target, args);
+        } catch (e) {
+          // A write before the user accepted an in-memory migration (srs-rust#1454): ask again.
+          if (isMigrationRequired(e)) onMigrationRequired?.();
+          throw e;
         } finally {
           const now = target.write_epoch();
           if (now !== seen) {
@@ -2285,6 +2297,30 @@ export function availableMigrations(repo: SrsRepository): MigrationSummary[] {
 export function applyMigration(repo: SrsRepository, id: string): MigrationApplyResult {
   return repo.apply_migration(id) as MigrationApplyResult;
 }
+
+/**
+ * A pre-current `.srsj`/`.srs` the engine migrated in memory on load (srs-rust#1454). Until
+ * `acceptMigration` every write is refused with `MIGRATION_REQUIRED_CODE`; exports are not.
+ */
+export interface MigrationNotice {
+  sourceRevision: number;
+  migrations: string[];
+}
+export const MIGRATION_REQUIRED_CODE = "migration-required-before-write";
+
+/** The in-memory migration notice, or `null` when the document opened as stored. */
+export function migrationNotice(repo: SrsRepository): MigrationNotice | null {
+  return (repo.migration_notice() as MigrationNotice | null) ?? null;
+}
+
+/** The user's consent to a `MigrationNotice`: writes work from here on, and the next export is current. */
+export function acceptMigration(repo: SrsRepository): void {
+  repo.accept_migration();
+}
+
+/** Whether an engine error is the refusal of a write before `acceptMigration`. */
+export const isMigrationRequired = (e: unknown): boolean =>
+  typeof e === "object" && e !== null && (e as { code?: unknown }).code === MIGRATION_REQUIRED_CODE;
 
 // ---------------------------------------------------------------------------
 // Attachment wrappers (srs-rust#290, srs-rust#291, srs-web#99)
