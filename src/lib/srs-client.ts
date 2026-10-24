@@ -387,10 +387,11 @@ export interface SrsRelation {
   relationType: string;
   sourceInstanceId: string;
   targetInstanceId: string;
-  assertedBy?: string;
-  confidence?: number;
-  status?: string;
   createdAt?: string;
+  /** RFC-046: read-only to clients, stamped by the engine from the session actor. */
+  createdBy?: { kind: "human" | "ai"; id: string; name?: string };
+  notes?: string;
+  meta?: Record<string, unknown>;
 }
 
 export interface RelationListFilter {
@@ -405,9 +406,8 @@ export interface CreateRelationInput {
   relationType: string;
   sourceInstanceId: string;
   targetInstanceId: string;
-  assertedBy?: string;
-  confidence?: number;
-  status?: string;
+  notes?: string;
+  meta?: Record<string, unknown>;
 }
 
 export interface CreateRecordSuccessorInput {
@@ -841,10 +841,10 @@ export function listRelations(repo: SrsRepository, filter: RelationListFilter = 
     relationType: r.relationType,
     sourceInstanceId: r.sourceInstanceId ?? r.sourceId,
     targetInstanceId: r.targetInstanceId ?? r.targetId,
-    assertedBy: r.assertedBy,
-    confidence: r.confidence,
-    status: r.status,
     createdAt: r.createdAt,
+    createdBy: r.createdBy,
+    notes: r.notes,
+    meta: r.meta,
   }));
 }
 
@@ -858,10 +858,10 @@ export function createRelation(repo: SrsRepository, input: CreateRelationInput):
     relationType: raw.relationType,
     sourceInstanceId: raw.sourceInstanceId,
     targetInstanceId: raw.targetInstanceId,
-    assertedBy: raw.assertedBy,
-    confidence: raw.confidence,
-    status: raw.status,
     createdAt: raw.createdAt,
+    createdBy: raw.createdBy,
+    notes: raw.notes,
+    meta: raw.meta,
   };
 }
 
@@ -924,10 +924,10 @@ function normalizeRelationRaw(raw: any): SrsRelation {
     relationType: raw.relationType,
     sourceInstanceId: raw.sourceInstanceId,
     targetInstanceId: raw.targetInstanceId,
-    assertedBy: raw.assertedBy,
-    confidence: raw.confidence,
-    status: raw.status,
     createdAt: raw.createdAt,
+    createdBy: raw.createdBy,
+    notes: raw.notes,
+    meta: raw.meta,
   };
 }
 
