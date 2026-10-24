@@ -226,7 +226,7 @@
   const MIGRATION_DECLINED = "migration-declined";
   const readOnlyText = $derived(
     readOnlyHost === MIGRATION_DECLINED
-      ? "Not migrated: this document uses an older SRS data model, so it is read-only. Open it again and choose Migrate to edit it."
+      ? "Not migrated: this document uses an older SRS data model, so it is read-only. Open (or restore) it again and choose Migrate to edit it, or save a copy."
       : readOnlyHost
         ? `Opened from ${readOnlyHost}, read-only. Use Document > Save a copy… to keep an editable copy.`
         : null
@@ -682,6 +682,7 @@
     repo = newRepo;
     activeDocument = null;
     readOnlyHost = null;
+    migrationOffer = null;
     beginDocument();
     repoName = name;
     documentTitle = name;
@@ -1086,15 +1087,18 @@
               repo = restored;
               readOnlyHost = null;
               gateOnMigration(restored, entry.name, () => {
+                // A restored session is unsaved work, unless its migration was declined (read-only, #611):
+                // then it is neither dirty nor written back, so the stored copy stays as it was.
+                const editable = !readOnlyHost;
                 repo = restored;
-                beginDocument({ dirty: true });
+                beginDocument({ dirty: editable });
                 repoName = entry.name;
                 documentTitle = resolveRepositoryTitle(restored, repoName);
                 activeDocument = null;
                 appState = "loaded";
                 editorMode = "generic";
                 cachedSession = null;
-                void saveWorkingCopy(repoName, () => exportArchive(restored));
+                if (editable) void saveWorkingCopy(repoName, () => exportArchive(restored));
               });
             } catch (e: unknown) {
               void clearWorkingCopy();
