@@ -30,6 +30,8 @@
     installBundles,
     neededMigrationIds,
     applyMigration,
+    migrationNotice,
+    acceptMigration,
   } from "$lib/srs-client.js";
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
   import type { AgentPanelCtx } from "$lib/agent-activity.js";
@@ -37,7 +39,7 @@
   import { fetchArchiveFile, parseOpenUrl, parseRepoLink, withoutOpenParam, withoutRepoLink, type RepoLink } from "$lib/open-url.js";
   import type { GitHubProvider } from "$lib/storage/github.js";
   import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
-  import { listTypes, resolveRepositoryTitle, type AgentWriteGuard, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
+  import { listTypes, resolveRepositoryTitle, type AgentWriteGuard, type MigrationNotice, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
@@ -206,23 +208,38 @@
   let restoreError = $state<string | null>(null);
 
   /**
-   * Revision gate (srs-web#334, #583). A repository below the engine's revision loads but
-   * the engine refuses every read until the revision migrations are applied, so the
-   * load is held here and the user is asked — never opened empty. Since build.545 a
-   * pre-10 .srsj/.srs is migrated in memory on open; only a tree (folder, GitHub,
-   * Dropbox) still reaches this prompt. `finish(dirty)`
-   * is the load path's own completion step; it runs after migrate (dirty=true,
-   * the migrated working copy is unsaved until Save) or immediately when no
-   * migration is needed.
+   * Revision gate (srs-web#334, #583, #611). Two shapes, one prompt:
+   * - a tree (folder, GitHub, Dropbox) below the engine's revision loads but the engine refuses
+   *   every read until the revision migrations are applied (`ids`);
+   * - a pre-10 .srsj/.srs is migrated in memory on open and carries a `migrationNotice`
+   *   (`sourceRevision` set): reads work, every write is refused until `acceptMigration`.
+   * The load is held here and the user is asked. `finish(dirty)` is the load path's own
+   * completion step; it runs after migrate (dirty=true, the migrated working copy is unsaved
+   * until Save), after "open read-only" (dirty=false) or immediately when nothing is needed.
    */
-  let pendingMigration = $state<{ repo: SrsRepository; name: string; ids: string[]; finish: (dirty: boolean) => void } | null>(null);
+  type MigrationOffer = { repo: SrsRepository; name: string; ids: string[]; sourceRevision?: number; finish: (dirty: boolean) => void };
+  let pendingMigration = $state<MigrationOffer | null>(null);
   let migrationError = $state<string | null>(null);
+  /** The open document's unanswered in-memory offer (declined, or not yet answered): offered again on a refused write. */
+  let migrationOffer: MigrationOffer | null = null;
+  /** `readOnlyHost` for a document whose in-memory migration was declined. */
+  const MIGRATION_DECLINED = "migration-declined";
+  const readOnlyText = $derived(
+    readOnlyHost === MIGRATION_DECLINED
+      ? "Not migrated: this document uses an older SRS data model, so it is read-only. Open it again and choose Migrate to edit it."
+      : readOnlyHost
+        ? `Opened from ${readOnlyHost}, read-only. Use Document > Save a copy… to keep an editable copy.`
+        : null
+  );
 
   function gateOnMigration(loaded: SrsRepository, name: string, finish: (dirty: boolean) => void): void {
+    migrationOffer = null; // a new document: an earlier one's offer never applies to it
     // rfc043 (7 -> 8), rfc046 (8 -> 9) and rfc052 (9 -> 10).
     let ids: string[];
+    let notice: MigrationNotice | null;
     try {
       ids = neededMigrationIds(loaded);
+      notice = ids.length ? null : migrationNotice(loaded);
     } catch (e) {
       // Unknown revision state: do not open (no actor, no writes) and say why.
       repo = null;
@@ -230,23 +247,43 @@
       appState = "error";
       return;
     }
-    if (ids.length) {
-      pendingMigration = { repo: loaded, name, ids, finish };
-      repo = null; // not opened (no MCP session etc.) until migrated
-      migrationError = null;
-      appState = "migrate";
+    if (notice && readOnlyHost) {
+      // Opened from a link: nowhere to save it back, so migrate silently in memory, never dirty (#478).
+      acceptMigration(loaded);
+      finish(false);
+    } else if (ids.length || notice) {
+      offerMigration({ repo: loaded, name, ids: notice?.migrations ?? ids, sourceRevision: notice?.sourceRevision, finish });
     } else {
       finish(false);
     }
+  }
+
+  function offerMigration(offer: MigrationOffer): void {
+    pendingMigration = offer;
+    if (offer.sourceRevision !== undefined) migrationOffer = offer;
+    repo = null; // not opened (no MCP session etc.) until the user answers
+    migrationError = null;
+    appState = "migrate";
+  }
+
+  /** A write refused with `migration-required-before-write` (srs-rust#1454): ask instead of failing. */
+  function onMigrationRequired(): void {
+    if (migrationOffer) offerMigration(migrationOffer);
   }
 
   function runPendingMigration(): void {
     const pending = pendingMigration;
     if (!pending) return;
     try {
-      // Each id is re-checked after the previous one (rfc046 requires rfc043 first).
-      for (const id of pending.ids) {
-        if (neededMigrationIds(pending.repo).includes(id)) applyMigration(pending.repo, id);
+      if (pending.sourceRevision !== undefined) {
+        acceptMigration(pending.repo);
+        migrationOffer = null;
+        if (readOnlyHost === MIGRATION_DECLINED) readOnlyHost = null;
+      } else {
+        // Each id is re-checked after the previous one (rfc046 requires rfc043 first).
+        for (const id of pending.ids) {
+          if (neededMigrationIds(pending.repo).includes(id)) applyMigration(pending.repo, id);
+        }
       }
     } catch (e: unknown) {
       // All-or-nothing in the engine: nothing was written. Keep the prompt up.
@@ -258,8 +295,18 @@
     pending.finish(!readOnlyHost);
   }
 
+  /** Decline an in-memory migration: open the document unchanged and read-only, no write attempted. */
+  function openPendingReadOnly(): void {
+    const pending = pendingMigration;
+    if (!pending) return;
+    pendingMigration = null;
+    readOnlyHost = MIGRATION_DECLINED;
+    pending.finish(false);
+  }
+
   function cancelPendingMigration(): void {
     pendingMigration = null;
+    migrationOffer = null;
     pendingEditor = null;
     repo = null;
     activeDocument = null;
@@ -294,7 +341,7 @@
     // Every load path passes through here: from now on each engine write reports itself.
     if (repo) {
       if (readOnlyHost) repo = readOnlyRepo(repo, () => readOnlyHost !== null);
-      repo = observeWrites(repo, syncDocument);
+      repo = observeWrites(repo, syncDocument, onMigrationRequired);
       applyActor(repo);
       void resolveSignedInActor();
     }
@@ -831,6 +878,11 @@
         // The copy is the user's own file: edit it from here on (a downloaded copy leaves this one read-only).
         if (readOnlyHost) {
           readOnlyHost = null;
+          // A declined in-memory migration: the copy was exported current, so the open document is too.
+          if (migrationOffer) {
+            acceptMigration(repository);
+            migrationOffer = null;
+          }
           agentLib.applyGuards();
         }
         saveToast(...savedMessage(completeDocumentSave(saveSnapshot), `Saved as ${handle.name}.`));
@@ -992,10 +1044,18 @@
       {#if migrationError}<Notice kind="error" testid="migration-error">{migrationError}</Notice>{/if}
     {/snippet}
     <p class="landing__status">
-      <strong>{pendingMigration.name}</strong>: migrating updates the working copy (<code>{pendingMigration.ids.join(", ")}</code>). Nothing is saved until you press Save.
+      {#if pendingMigration.sourceRevision !== undefined}
+        <strong>{pendingMigration.name}</strong> is stored at data-model revision <span data-testid="migration-source-revision">{pendingMigration.sourceRevision}</span>.
+        Migrating it (<code>{pendingMigration.ids.join(", ")}</code>) lets you edit it; nothing is saved until you press Save. Or open it read-only, unchanged.
+      {:else}
+        <strong>{pendingMigration.name}</strong>: migrating updates the working copy (<code>{pendingMigration.ids.join(", ")}</code>). Nothing is saved until you press Save.
+      {/if}
     </p>
     <div class="landing__actions">
       <Button variant="primary" data-testid="migration-apply" onclick={runPendingMigration}>Migrate and open</Button>
+      {#if pendingMigration.sourceRevision !== undefined}
+        <Button data-testid="migration-read-only" onclick={openPendingReadOnly}>Open read-only</Button>
+      {/if}
       <Button data-testid="migration-cancel" onclick={cancelPendingMigration}>Cancel</Button>
     </div>
   </LandingFrame>
@@ -1076,7 +1136,7 @@
     onSave={readOnlyHost ? undefined : activeDocument === null || activeDocument.capabilities.write ? handleSave : undefined}
     readOnly={readOnlyHost !== null}
     onSaveCopy={readOnlyHost ? saveCopy : undefined}
-    readOnlyReason={readOnlyHost ? `Opened from ${readOnlyHost}, read-only. Use Document > Save a copy… to keep an editable copy.` : activeDocument?.readOnlyReason ?? null}
+    readOnlyReason={readOnlyText ?? activeDocument?.readOnlyReason ?? null}
     {saving}
     documentDirty={documentDirty}
     documentRevision={documentRevision}
@@ -1114,7 +1174,7 @@
     onSave={readOnlyHost ? undefined : activeDocument === null || activeDocument.capabilities.write ? handleSave : undefined}
     readOnly={readOnlyHost !== null}
     onSaveCopy={readOnlyHost ? saveCopy : undefined}
-    readOnlyReason={readOnlyHost ? `Opened from ${readOnlyHost}, read-only. Use Document > Save a copy… to keep an editable copy.` : activeDocument?.readOnlyReason ?? null}
+    readOnlyReason={readOnlyText ?? activeDocument?.readOnlyReason ?? null}
     {saving}
     documentDirty={documentDirty}
     documentRevision={documentRevision}
