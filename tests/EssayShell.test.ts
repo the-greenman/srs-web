@@ -66,6 +66,12 @@ vi.mock("../src/lib/essay/essay-document.js", () => ({
   setTitle: vi.fn(),
   transfer: vi.fn(),
 }));
+// The shell test has no engine: no boundaries, no domain (essay-domain.wasm.test.ts covers the real thing).
+vi.mock("../src/lib/essay/essay-domain.js", () => ({
+  domainMap: () => null,
+  listBoundaries: () => [],
+  setBoundary: vi.fn(),
+}));
 
 vi.mock("../src/lib/comments.js", async (orig) => ({
   ...(await orig<typeof import("../src/lib/comments.js")>()),

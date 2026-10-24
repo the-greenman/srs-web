@@ -10,7 +10,7 @@
   import { onDestroy, onMount, tick, untrack } from "svelte";
   import type { Snippet } from "svelte";
   import { copyText } from "$lib/clipboard.js";
-  import { repositoryId } from "$lib/srs-client.js";
+  import { getRecord, repositoryId } from "$lib/srs-client.js";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import AgentFeed from "$lib/components/AgentFeed.svelte";
   import AgentPresence from "$lib/components/AgentPresence.svelte";
@@ -27,6 +27,7 @@
   import ReferencesTray from "$lib/components/ReferencesTray.svelte";
   import DraftTray from "$lib/components/DraftTray.svelte";
   import Panel from "$lib/components/Panel.svelte";
+  import DomainMap from "$lib/components/DomainMap.svelte";
   import LayersPanel from "$lib/components/LayersPanel.svelte";
   import type { DragPayload, KeyMove } from "$lib/components/dnd.js";
   import Button from "$lib/components/Button.svelte";
@@ -79,6 +80,7 @@
   import { essayMarkdown, essayReferences, essaySnapshot, essayWriteGuard } from "./essay-document.js";
   import { downloadText, triggerDownload } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
+  import { domainMap, listBoundaries, setBoundary } from "./essay-domain.js";
   import { formatAddress, parseAddress, pushAddress } from "$lib/address.js";
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
   import { EssayHistory, snapshotEssay } from "./essay-history.js";
@@ -251,7 +253,9 @@
     }
   }
   const togglePin = (id: string) =>
-    setPins(pinnedIds.includes(id) ? pinnedIds.filter((x) => x !== id) : [...pinnedIds, id]);
+    openedDomain.some((o) => o.id === id)
+      ? (openedDomain = openedDomain.filter((o) => o.id !== id))
+      : setPins(pinnedIds.includes(id) ? pinnedIds.filter((x) => x !== id) : [...pinnedIds, id]);
   // Drop pins whose attachment no longer exists, silently.
   $effect(() => {
     if (!model) return;
@@ -262,6 +266,29 @@
     const kept = untrack(() => pinnedIds).filter((id) => live.has(id));
     if (kept.length !== untrack(() => pinnedIds).length) untrack(() => setPins(kept));
   });
+  /** The essay's domain (srs-web#571): recomputed with the model, which reloads on every write. */
+  const domain = $derived(model ? domainMap(repo, model.essayId) : null);
+  const boundaries = $derived(model ? listBoundaries(repo) : []);
+  /** Domain records opened into the pinned pane (this session only; they are not attachments). */
+  let openedDomain = $state<{ id: string; title: string; kind: string; text: string }[]>([]);
+  function openDomainRecord(id: string) {
+    if (openedDomain.some((o) => o.id === id)) return;
+    const r = getRecord(repo, id);
+    if (!r) return;
+    const text = Object.values(r.fieldValues)
+      .filter((v): v is string => typeof v === "string")
+      .join("\n\n");
+    openedDomain = [...openedDomain, { id, title: r.displayLabel || id, kind: r.typeName ?? "record", text }];
+  }
+  const chooseBoundary = (id: string | null) => {
+    try {
+      setBoundary(repo, model!.essayId, id);
+      openedDomain = [];
+      reload();
+    } catch (e) {
+      error = msg(e);
+    }
+  };
   /** References pinned from the tray (by instance id, linked or not), then pinned margin attachments. */
   const pinnedRefs = $derived((model?.references ?? []).filter((r) => pinnedIds.includes(r.id)));
   const pinned = $derived([
@@ -274,6 +301,7 @@
       href: r.url || undefined,
       removable: false,
     })),
+    ...openedDomain.map((o) => ({ id: o.id, kind: o.kind, title: o.title, text: o.text, removable: false })),
     ...Object.values(model?.attachments ?? {})
       .flat()
       .filter((a) => pinnedIds.includes(a.id) && !pinnedRefs.some((r) => r.id === a.neighbourId))
@@ -878,6 +906,16 @@
             onforget={forget}
           />
         </Panel>
+        {#if boundaries.length || domain}
+          <Panel title="Domain" aside={domain ? domain.problems.touched.length + "/" + (domain.problems.touched.length + domain.problems.untouched.length) : undefined} persistKey="essay.domain" collapseWhen={NARROW}>
+            <DomainMap
+              {boundaries}
+              map={domain}
+              onchoose={chooseBoundary}
+              onopen={openDomainRecord}
+            />
+          </Panel>
+        {/if}
         {#if model.referencesContainerId}
           <Panel title="References" aside={referenceItems.length} persistKey="essay.references" collapseWhen={NARROW}>
             <ReferencesTray

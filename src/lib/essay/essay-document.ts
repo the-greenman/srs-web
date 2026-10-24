@@ -544,6 +544,7 @@ export function agentHandoff(a: {
     `- Gather: a source, claim or problem worth having for this essay goes in references: create it${r ? ` with containerId ${r}` : ""}, or container_member_add an existing one. Read references first so you don't duplicate.`,
     `- The writer's own material is in references too: com.mudemocracy.argument/source records (a source_url for a web page; a text file attached to the record, e.g. a transcript or paper). To read attached text: for each sourceRefs entry with sourceType repository-document, read ${uri}/attachment/<its sourceId>.`,
     "- Attach: link a reference to a paragraph with com.mudemocracy.essay/bears-on (paragraph → problem), evidences (source or claim → paragraph, supports) or com.mudemocracy.essay/counters (source or claim → paragraph, opposes).",
+    "- Domain: you may propose the essay's boundary (its domain) as a comment; never set com.mudemocracy.argument/within-boundary yourself, the writer chooses it.",
     "- Titles: you may set paragraph_title only where it is empty.",
     "- Before creating a record of any type, read its type_schema; the aiGuidance there is authoritative.",
   ].join("\n");
