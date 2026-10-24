@@ -2486,10 +2486,17 @@ export function moveInPrecedesChain(
   return normalizeChainSpliceResult(raw);
 }
 
-/** Registry ids of the revision migrations the load gate offers (RFC-043 7 -> 8, RFC-046 8 -> 9, RFC-052 9 -> 10). */
+/**
+ * Registry ids of the revision migrations the load gate offers
+ * (RFC-043 7 -> 8, RFC-046 8 -> 9, RFC-052 9 -> 10, RFC-051 10 -> 11).
+ * Listed here because `available_migrations()` does not say which entries are
+ * revision steps (it also reports structural ones such as `migrate-identity`
+ * as needed); srs-rust#1466 exposes that, after which this list goes.
+ */
 export const RFC043_MIGRATION_ID = "rfc043-container-entries";
 export const RFC046_MIGRATION_ID = "rfc046-actor-provenance";
 export const RFC052_MIGRATION_ID = "rfc052-root-container";
+export const RFC051_MIGRATION_ID = "rfc051-container-entries";
 
 /**
  * Revision migrations the load gate offers, in order, when the engine reports them needed.
@@ -2501,9 +2508,12 @@ export function neededMigrationIds(repo: SrsRepository): string[] {
       .filter((m) => m.status.needed)
       .map((m) => m.id)
   );
-  return [RFC043_MIGRATION_ID, RFC046_MIGRATION_ID, RFC052_MIGRATION_ID].filter((id) =>
-    needed.has(id)
-  );
+  return [
+    RFC043_MIGRATION_ID,
+    RFC046_MIGRATION_ID,
+    RFC052_MIGRATION_ID,
+    RFC051_MIGRATION_ID,
+  ].filter((id) => needed.has(id));
 }
 
 // ---------------------------------------------------------------------------

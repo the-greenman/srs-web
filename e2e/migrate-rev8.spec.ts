@@ -9,7 +9,7 @@ import { openMenu } from "./helpers.js";
  * pre-10 .srsj in memory on open and refuses writes until the user accepts (srs-rust#1454), so
  * srs-web asks first (srs-web#611). Opened from a writable (Dropbox) handle: accepting marks the
  * document Unsaved, a reply is written with an attributed actor (the engine refuses actor writes
- * below revision 9), and Save writes the migrated document at revision 10.
+ * below revision 9), and Save writes the migrated document at revision 11.
  */
 const FIXTURE = readFileSync(
   path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "rev8", "essay-rev8.srsj"),
@@ -70,7 +70,7 @@ async function installDropbox(page: Page, canCreate = false): Promise<void> {
   );
 }
 
-test("a rev-8 essay asks, migrates on consent, takes an attributed reply and saves at revision 10", async ({
+test("a rev-8 essay asks, migrates on consent, takes an attributed reply and saves at revision 11", async ({
   page,
 }) => {
   await installDropbox(page);
@@ -80,7 +80,7 @@ test("a rev-8 essay asks, migrates on consent, takes an attributed reply and sav
 
   await expect(page.getByTestId("migration-source-revision")).toHaveText("8");
   await expect(page.getByTestId("migration-prompt")).toContainText(
-    "rfc046-actor-provenance, rfc052-root-container"
+    "rfc046-actor-provenance, rfc052-root-container, rfc051-container-entries"
   );
   await page.getByTestId("migration-apply").click();
   await expect(page.getByTestId("save-status")).toContainText("Unsaved");
@@ -101,7 +101,7 @@ test("a rev-8 essay asks, migrates on consent, takes an attributed reply and sav
   await expect(page.getByTestId("save-status")).toContainText("Saved.");
   // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
   const saved = await page.evaluate(() => (window as any).__WRITTEN__ as string);
-  expect(JSON.parse(saved).manifest.dataModelRevision).toBe(10);
+  expect(JSON.parse(saved).manifest.dataModelRevision).toBe(11);
   expect(saved).toContain("After migration.");
 });
 

@@ -14,12 +14,16 @@ import { openPackageEditor, navItem, newRecord } from "./helpers.js";
  * proves the same property survives the whole web path — real WASM, the tree
  * load/export round-trip, and the app's own save flow.
  *
+ * RFC-051 (dataModelRevision 11) closes the last shared file: container
+ * membership is one entry file per member, so two writers adding records to
+ * the same section now produce disjoint patches too and merge as a plain union.
+ *
  * Deliberately NOT a replacement for srs-web#251: two writers editing the *same*
  * semantic file still need three-way merge/conflict UX, which #251 owns. What is
  * covered here is only the case RFC-038 removes conflicts from — different
  * objects, hence different files.
  *
- * Refs the-greenman/srs#291, the-greenman/srs#297.
+ * Refs the-greenman/srs#291, the-greenman/srs#297, the-greenman/srs#940 (RFC-051).
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -239,35 +243,28 @@ test.describe("RFC-038 two-writer concurrency (srs#291)", () => {
     const recordsB = b.changed.filter((p) => p.startsWith("records/"));
     expect(recordsA.filter((p) => recordsB.includes(p))).toEqual([]);
 
-    // Residual shared state: creating a record in a section also appends to that
-    // section Container's memberInstanceIds, so both writers rewrite the same
-    // container file. RFC-038 makes records and relations independent; Container
-    // membership is still a shared mutable array, so this case needs the
-    // semantic (union) merge below rather than a textual one. Asserting the
-    // overlap is *only* containers keeps that boundary honest — if a manifest or
-    // a collection ever reappears here, this fails loudly.
-    // Same coupling as the-greenman/srs-rust#834; the merge UX is srs-web#251.
-    const shared = a.changed.filter((p) => b.changed.includes(p));
-    expect(shared.every((p) => p.startsWith("containers/"))).toBe(true);
+    // RFC-051 (revision 11): container membership is one entry file per member
+    // (`containers/<containerId>/entries/<instanceId>.json`), so adding a record
+    // to a section adds an entry file and rewrites no shared container file.
+    for (const w of writers) {
+      const containerFiles = w.changed.filter((p) => p.startsWith("containers/"));
+      expect(containerFiles).toHaveLength(1);
+      expect(containerFiles[0]).toMatch(/^containers\/[^/]+\/entries\/[^/]+\.json$/);
+    }
 
-    // Merge: union the disjoint files, and union the membership of any container
-    // both writers touched.
+    // The acceptance property: the two patches share no file at all, so a plain
+    // merge (take every file either writer changed) is the whole merge — no
+    // semantic union of a membership array, no conflict.
+    expect(a.changed.filter((p) => b.changed.includes(p))).toEqual([]);
     const merged: Record<string, string> = { ...BASE_TREE };
     for (const w of writers) {
-      for (const p of w.changed) if (!shared.includes(p)) merged[p] = w.filesB64[p];
-    }
-    for (const p of shared) {
-      const av = JSON.parse(Buffer.from(a.filesB64[p], "base64").toString("utf8"));
-      const bv = JSON.parse(Buffer.from(b.filesB64[p], "base64").toString("utf8"));
-      // RFC-043: entries are `{instanceId, depth?}`; union by instanceId, keeping order.
-      const byId = new Map<string, { instanceId: string; depth?: number }>();
-      for (const e of [...(av.memberInstanceIds ?? []), ...(bv.memberInstanceIds ?? [])]) {
-        if (!byId.has(e.instanceId)) byId.set(e.instanceId, e);
+      for (const p of w.changed) {
+        if (p in w.filesB64) merged[p] = w.filesB64[p];
+        else delete merged[p];
       }
-      av.memberInstanceIds = [...byId.values()];
-      merged[p] = Buffer.from(JSON.stringify(av, null, 2)).toString("base64");
     }
-    expect(Object.keys(merged).length).toBe(Object.keys(BASE_TREE).length + 2);
+    // Two new records and two new entry files.
+    expect(Object.keys(merged).length).toBe(Object.keys(BASE_TREE).length + 4);
 
     const context = await browser.newContext();
     const page = await context.newPage();

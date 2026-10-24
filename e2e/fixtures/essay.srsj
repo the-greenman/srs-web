@@ -3,7 +3,7 @@
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
     "createdAt": "2026-10-02T22:01:12.625704949+00:00",
-    "dataModelRevision": 10,
+    "dataModelRevision": 11,
     "namespace": "com.mudemocracy.essay",
     "repositoryId": "4cd37b83-6625-40ed-abad-31dea5a77800",
     "rootContainerId": "4cd37b83-6625-40ed-abad-31dea5a77800",
@@ -11,44 +11,50 @@
     "title": "Essay fixture"
   },
   "data": {
-    "containers/4cd37b83-6625-40ed-abad-31dea5a77800.json": {
+    "containers/4cd37b83-6625-40ed-abad-31dea5a77800/container.json": {
       "containerId": "4cd37b83-6625-40ed-abad-31dea5a77800",
       "identityInstanceId": "0889e3d4-b259-4735-a439-d7216cee1956",
-      "memberInstanceIds": [
-        {
-          "instanceId": "0889e3d4-b259-4735-a439-d7216cee1956"
-        }
-      ],
       "title": "Essay fixture"
     },
-    "containers/essay-draft-de837958.json": {
-      "containerId": "de837958-0af1-4b67-8245-df7a46706b76",
-      "memberInstanceIds": [
-        {
-          "instanceId": "2027b81d-15a7-43f6-977b-26603412fbf4"
-        }
-      ],
-      "title": "Essay draft"
+    "containers/4cd37b83-6625-40ed-abad-31dea5a77800/entries/0889e3d4-b259-4735-a439-d7216cee1956.json": {
+      "containerId": "4cd37b83-6625-40ed-abad-31dea5a77800",
+      "instanceId": "0889e3d4-b259-4735-a439-d7216cee1956",
+      "key": "a0"
     },
-    "containers/on-small-democracy-c4b0c11c.json": {
+    "containers/c4b0c11c-3ada-428a-8f6e-78a82e653e9b/container.json": {
       "anchorInstanceId": "ae3d5221-b2ac-4ae8-a180-d90f84f49435",
       "containerId": "c4b0c11c-3ada-428a-8f6e-78a82e653e9b",
       "identityInstanceId": "ae3d5221-b2ac-4ae8-a180-d90f84f49435",
-      "memberInstanceIds": [
-        {
-          "instanceId": "ae3d5221-b2ac-4ae8-a180-d90f84f49435"
-        },
-        {
-          "instanceId": "d37f5c95-9f51-412c-935a-4288ca19700c"
-        },
-        {
-          "instanceId": "3cce92a6-aa40-4412-9a05-f15e6c263c38"
-        },
-        {
-          "instanceId": "bf0ac95e-c6fa-4036-8f79-8b2039cb4051"
-        }
-      ],
       "title": "On small democracy"
+    },
+    "containers/c4b0c11c-3ada-428a-8f6e-78a82e653e9b/entries/3cce92a6-aa40-4412-9a05-f15e6c263c38.json": {
+      "containerId": "c4b0c11c-3ada-428a-8f6e-78a82e653e9b",
+      "instanceId": "3cce92a6-aa40-4412-9a05-f15e6c263c38",
+      "key": "a2"
+    },
+    "containers/c4b0c11c-3ada-428a-8f6e-78a82e653e9b/entries/ae3d5221-b2ac-4ae8-a180-d90f84f49435.json": {
+      "containerId": "c4b0c11c-3ada-428a-8f6e-78a82e653e9b",
+      "instanceId": "ae3d5221-b2ac-4ae8-a180-d90f84f49435",
+      "key": "a0"
+    },
+    "containers/c4b0c11c-3ada-428a-8f6e-78a82e653e9b/entries/bf0ac95e-c6fa-4036-8f79-8b2039cb4051.json": {
+      "containerId": "c4b0c11c-3ada-428a-8f6e-78a82e653e9b",
+      "instanceId": "bf0ac95e-c6fa-4036-8f79-8b2039cb4051",
+      "key": "a3"
+    },
+    "containers/c4b0c11c-3ada-428a-8f6e-78a82e653e9b/entries/d37f5c95-9f51-412c-935a-4288ca19700c.json": {
+      "containerId": "c4b0c11c-3ada-428a-8f6e-78a82e653e9b",
+      "instanceId": "d37f5c95-9f51-412c-935a-4288ca19700c",
+      "key": "a1"
+    },
+    "containers/de837958-0af1-4b67-8245-df7a46706b76/container.json": {
+      "containerId": "de837958-0af1-4b67-8245-df7a46706b76",
+      "title": "Essay draft"
+    },
+    "containers/de837958-0af1-4b67-8245-df7a46706b76/entries/2027b81d-15a7-43f6-977b-26603412fbf4.json": {
+      "containerId": "de837958-0af1-4b67-8245-df7a46706b76",
+      "instanceId": "2027b81d-15a7-43f6-977b-26603412fbf4",
+      "key": "a0"
     },
     "package/compositions/essay-79b8c032.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/composition.json",

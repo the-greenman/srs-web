@@ -134,9 +134,11 @@ test.describe("Open a folder from this device", () => {
     await expect(page.locator('[data-testid="catalog-diagnostics"]')).toHaveCount(0);
   });
 
-  test("a revision-9 folder offers the RFC-052 migration, then opens (srs-web#583)", async ({ page }) => {
+  test("a revision-9 folder offers the RFC-052 and RFC-051 migrations, then opens (srs-web#583, #584)", async ({
+    page,
+  }) => {
     await page.getByTestId("source-local-folder-input").setInputFiles(REV9_DIR);
-    await acceptMigration(page, "rfc052-root-container");
+    await acceptMigration(page, "rfc052-root-container", "rfc051-container-entries");
     await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
     // Read-only (no Save): migrated in memory, never dirty.
     await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
@@ -225,14 +227,14 @@ test.describe("Save a folder back to disk (File System Access)", () => {
   });
 });
 
-test("a writable revision-9 folder is migrated unsaved, and Save writes the revision-10 root (srs-web#583)", async ({
+test("a writable revision-9 folder is migrated unsaved, and Save writes the revision-11 root (srs-web#583, #584)", async ({
   page,
 }) => {
   await installFakeDirectoryPicker(page, REV9_TREE);
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page.getByTestId("source-local-folder").click();
-  await acceptMigration(page, "rfc052-root-container");
+  await acceptMigration(page, "rfc052-root-container", "rfc051-container-entries");
   await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
   await expect(page.getByText(/Unsaved/i).first()).toBeVisible();
 
@@ -243,7 +245,15 @@ test("a writable revision-9 folder is migrated unsaved, and Save writes the revi
     return Object.fromEntries([...d].map(([p, b]) => [p, new TextDecoder().decode(b)]));
   });
   const manifest = JSON.parse(disk["manifest.json"]);
-  expect(manifest.dataModelRevision).toBe(10);
+  expect(manifest.dataModelRevision).toBe(11);
   expect(manifest).not.toHaveProperty("container");
-  expect(JSON.parse(disk[`containers/${manifest.rootContainerId}.json`]).containerId).toBe(manifest.rootContainerId);
+  // RFC-051: the root container is a directory — a head without members, plus one entry per member.
+  const root = manifest.rootContainerId;
+  const head = JSON.parse(disk[`containers/${root}/container.json`]);
+  expect(head.containerId).toBe(root);
+  expect(head).not.toHaveProperty("memberInstanceIds");
+  expect(disk).not.toHaveProperty(`containers/${root}.json`);
+  const entries = Object.keys(disk).filter((p) => p.startsWith(`containers/${root}/entries/`));
+  expect(entries.length).toBeGreaterThan(0);
+  for (const p of entries) expect(JSON.parse(disk[p]).containerId).toBe(root);
 });

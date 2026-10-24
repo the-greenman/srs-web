@@ -234,7 +234,7 @@
 
   function gateOnMigration(loaded: SrsRepository, name: string, finish: (dirty: boolean) => void): void {
     migrationOffer = null; // a new document: an earlier one's offer never applies to it
-    // rfc043 (7 -> 8), rfc046 (8 -> 9) and rfc052 (9 -> 10).
+    // rfc043 (7 -> 8), rfc046 (8 -> 9), rfc052 (9 -> 10) and rfc051 (10 -> 11).
     let ids: string[];
     let notice: MigrationNotice | null;
     try {
