@@ -6,7 +6,7 @@ import type { Page } from "@playwright/test";
 /**
  * large-repo.spec.ts — srs-web#481: Records and Map stay usable on a repository the size of the SRS spec
  * (704 records: 677 typed in 15 types, 27 notes; the hub concept "Travelling form" has 26 relations).
- * srs-spec.srs is the published spec bundle (srs#906), migrated to data-model revision 10.
+ * srs-spec.srs is the published spec bundle (srs#906), migrated to data-model revision 11.
  */
 const FIXTURE = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "srs-spec.srs");
 

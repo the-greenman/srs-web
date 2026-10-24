@@ -3,7 +3,7 @@
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
     "createdAt": "2026-10-02T22:18:37.783080561+00:00",
-    "dataModelRevision": 10,
+    "dataModelRevision": 11,
     "declaredExtensions": [
       "ext:type-inheritance"
     ],
@@ -15,115 +15,149 @@
     "title": "muDemocracy"
   },
   "data": {
-    "containers/a61d0eff-9b8f-4126-95cd-1412ce178fb0.json": {
-      "containerId": "a61d0eff-9b8f-4126-95cd-1412ce178fb0",
-      "createdAt": "2026-06-04T00:00:00Z",
-      "identityInstanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
-      "memberInstanceIds": [
-        {
-          "instanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f"
-        }
-      ],
-      "title": "muDemocracy"
-    },
-    "containers/deciding-which-decisions-to-record-7989545d.json": {
-      "anchorInstanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
-      "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
-      "containerType": "guide",
-      "createdAt": "2026-06-04T00:00:00Z",
-      "memberInstanceIds": [
-        {
-          "instanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f"
-        },
-        {
-          "instanceId": "a638cca2-6650-44bb-9ede-7d2fc40c57b2"
-        },
-        {
-          "instanceId": "1126bdf3-8171-4c04-89fd-13610018bb78"
-        },
-        {
-          "instanceId": "b5a4b93a-16d5-400d-be4b-a11ee98bc9e6"
-        },
-        {
-          "instanceId": "07b77123-7e01-4253-883e-766c99016016"
-        }
-      ],
-      "title": "Deciding which decisions to record"
-    },
-    "containers/decision-recording-1c843817.json": {
+    "containers/1c843817-c0f9-4ba6-b65f-c6d23af161a7/container.json": {
       "anchorInstanceId": "1ff0ab83-c1c8-4e23-b611-2e629d919307",
       "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
       "containerType": "guide",
       "createdAt": "2026-06-04T00:00:00Z",
-      "memberInstanceIds": [
-        {
-          "instanceId": "1ff0ab83-c1c8-4e23-b611-2e629d919307"
-        },
-        {
-          "instanceId": "2aeb491a-9664-45e6-87e6-6fa38a3324c4"
-        },
-        {
-          "instanceId": "8b33ce73-8e9f-45bb-90a3-c782c004db1e"
-        },
-        {
-          "instanceId": "3ad28075-33d6-457e-a824-9421d0e83e2b"
-        },
-        {
-          "instanceId": "e89f9184-6c54-4c99-936a-9ae3baf5595b"
-        },
-        {
-          "instanceId": "6ddd3472-a70d-4382-bd57-6bb24708a764"
-        }
-      ],
       "title": "Decision Recording"
     },
-    "containers/deliberating-a-decision-78749395.json": {
+    "containers/1c843817-c0f9-4ba6-b65f-c6d23af161a7/entries/1ff0ab83-c1c8-4e23-b611-2e629d919307.json": {
+      "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
+      "instanceId": "1ff0ab83-c1c8-4e23-b611-2e629d919307",
+      "key": "a0"
+    },
+    "containers/1c843817-c0f9-4ba6-b65f-c6d23af161a7/entries/2aeb491a-9664-45e6-87e6-6fa38a3324c4.json": {
+      "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
+      "instanceId": "2aeb491a-9664-45e6-87e6-6fa38a3324c4",
+      "key": "a1"
+    },
+    "containers/1c843817-c0f9-4ba6-b65f-c6d23af161a7/entries/3ad28075-33d6-457e-a824-9421d0e83e2b.json": {
+      "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
+      "instanceId": "3ad28075-33d6-457e-a824-9421d0e83e2b",
+      "key": "a3"
+    },
+    "containers/1c843817-c0f9-4ba6-b65f-c6d23af161a7/entries/6ddd3472-a70d-4382-bd57-6bb24708a764.json": {
+      "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
+      "instanceId": "6ddd3472-a70d-4382-bd57-6bb24708a764",
+      "key": "a5"
+    },
+    "containers/1c843817-c0f9-4ba6-b65f-c6d23af161a7/entries/8b33ce73-8e9f-45bb-90a3-c782c004db1e.json": {
+      "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
+      "instanceId": "8b33ce73-8e9f-45bb-90a3-c782c004db1e",
+      "key": "a2"
+    },
+    "containers/1c843817-c0f9-4ba6-b65f-c6d23af161a7/entries/e89f9184-6c54-4c99-936a-9ae3baf5595b.json": {
+      "containerId": "1c843817-c0f9-4ba6-b65f-c6d23af161a7",
+      "instanceId": "e89f9184-6c54-4c99-936a-9ae3baf5595b",
+      "key": "a4"
+    },
+    "containers/78749395-dcde-4b02-a59e-184095e0ae0b/container.json": {
       "anchorInstanceId": "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b",
       "containerId": "78749395-dcde-4b02-a59e-184095e0ae0b",
       "containerType": "guide",
       "createdAt": "2026-06-04T00:00:00Z",
-      "memberInstanceIds": [
-        {
-          "instanceId": "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b"
-        },
-        {
-          "instanceId": "2b512f4c-522f-4081-bb07-a1cfe7ad94f0"
-        },
-        {
-          "instanceId": "f82ca8a8-63f7-49b9-89df-94597277025b"
-        },
-        {
-          "instanceId": "f889bfae-3798-43ab-8e7c-b0a42d6f5291"
-        },
-        {
-          "instanceId": "3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c"
-        }
-      ],
       "title": "Deliberating a decision"
     },
-    "containers/recognising-decisions-d0c8cba0.json": {
+    "containers/78749395-dcde-4b02-a59e-184095e0ae0b/entries/2b512f4c-522f-4081-bb07-a1cfe7ad94f0.json": {
+      "containerId": "78749395-dcde-4b02-a59e-184095e0ae0b",
+      "instanceId": "2b512f4c-522f-4081-bb07-a1cfe7ad94f0",
+      "key": "a1"
+    },
+    "containers/78749395-dcde-4b02-a59e-184095e0ae0b/entries/30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b.json": {
+      "containerId": "78749395-dcde-4b02-a59e-184095e0ae0b",
+      "instanceId": "30b82df3-1cf3-45e9-a1e5-1b8fe1d3497b",
+      "key": "a0"
+    },
+    "containers/78749395-dcde-4b02-a59e-184095e0ae0b/entries/3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c.json": {
+      "containerId": "78749395-dcde-4b02-a59e-184095e0ae0b",
+      "instanceId": "3d2c4b12-f7ea-4b8c-a87a-2acbe604b74c",
+      "key": "a4"
+    },
+    "containers/78749395-dcde-4b02-a59e-184095e0ae0b/entries/f82ca8a8-63f7-49b9-89df-94597277025b.json": {
+      "containerId": "78749395-dcde-4b02-a59e-184095e0ae0b",
+      "instanceId": "f82ca8a8-63f7-49b9-89df-94597277025b",
+      "key": "a2"
+    },
+    "containers/78749395-dcde-4b02-a59e-184095e0ae0b/entries/f889bfae-3798-43ab-8e7c-b0a42d6f5291.json": {
+      "containerId": "78749395-dcde-4b02-a59e-184095e0ae0b",
+      "instanceId": "f889bfae-3798-43ab-8e7c-b0a42d6f5291",
+      "key": "a3"
+    },
+    "containers/7989545d-8649-455d-96c8-5b4615447fb7/container.json": {
+      "anchorInstanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
+      "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
+      "containerType": "guide",
+      "createdAt": "2026-06-04T00:00:00Z",
+      "title": "Deciding which decisions to record"
+    },
+    "containers/7989545d-8649-455d-96c8-5b4615447fb7/entries/07b77123-7e01-4253-883e-766c99016016.json": {
+      "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
+      "instanceId": "07b77123-7e01-4253-883e-766c99016016",
+      "key": "a4"
+    },
+    "containers/7989545d-8649-455d-96c8-5b4615447fb7/entries/1126bdf3-8171-4c04-89fd-13610018bb78.json": {
+      "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
+      "instanceId": "1126bdf3-8171-4c04-89fd-13610018bb78",
+      "key": "a2"
+    },
+    "containers/7989545d-8649-455d-96c8-5b4615447fb7/entries/a44be813-d2b4-4214-aaa9-4b8a11ce206f.json": {
+      "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
+      "instanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
+      "key": "a0"
+    },
+    "containers/7989545d-8649-455d-96c8-5b4615447fb7/entries/a638cca2-6650-44bb-9ede-7d2fc40c57b2.json": {
+      "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
+      "instanceId": "a638cca2-6650-44bb-9ede-7d2fc40c57b2",
+      "key": "a1"
+    },
+    "containers/7989545d-8649-455d-96c8-5b4615447fb7/entries/b5a4b93a-16d5-400d-be4b-a11ee98bc9e6.json": {
+      "containerId": "7989545d-8649-455d-96c8-5b4615447fb7",
+      "instanceId": "b5a4b93a-16d5-400d-be4b-a11ee98bc9e6",
+      "key": "a3"
+    },
+    "containers/a61d0eff-9b8f-4126-95cd-1412ce178fb0/container.json": {
+      "containerId": "a61d0eff-9b8f-4126-95cd-1412ce178fb0",
+      "createdAt": "2026-06-04T00:00:00Z",
+      "identityInstanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
+      "title": "muDemocracy"
+    },
+    "containers/a61d0eff-9b8f-4126-95cd-1412ce178fb0/entries/a44be813-d2b4-4214-aaa9-4b8a11ce206f.json": {
+      "containerId": "a61d0eff-9b8f-4126-95cd-1412ce178fb0",
+      "instanceId": "a44be813-d2b4-4214-aaa9-4b8a11ce206f",
+      "key": "a0"
+    },
+    "containers/d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d/container.json": {
       "anchorInstanceId": "0dff90b5-4534-4a2b-9f1a-28f35130e943",
       "containerId": "d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d",
       "containerType": "guide",
       "createdAt": "2026-06-04T00:00:00Z",
-      "memberInstanceIds": [
-        {
-          "instanceId": "0dff90b5-4534-4a2b-9f1a-28f35130e943"
-        },
-        {
-          "instanceId": "0fd5e0f3-63d8-430d-9454-da8c9f20cf52"
-        },
-        {
-          "instanceId": "afa31093-d955-4ea1-841e-9443775e3f15"
-        },
-        {
-          "instanceId": "0c7f33d9-58cb-489c-9fd8-26d8b807fe21"
-        },
-        {
-          "instanceId": "26f98f5b-f49a-4ac1-8bac-41aedccabc31"
-        }
-      ],
       "title": "Recognising decisions"
+    },
+    "containers/d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d/entries/0c7f33d9-58cb-489c-9fd8-26d8b807fe21.json": {
+      "containerId": "d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d",
+      "instanceId": "0c7f33d9-58cb-489c-9fd8-26d8b807fe21",
+      "key": "a3"
+    },
+    "containers/d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d/entries/0dff90b5-4534-4a2b-9f1a-28f35130e943.json": {
+      "containerId": "d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d",
+      "instanceId": "0dff90b5-4534-4a2b-9f1a-28f35130e943",
+      "key": "a0"
+    },
+    "containers/d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d/entries/0fd5e0f3-63d8-430d-9454-da8c9f20cf52.json": {
+      "containerId": "d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d",
+      "instanceId": "0fd5e0f3-63d8-430d-9454-da8c9f20cf52",
+      "key": "a1"
+    },
+    "containers/d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d/entries/26f98f5b-f49a-4ac1-8bac-41aedccabc31.json": {
+      "containerId": "d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d",
+      "instanceId": "26f98f5b-f49a-4ac1-8bac-41aedccabc31",
+      "key": "a4"
+    },
+    "containers/d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d/entries/afa31093-d955-4ea1-841e-9443775e3f15.json": {
+      "containerId": "d0c8cba0-06a9-4223-b6c7-7f52ed1f7f6d",
+      "instanceId": "afa31093-d955-4ea1-841e-9443775e3f15",
+      "key": "a2"
     },
     "package/blueprints/guide-7bfa600b.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/blueprint.json",
@@ -857,7 +891,7 @@
         "compositions/guide-body-view-2aba4d85.json"
       ],
       "createdAt": "2026-01-01T00:00:00Z",
-      "dataModelRevision": 10,
+      "dataModelRevision": 11,
       "description": "",
       "fields": [
         "fields/slug-2e3be0f8.json",

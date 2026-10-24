@@ -45,7 +45,7 @@ export async function openInspectorDrawer(page: Page): Promise<void> {
 }
 
 /**
- * The revision migration prompt must appear (a tree below revision 10, or a pre-10 document
+ * The revision migration prompt must appear (a tree below revision 11, or a pre-11 document
  * migrated in memory, srs-web#611); accept it.
  * Use only where a migration is expected — a missing prompt fails the test.
  */

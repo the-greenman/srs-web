@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * srs-web#611 against the REAL engine (srs-rust#1454): a pre-10 .srsj opens migrated in memory with
+ * srs-web#611 against the REAL engine (srs-rust#1454): a pre-11 .srsj opens migrated in memory with
  * a notice, every write is refused with `migration-required-before-write` until the user accepts,
  * and the refusal reaches the write choke point's prompt callback.
  */
@@ -28,7 +28,7 @@ describe.skipIf(!haveBindings)("in-memory migration notice on the real engine", 
   const rev7 = () =>
     readFileSync(path.resolve(__dirname, "../e2e/fixtures/rev7/sample-rev7.srsj"), "utf8");
 
-  it("refuses writes until accepted, tells the choke point, then exports at revision 10", async () => {
+  it("refuses writes until accepted, tells the choke point, then exports at revision 11", async () => {
     const mod = await engine();
     const client = await import("../src/lib/srs-client.js");
     const raw = mod.SrsRepository.load(rev7());
@@ -39,6 +39,7 @@ describe.skipIf(!haveBindings)("in-memory migration notice on the real engine", 
       "rfc043-container-entries",
       "rfc046-actor-provenance",
       "rfc052-root-container",
+      "rfc051-container-entries",
     ]);
     // The tree gate's list is empty for a load() handle: the notice is the only signal.
     expect(client.neededMigrationIds(raw)).toEqual([]);
@@ -58,15 +59,15 @@ describe.skipIf(!haveBindings)("in-memory migration notice on the real engine", 
     expect(client.migrationNotice(repo)).toBeNull();
     expect(() => client.createContainer(repo, { title: "After consent" })).not.toThrow();
     expect(onRequired).toHaveBeenCalledTimes(1);
-    expect(JSON.parse(client.exportSrsj(repo)).manifest.dataModelRevision).toBe(10);
+    expect(JSON.parse(client.exportSrsj(repo)).manifest.dataModelRevision).toBe(11);
   });
 
-  it("a current document carries no notice, and the governance seed is 1.2.3 at revision 10", async () => {
+  it("a current document carries no notice, and the governance seed is 1.2.3 at revision 11", async () => {
     const mod = await engine();
     const client = await import("../src/lib/srs-client.js");
     const text = readFileSync(path.join(bindings, "governance-seed.srsj"), "utf8");
     const seed = JSON.parse(text);
-    expect(seed.manifest.dataModelRevision).toBe(10);
+    expect(seed.manifest.dataModelRevision).toBe(11);
     expect(seed.data["package/package.json"].version).toBe("1.2.3");
     expect(client.migrationNotice(mod.SrsRepository.load(text))).toBeNull();
   });

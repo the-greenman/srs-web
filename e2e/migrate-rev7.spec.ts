@@ -23,7 +23,7 @@ test.describe("a rev-7 file", () => {
     await expect(prompt).toBeVisible({ timeout: 10000 });
     await expect(page.getByTestId("migration-source-revision")).toHaveText("7");
     await expect(prompt).toContainText(
-      "rfc043-container-entries, rfc046-actor-provenance, rfc052-root-container"
+      "rfc043-container-entries, rfc046-actor-provenance, rfc052-root-container, rfc051-container-entries"
     );
   });
 
@@ -70,7 +70,7 @@ test("declining a restored rev-7 session leaves it read-only, clean and unchange
   await page.getByTestId("migration-read-only").click();
   await expect(page.getByTestId("read-only-note")).toContainText("Not migrated");
   await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
-  // Not written back at revision 10, so restoring again asks again.
+  // Not written back at revision 11, so restoring again asks again.
   expect(await page.evaluate(() => localStorage.getItem("srs-web:working-copy"))).toBe(entry);
   await restore();
 });
