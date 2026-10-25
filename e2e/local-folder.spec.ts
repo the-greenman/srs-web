@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
-import { openPackageEditor, navItem } from "./helpers.js";
+import { acceptMigration, openPackageEditor, navItem } from "./helpers.js";
 
 /**
  * local-folder.spec.ts — opening an exploded SRS repository from the local
@@ -20,6 +20,8 @@ import { openPackageEditor, navItem } from "./helpers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const EXPLODED_DIR = path.join(__dirname, "fixtures", "exploded");
+/** The same tree at revision 9 (root container inline in the manifest), before RFC-052. */
+const REV9_DIR = path.join(__dirname, "fixtures", "rev9", "exploded");
 
 /** Read every file under a directory into a { relativePath: base64 } map. */
 function readTreeFixture(dir: string): Record<string, string> {
@@ -39,6 +41,7 @@ function readTreeFixture(dir: string): Record<string, string> {
   return files;
 }
 const EXPLODED_TREE = readTreeFixture(EXPLODED_DIR);
+const REV9_TREE = readTreeFixture(REV9_DIR);
 
 /**
  * Install a fake File System Access picker over an in-page directory backed by
@@ -131,6 +134,25 @@ test.describe("Open a folder from this device", () => {
     await expect(page.locator('[data-testid="catalog-diagnostics"]')).toHaveCount(0);
   });
 
+  test("a revision-9 folder offers the RFC-052 and RFC-051 migrations, then opens (srs-web#583, #584)", async ({
+    page,
+  }) => {
+    await page.getByTestId("source-local-folder-input").setInputFiles(REV9_DIR);
+    await acceptMigration(page, "rfc052-root-container", "rfc051-container-entries");
+    await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
+    // Read-only (no Save): migrated in memory, never dirty.
+    await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
+    await openPackageEditor(page, "governance");
+    await expect(navItem(page, /Migrations/)).toBeVisible({ timeout: 15000 });
+  });
+
+  test("cancelling the revision-9 migration returns to the picker without opening", async ({ page }) => {
+    await page.getByTestId("source-local-folder-input").setInputFiles(REV9_DIR);
+    await page.getByTestId("migration-cancel").click();
+    await expect(page.getByTestId("generic-file-picker")).toBeVisible();
+    await expect(page.getByTestId("generic-srs-shell")).toHaveCount(0);
+  });
+
   test("a folder opened read-only offers no Save, and explains why (srs-web#317)", async ({
     page,
   }) => {
@@ -203,4 +225,35 @@ test.describe("Save a folder back to disk (File System Access)", () => {
     // route this handle at GitHub.
     await expect(page.getByTestId("git-save-modal")).toHaveCount(0);
   });
+});
+
+test("a writable revision-9 folder is migrated unsaved, and Save writes the revision-11 root (srs-web#583, #584)", async ({
+  page,
+}) => {
+  await installFakeDirectoryPicker(page, REV9_TREE);
+  await page.goto("/");
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+  await page.getByTestId("source-local-folder").click();
+  await acceptMigration(page, "rfc052-root-container", "rfc051-container-entries");
+  await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(/Unsaved/i).first()).toBeVisible();
+
+  await page.getByTestId("save-document").click();
+  await expect(page.getByTestId("save-status")).toContainText("Saved.");
+  const disk = await page.evaluate(() => {
+    const d = (window as unknown as { __DISK__: Map<string, Uint8Array> }).__DISK__;
+    return Object.fromEntries([...d].map(([p, b]) => [p, new TextDecoder().decode(b)]));
+  });
+  const manifest = JSON.parse(disk["manifest.json"]);
+  expect(manifest.dataModelRevision).toBe(11);
+  expect(manifest).not.toHaveProperty("container");
+  // RFC-051: the root container is a directory — a head without members, plus one entry per member.
+  const root = manifest.rootContainerId;
+  const head = JSON.parse(disk[`containers/${root}/container.json`]);
+  expect(head.containerId).toBe(root);
+  expect(head).not.toHaveProperty("memberInstanceIds");
+  expect(disk).not.toHaveProperty(`containers/${root}.json`);
+  const entries = Object.keys(disk).filter((p) => p.startsWith(`containers/${root}/entries/`));
+  expect(entries.length).toBeGreaterThan(0);
+  for (const p of entries) expect(JSON.parse(disk[p]).containerId).toBe(root);
 });

@@ -2,57 +2,62 @@
   "srsj": "2",
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
-      "containerId": "e62cc4d4-02cc-4a7f-bfda-b89d6998867e",
-      "identityInstanceId": "0608cbf5-a4e2-48bf-acc2-a70d687f18ff",
-      "memberInstanceIds": [
-        {
-          "instanceId": "0608cbf5-a4e2-48bf-acc2-a70d687f18ff"
-        }
-      ],
-      "title": "Essay fixture"
-    },
     "createdAt": "2026-10-05T21:47:29.810882560+00:00",
-    "dataModelRevision": 9,
+    "dataModelRevision": 11,
     "namespace": "com.mudemocracy.essay",
     "repositoryId": "e62cc4d4-02cc-4a7f-bfda-b89d6998867e",
+    "rootContainerId": "e62cc4d4-02cc-4a7f-bfda-b89d6998867e",
     "srsVersion": "2.0-draft",
     "title": "Essay fixture"
   },
   "data": {
-    "containers/essay-draft-d5426678.json": {
-      "containerId": "d5426678-d6cb-4185-94d4-878c2e972fab",
-      "memberInstanceIds": [
-        {
-          "instanceId": "584770a0-4161-42e2-907e-677db75d25be"
-        }
-      ],
-      "title": "Essay draft"
-    },
-    "containers/on-small-democracy--comments--43602b01.json": {
+    "containers/43602b01-3df5-4eb0-9f43-4a3c915071d4/container.json": {
       "containerId": "43602b01-3df5-4eb0-9f43-4a3c915071d4",
       "title": "On small democracy (comments)"
     },
-    "containers/on-small-democracy--references--bee76ab7.json": {
-      "containerId": "bee76ab7-2fcf-4bb3-902a-5d9de5663acc",
-      "title": "On small democracy (references)"
-    },
-    "containers/on-small-democracy-7a60ed6c.json": {
+    "containers/7a60ed6c-253b-4da7-b21e-c7fab82d0255/container.json": {
       "anchorInstanceId": "ef448418-d010-43bb-9c88-5b914df2cf48",
       "containerId": "7a60ed6c-253b-4da7-b21e-c7fab82d0255",
       "identityInstanceId": "ef448418-d010-43bb-9c88-5b914df2cf48",
-      "memberInstanceIds": [
-        {
-          "instanceId": "ef448418-d010-43bb-9c88-5b914df2cf48"
-        },
-        {
-          "instanceId": "32f73471-7591-4d07-befd-0b61ef8c4b56"
-        },
-        {
-          "instanceId": "e9cf6a25-f89a-4748-b2c1-b02081342309"
-        }
-      ],
       "title": "On small democracy"
+    },
+    "containers/7a60ed6c-253b-4da7-b21e-c7fab82d0255/entries/32f73471-7591-4d07-befd-0b61ef8c4b56.json": {
+      "containerId": "7a60ed6c-253b-4da7-b21e-c7fab82d0255",
+      "instanceId": "32f73471-7591-4d07-befd-0b61ef8c4b56",
+      "key": "a1"
+    },
+    "containers/7a60ed6c-253b-4da7-b21e-c7fab82d0255/entries/e9cf6a25-f89a-4748-b2c1-b02081342309.json": {
+      "containerId": "7a60ed6c-253b-4da7-b21e-c7fab82d0255",
+      "instanceId": "e9cf6a25-f89a-4748-b2c1-b02081342309",
+      "key": "a2"
+    },
+    "containers/7a60ed6c-253b-4da7-b21e-c7fab82d0255/entries/ef448418-d010-43bb-9c88-5b914df2cf48.json": {
+      "containerId": "7a60ed6c-253b-4da7-b21e-c7fab82d0255",
+      "instanceId": "ef448418-d010-43bb-9c88-5b914df2cf48",
+      "key": "a0"
+    },
+    "containers/bee76ab7-2fcf-4bb3-902a-5d9de5663acc/container.json": {
+      "containerId": "bee76ab7-2fcf-4bb3-902a-5d9de5663acc",
+      "title": "On small democracy (references)"
+    },
+    "containers/d5426678-d6cb-4185-94d4-878c2e972fab/container.json": {
+      "containerId": "d5426678-d6cb-4185-94d4-878c2e972fab",
+      "title": "Essay draft"
+    },
+    "containers/d5426678-d6cb-4185-94d4-878c2e972fab/entries/584770a0-4161-42e2-907e-677db75d25be.json": {
+      "containerId": "d5426678-d6cb-4185-94d4-878c2e972fab",
+      "instanceId": "584770a0-4161-42e2-907e-677db75d25be",
+      "key": "a0"
+    },
+    "containers/e62cc4d4-02cc-4a7f-bfda-b89d6998867e/container.json": {
+      "containerId": "e62cc4d4-02cc-4a7f-bfda-b89d6998867e",
+      "identityInstanceId": "0608cbf5-a4e2-48bf-acc2-a70d687f18ff",
+      "title": "Essay fixture"
+    },
+    "containers/e62cc4d4-02cc-4a7f-bfda-b89d6998867e/entries/0608cbf5-a4e2-48bf-acc2-a70d687f18ff.json": {
+      "containerId": "e62cc4d4-02cc-4a7f-bfda-b89d6998867e",
+      "instanceId": "0608cbf5-a4e2-48bf-acc2-a70d687f18ff",
+      "key": "a0"
     },
     "package/compositions/essay-79b8c032.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/composition.json",

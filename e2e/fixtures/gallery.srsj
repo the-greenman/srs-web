@@ -1,112 +1,194 @@
 {
+  "srsj": "2",
+  "manifest": {
+    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+    "createdAt": "2026-10-02T22:18:37.653412796+00:00",
+    "dataModelRevision": 11,
+    "namespace": "com.limoma",
+    "repositoryId": "8ae058dc-b52d-4e52-8e7e-969018532a04",
+    "rootContainerId": "4e4c9501-2709-4220-bb47-486f6f78a937",
+    "srsVersion": "2.0-draft",
+    "title": "Limoma"
+  },
   "data": {
-    "containers/articles-f7562aa3.json": {
-      "anchorInstanceId": "5ec00001-0000-4000-8000-000000000001",
-      "containerId": "f7562aa3-98c7-44be-b4c5-5474df6441f2",
-      "containerType": "document",
-      "createdAt": "2026-05-31T00:00:00Z",
-      "memberInstanceIds": [
-        {
-          "instanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809"
-        },
-        {
-          "instanceId": "31291422-cd8b-4840-b884-d55023d938cb"
-        },
-        {
-          "instanceId": "7560efe9-27e3-4186-8b9d-6ab48283f1df"
-        },
-        {
-          "instanceId": "0482c489-37b4-4342-adaa-36e69dc6f780"
-        },
-        {
-          "instanceId": "c503fae5-c3ab-452e-a0b4-5682ca204288"
-        },
-        {
-          "instanceId": "cc58c0dd-8e3a-4dc5-9b58-f3273911a9a9"
-        },
-        {
-          "instanceId": "5ec00001-0000-4000-8000-000000000001"
-        }
-      ],
-      "title": "Articles"
-    },
-    "containers/decision-log-138e2fac.json": {
+    "containers/138e2fac-6a8a-4a06-9511-5aefd99ceae9/container.json": {
       "anchorInstanceId": "5ec00003-0000-4000-8000-000000000003",
       "containerId": "138e2fac-6a8a-4a06-9511-5aefd99ceae9",
       "containerType": "document",
       "createdAt": "2026-05-31T00:00:00Z",
-      "memberInstanceIds": [
-        {
-          "instanceId": "00000000-0000-4000-8000-000000005802"
-        },
-        {
-          "instanceId": "00000000-0000-4000-8000-000000005801"
-        },
-        {
-          "instanceId": "9054911c-5285-4c3e-8198-4b9650169001"
-        },
-        {
-          "instanceId": "eb4024a0-486f-4d64-a4e4-5d80297129d2"
-        },
-        {
-          "instanceId": "3be7b057-9167-42a4-b0db-2a8b30666cef"
-        },
-        {
-          "instanceId": "9af57e54-03fb-4625-9a4c-8d2a254ff2b7"
-        },
-        {
-          "instanceId": "4a989562-4a9d-4c86-a365-91bf14d55f06"
-        },
-        {
-          "instanceId": "dd715d4a-8640-4641-b79d-e44f728c547b"
-        },
-        {
-          "instanceId": "a9ca11cf-fd34-4901-b5f6-51e20737cb56"
-        },
-        {
-          "instanceId": "5ec00003-0000-4000-8000-000000000003"
-        }
-      ],
       "title": "Decision Log"
     },
-    "containers/exercises-ece00010.json": {
-      "anchorInstanceId": "5ec00004-0000-4000-8000-000000000004",
-      "containerId": "ece00010-0000-4000-8000-000000000010",
-      "containerType": "document",
-      "createdAt": "2026-06-27T00:00:00Z",
-      "memberInstanceIds": [
-        {
-          "instanceId": "ee000001-0000-4000-8000-000000000001"
-        },
-        {
-          "instanceId": "ee000002-0000-4000-8000-000000000002"
-        },
-        {
-          "instanceId": "5ec00004-0000-4000-8000-000000000004"
-        }
-      ],
-      "title": "Exercises"
+    "containers/138e2fac-6a8a-4a06-9511-5aefd99ceae9/entries/00000000-0000-4000-8000-000000005801.json": {
+      "containerId": "138e2fac-6a8a-4a06-9511-5aefd99ceae9",
+      "instanceId": "00000000-0000-4000-8000-000000005801",
+      "key": "a1"
     },
-    "containers/roles-b30db206.json": {
+    "containers/138e2fac-6a8a-4a06-9511-5aefd99ceae9/entries/00000000-0000-4000-8000-000000005802.json": {
+      "containerId": "138e2fac-6a8a-4a06-9511-5aefd99ceae9",
+      "instanceId": "00000000-0000-4000-8000-000000005802",
+      "key": "a0"
+    },
+    "containers/138e2fac-6a8a-4a06-9511-5aefd99ceae9/entries/3be7b057-9167-42a4-b0db-2a8b30666cef.json": {
+      "containerId": "138e2fac-6a8a-4a06-9511-5aefd99ceae9",
+      "instanceId": "3be7b057-9167-42a4-b0db-2a8b30666cef",
+      "key": "a4"
+    },
+    "containers/138e2fac-6a8a-4a06-9511-5aefd99ceae9/entries/4a989562-4a9d-4c86-a365-91bf14d55f06.json": {
+      "containerId": "138e2fac-6a8a-4a06-9511-5aefd99ceae9",
+      "instanceId": "4a989562-4a9d-4c86-a365-91bf14d55f06",
+      "key": "a6"
+    },
+    "containers/138e2fac-6a8a-4a06-9511-5aefd99ceae9/entries/5ec00003-0000-4000-8000-000000000003.json": {
+      "containerId": "138e2fac-6a8a-4a06-9511-5aefd99ceae9",
+      "instanceId": "5ec00003-0000-4000-8000-000000000003",
+      "key": "a9"
+    },
+    "containers/138e2fac-6a8a-4a06-9511-5aefd99ceae9/entries/9054911c-5285-4c3e-8198-4b9650169001.json": {
+      "containerId": "138e2fac-6a8a-4a06-9511-5aefd99ceae9",
+      "instanceId": "9054911c-5285-4c3e-8198-4b9650169001",
+      "key": "a2"
+    },
+    "containers/138e2fac-6a8a-4a06-9511-5aefd99ceae9/entries/9af57e54-03fb-4625-9a4c-8d2a254ff2b7.json": {
+      "containerId": "138e2fac-6a8a-4a06-9511-5aefd99ceae9",
+      "instanceId": "9af57e54-03fb-4625-9a4c-8d2a254ff2b7",
+      "key": "a5"
+    },
+    "containers/138e2fac-6a8a-4a06-9511-5aefd99ceae9/entries/a9ca11cf-fd34-4901-b5f6-51e20737cb56.json": {
+      "containerId": "138e2fac-6a8a-4a06-9511-5aefd99ceae9",
+      "instanceId": "a9ca11cf-fd34-4901-b5f6-51e20737cb56",
+      "key": "a8"
+    },
+    "containers/138e2fac-6a8a-4a06-9511-5aefd99ceae9/entries/dd715d4a-8640-4641-b79d-e44f728c547b.json": {
+      "containerId": "138e2fac-6a8a-4a06-9511-5aefd99ceae9",
+      "instanceId": "dd715d4a-8640-4641-b79d-e44f728c547b",
+      "key": "a7"
+    },
+    "containers/138e2fac-6a8a-4a06-9511-5aefd99ceae9/entries/eb4024a0-486f-4d64-a4e4-5d80297129d2.json": {
+      "containerId": "138e2fac-6a8a-4a06-9511-5aefd99ceae9",
+      "instanceId": "eb4024a0-486f-4d64-a4e4-5d80297129d2",
+      "key": "a3"
+    },
+    "containers/4e4c9501-2709-4220-bb47-486f6f78a937/container.json": {
+      "anchorInstanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809",
+      "containerId": "4e4c9501-2709-4220-bb47-486f6f78a937",
+      "identityInstanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809",
+      "title": "Limoma"
+    },
+    "containers/4e4c9501-2709-4220-bb47-486f6f78a937/entries/5ec00001-0000-4000-8000-000000000001.json": {
+      "containerId": "4e4c9501-2709-4220-bb47-486f6f78a937",
+      "instanceId": "5ec00001-0000-4000-8000-000000000001",
+      "key": "a1"
+    },
+    "containers/4e4c9501-2709-4220-bb47-486f6f78a937/entries/5ec00002-0000-4000-8000-000000000002.json": {
+      "containerId": "4e4c9501-2709-4220-bb47-486f6f78a937",
+      "instanceId": "5ec00002-0000-4000-8000-000000000002",
+      "key": "a2"
+    },
+    "containers/4e4c9501-2709-4220-bb47-486f6f78a937/entries/5ec00003-0000-4000-8000-000000000003.json": {
+      "containerId": "4e4c9501-2709-4220-bb47-486f6f78a937",
+      "instanceId": "5ec00003-0000-4000-8000-000000000003",
+      "key": "a3"
+    },
+    "containers/4e4c9501-2709-4220-bb47-486f6f78a937/entries/5ec00004-0000-4000-8000-000000000004.json": {
+      "containerId": "4e4c9501-2709-4220-bb47-486f6f78a937",
+      "instanceId": "5ec00004-0000-4000-8000-000000000004",
+      "key": "a4"
+    },
+    "containers/4e4c9501-2709-4220-bb47-486f6f78a937/entries/ad159754-2edd-4bf8-a70f-a29a617e5809.json": {
+      "containerId": "4e4c9501-2709-4220-bb47-486f6f78a937",
+      "instanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809",
+      "key": "a0"
+    },
+    "containers/b30db206-e9a7-4588-a9aa-53451aacd243/container.json": {
       "anchorInstanceId": "5ec00002-0000-4000-8000-000000000002",
       "containerId": "b30db206-e9a7-4588-a9aa-53451aacd243",
       "containerType": "document",
       "createdAt": "2026-05-31T00:00:00Z",
-      "memberInstanceIds": [
-        {
-          "instanceId": "5bbf9209-1dc9-44b2-b0a3-f2192db5a879"
-        },
-        {
-          "instanceId": "8ed62308-f7b4-47e1-b1a2-5490908efd86"
-        },
-        {
-          "instanceId": "448d64d4-ae82-4971-b027-3b78b9c7a90a"
-        },
-        {
-          "instanceId": "5ec00002-0000-4000-8000-000000000002"
-        }
-      ],
       "title": "Roles"
+    },
+    "containers/b30db206-e9a7-4588-a9aa-53451aacd243/entries/448d64d4-ae82-4971-b027-3b78b9c7a90a.json": {
+      "containerId": "b30db206-e9a7-4588-a9aa-53451aacd243",
+      "instanceId": "448d64d4-ae82-4971-b027-3b78b9c7a90a",
+      "key": "a2"
+    },
+    "containers/b30db206-e9a7-4588-a9aa-53451aacd243/entries/5bbf9209-1dc9-44b2-b0a3-f2192db5a879.json": {
+      "containerId": "b30db206-e9a7-4588-a9aa-53451aacd243",
+      "instanceId": "5bbf9209-1dc9-44b2-b0a3-f2192db5a879",
+      "key": "a0"
+    },
+    "containers/b30db206-e9a7-4588-a9aa-53451aacd243/entries/5ec00002-0000-4000-8000-000000000002.json": {
+      "containerId": "b30db206-e9a7-4588-a9aa-53451aacd243",
+      "instanceId": "5ec00002-0000-4000-8000-000000000002",
+      "key": "a3"
+    },
+    "containers/b30db206-e9a7-4588-a9aa-53451aacd243/entries/8ed62308-f7b4-47e1-b1a2-5490908efd86.json": {
+      "containerId": "b30db206-e9a7-4588-a9aa-53451aacd243",
+      "instanceId": "8ed62308-f7b4-47e1-b1a2-5490908efd86",
+      "key": "a1"
+    },
+    "containers/ece00010-0000-4000-8000-000000000010/container.json": {
+      "anchorInstanceId": "5ec00004-0000-4000-8000-000000000004",
+      "containerId": "ece00010-0000-4000-8000-000000000010",
+      "containerType": "document",
+      "createdAt": "2026-06-27T00:00:00Z",
+      "title": "Exercises"
+    },
+    "containers/ece00010-0000-4000-8000-000000000010/entries/5ec00004-0000-4000-8000-000000000004.json": {
+      "containerId": "ece00010-0000-4000-8000-000000000010",
+      "instanceId": "5ec00004-0000-4000-8000-000000000004",
+      "key": "a2"
+    },
+    "containers/ece00010-0000-4000-8000-000000000010/entries/ee000001-0000-4000-8000-000000000001.json": {
+      "containerId": "ece00010-0000-4000-8000-000000000010",
+      "instanceId": "ee000001-0000-4000-8000-000000000001",
+      "key": "a0"
+    },
+    "containers/ece00010-0000-4000-8000-000000000010/entries/ee000002-0000-4000-8000-000000000002.json": {
+      "containerId": "ece00010-0000-4000-8000-000000000010",
+      "instanceId": "ee000002-0000-4000-8000-000000000002",
+      "key": "a1"
+    },
+    "containers/f7562aa3-98c7-44be-b4c5-5474df6441f2/container.json": {
+      "anchorInstanceId": "5ec00001-0000-4000-8000-000000000001",
+      "containerId": "f7562aa3-98c7-44be-b4c5-5474df6441f2",
+      "containerType": "document",
+      "createdAt": "2026-05-31T00:00:00Z",
+      "title": "Articles"
+    },
+    "containers/f7562aa3-98c7-44be-b4c5-5474df6441f2/entries/0482c489-37b4-4342-adaa-36e69dc6f780.json": {
+      "containerId": "f7562aa3-98c7-44be-b4c5-5474df6441f2",
+      "instanceId": "0482c489-37b4-4342-adaa-36e69dc6f780",
+      "key": "a3"
+    },
+    "containers/f7562aa3-98c7-44be-b4c5-5474df6441f2/entries/31291422-cd8b-4840-b884-d55023d938cb.json": {
+      "containerId": "f7562aa3-98c7-44be-b4c5-5474df6441f2",
+      "instanceId": "31291422-cd8b-4840-b884-d55023d938cb",
+      "key": "a1"
+    },
+    "containers/f7562aa3-98c7-44be-b4c5-5474df6441f2/entries/5ec00001-0000-4000-8000-000000000001.json": {
+      "containerId": "f7562aa3-98c7-44be-b4c5-5474df6441f2",
+      "instanceId": "5ec00001-0000-4000-8000-000000000001",
+      "key": "a6"
+    },
+    "containers/f7562aa3-98c7-44be-b4c5-5474df6441f2/entries/7560efe9-27e3-4186-8b9d-6ab48283f1df.json": {
+      "containerId": "f7562aa3-98c7-44be-b4c5-5474df6441f2",
+      "instanceId": "7560efe9-27e3-4186-8b9d-6ab48283f1df",
+      "key": "a2"
+    },
+    "containers/f7562aa3-98c7-44be-b4c5-5474df6441f2/entries/ad159754-2edd-4bf8-a70f-a29a617e5809.json": {
+      "containerId": "f7562aa3-98c7-44be-b4c5-5474df6441f2",
+      "instanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809",
+      "key": "a0"
+    },
+    "containers/f7562aa3-98c7-44be-b4c5-5474df6441f2/entries/c503fae5-c3ab-452e-a0b4-5682ca204288.json": {
+      "containerId": "f7562aa3-98c7-44be-b4c5-5474df6441f2",
+      "instanceId": "c503fae5-c3ab-452e-a0b4-5682ca204288",
+      "key": "a4"
+    },
+    "containers/f7562aa3-98c7-44be-b4c5-5474df6441f2/entries/cc58c0dd-8e3a-4dc5-9b58-f3273911a9a9.json": {
+      "containerId": "f7562aa3-98c7-44be-b4c5-5474df6441f2",
+      "instanceId": "cc58c0dd-8e3a-4dc5-9b58-f3273911a9a9",
+      "key": "a5"
     },
     "package/compositions/articles-and-roles-78b11038.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/composition.json",
@@ -898,7 +980,7 @@
         "compositions/articles-and-roles-78b11038.json"
       ],
       "createdAt": "2026-01-01T00:00:00Z",
-      "dataModelRevision": 8,
+      "dataModelRevision": 11,
       "description": "",
       "fields": [
         "fields/alternativesconsidered-636ce948.json",
@@ -1941,38 +2023,5 @@
       "sourceInstanceId": "0482c489-37b4-4342-adaa-36e69dc6f780",
       "targetInstanceId": "8ed62308-f7b4-47e1-b1a2-5490908efd86"
     }
-  },
-  "manifest": {
-    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
-      "anchorInstanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809",
-      "containerId": "4e4c9501-2709-4220-bb47-486f6f78a937",
-      "identityInstanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809",
-      "memberInstanceIds": [
-        {
-          "instanceId": "ad159754-2edd-4bf8-a70f-a29a617e5809"
-        },
-        {
-          "instanceId": "5ec00001-0000-4000-8000-000000000001"
-        },
-        {
-          "instanceId": "5ec00002-0000-4000-8000-000000000002"
-        },
-        {
-          "instanceId": "5ec00003-0000-4000-8000-000000000003"
-        },
-        {
-          "instanceId": "5ec00004-0000-4000-8000-000000000004"
-        }
-      ],
-      "title": "Limoma"
-    },
-    "createdAt": "2026-10-02T22:18:37.653412796+00:00",
-    "dataModelRevision": 9,
-    "namespace": "com.limoma",
-    "repositoryId": "8ae058dc-b52d-4e52-8e7e-969018532a04",
-    "srsVersion": "2.0-draft",
-    "title": "Limoma"
-  },
-  "srsj": "2"
+  }
 }

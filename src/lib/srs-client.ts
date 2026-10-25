@@ -205,6 +205,10 @@ export interface SrsRepository {
   available_migrations(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in applyMigration()
   apply_migration(id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in migrationNotice()
+  migration_notice(): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in acceptMigration()
+  accept_migration(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in orderByPrecedes()
   order_by_precedes(input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listAttachments()
@@ -383,10 +387,11 @@ export interface SrsRelation {
   relationType: string;
   sourceInstanceId: string;
   targetInstanceId: string;
-  assertedBy?: string;
-  confidence?: number;
-  status?: string;
   createdAt?: string;
+  /** RFC-046: read-only to clients, stamped by the engine from the session actor. */
+  createdBy?: { kind: "human" | "ai"; id: string; name?: string };
+  notes?: string;
+  meta?: Record<string, unknown>;
 }
 
 export interface RelationListFilter {
@@ -401,9 +406,8 @@ export interface CreateRelationInput {
   relationType: string;
   sourceInstanceId: string;
   targetInstanceId: string;
-  assertedBy?: string;
-  confidence?: number;
-  status?: string;
+  notes?: string;
+  meta?: Record<string, unknown>;
 }
 
 export interface CreateRecordSuccessorInput {
@@ -602,7 +606,11 @@ export function loadRepo(srsj: string): SrsRepository {
  * microtask, so a multi-call action reports once. MCP writes go through `McpSession`, not
  * this handle; the relay host reports those via its own `onHandled`.
  */
-export function observeWrites(repo: SrsRepository, onWrite: () => void): SrsRepository {
+export function observeWrites(
+  repo: SrsRepository,
+  onWrite: () => void,
+  onMigrationRequired?: () => void
+): SrsRepository {
   let seen = repo.write_epoch();
   let pending = false;
   return new Proxy(repo, {
@@ -612,6 +620,10 @@ export function observeWrites(repo: SrsRepository, onWrite: () => void): SrsRepo
       return (...args: unknown[]) => {
         try {
           return value.apply(target, args);
+        } catch (e) {
+          // A write before the user accepted an in-memory migration (srs-rust#1454): ask again.
+          if (isMigrationRequired(e)) onMigrationRequired?.();
+          throw e;
         } finally {
           const now = target.write_epoch();
           if (now !== seen) {
@@ -829,10 +841,10 @@ export function listRelations(repo: SrsRepository, filter: RelationListFilter = 
     relationType: r.relationType,
     sourceInstanceId: r.sourceInstanceId ?? r.sourceId,
     targetInstanceId: r.targetInstanceId ?? r.targetId,
-    assertedBy: r.assertedBy,
-    confidence: r.confidence,
-    status: r.status,
     createdAt: r.createdAt,
+    createdBy: r.createdBy,
+    notes: r.notes,
+    meta: r.meta,
   }));
 }
 
@@ -846,10 +858,10 @@ export function createRelation(repo: SrsRepository, input: CreateRelationInput):
     relationType: raw.relationType,
     sourceInstanceId: raw.sourceInstanceId,
     targetInstanceId: raw.targetInstanceId,
-    assertedBy: raw.assertedBy,
-    confidence: raw.confidence,
-    status: raw.status,
     createdAt: raw.createdAt,
+    createdBy: raw.createdBy,
+    notes: raw.notes,
+    meta: raw.meta,
   };
 }
 
@@ -912,10 +924,10 @@ function normalizeRelationRaw(raw: any): SrsRelation {
     relationType: raw.relationType,
     sourceInstanceId: raw.sourceInstanceId,
     targetInstanceId: raw.targetInstanceId,
-    assertedBy: raw.assertedBy,
-    confidence: raw.confidence,
-    status: raw.status,
     createdAt: raw.createdAt,
+    createdBy: raw.createdBy,
+    notes: raw.notes,
+    meta: raw.meta,
   };
 }
 
@@ -1264,7 +1276,7 @@ export interface NavigationNode {
 /**
  * Full repository navigation result from `repositoryNavigation()`.
  * `sections` follow the root container's entry order (RFC-043 [R12]) with `depth`.
- * `diagnostics` is non-empty when `manifest.container` is absent (pre-RFC-013 repo).
+ * `diagnostics` is non-empty when the manifest names no root container (`rootContainerId`, RFC-052).
  * Mirrors `RepositoryNavigation` in srs-rust `repository_navigation_service.rs`.
  */
 export interface RepositoryNavigation {
@@ -2158,9 +2170,9 @@ function normalizeRepositoryNavigation(raw: any): RepositoryNavigation {
 /**
  * Return the repository identity record and precedes-ordered section nodes.
  * Sources from `repository_navigation_service` (srs-rust#268), which reads the
- * RFC-013 root container from `manifest.container`.
+ * RFC-013 root container named by `manifest.rootContainerId` (RFC-052).
  *
- * When `diagnostics` is non-empty, `manifest.container` is absent (pre-RFC-013 repo)
+ * When `diagnostics` is non-empty, the manifest names no root container
  * and `sections` is empty. Callers should fall back to `listContainers()` in that case.
  *
  * ADR-001: pure WASM pass-through — section ordering is computed in the Rust service.
@@ -2177,7 +2189,7 @@ export function repositoryNavigation(repo: SrsRepository): RepositoryNavigation 
  * `default_repository_container` falls back to the namespace when no title was given
  * at creation, so this is still a meaningful improvement over the opened file/URL name),
  * else `fallback` (the caller's opened file/URL name, pre-stripped of its extension).
- * A repository predating RFC-013 (no `manifest.container`) or a WASM read failure also
+ * A repository with no root container (no `manifest.rootContainerId`) or a WASM read failure also
  * falls back — this must never block opening the document.
  */
 export function resolveRepositoryTitle(repo: SrsRepository, fallback: string): string {
@@ -2285,6 +2297,30 @@ export function availableMigrations(repo: SrsRepository): MigrationSummary[] {
 export function applyMigration(repo: SrsRepository, id: string): MigrationApplyResult {
   return repo.apply_migration(id) as MigrationApplyResult;
 }
+
+/**
+ * A pre-current `.srsj`/`.srs` the engine migrated in memory on load (srs-rust#1454). Until
+ * `acceptMigration` every write is refused with `MIGRATION_REQUIRED_CODE`; exports are not.
+ */
+export interface MigrationNotice {
+  sourceRevision: number;
+  migrations: string[];
+}
+export const MIGRATION_REQUIRED_CODE = "migration-required-before-write";
+
+/** The in-memory migration notice, or `null` when the document opened as stored. */
+export function migrationNotice(repo: SrsRepository): MigrationNotice | null {
+  return (repo.migration_notice() as MigrationNotice | null) ?? null;
+}
+
+/** The user's consent to a `MigrationNotice`: writes work from here on, and the next export is current. */
+export function acceptMigration(repo: SrsRepository): void {
+  repo.accept_migration();
+}
+
+/** Whether an engine error is the refusal of a write before `acceptMigration`. */
+export const isMigrationRequired = (e: unknown): boolean =>
+  typeof e === "object" && e !== null && (e as { code?: unknown }).code === MIGRATION_REQUIRED_CODE;
 
 // ---------------------------------------------------------------------------
 // Attachment wrappers (srs-rust#290, srs-rust#291, srs-web#99)
@@ -2450,9 +2486,17 @@ export function moveInPrecedesChain(
   return normalizeChainSpliceResult(raw);
 }
 
-/** Registry ids of the revision migrations the load gate offers (RFC-043 7 -> 8, RFC-046 8 -> 9). */
+/**
+ * Registry ids of the revision migrations the load gate offers
+ * (RFC-043 7 -> 8, RFC-046 8 -> 9, RFC-052 9 -> 10, RFC-051 10 -> 11).
+ * Listed here because `available_migrations()` does not say which entries are
+ * revision steps (it also reports structural ones such as `migrate-identity`
+ * as needed); srs-rust#1466 exposes that, after which this list goes.
+ */
 export const RFC043_MIGRATION_ID = "rfc043-container-entries";
 export const RFC046_MIGRATION_ID = "rfc046-actor-provenance";
+export const RFC052_MIGRATION_ID = "rfc052-root-container";
+export const RFC051_MIGRATION_ID = "rfc051-container-entries";
 
 /**
  * Revision migrations the load gate offers, in order, when the engine reports them needed.
@@ -2464,7 +2508,12 @@ export function neededMigrationIds(repo: SrsRepository): string[] {
       .filter((m) => m.status.needed)
       .map((m) => m.id)
   );
-  return [RFC043_MIGRATION_ID, RFC046_MIGRATION_ID].filter((id) => needed.has(id));
+  return [
+    RFC043_MIGRATION_ID,
+    RFC046_MIGRATION_ID,
+    RFC052_MIGRATION_ID,
+    RFC051_MIGRATION_ID,
+  ].filter((id) => needed.has(id));
 }
 
 // ---------------------------------------------------------------------------
