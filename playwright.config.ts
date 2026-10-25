@@ -8,6 +8,11 @@ const baseURL = `http://localhost:${port}`
 // (PLAYWRIGHT_BROWSERS_PATH) when the pinned build is not installed.
 const pinnedChromium = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 
+// Writers have a name (srs-web#618): the essay is read-only without one, so every spec starts with a
+// saved local actor. A spec that tests the missing-name path clears it with `test.use({ storageState: NO_ACTOR })`.
+const actor = { kind: "human", id: "local:e2e-ada", name: "Ada" }
+export const NO_ACTOR = { cookies: [], origins: [] }
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -22,6 +27,10 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "on-first-retry",
+    storageState: {
+      cookies: [],
+      origins: [{ origin: baseURL, localStorage: [{ name: "srs-web.actor", value: JSON.stringify(actor) }] }],
+    },
   },
   projects: [
     {

@@ -456,7 +456,6 @@ test("three agents: each is visible in the presence strip, and their comments ke
   await expect(thread.getByTestId("actor-name")).toHaveText(["alpha", "beta", "gamma"]);
 
   // a human run: the first comment carries the chip, the next one only the compact mark (a circle)
-  await thread.getByLabel("Your name").fill("Ada");
   for (const t of ["human one", "human two"]) {
     await thread.getByLabel("Reply").fill(t);
     await thread.getByRole("button", { name: "Comment", exact: true }).click();

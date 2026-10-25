@@ -50,7 +50,6 @@ test("essay corpus: a comment on a non-paragraph instance works", async ({ page 
   const errors = await selectFirstRecord(page, "essay.srsj", "On small democracy");
   const notes = page.getByTestId("instance-notes");
   await expect(notes.getByTestId("comment-thread")).toBeVisible();
-  await notes.getByLabel("Your name").fill("Ada");
   await notes.getByLabel("Reply").fill("A comment from the generic inspector.");
   await notes.getByRole("button", { name: "Comment", exact: true }).click();
   await expect(notes.getByTestId("comment")).toHaveCount(1);

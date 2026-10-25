@@ -22,29 +22,28 @@ async function openThread(page: Page, paragraph: number) {
   const badge = items(page).nth(paragraph).getByTestId("comment-badge");
   if ((await badge.getAttribute("aria-expanded")) !== "true") await badge.click();
 }
-async function reply(page: Page, paragraph: number, text: string, name?: string) {
+async function reply(page: Page, paragraph: number, text: string) {
   const thread = items(page).nth(paragraph);
   await openThread(page, paragraph);
-  if (name) await thread.getByLabel("Your name").fill(name);
   await thread.getByLabel("Reply").fill(text);
   await thread.getByRole("button", { name: "Comment", exact: true }).click();
 }
 
 test("a human comment shows the human author", async ({ page }) => {
   await open(page);
-  await reply(page, 0, "Nice opening.", "Ada");
+  await reply(page, 0, "Nice opening.");
   const c = items(page).nth(0).getByTestId("comment");
   await expect(c).toHaveCount(1);
   await expect(c.getByTestId("actor-name")).toHaveText("Ada");
   await expect(c.getByTestId("actor-kind")).toHaveText("human");
   await expect(c).toContainText("Nice opening.");
-  // the name is remembered: the next reply no longer asks for it
+  // the writer has a name: the reply box does not ask for one
   await expect(items(page).nth(0).getByLabel("Your name")).toHaveCount(0);
 });
 
 test("comments on two paragraphs stay separate and oldest first", async ({ page }) => {
   await open(page);
-  await reply(page, 0, "first on one", "Ada");
+  await reply(page, 0, "first on one");
   await expect(items(page).nth(0).getByTestId("comment")).toHaveCount(1);
   await reply(page, 1, "only on two");
   await reply(page, 0, "second on one");
@@ -108,7 +107,7 @@ test("an MCP-created comment shows the agent author, live", async ({ page }) => 
     capabilities: {},
     clientInfo: { name: "agent-test", version: "0" },
   });
-  await reply(page, 1, "human first", "Ada");
+  await reply(page, 1, "human first");
   await expect(items(page).nth(1).getByTestId("comment")).toHaveCount(1);
   const paragraph = (await items(page)
     .nth(1)
@@ -147,7 +146,7 @@ test("an MCP-created comment shows the agent author, live", async ({ page }) => 
 
 test("threads are hidden by default; the badge shows the count and opens one; comment mode shows all", async ({ page }) => {
   await open(page);
-  await reply(page, 0, "one", "Ada");
+  await reply(page, 0, "one");
   await expect(items(page).nth(0).getByTestId("comment-badge")).toHaveText("1");
   await items(page).nth(0).getByTestId("comment-badge").click(); // close
   await expect(page.getByTestId("comment-thread")).toHaveCount(0);
@@ -230,7 +229,7 @@ test("a thread opened by its badge is gone after Comments on then off", async ({
 
 test("posting keeps the thread open and the badge still closes it", async ({ page }) => {
   await open(page);
-  await reply(page, 0, "stays", "Ada");
+  await reply(page, 0, "stays");
   await expect(items(page).nth(0).getByTestId("comment")).toHaveCount(1);
   await expect(threads(page)).toHaveCount(1);
   await badge(page, 0).click();
