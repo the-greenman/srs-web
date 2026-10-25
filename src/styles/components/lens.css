@@ -232,6 +232,10 @@
   gap: var(--space-xs);
   padding: var(--space-2xs) var(--space-sm) var(--space-xs);
 }
+.lens-filter > .input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 .lens-context .lens-pane-head,
 .lens-board .lens-pane-head {
   padding-left: 0;

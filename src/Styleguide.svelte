@@ -573,7 +573,7 @@
       <Frame width="var(--inspector-width)" caption="Switcher (section tabs + More) and the outline told apart by Nesting, Select on, a set of 2" testid="sg-lens-outline">
         <LensSwitcher tabs={fx.lensTabs} more={fx.lensMore} active="nav:s-case" onPick={noop} />
         <div class="nav" style="padding: var(--space-xs) 0">
-          <Collection data={fx.lensOutline} selectedId="c-2" expanded={new Set(["c-1"])} onDark by="nesting" byOptions={fx.lensByOptions} onBy={noop} picking checked={new Set(["c-2", "c-3"])} checkedCount={2} canShow onPicking={noop} onCheck={noop} onShowSet={noop} onClearChecks={noop} onSelect={noop} onExpand={noop} />
+          <Collection filterable data={fx.lensOutline} selectedId="c-2" expanded={new Set(["c-1"])} onDark by="nesting" byOptions={fx.lensByOptions} onBy={noop} picking checked={new Set(["c-2", "c-3"])} checkedCount={2} canShow onPicking={noop} onCheck={noop} onShowSet={noop} onClearChecks={noop} onSelect={noop} onExpand={noop} />
         </div>
       </Frame>
       <Frame width="var(--inspector-width)" caption="A list told apart by Created by: ActorChip headings with counts" testid="sg-lens-created-by">
