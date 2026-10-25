@@ -41,6 +41,17 @@
 .essay-shell__empty {
   padding: var(--space-md);
 }
+/* Read-only until the writer gives a name (srs-web#618). */
+.essay-shell__name-gate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+}
+.essay-shell__page[inert] {
+  opacity: 0.6;
+}
 /* bp: compact */
 @media (max-width: 720px) {
   .essay-shell__page {

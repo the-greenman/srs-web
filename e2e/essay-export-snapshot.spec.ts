@@ -24,7 +24,6 @@ test("Export snapshot: a valid slice with every paragraph, the comment and the e
 
   const first = page.locator(".essay-shell__page .block-stack__item").first();
   await first.getByTestId("comment-badge").click();
-  await first.getByLabel("Your name").fill("Ada");
   await first.getByLabel("Reply").fill("Nice opening.");
   await first.getByRole("button", { name: "Comment", exact: true }).click();
   await expect(first.getByTestId("comment")).toHaveCount(1);

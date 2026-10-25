@@ -89,7 +89,6 @@ test("a rev-8 essay asks, migrates on consent, takes an attributed reply and sav
   await page.getByTestId("package-editor-essay").click();
   const first = page.locator(".essay-shell__page .block-stack__item").first();
   await first.getByTestId("comment-badge").click();
-  await first.getByLabel("Your name").fill("Ada");
   await first.getByLabel("Reply").fill("After migration.");
   await first.getByRole("button", { name: "Comment", exact: true }).click();
   const c = first.getByTestId("comment");
@@ -129,7 +128,6 @@ test("a declined rev-8 essay saved as a copy becomes editable, with no second pr
   await page.getByTestId("package-editor-essay").click();
   const first = page.locator(".essay-shell__page .block-stack__item").first();
   await first.getByTestId("comment-badge").click();
-  await first.getByLabel("Your name").fill("Ada");
   await first.getByLabel("Reply").fill("On the copy.");
   await first.getByRole("button", { name: "Comment", exact: true }).click();
   await expect(first.getByTestId("comment").getByTestId("actor-name")).toHaveText("Ada");

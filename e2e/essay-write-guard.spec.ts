@@ -140,7 +140,6 @@ test("agent writes cannot change the essay text but can comment", async ({ page 
   // ... but not one the human created (a comment through the UI).
   const first = page.locator(".essay-shell__page .block-stack__item").first();
   await first.getByTestId("comment-badge").click();
-  await first.getByLabel("Your name").fill("Ada");
   await first.getByLabel("Reply").fill("Human comment.");
   await first.getByRole("button", { name: "Comment", exact: true }).click();
   await expect(first.getByTestId("comment")).toHaveCount(1);

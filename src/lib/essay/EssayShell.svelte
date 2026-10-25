@@ -135,9 +135,22 @@
   let essayId = $state<string | null>(null);
   let model = $state<EssayModel | null>(null);
   let error = $state<string | null>(null);
-  /** Whether UI writes are attributed (login or saved name); follows actor changes. */
-  let hasActor = $state(currentActor() !== null);
-  onDestroy(onActorChange(() => (hasActor = currentActor() !== null)));
+  /** Who the session writes as (login or saved name); follows actor changes. */
+  let actor = $state(currentActor());
+  const hasActor = $derived(actor !== null);
+  onDestroy(onActorChange(() => (actor = currentActor())));
+  /** No unattributed writes (srs-web#618): without an actor the page is read-only until a name is given. */
+  const needsName = $derived(!hasActor);
+  let writerName = $state("");
+  function saveWriterName(e?: Event) {
+    e?.preventDefault();
+    if (!saveLocalName(writerName)) {
+      if (writerName.trim()) error = "Could not remember your name in this browser.";
+      return;
+    }
+    writerName = "";
+    error = null;
+  }
 
   const pinKey = (id: string) => `essay.pins.${id}`;
   const foldKey = (id: string) => `srs-web.essay-fold.${id}`;
@@ -723,6 +736,11 @@
     {/snippet}
     {#snippet trail()}<InspectorTrigger />{/snippet}
     {#snippet status()}
+      {#if actor}
+        <span data-testid="session-actor" title={actor.id.startsWith("local:") ? "Writing under a name saved in this browser only" : actor.id}>
+          Writing as {actor.name ?? actor.id}{actor.id.startsWith("local:") ? " (this browser)" : ""}
+        </span>
+      {/if}
       {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
     {/snippet}
   </Toolbar>
@@ -738,6 +756,13 @@
     </Notice>
   {/if}
   {#if error}<Notice kind="error" testid="essay-error">{error}</Notice>{/if}
+  {#if needsName}
+    <form class="essay-shell__name-gate" data-testid="name-gate" onsubmit={saveWriterName}>
+      <Notice kind="info">This essay is read-only until we know who is writing. Give your name, or sign in, to edit.</Notice>
+      <Input aria-label="Your name" data-testid="name-gate-input" bind:value={writerName} />
+      <Button variant="primary" type="submit" disabled={!writerName.trim()}>Start writing</Button>
+    </form>
+  {/if}
 
 
   <div class="workspace workspace--flush essay-shell">
@@ -752,6 +777,7 @@
       <article
         class="essay-shell__page"
         aria-label={model.title}
+        inert={needsName}
         ondragover={poolDrop ? (e) => dropKinds(e) && e.preventDefault() : undefined}
         ondrop={poolDrop
           ? (e) => {
