@@ -7,9 +7,19 @@
 <script lang="ts">
   import type { SrsRecord } from '$lib/srs-client.js';
   import { TYPE_REGISTRY } from '$lib/governance/type-registry.js';
+  import { getFieldMetaContext } from '$lib/governance/field-meta.js';
   import RecordProse from './RecordProse.svelte';
 
   let { record }: { record: SrsRecord } = $props();
+
+  const _fieldMetaCtx = getFieldMetaContext();
+  /** The record's stored fields with the labels and value kinds the schema context knows; unknown names keep their own. */
+  const fields = $derived(
+    Object.keys(record.fieldValues).flatMap((name) => {
+      const def = _fieldMetaCtx.meta.get(name);
+      return def ? [def] : [{ name, label: name, valueType: 'string' as const, required: false }];
+    })
+  );
 
   let ViewComponent = $derived(TYPE_REGISTRY[record.typeId]?.view);
 </script>
@@ -17,5 +27,5 @@
 {#if ViewComponent}
   <ViewComponent {record} />
 {:else}
-  <RecordProse {record} fields={[]} composites={[]} />
+  <RecordProse {record} {fields} composites={[]} />
 {/if}
