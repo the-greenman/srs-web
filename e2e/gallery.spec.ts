@@ -173,7 +173,7 @@ test.describe("Gallery fixture — real records render", () => {
     await page.locator(".record-list__item").first().click();
 
     // Reading view must contain role-specific field labels
-    await expect(page.locator('[data-testid="record-reading"]')).toContainText("Role Holder");
+    await expect(page.locator('[data-testid="record-reading"] [data-testid="record-prose"]')).toBeVisible(); // labels are tooltips on chips under RecordProse (ADR-024)
 
     // Field content must NOT appear in the inspector
     await expect(page.locator(".inspector__section").first()).not.toContainText("Role Holder");
