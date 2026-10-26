@@ -92,21 +92,46 @@ declare global {
   }
 }
 
-/** Walk `dir` into a repo-relative path -> bytes map. */
-async function readDirectory(
+/** Files read at once. Each `getFile()` is a round trip to the browser's file service. */
+const READ_CONCURRENCY = 32;
+
+/** List every file under `dir` as repo-relative path -> handle. */
+async function listFiles(
   dir: FileSystemDirectoryHandle,
   prefix: string,
-  out: Record<string, Uint8Array>
+  out: [string, FileSystemFileHandle][]
 ): Promise<void> {
   for await (const [name, handle] of dir.entries()) {
     if (handle.kind === "directory") {
       if (TREE_SKIP_DIRS.has(name)) continue;
-      await readDirectory(handle as FileSystemDirectoryHandle, `${prefix}${name}/`, out);
+      await listFiles(handle as FileSystemDirectoryHandle, `${prefix}${name}/`, out);
     } else {
-      const file = await (handle as FileSystemFileHandle).getFile();
-      out[`${prefix}${name}`] = new Uint8Array(await file.arrayBuffer());
+      out.push([`${prefix}${name}`, handle as FileSystemFileHandle]);
     }
   }
+}
+
+/**
+ * Walk `dir` into a repo-relative path -> bytes map. The files are read concurrently:
+ * a serial walk of a few thousand files costs minutes (srs-web#629). Paths come back
+ * sorted, so the tree never depends on which read finished first.
+ */
+async function readDirectory(dir: FileSystemDirectoryHandle): Promise<Record<string, Uint8Array>> {
+  const files: [string, FileSystemFileHandle][] = [];
+  await listFiles(dir, "", files);
+  files.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  const bytes: Uint8Array[] = new Array(files.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < files.length) {
+      const i = next++;
+      // biome-ignore lint/style/noNonNullAssertion: i < files.length
+      const file = await files[i]![1].getFile();
+      bytes[i] = new Uint8Array(await file.arrayBuffer());
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(READ_CONCURRENCY, files.length) }, worker));
+  return Object.fromEntries(files.map(([path], i) => [path, bytes[i] as Uint8Array]));
 }
 
 /** Resolve the directory holding `path`'s last segment, creating it when asked. */
@@ -231,8 +256,7 @@ export async function pickLocalDirectory(): Promise<LocalTreeHandle | null> {
     if (e instanceof DOMException && e.name === "AbortError") return null;
     throw e;
   }
-  const files: Record<string, Uint8Array> = {};
-  await readDirectory(dir, "", files);
+  const files = await readDirectory(dir);
   assertRepoTree(files);
   return new LocalTreeHandle(`local-dir:${dir.name}`, dir.name, files, dir);
 }

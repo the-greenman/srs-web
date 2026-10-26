@@ -188,6 +188,48 @@ describe("pickLocalDirectory", () => {
     expect(Object.keys(await handle.readTree())).not.toContain("node_modules/pkg/index.js");
   });
 
+  it("reads files concurrently, never more than the cap at once, and returns sorted paths (srs-web#629)", async () => {
+    const names = Array.from(
+      { length: 100 },
+      (_, i) => `records/r${String(99 - i).padStart(3, "0")}.json`
+    );
+    let inFlight = 0;
+    let peak = 0;
+    const file = (name: string) => ({
+      kind: "file" as const,
+      name,
+      getFile: async () => {
+        inFlight++;
+        peak = Math.max(peak, inFlight);
+        await new Promise((r) => setTimeout(r, 1));
+        inFlight--;
+        return { arrayBuffer: () => Promise.resolve(bytes(name).buffer) };
+      },
+    });
+    const records = {
+      kind: "directory" as const,
+      name: "records",
+      async *entries() {
+        for (const n of names) yield [n.slice("records/".length), file(n)];
+      },
+    };
+    const root = {
+      kind: "directory" as const,
+      name: "repo",
+      async *entries() {
+        yield ["manifest.json", file("manifest.json")];
+        yield ["records", records];
+      },
+    };
+    const handle = await pickHandle(root as unknown as FileSystemDirectoryHandle);
+    const tree = await handle.readTree();
+
+    expect(peak).toBeGreaterThan(1);
+    expect(peak).toBeLessThanOrEqual(32);
+    expect(Object.keys(tree)).toEqual(["manifest.json", ...[...names].sort()]);
+    expect(text(tree["records/r042.json"] as Uint8Array)).toBe("records/r042.json");
+  });
+
   it("refuses a folder that is not an SRS repository", async () => {
     const { dir } = stubDirectory({ "README.md": "hello" });
     await expect(pickHandle(dir)).rejects.toThrow(/not an SRS repository/);
