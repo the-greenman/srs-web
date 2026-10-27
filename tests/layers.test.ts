@@ -30,9 +30,9 @@ const DOCUMENT = /(?<![\w.$/"'-])document\.[a-zA-Z]/;
 /** Allowed exceptions: every entry needs a reason that names its follow-up. */
 const IMPORTS_SVELTE: Record<string, string> = {
   "src/lib/components/index.ts":
-    "the component barrel re-exports components; it holds no behaviour",
+    "the component barrel re-exports components; it holds no behaviour; permanent exception, no follow-up",
   "src/lib/editors/registry.ts":
-    "the editor registry maps a view to its shell; a shell is a screen (ADR-022)",
+    "the editor registry maps a view to its shell; a shell is a screen (ADR-022); permanent exception, no follow-up",
   "src/lib/governance/type-registry.ts":
     "maps a type to its view component; follow-up: move the mapping to the screen layer",
 };
@@ -44,7 +44,7 @@ const TOUCHES_DOCUMENT: Record<string, string> = {
     "anchor-click download; follow-up: share the download helper with attachment-download.ts",
   "src/lib/storage/local.ts": "anchor-click download; follow-up: share the download helper",
   "src/lib/storage/script-loader.ts":
-    "injects a vendor script tag; a browser adapter, not behaviour",
+    "injects a vendor script tag; a browser adapter; follow-up: move to a storage adapter outside the headless scope",
   "src/lib/agent-library.svelte.ts":
     "visibilitychange listener; follow-up: the host component registers it",
 };
@@ -98,6 +98,8 @@ const NO_SPECIMEN: Record<string, string> = Object.fromEntries(
     "SaveToModal",
     "SuccessorModal",
     "TrayRow",
+    "Drawer",
+    "Migrations",
     "ViewPicker",
     "Workspace",
   ].map((n) => [n, NO_SPECIMEN_REASON])
@@ -110,7 +112,9 @@ describe("shared components (ADR-027)", () => {
   const components = readdirSync(join(ROOT, "src/lib/components"))
     .filter((n) => n.endsWith(".svelte"))
     .map((n) => n.replace(/\.svelte$/, ""));
-  const unmounted = components.filter((c) => !new RegExp(`\\b${c}\\b`).test(specimens)).sort();
+  const unmounted = components
+    .filter((c) => !new RegExp(`<${c}[\\s/>]|/${c}\\.svelte`).test(specimens))
+    .sort();
 
   it("are each mounted by the styleguide", () => {
     expect(unmounted).toEqual(Object.keys(NO_SPECIMEN).sort());

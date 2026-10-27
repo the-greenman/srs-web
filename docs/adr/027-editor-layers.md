@@ -17,7 +17,7 @@ ADR-019 and ADR-020 cover the look: token tiers, the `theme` layer, `/styleguide
 Four layers. Each change lives in exactly one of them.
 
 1. **Core.** SRS semantics, in srs-rust through WASM (ADR-001). Unchanged.
-2. **Headless.** Reusable behaviour with no UI, in `.ts` or `.svelte.ts` modules under `src/lib/<feature>/`. These hold state, acts and derivations. They contain no markup and no CSS, import no `.svelte` file, and do not touch `document`. Every editor that needs the behaviour uses the same module: the method affirmation editor and the essay editor share one headless module for tick and deny, and may look different.
+2. **Headless.** Reusable behaviour with no UI, in `.ts` or `.svelte.ts` modules under `src/lib/` (by feature, `src/lib/<feature>/`). These hold state, acts and derivations. They contain no markup and no CSS, import no `.svelte` file, and do not touch `document`. Every editor that needs the behaviour uses the same module: the method affirmation editor and the essay editor share one headless module for tick and deny, and may look different.
 3. **Components.** Svelte presentation over headless modules, styled only through tokens (ADR-020). Each shared component in `src/lib/components/` has a specimen on `/styleguide`.
 4. **Screens.** Editors compose components. They add no behaviour of their own.
 
@@ -30,7 +30,7 @@ Four layers. Each change lives in exactly one of them.
 `tests/layers.test.ts` checks two things and fails on either:
 
 - a headless module imports a `.svelte` file or touches `document`;
-- a shared component in `src/lib/components/` is not mounted by `src/Styleguide.svelte` or `src/styleguide/`.
+- a shared component in `src/lib/components/` is not mounted (`<Name`) or imported by `src/Styleguide.svelte` or `src/styleguide/`.
 
 Existing offenders are the baseline, listed in the test with a reason each. The lists only shrink: an entry that is fixed is removed, and a new offender fails the test.
 
