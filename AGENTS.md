@@ -5,3 +5,4 @@
 - **Do not invoke or follow `.claude/commands/*`** — those are Claude-specific. `epic-worker`/`epic-coordinator` are retired (srs#451). The process is `CLAUDE.md` + #512.
 - **PRs**: label `epic-256:owner-merge`, body references `Closes #N` / `Refs #N`. Never merge.
 - **Gates**: `npm run build`, `npm test`, `npx playwright test` (e2e is where bindings regressions show). Pin via `ensure-bindings.mjs`. Auto-deploys on push to `main` (Cloudflare Workers Builds) — never `npm run deploy`.
+- **Layers**: behaviour goes in a headless module, looks start on `/styleguide`; see `CLAUDE.md` "Layers", ADR-019, ADR-020, ADR-027 and `src/styles/README.md`. `tests/layers.test.ts` guards it.
