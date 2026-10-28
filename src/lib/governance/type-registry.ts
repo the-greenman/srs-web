@@ -19,7 +19,7 @@ export interface TypeRegistryEntry {
   typeNamespace: string;
   typeVersion: number;
   /**
-   * Custom view component for this type. Optional: absent entries fall back to RecordView
+   * Custom view component for this type. Optional: absent entries fall back to RecordProse
    * in RecordDispatch.svelte. All registered views accept { record: SrsRecord }.
    * Cast required: Svelte 5 component types are not structurally identical even when
    * they share the same prop interface.
@@ -41,7 +41,7 @@ export const DECISION_LOG_TYPE_ID = "5a061505-dd0e-4c8d-9e20-fa28a3c42b68";
 
 // Release 1 is a decision-log-only editor. The `article`, `role`, and `exercise` types
 // stay defined (dormant) in the com.mudemocracy.governance package, but the editor
-// registers only the decision view. Any dormant-type record falls back to RecordView
+// registers only the decision view. Any dormant-type record falls back to RecordProse
 // via RecordDispatch.
 export const TYPE_REGISTRY: Record<string, TypeRegistryEntry> = {
   [DECISION_TYPE_ID]: {

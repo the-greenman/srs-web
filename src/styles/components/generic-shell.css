@@ -300,18 +300,6 @@
   color: var(--color-muted-strong);
   font-size: var(--size-sm);
 }
-.generic-field {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 0;
-  border-bottom: var(--rule-soft);
-  font-size: var(--size-sm);
-}
-.generic-field strong {
-  color: var(--color-muted-strong);
-  font-size: var(--size-xs);
-}
 .generic-edit {
   margin-top: var(--space-xs);
   font: inherit;

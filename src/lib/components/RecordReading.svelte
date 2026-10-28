@@ -2,7 +2,7 @@
   RecordReading — record reading view for the governance centre canvas.
 
   Delegates content rendering to RecordDispatch, which routes to a type-specific view
-  (DecisionView in release 1) or falls back to RecordView for unregistered types.
+  (DecisionView in release 1) or falls back to RecordProse for unregistered types.
   ADR-006: typeId-keyed dispatch; srs-web#70.
 
   Usage: show when a record is selected and formMode is null; clicking back clears selection.
@@ -11,6 +11,9 @@
   import ArrowLeft from "@lucide/svelte/icons/arrow-left";
   import type { SrsRecord } from "$lib/srs-client.js";
   import RecordDispatch from "../../rendering/RecordDispatch.svelte";
+  import { TYPE_REGISTRY } from "$lib/governance/type-registry.js";
+  import type { Status } from "$lib/types.js";
+  import Tag from "./Tag.svelte";
 
   let {
     record,
@@ -21,12 +24,19 @@
     sectionLabel: string;
     onBack: () => void;
   } = $props();
+
+  // RecordProse leaves lifecycle to its host (ADR-024); a registered view (DecisionView's Card) already shows its own.
+  const showStatus = $derived(Boolean(record.lifecycle) && !TYPE_REGISTRY[record.typeId]?.view);
 </script>
 
 <div data-testid="record-reading" class="reading">
   <button class="reading__back" data-testid="record-reading-back" onclick={onBack}>
     <ArrowLeft size={14} aria-hidden="true" /> {sectionLabel}
   </button>
+
+  {#if showStatus}
+    <p class="reading__status" data-testid="record-reading-status"><Tag status={record.lifecycle as Status} /></p>
+  {/if}
 
   <div class="reading__card">
     <RecordDispatch {record} />
@@ -54,6 +64,10 @@
 
   .reading__back:hover {
     color: var(--color-text);
+  }
+
+  .reading__status {
+    margin: 0 0 var(--space-xs);
   }
 
   .reading__card {

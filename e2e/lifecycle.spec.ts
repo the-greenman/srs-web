@@ -59,18 +59,18 @@ test.describe("Lifecycle transitions (B11)", () => {
   });
 
   // --------------------------------------------------------------------------
-  // srs-web#211: the read-only RecordView (the fallback view articles dispatch
-  // to — decisions use the bespoke DecisionView) surfaces each field's own
-  // description as an inline caption, mirroring the #176 editor treatment.
+  // srs-web#550: the fallback view articles dispatch to is RecordProse (ADR-024), which
+  // shows no field description captions (srs-web#211 captions retired, owner A2); the host
+  // (RecordReading) shows the lifecycle status instead.
   // --------------------------------------------------------------------------
-  test("RecordView shows field description captions for a selected article (#211)", async ({
+  test("the reading view shows prose and the lifecycle status for a selected article (#550)", async ({
     page,
   }) => {
     await page.locator(".record-list__item").filter({ hasText: "What this is" }).click();
     const reading = page.getByTestId("record-reading");
     await expect(reading).toBeVisible({ timeout: 3000 });
-    // At least one populated field renders its description caption below the label.
-    await expect(reading.locator(".card__field-description").first()).toBeVisible();
+    await expect(reading.locator('[data-testid="record-prose"]')).toBeVisible();
+    await expect(reading.getByTestId("record-reading-status")).toBeVisible();
   });
 
   // --------------------------------------------------------------------------

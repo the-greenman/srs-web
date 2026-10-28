@@ -15,7 +15,7 @@ import { openPackageEditor, navItem } from "./helpers.js";
  * TYPE_REGISTRY. Article, role, and exercise records fall back to RecordView
  * via RecordDispatch. Field labels are derived from the WASM typeSchema()
  * output (displayLabel → JSON Schema title), so assertions like "Article Text",
- * "Role Holder", and "Thinking Reached" remain valid under RecordView.
+ * "Role Holder", and "Thinking Reached" remain valid under RecordProse.
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -131,7 +131,7 @@ test.describe("Gallery fixture — real records render", () => {
     await expect(exercisesNav).toContainText("2");
   });
 
-  test("selecting an exercise shows its fields in the reading view (RecordView fallback)", async ({ page }) => {
+  test("selecting an exercise shows its fields in the reading view (RecordProse fallback)", async ({ page }) => {
     await navItem(page, /Exercises/).click();
     await page.locator(".record-list__item").first().click();
 
@@ -151,7 +151,7 @@ test.describe("Gallery fixture — real records render", () => {
 
     // Reading view must appear in the centre with field labels
     await expect(page.locator('[data-testid="record-reading"]')).toBeVisible();
-    await expect(page.locator('[data-testid="record-reading"]')).toContainText("Article Text");
+    await expect(page.locator('[data-testid="record-reading"] [data-testid="record-prose"]')).toBeVisible(); // the long article text is the unlabelled prose body (ADR-024)
 
     // Field content must NOT appear in the inspector
     await expect(page.locator(".inspector__section").first()).not.toContainText("Article Text");
@@ -173,7 +173,7 @@ test.describe("Gallery fixture — real records render", () => {
     await page.locator(".record-list__item").first().click();
 
     // Reading view must contain role-specific field labels
-    await expect(page.locator('[data-testid="record-reading"]')).toContainText("Role Holder");
+    await expect(page.locator('[data-testid="record-reading"] [data-testid="record-prose"]')).toBeVisible(); // labels are tooltips on chips under RecordProse (ADR-024)
 
     // Field content must NOT appear in the inspector
     await expect(page.locator(".inspector__section").first()).not.toContainText("Role Holder");

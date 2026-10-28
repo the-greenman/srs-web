@@ -28,7 +28,7 @@
     UpdateRecordInput,
   } from "$lib/srs-client.js";
   import PreviewPane from "$lib/components/PreviewPane.svelte";
-  import FieldValueView from "../../rendering/FieldValueView.svelte";
+  import RecordProse from "../../rendering/RecordProse.svelte";
   import { definitionToComposites, definitionToFields } from "$lib/editor/blueprint-fields.js";
   import SectionForm from "$lib/editor/SectionForm.svelte";
   import BlueprintDocumentEditor from "$lib/editor/BlueprintDocumentEditor.svelte";
@@ -151,7 +151,7 @@
   let expandedMembers = $state<Record<string, ResolvedMember[]>>({});
   let recordError = $state<string | null>(null);
   /** Read-only inspector field metadata for the selected record (srs-web#479). */
-  let recordFieldMeta = $state<Map<string, FieldFormDef>>(new Map());
+  let recordSchema = $state<{ fields: FieldFormDef[]; composites: CompositeFormDef[] }>({ fields: [], composites: [] });
   let editFormDef = $state<{ label: string; fields: FieldFormDef[]; composites: CompositeFormDef[] } | null>(null);
   let activeBlueprint = $state<BlueprintSummary | null>(null);
   let documentRenderRevision = $state(0);
@@ -283,7 +283,7 @@
       editError = null;
       const record = getRecord(repo, instanceId);
       selectedRecord = record;
-      recordFieldMeta = record ? fetchFieldMeta(record) : new Map();
+      recordSchema = record ? fetchRecordSchema(record) : { fields: [], composites: [] };
       showInspector();
     } catch (error: unknown) {
       recordError = message(error);
@@ -291,25 +291,24 @@
   }
 
   /**
-   * Field-name → FieldFormDef map for the read-only inspector view, so
-   * FieldValueView knows which fields are markdown/url rather than plain
-   * text (srs-web#479). Best-effort: an unprojectable type still shows the
-   * record with plain-text field rendering.
+   * The record type's fields and composites for the read-only inspector view, so RecordProse
+   * (ADR-024) labels them and knows which are markdown (srs-web#479, #550). Best-effort: an
+   * unprojectable type still shows the record, every stored value labelled by its name.
    */
-  function fetchFieldMeta(record: SrsRecord): Map<string, FieldFormDef> {
+  function fetchRecordSchema(record: SrsRecord): { fields: FieldFormDef[]; composites: CompositeFormDef[] } {
     try {
       const result = typeSchema(repo, record.typeId, record.typeVersion);
       const definition = result.schema as unknown as SchemaDefinition;
-      if (!definition.properties) return new Map();
-      return new Map(definitionToFields(definition).map((field) => [field.name, field]));
+      if (!definition.properties) return { fields: [], composites: [] };
+      return { fields: definitionToFields(definition), composites: definitionToComposites(definition) };
     } catch {
-      return new Map();
+      return { fields: [], composites: [] };
     }
   }
 
   function clearRecordSelection(): void {
     selectedRecord = null;
-    recordFieldMeta = new Map();
+    recordSchema = { fields: [], composites: [] };
     editing = false;
     editFormDef = null;
     editError = null;
@@ -575,14 +574,11 @@
       {:else}
         <header class="generic-inspector-head">
           <p>Record</p>
-          <h2>{selectedRecord.displayLabel ?? selectedRecord.instanceId}</h2>
           <span>{selectedRecord.typeNamespace}/{selectedRecord.typeName}</span>
           {#if !readOnly}<button class="generic-edit" disabled={saving} onclick={beginEdit}>Edit fields</button>{/if}
           {#if editError}<Notice kind="error" testid="generic-edit-error">{editError}</Notice>{/if}
         </header>
-        {#each Object.entries(selectedRecord.fieldValues) as [name, value] (name)}
-          <div class="generic-field"><strong>{name}</strong><FieldValueView {value} valueType={recordFieldMeta.get(name)?.valueType} /></div>
-        {/each}
+        <RecordProse record={selectedRecord} fields={recordSchema.fields} composites={recordSchema.composites} heading="h2" />
         {#key selectedRecord.instanceId}
           {#if !readOnly}<InstanceNotes {repo} instanceId={selectedRecord.instanceId} revision={documentRevision} heading />{/if}
         {/key}
