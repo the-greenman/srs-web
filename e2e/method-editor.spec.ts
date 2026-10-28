@@ -24,7 +24,8 @@ test("review suggested problems and set one aside", async ({ page }) => {
   for (const card of await cards.all())
     await expect(card.getByTestId("actor-kind")).toHaveText("ai");
   await expect(cards.first()).toContainText("Writer");
-  await expect(board.getByTestId("problem-comments")).toHaveCount(1);
+  // SP-2 has a human comment; SP-1 has an agent's link proposal (srs-web#617)
+  await expect(board.getByTestId("problem-comments")).toHaveCount(2);
   await expect(
     cards.filter({ hasText: "Suggestions pile up unseen" }).getByRole("img", { name: "1 comment" })
   ).toBeVisible();
@@ -150,5 +151,39 @@ test("remedies list under the problems they answer; affirm one, then a cluster a
   await expect(page.getByTestId("problem-actions-restore")).toBeVisible();
   await page.getByTestId("problem-actions-restore").click();
   await expect(page.getByTestId("problem-actions-affirm")).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("an agent's proposed link is answered in place: tick, then clear (srs-web#617)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.addInitScript(() =>
+    localStorage.setItem(
+      "srs-web.actor",
+      JSON.stringify({ kind: "human", id: "local:owner", name: "Owner Person" })
+    )
+  );
+  await page.goto("/");
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+  await page.locator('input[type="file"]#srsj-file').setInputFiles(FIXTURE);
+  await openPackageEditor(page, "method");
+
+  await page.getByRole("button", { name: "Open A document cannot leave and return" }).click();
+  await openInspectorDrawer(page);
+  const proposal = page.getByTestId("link-proposal");
+  await expect(proposal).toHaveCount(1);
+  await expect(proposal).toContainText("Held by");
+  await expect(proposal).toContainText("Owner");
+  await expect(proposal).toHaveAttribute("data-answer", "none");
+  // the proposal is not repeated in the plain comment thread
+  await expect(page.getByTestId("comment-thread").getByTestId("comment")).toHaveCount(0);
+
+  const tick = proposal.getByTestId("proposal-agree");
+  await tick.click();
+  await expect(proposal).toHaveAttribute("data-answer", "agree");
+  await expect(tick).toHaveAttribute("aria-pressed", "true");
+  await tick.click();
+  await expect(proposal).toHaveAttribute("data-answer", "none");
+  await expect(page.getByTestId("document-dirty-status")).toBeVisible();
   expect(errors).toEqual([]);
 });
