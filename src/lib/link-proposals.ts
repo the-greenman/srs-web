@@ -1,3 +1,4 @@
+import { SO_COMMENTS_ON, SO_COMMENT_TYPE_ID } from "$lib/comments.js";
 /**
  * Affirm in context (srs-web#617, remedy 2910ac1e): an agent proposes a link as one comment on the
  * record it starts from, and the owner answers on that comment with a tick or a deny. Headless: no
@@ -12,7 +13,6 @@
  */
 import { createRecord, createRelation, deleteRecord, listRelations } from "$lib/srs-client.js";
 import type { Actor, SrsRecord, SrsRepository, TypeSummary } from "$lib/srs-client.js";
-import { SO_COMMENT_TYPE_ID, SO_COMMENTS_ON } from "$lib/comments.js";
 import { recordsOfType, typeVersion } from "$lib/type-version.js";
 
 export const PROPOSES_LINK_TO = "com.semanticops.comments/proposes-link-to";
@@ -52,18 +52,28 @@ export function currentAnswers(
     if (!prev || prev.createdAt <= r.createdAt) latest.set(who, r);
   }
   const out: Record<string, Exclude<Answer, "withdrawn">> = {};
-  for (const [who, r] of latest) if (r.kind !== "withdrawn") out[who] = r.kind as "agree" | "disagree";
+  for (const [who, r] of latest)
+    if (r.kind !== "withdrawn") out[who] = r.kind as "agree" | "disagree";
   return out;
 }
 
 /** Proposals whose link starts at `sourceId`, oldest first, each with its current answers. */
-export function loadProposals(repo: SrsRepository, types: TypeSummary[], sourceId: string): Proposal[] {
+export function loadProposals(
+  repo: SrsRepository,
+  types: TypeSummary[],
+  sourceId: string
+): Proposal[] {
   const comments = new Map(
-    recordsOfType(repo, types, SO_COMMENT_TYPE_ID).map((r) => [r.instanceId, r] as [string, SrsRecord])
+    recordsOfType(repo, types, SO_COMMENT_TYPE_ID).map(
+      (r) => [r.instanceId, r] as [string, SrsRecord]
+    )
   );
   const on = listRelations(repo, { relationType: SO_COMMENTS_ON });
   const to = new Map(
-    listRelations(repo, { relationType: PROPOSES_LINK_TO }).map((r) => [r.sourceInstanceId, r.targetInstanceId])
+    listRelations(repo, { relationType: PROPOSES_LINK_TO }).map((r) => [
+      r.sourceInstanceId,
+      r.targetInstanceId,
+    ])
   );
   const out: Proposal[] = [];
   for (const rel of on) {
@@ -76,7 +86,11 @@ export function loadProposals(repo: SrsRepository, types: TypeSummary[], sourceI
       .filter((r) => r.targetInstanceId === c.instanceId)
       .map((r) => comments.get(r.sourceInstanceId))
       .filter((r): r is SrsRecord => !!r)
-      .map((r) => ({ author: r.createdBy, kind: str(r.fieldValues.kind), createdAt: r.createdAt ?? "" }));
+      .map((r) => ({
+        author: r.createdBy,
+        kind: str(r.fieldValues.kind),
+        createdAt: r.createdAt ?? "",
+      }));
     out.push({
       id: c.instanceId,
       sourceId,
@@ -97,7 +111,9 @@ function commentWith(
   fieldValues: Record<string, string>,
   relations: { relationType: string; targetInstanceId: string }[]
 ): string {
-  const rec = createRecord(repo, SO_COMMENT_TYPE_ID, typeVersion(repo, SO_COMMENT_TYPE_ID), { fieldValues });
+  const rec = createRecord(repo, SO_COMMENT_TYPE_ID, typeVersion(repo, SO_COMMENT_TYPE_ID), {
+    fieldValues,
+  });
   try {
     for (const r of relations) createRelation(repo, { ...r, sourceInstanceId: rec.instanceId });
   } catch (e) {
@@ -133,7 +149,12 @@ export function proposeLink(
  * Answer a proposal (tick, deny, or clear) as the session's actor. `text` is an optional reason;
  * without one the answer itself is the text, since `comment_text` is required.
  */
-export function respond(repo: SrsRepository, proposalId: string, answer: Answer, text = ""): string {
+export function respond(
+  repo: SrsRepository,
+  proposalId: string,
+  answer: Answer,
+  text = ""
+): string {
   return commentWith(repo, { comment_text: text || answer, kind: answer }, [
     { relationType: SO_COMMENTS_ON, targetInstanceId: proposalId },
   ]);
