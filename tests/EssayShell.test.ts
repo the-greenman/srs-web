@@ -30,6 +30,8 @@ const model: EssayModel = {
 const store = new Map<string, string>();
 beforeEach(() => {
   store.clear();
+  // Writers have a name (srs-web#618): without one the essay is read-only.
+  store.set("srs-web.actor", JSON.stringify({ kind: "human", id: "local:t", name: "Tess" }));
   vi.stubGlobal("localStorage", {
     getItem: (k: string) => store.get(k) ?? null,
     setItem: (k: string, v: string) => void store.set(k, v),
@@ -65,6 +67,12 @@ vi.mock("../src/lib/essay/essay-document.js", () => ({
   removeReference: vi.fn(),
   setTitle: vi.fn(),
   transfer: vi.fn(),
+}));
+// The shell test has no engine: no boundaries, no domain (essay-domain.wasm.test.ts covers the real thing).
+vi.mock("../src/lib/essay/essay-domain.js", () => ({
+  domainMap: () => null,
+  listBoundaries: () => [],
+  setBoundary: vi.fn(),
 }));
 
 vi.mock("../src/lib/comments.js", async (orig) => ({
@@ -454,4 +462,28 @@ it("history that arrives after mount (no status at first) is seeded as seen, not
   await rerender({ agentStatus: status([write(6), write(5), write(4)]) });
   await tick();
   expect(getByTestId("inspector-badge").textContent).toBe("1");
+});
+
+it("without an actor the essay is read-only behind a name prompt; a name unlocks it and the header names the writer (srs-web#618)", async () => {
+  store.clear();
+  doc.loadEssay.mockReturnValue(model);
+  const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
+  const { container, getByTestId, queryByTestId } = render(EssayShell, {
+    repo: {} as never,
+    repoName: "r",
+    onExport: () => {},
+    documentRevision: 1,
+  });
+  await tick();
+  expect(getByTestId("name-gate")).toBeTruthy();
+  expect(container.querySelector(".essay-shell__page")?.hasAttribute("inert")).toBe(true);
+  expect(queryByTestId("session-actor")).toBeNull();
+
+  await fireEvent.input(getByTestId("name-gate-input"), { target: { value: "Ada" } });
+  await fireEvent.submit(getByTestId("name-gate"));
+  await tick();
+  expect(queryByTestId("name-gate")).toBeNull();
+  expect(container.querySelector(".essay-shell__page")?.hasAttribute("inert")).toBe(false);
+  expect(getByTestId("session-actor").textContent).toContain("Ada");
+  expect(JSON.parse(store.get("srs-web.actor") ?? "{}").name).toBe("Ada");
 });

@@ -2,18 +2,8 @@
   "srsj": "2",
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
-      "containerId": "e0187c2a-c499-4c80-8d68-0a0bba549cb6",
-      "identityInstanceId": "f6ea924f-1a1d-4b2e-a30c-d226c733658b",
-      "memberInstanceIds": [
-        {
-          "instanceId": "f6ea924f-1a1d-4b2e-a30c-d226c733658b"
-        }
-      ],
-      "title": "Method fixture"
-    },
     "createdAt": "2026-10-09T10:40:52.166246276+00:00",
-    "dataModelRevision": 9,
+    "dataModelRevision": 11,
     "namespace": "com.semanticops.programme",
     "packageRefs": [
       {
@@ -22,49 +12,72 @@
       }
     ],
     "repositoryId": "e0187c2a-c499-4c80-8d68-0a0bba549cb6",
+    "rootContainerId": "e0187c2a-c499-4c80-8d68-0a0bba549cb6",
     "srsVersion": "2.0-draft",
     "title": "Method fixture"
   },
   "data": {
-    "containers/affirmed-f2ec5a54.json": {
-      "containerId": "f2ec5a54-498b-45d3-a2ab-146560ca5147",
-      "memberInstanceIds": [],
-      "title": "Affirmed"
+    "containers/00f90cfc-0042-484a-8cb7-a7b129f15464/container.json": {
+      "containerId": "00f90cfc-0042-484a-8cb7-a7b129f15464",
+      "title": "Suggestions"
     },
-    "containers/set-aside-4052dcd3.json": {
+    "containers/00f90cfc-0042-484a-8cb7-a7b129f15464/entries/3c79de6c-41d7-47e8-a908-9d2c4869518c.json": {
+      "containerId": "00f90cfc-0042-484a-8cb7-a7b129f15464",
+      "instanceId": "3c79de6c-41d7-47e8-a908-9d2c4869518c",
+      "key": "a0"
+    },
+    "containers/00f90cfc-0042-484a-8cb7-a7b129f15464/entries/50e0c671-2f0c-43b8-ac11-da109711ad3d.json": {
+      "containerId": "00f90cfc-0042-484a-8cb7-a7b129f15464",
+      "instanceId": "50e0c671-2f0c-43b8-ac11-da109711ad3d",
+      "key": "a7"
+    },
+    "containers/00f90cfc-0042-484a-8cb7-a7b129f15464/entries/5e024e2f-b9ab-4417-9cbb-e7c8f38e93de.json": {
+      "containerId": "00f90cfc-0042-484a-8cb7-a7b129f15464",
+      "instanceId": "5e024e2f-b9ab-4417-9cbb-e7c8f38e93de",
+      "key": "a2"
+    },
+    "containers/00f90cfc-0042-484a-8cb7-a7b129f15464/entries/af43eb9b-f631-4767-9ad2-7ba24b387083.json": {
+      "containerId": "00f90cfc-0042-484a-8cb7-a7b129f15464",
+      "instanceId": "af43eb9b-f631-4767-9ad2-7ba24b387083",
+      "key": "a6"
+    },
+    "containers/00f90cfc-0042-484a-8cb7-a7b129f15464/entries/b3cdb812-6bdb-400f-8493-7123acd3bee6.json": {
+      "containerId": "00f90cfc-0042-484a-8cb7-a7b129f15464",
+      "instanceId": "b3cdb812-6bdb-400f-8493-7123acd3bee6",
+      "key": "a5"
+    },
+    "containers/00f90cfc-0042-484a-8cb7-a7b129f15464/entries/cbe25c3e-5039-4910-8584-50e7e267c75a.json": {
+      "containerId": "00f90cfc-0042-484a-8cb7-a7b129f15464",
+      "instanceId": "cbe25c3e-5039-4910-8584-50e7e267c75a",
+      "key": "a4"
+    },
+    "containers/00f90cfc-0042-484a-8cb7-a7b129f15464/entries/d903c187-c985-4a4f-9688-ab4c2949c77a.json": {
+      "containerId": "00f90cfc-0042-484a-8cb7-a7b129f15464",
+      "instanceId": "d903c187-c985-4a4f-9688-ab4c2949c77a",
+      "key": "a3"
+    },
+    "containers/00f90cfc-0042-484a-8cb7-a7b129f15464/entries/dc94b911-9687-4363-a86f-3c2929870fdf.json": {
+      "containerId": "00f90cfc-0042-484a-8cb7-a7b129f15464",
+      "instanceId": "dc94b911-9687-4363-a86f-3c2929870fdf",
+      "key": "a1"
+    },
+    "containers/4052dcd3-6309-4739-bb90-834a3d82a6da/container.json": {
       "containerId": "4052dcd3-6309-4739-bb90-834a3d82a6da",
-      "memberInstanceIds": [],
       "title": "Set aside"
     },
-    "containers/suggestions-00f90cfc.json": {
-      "containerId": "00f90cfc-0042-484a-8cb7-a7b129f15464",
-      "memberInstanceIds": [
-        {
-          "instanceId": "3c79de6c-41d7-47e8-a908-9d2c4869518c"
-        },
-        {
-          "instanceId": "dc94b911-9687-4363-a86f-3c2929870fdf"
-        },
-        {
-          "instanceId": "5e024e2f-b9ab-4417-9cbb-e7c8f38e93de"
-        },
-        {
-          "instanceId": "d903c187-c985-4a4f-9688-ab4c2949c77a"
-        },
-        {
-          "instanceId": "cbe25c3e-5039-4910-8584-50e7e267c75a"
-        },
-        {
-          "instanceId": "b3cdb812-6bdb-400f-8493-7123acd3bee6"
-        },
-        {
-          "instanceId": "af43eb9b-f631-4767-9ad2-7ba24b387083"
-        },
-        {
-          "instanceId": "50e0c671-2f0c-43b8-ac11-da109711ad3d"
-        }
-      ],
-      "title": "Suggestions"
+    "containers/e0187c2a-c499-4c80-8d68-0a0bba549cb6/container.json": {
+      "containerId": "e0187c2a-c499-4c80-8d68-0a0bba549cb6",
+      "identityInstanceId": "f6ea924f-1a1d-4b2e-a30c-d226c733658b",
+      "title": "Method fixture"
+    },
+    "containers/e0187c2a-c499-4c80-8d68-0a0bba549cb6/entries/f6ea924f-1a1d-4b2e-a30c-d226c733658b.json": {
+      "containerId": "e0187c2a-c499-4c80-8d68-0a0bba549cb6",
+      "instanceId": "f6ea924f-1a1d-4b2e-a30c-d226c733658b",
+      "key": "a0"
+    },
+    "containers/f2ec5a54-498b-45d3-a2ab-146560ca5147/container.json": {
+      "containerId": "f2ec5a54-498b-45d3-a2ab-146560ca5147",
+      "title": "Affirmed"
     },
     "package/fields/actorid-94d587e4.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/field.json",

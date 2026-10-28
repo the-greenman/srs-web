@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { acceptMigration, openMenu, routeRelayChannels } from "./helpers.js";
+import { openMenu, routeRelayChannels } from "./helpers.js";
 
 /**
  * open-url.spec.ts — srs-web#471: `?open=<https url>` opens an archive read-only through the same
@@ -25,11 +25,10 @@ test("opens a .srs from a link read-only, names the host, clears the parameter",
   const requests: string[] = [];
   page.on("request", (r) => r.url() === link && requests.push(r.headers().cookie ?? "none"));
   await page.goto(`/?open=${encodeURIComponent(link)}`);
-  await acceptMigration(page); // pagetest.srs predates revision 9; the migration is in memory, never saved
   await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 20000 });
   expect(requests).toEqual(["none"]);
 
-  // read-only + migrated must never be dirty: nothing to save, so nothing is offered (srs-web#478)
+  // read-only must never be dirty: nothing to save, so nothing is offered (srs-web#478)
   await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
 
   // the source is stated, read-only is stated, and the parameter left the address bar
@@ -184,7 +183,6 @@ test("the chooser's From a URL opens the same read-only document, with refusals 
   await expect(page.getByRole("alert")).toContainText("Only https:// links can be opened.");
   await input.fill(link);
   await input.press("Enter");
-  await acceptMigration(page);
   await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 20000 });
   await expect(page.getByTestId("read-only-note")).toContainText("Opened from semanticops.test, read-only");
   await expect(page.getByTestId("save-document")).toHaveCount(0);

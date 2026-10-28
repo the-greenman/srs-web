@@ -2,75 +2,84 @@
   "srsj": "2",
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "container": {
-      "anchorInstanceId": "11000000-0000-4000-8000-000000000001",
-      "containerId": "00000000-0000-4000-8000-000000000000",
-      "memberInstanceIds": [
-        {
-          "instanceId": "11000000-0000-4000-8000-000000000001"
-        },
-        {
-          "instanceId": "11000000-0000-4000-8000-000000000002"
-        },
-        {
-          "instanceId": "11000000-0000-4000-8000-000000000003"
-        },
-        {
-          "instanceId": "11000000-0000-4000-8000-000000000004"
-        },
-        {
-          "instanceId": "11000000-0000-4000-8000-000000000005"
-        }
-      ],
-      "title": "Test Governance"
-    },
     "createdAt": "2026-10-02T22:18:45.296230013+00:00",
-    "dataModelRevision": 9,
+    "dataModelRevision": 11,
     "namespace": "test",
     "repositoryId": "00000000-0000-0000-0000-000000000001",
+    "rootContainerId": "00000000-0000-4000-8000-000000000000",
     "srsVersion": "2.0-draft",
     "title": "Test Governance"
   },
   "data": {
-    "containers/articles-aa000001.json": {
+    "containers/00000000-0000-4000-8000-000000000000/container.json": {
+      "anchorInstanceId": "11000000-0000-4000-8000-000000000001",
+      "containerId": "00000000-0000-4000-8000-000000000000",
+      "title": "Test Governance"
+    },
+    "containers/00000000-0000-4000-8000-000000000000/entries/11000000-0000-4000-8000-000000000001.json": {
+      "containerId": "00000000-0000-4000-8000-000000000000",
+      "instanceId": "11000000-0000-4000-8000-000000000001",
+      "key": "a0"
+    },
+    "containers/00000000-0000-4000-8000-000000000000/entries/11000000-0000-4000-8000-000000000002.json": {
+      "containerId": "00000000-0000-4000-8000-000000000000",
+      "instanceId": "11000000-0000-4000-8000-000000000002",
+      "key": "a1"
+    },
+    "containers/00000000-0000-4000-8000-000000000000/entries/11000000-0000-4000-8000-000000000003.json": {
+      "containerId": "00000000-0000-4000-8000-000000000000",
+      "instanceId": "11000000-0000-4000-8000-000000000003",
+      "key": "a2"
+    },
+    "containers/00000000-0000-4000-8000-000000000000/entries/11000000-0000-4000-8000-000000000004.json": {
+      "containerId": "00000000-0000-4000-8000-000000000000",
+      "instanceId": "11000000-0000-4000-8000-000000000004",
+      "key": "a3"
+    },
+    "containers/00000000-0000-4000-8000-000000000000/entries/11000000-0000-4000-8000-000000000005.json": {
+      "containerId": "00000000-0000-4000-8000-000000000000",
+      "instanceId": "11000000-0000-4000-8000-000000000005",
+      "key": "a4"
+    },
+    "containers/aa000001-0000-4000-8000-000000000001/container.json": {
       "anchorInstanceId": "11000000-0000-4000-8000-000000000002",
       "containerId": "aa000001-0000-4000-8000-000000000001",
-      "memberInstanceIds": [
-        {
-          "instanceId": "11000000-0000-4000-8000-000000000002"
-        }
-      ],
       "title": "Articles"
     },
-    "containers/decision-log-dd000001.json": {
-      "anchorInstanceId": "11000000-0000-4000-8000-000000000003",
-      "containerId": "dd000001-0000-4000-8000-000000000001",
-      "memberInstanceIds": [
-        {
-          "instanceId": "11000000-0000-4000-8000-000000000003"
-        }
-      ],
-      "title": "Decision Log"
+    "containers/aa000001-0000-4000-8000-000000000001/entries/11000000-0000-4000-8000-000000000002.json": {
+      "containerId": "aa000001-0000-4000-8000-000000000001",
+      "instanceId": "11000000-0000-4000-8000-000000000002",
+      "key": "a0"
     },
-    "containers/exercise-book-ee000001.json": {
-      "anchorInstanceId": "11000000-0000-4000-8000-000000000005",
-      "containerId": "ee000001-0000-4000-8000-000000000001",
-      "memberInstanceIds": [
-        {
-          "instanceId": "11000000-0000-4000-8000-000000000005"
-        }
-      ],
-      "title": "Exercise Book"
-    },
-    "containers/roles-cc000001.json": {
+    "containers/cc000001-0000-4000-8000-000000000001/container.json": {
       "anchorInstanceId": "11000000-0000-4000-8000-000000000004",
       "containerId": "cc000001-0000-4000-8000-000000000001",
-      "memberInstanceIds": [
-        {
-          "instanceId": "11000000-0000-4000-8000-000000000004"
-        }
-      ],
       "title": "Roles"
+    },
+    "containers/cc000001-0000-4000-8000-000000000001/entries/11000000-0000-4000-8000-000000000004.json": {
+      "containerId": "cc000001-0000-4000-8000-000000000001",
+      "instanceId": "11000000-0000-4000-8000-000000000004",
+      "key": "a0"
+    },
+    "containers/dd000001-0000-4000-8000-000000000001/container.json": {
+      "anchorInstanceId": "11000000-0000-4000-8000-000000000003",
+      "containerId": "dd000001-0000-4000-8000-000000000001",
+      "title": "Decision Log"
+    },
+    "containers/dd000001-0000-4000-8000-000000000001/entries/11000000-0000-4000-8000-000000000003.json": {
+      "containerId": "dd000001-0000-4000-8000-000000000001",
+      "instanceId": "11000000-0000-4000-8000-000000000003",
+      "key": "a0"
+    },
+    "containers/ee000001-0000-4000-8000-000000000001/container.json": {
+      "anchorInstanceId": "11000000-0000-4000-8000-000000000005",
+      "containerId": "ee000001-0000-4000-8000-000000000001",
+      "title": "Exercise Book"
+    },
+    "containers/ee000001-0000-4000-8000-000000000001/entries/11000000-0000-4000-8000-000000000005.json": {
+      "containerId": "ee000001-0000-4000-8000-000000000001",
+      "instanceId": "11000000-0000-4000-8000-000000000005",
+      "key": "a0"
     },
     "package/fields/statement-3b000001.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
@@ -110,7 +119,7 @@
       "blueprints": [],
       "compositions": [],
       "createdAt": "2026-01-01T00:00:00Z",
-      "dataModelRevision": 8,
+      "dataModelRevision": 11,
       "description": "",
       "fields": [
         "fields/statement-3b000001.json",

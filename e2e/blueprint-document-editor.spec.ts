@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { acceptMigration, menuItem } from "./helpers.js";
+import { menuItem } from "./helpers.js";
 
 /**
  * blueprint-document-editor.spec.ts — generic, blueprint-driven document
@@ -34,7 +34,6 @@ test.describe("BlueprintDocumentEditor (srs-web#322)", () => {
     await page.goto("/");
     await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
     await page.locator('input[type="file"]#srsj-file').setInputFiles(FIXTURE);
-    await acceptMigration(page);
     await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
   });
 

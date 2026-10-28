@@ -504,7 +504,6 @@ test("Delete permanently removes the paragraph and its comment, after a confirm"
   await open(page);
   const first = page.locator(".essay-shell__page .block-stack__item").first();
   await first.getByTestId("comment-badge").click();
-  await first.getByLabel("Your name").fill("Ada");
   await first.getByLabel("Reply").fill("Doomed.");
   await first.getByRole("button", { name: "Comment", exact: true }).click();
   await expect(first.getByTestId("comment")).toHaveCount(1);

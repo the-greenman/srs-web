@@ -10,7 +10,7 @@ import { openPackageEditor, navItem } from "./helpers.js";
  * active section heading shown in the main content area.
  *
  * Uses gallery.srsj, not sample.srsj: sample.srsj is deliberately left
- * without manifest.container.identityInstanceId set (migrations.spec.ts's
+ * without the root container's identityInstanceId set (migrations.spec.ts's
  * fixture, exercising the "needs migration" state) — as of srs-rust
  * build.297, repository_navigation() surfaces that as a diagnostic, and
  * GovernanceShell's loadContainerNav() falls back to the legacy

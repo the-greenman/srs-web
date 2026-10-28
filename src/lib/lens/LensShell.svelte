@@ -260,9 +260,39 @@
     else if (formatAddress(current()) !== formatAddress(a)) replaceAddress(current(), trail);
   }
 
+  // Expansion is remembered per repository and lens for the session (a reload of the same lens re-opens it).
+  const expandedKey = (l: Lens) => `srs-web:lens-expanded:${repoId}:${l.id}`;
+  /** The lens `expanded` belongs to (set by load, which may run before `lens` itself changes). */
+  let expandedFor: Lens | undefined;
+  function rememberExpanded(): void {
+    if (!expandedFor) return;
+    try {
+      sessionStorage.setItem(expandedKey(expandedFor), JSON.stringify([...expanded]));
+    } catch {
+      // Storage blocked: expansion just is not remembered.
+    }
+  }
+  function restoreExpanded(l: Lens): void {
+    let ids: string[] = [];
+    try {
+      const raw = sessionStorage.getItem(expandedKey(l));
+      if (raw) ids = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    if (!Array.isArray(ids) || ids.length === 0) return;
+    const want = new Set(ids);
+    // Children arrive after their parent, so one pass down the growing list reaches nested ones too.
+    for (let i = 0; i < collection.items.length; i++) {
+      const it = collection.items[i];
+      if (want.has(it.id) && it.sectionContainerId && !expanded.has(it.id)) expand(it);
+    }
+  }
+
   /** A fresh collection for `l`, with the lens's own focus mode. */
   function load(l: Lens | undefined): void {
     expanded = new Set();
+    expandedFor = l;
     hint = undefined;
     mode = l?.focus.kind ?? "read";
     if (!l) {
@@ -272,6 +302,7 @@
     try {
       collection = loadCollection(repo, l);
       error = null;
+      restoreExpanded(l);
     } catch (e) {
       collection = EMPTY;
       fail(e);
@@ -303,7 +334,7 @@
       seenRevision = r;
       const keep = expanded;
       load(lens);
-      for (const i of collection.items) if (keep.has(i.id)) expand(i);
+      for (const i of collection.items) if (keep.has(i.id) && !expanded.has(i.id)) expand(i);
     });
   });
 
@@ -353,6 +384,7 @@
       }
     }
     expanded = next;
+    rememberExpanded();
   }
 
   function more_(): void {
@@ -667,6 +699,7 @@
     onSelect={pick}
     onExpand={expand}
     onMore={more_}
+    filterable
   />
 {/snippet}
 

@@ -11,7 +11,10 @@
   of the pane's scroller while it scrolls.
   Presentation only: "Tell apart by" is grouping over loaded items (ADR-025, D7); items arrive loaded
   and grouped (lens-data.ts, lens-distinctions.ts). Wraps .lens-collection (lens.css).
-  Parts: head, by, set-bar, group, row, toggle.
+  The list also filters (a box above the rows: rows whose label matches, with the loaded ancestors of a match
+  kept so the outline still reads; Escape clears), moves with the arrow keys (Up/Down/Home/End between rows,
+  Right/Left expand and collapse a nested container) and scrolls the selected row into view.
+  Parts: head, by, filter, set-bar, group, row, toggle.
 -->
 <script lang="ts">
   import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -20,6 +23,7 @@
   import ActorChip from "$lib/components/ActorChip.svelte";
   import Button from "$lib/components/Button.svelte";
   import Checkbox from "$lib/components/Checkbox.svelte";
+  import Input from "$lib/components/Input.svelte";
   import IconButton from "$lib/components/IconButton.svelte";
   import LogTable from "$lib/components/LogTable.svelte";
   import Select from "$lib/components/Select.svelte";
@@ -51,6 +55,7 @@
     onSelect,
     onExpand,
     onMore,
+    filterable = false,
   }: {
     data: CollectionData;
     mode?: "list" | "table";
@@ -84,14 +89,74 @@
     onSelect: (item: Item) => void;
     onExpand?: (item: Item) => void;
     onMore?: () => void;
+    /** The list shows a filter box. */
+    filterable?: boolean;
   } = $props();
+
+  let query = $state("");
+  let root = $state<HTMLElement>();
+  const needle = $derived(filterable && mode === "list" ? query.trim().toLowerCase() : "");
+  /** Indices of the rows shown: the matches, and under Nesting the loaded ancestors of each match. */
+  const shown = $derived.by<number[]>(() => {
+    if (!needle) return data.items.map((_, i) => i);
+    const keep = new Set<number>();
+    const path: number[] = [];
+    data.items.forEach((item, i) => {
+      path.length = Math.min(path.length, item.depth);
+      path[item.depth] = i;
+      if (!item.label.toLowerCase().includes(needle)) return;
+      keep.add(i);
+      if (by === "nesting") for (const a of path.slice(0, item.depth)) if (a !== undefined) keep.add(a);
+    });
+    return [...keep].sort((a, b) => a - b);
+  });
+
+  const shownSet = $derived(new Set(shown));
+
+  function keydown(e: KeyboardEvent): void {
+    const target = e.target as HTMLElement;
+    const buttons = Array.from(root?.querySelectorAll<HTMLElement>(".lens-list__item") ?? []);
+    const at = buttons.indexOf(target);
+    if (at < 0) return;
+    const go = (n: number) => {
+      e.preventDefault();
+      buttons[Math.max(0, Math.min(buttons.length - 1, n))]?.focus();
+    };
+    const id = target.closest<HTMLElement>("[data-srs-instance]")?.dataset.srsInstance;
+    const item = data.items.find((x) => x.id === id);
+    if (e.key === "ArrowDown") go(at + 1);
+    else if (e.key === "ArrowUp") go(at - 1);
+    else if (e.key === "Home") go(0);
+    else if (e.key === "End") go(buttons.length - 1);
+    else if (item?.sectionContainerId && onExpand && by === "nesting") {
+      if (e.key === "ArrowRight" && !expanded.has(item.id)) {
+        e.preventDefault();
+        onExpand(item);
+      } else if (e.key === "ArrowLeft" && expanded.has(item.id)) {
+        e.preventDefault();
+        onExpand(item);
+      }
+    }
+  }
+
+  // The selected row stays in view as the selection (or the rows) change.
+  let scrolledTo: string | null = null;
+  $effect(() => {
+    void data.items;
+    const id = selectedId;
+    if (!id || !root || id === scrolledTo) return;
+    const row = Array.from(root.querySelectorAll<HTMLElement>("[data-srs-instance]")).find((r) => r.dataset.srsInstance === id);
+    if (!row) return;
+    scrolledTo = id;
+    row.scrollIntoView?.({ block: "nearest" });
+  });
 
   const plain = $derived(by === "none");
   /** Lifecycle tags only when they tell rows apart. */
   const states = $derived(new Set(data.items.map((i) => i.lifecycle).filter(Boolean)).size > 1);
   const counts = $derived(
-    data.items.reduce(
-      (m, i) => m.set(i.group, (m.get(i.group) ?? 0) + 1),
+    shown.reduce(
+      (m, n) => m.set(data.items[n].group, (m.get(data.items[n].group) ?? 0) + 1),
       new Map<string | undefined, number>()
     )
   );
@@ -122,18 +187,28 @@
         data.items.some((i) => cell(i, c) !== "")
     ),
   ]);
+  /** The shown row above each shown row. */
+  const before = $derived(new Map(shown.slice(1).map((n, k) => [n, shown[k]] as const)));
   // A heading each time the group changes; items of one group are contiguous.
-  const heading = (i: number): string | undefined =>
-    data.items[i].group !== undefined && (i === 0 || data.items[i - 1].group !== data.items[i].group)
+  const heading = (i: number): string | undefined => {
+    const prev = before.get(i);
+    return data.items[i].group !== undefined && (prev === undefined || data.items[prev].group !== data.items[i].group)
       ? data.items[i].group
       : undefined;
+  };
 
   let last: number | null = null;
   function check(i: number, shift: boolean): void {
     const on = !checked.has(data.items[i].id);
     const [a, b] = shift && last !== null ? [Math.min(last, i), Math.max(last, i)] : [i, i];
     last = i;
-    onCheck?.(data.items.slice(a, b + 1).map((x) => x.id), on);
+    onCheck?.(
+      data.items
+        .slice(a, b + 1)
+        .filter((_, k) => shownSet.has(a + k))
+        .map((x) => x.id),
+      on
+    );
   }
 </script>
 
@@ -146,7 +221,7 @@
   <small>{counts.get(item.group)}</small>
 {/snippet}
 
-<div class="lens-collection" class:lens-collection--dark={onDark} data-testid="lens-collection" data-mode={mode}>
+<div class="lens-collection" class:lens-collection--dark={onDark} bind:this={root} data-testid="lens-collection" data-mode={mode}>
   {#if onBy || onPicking}
     <div class="lens-pane-head" data-part="head">
       {#if onBy && byOptions.length > 0}
@@ -176,6 +251,24 @@
       {#if onRemoveSet}
         <Button size="sm" variant="ghost" {onDark} data-testid="lens-remove-set" onclick={onRemoveSet}>Remove My set</Button>
       {/if}
+    </div>
+  {/if}
+  {#if filterable && mode === "list" && data.items.length > 0}
+    <div class="lens-pane-head lens-filter" data-part="filter">
+      <Input
+        type="search"
+        bind:value={query}
+        placeholder="Filter"
+        aria-label="Filter the collection"
+        data-testid="lens-filter"
+        onkeydown={(e: KeyboardEvent) => {
+          if (e.key === "Escape") query = "";
+          else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            root?.querySelector<HTMLElement>(".lens-list__item")?.focus();
+          }
+        }}
+      />
     </div>
   {/if}
   {#if note}<p class="lens-empty lens-collection__note" data-testid="lens-collection-note">{note}</p>{/if}
@@ -223,8 +316,12 @@
       {/each}
     </LogTable>
   {:else}
-    <ul class="lens-list" aria-label="Collection">
-      {#each data.items as item, i (`${i}:${item.id}`)}
+    {#if shown.length === 0}<p class="lens-empty" role="status" data-testid="lens-filter-empty">No match.</p>{/if}
+    <!-- Key events bubble up from the row buttons; the list itself is not interactive. -->
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+    <ul class="lens-list" aria-label="Collection" onkeydown={keydown}>
+      {#each shown as i (`${i}:${data.items[i].id}`)}
+        {@const item = data.items[i]}
         {@const h = heading(i)}
         {#if h !== undefined}
           <li class="lens-list__group" data-part="group" data-testid="lens-group">{@render groupLabel(item, h)}</li>
@@ -236,6 +333,7 @@
           aria-current={item.id === selectedId ? "true" : undefined}
           style:--lens-depth={by === "nesting" ? item.depth : 0}
           data-part="row"
+          data-srs-instance={item.id}
         >
           {#if picking}
             <Checkbox

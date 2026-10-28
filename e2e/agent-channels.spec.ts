@@ -7,7 +7,7 @@ import { connectAgents, openDirectUrl, routeRelayChannels } from "./helpers";
 /**
  * agent-channels.spec.ts — srs-web#358: one relay channel + MCP session per agent, each with its
  * own host-minted actor id; the write guard applies to every session; disconnecting one keeps
- * the others working. Fixture: essay.srsj (revision 9).
+ * the others working. Fixture: essay.srsj (revision 11).
  */
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
 const items = (page: Page) => page.locator(".essay-shell__page .block-stack__item");
@@ -456,7 +456,6 @@ test("three agents: each is visible in the presence strip, and their comments ke
   await expect(thread.getByTestId("actor-name")).toHaveText(["alpha", "beta", "gamma"]);
 
   // a human run: the first comment carries the chip, the next one only the compact mark (a circle)
-  await thread.getByLabel("Your name").fill("Ada");
   for (const t of ["human one", "human two"]) {
     await thread.getByLabel("Reply").fill(t);
     await thread.getByRole("button", { name: "Comment", exact: true }).click();

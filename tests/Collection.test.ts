@@ -90,3 +90,50 @@ describe("Collection", () => {
     expect(first.slice(1)).toEqual(["group", "x"]);
   });
 });
+
+describe("Collection navigation (srs-web#425)", () => {
+  const outline: Item[] = [
+    { id: "a", label: "Alpha", depth: 0, sectionContainerId: "s-a" },
+    { id: "b", label: "Beta", depth: 1 },
+    { id: "c", label: "Gamma", depth: 1 },
+    { id: "d", label: "Delta", depth: 0 },
+  ];
+  const labels = (c: HTMLElement) => [...c.querySelectorAll(".lens-list__label")].map((e) => e.textContent);
+
+  it("filter keeps matches and their ancestors, Escape clears", async () => {
+    const { container, getByTestId } = render(Collection, { data: data(outline), by: "nesting", filterable: true, onSelect: () => {} });
+    const box = getByTestId("lens-filter") as HTMLInputElement;
+    await fireEvent.input(box, { target: { value: "gam" } });
+    expect(labels(container)).toEqual(["Alpha", "Gamma"]);
+    await fireEvent.input(box, { target: { value: "zzz" } });
+    expect(getByTestId("lens-filter-empty")).toBeTruthy();
+    await fireEvent.input(box, { target: { value: "gam" } });
+    await fireEvent.keyDown(box, { key: "Escape" });
+    expect(labels(container)).toEqual(["Alpha", "Beta", "Gamma", "Delta"]);
+  });
+
+  it("no filter box unless filterable", () => {
+    const { queryByTestId } = render(Collection, { data: data(outline), onSelect: () => {} });
+    expect(queryByTestId("lens-filter")).toBeNull();
+  });
+
+  it("arrow keys move between rows and expand/collapse", async () => {
+    const onExpand = vi.fn();
+    const { container } = render(Collection, { data: data(outline), by: "nesting", onExpand, onSelect: () => {} });
+    const items = container.querySelectorAll<HTMLElement>(".lens-list__item");
+    items[0].focus();
+    await fireEvent.keyDown(items[0], { key: "ArrowDown" });
+    expect(document.activeElement).toBe(items[1]);
+    await fireEvent.keyDown(items[1], { key: "End" });
+    expect(document.activeElement).toBe(items[3]);
+    await fireEvent.keyDown(items[0], { key: "ArrowRight" });
+    expect(onExpand).toHaveBeenCalledTimes(1);
+  });
+
+  it("scrolls the selected row into view", () => {
+    const spy = vi.fn();
+    Element.prototype.scrollIntoView = spy;
+    render(Collection, { data: data(outline), selectedId: "c", onSelect: () => {} });
+    expect(spy).toHaveBeenCalledWith({ block: "nearest" });
+  });
+});

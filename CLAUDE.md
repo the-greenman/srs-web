@@ -7,6 +7,10 @@ monorepo.
 
 **Project context (agent memory):** decisions, conventions, component boundaries and known traps for the whole SRS ecosystem live in the sibling [`srs-context`](https://github.com/the-greenman/srs-context) repo (an SRS repository; a SessionStart hook injects its brief when the clone is present). Use the `srs-context` skill: scope with `find`, read the component's context before changing it, and record what you learn before finishing. CLAUDE.md stays authoritative on conflict.
 
+## Layers
+
+Where a change lives is decided by [ADR-027](docs/adr/027-editor-layers.md): core (srs-rust, ADR-001), headless behaviour (`.ts` / `.svelte.ts` modules with no markup, no `.svelte` import, no `document`), components (tokens only, a specimen on `/styleguide`), screens (compose components, no behaviour). A change of look starts on `/styleguide`. Look: [ADR-019](docs/adr/019-ui-theming-surface-and-live-styleguide.md), [ADR-020](docs/adr/020-icon-set-and-component-token-api.md), `src/styles/README.md`. Guard: `tests/layers.test.ts`.
+
 ## Project & priority management
 
 Programme, queue, board and priority tooling live in **the-greenman/clerk** (`docs/tools.md`; locally `~/dev/semanticops/clerk`): `clerk board` (story-driven priority on Project #6; stories and epics in `the-greenman/semanticops.com`), `clerk roadmap` (derives epic priority from the srs-programme period ranking; the only writer of epic priority), `clerk queue`. The slash commands `/triage`, `/stories`, `/roadmap` are canonical in clerk `.claude/commands/`. Programme data (roadmap, problems, sessions) is **the-greenman/srs-programme**.
@@ -25,3 +29,7 @@ Every branch must trace to a GitHub issue, and every PR must link its issue. Thi
 - **Merged branches auto-delete** — the repo has `deleteBranchOnMerge` enabled; a branch is removed automatically once its PR merges. Don't recreate deleted merged branches.
 - **Abandoning work** — if a PR is closed **without merging** and the work is still wanted, reopen/flag the linked issue with a pointer to the branch **before** walking away. Otherwise the issue looks done while the fix lives only on a dead branch.
 - **Automated safety net** — the weekly **SRS Branch Auditor** cloud routine reports merged-but-undeleted branches and reopens any issue whose fix survives only on an unmerged branch.
+
+## Narrative explorations
+
+When the owner explains the work, or starts describing a problem or a remedy, capture their words verbatim as a Tier-0 vignette in their conversation's container (srs-programme, Narrative explorations `80b283ef`) before acting, unprompted, and derive records from it as suggestions with `derived-from`. The practice is the clerk handbook chapter *Narrative explorations: how meaning grows* (decision 77e04b19); the brief injected by srs-context carries the rule.
