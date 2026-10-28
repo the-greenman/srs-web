@@ -61,6 +61,9 @@ export interface SrsRepository {
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised to SrsRecord | null in getRecord()
   get_record(id: string): any;
   list_notes(): ListNotesResult;
+  /** `{kind: "note", note}` or `{kind: "record", record}`; notes carry their tags here (list_notes summaries do not). */
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; narrowed by the caller
+  get_instance(id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in createRecord()
   create_record(type_id: string, type_version: number, input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; normalised in updateRecord()

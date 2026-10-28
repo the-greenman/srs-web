@@ -187,3 +187,38 @@ test("an agent's proposed link is answered in place: tick, then clear (srs-web#6
   await expect(page.getByTestId("document-dirty-status")).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test("affirm in the flow of the conversation: tick one derived record, deny another (srs-web#622)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.addInitScript(() =>
+    localStorage.setItem(
+      "srs-web.actor",
+      JSON.stringify({ kind: "human", id: "local:owner", name: "Owner Person" })
+    )
+  );
+  await page.goto("/");
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+  await page.locator('input[type="file"]#srsj-file').setInputFiles(FIXTURE);
+  await openPackageEditor(page, "method");
+
+  await page.getByTestId("method-view-conversations").click();
+  const view = page.getByTestId("narrative-view");
+  const vignettes = view.getByTestId("narrative-vignette");
+  await expect(vignettes).toHaveCount(2);
+  await expect(vignettes.first()).toContainText("nobody reads the queue");
+  const records = vignettes.first().getByTestId("narrative-record");
+  await expect(records).toHaveCount(2);
+  // the tension derived from the second vignette is shown, with no act
+  await expect(vignettes.nth(1).getByTestId("narrative-record")).toContainText("Testimony and authority");
+  await expect(vignettes.nth(1).getByTestId("narrative-affirm")).toHaveCount(0);
+
+  const problem = records.filter({ hasText: "Suggestions pile up unseen" });
+  await problem.getByTestId("narrative-affirm").click();
+  await expect(problem).toHaveAttribute("data-layer", "affirmed");
+  const remedy = records.filter({ hasText: "Weekly suggestions digest" });
+  await remedy.getByTestId("narrative-set-aside").click();
+  await expect(remedy).toHaveAttribute("data-layer", "set-aside");
+  await expect(page.getByTestId("document-dirty-status")).toBeVisible();
+  expect(errors).toEqual([]);
+});
