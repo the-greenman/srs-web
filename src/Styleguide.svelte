@@ -8,7 +8,7 @@
   import { onMount, type Snippet } from "svelte";
   import {
     ActionBar, ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
-    CommentBadge, CommentThread, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
+    CommentBadge, CommentThread, LinkProposals, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, LinkedRecord, RemedyCard, MarkdownHelp, MarkdownText, MethodBoard, AgentPanel, McpConnection, Panel, ProblemCard, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
     TagChip, Textarea, Notice, SectionHeader, SourceRow, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
   } from "$lib/components";
@@ -403,6 +403,8 @@
         <div><h3>25 comments (earlier collapsed)</h3><CommentThread comments={fx.manyComments} onadd={noop} /></div>
         <div><h3>Grouped same-author runs</h3><CommentThread comments={fx.runComments} onadd={noop} /></div>
         <div><h3>Markdown, and inert HTML</h3><CommentThread comments={fx.markdownComments} onadd={noop} /></div>
+        <div><h3>Proposed links: none answered, ticked, denied</h3><LinkProposals proposals={fx.proposals} me={fx.human.id} onanswer={noop} /></div>
+        <div><h3>Proposed links, no session actor (read only)</h3><LinkProposals proposals={fx.proposals} onanswer={noop} /></div>
         <div><h3>Agents and a human</h3><CommentThread comments={fx.comments} onadd={noop} /></div>
       </div>
     {/snippet}

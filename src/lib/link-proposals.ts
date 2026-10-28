@@ -38,6 +38,18 @@ export interface Proposal {
   answers: Record<string, Exclude<Answer, "withdrawn">>;
 }
 
+/** A proposal as a component shows it: labels come from the engine, never computed here. */
+export interface ProposalView {
+  id: string;
+  /** The relation type's label, e.g. "answers". */
+  relationLabel: string;
+  /** The engine's label for the record the link would point to. */
+  targetLabel: string;
+  why: string;
+  author?: Actor;
+  answers: Proposal["answers"];
+}
+
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
 /** The latest answer per author, oldest first in, latest wins; `withdrawn` clears. Pure. */

@@ -1,0 +1,36 @@
+/* LinkProposals (srs-web#617): proposed links answered in place with a tick or a deny. */
+.proposals {
+  display: grid;
+  gap: var(--space-sm);
+}
+.proposals__item {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  border: 1px dashed var(--color-line);
+  border-radius: var(--radius-md);
+}
+.proposals__item[data-answer="agree"] {
+  border-style: solid;
+}
+.proposals__item[data-answer="disagree"] {
+  opacity: 0.7;
+}
+.proposals__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.proposals__link {
+  display: inline-flex;
+  gap: var(--space-xs);
+  font-weight: 600;
+}
+.proposals__relation {
+  font-weight: 400;
+}
+.proposals__answers {
+  display: flex;
+  gap: var(--space-xs);
+}

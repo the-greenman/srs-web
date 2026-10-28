@@ -105,6 +105,7 @@ export { default as AttachmentPreview } from "./AttachmentPreview.svelte";
 export { default as TrayRow } from "./TrayRow.svelte";
 export { default as DraftTray } from "./DraftTray.svelte";
 export { default as CommentThread } from "./CommentThread.svelte";
+export { default as LinkProposals } from "./LinkProposals.svelte";
 export { default as EyeToggle } from "./EyeToggle.svelte";
 export { default as InlineText } from "./InlineText.svelte";
 

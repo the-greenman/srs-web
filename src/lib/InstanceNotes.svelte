@@ -14,9 +14,12 @@
   import { addComment } from '$lib/comments.js';
   import { loadInstanceNotes } from '$lib/instance-notes.js';
   import type { InstanceNotes } from '$lib/instance-notes.js';
+  import { respond } from '$lib/link-proposals.js';
+  import type { Answer } from '$lib/link-proposals.js';
   import type { SrsRepository } from '$lib/srs-client.js';
   import AnnotationMargin from '$lib/components/AnnotationMargin.svelte';
   import CommentThread from '$lib/components/CommentThread.svelte';
+  import LinkProposals from '$lib/components/LinkProposals.svelte';
 
   let {
     repo,
@@ -30,7 +33,19 @@
   let hasActor = $state(currentActor() !== null);
   onDestroy(onActorChange(() => (hasActor = currentActor() !== null)));
 
-  const empty: InstanceNotes = { available: false, comments: [], annotations: [] };
+  const empty: InstanceNotes = { available: false, comments: [], annotations: [], proposals: [] };
+  let me = $state(currentActor()?.id);
+  onDestroy(onActorChange(() => (me = currentActor()?.id)));
+
+  function answer(proposalId: string, a: Answer) {
+    try {
+      respond(repo, proposalId, a);
+      error = null;
+      written += 1;
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    }
+  }
   const notes = $derived.by(() => {
     void revision;
     void written;
@@ -62,6 +77,7 @@
     <AnnotationMargin annotations={notes.annotations} variant="expanded" max={8} />
   {/if}
   {#if notes.available}
+    <LinkProposals proposals={notes.proposals} {me} onanswer={answer} />
     <CommentThread comments={notes.comments} needsName={!hasActor} onadd={comment} />
     {#if error}<Notice kind="error">{error}</Notice>{/if}
   {/if}
