@@ -1,0 +1,19 @@
+{
+  "id": "ddfd7c12-9190-4ffa-a9bd-1c7c494e2d7a",
+  "namespace": "com.semanticops.help",
+  "name": "title",
+  "version": 1,
+  "description": "Title",
+  "aiGuidance": {
+    "purpose": "The feature's name as the writer sees it.",
+    "extraction": "Short, in the writer's words: Connect your AI.",
+    "negativeGuidance": "No internal names or ids."
+  },
+  "fieldType": {
+    "datatype": "string",
+    "cardinality": "single",
+    "format": "plain"
+  },
+  "editorHint": "singleline",
+  "createdAt": "2026-10-29T14:10:23.097722421+00:00"
+}

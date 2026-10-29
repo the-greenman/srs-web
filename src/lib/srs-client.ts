@@ -1228,6 +1228,8 @@ export interface ContainerSummary {
 export interface Container {
   containerId: string;
   title: string;
+  /** The container's slug name, when it has one (help keys an editor's container by it). */
+  name?: string;
   containerType?: string;
   /** RFC-043 [R4]: explicit typing anchor (replaces the removed `rootInstanceIds`). */
   anchorInstanceId?: string;

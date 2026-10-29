@@ -1,0 +1,70 @@
+/**
+ * Editor help as data (decision 9441693e, srs-web#639). The help repository in `help/` (an SRS
+ * repository, edited in the editor itself) holds one `ui-feature` record per feature; an editor's
+ * help is the container named after its id, in entry order. Components never hold help text: they
+ * name the feature (`use:feature`, ./feature.ts) and the contract test joins the two.
+ */
+import {
+  type SrsRepository,
+  getContainer,
+  getContainerOutline,
+  getRecord,
+  listContainers,
+  loadRepoFromTree,
+} from "$lib/srs-client.js";
+
+export interface HelpItem {
+  instanceId: string;
+  featureId: string;
+  placement: "ui" | "concept";
+  title: string;
+  summary: string;
+  explanation?: string;
+  aiGuidance?: string;
+}
+
+const PREFIX = "../../../help/";
+const FILES = import.meta.glob("../../../help/**/*", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
+
+let loaded: SrsRepository | null = null;
+
+/** The bundled help repository, loaded once (after initWasm). */
+export function helpRepository(): SrsRepository {
+  if (!loaded) {
+    const enc = new TextEncoder();
+    loaded = loadRepoFromTree(
+      Object.fromEntries(
+        Object.entries(FILES).map(([k, v]) => [k.slice(PREFIX.length), enc.encode(v)])
+      )
+    );
+  }
+  return loaded;
+}
+
+/** The help for one editor, in display order; empty when the editor has no help container. */
+export function helpFor(editorId: string, repo: SrsRepository = helpRepository()): HelpItem[] {
+  const container = listContainers(repo)
+    .map((c) => getContainer(repo, c.containerId))
+    .find((c) => c.name === editorId);
+  if (!container) return [];
+  return getContainerOutline(repo, container.containerId).entries.flatMap(({ instanceId }) => {
+    const r = getRecord(repo, instanceId);
+    if (r?.typeName !== "ui-feature") return [];
+    const v = r.fieldValues as Record<string, string | undefined>;
+    return [
+      {
+        instanceId,
+        featureId: v.feature_id ?? "",
+        placement: v.placement === "concept" ? "concept" : "ui",
+        title: v.title ?? "",
+        summary: v.summary ?? "",
+        explanation: v.explanation,
+        aiGuidance: v.ai_guidance,
+      },
+    ];
+  });
+}

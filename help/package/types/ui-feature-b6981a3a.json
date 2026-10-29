@@ -1,0 +1,47 @@
+{
+  "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+  "id": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "namespace": "com.semanticops.help",
+  "name": "ui-feature",
+  "version": 1,
+  "description": "One feature of an editor, with the words a person reads and the guidance an agent teaches from.",
+  "fields": [
+    {
+      "fieldId": "c39e1628-919c-499a-a677-c5784f30c031",
+      "order": 0,
+      "required": true
+    },
+    {
+      "fieldId": "cbe3853b-0926-4365-9460-e65a0727b61a",
+      "order": 1,
+      "required": true
+    },
+    {
+      "fieldId": "ddfd7c12-9190-4ffa-a9bd-1c7c494e2d7a",
+      "order": 2,
+      "required": true
+    },
+    {
+      "fieldId": "da922f6f-8d52-4e2d-b073-85c4dfae064c",
+      "order": 3,
+      "required": true
+    },
+    {
+      "fieldId": "595b35f6-c996-4e0d-8b01-52cf80428e6f",
+      "order": 4,
+      "required": false
+    },
+    {
+      "fieldId": "4f5a1cdd-5212-49f3-9d53-e832eeb53cc6",
+      "order": 5,
+      "required": false
+    }
+  ],
+  "identityFieldId": "ddfd7c12-9190-4ffa-a9bd-1c7c494e2d7a",
+  "aiGuidance": {
+    "purpose": "Help as data (decision 9441693e): one record per feature; each editor's container orders them.",
+    "extraction": "feature_id joins the record to the UI; summary is what the writer reads first.",
+    "negativeGuidance": "Help text never lives in components."
+  },
+  "createdAt": "2026-10-29T14:10:23.286992208+00:00"
+}

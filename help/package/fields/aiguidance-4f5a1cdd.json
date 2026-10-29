@@ -1,0 +1,19 @@
+{
+  "id": "4f5a1cdd-5212-49f3-9d53-e832eeb53cc6",
+  "namespace": "com.semanticops.help",
+  "name": "ai_guidance",
+  "version": 1,
+  "description": "Guidance for agents",
+  "aiGuidance": {
+    "purpose": "How an agent should teach this feature: what to check, what to show with ui_highlight, what to ask the writer.",
+    "extraction": "Instructions to an agent, imperative.",
+    "negativeGuidance": "Never tell an agent to write the writer's text."
+  },
+  "fieldType": {
+    "datatype": "string",
+    "cardinality": "single",
+    "format": "markdown"
+  },
+  "editorHint": "textarea",
+  "createdAt": "2026-10-29T14:10:23.241313712+00:00"
+}

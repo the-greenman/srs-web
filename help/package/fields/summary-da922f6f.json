@@ -1,0 +1,19 @@
+{
+  "id": "da922f6f-8d52-4e2d-b073-85c4dfae064c",
+  "namespace": "com.semanticops.help",
+  "name": "summary",
+  "version": 1,
+  "description": "Summary",
+  "aiGuidance": {
+    "purpose": "The words the help dialog shows: what this is and what to do, for someone who has never seen the editor.",
+    "extraction": "Two to four plain sentences, second person.",
+    "negativeGuidance": "No jargon the writer has not met; no internals."
+  },
+  "fieldType": {
+    "datatype": "string",
+    "cardinality": "single",
+    "format": "markdown"
+  },
+  "editorHint": "textarea",
+  "createdAt": "2026-10-29T14:10:23.143230919+00:00"
+}

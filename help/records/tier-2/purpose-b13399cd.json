@@ -1,0 +1,14 @@
+{
+  "instanceId": "b13399cd-ba0d-4dc2-ba88-2ea086da96c5",
+  "typeId": "3c000001-0000-4000-a000-000000000001",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.core",
+  "typeName": "purpose",
+  "fieldValues": {
+    "statement": "The help each srs-web editor shows a person and teaches an agent: one record per feature, one container per editor (srs-web#639, decision 9441693e).",
+    "title": "SemanticOps editor help"
+  },
+  "createdAt": "2026-10-29T14:10:00.983898030+00:00",
+  "updatedAt": "2026-10-29T14:10:00.983898030+00:00",
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

@@ -1,0 +1,11 @@
+{
+  "rootContainerId": "c184d887-2fa2-4cbe-8528-cc5ac78a6766",
+  "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+  "createdAt": "2026-10-29T14:10:00.983640150+00:00",
+  "dataModelRevision": 11,
+  "description": "The help each srs-web editor shows a person and teaches an agent: one record per feature, one container per editor (srs-web#639, decision 9441693e).",
+  "namespace": "com.semanticops.help",
+  "repositoryId": "c184d887-2fa2-4cbe-8528-cc5ac78a6766",
+  "srsVersion": "2.0-draft",
+  "title": "SemanticOps editor help"
+}

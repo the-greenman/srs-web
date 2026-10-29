@@ -1,0 +1,29 @@
+{
+  "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
+  "id": "5f6036f3-e6d5-4d7b-821f-7e2926686eae",
+  "namespace": "com.semanticops.help",
+  "name": "help",
+  "version": "1.0.0",
+  "title": "help",
+  "description": "",
+  "status": "active",
+  "createdAt": "2026-01-01T00:00:00Z",
+  "fields": [
+    "fields/featureid-c39e1628.json",
+    "fields/placement-cbe3853b.json",
+    "fields/title-ddfd7c12.json",
+    "fields/summary-da922f6f.json",
+    "fields/explanation-595b35f6.json",
+    "fields/aiguidance-4f5a1cdd.json"
+  ],
+  "types": [
+    "types/ui-feature-b6981a3a.json"
+  ],
+  "relationTypes": [],
+  "views": [],
+  "compositions": [],
+  "blueprints": [],
+  "vocabularies": [
+    "vocabularies/placement-2b99ba0a.json"
+  ]
+}

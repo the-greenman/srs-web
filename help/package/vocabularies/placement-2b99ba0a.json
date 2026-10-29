@@ -1,0 +1,26 @@
+{
+  "id": "2b99ba0a-7b9e-4e6e-a7a0-ad3821ae5884",
+  "version": 1,
+  "namespace": "com.semanticops.help",
+  "name": "placement",
+  "mode": "closed",
+  "terms": [
+    {
+      "id": "cb63b260-3c20-4438-82ae-3041766d510d",
+      "version": 1,
+      "namespace": "com.semanticops.help",
+      "key": "ui",
+      "label": "In the UI",
+      "description": "The feature is a control or area on screen; a component presents it with use:feature."
+    },
+    {
+      "id": "b2262cbe-d1f3-42be-b3b0-e9d49008275d",
+      "version": 1,
+      "namespace": "com.semanticops.help",
+      "key": "concept",
+      "label": "Concept",
+      "description": "An idea the writer needs, with no one place on screen."
+    }
+  ],
+  "createdAt": "2026-10-29T14:10:22.962879702+00:00"
+}
