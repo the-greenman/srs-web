@@ -9,8 +9,8 @@
 <script lang="ts">
   import { onDestroy, onMount, tick, untrack } from "svelte";
   import type { Snippet } from "svelte";
-  import { copyText } from "$lib/clipboard.js";
-  import { getRecord, repositoryId } from "$lib/srs-client.js";
+  import { copyHtml, copyText } from "$lib/clipboard.js";
+  import { getRecord, renderMarkdown, repositoryId } from "$lib/srs-client.js";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import AgentFeed from "$lib/components/AgentFeed.svelte";
   import AgentPresence from "$lib/components/AgentPresence.svelte";
@@ -541,6 +541,17 @@
     }
   }
 
+  async function copyEssayAs(html: boolean) {
+    try {
+      const md = essayMarkdown(repo, model!);
+      const ok = html ? await copyHtml(renderMarkdown(md)) : await copyText(md);
+      if (ok) notify({ kind: "success", key: "copy-essay", text: html ? "Copied as HTML" : "Copied as markdown" });
+      else error = "Could not copy to the clipboard.";
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    }
+  }
+
   /** Export references (srs-web#278): the material the essay refers to, as markdown, from the bundle. */
   function exportReferences() {
     try {
@@ -722,6 +733,8 @@
         onsave: onSave,
         onexport: onExport,
         onexportmd: model ? exportMarkdown : undefined,
+        oncopymd: model ? () => copyEssayAs(false) : undefined,
+        oncopyhtml: model ? () => copyEssayAs(true) : undefined,
         onsnapshot: model?.canSnapshot ? exportSnapshot : undefined,
         onreferences: model?.canSnapshot ? exportReferences : undefined,
         onexplorer: onOpenExplorer,

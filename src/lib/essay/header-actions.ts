@@ -36,6 +36,9 @@ export interface HeaderHandlers {
   onexport: () => void;
   /** Download the visible essay text as markdown. Absent while no essay is open. */
   onexportmd?: () => void;
+  /** Copy the visible essay text to the clipboard as markdown / as rendered html. Absent while no essay is open. */
+  oncopymd?: () => void;
+  oncopyhtml?: () => void;
   /** Download the essay's snapshot (.srs slice). Absent while no essay is open or its package cannot bundle. */
   onsnapshot?: () => void;
   onreferences?: () => void;
@@ -97,6 +100,24 @@ export function headerActions(
       run: h.onexportmd,
       enabled: true,
       testid: "export-markdown",
+    },
+    !!h.oncopymd && {
+      id: "copy-md",
+      group: "document",
+      kind: "action",
+      label: "Copy as markdown",
+      run: h.oncopymd,
+      enabled: true,
+      testid: "copy-markdown",
+    },
+    !!h.oncopyhtml && {
+      id: "copy-html",
+      group: "document",
+      kind: "action",
+      label: "Copy as HTML",
+      run: h.oncopyhtml,
+      enabled: true,
+      testid: "copy-html",
     },
     !!h.onreferences && {
       id: "export-references",
