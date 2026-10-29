@@ -71,3 +71,21 @@ export function helpFor(editorId: string, repo: SrsRepository = helpRepository()
     ];
   });
 }
+
+const dismissedKey = (editorId: string) => `srs-web.help.dismissed.${editorId}`;
+
+/** "Don't show again" for an editor's help, per viewer. Storage may be unavailable: then help shows. */
+export function helpDismissed(editorId: string): boolean {
+  try {
+    return localStorage.getItem(dismissedKey(editorId)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setHelpDismissed(editorId: string, dismissed: boolean): void {
+  try {
+    if (dismissed) localStorage.setItem(dismissedKey(editorId), "1");
+    else localStorage.removeItem(dismissedKey(editorId));
+  } catch {}
+}

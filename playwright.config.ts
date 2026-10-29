@@ -11,7 +11,11 @@ const pinnedChromium = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 // Writers have a name (srs-web#618): the essay is read-only without one, so every spec starts with a
 // saved local actor. A spec that tests the missing-name path clears it with `test.use({ storageState: NO_ACTOR })`.
 const actor = { kind: "human", id: "local:e2e-ada", name: "Ada" }
-export const NO_ACTOR = { cookies: [], origins: [] }
+// First-run help (srs-web#642) is dismissed for every spec, so its dialog never covers the page; a spec
+// that tests it uses FIRST_RUN (no actor, nothing dismissed).
+const helpDismissed = [{ name: "srs-web.help.dismissed.essay", value: "1" }]
+export const FIRST_RUN = { cookies: [], origins: [] }
+export const NO_ACTOR = { cookies: [], origins: [{ origin: baseURL, localStorage: helpDismissed }] }
 
 export default defineConfig({
   testDir: "./e2e",
@@ -29,7 +33,7 @@ export default defineConfig({
     trace: "on-first-retry",
     storageState: {
       cookies: [],
-      origins: [{ origin: baseURL, localStorage: [{ name: "srs-web.actor", value: JSON.stringify(actor) }] }],
+      origins: [{ origin: baseURL, localStorage: [{ name: "srs-web.actor", value: JSON.stringify(actor) }, ...helpDismissed] }],
     },
   },
   projects: [
