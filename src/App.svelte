@@ -34,7 +34,9 @@
     acceptMigration,
   } from "$lib/srs-client.js";
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
-  import type { AgentPanelCtx } from "$lib/agent-activity.js";
+  import type { AgentPanelCtx, UiHost } from "$lib/agent-activity.js";
+  import { helpFor } from "$lib/help/help.js";
+  import UiSpot from "$lib/components/UiSpot.svelte";
   import { AgentLibrary } from "$lib/agent-library.svelte.js";
   import { fetchArchiveFile, parseNewLink, parseOpenUrl, parseRepoLink, withoutBootLinks, type RepoLink } from "$lib/open-url.js";
   import type { GitHubProvider } from "$lib/storage/github.js";
@@ -429,7 +431,39 @@
   const currentGuard = (): AgentWriteGuard | null =>
     readOnlyHost && repo ? readOnlyGuard(repo) : agentGuard && agentGuardRepo === repo ? agentGuard : null;
   // Relays, saved agents and their sessions (srs-web#603): one controller in $lib for every app.
-  const agentLib = new AgentLibrary({ guard: currentGuard, onHandled: () => void syncDocument() });
+  // ── Host UI tools (ui_help, ui_highlight; srs-web#643, ADR-028): the open editor's help and the writer's screen.
+  let spot = $state<{ target: HTMLElement; message?: string } | null>(null);
+  const visible = (el: Element) => el.getClientRects().length > 0;
+  const inView = (el: Element) => {
+    const r = el.getBoundingClientRect();
+    return r.bottom > 0 && r.top < innerHeight;
+  };
+  const ui: UiHost = {
+    help: () => {
+      try {
+        return appState === "loaded" ? helpFor(activeEditor?.id ?? editorMode) : [];
+      } catch {
+        return []; // no help repository for this editor
+      }
+    },
+    onScreen: (id) => Array.from(document.querySelectorAll(`[data-feature="${CSS.escape(id)}"]`)).some(visible),
+    highlight({ featureId, blockId, message }) {
+      const sel = featureId ? `[data-feature="${CSS.escape(featureId)}"]` : `[data-block-id="${CSS.escape(blockId ?? "")}"]`;
+      const els = Array.from(document.querySelectorAll<HTMLElement>(sel)).filter(visible);
+      if (!els.length)
+        return {
+          shown: false,
+          reason: featureId
+            ? `"${featureId}" is not on the writer's screen now (its panel may be closed, or this editor does not have it). Tell the writer where to find it.`
+            : "That paragraph is not on the writer's screen (it may be hidden, folded, or outside a zoom).",
+        };
+      const el = els.find(inView) ?? els[0];
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      spot = { target: el, message }; // UiSpot follows it through the scroll and closes itself
+      return { shown: true };
+    },
+  };
+  const agentLib = new AgentLibrary({ guard: currentGuard, onHandled: () => void syncDocument(), ui });
   $effect(() => {
     const current = repo;
     untrack(() => agentLib.setRepository(current));
@@ -1361,3 +1395,5 @@
     }}
   />
 {/if}
+
+{#if spot}{#key spot}<UiSpot target={spot.target} message={spot.message} onclose={() => (spot = null)} />{/key}{/if}

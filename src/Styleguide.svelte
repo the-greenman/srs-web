@@ -7,7 +7,7 @@
   import "./styles/themes/demo.css";
   import { onMount, type Snippet } from "svelte";
   import {
-    ActionBar, ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
+    ActionBar, ActionMenu, UiSpot, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, Count, CommentThread, LinkProposals, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, LinkedRecord, RemedyCard, MarkdownHelp, MarkdownText, MethodBoard, AgentPanel, McpConnection, Panel, ProblemCard, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
     TagChip, Textarea, Notice, SectionHeader, SourceRow, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
@@ -807,6 +807,9 @@
         <Button size="sm" variant="primary">Save</Button>
       {/snippet}
     </Modal>
+    <div data-testid="sg-ui-spot" style="padding-bottom: 64px">
+      <UiSpot inline rect={{ top: 0, left: 0, width: 220, height: 36 }} message="This is Layers: an outline of your essay." onclose={() => {}} />
+    </div>
     <UpgradePlan inline testid="sg-upgrade-plan" plans={[fx.upgradePlan]} onApply={() => {}} onCancel={() => {}} />
     <div data-testid="sg-packages-dialog"><PackagesDialog inline packages={fx.installedPackagesFx} onUpgrade={() => {}} onClose={() => {}} /></div>
   </section>

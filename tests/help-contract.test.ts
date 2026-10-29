@@ -35,7 +35,8 @@ const inEditorHelp = new Set(
 
 // Every mention of the attribute in markup or code, however written. A declaration is
 // `data-feature="slug"`; anything else fails unless listed as a pass-through below.
-const MENTION = /data-feature\s*=\s*(\S+?)(?=[\s>/]|$)|["']data-feature["']\s*[:,]/gm;
+// `[data-feature=…]` is a CSS selector that reads features (ui_highlight), not a declaration: skipped.
+const MENTION = /(?<!\[)data-feature\s*=\s*(\S+?)(?=[\s>/]|$)|["']data-feature["']\s*[:,]/gm;
 /** Components that only pass a declared id through (e.g. `data-feature={a.feature}` from action data). */
 const PASS_THROUGH: Record<string, string> = {
   "src/lib/components/Toolbar.svelte": "{a.feature}",
@@ -100,6 +101,7 @@ describe("help feature contract (decision 9441693e)", () => {
     const seen = (src: string) =>
       [...src.matchAll(MENTION)].map((m) => DECLARED.test((m[1] ?? m[0]).trim()));
     expect(seen('<b data-feature="essay.x">')).toEqual([true]);
+    expect(seen('querySelector(`[data-feature="${CSS.escape(id)}"]`)')).toEqual([]);
     for (const bad of [
       "<b data-feature='essay.x'>",
       "<b data-feature=essay.x>",

@@ -1,0 +1,42 @@
+/* ============================================================================
+   component: ui spot (.ui-spot) — an agent pointing at the writer's screen (ui_highlight, #643)
+   ========================================================================== */
+.ui-spot {
+  position: fixed;
+  z-index: var(--z-overlay);
+  outline: var(--focus-ring);
+  outline-offset: var(--space-2xs);
+  border-radius: var(--radius-md);
+  pointer-events: none; /* the writer can click what it points at */
+  animation: ui-spot-pulse 1.2s ease-in-out 3;
+}
+.ui-spot--inline {
+  position: relative;
+}
+.ui-spot__message {
+  pointer-events: auto;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  left: 0;
+  max-width: 32ch;
+  margin: 0;
+  padding: var(--space-2xs) var(--space-xs);
+  font-size: var(--size-sm);
+  color: var(--color-text);
+  background: var(--popover-bg);
+  border: 1px solid var(--popover-border);
+  box-shadow: var(--popover-shadow);
+}
+@keyframes ui-spot-pulse {
+  50% {
+    outline-offset: var(--space-xs);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-spot {
+    animation: none;
+  }
+}
