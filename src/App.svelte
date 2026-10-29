@@ -36,7 +36,7 @@
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
   import type { AgentPanelCtx } from "$lib/agent-activity.js";
   import { AgentLibrary } from "$lib/agent-library.svelte.js";
-  import { fetchArchiveFile, parseNewLink, parseOpenUrl, parseRepoLink, withoutNewParam, withoutOpenParam, withoutRepoLink, type RepoLink } from "$lib/open-url.js";
+  import { fetchArchiveFile, parseNewLink, parseOpenUrl, parseRepoLink, withoutBootLinks, type RepoLink } from "$lib/open-url.js";
   import type { GitHubProvider } from "$lib/storage/github.js";
   import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
   import { listTypes, resolveRepositoryTitle, type AgentWriteGuard, type MigrationNotice, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
@@ -44,7 +44,7 @@
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
-  import { EDITORS, availableEditors, installEditor as installEditorPackages, isBuiltInView, usableEditor, type EditorDefinition } from "$lib/editors/registry.js";
+  import { EDITORS, availableEditors, creatableEditors, installEditor as installEditorPackages, isBuiltInView, usableEditor, type EditorDefinition } from "$lib/editors/registry.js";
   import { type Address, parseAddress, replaceAddress } from "$lib/address.js";
   import LensShell from "$lib/lens/LensShell.svelte";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
@@ -116,6 +116,7 @@
   let repoLinkError = $state<string | null>(null);
   /** A `?new=` link held back because a recovery copy is waiting (#640): the landing offers both. */
   let pendingNew = $state<EditorDefinition | null>(null);
+  let newLinkError = $state<string | null>(null);
   /** Editor to select once the next document has loaded (a deep link's `editor`); dropped if not usable. */
   let pendingEditor = $state<string | null>(null);
   /** Host of a link being fetched at boot (#471), for the splash text. */
@@ -340,6 +341,7 @@
   };
 
   function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
+    pendingNew = null; // a document opened: a held ?new offer is spent
     // Every load path passes through here: from now on each engine write reports itself.
     if (repo) {
       if (readOnlyHost) repo = readOnlyRepo(repo, () => readOnlyHost !== null);
@@ -453,17 +455,26 @@
           return;
         }
         const newId = parseNewLink(location.search);
-        if (newId !== null) return startFromNewLink(newId);
-        try {
-          repoLink = parseRepoLink(location.search);
-        } catch (e: unknown) {
-          repoLinkError = e instanceof Error ? e.message : String(e);
+        if (newId === null) {
+          try {
+            repoLink = parseRepoLink(location.search);
+          } catch (e: unknown) {
+            repoLinkError = e instanceof Error ? e.message : String(e);
+          }
         }
-        if (repoLink || repoLinkError) history.replaceState(history.state, "", withoutRepoLink(location.href));
+        // Every boot link is read once: none survives to act again on a reload.
+        history.replaceState(history.state, "", withoutBootLinks(location.href));
         return loadWorkingCopy().then((cached) => {
           if (cached !== null) {
             cachedSession = cached;
             editorMode = "generic";
+          }
+          if (newId !== null) {
+            // ?new=<editor> (#640): start at once, unless a recovery copy is waiting (never replaced unasked).
+            const editor = creatableEditors().find((e) => e.id === newId);
+            if (!editor) newLinkError = `"${newId}" is not an editor that can start a new document.`;
+            else if (cached === null) return startNew(editor);
+            else pendingNew = editor;
           }
           appState = "idle";
         });
@@ -732,27 +743,16 @@
   // Start from a link (?new=<editor>, #640)
   // ---------------------------------------------------------------------------
 
-  /**
-   * A new, unsaved document in that editor, as Start new would make it. The parameter goes first so a
-   * reload never makes a second one. A waiting recovery copy is never overwritten: the landing offers
-   * Restore beside Start new instead. An unknown editor lands on the picker with a notice.
-   */
-  async function startFromNewLink(id: string): Promise<void> {
-    history.replaceState(history.state, "", withoutNewParam(location.href));
-    const editor = EDITORS.find((e) => e.id === id && (e.create || e.seed));
-    const cached = await loadWorkingCopy();
-    if (cached !== null) {
-      cachedSession = cached;
-      editorMode = "generic";
+  /** A new, unsaved document in `editor`, as Start new makes it; a failure lands on the picker with a notice. */
+  async function startNew(editor: EditorDefinition): Promise<void> {
+    pendingNew = null;
+    newLinkError = null;
+    try {
+      await createRepository(`Untitled ${editor.label.toLowerCase()}`, [editor.id]);
+    } catch (e: unknown) {
+      newLinkError = `Could not start a new ${editor.label.toLowerCase()}: ${e instanceof Error ? e.message : String(e)}`;
+      appState = "idle";
     }
-    if (!editor) {
-      repoLinkError = `"${id}" is not an editor that can start a new document.`;
-    } else if (cached === null) {
-      return createRepository(`Untitled ${editor.label.toLowerCase()}`, [editor.id]);
-    } else {
-      pendingNew = editor;
-    }
-    appState = "idle";
   }
 
   // ---------------------------------------------------------------------------
@@ -780,7 +780,7 @@
 
   /** `?open=`: the one shared path, with a failure taking the whole page (the chooser shows it inline instead). */
   async function openFromLink(raw: string): Promise<void> {
-    history.replaceState(history.state, "", withoutOpenParam(location.href));
+    history.replaceState(history.state, "", withoutBootLinks(location.href));
     try {
       await openFromUrl(raw);
     } catch (e: unknown) {
@@ -1136,7 +1136,7 @@
               restoreError = `Could not restore session: ${e instanceof Error ? e.message : String(e)}`;
             }
           }}>Restore session</Button>
-            <Button size="sm" data-testid="restore-discard" onclick={() => { void clearWorkingCopy(); cachedSession = null; restoreError = null; }}>Discard</Button>
+            <Button size="sm" data-testid="restore-discard" onclick={() => { void clearWorkingCopy(); cachedSession = null; restoreError = null; pendingNew = null; }}>Discard</Button>
           </div>
         </Notice>
         {#if restoreError}<Notice kind="error" testid="restore-error">{restoreError}</Notice>{/if}
@@ -1156,10 +1156,13 @@
         <Notice kind="info" testid="new-link">
           You followed a link to start a new {editor.label.toLowerCase()}. You also have unsaved work in this browser: restore it above, or start the new {editor.label.toLowerCase()} (the unsaved work is replaced once you edit it).
           <div class="landing__actions">
-            <Button size="sm" variant="primary" data-testid="new-link-start" onclick={() => { const e = editor; pendingNew = null; void createRepository(`Untitled ${e.label.toLowerCase()}`, [e.id]); }}>Start a new {editor.label.toLowerCase()}</Button>
+            <Button size="sm" variant="primary" data-testid="new-link-start" onclick={() => void startNew(editor)}>Start a new {editor.label.toLowerCase()}</Button>
             <Button size="sm" onclick={() => { pendingNew = null; }}>Dismiss</Button>
           </div>
         </Notice>
+      {/if}
+      {#if newLinkError}
+        <Notice kind="error" testid="new-link-error">{newLinkError}</Notice>
       {/if}
       {#if repoLinkError}
         <Notice kind="error" testid="repo-link-error">{repoLinkError}</Notice>

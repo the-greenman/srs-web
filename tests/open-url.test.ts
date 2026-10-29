@@ -7,9 +7,7 @@ import {
   parseOpenUrl,
   parseRepoLink,
   sniffArchive,
-  withoutNewParam,
-  withoutOpenParam,
-  withoutRepoLink,
+  withoutBootLinks,
 } from "../src/lib/open-url";
 
 const zip = new Uint8Array([0x50, 0x4b, 3, 4, 0, 0]);
@@ -42,12 +40,12 @@ describe("parseOpenUrl", () => {
   });
 });
 
-describe("withoutOpenParam", () => {
+describe("withoutBootLinks: open", () => {
   it("drops only open", () => {
     expect(
-      withoutOpenParam("https://app.test/?open=https%3A%2F%2Fa.test%2Fx.srs&theme=dark#h")
+      withoutBootLinks("https://app.test/?open=https%3A%2F%2Fa.test%2Fx.srs&theme=dark#h")
     ).toBe("/?theme=dark#h");
-    expect(withoutOpenParam("https://app.test/?open=x")).toBe("/");
+    expect(withoutBootLinks("https://app.test/?open=x")).toBe("/");
   });
 });
 
@@ -136,21 +134,23 @@ describe("parseRepoLink", () => {
   });
 });
 
-describe("withoutRepoLink", () => {
+describe("withoutBootLinks: repo", () => {
   it("drops only the deep-link parameters", () => {
-    expect(withoutRepoLink("https://app.test/?repo=a/b&ref=m&path=p&editor=method&theme=dark#h")).toBe("/?theme=dark#h");
+    expect(withoutBootLinks("https://app.test/?repo=a/b&ref=m&path=p&editor=method&theme=dark#h")).toBe("/?theme=dark#h");
   });
 });
 
-describe("parseNewLink / withoutNewParam (#640)", () => {
+describe("parseNewLink / withoutBootLinks (#640)", () => {
   it("reads the editor id, and null when absent or empty", () => {
     expect(parseNewLink("?new=essay")).toBe("essay");
     expect(parseNewLink("?new=%20essay%20")).toBe("essay");
+    expect(parseNewLink("?new=Essay")).toBe("essay");
     expect(parseNewLink("?new=")).toBeNull();
     expect(parseNewLink("?open=x")).toBeNull();
   });
 
   it("drops only new, keeping other parameters and the hash", () => {
-    expect(withoutNewParam("https://app.example/?new=essay&x=1#e=a")).toBe("/?x=1#e=a");
+    expect(withoutBootLinks("https://app.example/?new=essay&x=1#e=a")).toBe("/?x=1#e=a");
+    expect(withoutBootLinks("https://app.example/?new=essay&repo=a/b&open=x&ref=m")).toBe("/");
   });
 });

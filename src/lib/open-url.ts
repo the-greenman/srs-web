@@ -29,24 +29,15 @@ export function parseOpenUrl(raw: string, allowLocalHttp = import.meta.env.DEV):
   return url;
 }
 
-/** The query string without `open`, keeping every other parameter and the hash. */
-export function withoutOpenParam(href: string): string {
-  return withoutParam(href, "open");
-}
-
-/** The editor id in a `?new=<editor>` link (#640), or null when absent or empty. */
+/** The editor id in a `?new=<editor>` link (#640), lower-cased; null when absent or empty. */
 export function parseNewLink(search: string): string | null {
-  return new URLSearchParams(search).get("new")?.trim() || null;
+  return new URLSearchParams(search).get("new")?.trim().toLowerCase() || null;
 }
 
-/** The query string without `new`, keeping every other parameter and the hash. */
-export function withoutNewParam(href: string): string {
-  return withoutParam(href, "new");
-}
-
-function withoutParam(href: string, key: string): string {
+/** The address without every boot-link parameter (`open`, `new`, `repo`, `ref`, `path`, `editor`). */
+export function withoutBootLinks(href: string): string {
   const url = new URL(href);
-  url.searchParams.delete(key);
+  for (const k of ["open", "new", "repo", "ref", "path", "editor"]) url.searchParams.delete(k);
   return url.pathname + url.search + url.hash;
 }
 
@@ -147,11 +138,4 @@ export function parseRepoLink(search: string): RepoLink | null {
   if (path.split("/").some((s) => s === ".."))
     throw new OpenUrlError('The path may not contain "..".');
   return { owner, name, ref, path, editor: q.get("editor")?.trim() ?? "" };
-}
-
-/** The address without the deep-link parameters (`repo`, `ref`, `path`, `editor`). */
-export function withoutRepoLink(href: string): string {
-  const url = new URL(href);
-  for (const k of ["repo", "ref", "path", "editor"]) url.searchParams.delete(k);
-  return url.pathname + url.search + url.hash;
 }

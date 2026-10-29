@@ -18,7 +18,7 @@ test("?new=essay opens an untitled essay and drops the parameter", async ({ page
 
 test("an unknown editor lands on the picker with a notice", async ({ page }) => {
   await page.goto("/?new=nope");
-  await expect(page.getByTestId("repo-link-error")).toContainText('"nope"');
+  await expect(page.getByTestId("new-link-error")).toContainText('"nope"');
   await expect(page.getByTestId("generic-file-picker")).toBeVisible();
 });
 
@@ -30,4 +30,14 @@ test("with unsaved work waiting, the link offers restore or start new", async ({
   await expect(page.getByTestId("restore-notice")).toBeVisible({ timeout: 15000 });
   await page.getByTestId("new-link-start").click();
   await expect(page.locator(".essay-shell__page")).toBeVisible();
+});
+
+test("restoring the waiting copy spends the offer", async ({ page }) => {
+  const entry = JSON.stringify({ name: "sample", srsj: readFileSync(SAMPLE, "utf8"), savedAt: "2026-10-01T00:00:00Z" });
+  await page.goto("/");
+  await page.evaluate((e) => localStorage.setItem("srs-web:working-copy", e), entry);
+  await page.goto("/?new=Essay&repo=a/b");
+  await expect(page).toHaveURL((u) => u.search === "");
+  await page.getByTestId("restore-notice").getByTestId("restore-discard").click();
+  await expect(page.getByTestId("new-link")).toHaveCount(0);
 });
