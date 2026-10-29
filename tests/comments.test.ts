@@ -50,3 +50,20 @@ it("taskState: the latest settling response wins, withdrawn reopens, the text is
   expect(taskState([r("agree", "3"), r("done", "1")]).state).toBe("done");
   expect(taskState([r("done", "1")]).reason).toBeUndefined();
 });
+
+it("taskState orders by time, not by string: a Z stamp and an offset stamp in the same second", async () => {
+  const { taskState, byTime } = await import("../src/lib/comments");
+  const done: Comment = { id: "d", text: "done", createdAt: "2026-10-29T10:00:03Z", kind: "done" };
+  const reopen: Comment = { id: "w", text: "withdrawn", createdAt: "2026-10-29T10:00:03.5+00:00", kind: "withdrawn" };
+  expect(taskState([done, reopen]).state).toBe("open");
+  expect(taskState([reopen, done]).state).toBe("open");
+  expect(byTime("2026-10-29T10:00:03Z", "2026-10-29T10:00:03.5+00:00")).toBeLessThan(0);
+});
+
+it("kindsIn needs the SemanticOps comment at v2 (v1 has no kind)", async () => {
+  const { kindsIn } = await import("../src/lib/comments");
+  const SO = "11cd0a5f-8c3f-4ec2-a055-5b9f56c5b0bc";
+  expect(kindsIn([{ id: SO, version: 1 }])).toBe(false);
+  expect(kindsIn([{ id: SO, version: 1 }, { id: SO, version: 2 }])).toBe(true);
+  expect(kindsIn([])).toBe(false);
+});

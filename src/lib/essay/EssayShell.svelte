@@ -85,7 +85,7 @@
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
   import { EssayHistory, snapshotEssay } from "./essay-history.js";
   import { canShow, isShown, setOpen, summary, toggle, toggleAll } from "./thread-visibility.js";
-  import { addComment, kindsAvailable } from "$lib/comments.js";
+  import { addComment } from "$lib/comments.js";
   import type { ContentKind } from "$lib/comments.js";
   import { respond } from "$lib/link-proposals.js";
   import { annotationsFor } from "$lib/annotations.js";
@@ -138,8 +138,6 @@
   let essays = $state<EssaySummary[]>([]);
   let essayId = $state<string | null>(null);
   let model = $state<EssayModel | null>(null);
-  /** Comments here can carry a kind (comments 1.1.0 installed); re-read when the model reloads. */
-  const canKind = $derived(model ? kindsAvailable(repo) : false);
   let error = $state<string | null>(null);
   /** Who the session writes as (login or saved name); follows actor changes. */
   let actor = $state(currentActor());
@@ -900,7 +898,7 @@
                 ondelete={() => toBin(p.id)}
               />
               {#if showThread(p.id)}
-                <CommentThread {now} comments={model!.comments[p.id] ?? []} needsName={!hasActor} kinds={canKind} onadd={(t, n, k) => comment(p.id, t, n, k)} onrespond={hasActor ? settle : undefined} onclose={() => closeThread(p.id)} />
+                <CommentThread {now} comments={model!.comments[p.id] ?? []} needsName={!hasActor} kinds={model!.canKind} onadd={(t, n, k) => comment(p.id, t, n, k)} onrespond={hasActor ? settle : undefined} onclose={() => closeThread(p.id)} />
               {/if}
             {/if}
           {/snippet}

@@ -1620,20 +1620,26 @@ export function installPackageBundle(
  * unsatisfied dependency throws before that bundle writes anything. A re-install of an
  * identical bundle is a core no-op. Earlier bundles stay installed if a later one throws.
  */
-export function installBundles(
+export function installBundles(repo: SrsRepository, packageIds: string[]): InstallPackageResult[] {
+  return installWithDependencies(repo, packageIds, new Set());
+}
+
+/** `installBundles`, first installing each bundle's missing pinned dependencies; `seen` stops a cycle. */
+function installWithDependencies(
   repo: SrsRepository,
   packageIds: string[],
-  seen = new Set<string>()
+  seen: Set<string>
 ): InstallPackageResult[] {
   return [...new Set(packageIds)].flatMap((packageId) => {
     if (seen.has(packageId)) return [];
     seen.add(packageId);
     const text = bundledPackage(packageId);
     if (!text) throw new Error(`No bundled package ${packageId}`);
-    const deps = installBundles(repo, missingPinnedDependencies(repo, text), seen);
-    const check = repo.check_package_requirements(text);
-    if (!Array.isArray(check?.dependencies)) throw new Error("malformed requirement check result");
-    const unmet = (check.dependencies as RequirementOutcome[]).find((o) => !o.satisfied);
+    let outcomes = bundleRequirements(repo, text);
+    const missing = missingPinned(outcomes);
+    const deps = installWithDependencies(repo, missing, seen);
+    if (missing.length) outcomes = bundleRequirements(repo, text); // re-checked only when something was installed
+    const unmet = outcomes.find((o) => !o.satisfied);
     if (unmet) {
       throw new Error(`${packageId} needs ${unmet.name} ${unmet.version}`);
     }
@@ -1641,15 +1647,20 @@ export function installBundles(
   });
 }
 
-/**
- * The packageIds a bundle requires that the core reports `missing` and that are pinned here: installed
- * before the bundle, so a package never waits on a dependency the editor ships (essay 1.8.0 needs
- * comments 1.1.0, srs-web#591). Outdated or incompatible ones are left to the core's refusal.
- */
-function missingPinnedDependencies(repo: SrsRepository, bundleText: string): string[] {
+/** The core's outcome for each requirement a bundle declares (`check_package_requirements` reads the bundle text). */
+function bundleRequirements(repo: SrsRepository, bundleText: string): RequirementOutcome[] {
   const check = repo.check_package_requirements(bundleText);
   if (!Array.isArray(check?.dependencies)) throw new Error("malformed requirement check result");
-  return (check.dependencies as RequirementOutcome[])
+  return check.dependencies as RequirementOutcome[];
+}
+
+/**
+ * The requirements the core reports `missing` whose bundle is pinned here: installed with the bundle,
+ * so a package never waits on a dependency the editor ships (essay 1.8.0 needs comments 1.1.0,
+ * srs-web#591). Outdated or incompatible ones are left to the core's refusal.
+ */
+function missingPinned(outcomes: RequirementOutcome[]): string[] {
+  return outcomes
     .filter(
       (o) =>
         !o.satisfied &&
@@ -1759,14 +1770,15 @@ export function upgradeBundles(
   return [...new Set(packageIds)].map((packageId) => {
     const text = bundledPackage(packageId);
     if (!text) throw new Error(`No bundled package ${packageId}`);
-    // A dependency the new version adds is installed first; a dry run only names it in the plan.
-    const deps = missingPinnedDependencies(repo, text);
-    if (!options.dryRun) installBundles(repo, deps);
+    // A dependency the new version adds is installed AFTER the upgrade (the core only warns while it
+    // is missing), so an upgrade that throws leaves nothing written; a dry run only names it.
+    const deps = missingPinned(bundleRequirements(repo, text));
     const plan = upgradePackageBundle(repo, text, {
       dryRun: options.dryRun,
       priorBundles: priorBundles(repo, packageId),
       adopt: options.adopt?.[packageId],
     });
+    if (!options.dryRun) installBundles(repo, deps);
     if (options.dryRun && deps.length) {
       // The core warns that each is missing (as an outcome object); the plan says it is installed instead.
       const names = deps

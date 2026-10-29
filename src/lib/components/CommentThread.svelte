@@ -61,13 +61,11 @@
   const overflowing = new SvelteSet<string>();
 
   const present = $derived(CONTENT_KINDS.filter((k) => comments.some((c) => c.kind === k)));
-  const shown = $derived(filter ? comments.filter((c) => c.kind === filter) : comments);
+  // A filtered kind that no longer occurs (the thread changed) reads as All.
+  const active = $derived(filter && present.includes(filter as ContentKind) ? filter : null);
+  const shown = $derived(active ? comments.filter((c) => c.kind === active) : comments);
   const long = $derived(comments.length > EARLIER_THRESHOLD);
   const hidden = $derived(reveal ? 0 : Math.max(0, shown.length - EARLIER_THRESHOLD));
-  // A filtered kind that no longer occurs (the thread changed) falls back to All.
-  $effect(() => {
-    if (filter && !present.includes(filter as ContentKind)) filter = null;
-  });
   const visible = $derived(shown.slice(hidden));
   const runs = $derived(groupRuns(visible));
 
@@ -124,9 +122,9 @@
   {#if !folded && present.length > 0}
     <div class="comments__filter" role="group" aria-label="Show comments of kind" data-part="filter">
       <!-- Chips the size of the kind labels they filter by (srs-web#591). -->
-      <button type="button" class="comments__kind comments__chip" aria-pressed={filter === null} onclick={() => (filter = null)}>All</button>
+      <button type="button" class="comments__kind comments__chip" aria-pressed={active === null} onclick={() => (filter = null)}>All</button>
       {#each present as k (k)}
-        <button type="button" class="comments__kind comments__chip" aria-pressed={filter === k} data-testid="comment-filter-{k}" onclick={() => (filter = filter === k ? null : k)}>{k}</button>
+        <button type="button" class="comments__kind comments__chip" aria-pressed={active === k} data-testid="comment-filter-{k}" onclick={() => (filter = active === k ? null : k)}>{k}</button>
       {/each}
     </div>
   {/if}

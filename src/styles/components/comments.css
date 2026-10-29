@@ -169,9 +169,6 @@
   .comments__reply .btn {
     width: 100%;
   }
-  .comments__reply .select.comments__kind-pick {
-    align-self: flex-start;
-  }
 }
 
 /* Margin badge: a speech bubble with the count; empty ones appear on block hover / focus only. */
@@ -332,7 +329,7 @@
    Empty it reads a muted "kind", so a writer can ignore it. */
 .comments__reply .select.comments__kind-pick {
   flex: none;
-  align-self: center;
+  align-self: flex-start; /* also at phone width, where the reply stacks and stretches */
   width: auto;
   field-sizing: content; /* as wide as the chosen kind, like the label */
   padding: 0 4px;

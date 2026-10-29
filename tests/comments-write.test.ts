@@ -146,3 +146,12 @@ it("loadComments carries the kind and derives a task's state from responses on i
     task: { state: "rejected", reason: "not needed" },
   });
 });
+
+it("addComment drops a kind on the SemanticOps comment v1, which has no kind field", () => {
+  m.listTypes.mockReturnValue([{ id: SO_TYPE, version: 1 }] as never);
+  m.listRelationTypes.mockReturnValue([{ key: SO_REL }] as never);
+  addComment({} as never, "t", "hi", null, "task");
+  expect(m.createRecord).toHaveBeenLastCalledWith(expect.anything(), SO_TYPE, 1, {
+    fieldValues: { comment_text: "hi" },
+  });
+});
