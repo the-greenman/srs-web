@@ -223,3 +223,99 @@ it("sessionUnknown: only a replied non-initialize message on an uninitialized se
   h.handle(LIST);
   expect(h.sessionUnknown?.()).toBe(false);
 });
+
+// ── Host UI tools (srs-web#643, ADR-028) ─────────────────────────────────────────────────────
+import { UI_TOOLS, type UiHost, withUiTools } from "../src/lib/agent-activity";
+
+const toolEngine = (tools: unknown[] = [{ name: "find" }]) => {
+  const seen: string[] = [];
+  return {
+    seen,
+    handle(text: string) {
+      seen.push(text);
+      const m = JSON.parse(text);
+      return JSON.stringify({
+        jsonrpc: "2.0",
+        id: m.id,
+        result: m.method === "tools/list" ? { tools } : {},
+      });
+    },
+  };
+};
+const host = (o: Partial<UiHost> = {}): UiHost => ({
+  help: () => [
+    {
+      instanceId: "1",
+      featureId: "essay.layers",
+      placement: "ui",
+      title: "Layers",
+      summary: "An outline.",
+      aiGuidance: "Show it.",
+    },
+    {
+      instanceId: "2",
+      featureId: "essay.indents",
+      placement: "concept",
+      title: "Indents",
+      summary: "Grouping.",
+    },
+  ],
+  onScreen: (id) => id === "essay.layers",
+  highlight: () => ({ shown: true }),
+  ...o,
+});
+const call = (name: string, args: unknown = {}) =>
+  JSON.stringify({
+    jsonrpc: "2.0",
+    id: 7,
+    method: "tools/call",
+    params: { name, arguments: args },
+  });
+
+it("appends the UI tools to the engine's first tools/list page only", () => {
+  const h = withUiTools(toolEngine(), host());
+  const first = JSON.parse(h.handle('{"jsonrpc":"2.0","id":1,"method":"tools/list"}')!);
+  expect(first.result.tools.map((t: { name: string }) => t.name)).toEqual([
+    "find",
+    ...UI_TOOLS.map((t) => t.name),
+  ]);
+  const next = JSON.parse(
+    h.handle('{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{"cursor":"x"}}')!
+  );
+  expect(next.result.tools.map((t: { name: string }) => t.name)).toEqual(["find"]);
+});
+
+it("answers ui_help itself with the manual, in order, never reaching the engine", () => {
+  const e = toolEngine();
+  const r = JSON.parse(withUiTools(e, host()).handle(call("ui_help"))!);
+  expect(e.seen).toEqual([]);
+  expect(r.id).toBe(7);
+  const text: string = r.result.content[0].text;
+  expect(text.indexOf("Layers")).toBeLessThan(text.indexOf("Indents"));
+  expect(text).toContain("`essay.layers`, on screen now");
+  expect(text).toContain("`essay.indents`, an idea");
+  expect(text).toContain("How to teach it: Show it.");
+});
+
+it("ui_highlight passes the target and says when it is not on screen; with no target it is an error", () => {
+  const seen: unknown[] = [];
+  const h = withUiTools(
+    toolEngine(),
+    host({ highlight: (t) => (seen.push(t), { shown: false, reason: "closed" }) })
+  );
+  const r = JSON.parse(
+    h.handle(call("ui_highlight", { featureId: " essay.layers ", message: "Here" }))!
+  );
+  expect(seen).toEqual([{ featureId: "essay.layers", blockId: undefined, message: "Here" }]);
+  expect(JSON.parse(r.result.content[0].text)).toEqual({ shown: false, reason: "closed" });
+  const none = JSON.parse(h.handle(call("ui_highlight", {}))!);
+  expect(none.result.isError).toBe(true);
+});
+
+it("passes every other call, and unparseable frames, to the engine", () => {
+  const seen: string[] = [];
+  const h = withUiTools({ handle: (t) => (seen.push(t), "ok") }, host());
+  expect(h.handle(call("find"))).toBe("ok");
+  expect(h.handle("not json")).toBe("ok");
+  expect(seen).toEqual([call("find"), "not json"]);
+});

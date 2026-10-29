@@ -12,7 +12,7 @@
  * the 15 s clock) that live as long as that component.
  */
 import { tick } from "svelte";
-import { type AgentStatus, type AgentWrite, pushWrite } from "./agent-activity.js";
+import { type AgentStatus, type AgentWrite, type UiHost, pushWrite } from "./agent-activity.js";
 import {
   type AgentConnection,
   acquireChannelLock,
@@ -36,6 +36,8 @@ export interface AgentLibraryOptions {
   guard: () => AgentWriteGuard | null;
   /** An agent request was handled (it may have written): the app marks its document unsaved. */
   onHandled: () => void;
+  /** The writer's screen for the host UI tools (ui_help, ui_highlight). */
+  ui?: UiHost;
 }
 
 export class AgentLibrary {
@@ -188,6 +190,7 @@ export class AgentLibrary {
   #openSession(conn: AgentConnection): void {
     openAgentSession(this.#entry(conn), conn, this.#repo, {
       guard: this.#o.guard,
+      ui: this.#o.ui,
       onGuardError: this.#guardError(conn.id),
       onWrite: (w) => {
         this.writes = pushWrite(this.writes, w);

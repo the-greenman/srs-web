@@ -22,3 +22,4 @@ An agent reads and writes the document open in the browser tab through an MCP re
 2. In that agent's `⋯` menu, **Pair an agent…** shows a connector URL (no secret in it) and a 10-character pairing code that refreshes every 10 minutes.
 3. Add the connector URL to the MCP client as a remote (HTTP) server, for example `claude mcp add --transport http <name> <connector URL>`, and enter the pairing code when the client's sign-in asks for it.
 4. Keep the tab open: the agent works through it. **Direct URL…** in the same menu gives a capability URL for clients without MCP sign-in; treat it as a password.
+5. To learn the editor, call `ui_help` (the open editor's manual: each feature in order and how to teach it) and show the person where things are with `ui_highlight` (a feature id from `ui_help`, or a paragraph's instanceId). Both only read and point; neither changes the document.

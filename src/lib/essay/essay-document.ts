@@ -564,6 +564,7 @@ export function agentHandoff(a: {
     "- Domain: you may propose the essay's boundary (its domain) as a comment; never set com.mudemocracy.argument/within-boundary yourself, the writer chooses it.",
     "- Titles: you may set paragraph_title only where it is empty.",
     "- Before creating a record of any type, read its type_schema; the aiGuidance there is authoritative.",
+    "- Teaching the writer: call ui_help for this editor's manual (each feature, in order, and how to teach it); use ui_highlight to show the writer where a feature or a paragraph is. Paragraph indents are the essay's outline: depth in the container outline, layout only.",
   ].join("\n");
 }
 

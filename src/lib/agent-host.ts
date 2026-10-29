@@ -1,4 +1,4 @@
-import { type AgentWrite, observeSession } from "./agent-activity.js";
+import { type AgentWrite, type UiHost, observeSession, withUiTools } from "./agent-activity.js";
 /**
  * Agent session host (srs-web#576): the composition that makes an MCP session safe to attach, so
  * every app built on srs-web connects agents the same way (capability layering: a composition every
@@ -35,6 +35,8 @@ export interface AgentSessionOptions {
   onClientName?: (name: string, replayed: boolean) => void;
   /** The guard could not be applied: the agent has been detached (fail closed). */
   onGuardError?: (message: string) => void;
+  /** The writer's screen, for the host UI tools (ui_help, ui_highlight); absent, the agent has none. */
+  ui?: UiHost;
 }
 
 /**
@@ -96,17 +98,16 @@ export function openAgentSession(
   if (!repo || !session) return;
   if (!applyAgentGuard(entry, o)) return;
   applyAgentActor(session, repo, conn);
-  void entry.host.attach(
-    observeSession(session, conn.id, {
-      onWrite: o.onWrite,
-      onClientName: o.onClientName,
-      relationTarget: (id) =>
-        listRelations(repo, {}).find((r) => r.relationId === id)?.targetInstanceId,
-      initStore: {
-        load: () => connections.loadInit(conn.id),
-        save: (i) => connections.saveInit(conn.id, i),
-        clear: () => connections.clearInit(conn.id),
-      },
-    })
-  );
+  const observed = observeSession(session, conn.id, {
+    onWrite: o.onWrite,
+    onClientName: o.onClientName,
+    relationTarget: (id) =>
+      listRelations(repo, {}).find((r) => r.relationId === id)?.targetInstanceId,
+    initStore: {
+      load: () => connections.loadInit(conn.id),
+      save: (i) => connections.saveInit(conn.id, i),
+      clear: () => connections.clearInit(conn.id),
+    },
+  });
+  void entry.host.attach(o.ui ? withUiTools(observed, o.ui) : observed);
 }
