@@ -13,7 +13,7 @@ Where a change lives is decided by [ADR-027](docs/adr/027-editor-layers.md): cor
 
 ## Editor help
 
-Help is data: the words live in the `help/` SRS repository, and components only name their feature with `use:feature`. The contract test fails when the two part ([src/lib/help/README.md](src/lib/help/README.md), decision 9441693e).
+Help is data: the words live in the `help/` SRS repository, and components only name their feature with a `data-feature` attribute. The contract test fails when the two part ([src/lib/help/README.md](src/lib/help/README.md), decision 9441693e).
 
 ## Project & priority management
 

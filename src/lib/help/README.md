@@ -9,9 +9,9 @@ Help is data (decision 9441693e, srs-web#639). The words live in **`help/`** at 
   - `explanation`, shown on More and given to agents
   - `ai_guidance`, how an agent should teach it
 - **An editor's help** is the container whose `name` is the editor id (`essay`). Its entry order is the order shown. A shared record can be a member of several editors' containers.
-- **A component** names the feature it presents with `use:feature={"essay.add-paragraph"}` (`feature.ts`, a string literal). It never holds help text.
+- **A component** names the feature it presents with a plain attribute, `data-feature="essay.add-paragraph"` (a string literal), on an element or on a component that passes attributes through (`Button`, `Panel`). It never holds help text.
 - **No drift.** `tests/help-contract.test.ts` fails when:
-  - a `use:feature` has no record
+  - a `data-feature` has no record
   - a `ui` record is on no component
   - an id is used twice
   
@@ -25,6 +25,6 @@ Open `help/` in the editor (Open → Folder on this device), edit the records, a
 
 1. Create a container in `help/` named after the editor id (its registry `id`).
 2. Add `ui-feature` records to it, or add existing `shell.*` records as members.
-3. Put `use:feature` on the components that present the `ui` features.
+3. Put `data-feature` on the elements that present the `ui` features.
 
 `helpFor(editorId)` (`help.ts`) returns the editor's help in order. An editor with no container has no help.

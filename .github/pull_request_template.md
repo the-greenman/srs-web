@@ -14,5 +14,5 @@ Closes #<!-- issue number -->
 
 - [ ] Linked to a tracking issue above (`Closes #N`, or `Refs #N` with a reason)
 - [ ] Tests / validation pass locally
-- [ ] Changed what a `use:feature` element does? Its help record in `help/` still says what it does
+- [ ] Changed what a `data-feature` element does? Its help record in `help/` still says what it does
 - [ ] If I close this PR **without merging** and the work is still wanted, I will reopen/flag the linked issue with a pointer to the branch before abandoning it

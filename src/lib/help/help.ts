@@ -2,7 +2,7 @@
  * Editor help as data (decision 9441693e, srs-web#639). The help repository in `help/` (an SRS
  * repository, edited in the editor itself) holds one `ui-feature` record per feature; an editor's
  * help is the container named after its id, in entry order. Components never hold help text: they
- * name the feature (`use:feature`, ./feature.ts) and the contract test joins the two.
+ * name the feature with a `data-feature="<id>"` attribute and the contract test joins the two.
  */
 import {
   type SrsRepository,

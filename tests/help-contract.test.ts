@@ -1,7 +1,7 @@
 // The feature contract (decision 9441693e, srs-web#639): help and UI cannot drift apart.
-//  1. every `use:feature` id in a component has a ui-feature record in help/;
+//  1. every `data-feature` id in a component has a ui-feature record in help/;
 //  2. every record placed in the UI is presented by some component;
-//  3. no feature id is used by two records, and every use:feature names a string literal.
+//  3. no feature id is used by two records, and every data-feature names a string literal.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -23,7 +23,7 @@ const records = walk(join(ROOT, "help/records"))
     title: r.fieldValues.title as string,
   }));
 
-const USE = /use:feature=\{([^}]*)\}/g;
+const USE = /\bdata-feature=("[^"]*"|\{[^}]*\})/g;
 const uses = walk(join(ROOT, "src"))
   .filter((p) => p.endsWith(".svelte"))
   .flatMap((p) =>
@@ -32,14 +32,14 @@ const uses = walk(join(ROOT, "src"))
       raw: m[1].trim(),
     }))
   );
-const literal = (raw: string) => /^(["'`])([\w.-]+)\1$/.exec(raw)?.[2];
+const literal = (raw: string) => /^"([\w.-]+)"$/.exec(raw)?.[1];
 
 describe("help feature contract (decision 9441693e)", () => {
-  it("every use:feature names a string literal", () => {
+  it("every data-feature names a string literal", () => {
     expect(uses.filter((u) => !literal(u.raw)).map((u) => `${u.file}: ${u.raw}`)).toEqual([]);
   });
 
-  it("every use:feature has a help record", () => {
+  it("every data-feature has a help record", () => {
     const known = new Set(records.map((r) => r.id));
     expect(
       uses
