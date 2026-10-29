@@ -20,12 +20,12 @@ test("an agent reads the essay's manual and points at the screen", async ({ page
 
   const manual = text(await tool(1, "ui_help", {}));
   expect(manual.indexOf("Connect your AI")).toBeLessThan(manual.indexOf("Your name"));
-  expect(manual).toContain("`essay.layers`, on screen now");
+  expect(manual).toContain("`essay.layers`, on the page now");
 
   const shown = await tool(1, "ui_highlight", { featureId: "essay.layers", message: "This is Layers." });
   expect(JSON.parse(text(shown))).toEqual({ shown: true });
   await expect(page.getByTestId("ui-spot")).toContainText("This is Layers.");
-  await page.getByTestId("ui-spot").click();
+  await page.getByTestId("ui-spot").getByRole("button").click(); // the message closes it; the outline lets clicks through
   await expect(page.getByTestId("ui-spot")).toHaveCount(0);
 
   // this fixture has no references collection, so its References panel is not on screen

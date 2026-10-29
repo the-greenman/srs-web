@@ -7,13 +7,17 @@
   outline: var(--focus-ring);
   outline-offset: var(--space-2xs);
   border-radius: var(--radius-md);
-  cursor: pointer;
+  pointer-events: none; /* the writer can click what it points at */
   animation: ui-spot-pulse 1.2s ease-in-out 3;
 }
 .ui-spot--inline {
   position: relative;
 }
 .ui-spot__message {
+  pointer-events: auto;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
   position: absolute;
   top: calc(100% + var(--space-xs));
   left: 0;

@@ -185,7 +185,7 @@ export interface AgentStatus {
 export interface UiHost {
   /** The open editor's help, in order; [] when it has none. */
   help(): HelpItem[];
-  /** Whether a feature is on the writer's screen now. */
+  /** Whether a feature is on the page now (rendered; ui_highlight scrolls it into view). */
   onScreen(featureId: string): boolean;
   /** Point at a feature or a paragraph; `shown: false` with the reason when it is not on screen. */
   highlight(t: { featureId?: string; blockId?: string; message?: string }): {
@@ -199,7 +199,7 @@ export const UI_TOOLS = [
   {
     name: "ui_help",
     description:
-      "Read the manual of the editor the writer has open: each feature's id, what it is, how to teach it, and whether it is on the writer's screen now. Use it to teach the writer the editor, one feature at a time. Read-only.",
+      "Read the manual of the editor the writer has open: each feature's id, what it is, how to teach it, and whether it is on the page now. Use it to teach the writer the editor, one feature at a time. Read-only.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     annotations: { title: "Editor manual", ...READ_ONLY },
   },
@@ -237,8 +237,8 @@ export function uiManual(ui: UiHost): string {
         i.placement === "concept"
           ? "an idea, not one place on screen"
           : ui.onScreen(i.featureId)
-            ? "on screen now"
-            : "not on screen now";
+            ? "on the page now"
+            : "not on the page now";
       return [
         `## ${i.title} (\`${i.featureId}\`, ${where})`,
         i.summary,
@@ -253,47 +253,48 @@ export function uiManual(ui: UiHost): string {
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : undefined);
 
-/** Answer the host UI tools; pass everything else to the session, appending them to its tools/list. */
+type RpcMessage = {
+  id?: unknown;
+  method?: unknown;
+  params?: { name?: unknown; cursor?: unknown; arguments?: Record<string, unknown> };
+};
+
+/**
+ * Answer the host UI tools; pass everything else to the session, appending them to its tools/list.
+ * A UI call keeps the MCP lifecycle: until the session has answered a request, a `ping` with the
+ * call's id goes first (which replays a stored initialize after a reload, ADR-024 #418); if the
+ * session is still unknown, that reply stands. A call without an id (a notification) is the engine's.
+ */
 export function withUiTools(inner: FrameHandler, ui: UiHost): FrameHandler {
+  let ready = false;
+  let hostAnswered = false;
   return {
     handle(text) {
-      let m: {
-        id?: unknown;
-        method?: unknown;
-        params?: { name?: unknown; cursor?: unknown; arguments?: Record<string, unknown> };
-      };
+      let m: RpcMessage | undefined;
       try {
         m = JSON.parse(text);
-      } catch {
-        return inner.handle(text);
-      }
-      if (m?.method === "tools/call" && UI_TOOL_NAMES.has(m.params?.name as string)) {
-        const a = m.params?.arguments ?? {};
-        let result: { content: { type: "text"; text: string }[]; isError?: boolean };
-        if (m.params?.name === "ui_help")
-          result = { content: [{ type: "text", text: uiManual(ui) }] };
-        else {
-          const t = {
-            featureId: str(a.featureId),
-            blockId: str(a.blockId),
-            message: str(a.message),
-          };
-          const r =
-            t.featureId || t.blockId
-              ? ui.highlight(t)
-              : {
-                  shown: false,
-                  reason:
-                    "Give a featureId (from ui_help) or a blockId (a paragraph's instanceId).",
-                };
-          result = {
-            content: [{ type: "text", text: JSON.stringify(r) }],
-            ...(t.featureId || t.blockId ? {} : { isError: true }),
-          };
+      } catch {}
+      hostAnswered = false;
+      if (
+        m?.method === "tools/call" &&
+        m.id !== undefined &&
+        UI_TOOL_NAMES.has(m.params?.name as string)
+      ) {
+        if (!ready) {
+          const pong = inner.handle(JSON.stringify({ jsonrpc: "2.0", id: m.id, method: "ping" }));
+          if (inner.sessionUnknown?.() || pong === undefined || rpcInfo(pong).isError) return pong;
+          ready = true;
         }
-        return JSON.stringify({ jsonrpc: "2.0", id: m.id, result });
+        hostAnswered = true;
+        return JSON.stringify({
+          jsonrpc: "2.0",
+          id: m.id,
+          result: callUiTool(ui, m.params?.name as string, m.params?.arguments ?? {}),
+        });
       }
       const out = inner.handle(text);
+      if (out !== undefined && !inner.sessionUnknown?.() && m?.method !== "initialize")
+        ready = true;
       if (m?.method === "tools/list" && out !== undefined && m.params?.cursor === undefined) {
         try {
           const r = JSON.parse(out);
@@ -305,6 +306,23 @@ export function withUiTools(inner: FrameHandler, ui: UiHost): FrameHandler {
       }
       return out;
     },
-    sessionUnknown: () => inner.sessionUnknown?.() ?? false,
+    // a host-answered call is never an unknown session, whatever the engine said last
+    sessionUnknown: () => !hostAnswered && (inner.sessionUnknown?.() ?? false),
   };
+}
+
+function callUiTool(ui: UiHost, name: string, a: Record<string, unknown>) {
+  if (name === "ui_help") return { content: [{ type: "text", text: uiManual(ui) }] };
+  const t = { featureId: str(a.featureId), blockId: str(a.blockId), message: str(a.message) };
+  if (!t.featureId && !t.blockId)
+    return {
+      content: [
+        {
+          type: "text",
+          text: "Give a featureId (from ui_help) or a blockId (a paragraph's instanceId).",
+        },
+      ],
+      isError: true,
+    };
+  return { content: [{ type: "text", text: JSON.stringify(ui.highlight(t)) }] };
 }

@@ -432,8 +432,7 @@
     readOnlyHost && repo ? readOnlyGuard(repo) : agentGuard && agentGuardRepo === repo ? agentGuard : null;
   // Relays, saved agents and their sessions (srs-web#603): one controller in $lib for every app.
   // ── Host UI tools (ui_help, ui_highlight; srs-web#643, ADR-028): the open editor's help and the writer's screen.
-  let spot = $state<{ rect: { top: number; left: number; width: number; height: number }; message?: string } | null>(null);
-  let spotTimer: ReturnType<typeof setTimeout> | undefined;
+  let spot = $state<{ target: HTMLElement; message?: string } | null>(null);
   const visible = (el: Element) => el.getClientRects().length > 0;
   const inView = (el: Element) => {
     const r = el.getBoundingClientRect();
@@ -460,13 +459,7 @@
         };
       const el = els.find(inView) ?? els[0];
       el.scrollIntoView({ block: "center", behavior: "smooth" });
-      clearTimeout(spotTimer);
-      // after the scroll settles, outline where it landed; cleared by a click, Escape or after 8 s
-      setTimeout(() => {
-        const r = el.getBoundingClientRect();
-        spot = { rect: { top: r.top, left: r.left, width: r.width, height: r.height }, message };
-        spotTimer = setTimeout(() => (spot = null), 8000);
-      }, 400);
+      spot = { target: el, message }; // UiSpot follows it through the scroll and closes itself
       return { shown: true };
     },
   };
@@ -1403,4 +1396,4 @@
   />
 {/if}
 
-{#if spot}<UiSpot rect={spot.rect} message={spot.message} onclose={() => { clearTimeout(spotTimer); spot = null; }} />{/if}
+{#if spot}{#key spot}<UiSpot target={spot.target} message={spot.message} onclose={() => (spot = null)} />{/key}{/if}
