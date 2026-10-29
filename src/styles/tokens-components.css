@@ -132,6 +132,11 @@
   --agent-panel-name-size: var(--size-sm);
   --agent-panel-meta-size: var(--size-xs);
 
+  /* Count (#648): small word / character counts under paragraphs and the essay title. */
+  --count-font: var(--font-mono);
+  --count-size: var(--size-xs);
+  --count-fg: var(--color-muted);
+
   /* CommentThread: bounded list, clamped comments, composer growth. */
   --comment-thread-max: 24rem;
   --comment-thread-pad-end: var(--space-sm);

@@ -64,13 +64,23 @@ describe("outsideRun (drop-target filter over the core's runEnd)", () => {
     expect(countText("  two\nwords  ")).toEqual({ words: 2, chars: 9 });
     expect(countText("café 👍🏽")).toEqual({ words: 2, chars: 6 });
   });
-  it("essayCounts gives own counts, nested subtotals and the essay total", () => {
+  it("essayCounts gives own counts, subtotals for paragraphs with children, and the essay total", () => {
+    // a, b(b1(b2), b3), c as the core's outline reports it (runEnd is exclusive, in this list)
+    const outline = [
+      { instanceId: "a", depth: 0, hasChildren: false, runSize: 1, runEnd: 1 },
+      { instanceId: "b", depth: 0, hasChildren: true, runSize: 4, runEnd: 5 },
+      { instanceId: "b1", depth: 1, hasChildren: true, runSize: 2, runEnd: 4 },
+      { instanceId: "b2", depth: 2, hasChildren: false, runSize: 1, runEnd: 4 },
+      { instanceId: "b3", depth: 1, hasChildren: false, runSize: 1, runEnd: 5 },
+      { instanceId: "c", depth: 0, hasChildren: false, runSize: 1, runEnd: 6 },
+    ];
     const text: Record<string, string> = { a: "one", b: "two words", b1: "x y z", b2: "q", b3: "", c: "end" };
-    const { own, subtotal, total } = essayCounts(list, (id) => text[id]);
-    expect(own.get("b")!.words).toBe(2);
-    expect(subtotal.get("b")!.words).toBe(6); // b + b1 + b2 + b3
-    expect(subtotal.get("b1")!.words).toBe(4);
-    expect(subtotal.get("a")!.words).toBe(1);
+    const { own, subtotal, total } = essayCounts(outline, (id) => text[id]);
+    expect(own.get("b")?.words).toBe(2);
+    expect(subtotal.get("b")?.words).toBe(6); // b + b1 + b2 + b3
+    expect(subtotal.get("b1")?.words).toBe(4);
+    expect(subtotal.has("a")).toBe(false); // no children, no subtotal
     expect(total).toEqual({ words: 8, chars: 3 + 9 + 5 + 1 + 0 + 3 });
   });
+
 });

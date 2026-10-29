@@ -13,6 +13,7 @@
   import { getRecord, repositoryId } from "$lib/srs-client.js";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import AgentFeed from "$lib/components/AgentFeed.svelte";
+  import Count from "$lib/components/Count.svelte";
   import AgentPresence from "$lib/components/AgentPresence.svelte";
   import { verb } from "$lib/agent-activity.js";
   import { relativeTime } from "$lib/relative-time.js";
@@ -91,7 +92,7 @@
   import { annotationsFor } from "$lib/annotations.js";
   import type { Annotation } from "$lib/annotations.js";
   import { essaySource } from "./annotation-source.js";
-  import { countLabel, essayCounts, hiddenByAncestor, outsideRun, visibleEntries } from "./essay-model.js";
+  import { essayCounts, hiddenByAncestor, outsideRun, plainText, visibleEntries } from "./essay-model.js";
 
   let {
     repo,
@@ -363,9 +364,8 @@
     );
   }
   /** Main-body counts (hidden paragraphs included; draft and bin are not entries). */
-  const counts = $derived(essayCounts(model?.entries ?? [], (id) => model?.paragraphs[id]?.body ?? ""));
-  const totalLabel = $derived(countLabel(counts.total));
-  const hasChildren = $derived(new Set((model?.entries ?? []).filter((e) => e.hasChildren).map((e) => e.instanceId)));
+  // ponytail: re-renders every body on each reload; cache by body if long essays feel slow.
+  const counts = $derived(essayCounts(model?.entries ?? [], (id) => plainText(model?.paragraphs[id]?.body ?? "")));
   const showThread = (id: string) => isShown(openThreads, id, hidden, inherited);
   const allItems = $derived((model?.entries ?? []).map((e) => ({ id: e.instanceId, depth: e.depth })));
   /** Zoomed: the paragraph and its subtree (the entries after it that are deeper). */
@@ -848,7 +848,14 @@
             />
           </div>
         {/if}
-        <p class="essay-shell__count" data-testid="essay-count" title={`Essay total: ${totalLabel.title}`}><span aria-hidden="true">{totalLabel.text}</span><span class="sr-only">Essay total: {totalLabel.title}</span></p>
+        <!-- Zoomed: the count of what is on screen (the zoomed paragraph and its run), not the essay. -->
+        <div data-testid="essay-count">
+          {#if zoomId}
+            <Count class="essay-shell__count" label="Section" count={counts.subtotal.get(zoomId) ?? counts.own.get(zoomId) ?? counts.total} />
+          {:else}
+            <Count class="essay-shell__count" label="Essay" count={counts.total} />
+          {/if}
+        </div>
         {#if zoomId}
           <div class="essay-shell__zoombar">
             <Button variant="ghost" data-testid="zoom-exit" aria-label="Whole document" onclick={() => setZoom(null)}><ArrowLeft size={16} aria-hidden="true" /><span class="essay-shell__label"> Whole document</span></Button>
@@ -873,13 +880,16 @@
                   ondownload={downloadFile}
                 />
               {/snippet}
+              {#snippet countSlot()}
+                <Count count={counts.own.get(p.id) ?? { words: 0, chars: 0 }} subtotal={counts.subtotal.get(p.id)} />
+              {/snippet}
               <Block
                 id={p.id}
                 title={p.title}
                 body={p.body}
                 hidden={hidden.has(p.id)}
                 inherited={inherited.has(p.id)}
-                count={countLabel(counts.own.get(p.id)!, hasChildren.has(p.id) ? counts.subtotal.get(p.id) : undefined)}
+                count={countSlot}
                 {handle}
                 {margin}
                 onzoom={() => setZoom(p.id)}

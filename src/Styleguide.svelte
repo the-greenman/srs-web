@@ -8,7 +8,7 @@
   import { onMount, type Snippet } from "svelte";
   import {
     ActionBar, ActionMenu, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
-    CommentBadge, CommentThread, LinkProposals, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
+    CommentBadge, Count, CommentThread, LinkProposals, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, LinkedRecord, RemedyCard, MarkdownHelp, MarkdownText, MethodBoard, AgentPanel, McpConnection, Panel, ProblemCard, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
     TagChip, Textarea, Notice, SectionHeader, SourceRow, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
   } from "$lib/components";
@@ -450,6 +450,23 @@
     {@render specimen("hidden paragraph", fx.stripText.titled, "sg__strip-on", { hidden: true })}
     {@render specimen("long title: the strip covers the end of it", fx.stripText.longTitle, "sg__strip-on")}
     {@render specimen("touch: menu only", fx.stripText.titled, "sg__touch")}
+    <h3>Counts</h3>
+    <p class="sg__note">Words and characters of the rendered text; Σ adds everything nested. Hover for the full sentence. An empty count renders nothing.</p>
+    <div class="sg__row" data-testid="sg-counts">
+      <Count count={{ words: 84, chars: 512 }} />
+      <Count count={{ words: 84, chars: 512 }} subtotal={{ words: 320, chars: 1904 }} />
+      <Count label="Essay" count={{ words: 4980, chars: 29870 }} />
+    </div>
+    {#snippet countSlot()}<Count count={{ words: 12, chars: 71 }} subtotal={{ words: 40, chars: 236 }} />{/snippet}
+    {#snippet counted()}
+      <div class="sg__paragraph" data-testid="sg-paragraph-count">
+        <Block
+          id="sg-count" title={fx.stripText.titled.title} body={fx.stripText.titled.body} count={countSlot}
+          onbody={noop} ontitle={noop} onhide={noop} onnew={noop} onindent={noop} onmove={noop}
+        />
+      </div>
+    {/snippet}
+    <figure class="sg__figure"><figcaption>with a count</figcaption>{@render gated(counted)}</figure>
     <h3>Hover wins over focus: one-line paragraph under a neighbour with an open thread (live: focus A's text, hover B)</h3>
     <div class="essay-shell__page sg__page" data-testid="sg-strip-pair">
       <BlockStack items={[{ id: "p1", depth: 0 }, { id: "p2", depth: 0 }]} source="styleguide-strip" ondrop={noop} label="Strip pair">
