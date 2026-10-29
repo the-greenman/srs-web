@@ -41,6 +41,10 @@
   import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
   import { listTypes, resolveRepositoryTitle, type AgentWriteGuard, type MigrationNotice, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
+  import {
+    describeHandle, loadRecent, recordOpened, removeRecent, saveRecent, toggleStar,
+    type RecentRepo,
+  } from "$lib/recent-repos.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
@@ -208,6 +212,13 @@
 
   /** Cached working copy loaded from localStorage on WASM init. */
   let cachedSession = $state<WorkingCopyEntry | null>(null);
+  /** Recently opened repositories, starred first (srs-web#661). */
+  let recent = $state<RecentRepo[]>([]);
+  let recentError = $state<string | null>(null);
+  function setRecent(next: RecentRepo[]): void {
+    recent = next;
+    void saveRecent(next);
+  }
   let restoreError = $state<string | null>(null);
 
   /**
@@ -465,6 +476,7 @@
         }
         // Every boot link is read once: none survives to act again on a reload.
         history.replaceState(history.state, "", withoutBootLinks(location.href));
+        void loadRecent().then((list) => (recent = list));
         return loadWorkingCopy().then((cached) => {
           if (cached !== null) {
             cachedSession = cached;
@@ -517,6 +529,8 @@
         const dirty = migrated && !handle.readOnlyReason;
         repo = loaded;
         activeDocument = handle;
+        const remembered = describeHandle(handle);
+        if (remembered) setRecent(recordOpened(recent, remembered.source, remembered.label, new Date().toISOString()));
         beginDocument({ dirty });
         repoName = stripSrsExtension(handle.name);
         documentTitle = resolveRepositoryTitle(loaded, repoName);
@@ -786,6 +800,27 @@
     } catch (e: unknown) {
       errorMsg = e instanceof Error ? e.message : String(e);
       appState = "error";
+    }
+  }
+
+  /** Reopen a Recent entry (srs-web#661): GitHub as `openRepoLink` does, sign-in first when needed. */
+  async function openRecent(entry: RecentRepo): Promise<void> {
+    recentError = null;
+    try {
+      const github = storageProviders.github as GitHubProvider | undefined;
+      if (!github?.configured) throw new Error("GitHub is not configured on this site.");
+      await github.authenticate();
+      const [repoPart = ""] = entry.source.where.split(":");
+      const handle = await github.openTree({
+        id: `${entry.source.where}#repo`,
+        name: repoPart.split("/").pop() ?? repoPart,
+        kind: "repository",
+        path: entry.source.where,
+        revision: null,
+      });
+      await loadDocument(handle);
+    } catch (e: unknown) {
+      recentError = `Could not reopen ${entry.label}: ${e instanceof Error ? e.message : String(e)}`;
     }
   }
 
@@ -1103,6 +1138,11 @@
     onOpenArchive={loadArchiveDocument}
     onOpenUrl={openFromUrl}
     onCreate={createRepository}
+    {recent}
+    onOpenRecent={openRecent}
+    onToggleStar={(key) => setRecent(toggleStar(recent, key))}
+    onRemoveRecent={(key) => setRecent(removeRecent(recent, key))}
+    {recentError}
   >
     {#snippet notices()}
       {#if cachedSession !== null}

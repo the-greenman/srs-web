@@ -311,6 +311,12 @@ export class GitHubRepoTreeHandle implements DocumentHandle, GitBranchAware, Rep
     return `${this.location.owner}/${this.location.repo}`;
   }
 
+  /** `owner/repo:branch:dir`, the path form `GitHubProvider.openTree` reopens (srs-web#661). */
+  get where(): string {
+    const { owner, repo, branch, dir } = this.location;
+    return `${owner}/${repo}:${branch}:${dir}`;
+  }
+
   /** Read every file under this handle's directory into memory, retaining the base state
    * so a subsequent commitTree() can diff against it. */
   async readTree(): Promise<Record<string, Uint8Array>> {
