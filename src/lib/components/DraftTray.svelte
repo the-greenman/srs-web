@@ -6,6 +6,8 @@
 -->
 <script lang="ts">
   import CornerUpLeft from '@lucide/svelte/icons/corner-up-left';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import Button from './Button.svelte';
   import IconButton from './IconButton.svelte';
   import TrayRow from './TrayRow.svelte';
@@ -16,6 +18,8 @@
   export interface DraftItem {
     id: string;
     label: string;
+    /** Full paragraph text; when set the row can be expanded to read it in place. */
+    body?: string;
   }
 
   let {
@@ -38,6 +42,13 @@
   } = $props();
 
   const byId = $derived(new Map(items.map((i) => [i.id, i])));
+  // Expanded rows are session-local view state, not essay data.
+  let open = $state(new Set<string>());
+  const toggle = (id: string) => {
+    const next = new Set(open);
+    if (!next.delete(id)) next.add(id);
+    open = next;
+  };
 </script>
 
 <section class="tray draft-tray" aria-label="Draft tray">
@@ -52,9 +63,19 @@
         {#if d}
           <TrayRow label={d.label} labelProps={{ 'aria-roledescription': 'drag handle', ...handle }}>
             {#snippet actions()}
+              {#if d.body}
+                <IconButton
+                  icon={open.has(d.id) ? ChevronDown : ChevronRight}
+                  variant="outline"
+                  label={`${open.has(d.id) ? 'Hide' : 'Preview'} ${d.label}`}
+                  aria-expanded={open.has(d.id)}
+                  onclick={() => toggle(d.id)}
+                />
+              {/if}
               <IconButton icon={CornerUpLeft} variant="outline" label={`Put back ${d.label}`} onclick={() => onputback(d.id)} />
             {/snippet}
           </TrayRow>
+          {#if d.body && open.has(d.id)}<p class="tray__preview" data-testid="draft-preview">{d.body}</p>{/if}
         {/if}
       {/snippet}
     </BlockStack>

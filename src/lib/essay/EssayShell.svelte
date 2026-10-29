@@ -452,7 +452,7 @@
   }
   const dropReference = (id: string) => run(() => removeReference(repo, model!, id));
   const draftItems = $derived(
-    (model?.draftEntries ?? []).map((e) => ({ id: e.instanceId, label: label(e.instanceId) })),
+    (model?.draftEntries ?? []).map((e) => ({ id: e.instanceId, label: label(e.instanceId), body: model?.paragraphs[e.instanceId]?.body })),
   );
 
   function comment(paragraphId: string, text: string, name?: string, kind?: ContentKind) {

@@ -49,6 +49,14 @@
 .draft-tray .tray__label {
   cursor: grab;
 }
+.tray__preview {
+  margin: 0;
+  padding: 4px var(--space-xs) var(--space-xs);
+  font-size: var(--size-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--color-line-soft);
+}
 .tray__actions {
   display: flex;
   flex-wrap: wrap;
