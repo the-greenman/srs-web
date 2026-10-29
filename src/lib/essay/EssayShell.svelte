@@ -544,7 +544,8 @@
   async function copyEssayAs(html: boolean) {
     try {
       const md = essayMarkdown(repo, model!);
-      const ok = html ? await copyHtml(renderMarkdown(md)) : await copyText(md);
+      const ok = html ? await copyHtml(renderMarkdown(md), md) : await copyText(md);
+      if (ok) error = null;
       if (ok) notify({ kind: "success", key: "copy-essay", text: html ? "Copied as HTML" : "Copied as markdown" });
       else error = "Could not copy to the clipboard.";
     } catch (e) {

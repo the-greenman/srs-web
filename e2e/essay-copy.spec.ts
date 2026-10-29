@@ -16,7 +16,9 @@ test("Copy as markdown and Copy as HTML write the essay to the clipboard", async
 
   await openMenu(page, "Document");
   await page.getByTestId("copy-markdown").click();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^# On small democracy/m);
+  const md = await page.evaluate(() => navigator.clipboard.readText());
+  expect(md).toMatch(/^# On small democracy/m);
+  expect(md).toContain("First paragraph.");
 
   await openMenu(page, "Document");
   await page.getByTestId("copy-html").click();
