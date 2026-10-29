@@ -178,6 +178,10 @@
     {#if needsName}
       <Input aria-label="Your name" placeholder="Your name" bind:value={name} required />
     {/if}
+    {#if kinds}
+      <!-- A native select dressed as the kind label it sets: small, ignorable by a human, there for agents and the odd task. -->
+      <Select aria-label="Kind" title="Kind (optional)" data-testid="comment-kind-pick" class={`comments__kind comments__kind-pick${kind ? '' : ' is-empty'}`} value={kind} onchange={(e: Event) => (kind = (e.currentTarget as HTMLSelectElement).value)} options={[{ value: '', label: 'kind' }, ...CONTENT_KINDS]} />
+    {/if}
     <Textarea
       class="textarea--grow"
       aria-label="Reply"
@@ -188,9 +192,6 @@
         if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit(e);
       }}
     />
-    {#if kinds}
-      <Select aria-label="Kind" data-testid="comment-kind-pick" value={kind} onchange={(e: Event) => (kind = (e.currentTarget as HTMLSelectElement).value)} options={[{ value: '', label: 'No kind' }, ...CONTENT_KINDS]} />
-    {/if}
     <Button size="sm" variant="primary" type="submit" disabled={!text.trim() || (needsName && !name.trim())}>Comment</Button>
     {#if onclose}<Button size="sm" variant="ghost" type="button" data-testid="comment-close" onclick={onclose}>Hide comments</Button>{/if}
   </form>
