@@ -10,7 +10,7 @@
 
 ## Open a repository by URL
 
-- `https://app.semanticops.com/?open=<url>`: downloads an `.srs` or `.srsj` archive and opens it. The URL must be `https`, without credentials, and its server must allow cross-origin reads (CORS); a redirect must stay on the same host, and the limit is 50 MB.
+- `https://app.semanticops.com/?open=<url>`: downloads an `.srs` or `.srsj` archive and opens it read-only (Document > Save a copy… makes an editable copy). The URL must be `https`, without credentials, and its server must allow cross-origin reads (CORS); a redirect must stay on the same host, and the limit is 50 MB.
 - `https://app.semanticops.com/?repo=<owner>/<name>[&ref=<branch>][&path=<dir>]`: offers to open an SRS repository kept as plain files in a GitHub repository; one click opens it, signing in to GitHub if needed. `path` is the directory holding `manifest.json`.
 
 ## Pair an agent over MCP
