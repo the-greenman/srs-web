@@ -37,7 +37,9 @@ const inEditorHelp = new Set(
 // `data-feature="slug"`; anything else fails unless listed as a pass-through below.
 const MENTION = /data-feature\s*=\s*(\S+?)(?=[\s>/]|$)|["']data-feature["']\s*[:,]/gm;
 /** Components that only pass a declared id through (e.g. `data-feature={a.feature}` from action data). */
-const PASS_THROUGH: Record<string, string> = {};
+const PASS_THROUGH: Record<string, string> = {
+  "src/lib/components/Toolbar.svelte": "{a.feature}",
+};
 const DECLARED = /^"([a-z0-9-]+(?:\.[a-z0-9-]+)+)"$/;
 const mentions = walk(join(ROOT, "src"))
   .filter((p) => /\.(svelte|ts)$/.test(p))
@@ -51,6 +53,14 @@ const uses = mentions.flatMap((m) => {
   const id = DECLARED.exec(m.raw)?.[1];
   return id ? [{ ...m, id }] : [];
 });
+/** Action data a component renders (Toolbar's `feature` → `data-feature`): `feature: "slug"` in a .ts. */
+const ACTION = /\bfeature: ("[^"]*")/g;
+for (const p of walk(join(ROOT, "src")).filter((p) => p.endsWith(".ts")))
+  for (const m of readFileSync(p, "utf8").matchAll(ACTION)) {
+    const id = DECLARED.exec(m[1])?.[1];
+    mentions.push({ file: relative(ROOT, p), raw: m[1] });
+    if (id) uses.push({ file: relative(ROOT, p), raw: m[1], id });
+  }
 
 describe("help feature contract (decision 9441693e)", () => {
   it('every data-feature is declared as data-feature="slug" (or is a listed pass-through)', () => {

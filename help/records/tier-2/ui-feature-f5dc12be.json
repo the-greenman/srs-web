@@ -1,0 +1,21 @@
+{
+  "instanceId": "f5dc12be-afbd-4d7e-aaa0-f798cd642042",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay.comments",
+    "placement": "ui",
+    "title": "Comments",
+    "summary": "Your AI answers in comments beside a paragraph. It never rewrites your words. Reply in the thread to steer it."
+  },
+  "createdAt": "2026-10-29T14:42:46.672328255+00:00",
+  "updatedAt": "2026-10-29T14:42:46.672337699+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

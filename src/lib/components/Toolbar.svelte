@@ -93,6 +93,7 @@
         variant="primary"
         data-part="primary"
         data-testid={itemTestid(a)}
+        data-feature={a.feature}
         disabled={!a.enabled}
         onclick={a.run}
       >{a.label}</Button>
