@@ -3,9 +3,11 @@ import {
   MAX_ARCHIVE_BYTES,
   OpenUrlError,
   fetchArchiveFile,
+  parseNewLink,
   parseOpenUrl,
   parseRepoLink,
   sniffArchive,
+  withoutNewParam,
   withoutOpenParam,
   withoutRepoLink,
 } from "../src/lib/open-url";
@@ -137,5 +139,18 @@ describe("parseRepoLink", () => {
 describe("withoutRepoLink", () => {
   it("drops only the deep-link parameters", () => {
     expect(withoutRepoLink("https://app.test/?repo=a/b&ref=m&path=p&editor=method&theme=dark#h")).toBe("/?theme=dark#h");
+  });
+});
+
+describe("parseNewLink / withoutNewParam (#640)", () => {
+  it("reads the editor id, and null when absent or empty", () => {
+    expect(parseNewLink("?new=essay")).toBe("essay");
+    expect(parseNewLink("?new=%20essay%20")).toBe("essay");
+    expect(parseNewLink("?new=")).toBeNull();
+    expect(parseNewLink("?open=x")).toBeNull();
+  });
+
+  it("drops only new, keeping other parameters and the hash", () => {
+    expect(withoutNewParam("https://app.example/?new=essay&x=1#e=a")).toBe("/?x=1#e=a");
   });
 });

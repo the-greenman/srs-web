@@ -36,7 +36,7 @@
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
   import type { AgentPanelCtx } from "$lib/agent-activity.js";
   import { AgentLibrary } from "$lib/agent-library.svelte.js";
-  import { fetchArchiveFile, parseOpenUrl, parseRepoLink, withoutOpenParam, withoutRepoLink, type RepoLink } from "$lib/open-url.js";
+  import { fetchArchiveFile, parseNewLink, parseOpenUrl, parseRepoLink, withoutNewParam, withoutOpenParam, withoutRepoLink, type RepoLink } from "$lib/open-url.js";
   import type { GitHubProvider } from "$lib/storage/github.js";
   import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
   import { listTypes, resolveRepositoryTitle, type AgentWriteGuard, type MigrationNotice, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
@@ -44,7 +44,7 @@
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
-  import { EDITORS, availableEditors, installEditor as installEditorPackages, isBuiltInView, usableEditor } from "$lib/editors/registry.js";
+  import { EDITORS, availableEditors, installEditor as installEditorPackages, isBuiltInView, usableEditor, type EditorDefinition } from "$lib/editors/registry.js";
   import { type Address, parseAddress, replaceAddress } from "$lib/address.js";
   import LensShell from "$lib/lens/LensShell.svelte";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
@@ -114,6 +114,8 @@
   let repoLink = $state<RepoLink | null>(null);
   let repoLinkBusy = $state(false);
   let repoLinkError = $state<string | null>(null);
+  /** A `?new=` link held back because a recovery copy is waiting (#640): the landing offers both. */
+  let pendingNew = $state<EditorDefinition | null>(null);
   /** Editor to select once the next document has loaded (a deep link's `editor`); dropped if not usable. */
   let pendingEditor = $state<string | null>(null);
   /** Host of a link being fetched at boot (#471), for the splash text. */
@@ -450,6 +452,8 @@
           void openFromLink(link);
           return;
         }
+        const newId = parseNewLink(location.search);
+        if (newId !== null) return startFromNewLink(newId);
         try {
           repoLink = parseRepoLink(location.search);
         } catch (e: unknown) {
@@ -722,6 +726,33 @@
         { cause: e },
       );
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Start from a link (?new=<editor>, #640)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * A new, unsaved document in that editor, as Start new would make it. The parameter goes first so a
+   * reload never makes a second one. A waiting recovery copy is never overwritten: the landing offers
+   * Restore beside Start new instead. An unknown editor lands on the picker with a notice.
+   */
+  async function startFromNewLink(id: string): Promise<void> {
+    history.replaceState(history.state, "", withoutNewParam(location.href));
+    const editor = EDITORS.find((e) => e.id === id && (e.create || e.seed));
+    const cached = await loadWorkingCopy();
+    if (cached !== null) {
+      cachedSession = cached;
+      editorMode = "generic";
+    }
+    if (!editor) {
+      repoLinkError = `"${id}" is not an editor that can start a new document.`;
+    } else if (cached === null) {
+      return createRepository(`Untitled ${editor.label.toLowerCase()}`, [editor.id]);
+    } else {
+      pendingNew = editor;
+    }
+    appState = "idle";
   }
 
   // ---------------------------------------------------------------------------
@@ -1117,6 +1148,16 @@
           <div class="landing__actions">
             <Button size="sm" variant="primary" data-testid="repo-link-open" disabled={repoLinkBusy} onclick={() => void openRepoLink(link)}>{repoLinkBusy ? "Opening…" : "Open from GitHub"}</Button>
             <Button size="sm" onclick={() => { repoLink = null; repoLinkError = null; }}>Dismiss</Button>
+          </div>
+        </Notice>
+      {/if}
+      {#if pendingNew}
+        {@const editor = pendingNew}
+        <Notice kind="info" testid="new-link">
+          You followed a link to start a new {editor.label.toLowerCase()}. You also have unsaved work in this browser: restore it above, or start the new {editor.label.toLowerCase()} (the unsaved work is replaced once you edit it).
+          <div class="landing__actions">
+            <Button size="sm" variant="primary" data-testid="new-link-start" onclick={() => { const e = editor; pendingNew = null; void createRepository(`Untitled ${e.label.toLowerCase()}`, [e.id]); }}>Start a new {editor.label.toLowerCase()}</Button>
+            <Button size="sm" onclick={() => { pendingNew = null; }}>Dismiss</Button>
           </div>
         </Notice>
       {/if}

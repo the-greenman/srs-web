@@ -31,8 +31,22 @@ export function parseOpenUrl(raw: string, allowLocalHttp = import.meta.env.DEV):
 
 /** The query string without `open`, keeping every other parameter and the hash. */
 export function withoutOpenParam(href: string): string {
+  return withoutParam(href, "open");
+}
+
+/** The editor id in a `?new=<editor>` link (#640), or null when absent or empty. */
+export function parseNewLink(search: string): string | null {
+  return new URLSearchParams(search).get("new")?.trim() || null;
+}
+
+/** The query string without `new`, keeping every other parameter and the hash. */
+export function withoutNewParam(href: string): string {
+  return withoutParam(href, "new");
+}
+
+function withoutParam(href: string, key: string): string {
   const url = new URL(href);
-  url.searchParams.delete("open");
+  url.searchParams.delete(key);
   return url.pathname + url.search + url.hash;
 }
 
