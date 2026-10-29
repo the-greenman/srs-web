@@ -46,7 +46,7 @@ Agent roles for use in srs-web plan files. For the shared Rust-side roles (Bindi
 - **Reviews for, in priority order:**
   1. ADR-001 violations: SRS semantics re-implemented in TypeScript.
   2. WASM API drift: TS types inconsistent with the payload schemas from `srs-rust/crates/srs-cli/schemas/payload/`.
-  3. ADR-027 layer violations: behaviour in a screen or component instead of a headless module, a look change that did not start on `/styleguide`, a shared component without a specimen, behaviour duplicated across editors.
+  3. ADR-027 layer violations: behaviour in a screen or component instead of a headless module, a look change that did not start on `/styleguide`, behaviour duplicated across editors.
   4. Scope creep: work outside `srs-web/**`.
   5. Incomplete plans: missing acceptance criteria, missing tests, missing dependency declarations.
 - **Constraints:** Every finding cites the specific ADR or rule violated, with `blocking` / `should-fix` / `nit` severity.

@@ -96,7 +96,7 @@ Check the existing WASM surface in `srs-web/src/wasm/` or the current `srs-rust`
 ## Stage 3 — Plan review loop
 
 1. Spawn review agents **in parallel** (one Agent call, multiple invokes):
-   - **Architecture Reviewer (srs-web)** (`agents.md#architecture-reviewer-srs-web`) `model: "sonnet"` — checks the plan against every ADR in `srs-web/docs/adr/` for ADR-001 compliance, WASM API drift, scope discipline, and ADR coverage. Read-only; returns numbered findings with severity (`blocking` / `should-fix` / `nit`).
+   - **Architecture Reviewer (srs-web)** (`agents.md#architecture-reviewer-srs-web`) `model: "sonnet"` — checks the plan against every ADR in `srs-web/docs/adr/` for ADR-001 and ADR-027 compliance (each task names its layer), WASM API drift, scope discipline, and ADR coverage. Read-only; returns numbered findings with severity (`blocking` / `should-fix` / `nit`).
    - **Plan Reviewer** (`agents.md#plan-reviewer` from `srs-rust/plans/agents.md`) `model: "haiku"` — completeness, contracts, scope discipline, testability. Findings same format.
    Give each agent the plan file path and relevant CLAUDE.md / ADR paths. They are read-only.
 2. Post **all** findings as comments on the issue:
@@ -150,7 +150,7 @@ Do all implementation inside that worktree. Run `npm install` once in the worktr
 Execute the plan phase by phase. For each phase:
 - Implement the tasks, keeping all changes within `srs-web/**`.
 - Respect ADR-001: no SRS semantics in TypeScript. If a WASM method is missing, file the srs-rust issue and stop.
-- Respect ADR-027: build each task in the layer the plan names, headless module before component and specimen, and component before screen. Make a look change on `/styleguide` first. Behaviour that another editor already has is extracted into a headless module, never copied.
+- Respect ADR-027: build each task in the layer the plan names, and make a look change on `/styleguide` first. Behaviour another editor already has is extracted into a headless module, never copied.
 - Run the phase's **milestone gate**:
   ```bash
   npm run typecheck
