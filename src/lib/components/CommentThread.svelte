@@ -48,7 +48,7 @@
     onrespond?: (commentId: string, kind: 'done' | 'rejected' | 'withdrawn', text?: string) => void;
     /** Optional: shows a "Hide comments" control beside Comment (the shell owns the visibility state). */
     onclose?: () => void;
-  } & HTMLAttributes<HTMLElement> = $props(); // other attributes (e.g. data-feature, src/lib/help) go on the root
+  } & Omit<HTMLAttributes<HTMLElement>, "onclose"> = $props(); // other attributes (e.g. data-feature, src/lib/help) go on the root
 
   let text = $state('');
   let name = $state('');

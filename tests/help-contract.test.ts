@@ -54,11 +54,12 @@ const uses = mentions.flatMap((m) => {
   return id ? [{ ...m, id }] : [];
 });
 /** Action data a component renders (Toolbar's `feature` → `data-feature`): `feature: "slug"` in a .ts. */
-const ACTION = /\bfeature: ("[^"]*")/g;
-for (const p of walk(join(ROOT, "src")).filter((p) => p.endsWith(".ts")))
+// Any value written for `feature:` counts as a mention; only a "slug" literal declares one. Fixtures are not components.
+const ACTION = /\bfeature\s*:\s*([^,;\n}]+)/g;
+for (const p of walk(join(ROOT, "src/lib")).filter((p) => p.endsWith(".ts")))
   for (const m of readFileSync(p, "utf8").matchAll(ACTION)) {
-    const id = DECLARED.exec(m[1])?.[1];
-    mentions.push({ file: relative(ROOT, p), raw: m[1] });
+    const id = DECLARED.exec(m[1].trim())?.[1];
+    mentions.push({ file: relative(ROOT, p), raw: m[1].trim() });
     if (id) uses.push({ file: relative(ROOT, p), raw: m[1], id });
   }
 
@@ -106,6 +107,13 @@ describe("help feature contract (decision 9441693e)", () => {
       "{...{ 'data-feature': id }}",
       'el.setAttribute("data-feature", id)',
     ])
+      expect(seen(bad)).toEqual([false]);
+  });
+
+  it("the action-data scanner sees every way of writing feature:", () => {
+    const seen = (src: string) => [...src.matchAll(ACTION)].map((m) => DECLARED.test(m[1].trim()));
+    expect(seen('{ feature: "shell.save" }')).toEqual([true]);
+    for (const bad of ["{ feature: 'shell.save' }", "{ feature: id }", '{ feature:"shell.save"x }'])
       expect(seen(bad)).toEqual([false]);
   });
 

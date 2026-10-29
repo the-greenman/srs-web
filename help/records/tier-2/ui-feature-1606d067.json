@@ -10,10 +10,10 @@
     "title": "Connect your AI",
     "summary": "This editor works with the AI you already use: Claude Code, claude.ai or ChatGPT. Open **Agents**, choose **Connect an agent**, then **Pair an agent…** in its ⋯ menu. Give the connector link to your AI as a custom connector, and type the code when it asks. Keep this tab open while your AI works.",
     "explanation": "Make one agent per AI in **Agents** (Connect an agent), then open its ⋯ menu → **Pair an agent…** for a connector link and a pairing code. The code refreshes about every ten minutes; the link holds no secret.\n\n| Your AI | Where the link goes | When it asks |\n| --- | --- | --- |\n| Claude Code | `claude mcp add --transport http <name> <link>`, then `/mcp` and sign in | type the pairing code |\n| claude.ai | Settings → Connectors → Add custom connector | type the pairing code |\n| ChatGPT | Settings → Connectors (developer mode) → create a connector, authentication OAuth | type the pairing code |\n\nKeep this tab open: your AI works through it, and its changes stay unsaved until you Save.",
-    "ai_guidance": "confirm the writer is connected by calling `ui_help`; if not, walk them through the steps for their client (README table)."
+    "ai_guidance": "Confirm the writer is connected by calling ui_help; if not, walk them through the steps for their client from the table in this feature's explanation, and use ui_highlight on shell.connect-ai to show them the Agents panel."
   },
   "createdAt": "2026-10-29T14:42:45.885208377+00:00",
-  "updatedAt": "2026-10-29T14:42:45.885217626+00:00",
+  "updatedAt": "2026-10-29T17:06:15.036170088+00:00",
   "createdBy": {
     "kind": "ai",
     "id": "agent:claude-code",

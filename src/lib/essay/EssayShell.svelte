@@ -869,7 +869,7 @@
         {/if}
         {#if items.length === 0}
           <p class="essay-shell__hint">No paragraphs yet.</p>
-          <Button variant="mono" data-testid="first-paragraph" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add first paragraph</Button>
+          <Button variant="mono" data-testid="first-paragraph" data-feature="essay.paragraphs" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add first paragraph</Button>
         {/if}
         <BlockStack {items} source="essay" label="Essay paragraphs" candrop={essayDrop} ondrop={(p, t) => onDrop("essay", p, t)} onfiles={dropFiles}>
           {#snippet row(item, handle)}
