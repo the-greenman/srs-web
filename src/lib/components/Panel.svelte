@@ -8,6 +8,7 @@
 <script lang="ts">
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import type { Snippet } from 'svelte';
+  import type { HTMLAttributes } from 'svelte/elements';
 
   let {
     title,
@@ -20,6 +21,7 @@
     actions,
     class: className = '',
     children,
+    ...rest
   }: {
     title: string;
     /** Count or short status shown right-aligned in the header. */
@@ -37,7 +39,7 @@
     /** Extra classes on the root (e.g. a host block's own styling hook). */
     class?: string;
     children?: Snippet;
-  } = $props();
+  } & HTMLAttributes<HTMLElement> = $props(); // other attributes (e.g. data-feature, src/lib/help) go on the root
 
   const storageKey = () => (persistKey ? `srs-web.panel.${persistKey}` : null);
   (() => {
@@ -73,12 +75,12 @@
 {/snippet}
 
 {#if collapsible}
-  <details class={cls} bind:open ontoggle={remember}>
+  <details {...rest} class={cls} bind:open ontoggle={remember}>
     <summary class="panel__head" data-part="head">{@render head()}</summary>
     <div class="panel__body" data-part="body">{@render children?.()}</div>
   </details>
 {:else}
-  <section class={cls}>
+  <section {...rest} class={cls}>
     <div class="panel__head" data-part="head">{@render head()}</div>
     <div class="panel__body" data-part="body">{@render children?.()}</div>
   </section>

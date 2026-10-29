@@ -1,0 +1,19 @@
+{
+  "id": "c39e1628-919c-499a-a677-c5784f30c031",
+  "namespace": "com.semanticops.help",
+  "name": "feature_id",
+  "version": 1,
+  "description": "Stable feature id",
+  "aiGuidance": {
+    "purpose": "The stable id that joins this help to the UI: a component declares it with the attribute data-feature=\"<id>\"; agents name it in ui_highlight.",
+    "extraction": "A lowercase dotted slug: <editor>.<feature> (essay.add-paragraph) or shell.<feature> for UI every editor shares (shell.agent-panel).",
+    "negativeGuidance": "Never change an id once used; never reuse one for a different feature."
+  },
+  "fieldType": {
+    "datatype": "string",
+    "cardinality": "single",
+    "format": "plain"
+  },
+  "editorHint": "singleline",
+  "createdAt": "2026-10-29T14:10:23.002959319+00:00"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "595b35f6-c996-4e0d-8b01-52cf80428e6f",
+  "namespace": "com.semanticops.help",
+  "name": "explanation",
+  "version": 1,
+  "description": "Explanation",
+  "aiGuidance": {
+    "purpose": "The longer explanation, shown on More and given to agents.",
+    "extraction": "Markdown; the detail a curious writer needs.",
+    "negativeGuidance": "Do not repeat the summary."
+  },
+  "fieldType": {
+    "datatype": "string",
+    "cardinality": "single",
+    "format": "markdown"
+  },
+  "editorHint": "textarea",
+  "createdAt": "2026-10-29T14:10:23.192329262+00:00"
+}

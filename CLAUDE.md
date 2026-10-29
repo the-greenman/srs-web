@@ -11,6 +11,10 @@ monorepo.
 
 Where a change lives is decided by [ADR-027](docs/adr/027-editor-layers.md): core (srs-rust, ADR-001), headless behaviour (`.ts` / `.svelte.ts` modules with no markup, no `.svelte` import, no `document`), components (tokens only, a specimen on `/styleguide`), screens (compose components, no behaviour). A change of look starts on `/styleguide`. Look: [ADR-019](docs/adr/019-ui-theming-surface-and-live-styleguide.md), [ADR-020](docs/adr/020-icon-set-and-component-token-api.md), `src/styles/README.md`. Guard: `tests/layers.test.ts`.
 
+## Editor help
+
+Help is data: the words live in the `help/` SRS repository, and components only name their feature with a `data-feature` attribute. The contract test fails when the two part ([src/lib/help/README.md](src/lib/help/README.md), decision 9441693e).
+
 ## Project & priority management
 
 Programme, queue, board and priority tooling live in **the-greenman/clerk** (`docs/tools.md`; locally `~/dev/semanticops/clerk`): `clerk board` (story-driven priority on Project #6; stories and epics in `the-greenman/semanticops.com`), `clerk roadmap` (derives epic priority from the srs-programme period ranking; the only writer of epic priority), `clerk queue`. The slash commands `/triage`, `/stories`, `/roadmap` are canonical in clerk `.claude/commands/`. Programme data (roadmap, problems, sessions) is **the-greenman/srs-programme**.
