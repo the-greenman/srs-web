@@ -46,6 +46,7 @@
     oncopyagent,
     onattach,
     margin,
+    count,
   }: {
     id: string;
     title?: string;
@@ -74,6 +75,8 @@
     onattach?: (files: AttachFile[]) => void | Promise<void>;
     /** The one right-margin slot: comment badge, attachment glyphs. */
     margin?: Snippet;
+    /** Word / character count under the body: small `text`, full `title` on hover and for screen readers. */
+    count?: { text: string; title: string };
   } = $props();
 
   let editingTitle = $state(false);
@@ -247,6 +250,9 @@
         oncommit={onbody}
         onkeydown={bodyKeydown}
       />
+    {/if}
+    {#if count}
+      <p class="block__count" data-testid="block-count" title={count.title}><span aria-hidden="true">{count.text}</span><span class="sr-only">{count.title}</span></p>
     {/if}
   </div>
   {#if margin && !(hidden || inherited)}<div class="block__margin" data-part="margin">{@render margin()}</div>{/if}
