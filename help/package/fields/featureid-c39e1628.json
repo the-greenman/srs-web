@@ -5,7 +5,7 @@
   "version": 1,
   "description": "Stable feature id",
   "aiGuidance": {
-    "purpose": "The stable id that joins this help to the UI: components declare it with use:feature, agents name it in ui_highlight.",
+    "purpose": "The stable id that joins this help to the UI: a component declares it with the attribute data-feature=\"<id>\"; agents name it in ui_highlight.",
     "extraction": "A lowercase dotted slug: <editor>.<feature> (essay.add-paragraph) or shell.<feature> for UI every editor shares (shell.agent-panel).",
     "negativeGuidance": "Never change an id once used; never reuse one for a different feature."
   },

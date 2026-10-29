@@ -19,7 +19,10 @@ const tree = (dir: string): Record<string, Uint8Array> =>
   Object.fromEntries(
     readdirSync(dir, { recursive: true, encoding: "utf8" })
       // as the app's import.meta.glob sees it: dot directories (the .srs marker) are skipped
-      .filter((p) => !p.startsWith(".") && statSync(path.join(dir, p)).isFile())
+      .filter(
+        (p) =>
+          !p.split(path.sep).some((s) => s.startsWith(".")) && statSync(path.join(dir, p)).isFile()
+      )
       .map((p) => [p.split(path.sep).join("/"), new Uint8Array(readFileSync(path.join(dir, p)))])
   );
 

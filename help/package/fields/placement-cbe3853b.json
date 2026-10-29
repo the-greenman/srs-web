@@ -7,7 +7,7 @@
   "aiGuidance": {
     "purpose": "Whether the feature has a place on screen (ui) or is an idea only (concept).",
     "extraction": "ui when a component presents it; concept otherwise.",
-    "negativeGuidance": "A ui feature must be presented by some component, or the contract test fails."
+    "negativeGuidance": "A ui feature must be named by some component's data-feature attribute, or the contract test fails."
   },
   "fieldType": {
     "datatype": "string",

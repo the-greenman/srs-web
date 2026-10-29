@@ -2,7 +2,7 @@
  * Editor help as data (decision 9441693e, srs-web#639). The help repository in `help/` (an SRS
  * repository, edited in the editor itself) holds one `ui-feature` record per feature; an editor's
  * help is the container named after its id, in entry order. Components never hold help text: they
- * name the feature with a `data-feature="<id>"` attribute and the contract test joins the two.
+ * name the feature by its id in a `data-feature` attribute, and the contract test joins the two.
  */
 import {
   type SrsRepository,
@@ -12,6 +12,9 @@ import {
   listContainers,
   loadRepoFromTree,
 } from "$lib/srs-client.js";
+
+/** The help repository's `ui-feature` type (help/package/types): records are chosen by typeId, never the name hint. */
+export const UI_FEATURE_TYPE_ID = "b6981a3a-d0e4-429b-9f1b-ae5090326570";
 
 export interface HelpItem {
   instanceId: string;
@@ -53,13 +56,13 @@ export function helpFor(editorId: string, repo: SrsRepository = helpRepository()
   if (!container) return [];
   return getContainerOutline(repo, container.containerId).entries.flatMap(({ instanceId }) => {
     const r = getRecord(repo, instanceId);
-    if (r?.typeName !== "ui-feature") return [];
+    if (r?.typeId !== UI_FEATURE_TYPE_ID) return [];
     const v = r.fieldValues as Record<string, string | undefined>;
     return [
       {
         instanceId,
         featureId: v.feature_id ?? "",
-        placement: v.placement === "concept" ? "concept" : "ui",
+        placement: v.placement === "concept" ? "concept" : "ui", // as the contract reads it: anything else is placed
         title: v.title ?? "",
         summary: v.summary ?? "",
         explanation: v.explanation,

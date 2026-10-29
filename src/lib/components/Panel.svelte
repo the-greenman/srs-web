@@ -8,6 +8,7 @@
 <script lang="ts">
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import type { Snippet } from 'svelte';
+  import type { HTMLAttributes } from 'svelte/elements';
 
   let {
     title,
@@ -38,9 +39,7 @@
     /** Extra classes on the root (e.g. a host block's own styling hook). */
     class?: string;
     children?: Snippet;
-    /** Other attributes go on the root, e.g. `data-feature` naming a help feature (src/lib/help). */
-    [attr: string]: unknown;
-  } = $props();
+  } & HTMLAttributes<HTMLElement> = $props(); // other attributes (e.g. data-feature, src/lib/help) go on the root
 
   const storageKey = () => (persistKey ? `srs-web.panel.${persistKey}` : null);
   (() => {
