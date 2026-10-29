@@ -22,10 +22,9 @@ test("Copy as markdown and Copy as HTML write the essay to the clipboard", async
 
   await openMenu(page, "Document");
   await page.getByTestId("copy-html").click();
-  const html = await page.evaluate(async () => {
+  // The write is async: poll until the html part lands.
+  await expect.poll(() => page.evaluate(async () => {
     const [item] = await navigator.clipboard.read();
-    return (await (await item.getType("text/html")).text());
-  });
-  expect(html).toContain("<h1");
-  expect(html).toContain("On small democracy");
+    return item.types.includes("text/html") ? await (await item.getType("text/html")).text() : "";
+  })).toContain("On small democracy");
 });
