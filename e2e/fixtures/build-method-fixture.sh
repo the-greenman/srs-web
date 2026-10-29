@@ -44,5 +44,14 @@ export SRS_ACTOR='{"kind":"ai","id":"agent:analyst","name":"Analyst scout"}'
 PR=$(echo '{"fieldValues":{"comment_text":"The owner also meets this when an edit comes back by hand.","kind":"suggestion","proposed_relation":"com.semanticops.method/held-by"}}' | srs record create --repo $W --type com.semanticops.comments/comment --version 2 | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d["payload"]["record"]["instanceId"] if d.get("ok") else sys.exit(str(d)))')
 rel com.semanticops.comments/comments-on $PR $P1
 rel com.semanticops.comments/proposes-link-to $PR $OWNER
+# a conversation (srs-web#622): identity note tagged conversation, two vignettes in order; SP-2 and
+# remedy R2 derive from the first, the tension from the second (shown, decided elsewhere)
+export SRS_ACTOR='{"kind":"human","id":"local:owner","name":"Owner Person"}'
+note() { echo "$1" | srs note create --repo $W | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d["payload"]["note"]["instanceId"] if d.get("ok") else sys.exit(str(d)))'; }
+CI=$(note '{"title":"Conversation 2026-10-28: suggestions nobody reads","tags":["conversation"],"sections":[{"name":"summary","label":"Summary","content":"The owner on suggestions that pile up."}]}')
+V1=$(note '{"title":"Suggestions pile up","tags":["narrative","vignette"],"sections":[{"name":"narrative","label":"Narrative","content":"The agents keep suggesting things and nobody reads the queue."},{"name":"source","label":"Source","content":"The owner, recorded verbatim."}]}')
+V2=$(note '{"title":"Who holds the line","tags":["narrative","vignette"],"sections":[{"name":"narrative","label":"Narrative","content":"Claims should carry who made them."},{"name":"source","label":"Source","content":"The owner, recorded verbatim."}]}')
+cont "{\"title\":\"2026-10-28 · Suggestions nobody reads\",\"identityInstanceId\":\"$CI\",\"anchorInstanceId\":\"$CI\",\"memberInstanceIds\":[{\"instanceId\":\"$CI\"},{\"instanceId\":\"$V1\"},{\"instanceId\":\"$V2\"}]}"
+rel derived-from $P2 $V1; rel derived-from $R2 $V1; rel derived-from $T $V2
 srs repo validate --repo $W | python3 -c "import sys,json; print(json.load(sys.stdin)[\"payload\"][\"summary\"])"
 srs repo copy --from $W --to "$OUT" >/dev/null

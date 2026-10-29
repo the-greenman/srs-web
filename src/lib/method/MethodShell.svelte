@@ -15,10 +15,14 @@
   import CardField from "$lib/components/CardField.svelte";
   import Inspector from "$lib/components/Inspector.svelte";
   import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
+  import Button from "$lib/components/Button.svelte";
   import Main from "$lib/components/Main.svelte";
   import LinkedRecord from "$lib/components/LinkedRecord.svelte";
   import RemedyCard from "$lib/components/RemedyCard.svelte";
   import MethodBoard from "$lib/components/MethodBoard.svelte";
+  import NarrativeView from "./NarrativeView.svelte";
+  import { listConversations, loadConversation } from "./narrative.js";
+  import type { Entity } from "./method-document.js";
   import type { MenuAction } from "$lib/components/menu-action.js";
   import Notice from "$lib/components/Notice.svelte";
   import Panel from "$lib/components/Panel.svelte";
@@ -88,6 +92,35 @@
   let editing = $state<{ label: string; fields: FieldFormDef[]; composites: CompositeFormDef[] } | null>(null);
   let editError = $state<string | null>(null);
   let lastGuard: AgentWriteGuard | undefined;
+  /** Board, or the conversations view: derived records beside the words they came from (srs-web#622). */
+  let view = $state<"board" | "conversations">("board");
+  let conversationId = $state("");
+  const conversations = $derived.by(() => {
+    void model;
+    try {
+      return view === "conversations" ? listConversations(repo) : [];
+    } catch {
+      return [];
+    }
+  });
+  $effect(() => {
+    if (view === "conversations" && !conversations.some((c) => c.containerId === conversationId))
+      conversationId = conversations[0]?.containerId ?? "";
+  });
+  const vignettes = $derived.by(() => {
+    if (view !== "conversations" || !conversationId || !model) return [];
+    try {
+      return loadConversation(repo, conversationId, model);
+    } catch (e) {
+      error = msg(e);
+      return [];
+    }
+  });
+
+  /** Tick in the conversations view: the same fork into Affirmed as the board's Affirm. */
+  function affirmFromConversation(id: string, e: Entity): void {
+    if (model) run(() => affirmRecord(repo, model!, id, e));
+  }
 
   const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
   const selected = $derived<MethodItem | null>((selectedId && model?.byId.get(selectedId)) || null);
@@ -216,8 +249,17 @@
         {#if !onSave && readOnlyReason}<Notice kind="info" testid="readonly-reason">{readOnlyReason}</Notice>{/if}
         {#if error}<Notice kind="error" testid="method-error">{error}</Notice>{/if}
         <div class="workspace">
-          {#if model}
+          <div class="method-views" role="group" aria-label="View">
+            <Button size="sm" variant="mono" active={view === "board"} aria-pressed={view === "board"} data-testid="method-view-board" onclick={() => (view = "board")}>Board</Button>
+            <Button size="sm" variant="mono" active={view === "conversations"} aria-pressed={view === "conversations"} data-testid="method-view-conversations" onclick={() => (view = "conversations")}>Conversations</Button>
+          </div>
+          {#if model && view === "board"}
             <MethodBoard domains={model.domains} bind:filter {selectedId} onopen={open} />
+          {:else if model}
+            <NarrativeView {conversations} bind:conversationId {vignettes}
+              canAct={!!model.containers.affirmed && !!model.containers.setAside}
+              onaffirm={affirmFromConversation}
+              onsetaside={(id) => run(() => moveToContainer(repo, model!, id, "setAside"))} />
           {/if}
         </div>
       </Main>
