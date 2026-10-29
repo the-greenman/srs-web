@@ -49,7 +49,8 @@ describe.skipIf(!haveBindings)("upgrade an editor's outdated package on the real
     const e0 = repo.write_epoch();
     const [plan] = upgradeBundles(repo, ids, { dryRun: true });
     expect(plan.dryRun).toBe(true);
-    expect([plan.previousVersion, plan.version]).toEqual(["1.2.0", "1.7.0"]);
+    expect([plan.previousVersion, plan.version]).toEqual(["1.2.0", "1.8.0"]);
+    expect(plan.dependencyWarnings).toEqual(["Also installs comments 1.1.0, which it needs."]);
     expect(plan.added.length + plan.newVersions.length + plan.updated.length).toBeGreaterThan(0);
     expect(repo.write_epoch()).toBe(e0);
     expect(availableEditors(repo, listTypes(repo))[0].unmet?.upgrade).toBeTruthy();
@@ -61,5 +62,7 @@ describe.skipIf(!haveBindings)("upgrade an editor's outdated package on the real
     expect(checkPackageRequirements(repo, essay.requires)[0].satisfied).toBe(true);
     expect(availableEditors(repo, listTypes(repo))[0].unmet).toBeNull();
     expect(() => newEssay(repo, "First")).not.toThrow();
+    // essay 1.8.0 depends on comments 1.1.0: the upgrade installed it first (srs-web#591)
+    expect(listTypes(repo).some((t: { id: string }) => t.id === "11cd0a5f-8c3f-4ec2-a055-5b9f56c5b0bc")).toBe(true);
   });
 });

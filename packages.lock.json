@@ -1,10 +1,17 @@
 [
   {
+    "packageId": "9092f84e-fb94-4f81-a523-0f7ef5b02194",
+    "name": "comments",
+    "version": "1.1.0",
+    "url": "https://github.com/the-greenman/srs-web/releases/download/packages-comments-1.1.0/comments.srspkg",
+    "sha256": "a806f6fae2ec1231f6f58aacf2fea6d81429f8665ca5f6a7feb230c6d6699297"
+  },
+  {
     "packageId": "5b14a4d4-ec08-4e5b-be75-c183aec90c40",
     "name": "essay",
-    "version": "1.7.0",
-    "url": "https://github.com/the-greenman/srs-web/releases/download/packages-essay-1.7.0/essay.srspkg",
-    "sha256": "0deb630c8271bc6be2e8484fe40fb12bdfbf618c0ffc742bab4960cb8f3d218d",
+    "version": "1.8.0",
+    "url": "https://github.com/the-greenman/srs-web/releases/download/packages-essay-1.8.0/essay.srspkg",
+    "sha256": "d7a3c77c258aaf4b7baf3d270de95a420f898e23c84497915ddc7ec0bce2e8a9",
     "history": [
       {
         "version": "1.5.0",
@@ -15,6 +22,16 @@
         "version": "1.6.0",
         "url": "https://github.com/the-greenman/srs-web/releases/download/packages-essay-1.6.0/essay.srspkg",
         "sha256": "236ee9b2930bf33b48ee6f7cf18c74f2fc97d6557c956e8ef70fc0e4a3a2a692"
+      },
+      {
+        "version": "1.7.0",
+        "url": "https://github.com/the-greenman/srs-web/releases/download/packages-essay-1.7.0/essay.srspkg",
+        "sha256": "0deb630c8271bc6be2e8484fe40fb12bdfbf618c0ffc742bab4960cb8f3d218d"
+      },
+      {
+        "version": "1.7.1",
+        "url": "https://github.com/the-greenman/srs-web/releases/download/packages-essay-1.7.1/essay.srspkg",
+        "sha256": "42b43b87bb7d8c5d69c77d48f511a296596526c89dbf27e383ace1d8fdb82b2d"
       }
     ]
   }

@@ -1621,17 +1621,31 @@ export function installPackageBundle(
  * identical bundle is a core no-op. Earlier bundles stay installed if a later one throws.
  */
 export function installBundles(repo: SrsRepository, packageIds: string[]): InstallPackageResult[] {
-  return [...new Set(packageIds)].map((packageId) => {
+  return [...new Set(packageIds)].flatMap((packageId) => {
     const text = bundledPackage(packageId);
     if (!text) throw new Error(`No bundled package ${packageId}`);
+    const deps = installBundles(repo, missingPinnedDependencies(repo, text));
     const check = repo.check_package_requirements(text);
     if (!Array.isArray(check?.dependencies)) throw new Error("malformed requirement check result");
     const unmet = (check.dependencies as RequirementOutcome[]).find((o) => !o.satisfied);
     if (unmet) {
       throw new Error(`${packageId} needs ${unmet.name} ${unmet.version}`);
     }
-    return installPackageBundle(repo, text);
+    return [...deps, installPackageBundle(repo, text)];
   });
+}
+
+/**
+ * The packageIds a bundle requires that the core reports `missing` and that are pinned here: installed
+ * before the bundle, so a package never waits on a dependency the editor ships (essay 1.8.0 needs
+ * comments 1.1.0, srs-web#591). Outdated or incompatible ones are left to the core's refusal.
+ */
+function missingPinnedDependencies(repo: SrsRepository, bundleText: string): string[] {
+  const check = repo.check_package_requirements(bundleText);
+  if (!Array.isArray(check?.dependencies)) throw new Error("malformed requirement check result");
+  return (check.dependencies as RequirementOutcome[])
+    .filter((o) => !o.satisfied && o.reason === REQUIREMENT_MISSING && o.packageId && bundledPackage(o.packageId))
+    .map((o) => o.packageId as string);
 }
 
 /** One definition in an upgrade plan list (`added`, `updated`, ...). */
@@ -1732,11 +1746,23 @@ export function upgradeBundles(
   return [...new Set(packageIds)].map((packageId) => {
     const text = bundledPackage(packageId);
     if (!text) throw new Error(`No bundled package ${packageId}`);
-    return upgradePackageBundle(repo, text, {
+    // A dependency the new version adds is installed first; a dry run only names it in the plan.
+    const deps = missingPinnedDependencies(repo, text);
+    if (!options.dryRun) installBundles(repo, deps);
+    const plan = upgradePackageBundle(repo, text, {
       dryRun: options.dryRun,
       priorBundles: priorBundles(repo, packageId),
       adopt: options.adopt?.[packageId],
     });
+    if (options.dryRun && deps.length) {
+      // The core warns that each is missing (as an outcome object); the plan says it is installed instead.
+      const names = deps.map((id) => PINNED.find((p) => p.packageId === id)).map((p) => `${p?.name} ${p?.version}`);
+      plan.dependencyWarnings = [
+        ...plan.dependencyWarnings.filter((w) => !deps.includes((w as unknown as RequirementOutcome)?.packageId ?? "")),
+        `Also installs ${names.join(", ")}, which it needs.`,
+      ];
+    }
+    return plan;
   });
 }
 
