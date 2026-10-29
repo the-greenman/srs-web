@@ -341,7 +341,8 @@
   };
 
   function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
-    pendingNew = null; // a document opened: a held ?new offer is spent
+    pendingNew = null; // a document opened: a held ?new offer, and any ?new error, are spent
+    newLinkError = null;
     // Every load path passes through here: from now on each engine write reports itself.
     if (repo) {
       if (readOnlyHost) repo = readOnlyRepo(repo, () => readOnlyHost !== null);
@@ -745,8 +746,7 @@
 
   /** A new, unsaved document in `editor`, as Start new makes it; a failure lands on the picker with a notice. */
   async function startNew(editor: EditorDefinition): Promise<void> {
-    pendingNew = null;
-    newLinkError = null;
+    newLinkError = null; // a held offer stays until a document opens (beginDocument), so a failure can be retried
     try {
       await createRepository(`Untitled ${editor.label.toLowerCase()}`, [editor.id]);
     } catch (e: unknown) {

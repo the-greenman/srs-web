@@ -32,7 +32,7 @@ test("with unsaved work waiting, the link offers restore or start new", async ({
   await expect(page.locator(".essay-shell__page")).toBeVisible();
 });
 
-test("restoring the waiting copy spends the offer", async ({ page }) => {
+test("discarding the waiting copy spends the offer; a combined link leaves no boot parameter", async ({ page }) => {
   const entry = JSON.stringify({ name: "sample", srsj: readFileSync(SAMPLE, "utf8"), savedAt: "2026-10-01T00:00:00Z" });
   await page.goto("/");
   await page.evaluate((e) => localStorage.setItem("srs-web:working-copy", e), entry);

@@ -34,10 +34,13 @@ export function parseNewLink(search: string): string | null {
   return new URLSearchParams(search).get("new")?.trim().toLowerCase() || null;
 }
 
-/** The address without every boot-link parameter (`open`, `new`, `repo`, `ref`, `path`, `editor`). */
+/** The address without its boot links: `open`, `new`, and a `repo` link with its `ref`, `path` and `editor`. */
 export function withoutBootLinks(href: string): string {
   const url = new URL(href);
-  for (const k of ["open", "new", "repo", "ref", "path", "editor"]) url.searchParams.delete(k);
+  const keys = url.searchParams.has("repo")
+    ? ["open", "new", "repo", "ref", "path", "editor"]
+    : ["open", "new"];
+  for (const k of keys) url.searchParams.delete(k);
   return url.pathname + url.search + url.hash;
 }
 
@@ -137,5 +140,5 @@ export function parseRepoLink(search: string): RepoLink | null {
   const path = (q.get("path") ?? "").replace(/^\/+|\/+$/g, "");
   if (path.split("/").some((s) => s === ".."))
     throw new OpenUrlError('The path may not contain "..".');
-  return { owner, name, ref, path, editor: q.get("editor")?.trim() ?? "" };
+  return { owner, name, ref, path, editor: q.get("editor")?.trim().toLowerCase() ?? "" };
 }

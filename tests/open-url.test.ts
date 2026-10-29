@@ -41,7 +41,7 @@ describe("parseOpenUrl", () => {
 });
 
 describe("withoutBootLinks: open", () => {
-  it("drops only open", () => {
+  it("drops open, keeping other parameters and the hash", () => {
     expect(
       withoutBootLinks("https://app.test/?open=https%3A%2F%2Fa.test%2Fx.srs&theme=dark#h")
     ).toBe("/?theme=dark#h");
@@ -135,7 +135,7 @@ describe("parseRepoLink", () => {
 });
 
 describe("withoutBootLinks: repo", () => {
-  it("drops only the deep-link parameters", () => {
+  it("drops a repo link with its ref, path and editor", () => {
     expect(withoutBootLinks("https://app.test/?repo=a/b&ref=m&path=p&editor=method&theme=dark#h")).toBe("/?theme=dark#h");
   });
 });
@@ -149,8 +149,10 @@ describe("parseNewLink / withoutBootLinks (#640)", () => {
     expect(parseNewLink("?open=x")).toBeNull();
   });
 
-  it("drops only new, keeping other parameters and the hash", () => {
+  it("drops the boot links, keeping other parameters and the hash", () => {
     expect(withoutBootLinks("https://app.example/?new=essay&x=1#e=a")).toBe("/?x=1#e=a");
     expect(withoutBootLinks("https://app.example/?new=essay&repo=a/b&open=x&ref=m")).toBe("/");
+    // ref, path and editor are a repo link's own: without repo they belong to someone else
+    expect(withoutBootLinks("https://app.example/?path=foo&ref=r&editor=x")).toBe("/?path=foo&ref=r&editor=x");
   });
 });
