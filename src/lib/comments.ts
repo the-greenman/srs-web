@@ -57,6 +57,10 @@ export interface Comment {
 
 const SETTLES = ["done", "rejected", "withdrawn"];
 
+/** Chronological order of two createdAt stamps (format-independent: Z, offsets, fractions); unparsable last. */
+export const byTime = (a: string, b: string): number =>
+  (Date.parse(a) || Number.POSITIVE_INFINITY) - (Date.parse(b) || Number.POSITIVE_INFINITY) || 0;
+
 /**
  * A task's state: the latest settling response wins, `withdrawn` reopens. Pure. Any author's response
  * counts (ponytail: an essay has one writer; per-author state when a second writer arrives).
@@ -64,7 +68,8 @@ const SETTLES = ["done", "rejected", "withdrawn"];
 export function taskState(responses: Comment[]): TaskState {
   let latest: Comment | undefined;
   for (const r of responses)
-    if (SETTLES.includes(r.kind ?? "") && (!latest || latest.createdAt <= r.createdAt)) latest = r;
+    if (SETTLES.includes(r.kind ?? "") && (!latest || byTime(latest.createdAt, r.createdAt) <= 0))
+      latest = r;
   if (!latest || latest.kind === "withdrawn") return { state: "open" };
   const state = latest.kind as "done" | "rejected";
   return {
@@ -74,8 +79,15 @@ export function taskState(responses: Comment[]): TaskState {
   };
 }
 
-/** Whether comments here can carry a kind: the SemanticOps comment type is installed. */
-export const kindsAvailable = (repo: SrsRepository): boolean => installed(repo).so;
+/** Comment v2 (comments 1.1.0) adds `kind`; v1 has only `comment_text`. */
+const KIND_SINCE = 2;
+
+/** Whether comments can carry a kind, from a type listing: the SemanticOps comment v2 or later is installed (its package ships `comments-on` with it). */
+export const kindsIn = (types: { id: string; version: number }[]): boolean =>
+  types.some((t) => t.id === SO_COMMENT_TYPE_ID && t.version >= KIND_SINCE);
+
+/** As `kindsIn`, reading the repository's types. */
+export const kindsAvailable = (repo: SrsRepository): boolean => kindsIn(listTypes(repo));
 
 /** Whether a comment type AND its `comments-on` relation are both installed, per package. */
 function installed(repo: SrsRepository) {
@@ -128,8 +140,7 @@ export function loadComments(repo: SrsRepository, types: TypeSummary[]): Record<
       ...(typeof kind === "string" && kind ? { kind } : {}),
     });
   }
-  for (const list of Object.values(out))
-    list.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  for (const list of Object.values(out)) list.sort((a, b) => byTime(a.createdAt, b.createdAt));
   // Responses comment on the comment they answer, so they sit under its id, never in a thread.
   for (const list of Object.values(out))
     for (const c of list) if (c.kind === "task") c.task = taskState(out[c.id] ?? []);
@@ -149,13 +160,15 @@ export function addComment(
   kind?: ContentKind
 ): void {
   const so = installed(repo).so;
-  // A kind exists only on the SemanticOps comment.
-  const input = { fieldValues: { comment_text: text, ...(so && kind ? { kind } : {}) } };
   // Write the SemanticOps pair when installed, else the essay pair.
   const [typeId, relationType] = so
     ? [SO_COMMENT_TYPE_ID, SO_COMMENTS_ON]
     : [COMMENT_TYPE_ID, COMMENTS_ON];
   const v = typeVersion(repo, typeId);
+  // A kind exists only on the SemanticOps comment v2; elsewhere it is dropped, never sent.
+  const input = {
+    fieldValues: { comment_text: text, ...(so && v >= KIND_SINCE && kind ? { kind } : {}) },
+  };
   const rec = containerId
     ? createRecordInContainer(repo, containerId, typeId, v, input)
     : createRecord(repo, typeId, v, input);

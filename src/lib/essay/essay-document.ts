@@ -1,6 +1,6 @@
 import { STRUCTURAL_CATEGORIES } from "$lib/annotations.js";
 import type { Attachment, FileAttachment, Related } from "$lib/annotations.js";
-import { COMMENTS_ON, isCommentsOn, loadComments } from "$lib/comments.js";
+import { COMMENTS_ON, SO_COMMENTS_ON, isCommentsOn, kindsIn, loadComments } from "$lib/comments.js";
 import type { Comment } from "$lib/comments.js";
 import type { AttachFile } from "$lib/components/attach-check.js";
 import {
@@ -124,6 +124,8 @@ export interface EssayModel {
   references: Reference[];
   /** Whether the installed document-state type can record a bundle (older packages cannot: no Export snapshot). */
   canSnapshot: boolean;
+  /** Comments here can carry a kind (comment v2, comments 1.1.0): read once per load, not per render. */
+  canKind: boolean;
   /** Comments by paragraph id, oldest first. */
   comments: Record<string, Comment[]>;
   /** Attachments by paragraph id (see Attachment). */
@@ -325,6 +327,20 @@ function loadSharedIn(
   return out;
 }
 
+/**
+ * The comments on `paragraphIds` and every response on them (a response comments on the comment it
+ * answers, so it is keyed under that comment's id, srs-web#591): what belongs with the essay.
+ */
+function paragraphComments(comments: Record<string, Comment[]>, paragraphIds: string[]): Comment[] {
+  const out: Comment[] = [];
+  const add = (c: Comment) => {
+    out.push(c);
+    for (const r of comments[c.id] ?? []) add(r);
+  };
+  for (const id of paragraphIds) for (const c of comments[id] ?? []) add(c);
+  return out;
+}
+
 /** Whether the installed `typeId` declares `field` (older packages do not). Cached per type version. */
 const fieldCache = new WeakMap<object, Map<string, { version: number; ok: boolean }>>();
 function hasField(
@@ -403,12 +419,11 @@ export function loadEssay(
       const filed = new Set(
         getContainerOutline(repo, commentsContainerId).entries.map((e) => e.instanceId)
       );
-      for (const id of Object.keys(paragraphs))
-        for (const c of comments[id] ?? [])
-          if (!filed.has(c.id)) {
-            addContainerMember(repo, commentsContainerId, c.id);
-            filed.add(c.id);
-          }
+      for (const c of paragraphComments(comments, Object.keys(paragraphs)))
+        if (!filed.has(c.id)) {
+          addContainerMember(repo, commentsContainerId, c.id);
+          filed.add(c.id);
+        }
     } catch (e) {
       tried.add(`sweep:${essayId}`); // stop retrying on every reload
       repairError ??= e instanceof Error ? e.message : String(e);
@@ -452,6 +467,7 @@ export function loadEssay(
     references,
     bundleContainerId: str(state?.fieldValues.bundle_container_id) || null,
     canSnapshot: !!state && hasField(repo, types, DOCUMENT_STATE_TYPE_ID, "bundle_container_id"),
+    canKind: kindsIn(types),
     comments,
     attachments: context.attachments,
     files: context.files,
@@ -738,9 +754,17 @@ export function deleteForever(repo: SrsRepository, m: EssayModel, id: string): v
   if (!m.binContainerId) throw new Error("This essay has no Bin");
   deleteFromBin(repo, m.binContainerId, id, {
     keep: (e) => !!m.sharedIn[e],
-    alsoDelete: (e) =>
-      listRelations(repo, { relationType: COMMENTS_ON, target: e }).map((r) => r.sourceInstanceId),
+    alsoDelete: (e) => commentsOn(repo, e),
   });
+}
+
+/** Every comment on `target` by either pair, and every response on those, depth first (srs-web#644). */
+function commentsOn(repo: SrsRepository, target: string, seen = new Set<string>()): string[] {
+  return [COMMENTS_ON, SO_COMMENTS_ON]
+    .flatMap((relationType) => listRelations(repo, { relationType, target }))
+    .map((r) => r.sourceInstanceId)
+    .filter((id) => !seen.has(id) && !!seen.add(id))
+    .flatMap((id) => [id, ...commentsOn(repo, id, seen)]);
 }
 
 /** Essays already repaired (or attempted) per repository handle, so a failing repair is not retried by the reload it causes. */
@@ -895,8 +919,8 @@ export function refreshBundle(repo: SrsRepository, m: EssayModel): string {
       ? getContainerOutline(repo, m.commentsContainerId).entries.map((e) => e.instanceId)
       : []
   );
-  for (const id of Object.keys(m.paragraphs))
-    for (const c of m.comments[id] ?? []) if (!filed.has(c.id)) own.add(c.id);
+  for (const c of paragraphComments(m.comments, Object.keys(m.paragraphs)))
+    if (!filed.has(c.id)) own.add(c.id);
   let bundle = m.bundleContainerId;
   if (!bundle) {
     bundle = createContainer(repo, {

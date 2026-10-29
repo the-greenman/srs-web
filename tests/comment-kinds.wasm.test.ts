@@ -83,5 +83,14 @@ describe.skipIf(!haveBindings)("comment kinds and task responses on the real eng
     expect(text).toContain('"task"');
     expect(text).toContain('"rejected"');
     expect(text).toContain("Out of scope.");
+
+    // srs-web#644: Delete forever takes the paragraph's SemanticOps comments and their responses with it
+    m = doc.loadEssay(again, essayId);
+    expect(m.canKind).toBe(true);
+    doc.binParagraph(again, m, p);
+    doc.deleteForever(again, doc.loadEssay(again, essayId), p);
+    expect(Object.keys(loadComments(again, listTypes(again)))).toEqual([]); // no comment, no response
+    expect(again.export_srsj()).not.toContain(back.id);
+    expect(again.validate().summary.errors).toBe(0);
   });
 });

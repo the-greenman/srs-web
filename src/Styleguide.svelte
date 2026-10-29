@@ -407,6 +407,7 @@
         <div><h3>Proposed links, no session actor (read only)</h3><LinkProposals proposals={fx.proposals} onanswer={noop} /></div>
         <div><h3>Agents and a human</h3><CommentThread comments={fx.comments} onadd={noop} /></div>
         <div><h3>Kinds, a filter and tasks (open, done, rejected), with a kind picker</h3><CommentThread comments={fx.kindComments} kinds onadd={noop} onrespond={noop} /></div>
+        <div><h3>Kinds and tasks, no session actor (states shown, no task controls)</h3><CommentThread comments={fx.kindComments} needsName onadd={noop} /></div>
       </div>
     {/snippet}
     {@render gated(threads)}
