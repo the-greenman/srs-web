@@ -722,18 +722,28 @@
     requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="agent-panel"] button, [data-testid="agent-panel"] input')?.focus());
   }
   let helpOpen = $state(false);
-  // The essay editor's help (decision 9441693e, #642): on open until "Don't show again", and from Go > Editor help….
-  // Before the name gate (R6 on semanticops.com#49): the dialog is modal over it.
+  // The essay editor's help (decision 9441693e, #642): once an essay is open for writing, until "Don't show
+  // again", and from Go > Editor help…. Before the name gate (R6 on semanticops.com#49): the dialog is modal over it.
   const help: HelpItem[] = (() => {
     try {
       return helpFor("essay");
-    } catch {
-      return []; // no engine (unit tests) or no help repository: no help, never a broken shell
+    } catch (e) {
+      console.warn("Essay help is unavailable:", e); // a broken help repository: no help, never a broken shell
+      return [];
     }
   })();
-  let guideOpen = $state(help.length > 0 && !helpDismissed("essay"));
+  let helpHidden = $state(helpDismissed("essay"));
+  let guideOpen = $state(false);
+  let guideOffered = false;
+  $effect(() => {
+    // offered once per shell, when an essay first shows for writing (not a read-only link, not an error)
+    if (guideOffered || !model || readOnlyReason || !help.length) return;
+    guideOffered = true;
+    guideOpen = !helpHidden;
+  });
   function closeGuide(dontShow: boolean) {
     setHelpDismissed("essay", dontShow);
+    helpHidden = dontShow;
     guideOpen = false;
   }
   const helpId = "essay-md-help";
@@ -819,8 +829,9 @@
   {#if guideOpen}
     <HelpDialog
       items={help}
-      dontShow={helpDismissed("essay")}
-      featureActions={agentPanel ? { "shell.connect-ai": { label: "Open Agents", run: () => { closeGuide(helpDismissed("essay")); void openAgents(); } } } : {}}
+      title="Essay editor help"
+      dontShow={helpHidden}
+      featureActions={agentPanel ? { "shell.connect-ai": { label: "Open Agents", run: (d) => { closeGuide(d); void openAgents(); } } } : {}}
       onclose={closeGuide}
     />
   {/if}

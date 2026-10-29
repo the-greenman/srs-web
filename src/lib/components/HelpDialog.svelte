@@ -13,7 +13,7 @@
   import Modal from './Modal.svelte';
 
   let {
-    title = 'Welcome',
+    title = 'Help',
     items,
     featureActions = {},
     dontShow = false,
@@ -23,7 +23,8 @@
     title?: string;
     items: HelpItem[];
     /** Extra buttons by feature id, supplied by the screen. */
-    featureActions?: Record<string, { label: string; run: () => void }>;
+    /** Extra buttons by feature id, supplied by the screen; `run` gets the current "Don't show again". */
+    featureActions?: Record<string, { label: string; run: (dontShow: boolean) => void }>;
     /** Start with "Don't show again" ticked (the help was dismissed before). */
     dontShow?: boolean;
     onclose: (dontShow: boolean) => void;
@@ -44,17 +45,15 @@
 
 <Modal {inline} {title} testid="help-dialog" onCancel={() => onclose(hide)}>
   {#if item}
-    <p class="help-dialog__count" data-part="count">{step + 1} of {items.length}</p>
-    <h3 class="help-dialog__title" data-testid="help-step-title">{item.title}</h3>
+    <p data-part="count">{step + 1} of {items.length}</p>
+    <h3 data-part="step-title" data-testid="help-step-title">{item.title}</h3>
     <MarkdownView value={item.summary} />
     {#if featureActions[item.featureId]}
       {@const a = featureActions[item.featureId]}
-      <Button size="sm" data-testid="help-action" onclick={a.run}>{a.label}</Button>
+      <Button size="sm" data-testid="help-action" onclick={() => a.run(hide)}>{a.label}</Button>
     {/if}
     {#if item.explanation}
-      {#key step}
-        <Disclosure label="More" testid="help-more" bind:open={more}><MarkdownView value={item.explanation} /></Disclosure>
-      {/key}
+      <Disclosure label="More" testid="help-more" bind:open={more}><MarkdownView value={item.explanation} /></Disclosure>
     {/if}
   {/if}
   {#snippet actions()}
