@@ -15,9 +15,14 @@ export function recordsOfType(
   );
 }
 
-/** The installed version of a type; throws when it is not installed. */
+/**
+ * The newest installed version of a type; throws when it is not installed. Versions sit side by side
+ * (srs-rust#1473), so new records bind to the latest one.
+ */
 export function typeVersion(repo: SrsRepository, typeId: string): number {
-  const t = listTypes(repo).find((x) => x.id === typeId);
-  if (!t) throw new Error(`Type ${typeId} is not installed`);
-  return t.version;
+  const versions = listTypes(repo)
+    .filter((x) => x.id === typeId)
+    .map((x) => x.version);
+  if (!versions.length) throw new Error(`Type ${typeId} is not installed`);
+  return Math.max(...versions);
 }

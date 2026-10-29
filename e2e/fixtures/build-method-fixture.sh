@@ -1,7 +1,8 @@
 # Builds e2e/fixtures/method.srsj (srs-web#526): the srs-programme method package, 1 domain, 1 cluster,
 # 2 personas, 1 trade-off side and 3 agent-suggested problems in Suggestions, plus empty Affirmed and
 # Set aside containers; the cluster, personas and 2 remedies (one answering two problems) sit in Suggestions too (srs-web#541). Built with the srs CLI (build.490), never by hand.
-# Usage: PKG=<srs-programme/packages/method> COMMENTS=<com.semanticops.comments-1.0.0.srspkg> bash build-method-fixture.sh <out.srsj>
+# Usage: PKG=<srs-programme/packages/method> COMMENTS=<com.semanticops.comments-1.1.0.srspkg> bash build-method-fixture.sh <out.srsj>
+# Comments 1.1.0 (srs-programme#189): an agent also proposes one link on SP-1 (srs-web#617), answered in place.
 set -e
 rm -f "${1:?out.srsj}"
 OUT=${1:?out.srsj}; W=$(mktemp -d)/method
@@ -38,5 +39,10 @@ cont "{\"title\":\"Set aside\",\"memberInstanceIds\":[]}"
 srs package install --repo $W --bundle "${COMMENTS:?COMMENTS}" | ok
 CM=$(echo '{"fieldValues":{"comment_text":"Which queue, exactly?"}}' | srs record create --repo $W --type com.semanticops.comments/comment | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d["payload"]["record"]["instanceId"] if d.get("ok") else sys.exit(str(d)))')
 rel com.semanticops.comments/comments-on $CM $P2
+# an agent's link proposal on P1 (srs-web#617): a suggestion comment naming the relation, comments-on P1, proposes-link-to OWNER
+export SRS_ACTOR='{"kind":"ai","id":"agent:analyst","name":"Analyst scout"}'
+PR=$(echo '{"fieldValues":{"comment_text":"The owner also meets this when an edit comes back by hand.","kind":"suggestion","proposed_relation":"com.semanticops.method/held-by"}}' | srs record create --repo $W --type com.semanticops.comments/comment --version 2 | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d["payload"]["record"]["instanceId"] if d.get("ok") else sys.exit(str(d)))')
+rel com.semanticops.comments/comments-on $PR $P1
+rel com.semanticops.comments/proposes-link-to $PR $OWNER
 srs repo validate --repo $W | python3 -c "import sys,json; print(json.load(sys.stdin)[\"payload\"][\"summary\"])"
 srs repo copy --from $W --to "$OUT" >/dev/null

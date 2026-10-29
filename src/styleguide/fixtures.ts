@@ -25,6 +25,7 @@ import type { InstalledPackage } from "$lib/package-upgrade";
 import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor, SrsRecord, UpgradePackageResult } from "$lib/srs-client";
 
+import type { ProposalView } from "$lib/link-proposals.js";
 import type { DiscoveryHit } from "$lib/srs-client";
 import type { StorageProviders } from "$lib/storage/index";
 import type { BreadcrumbItem, Diagnostic, Status } from "$lib/types";
@@ -1346,4 +1347,33 @@ export const methodLinks = [
   { id: "pc1", label: "Owner", entity: "persona" as const, status: "affirmed" as const },
   { id: "pc2", label: "Writer", entity: "persona" as const, status: "suggested" as const },
   { id: "pc3", label: "Reviewer", entity: "persona" as const, status: null },
+];
+
+/** Links agents propose from one record, answered in place (LinkProposals, srs-web#617). */
+export const proposals: ProposalView[] = [
+  {
+    id: "p1",
+    relationLabel: "answers",
+    targetLabel:
+      "SP-102 Affirming agents' structure one record at a time is harder than writing it myself",
+    why: "This paragraph describes judging a link away from the words it came from.",
+    author: agents[0],
+    answers: {},
+  },
+  {
+    id: "p2",
+    relationLabel: "evidences",
+    targetLabel: "Finding: decisions marked proposed stay in draft",
+    why: "Three decisions sat in draft for days.",
+    author: agents[1],
+    answers: { [human.id]: "agree", [agents[2].id]: "agree" },
+  },
+  {
+    id: "p3",
+    relationLabel: "derived-from",
+    targetLabel: "Vignette: the owner's words first",
+    why: "",
+    author: agents[0],
+    answers: { [human.id]: "disagree" },
+  },
 ];
