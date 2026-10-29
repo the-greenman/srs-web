@@ -1,0 +1,21 @@
+{
+  "instanceId": "987cac5f-db44-4536-99d5-dfec1618c177",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "shell.teach-me",
+    "placement": "concept",
+    "title": "Ask your AI to teach you",
+    "summary": "Once connected, your AI can read this editor's manual and point at things on your screen. Copy this prompt into your AI: _Use the ui_help tool, then teach me this editor one feature at a time, using ui_highlight to show me each one._"
+  },
+  "createdAt": "2026-10-29T14:42:45.993689799+00:00",
+  "updatedAt": "2026-10-29T14:42:45.993695119+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

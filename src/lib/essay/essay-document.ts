@@ -875,7 +875,7 @@ export function makeLocalCopy(repo: SrsRepository, m: EssayModel, paragraphId: s
 /**
  * The essay as static markdown (srs-web#416): the core composition render of the essay
  * container, minus the document-state hidden ids and the anchor record (the core already emits
- * the container title as H1). Children of a hidden paragraph are promoted by the core, not lost.
+ * the container title as H1). A hidden paragraph's children are left out with it, as the writer sees it.
  * Drafts and the bin are other containers, so never appear.
  */
 export function essayMarkdown(repo: SrsRepository, m: EssayModel): string {

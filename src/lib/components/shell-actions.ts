@@ -54,6 +54,7 @@ export const saveAction = (
   run,
   enabled: s.enabled,
   testid: "save-document",
+  feature: "shell.save",
 });
 
 /** Go > Open another (`toolbar-other`). */

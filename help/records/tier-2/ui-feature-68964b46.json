@@ -1,0 +1,21 @@
+{
+  "instanceId": "68964b46-a426-4e6f-a1ed-0cad47659e29",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay.paragraphs",
+    "placement": "ui",
+    "title": "Write in paragraphs",
+    "summary": "Your essay is a list of paragraphs. Each paragraph is kept on its own, so it can be linked, commented on and moved. Give a paragraph a short title when you know what it says."
+  },
+  "createdAt": "2026-10-29T14:42:46.106100290+00:00",
+  "updatedAt": "2026-10-29T14:42:46.106107711+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

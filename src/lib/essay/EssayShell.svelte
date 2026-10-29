@@ -810,7 +810,7 @@
   {/if}
   {#if error}<Notice kind="error" testid="essay-error">{error}</Notice>{/if}
   {#if needsName}
-    <form class="essay-shell__name-gate" data-testid="name-gate" onsubmit={saveWriterName}>
+    <form class="essay-shell__name-gate" data-testid="name-gate" data-feature="essay.name-gate" onsubmit={saveWriterName}>
       <Notice kind="info">This essay is read-only until we know who is writing. Give your name, or sign in, to edit.</Notice>
       <Input aria-label="Your name" data-testid="name-gate-input" bind:value={writerName} />
       <Button variant="primary" type="submit" disabled={!writerName.trim()}>Start writing</Button>
@@ -876,7 +876,7 @@
         {/if}
         {#if items.length === 0}
           <p class="essay-shell__hint">No paragraphs yet.</p>
-          <Button variant="mono" data-testid="first-paragraph" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add first paragraph</Button>
+          <Button variant="mono" data-testid="first-paragraph" data-feature="essay.paragraphs" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add first paragraph</Button>
         {/if}
         <BlockStack {items} source="essay" label="Essay paragraphs" candrop={essayDrop} ondrop={(p, t) => onDrop("essay", p, t)} onfiles={dropFiles}>
           {#snippet row(item, handle)}
@@ -922,13 +922,13 @@
                 ondelete={() => toBin(p.id)}
               />
               {#if showThread(p.id)}
-                <CommentThread {now} comments={model!.comments[p.id] ?? []} needsName={!hasActor} kinds={model!.canKind} onadd={(t, n, k) => comment(p.id, t, n, k)} onrespond={hasActor ? settle : undefined} onclose={() => closeThread(p.id)} />
+                <CommentThread data-feature="essay.comments" {now} comments={model!.comments[p.id] ?? []} needsName={!hasActor} kinds={model!.canKind} onadd={(t, n, k) => comment(p.id, t, n, k)} onrespond={hasActor ? settle : undefined} onclose={() => closeThread(p.id)} />
               {/if}
             {/if}
           {/snippet}
         </BlockStack>
         {#if items.length > 0 && !zoomId}
-          <Button variant="mono" class="essay-shell__add" data-testid="add-paragraph" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add paragraph</Button>
+          <Button variant="mono" class="essay-shell__add" data-testid="add-paragraph" data-feature="essay.paragraphs" onclick={() => run(() => `body:${addParagraph(repo, model!)}`)}>Add paragraph</Button>
         {/if}
       </article>
   {/if}
@@ -940,7 +940,7 @@
     <Inspector label="Panels">
       <div class="panel-rail" data-testid="rail">
 {#if model}
-        <Panel title="Layers" persistKey="essay.layers" collapseWhen={NARROW}>
+        <Panel title="Layers" data-feature="essay.layers" persistKey="essay.layers" collapseWhen={NARROW}>
           <LayersPanel
             {layers}
             candrop={essayDrop}
@@ -980,7 +980,7 @@
           </Panel>
         {/if}
         {#if model.referencesContainerId}
-          <Panel title="References" aside={referenceItems.length} persistKey="essay.references" collapseWhen={NARROW}>
+          <Panel title="References" data-feature="essay.sources" aside={referenceItems.length} persistKey="essay.references" collapseWhen={NARROW}>
             <ReferencesTray
               items={referenceItems}
               paragraphs={paragraphChoices}
@@ -1006,7 +1006,7 @@
 <AppShell {shell} main={mainPane} inspector={model || agentPanel ? inspectorPane : undefined} inspectorLabel="Panels" />
 
 {#snippet agents()}
-  <Panel title="Agents" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey="essay.agents" collapseWhen={NARROW} bind:open={agentsOpen}>
+  <Panel title="Agents" data-feature="shell.connect-ai" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey="essay.agents" collapseWhen={NARROW} bind:open={agentsOpen}>
     {#snippet actions()}{#if agentStatus}<AgentPresence status={agentStatus} />{/if}{/snippet}
     {#if model}
       <Button size="sm" variant="mono" data-testid="copy-for-agent" onclick={() => copyForAgent(zoomId ?? undefined)}>Copy essay handoff</Button>

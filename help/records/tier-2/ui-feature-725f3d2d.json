@@ -1,0 +1,21 @@
+{
+  "instanceId": "725f3d2d-dfb8-410e-bb4d-e399aa942429",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay.links",
+    "placement": "concept",
+    "title": "Problems and counter-claims",
+    "summary": "A paragraph can be linked to the problem it speaks to and to claims that push against it, as well as to its sources. Your AI can suggest these links; you decide which stay."
+  },
+  "createdAt": "2026-10-29T14:42:46.555067964+00:00",
+  "updatedAt": "2026-10-29T14:42:46.555074283+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

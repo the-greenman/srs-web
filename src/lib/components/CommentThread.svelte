@@ -13,6 +13,7 @@
   Wraps .comments (src/styles/components/comments.css). Story: muDemocracy.org#227, srs-web#422
 -->
 <script lang="ts">
+  import type { HTMLAttributes } from 'svelte/elements';
   import { SvelteSet } from 'svelte/reactivity';
   import { CONTENT_KINDS, EARLIER_THRESHOLD, groupRuns, plainText } from '$lib/comments.js';
   import { relativeTime } from '$lib/relative-time.js';
@@ -33,6 +34,7 @@
     onadd,
     onrespond,
     onclose,
+    ...rest
   }: {
     comments?: Comment[];
     /** No actor yet: ask for a display name with the first reply. */
@@ -46,7 +48,7 @@
     onrespond?: (commentId: string, kind: 'done' | 'rejected' | 'withdrawn', text?: string) => void;
     /** Optional: shows a "Hide comments" control beside Comment (the shell owns the visibility state). */
     onclose?: () => void;
-  } = $props();
+  } & Omit<HTMLAttributes<HTMLElement>, "onclose"> = $props(); // other attributes (e.g. data-feature, src/lib/help) go on the root
 
   let text = $state('');
   let name = $state('');
@@ -111,7 +113,7 @@
   }
 </script>
 
-<section class="comments" aria-label="Comments" data-testid="comment-thread" data-part="thread">
+<section {...rest} class="comments" aria-label="Comments" data-testid="comment-thread" data-part="thread">
   {#if long}
     <Button size="sm" variant="ghost" class="comments__summary" data-part="summary" aria-expanded={!folded} onclick={() => (folded = !folded)}>
       <ActorMark actor={comments.at(-1)?.author} size="sm" />

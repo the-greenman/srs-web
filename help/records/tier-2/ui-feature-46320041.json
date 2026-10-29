@@ -1,0 +1,22 @@
+{
+  "instanceId": "46320041-e240-47bd-b21a-aacfdf2abc13",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay.sources",
+    "placement": "ui",
+    "title": "Sources your AI can read",
+    "summary": "Drag text files (notes, transcripts, a report, up to 1 MB each) or a link into your essay. Drop on a paragraph to link the source to it, or anywhere on the page to keep it in References. Put the documents your essay answers, such as a funding call, under Context documents. Every connected AI reads your sources, so it can check your claims against them.",
+    "ai_guidance": "read each source through its attachment before commenting; point the writer to References with ui_highlight."
+  },
+  "createdAt": "2026-10-29T14:42:46.445401249+00:00",
+  "updatedAt": "2026-10-29T14:42:46.445406609+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

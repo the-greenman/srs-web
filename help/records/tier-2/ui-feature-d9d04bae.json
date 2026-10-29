@@ -1,0 +1,21 @@
+{
+  "instanceId": "d9d04bae-94f2-494e-8f42-12c185f66ce6",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "shell.save",
+    "placement": "ui",
+    "title": "Saving",
+    "summary": "Your essay lives in this browser tab until you save it. **Save** writes it where you choose: a file, GitHub, Dropbox or Google Drive."
+  },
+  "createdAt": "2026-10-29T14:42:46.891120092+00:00",
+  "updatedAt": "2026-10-29T14:42:46.891141008+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

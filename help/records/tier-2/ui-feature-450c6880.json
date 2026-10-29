@@ -1,0 +1,22 @@
+{
+  "instanceId": "450c6880-765c-4190-ae05-8bc7b247f7e5",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay.indents",
+    "placement": "concept",
+    "title": "Indents",
+    "summary": "You can indent a paragraph under another to group it: press Tab at the start of a paragraph (Shift+Tab to bring it back), use Alt+→ / Alt+←, the paragraph's ⋯ menu, or drag it onto another row in Layers. An indented paragraph moves, hides and zooms with the one above it. Indenting arranges your essay; it does not by itself say the paragraph supports the one above.",
+    "ai_guidance": "show it on a real paragraph with ui_highlight; agents see the indents as depth in the essay's outline."
+  },
+  "createdAt": "2026-10-29T14:42:46.330913338+00:00",
+  "updatedAt": "2026-10-29T14:42:46.330926524+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

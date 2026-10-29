@@ -22,6 +22,9 @@ export interface ToolbarAction extends MenuAction {
   group: string;
   kind: "action" | "toggle" | "primary";
   testid?: string;
+  /** The help feature this button presents (src/lib/help): rendered as `data-feature` on a bar button.
+   * ponytail: an action folded into a menu carries none (it is not on screen until the menu opens). */
+  feature?: string;
   /** Native popover invoker (the lone Help icon keeps toggling its popover natively). */
   popovertarget?: string;
   expanded?: boolean;

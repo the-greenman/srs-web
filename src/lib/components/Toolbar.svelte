@@ -93,6 +93,7 @@
         variant="primary"
         data-part="primary"
         data-testid={itemTestid(a)}
+        data-feature={a.feature}
         disabled={!a.enabled}
         onclick={a.run}
       >{a.label}</Button>
@@ -121,13 +122,14 @@
               label={a.label}
               disabled={!a.enabled}
               data-testid={itemTestid(a)}
+              data-feature={a.feature}
               popovertarget={a.popovertarget}
               popovertargetaction={a.popovertarget ? 'toggle' : undefined}
               aria-expanded={a.popovertarget ? a.expanded : undefined}
               onclick={a.popovertarget ? undefined : a.run}
             />
           {:else}
-            <Button class="toolbar__menu" size="sm" variant="ghost" data-part="menu" disabled={!a.enabled} data-testid={itemTestid(a)} onclick={a.run}>{a.label}</Button>
+            <Button class="toolbar__menu" size="sm" variant="ghost" data-part="menu" disabled={!a.enabled} data-testid={itemTestid(a)} data-feature={a.feature} onclick={a.run}>{a.label}</Button>
           {/if}
         {:else}
           <ActionMenu
