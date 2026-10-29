@@ -102,3 +102,47 @@ it("loadComments reads comments linked by either relation", () => {
   ]) as never);
   expect(loadComments({} as never, types as never)["T"].map((c) => c.text)).toEqual(["new", "old"]);
 });
+
+it("addComment writes a kind only on the SemanticOps comment", () => {
+  only(SO_TYPE, SO_REL);
+  addComment({} as never, "t", "hi", null, "task");
+  expect(m.createRecord).toHaveBeenLastCalledWith(expect.anything(), SO_TYPE, 2, {
+    fieldValues: { comment_text: "hi", kind: "task" },
+  });
+  only(OLD_TYPE, OLD_REL);
+  addComment({} as never, "t", "hi", null, "task");
+  expect(m.createRecord).toHaveBeenLastCalledWith(expect.anything(), OLD_TYPE, 2, {
+    fieldValues: { comment_text: "hi" },
+  });
+});
+
+it("loadComments carries the kind and derives a task's state from responses on it", () => {
+  const types = [{ id: SO_TYPE, namespace: "s", name: "comment" }];
+  m.listRelations.mockImplementation(((_r: unknown, f: { relationType: string }) =>
+    f.relationType === SO_REL
+      ? [
+          { relationId: "r1", sourceInstanceId: "task", targetInstanceId: "P" },
+          { relationId: "r2", sourceInstanceId: "resp", targetInstanceId: "task" },
+        ]
+      : []) as never);
+  m.listRecords.mockImplementation((() => [
+    {
+      instanceId: "task",
+      typeId: SO_TYPE,
+      fieldValues: { comment_text: "cite it", kind: "task" },
+      createdAt: "1",
+    },
+    {
+      instanceId: "resp",
+      typeId: SO_TYPE,
+      fieldValues: { comment_text: "not needed", kind: "rejected" },
+      createdAt: "2",
+    },
+  ]) as never);
+  const out = loadComments({} as never, types as never);
+  expect(out.P.map((c) => c.id)).toEqual(["task"]);
+  expect(out.P[0]).toMatchObject({
+    kind: "task",
+    task: { state: "rejected", reason: "not needed" },
+  });
+});

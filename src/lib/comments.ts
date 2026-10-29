@@ -31,13 +31,51 @@ export const SO_COMMENTS_ON = "com.semanticops.comments/comments-on";
 /** True for either package's `comments-on` relation key. */
 export const isCommentsOn = (key: string): boolean => key === COMMENTS_ON || key === SO_COMMENTS_ON;
 
+/** The content kinds a comment can carry (comments 1.1.0); response kinds are written by `respond`. */
+export const CONTENT_KINDS = ["question", "objection", "evidence", "suggestion", "task"] as const;
+export type ContentKind = (typeof CONTENT_KINDS)[number];
+
+/** A task's state, from the latest `done` / `rejected` / `withdrawn` response on it (ruling ff946eb1). */
+export interface TaskState {
+  state: "open" | "done" | "rejected";
+  /** The response's text, when it says more than its kind. */
+  reason?: string;
+  author?: Actor;
+}
+
 /** A comment on an instance; `author` is the engine-stamped `createdBy` (absent = unattributed). */
 export interface Comment {
   id: string;
   text: string;
   createdAt: string;
   author?: Actor;
+  /** Its kind (comments 1.1.0); absent on a plain or essay-package comment. */
+  kind?: string;
+  /** Only on a `task`. */
+  task?: TaskState;
 }
+
+const SETTLES = ["done", "rejected", "withdrawn"];
+
+/**
+ * A task's state: the latest settling response wins, `withdrawn` reopens. Pure. Any author's response
+ * counts (ponytail: an essay has one writer; per-author state when a second writer arrives).
+ */
+export function taskState(responses: Comment[]): TaskState {
+  let latest: Comment | undefined;
+  for (const r of responses)
+    if (SETTLES.includes(r.kind ?? "") && (!latest || latest.createdAt <= r.createdAt)) latest = r;
+  if (!latest || latest.kind === "withdrawn") return { state: "open" };
+  const state = latest.kind as "done" | "rejected";
+  return {
+    state,
+    author: latest.author,
+    ...(latest.text && latest.text !== state ? { reason: latest.text } : {}),
+  };
+}
+
+/** Whether comments here can carry a kind: the SemanticOps comment type is installed. */
+export const kindsAvailable = (repo: SrsRepository): boolean => installed(repo).so;
 
 /** Whether a comment type AND its `comments-on` relation are both installed, per package. */
 function installed(repo: SrsRepository) {
@@ -81,15 +119,20 @@ export function loadComments(repo: SrsRepository, types: TypeSummary[]): Record<
     if (!r) continue;
     out[rel.targetInstanceId] ??= [];
     const text = r.fieldValues.comment_text;
+    const kind = r.fieldValues.kind;
     out[rel.targetInstanceId].push({
       id: r.instanceId,
       text: typeof text === "string" ? text : "",
       createdAt: r.createdAt ?? "",
       author: r.createdBy,
+      ...(typeof kind === "string" && kind ? { kind } : {}),
     });
   }
   for (const list of Object.values(out))
     list.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  // Responses comment on the comment they answer, so they sit under its id, never in a thread.
+  for (const list of Object.values(out))
+    for (const c of list) if (c.kind === "task") c.task = taskState(out[c.id] ?? []);
   commentCache.set(repo, { key, comments: out });
   return out;
 }
@@ -102,11 +145,14 @@ export function addComment(
   repo: SrsRepository,
   targetId: string,
   text: string,
-  containerId?: string | null
+  containerId?: string | null,
+  kind?: ContentKind
 ): void {
-  const input = { fieldValues: { comment_text: text } };
+  const so = installed(repo).so;
+  // A kind exists only on the SemanticOps comment.
+  const input = { fieldValues: { comment_text: text, ...(so && kind ? { kind } : {}) } };
   // Write the SemanticOps pair when installed, else the essay pair.
-  const [typeId, relationType] = installed(repo).so
+  const [typeId, relationType] = so
     ? [SO_COMMENT_TYPE_ID, SO_COMMENTS_ON]
     : [COMMENT_TYPE_ID, COMMENTS_ON];
   const v = typeVersion(repo, typeId);

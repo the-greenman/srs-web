@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { groupRuns } from "../src/lib/comments";
-import { relativeTime } from "../src/lib/relative-time";
 import type { Comment } from "../src/lib/comments";
+import { relativeTime } from "../src/lib/relative-time";
 
 const c = (id: string, authorId?: string): Comment => ({
   id,
@@ -29,4 +29,24 @@ it("relativeTime buckets: just now, minutes, hours, then a date; empty when ther
   );
   expect(relativeTime("", now)).toBe("");
   expect(relativeTime("nonsense", now)).toBe("");
+});
+
+it("taskState: the latest settling response wins, withdrawn reopens, the text is the reason", async () => {
+  const { taskState } = await import("../src/lib/comments");
+  const r = (kind: string, createdAt: string, text = kind): Comment => ({
+    id: kind + createdAt,
+    text,
+    createdAt,
+    kind,
+  });
+  expect(taskState([])).toEqual({ state: "open" });
+  expect(taskState([r("done", "1")]).state).toBe("done");
+  expect(taskState([r("rejected", "1", "out of scope")])).toMatchObject({
+    state: "rejected",
+    reason: "out of scope",
+  });
+  expect(taskState([r("done", "1"), r("withdrawn", "2")]).state).toBe("open");
+  expect(taskState([r("withdrawn", "1"), r("rejected", "2")]).state).toBe("rejected");
+  expect(taskState([r("agree", "3"), r("done", "1")]).state).toBe("done");
+  expect(taskState([r("done", "1")]).reason).toBeUndefined();
 });

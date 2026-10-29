@@ -1844,13 +1844,13 @@ describe("upgradeBundles", () => {
 
   it("upgrades each package once and passes the dry-run option and the earlier bundles to the core", () => {
     const upgrade = vi.fn().mockReturnValue({ name: "essay" });
-    const installed = (n: number) => installedAt(["1.5.0", "1.6.0"].slice(0, n));
-    upgradeBundles(mockRepo({ upgrade_package_bundle: upgrade, check_package_requirements: installed(2) }), [ESSAY, ESSAY], { dryRun: true });
+    const history = priorBundleEntries(ESSAY).map((e) => e.version);
+    upgradeBundles(mockRepo({ upgrade_package_bundle: upgrade, check_package_requirements: installedAt(history) }), [ESSAY, ESSAY], { dryRun: true });
     expect(upgrade).toHaveBeenCalledTimes(1);
     const options = JSON.parse(upgrade.mock.calls[0][1]);
     expect(options.dryRun).toBe(true);
     expect(options.priorBundles).toEqual(priorBundleEntries(ESSAY).map((e) => e.text));
-    expect(options.priorBundles.length).toBe(2);
+    expect(options.priorBundles.length).toBe(history.length);
     expect(options.adopt).toBeUndefined();
   });
 

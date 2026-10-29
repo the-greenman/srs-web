@@ -111,6 +111,48 @@ export const comments: Comment[] = [
   { id: "3", text: "Thanks, looks right.", createdAt: "2026-10-04T11:58:00Z", author: human },
 ];
 
+/** Typed comments (srs-web#591): kinds, an open task, a done one and a rejected one with its reason. */
+export const kindComments: Comment[] = [
+  {
+    id: "k1",
+    text: "Which year is this figure from?",
+    createdAt: "2026-10-04T11:40:00Z",
+    author: agents[1],
+    kind: "question",
+  },
+  {
+    id: "k2",
+    text: "Cite the 2025 budget sheet here.",
+    createdAt: "2026-10-04T11:42:00Z",
+    author: agents[1],
+    kind: "task",
+    task: { state: "open" },
+  },
+  {
+    id: "k3",
+    text: "Link the council minutes.",
+    createdAt: "2026-10-04T11:44:00Z",
+    author: agents[0],
+    kind: "task",
+    task: { state: "done", author: human },
+  },
+  {
+    id: "k4",
+    text: "Add a counter-example from Wales.",
+    createdAt: "2026-10-04T11:46:00Z",
+    author: agents[0],
+    kind: "task",
+    task: { state: "rejected", reason: "Out of scope for this paragraph.", author: human },
+  },
+  {
+    id: "k5",
+    text: "This overstates the evidence.",
+    createdAt: "2026-10-04T11:50:00Z",
+    author: human,
+    kind: "objection",
+  },
+];
+
 const att = (i: number, icon: string, label: string, actor?: Actor): Annotation => ({
   kind: "attachment",
   key: `att${i}`,

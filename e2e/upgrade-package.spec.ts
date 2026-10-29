@@ -24,11 +24,11 @@ test("the notice offers the upgrade; the plan is a dry run; Apply upgrades and t
   await open(page, "essay-1.5.0.srsj");
   await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
   const notice = page.getByTestId("package-upgrade-notice");
-  await expect(notice).toContainText("essay 1.7.0 is available (installed 1.5.0).");
+  await expect(notice).toContainText("essay 1.8.0 is available (installed 1.5.0).");
 
   await page.getByTestId("package-upgrade-notice-action").click();
   const modal = page.getByTestId("upgrade-modal");
-  await expect(modal).toContainText("Upgrade essay 1.5.0 → 1.7.0");
+  await expect(modal).toContainText("Upgrade essay 1.5.0 → 1.8.0");
   await expect(modal.getByTestId("upgrade-counts")).toContainText("updated");
   await page.screenshot({ path: process.env.SHOT_UPGRADE ?? "test-results/upgrade-modal.png" });
 
@@ -56,10 +56,10 @@ test("Document > Packages… lists installed against bundled and upgrades throug
   await openMenu(page, "Document");
   await page.getByTestId("toolbar-packages").click();
   const dialog = page.getByTestId("packages-modal");
-  await expect(dialog.getByTestId("package-row-essay")).toContainText("installed 1.5.0, 1.7.0 is available");
+  await expect(dialog.getByTestId("package-row-essay")).toContainText("installed 1.5.0, 1.8.0 is available");
   await dialog.getByTestId("package-upgrade-essay").click();
   await expect(dialog).toHaveCount(0);
-  await expect(page.getByTestId("upgrade-modal")).toContainText("Upgrade essay 1.5.0 → 1.7.0");
+  await expect(page.getByTestId("upgrade-modal")).toContainText("Upgrade essay 1.5.0 → 1.8.0");
 });
 
 test("definitions the engine cannot prove unmodified are opt-in, never ticked by default", async ({ page }) => {
@@ -99,7 +99,7 @@ test("an outdated editor's Upgrade uses the same plan and opens the editor", asy
   await expect(page.getByTestId("package-upgrade-notice")).toContainText("installed 1.2.0");
   await page.getByTestId("package-editor-essay-upgrade").click();
   const modal = page.getByTestId("upgrade-modal");
-  await expect(modal).toContainText("Upgrade essay 1.2.0 → 1.7.0");
+  await expect(modal).toContainText("Upgrade essay 1.2.0 → 1.8.0");
   await page.getByTestId("upgrade-cancel").click();
   await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
   await page.getByTestId("package-editor-essay-upgrade").click();

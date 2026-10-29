@@ -82,7 +82,7 @@
       {/if}
       {#if plan.dependencyWarnings.length}
         <ul data-testid="upgrade-warnings">
-          {#each plan.dependencyWarnings as w (w)}<li>{w}</li>{/each}
+          {#each plan.dependencyWarnings as w, i (i)}<li>{typeof w === "string" ? w : `Needs ${w.name} ${w.version}`}</li>{/each}
         </ul>
       {/if}
     </section>

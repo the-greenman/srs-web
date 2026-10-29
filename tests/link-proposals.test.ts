@@ -2,6 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 const m = vi.hoisted(() => ({
   createRecord: vi.fn(() => ({ instanceId: "c1" })),
+  createRecordInContainer: vi.fn(() => ({ instanceId: "c1" })),
   createRelation: vi.fn(),
   deleteRecord: vi.fn(),
   listTypes: vi.fn(() => [
@@ -64,6 +65,14 @@ it("respond writes a typed response on the proposal, with the answer as text whe
     targetInstanceId: "prop",
     sourceInstanceId: "c1",
   });
+});
+
+it("respond settles a task into the comments container when one is given", () => {
+  respond({} as never, "task", "rejected", "out of scope", "K");
+  expect(m.createRecordInContainer).toHaveBeenCalledWith(expect.anything(), "K", T, 2, {
+    fieldValues: { comment_text: "out of scope", kind: "rejected" },
+  });
+  expect(m.createRecord).not.toHaveBeenCalled();
 });
 
 it("loadProposals finds proposals on a record with their current answers, ignoring plain comments", () => {

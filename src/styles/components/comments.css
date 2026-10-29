@@ -26,6 +26,50 @@
   border: 1px solid var(--color-line);
   text-transform: uppercase;
 }
+/* A settled task (srs-web#591): done reads as finished, rejected as struck. */
+.comments__state {
+  padding: 0 4px;
+  border: 1px solid var(--color-line-strong);
+  text-transform: uppercase;
+}
+.comments__state.is-rejected {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+.comments__reason {
+  margin: 2px 0 0;
+  font-size: var(--size-xs);
+  color: var(--color-muted);
+}
+.comments__filter,
+.comments__task {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+}
+/* Filter chips: the kind label as a toggle; muted until pressed, then solid. */
+.comments__filter {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+}
+.comments__chip {
+  font: inherit;
+  color: var(--color-muted);
+  background: transparent;
+  cursor: pointer;
+}
+.comments__chip:hover {
+  color: var(--color-text);
+}
+.comments__chip:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+.comments__chip[aria-pressed="true"] {
+  color: var(--color-text);
+  border-color: var(--color-text);
+}
 /* The body clamps rendered markdown (block children included): .comments__text is display:contents,
    so the paragraphs are the -webkit-box's own children. */
 .comments__body {
@@ -124,6 +168,9 @@
   }
   .comments__reply .btn {
     width: 100%;
+  }
+  .comments__reply .select.comments__kind-pick {
+    align-self: flex-start;
   }
 }
 
@@ -279,4 +326,24 @@
 }
 .instance-notes .comments {
   margin-left: 0;
+}
+
+/* The reply's kind picker looks like the label it sets (srs-web#591): a chip, not a form field.
+   Empty it reads a muted "kind", so a writer can ignore it. */
+.comments__reply .select.comments__kind-pick {
+  flex: none;
+  align-self: center;
+  width: auto;
+  field-sizing: content; /* as wide as the chosen kind, like the label */
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  line-height: inherit;
+  text-transform: uppercase;
+  background: transparent;
+  cursor: pointer;
+}
+.comments__reply .select.comments__kind-pick.is-empty {
+  color: var(--color-muted);
+  border-style: dashed;
 }

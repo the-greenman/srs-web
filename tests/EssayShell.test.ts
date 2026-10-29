@@ -2,8 +2,8 @@
 import { fireEvent, render } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeEach, expect, it, vi } from "vitest";
-import EssayAgentHost from "./EssayAgentHost.svelte";
 import type { EssayModel } from "../src/lib/essay/essay-document.js";
+import EssayAgentHost from "./EssayAgentHost.svelte";
 
 const model: EssayModel = {
   essayId: "e",
@@ -44,7 +44,11 @@ beforeEach(() => {
   }));
 });
 
-vi.mock("../src/lib/srs-client.js", () => ({ renderMarkdown: (md: string) => `<p>${md}</p>` }));
+vi.mock("../src/lib/srs-client.js", () => ({
+  renderMarkdown: (md: string) => `<p>${md}</p>`,
+  listTypes: () => [],
+  listRelationTypes: () => [],
+}));
 const addParagraph = vi.hoisted(() => vi.fn());
 const doc = vi.hoisted(() => ({
   listEssays: vi.fn(() => [{ id: "e", title: "Essay" }]),
