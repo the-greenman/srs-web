@@ -75,12 +75,21 @@ function idb<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest
     open.onupgradeneeded = () => open.result.createObjectStore(STORE);
     open.onerror = () => reject(open.error);
     open.onsuccess = () => {
-      const req = run(open.result.transaction(STORE, mode).objectStore(STORE));
-      req.onerror = () => reject(req.error);
-      req.onsuccess = () => {
-        open.result.close();
-        resolve(req.result);
-      };
+      const db = open.result;
+      try {
+        const req = run(db.transaction(STORE, mode).objectStore(STORE));
+        req.onerror = () => {
+          db.close();
+          reject(req.error);
+        };
+        req.onsuccess = () => {
+          db.close();
+          resolve(req.result);
+        };
+      } catch (e) {
+        db.close();
+        reject(e);
+      }
     };
   });
 }

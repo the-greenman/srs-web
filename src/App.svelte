@@ -215,9 +215,15 @@
   /** Recently opened repositories, starred first (srs-web#661). */
   let recent = $state<RecentRepo[]>([]);
   let recentError = $state<string | null>(null);
-  function setRecent(next: RecentRepo[]): void {
-    recent = next;
-    void saveRecent(next);
+  // Edits wait for the stored list to load, so an early open (a ?repo= boot link) is never overwritten by it.
+  const recentLoaded = loadRecent().then((list) => {
+    recent = list;
+  });
+  function editRecent(edit: (list: RecentRepo[]) => RecentRepo[]): void {
+    void recentLoaded.then(() => {
+      recent = edit(recent);
+      void saveRecent(recent);
+    });
   }
   let restoreError = $state<string | null>(null);
 
@@ -476,7 +482,6 @@
         }
         // Every boot link is read once: none survives to act again on a reload.
         history.replaceState(history.state, "", withoutBootLinks(location.href));
-        void loadRecent().then((list) => (recent = list));
         return loadWorkingCopy().then((cached) => {
           if (cached !== null) {
             cachedSession = cached;
@@ -530,7 +535,7 @@
         repo = loaded;
         activeDocument = handle;
         const remembered = describeHandle(handle);
-        if (remembered) setRecent(recordOpened(recent, remembered.source, remembered.label, new Date().toISOString()));
+        if (remembered) editRecent((list) => recordOpened(list, remembered.source, remembered.label, new Date().toISOString()));
         beginDocument({ dirty });
         repoName = stripSrsExtension(handle.name);
         documentTitle = resolveRepositoryTitle(loaded, repoName);
@@ -1140,8 +1145,11 @@
     onCreate={createRepository}
     {recent}
     onOpenRecent={openRecent}
-    onToggleStar={(key) => setRecent(toggleStar(recent, key))}
-    onRemoveRecent={(key) => setRecent(removeRecent(recent, key))}
+    onToggleStar={(key) => editRecent((list) => toggleStar(list, key))}
+    onRemoveRecent={(key) => {
+      recentError = null;
+      editRecent((list) => removeRecent(list, key));
+    }}
     {recentError}
   >
     {#snippet notices()}
