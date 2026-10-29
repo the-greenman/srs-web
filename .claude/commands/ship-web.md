@@ -87,6 +87,7 @@ Check the existing WASM surface in `srs-web/src/wasm/` or the current `srs-rust`
 2. Write a **draft** plan to `srs-web/plans/<slug>.md`, filling every section of the template. A plan that needs human interpretation at execution time is incomplete.
 3. **ADR check:** read every file in `srs-web/docs/adr/`. Identify:
    - Existing ADRs that govern choices in this plan (cite them in the Architecture Decisions table — at minimum reference ADR-001).
+   - The **layer** of each change, by [ADR-027](../../docs/adr/027-editor-layers.md) (core, headless, component, screen). Name it per task in the plan. A change of look starts on `/styleguide` and a new shared component lands with its specimen, as ADR-027 says.
    - Choices that require a **new ADR** — any decision that establishes a new architectural constraint, rejects a plausible alternative others might revisit, or changes a prior decision.
 4. **Design decision pause:** before finalising the plan, identify any decision with **long-term consequences** — a new WASM API shape that srs-rust will need to implement, a new component architecture or routing pattern, a new TS type contract, or anything that would be painful to reverse later. For each such decision, present it clearly to the user with the trade-offs and **wait for their input** before continuing. Record their decision in the plan's Architecture Decisions table (and draft a new ADR if warranted). This is the one deliberate pause in the autonomous pipeline.
 5. After input is received and decisions are recorded, finalise the plan and draft any new ADRs in `srs-web/docs/adr/NNN-title.md` using the existing ADRs as a template (status: `proposed`).
@@ -149,6 +150,7 @@ Do all implementation inside that worktree. Run `npm install` once in the worktr
 Execute the plan phase by phase. For each phase:
 - Implement the tasks, keeping all changes within `srs-web/**`.
 - Respect ADR-001: no SRS semantics in TypeScript. If a WASM method is missing, file the srs-rust issue and stop.
+- Respect ADR-027: build each task in the layer the plan names, headless module before component and specimen, and component before screen. Make a look change on `/styleguide` first. Behaviour that another editor already has is extracted into a headless module, never copied.
 - Run the phase's **milestone gate**:
   ```bash
   npm run typecheck
@@ -185,7 +187,7 @@ All checks must pass before proceeding. If an e2e test fails due to a missing fi
 ## Stage 7 — Code review loop
 
 1. Spawn in parallel against the diff (`git diff main...HEAD` from inside the worktree):
-   - **Architecture Reviewer (srs-web)** (`agents.md#architecture-reviewer-srs-web`) `model: "sonnet"` — audits code against every ADR, ADR-001 in particular; WASM API drift; scope discipline; TS type correctness.
+   - **Architecture Reviewer (srs-web)** (`agents.md#architecture-reviewer-srs-web`) `model: "sonnet"` — audits code against every ADR, ADR-001 and ADR-027 in particular; WASM API drift; scope discipline; TS type correctness. For ADR-027 it checks what `tests/layers.test.ts` cannot see: behaviour in a screen or component, a look change that did not start on `/styleguide`, behaviour duplicated across editors.
    - **Verification Agent (srs-web)** (`agents.md#verification-agent-srs-web`) `model: "haiku"` — runs `npm run typecheck`, `npm run build`, `npm test`; confirms WASM loads; produces the behaviour/duplication report.
 2. Post findings as issue comments.
 3. Respond: fix every `blocking` and `should-fix` finding, committing the fixes. Decline-with-reason for anything not fixed.
@@ -242,6 +244,7 @@ This runs **before** the PR, on the rebased feature branch (Stage 6 already sync
    - The WASM loads without JS errors.
    - The feature behaves as specified.
    - No regressions are visible in adjacent features.
+   - If a shared component or a token changed, its specimen on `/styleguide` renders as intended.
 
 4. **File issues:** `bug` for anything not working as designed (patch immediately if trivial); `enhancement` for workflow gaps that required workarounds. No cosmetic/hypothetical issues. **Parent every non-bug issue you file here under its epic/story** with `node ~/dev/semanticops/clerk/scripts/gh-project.mjs link <parent-repo>#<epic-N> <child-repo>#<filed-N>`, exactly as in Stage 3.4 — don't leave dogfood-surfaced follow-ups orphaned.
 
