@@ -48,8 +48,27 @@
   align-items: center;
   gap: var(--space-xs);
 }
-.comments__filter .btn[aria-pressed="true"] {
-  border-color: var(--color-line-strong);
+/* Filter chips: the kind label as a toggle; muted until pressed, then solid. */
+.comments__filter {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+}
+.comments__chip {
+  font: inherit;
+  color: var(--color-muted);
+  background: transparent;
+  cursor: pointer;
+}
+.comments__chip:hover {
+  color: var(--color-text);
+}
+.comments__chip:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+.comments__chip[aria-pressed="true"] {
+  color: var(--color-text);
+  border-color: var(--color-text);
 }
 /* The body clamps rendered markdown (block children included): .comments__text is display:contents,
    so the paragraphs are the -webkit-box's own children. */
