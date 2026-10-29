@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  countText,
+  essayCounts,
   hiddenByAncestor,
   outsideRun,
   toggled,
@@ -56,5 +58,19 @@ describe("outsideRun (drop-target filter over the core's runEnd)", () => {
     expect(outsideRun(o, "b", "c")).toBe(true);
     expect(outsideRun(o, "b1", "b")).toBe(true);
     expect(outsideRun(o, "zz", "a")).toBe(true); // dragged from another list
+  });
+  it("countText counts whitespace words and graphemes, spaces included", () => {
+    expect(countText("")).toEqual({ words: 0, chars: 0 });
+    expect(countText("  two\nwords  ")).toEqual({ words: 2, chars: 9 });
+    expect(countText("café 👍🏽")).toEqual({ words: 2, chars: 6 });
+  });
+  it("essayCounts gives own counts, nested subtotals and the essay total", () => {
+    const text: Record<string, string> = { a: "one", b: "two words", b1: "x y z", b2: "q", b3: "", c: "end" };
+    const { own, subtotal, total } = essayCounts(list, (id) => text[id]);
+    expect(own.get("b")!.words).toBe(2);
+    expect(subtotal.get("b")!.words).toBe(6); // b + b1 + b2 + b3
+    expect(subtotal.get("b1")!.words).toBe(4);
+    expect(subtotal.get("a")!.words).toBe(1);
+    expect(total).toEqual({ words: 8, chars: 3 + 9 + 5 + 1 + 0 + 3 });
   });
 });

@@ -46,3 +46,56 @@ export function hiddenByAncestor(entries: Entry[], hidden: Set<string>): Set<str
   }
   return out;
 }
+
+export interface Count {
+  words: number;
+  chars: number;
+}
+const graphemes = new Intl.Segmenter();
+/** Words split on whitespace; characters are graphemes, spaces included (what bid forms count). */
+export function countText(s: string): Count {
+  const t = s.trim();
+  return { words: t ? t.split(/\s+/).length : 0, chars: [...graphemes.segment(t)].length };
+}
+
+/**
+ * Word / character counts over the essay's main body (srs-web#648): each paragraph's own count, its
+ * subtotal with everything nested under it, and the essay total. Hidden paragraphs count; the
+ * draft and bin are not in `entries`, so they never do.
+ */
+export function essayCounts(
+  entries: Entry[],
+  text: (id: string) => string
+): { own: Map<string, Count>; subtotal: Map<string, Count>; total: Count } {
+  const own = new Map<string, Count>();
+  const subtotal = new Map<string, Count>();
+  const total = { words: 0, chars: 0 };
+  const add = (into: Count | undefined, c: Count) => {
+    if (!into) return;
+    into.words += c.words;
+    into.chars += c.chars;
+  };
+  const parent = new Map<string, string | null | undefined>(); // parents precede children
+  for (const e of entries) {
+    const c = countText(text(e.instanceId));
+    own.set(e.instanceId, c);
+    subtotal.set(e.instanceId, { ...c });
+    add(total, c);
+    parent.set(e.instanceId, e.parentInstanceId);
+    for (let p = e.parentInstanceId; p; p = parent.get(p)) add(subtotal.get(p), c);
+  }
+  return { own, subtotal, total };
+}
+
+const n = (x: number) => x.toLocaleString();
+/** Small visible text and the hover / screen-reader sentence; `subtotal` only for a paragraph with children. */
+export function countLabel(own: Count, subtotal?: Count): { text: string; title: string } {
+  const short = (c: Count) => `${n(c.words)}w ${n(c.chars)}c`;
+  const long = (c: Count) => `${n(c.words)} words, ${n(c.chars)} characters`;
+  return subtotal
+    ? {
+        text: `${short(own)} · Σ ${short(subtotal)}`,
+        title: `This paragraph: ${long(own)}. With nested paragraphs: ${long(subtotal)}.`,
+      }
+    : { text: short(own), title: long(own) };
+}
