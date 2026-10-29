@@ -35,6 +35,8 @@
   import InlineText from "$lib/components/InlineText.svelte";
   import MarkdownText from "$lib/components/MarkdownText.svelte";
   import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
+  import HelpDialog from "$lib/components/HelpDialog.svelte";
+  import { helpDismissed, helpFor, setHelpDismissed, type HelpItem } from "$lib/help/help.js";
   import AppShell from "$lib/components/AppShell.svelte";
   import Inspector from "$lib/components/Inspector.svelte";
   import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
@@ -720,6 +722,20 @@
     requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="agent-panel"] button, [data-testid="agent-panel"] input')?.focus());
   }
   let helpOpen = $state(false);
+  // The essay editor's help (decision 9441693e, #642): on open until "Don't show again", and from Go > Editor help….
+  // Before the name gate (R6 on semanticops.com#49): the dialog is modal over it.
+  const help: HelpItem[] = (() => {
+    try {
+      return helpFor("essay");
+    } catch {
+      return []; // no engine (unit tests) or no help repository: no help, never a broken shell
+    }
+  })();
+  let guideOpen = $state(help.length > 0 && !helpDismissed("essay"));
+  function closeGuide(dontShow: boolean) {
+    setHelpDismissed("essay", dontShow);
+    guideOpen = false;
+  }
   const helpId = "essay-md-help";
   let toolbarEl = $state<HTMLElement>();
   /** The paragraphs in view that can show a thread: the header Comments state is read over these. */
@@ -740,6 +756,7 @@
         onreferences: model?.canSnapshot ? exportReferences : undefined,
         onexplorer: onOpenExplorer,
         onopenagents: agentPanel ? openAgents : undefined,
+        oneditorhelp: help.length ? () => { guideOpen = true; } : undefined,
         onopenpackages: onOpenPackages,
         onopenanother: onOpenAnother,
       },
@@ -799,6 +816,14 @@
   </Toolbar>
   {/snippet}
   <MarkdownHelp id={helpId} anchor={toolbarEl} bind:open={helpOpen} />
+  {#if guideOpen}
+    <HelpDialog
+      items={help}
+      dontShow={helpDismissed("essay")}
+      featureActions={agentPanel ? { "shell.connect-ai": { label: "Open Agents", run: () => { closeGuide(helpDismissed("essay")); void openAgents(); } } } : {}}
+      onclose={closeGuide}
+    />
+  {/if}
 
   {#if notice}
     <Notice kind="info" testid="address-notice" onDismiss={() => (notice = null)}>{notice}</Notice>

@@ -7,7 +7,7 @@
   import "./styles/themes/demo.css";
   import { onMount, type Snippet } from "svelte";
   import {
-    ActionBar, ActionMenu, UiSpot, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
+    ActionBar, ActionMenu, HelpDialog, UiSpot, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, Count, CommentThread, LinkProposals, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, LinkedRecord, RemedyCard, MarkdownHelp, MarkdownText, MethodBoard, AgentPanel, McpConnection, Panel, ProblemCard, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
     TagChip, Textarea, Notice, SectionHeader, SourceRow, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
@@ -810,6 +810,18 @@
     <div data-testid="sg-ui-spot" style="padding-bottom: 64px">
       <UiSpot inline rect={{ top: 0, left: 0, width: 220, height: 36 }} message="This is Layers: an outline of your essay." onclose={() => {}} />
     </div>
+    {#snippet helpDialog()}
+      <HelpDialog
+        inline
+        items={[
+          { instanceId: "1", featureId: "shell.connect-ai", placement: "ui", title: "Connect your AI", summary: "This editor works with the AI you already use.", explanation: "Open **Agents**, then **Pair an agent…**." },
+          { instanceId: "2", featureId: "essay.paragraphs", placement: "ui", title: "Write in paragraphs", summary: "Your essay is a list of paragraphs." },
+        ]}
+        featureActions={{ "shell.connect-ai": { label: "Open Agents", run: () => {} } }}
+        onclose={() => {}}
+      />
+    {/snippet}
+    <div data-testid="sg-help-dialog">{@render gated(helpDialog)}</div>
     <UpgradePlan inline testid="sg-upgrade-plan" plans={[fx.upgradePlan]} onApply={() => {}} onCancel={() => {}} />
     <div data-testid="sg-packages-dialog"><PackagesDialog inline packages={fx.installedPackagesFx} onUpgrade={() => {}} onClose={() => {}} /></div>
   </section>

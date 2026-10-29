@@ -45,6 +45,8 @@ export interface HeaderHandlers {
   onexplorer?: () => void;
   /** Absent when the shell has no agent panel to open. */
   onopenagents?: () => void;
+  /** Go > Editor help…: reopen the editor's help (absent when it has none). */
+  oneditorhelp?: () => void;
   /** Absent while the document is read-only (an upgrade writes). */
   onopenpackages?: () => void;
   onopenanother: () => void;
@@ -158,6 +160,15 @@ export function headerActions(
     },
     !!h.onopenpackages && (packagesAction(h.onopenpackages) as HeaderAction),
     !!h.onopenagents && (agentsAction(h.onopenagents) as HeaderAction),
+    !!h.oneditorhelp && {
+      id: "editor-help",
+      group: "go",
+      kind: "action",
+      label: "Editor help…",
+      run: h.oneditorhelp,
+      enabled: true,
+      testid: "editor-help",
+    },
     openAnotherAction(h.onopenanother) as HeaderAction,
     {
       id: "help",
