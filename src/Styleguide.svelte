@@ -451,7 +451,7 @@
     {@render specimen("long title: the strip covers the end of it", fx.stripText.longTitle, "sg__strip-on")}
     {@render specimen("touch: menu only", fx.stripText.titled, "sg__touch")}
     <h3>Counts</h3>
-    <p class="sg__note">Words and characters of the rendered text; Σ adds everything nested. Hover for the full sentence. An empty count renders nothing.</p>
+    <p class="sg__note">Words and characters of the rendered text; Σ adds everything nested. Hover for the full sentence. An empty count keeps a blank row.</p>
     <div class="sg__row" data-testid="sg-counts">
       <Count count={{ words: 84, chars: 512 }} />
       <Count count={{ words: 84, chars: 512 }} subtotal={{ words: 320, chars: 1904 }} />
