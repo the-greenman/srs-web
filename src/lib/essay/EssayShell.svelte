@@ -85,7 +85,9 @@
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
   import { EssayHistory, snapshotEssay } from "./essay-history.js";
   import { canShow, isShown, setOpen, summary, toggle, toggleAll } from "./thread-visibility.js";
-  import { addComment } from "$lib/comments.js";
+  import { addComment, kindsAvailable } from "$lib/comments.js";
+  import type { ContentKind } from "$lib/comments.js";
+  import { respond } from "$lib/link-proposals.js";
   import { annotationsFor } from "$lib/annotations.js";
   import type { Annotation } from "$lib/annotations.js";
   import { essaySource } from "./annotation-source.js";
@@ -136,6 +138,8 @@
   let essays = $state<EssaySummary[]>([]);
   let essayId = $state<string | null>(null);
   let model = $state<EssayModel | null>(null);
+  /** Comments here can carry a kind (comments 1.1.0 installed); re-read when the model reloads. */
+  const canKind = $derived(model ? kindsAvailable(repo) : false);
   let error = $state<string | null>(null);
   /** Who the session writes as (login or saved name); follows actor changes. */
   let actor = $state(currentActor());
@@ -449,12 +453,17 @@
     (model?.draftEntries ?? []).map((e) => ({ id: e.instanceId, label: label(e.instanceId) })),
   );
 
-  function comment(paragraphId: string, text: string, name?: string) {
+  function comment(paragraphId: string, text: string, name?: string, kind?: ContentKind) {
     if (name) {
       if (!saveLocalName(name)) return void (error = "Could not remember your name in this browser.");
     }
     openThreads = setOpen(openThreads, paragraphId, true);
-    void run(() => addComment(repo, paragraphId, text, model?.commentsContainerId));
+    void run(() => addComment(repo, paragraphId, text, model?.commentsContainerId, kind));
+  }
+
+  /** Settle or reopen a task: the writer's own response comment on it (ruling ff946eb1, srs-web#591). */
+  function settle(commentId: string, kind: "done" | "rejected" | "withdrawn", text?: string) {
+    void run(() => respond(repo, commentId, kind, text, model?.commentsContainerId));
   }
 
   /** Focus a paragraph (agent feed, deep link); leave zoom first when it is hidden by it. */
@@ -885,7 +894,7 @@
                 ondelete={() => toBin(p.id)}
               />
               {#if showThread(p.id)}
-                <CommentThread {now} comments={model!.comments[p.id] ?? []} needsName={!hasActor} onadd={(t, n) => comment(p.id, t, n)} onclose={() => closeThread(p.id)} />
+                <CommentThread {now} comments={model!.comments[p.id] ?? []} needsName={!hasActor} kinds={canKind} onadd={(t, n, k) => comment(p.id, t, n, k)} onrespond={settle} onclose={() => closeThread(p.id)} />
               {/if}
             {/if}
           {/snippet}

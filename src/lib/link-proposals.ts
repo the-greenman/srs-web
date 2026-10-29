@@ -11,7 +11,13 @@ import { SO_COMMENTS_ON, SO_COMMENT_TYPE_ID } from "$lib/comments.js";
  * that `comments-on` the proposal (ruling ff946eb1); the current answer is the latest one by that
  * author, and changing one's mind is a new response.
  */
-import { createRecord, createRelation, deleteRecord, listRelations } from "$lib/srs-client.js";
+import {
+  createRecord,
+  createRecordInContainer,
+  createRelation,
+  deleteRecord,
+  listRelations,
+} from "$lib/srs-client.js";
 import type { Actor, SrsRecord, SrsRepository, TypeSummary } from "$lib/srs-client.js";
 import { recordsOfType, typeVersion } from "$lib/type-version.js";
 
@@ -20,6 +26,9 @@ export const PROPOSES_LINK_TO = "com.semanticops.comments/proposes-link-to";
 /** Response kinds a writer may give a proposal: the tick, the deny, and clearing either. */
 export type Answer = "agree" | "disagree" | "withdrawn";
 const ANSWERS: readonly string[] = ["agree", "disagree", "withdrawn"];
+
+/** Every response kind (comments 1.1.0): the answers, plus settling a task (`done`, `rejected`). */
+export type ResponseKind = Answer | "done" | "rejected";
 
 export interface Proposal {
   /** The proposal comment. */
@@ -117,15 +126,17 @@ export function loadProposals(
   return out.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-/** Create a comment and its relations; on a failed relation, remove what was written and rethrow. */
+/** Create a comment (into `containerId` when given) and its relations; on a failed relation, remove what was written and rethrow. */
 function commentWith(
   repo: SrsRepository,
   fieldValues: Record<string, string>,
-  relations: { relationType: string; targetInstanceId: string }[]
+  relations: { relationType: string; targetInstanceId: string }[],
+  containerId?: string | null
 ): string {
-  const rec = createRecord(repo, SO_COMMENT_TYPE_ID, typeVersion(repo, SO_COMMENT_TYPE_ID), {
-    fieldValues,
-  });
+  const v = typeVersion(repo, SO_COMMENT_TYPE_ID);
+  const rec = containerId
+    ? createRecordInContainer(repo, containerId, SO_COMMENT_TYPE_ID, v, { fieldValues })
+    : createRecord(repo, SO_COMMENT_TYPE_ID, v, { fieldValues });
   try {
     for (const r of relations) createRelation(repo, { ...r, sourceInstanceId: rec.instanceId });
   } catch (e) {
@@ -158,16 +169,21 @@ export function proposeLink(
 }
 
 /**
- * Answer a proposal (tick, deny, or clear) as the session's actor. `text` is an optional reason;
- * without one the answer itself is the text, since `comment_text` is required.
+ * Respond to a comment (a proposal's tick, deny or clear; a task's done, rejected or reopen) as the
+ * session's actor. `text` is an optional reason; without one the kind itself is the text, since
+ * `comment_text` is required. `containerId` files it with the essay's comments (srs-web#494).
  */
 export function respond(
   repo: SrsRepository,
-  proposalId: string,
-  answer: Answer,
-  text = ""
+  commentId: string,
+  kind: ResponseKind,
+  text = "",
+  containerId?: string | null
 ): string {
-  return commentWith(repo, { comment_text: text || answer, kind: answer }, [
-    { relationType: SO_COMMENTS_ON, targetInstanceId: proposalId },
-  ]);
+  return commentWith(
+    repo,
+    { comment_text: text || kind, kind },
+    [{ relationType: SO_COMMENTS_ON, targetInstanceId: commentId }],
+    containerId
+  );
 }

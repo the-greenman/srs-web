@@ -1644,7 +1644,13 @@ function missingPinnedDependencies(repo: SrsRepository, bundleText: string): str
   const check = repo.check_package_requirements(bundleText);
   if (!Array.isArray(check?.dependencies)) throw new Error("malformed requirement check result");
   return (check.dependencies as RequirementOutcome[])
-    .filter((o) => !o.satisfied && o.reason === REQUIREMENT_MISSING && o.packageId && bundledPackage(o.packageId))
+    .filter(
+      (o) =>
+        !o.satisfied &&
+        o.reason === REQUIREMENT_MISSING &&
+        o.packageId &&
+        bundledPackage(o.packageId)
+    )
     .map((o) => o.packageId as string);
 }
 
@@ -1756,9 +1762,13 @@ export function upgradeBundles(
     });
     if (options.dryRun && deps.length) {
       // The core warns that each is missing (as an outcome object); the plan says it is installed instead.
-      const names = deps.map((id) => PINNED.find((p) => p.packageId === id)).map((p) => `${p?.name} ${p?.version}`);
+      const names = deps
+        .map((id) => PINNED.find((p) => p.packageId === id))
+        .map((p) => `${p?.name} ${p?.version}`);
       plan.dependencyWarnings = [
-        ...plan.dependencyWarnings.filter((w) => !deps.includes((w as unknown as RequirementOutcome)?.packageId ?? "")),
+        ...plan.dependencyWarnings.filter(
+          (w) => !deps.includes((w as unknown as RequirementOutcome)?.packageId ?? "")
+        ),
         `Also installs ${names.join(", ")}, which it needs.`,
       ];
     }
