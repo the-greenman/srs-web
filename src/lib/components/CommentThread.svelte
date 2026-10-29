@@ -141,7 +141,7 @@
             <header class="comments__meta" data-part="meta">
               {#if i === 0}<ActorChip actor={c.author} />{:else}<ActorMark actor={c.author} size="sm" />{/if}
               {#if c.kind}<span class="comments__kind" data-part="kind" data-testid="comment-kind">{c.kind}</span>{/if}
-              {#if c.task && c.task.state !== 'open'}<span class="comments__state is-{c.task.state}" data-part="state" data-testid="task-state">{c.task.state}</span>{/if}
+              {#if c.task && c.task.state !== 'open'}<span class="comments__state is-{c.task.state}" data-part="state" data-testid="task-state">{c.task.state}</span>{#if onrespond}<Button size="sm" variant="ghost" class="comments__reopen" data-testid="task-reopen" onclick={() => onrespond(c.id, 'withdrawn')}>Reopen</Button>{/if}{/if}
               {#if c.createdAt}
                 <time class="comments__time" data-part="time" datetime={c.createdAt} title={new Date(c.createdAt).toLocaleString()}>{relativeTime(c.createdAt, now)}</time>
               {/if}
@@ -153,11 +153,9 @@
               <Button size="sm" variant="ghost" class="comments__more" data-part="more" aria-expanded={expanded.has(c.id)} onclick={() => toggle(c.id)}>{expanded.has(c.id) ? 'Show less' : 'Show more'}</Button>
             {/if}
             {#if c.task?.reason}<p class="comments__reason" data-part="reason">{c.task.reason}</p>{/if}
-            {#if c.task && onrespond}
+            {#if c.task?.state === 'open' && onrespond}
               <div class="comments__task" data-part="task">
-                {#if c.task.state !== 'open'}
-                  <Button size="sm" variant="ghost" data-testid="task-reopen" onclick={() => onrespond(c.id, 'withdrawn')}>Reopen</Button>
-                {:else if rejecting === c.id}
+                {#if rejecting === c.id}
                   <form class="comments__task" data-part="reject" onsubmit={(e) => reject(e, c.id)}>
                     <!-- svelte-ignore a11y_autofocus -->
                     <Input aria-label="Reason (optional)" placeholder="Reason (optional)" bind:value={reason} autofocus />

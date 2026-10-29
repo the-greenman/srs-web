@@ -36,6 +36,11 @@
   border-color: var(--color-error);
   color: var(--color-error);
 }
+/* Reopen sits beside the state chip, sized like it. */
+.comments__reopen {
+  padding: 0 4px;
+  font-size: var(--size-xs);
+}
 .comments__reason {
   margin: 2px 0 0;
   font-size: var(--size-xs);
