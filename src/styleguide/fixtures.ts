@@ -339,8 +339,8 @@ export const stackText: Record<string, { title: string; body: string }> = {
 };
 
 export const draftItems = [
-  { id: "d1", label: "Spare idea" },
-  { id: "d2", label: "Old intro" },
+  { id: "d1", label: "Spare idea", body: "A spare idea, set aside until the argument needs it." },
+  { id: "d2", label: "Old intro" }, // no body: no preview button,
 ];
 export const binItems = [{ id: "x1", label: "Deleted paragraph" }];
 export const referenceItems = [
@@ -559,7 +559,7 @@ export const agentWidths = [
   ["16rem", "Narrow 16rem"],
 ] as const;
 export const longDraftItems = [
-  { id: "ld1", label: longLabel },
+  { id: "ld1", label: longLabel, body: `${longLabel}. ${longLabel}.` },
   { id: "ld2", label: "Short" },
 ];
 export const longBinItems = [{ id: "lx1", label: longLabel }];
