@@ -323,3 +323,56 @@ test("Hide comments at the bottom closes the thread, focuses the badge and updat
   await expect(badge(page, 1)).toBeFocused();
   expect(await commentsState(page)).toBe("false");
 });
+
+/**
+ * srs-web#591: comment kinds and task responses. essay-1.5.0.srsj is upgraded first, which
+ * installs comments 1.1.0 with essay 1.8.0; then a task is labelled, filtered, done, reopened and
+ * rejected with a reason, each a response comment on it (ruling ff946eb1).
+ */
+test("kinds label and filter the thread; a task is done, reopened and rejected with a reason", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+  await page
+    .locator('input[type="file"]#srsj-file')
+    .setInputFiles(path.join(path.dirname(ESSAY), "essay-1.5.0.srsj"));
+  await page.getByTestId("package-upgrade-notice-action").click();
+  await expect(page.getByTestId("upgrade-modal")).toContainText("Also installs comments 1.1.0");
+  await page.getByTestId("upgrade-apply").click();
+  await expect(page.getByTestId("upgrade-modal")).toHaveCount(0);
+  await page.getByTestId("package-editor-essay").click();
+  await page.getByRole("button", { name: "New essay" }).click();
+  await page.getByTestId("first-paragraph").click();
+  await page.locator(".essay-shell__page .block__body").first().click();
+  await page.keyboard.type("Opening line.");
+
+  const thread = items(page).nth(0);
+  await openThread(page, 0);
+  for (const [kind, text] of [
+    ["question", "Which year?"],
+    ["task", "Cite the budget sheet."],
+  ]) {
+    await thread.getByTestId("comment-kind-pick").selectOption(kind);
+    await thread.getByLabel("Reply").fill(text);
+    await thread.getByRole("button", { name: "Comment", exact: true }).click();
+    await expect(thread.getByTestId("comment").filter({ hasText: text })).toHaveCount(1);
+  }
+  await expect(thread.getByTestId("comment-kind")).toHaveText(["question", "task"]);
+
+  await thread.getByTestId("comment-filter-task").click();
+  await expect(thread.getByTestId("comment")).toHaveCount(1);
+  await thread.getByRole("button", { name: "All", exact: true }).click();
+  await expect(thread.getByTestId("comment")).toHaveCount(2);
+
+  await thread.getByTestId("task-done").click();
+  await expect(thread.getByTestId("task-state")).toHaveText("done");
+  await thread.getByTestId("task-reopen").click();
+  await expect(thread.getByTestId("task-state")).toHaveCount(0);
+  await thread.getByTestId("task-reject").click();
+  await thread.getByLabel("Reason (optional)").fill("Out of scope.");
+  await thread.getByTestId("task-reject-confirm").click();
+  await expect(thread.getByTestId("task-state")).toHaveText("rejected");
+  await expect(thread).toContainText("Out of scope.");
+  await expect(thread.getByTestId("comment")).toHaveCount(2); // responses stay out of the thread
+});

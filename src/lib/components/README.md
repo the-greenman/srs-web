@@ -84,7 +84,7 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `ActorMark` | `actor?` (none = Unattributed) `size?` (`sm` \| `md`) | `.actor-mark` | srs-web [#422](https://github.com/the-greenman/srs-web/issues/422) |
 | `ActorStack` | `actors` (`(Actor \| undefined)[]`) `max?` | `.actor-stack` | #422 |
 | `AgentPresence` | `status` (AgentStatus): an `ActorStack` of the connected agents | `.presence` | #422 |
-| `CommentThread` | `comments` (`Comment[]`, src/lib/comments.ts) `needsName?` `onadd` (bounded list, clamped comments, earlier collapsed, same-author runs) | `.comments` | #227, #422 |
+| `CommentThread` | `comments` (`Comment[]`, src/lib/comments.ts) `needsName?` `kinds?` `onadd` `onrespond?` (bounded list, clamped comments, earlier collapsed, same-author runs; kind label and filter by kind; Done / Reject / Reopen on a task with `onrespond`; a kind picker with `kinds`) | `.comments` | #227, #422, #591 |
 | `MarkdownView` | `value`: read-only rendered markdown, the one display `{@html renderMarkdown}` site | `.md-view` | #422 |
 | `AgentFeed` | `status` (AgentStatus) `paragraphLabel` `onselect` `now?` `limit?` | `.agent-activity` | srs-web [#372](https://github.com/the-greenman/srs-web/issues/372) |
 | `CommentBadge` | `count` `label` `open?` `onclick` | `.comment-badge` | srs-web [#364](https://github.com/the-greenman/srs-web/issues/364) |

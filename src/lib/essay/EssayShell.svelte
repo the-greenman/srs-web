@@ -894,7 +894,7 @@
                 ondelete={() => toBin(p.id)}
               />
               {#if showThread(p.id)}
-                <CommentThread {now} comments={model!.comments[p.id] ?? []} needsName={!hasActor} kinds={canKind} onadd={(t, n, k) => comment(p.id, t, n, k)} onrespond={settle} onclose={() => closeThread(p.id)} />
+                <CommentThread {now} comments={model!.comments[p.id] ?? []} needsName={!hasActor} kinds={canKind} onadd={(t, n, k) => comment(p.id, t, n, k)} onrespond={hasActor ? settle : undefined} onclose={() => closeThread(p.id)} />
               {/if}
             {/if}
           {/snippet}

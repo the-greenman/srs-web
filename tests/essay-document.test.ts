@@ -454,7 +454,7 @@ describe("agentHandoff (srs-web#411, #498)", () => {
     expect(t).toContain("srs://R/container/C · one paragraph: srs://R/context/C/<paragraphId>");
     expect(t).toContain("Snapshot bundle: srs://R/container/Z");
     expect(t).toContain("How to work on this essay");
-    expect(t).toContain("{comment_text} with containerId K, then relation_create");
+    expect(t).toContain("{comment_text, kind} with containerId K, then relation_create");
     expect(t).toContain("create it with containerId F, or container_member_add");
     expect(t).toContain("paragraph_title only where it is empty");
     expect(t).toContain("read its type_schema");
@@ -476,7 +476,7 @@ describe("agentHandoff (srs-web#411, #498)", () => {
     expect(t).not.toMatch(
       /draft|bin |comments [A-Z0-9]|references [A-Z0-9]|document-state|Snapshot|Purpose/
     );
-    expect(t).toContain("record_create com.mudemocracy.essay/comment {comment_text}, then");
+    expect(t).toContain("record_create com.semanticops.comments/comment {comment_text, kind}, then");
   });
 });
 

@@ -63,7 +63,11 @@
   const present = $derived(CONTENT_KINDS.filter((k) => comments.some((c) => c.kind === k)));
   const shown = $derived(filter ? comments.filter((c) => c.kind === filter) : comments);
   const long = $derived(comments.length > EARLIER_THRESHOLD);
-  const hidden = $derived(long && !reveal ? Math.max(0, shown.length - EARLIER_THRESHOLD) : 0);
+  const hidden = $derived(reveal ? 0 : Math.max(0, shown.length - EARLIER_THRESHOLD));
+  // A filtered kind that no longer occurs (the thread changed) falls back to All.
+  $effect(() => {
+    if (filter && !present.includes(filter as ContentKind)) filter = null;
+  });
   const visible = $derived(shown.slice(hidden));
   const runs = $derived(groupRuns(visible));
 
@@ -153,10 +157,11 @@
                 {#if c.task.state !== 'open'}
                   <Button size="sm" variant="ghost" data-testid="task-reopen" onclick={() => onrespond(c.id, 'withdrawn')}>Reopen</Button>
                 {:else if rejecting === c.id}
-                  <form class="comments__task" onsubmit={(e) => reject(e, c.id)}>
-                    <Input aria-label="Reason (optional)" placeholder="Reason (optional)" bind:value={reason} />
+                  <form class="comments__task" data-part="reject" onsubmit={(e) => reject(e, c.id)}>
+                    <!-- svelte-ignore a11y_autofocus -->
+                    <Input aria-label="Reason (optional)" placeholder="Reason (optional)" bind:value={reason} autofocus />
                     <Button size="sm" type="submit" data-testid="task-reject-confirm">Reject</Button>
-                    <Button size="sm" variant="ghost" onclick={() => (rejecting = null)}>Cancel</Button>
+                    <Button size="sm" variant="ghost" type="button" onclick={() => (rejecting = null)}>Cancel</Button>
                   </form>
                 {:else}
                   <Button size="sm" data-testid="task-done" onclick={() => onrespond(c.id, 'done')}>Done</Button>
@@ -187,6 +192,6 @@
       <Select aria-label="Kind" data-testid="comment-kind-pick" value={kind} onchange={(e: Event) => (kind = (e.currentTarget as HTMLSelectElement).value)} options={[{ value: '', label: 'No kind' }, ...CONTENT_KINDS]} />
     {/if}
     <Button size="sm" variant="primary" type="submit" disabled={!text.trim() || (needsName && !name.trim())}>Comment</Button>
-    {#if onclose}<Button size="sm" variant="ghost" data-testid="comment-close" onclick={onclose}>Hide comments</Button>{/if}
+    {#if onclose}<Button size="sm" variant="ghost" type="button" data-testid="comment-close" onclick={onclose}>Hide comments</Button>{/if}
   </form>
 </section>

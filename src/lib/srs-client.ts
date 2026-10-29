@@ -1620,11 +1620,17 @@ export function installPackageBundle(
  * unsatisfied dependency throws before that bundle writes anything. A re-install of an
  * identical bundle is a core no-op. Earlier bundles stay installed if a later one throws.
  */
-export function installBundles(repo: SrsRepository, packageIds: string[]): InstallPackageResult[] {
+export function installBundles(
+  repo: SrsRepository,
+  packageIds: string[],
+  seen = new Set<string>()
+): InstallPackageResult[] {
   return [...new Set(packageIds)].flatMap((packageId) => {
+    if (seen.has(packageId)) return [];
+    seen.add(packageId);
     const text = bundledPackage(packageId);
     if (!text) throw new Error(`No bundled package ${packageId}`);
-    const deps = installBundles(repo, missingPinnedDependencies(repo, text));
+    const deps = installBundles(repo, missingPinnedDependencies(repo, text), seen);
     const check = repo.check_package_requirements(text);
     if (!Array.isArray(check?.dependencies)) throw new Error("malformed requirement check result");
     const unmet = (check.dependencies as RequirementOutcome[]).find((o) => !o.satisfied);
@@ -1689,7 +1695,8 @@ export interface UpgradePackageResult {
   repaired: UpgradeItem[];
   conflicts: UpgradeConflict[];
   removedUpstream: UpgradeItem[];
-  dependencyWarnings: string[];
+  /** The core reports each unmet requirement as an outcome; the editor's own notes are strings. */
+  dependencyWarnings: (string | RequirementOutcome)[];
   notes: string[];
 }
 
@@ -1767,7 +1774,7 @@ export function upgradeBundles(
         .map((p) => `${p?.name} ${p?.version}`);
       plan.dependencyWarnings = [
         ...plan.dependencyWarnings.filter(
-          (w) => !deps.includes((w as unknown as RequirementOutcome)?.packageId ?? "")
+          (w) => typeof w === "string" || !deps.includes(w.packageId ?? "")
         ),
         `Also installs ${names.join(", ")}, which it needs.`,
       ];
