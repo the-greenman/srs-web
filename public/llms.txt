@@ -1,0 +1,23 @@
+# SemanticOps editor
+
+> A browser editor for SRS (Semantic Record System) repositories that runs entirely client-side. It opens local folders, .srs and .srsj archives, GitHub repositories, Dropbox and Google Drive; every record, type, relation, validation and rendering goes through the srs engine compiled to WebAssembly, so the editor carries no semantics of its own.
+
+## Get running
+
+- Install the srs engine: `curl -fsSL https://engine.semanticops.com/install.sh | sh`
+- [First five minutes](https://engine.semanticops.com/start.md): CLI, MCP server, output contract
+- [SemanticOps sites](https://semanticops.com/llms.txt): every site and what it is for
+
+## Open a repository by URL
+
+- `https://app.semanticops.com/?open=<url>`: downloads an `.srs` or `.srsj` archive and opens it. The URL must be `https`, without credentials, and its server must allow cross-origin reads (CORS); a redirect must stay on the same host, and the limit is 50 MB.
+- `https://app.semanticops.com/?repo=<owner>/<name>[&ref=<branch>][&path=<dir>]`: offers to open an SRS repository kept as plain files in a GitHub repository; one click opens it, signing in to GitHub if needed. `path` is the directory holding `manifest.json`.
+
+## Pair an agent over MCP
+
+An agent reads and writes the document open in the browser tab through an MCP relay (`https://relay.semanticops.com`). The engine in the tab answers every call, so writes are validated as usual, and they stay unsaved until the person saves or exports.
+
+1. The person opens a repository, then the **Agents** panel, and uses **Connect an agent** (one agent per MCP client).
+2. In that agent's `⋯` menu, **Pair an agent…** shows a connector URL (no secret in it) and a 10-character pairing code that refreshes every 10 minutes.
+3. Add the connector URL to the MCP client as a remote (HTTP) server, for example `claude mcp add --transport http <name> <connector URL>`, and enter the pairing code when the client's sign-in asks for it.
+4. Keep the tab open: the agent works through it. **Direct URL…** in the same menu gives a capability URL for clients without MCP sign-in; treat it as a password.
