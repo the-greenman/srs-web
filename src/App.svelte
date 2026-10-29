@@ -215,6 +215,8 @@
   /** Recently opened repositories, starred first (srs-web#661). */
   let recent = $state<RecentRepo[]>([]);
   let recentError = $state<string | null>(null);
+  /** The Recent entry being reopened: its row shows busy and further clicks are ignored. */
+  let recentBusyKey = $state<string | null>(null);
   // Edits wait for the stored list to load, so an early open (a ?repo= boot link) is never overwritten by it.
   const recentLoaded = loadRecent().then((list) => {
     recent = list;
@@ -509,6 +511,7 @@
 
   async function loadDocument(handle: DocumentHandle, fromHost: string | null = null): Promise<void> {
     errorMsg = null;
+    recentError = null;
     readOnlyHost = fromHost;
     try {
       switch (handle.kind) {
@@ -528,14 +531,15 @@
           repo = loadRepo(text);
         }
       }
+      // Remembered once the read succeeded, whether or not the user then accepts a migration.
+      const remembered = describeHandle(handle);
+      if (remembered) editRecent((list) => recordOpened(list, remembered.source, remembered.label, new Date().toISOString()));
       const loaded = repo;
       gateOnMigration(loaded, handle.name, (migrated) => {
         // A handle that cannot save back (e.g. a folder from <input webkitdirectory>) is never dirty.
         const dirty = migrated && !handle.readOnlyReason;
         repo = loaded;
         activeDocument = handle;
-        const remembered = describeHandle(handle);
-        if (remembered) editRecent((list) => recordOpened(list, remembered.source, remembered.label, new Date().toISOString()));
         beginDocument({ dirty });
         repoName = stripSrsExtension(handle.name);
         documentTitle = resolveRepositoryTitle(loaded, repoName);
@@ -810,7 +814,9 @@
 
   /** Reopen a Recent entry (srs-web#661): GitHub as `openRepoLink` does, sign-in first when needed. */
   async function openRecent(entry: RecentRepo): Promise<void> {
+    if (recentBusyKey !== null) return;
     recentError = null;
+    recentBusyKey = entry.key;
     try {
       const github = storageProviders.github as GitHubProvider | undefined;
       if (!github?.configured) throw new Error("GitHub is not configured on this site.");
@@ -826,6 +832,8 @@
       await loadDocument(handle);
     } catch (e: unknown) {
       recentError = `Could not reopen ${entry.label}: ${e instanceof Error ? e.message : String(e)}`;
+    } finally {
+      recentBusyKey = null;
     }
   }
 
@@ -1151,6 +1159,7 @@
       editRecent((list) => removeRecent(list, key));
     }}
     {recentError}
+    {recentBusyKey}
   >
     {#snippet notices()}
       {#if cachedSession !== null}

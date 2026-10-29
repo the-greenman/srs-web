@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   MAX_RECENT,
   type RecentRepo,
   loadRecent,
+  saveRecent,
   recordOpened,
   removeRecent,
   toggleStar,
@@ -42,5 +43,72 @@ describe("recent-repos", () => {
 
   it("loads an empty list when IndexedDB is unavailable", async () => {
     await expect(loadRecent()).resolves.toEqual([]);
+  });
+});
+
+// In-memory IndexedDB stub: open/transaction/objectStore/put/get, settling on tx.oncomplete (or onabort).
+function stubIndexedDB(opts: { abortWrites?: boolean } = {}) {
+  const data = new Map<string, unknown>();
+  vi.stubGlobal("indexedDB", {
+    open() {
+      const open: Record<string, unknown> = {};
+      queueMicrotask(() => {
+        const db = {
+          createObjectStore() {},
+          close() {},
+          transaction() {
+            const tx: Record<string, unknown> = {};
+            const finish = (req: { result?: unknown }, fn: () => unknown) => {
+              queueMicrotask(() => {
+                if (opts.abortWrites) {
+                  tx.error = new Error("quota");
+                  (tx.onabort as () => void)?.();
+                  return;
+                }
+                req.result = fn();
+                (tx.oncomplete as () => void)?.();
+              });
+              return req;
+            };
+            tx.objectStore = () => ({
+              put: (v: unknown, k: string) => finish({}, () => void data.set(k, v)),
+              get: (k: string) => finish({}, () => data.get(k)),
+            });
+            return tx;
+          },
+        };
+        open.result = db;
+        (open.onupgradeneeded as () => void)?.();
+        (open.onsuccess as () => void)?.();
+      });
+      return open;
+    },
+  });
+  return data;
+}
+
+describe("recent-repos persistence", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("round-trips the list through IndexedDB", async () => {
+    stubIndexedDB();
+    const list = toggleStar(recordOpened([], gh(1), "o/r1", at(1)), "github:o/r1:main:");
+    await saveRecent(list);
+    expect(await loadRecent()).toEqual(list);
+  });
+
+  it("drops a malformed entry but keeps the rest", async () => {
+    const data = stubIndexedDB();
+    const good = recordOpened([], gh(1), "o/r1", at(1));
+    data.set("repos", [
+      ...good,
+      { key: "x", label: "x", source: { kind: "github", where: "a/b:m:" } },
+    ]);
+    expect(await loadRecent()).toEqual(good);
+  });
+
+  it("does not throw when a write aborts", async () => {
+    stubIndexedDB({ abortWrites: true });
+    await expect(saveRecent(recordOpened([], gh(1), "o/r1", at(1)))).resolves.toBeUndefined();
   });
 });

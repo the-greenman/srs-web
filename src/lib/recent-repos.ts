@@ -77,14 +77,16 @@ function idb<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest
     open.onsuccess = () => {
       const db = open.result;
       try {
-        const req = run(db.transaction(STORE, mode).objectStore(STORE));
-        req.onerror = () => {
-          db.close();
-          reject(req.error);
-        };
-        req.onsuccess = () => {
+        const tx = db.transaction(STORE, mode);
+        const req = run(tx.objectStore(STORE));
+        // Settled on the transaction, so a commit-time abort (quota) is a failure, not a success.
+        tx.oncomplete = () => {
           db.close();
           resolve(req.result);
+        };
+        tx.onabort = tx.onerror = () => {
+          db.close();
+          reject(tx.error ?? req.error);
         };
       } catch (e) {
         db.close();
@@ -94,11 +96,15 @@ function idb<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest
   });
 }
 
+/** Entries from another shape or a newer build are dropped one by one, never the whole list. */
 const isRecent = (r: unknown): r is RecentRepo =>
   typeof r === "object" &&
   r !== null &&
   typeof (r as RecentRepo).key === "string" &&
   typeof (r as RecentRepo).label === "string" &&
+  typeof (r as RecentRepo).starred === "boolean" &&
+  typeof (r as RecentRepo).lastOpened === "string" &&
+  (r as RecentRepo).source?.kind === "github" &&
   typeof (r as RecentRepo).source?.where === "string";
 
 export async function loadRecent(): Promise<RecentRepo[]> {

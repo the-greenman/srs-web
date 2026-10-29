@@ -32,6 +32,7 @@
     onToggleStar,
     onRemoveRecent,
     recentError = null,
+    recentBusyKey = null,
     ...rest
   }: {
     notices?: Snippet;
@@ -40,9 +41,18 @@
     onToggleStar?: (key: string) => void;
     onRemoveRecent?: (key: string) => void;
     recentError?: string | null;
+    /** Key of the entry being reopened, if any. */
+    recentBusyKey?: string | null;
     onCreate: ComponentProps<typeof CreateRepositoryPanel>['onCreate'];
   } & ComponentProps<typeof SourceChooser> &
     Omit<ComponentProps<typeof LandingFrame>, 'title' | 'standfirst' | 'eyebrow' | 'children' | 'notices'> = $props();
+
+  /** "main" or "main · sub/dir" from a GitHub `owner/repo:branch:dir`. */
+  function recentHint(entry: RecentRepo): string {
+    const [, branch = '', ...dir] = entry.source.where.split(':');
+    const sub = dir.join(':');
+    return sub ? `${branch} · ${sub}` : branch;
+  }
 </script>
 
 <LandingFrame
@@ -62,13 +72,15 @@
               <SourceRow
                 icon={GitBranch}
                 label={entry.label}
-                hint={entry.source.where.split(':').slice(1).join(':')}
+                hint={recentHint(entry)}
+                busy={recentBusyKey === entry.key}
+                disabled={recentBusyKey !== null}
                 onclick={() => onOpenRecent?.(entry)}
               />
               <IconButton
                 size="sm"
                 icon={Star}
-                label={entry.starred ? 'Remove from favourites' : 'Add to favourites'}
+                label="Favourite"
                 pressed={entry.starred}
                 data-testid="recent-star"
                 onclick={() => onToggleStar?.(entry.key)}
