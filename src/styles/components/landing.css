@@ -115,6 +115,9 @@
   gap: var(--landing-section-gap);
   min-width: 0;
 }
+.landing__recent {
+  grid-column: 1 / -1;
+}
 
 /* bp: form */
 @media (max-width: 640px) {

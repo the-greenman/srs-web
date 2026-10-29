@@ -43,6 +43,10 @@
   import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
   import { listTypes, resolveRepositoryTitle, type AgentWriteGuard, type MigrationNotice, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
+  import {
+    describeHandle, loadRecent, recordOpened, removeRecent, saveRecent, toggleStar,
+    type RecentRepo,
+  } from "$lib/recent-repos.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
 
@@ -210,6 +214,21 @@
 
   /** Cached working copy loaded from localStorage on WASM init. */
   let cachedSession = $state<WorkingCopyEntry | null>(null);
+  /** Recently opened repositories, starred first (srs-web#661). */
+  let recent = $state<RecentRepo[]>([]);
+  let recentError = $state<string | null>(null);
+  /** The Recent entry being reopened: its row shows busy and further clicks are ignored. */
+  let recentBusyKey = $state<string | null>(null);
+  // Edits wait for the stored list to load, so an early open (a ?repo= boot link) is never overwritten by it.
+  const recentLoaded = loadRecent().then((list) => {
+    recent = list;
+  });
+  function editRecent(edit: (list: RecentRepo[]) => RecentRepo[]): void {
+    void recentLoaded.then(() => {
+      recent = edit(recent);
+      void saveRecent(recent);
+    });
+  }
   let restoreError = $state<string | null>(null);
 
   /**
@@ -526,6 +545,7 @@
 
   async function loadDocument(handle: DocumentHandle, fromHost: string | null = null): Promise<void> {
     errorMsg = null;
+    recentError = null;
     readOnlyHost = fromHost;
     try {
       switch (handle.kind) {
@@ -545,6 +565,9 @@
           repo = loadRepo(text);
         }
       }
+      // Remembered once the read succeeded, whether or not the user then accepts a migration.
+      const remembered = describeHandle(handle);
+      if (remembered) editRecent((list) => recordOpened(list, remembered.source, remembered.label, new Date().toISOString()));
       const loaded = repo;
       gateOnMigration(loaded, handle.name, (migrated) => {
         // A handle that cannot save back (e.g. a folder from <input webkitdirectory>) is never dirty.
@@ -820,6 +843,31 @@
     } catch (e: unknown) {
       errorMsg = e instanceof Error ? e.message : String(e);
       appState = "error";
+    }
+  }
+
+  /** Reopen a Recent entry (srs-web#661): GitHub as `openRepoLink` does, sign-in first when needed. */
+  async function openRecent(entry: RecentRepo): Promise<void> {
+    if (recentBusyKey !== null) return;
+    recentError = null;
+    recentBusyKey = entry.key;
+    try {
+      const github = storageProviders.github as GitHubProvider | undefined;
+      if (!github?.configured) throw new Error("GitHub is not configured on this site.");
+      await github.authenticate();
+      const [repoPart = ""] = entry.source.where.split(":");
+      const handle = await github.openTree({
+        id: `${entry.source.where}#repo`,
+        name: repoPart.split("/").pop() ?? repoPart,
+        kind: "repository",
+        path: entry.source.where,
+        revision: null,
+      });
+      await loadDocument(handle);
+    } catch (e: unknown) {
+      recentError = `Could not reopen ${entry.label}: ${e instanceof Error ? e.message : String(e)}`;
+    } finally {
+      recentBusyKey = null;
     }
   }
 
@@ -1137,6 +1185,15 @@
     onOpenArchive={loadArchiveDocument}
     onOpenUrl={openFromUrl}
     onCreate={createRepository}
+    {recent}
+    onOpenRecent={openRecent}
+    onToggleStar={(key) => editRecent((list) => toggleStar(list, key))}
+    onRemoveRecent={(key) => {
+      recentError = null;
+      editRecent((list) => removeRecent(list, key));
+    }}
+    {recentError}
+    {recentBusyKey}
   >
     {#snippet notices()}
       {#if cachedSession !== null}
