@@ -194,6 +194,8 @@ test.describe("Go > Agents…", () => {
     await page.locator('input[type="file"]#srsj-file').setInputFiles(MUSRS);
     await openPackageEditor(page, "guides");
     await page.setViewportSize({ width: 390, height: 800 });
+    // Wait for the narrow bar: openMenu picks "Go" while the wide bar is still up, and that button then vanishes.
+    await expect(page.getByTestId("header-menu")).toBeVisible();
     const dock = page.locator(".mcp-dock");
     await openMenu(page, "Go"); // the narrow overflow
     await page.getByTestId("toolbar-agents").click();
