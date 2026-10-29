@@ -117,6 +117,7 @@ export { default as ActorStack } from "./ActorStack.svelte";
 export { default as AgentPresence } from "./AgentPresence.svelte";
 export { default as AgentFeed } from "./AgentFeed.svelte";
 export { default as CommentBadge } from "./CommentBadge.svelte";
+export { default as Count } from "./Count.svelte";
 export { default as AnnotationMargin } from "./AnnotationMargin.svelte";
 export { default as HoverCard } from "./HoverCard.svelte";
 export { default as PinnedPane } from "./PinnedPane.svelte";

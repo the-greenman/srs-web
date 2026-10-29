@@ -69,7 +69,7 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `ToastHost` | none (reads the notice store; mounted once by `Main`) | `.toast-host` | #441, ADR-020 (j) |
 | `NoticeRegion` | none (renders the pinned notices; `Main` places it below the bar) | `.notice`, `.diag*` | #441 |
 | `Lifecycle` | `status` `transitions` `onTransition` | `.lifecycle` | B11 [#7](https://github.com/the-greenman/srs-web/issues/7) |
-| `Block` | `id` `title?` `body?` `hidden?` `handle` `margin?` (one right-margin snippet) `onzoom?` `onpull?` `oncopylink?` `onattach?` (files from the menu's "Attach file…" popover) + callbacks (hover tools + ellipsis menu both render `paragraphActions`) | `.block` | srs-web [#328](https://github.com/the-greenman/srs-web/issues/328) |
+| `Block` | `id` `title?` `body?` `hidden?` `handle` `margin?` (one right-margin snippet) `count?` (snippet under the body, e.g. a `Count`) `onzoom?` `onpull?` `oncopylink?` `onattach?` (files from the menu's "Attach file…" popover) + callbacks (hover tools + ellipsis menu both render `paragraphActions`) | `.block` | srs-web [#328](https://github.com/the-greenman/srs-web/issues/328) |
 | `InlineText` | `value` `placeholder?` `label` `oncommit` `as?` `editing?` (bindable) | `.inline-text` | srs-web [#363](https://github.com/the-greenman/srs-web/issues/363) |
 | `IconButton` | `icon` (a Lucide component) `label` (required: name and tooltip) `size?` `variant?` (`plain` \| `outline`) `pressed?` `ref?` | `.icon-btn` | srs-web [#421](https://github.com/the-greenman/srs-web/issues/421) |
 | `Popover` | `open?` (bindable) `label` `placement?` `mode?` (`auto` \| `manual`) `role?` `anchor?` `id?` `trigger?` snippet `onclose?` | `.popover` | #421, ADR-020 (e) |
@@ -88,6 +88,7 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `MarkdownView` | `value`: read-only rendered markdown, the one display `{@html renderMarkdown}` site | `.md-view` | #422 |
 | `AgentFeed` | `status` (AgentStatus) `paragraphLabel` `onselect` `now?` `limit?` | `.agent-activity` | srs-web [#372](https://github.com/the-greenman/srs-web/issues/372) |
 | `CommentBadge` | `count` `label` `open?` `onclick` | `.comment-badge` | srs-web [#364](https://github.com/the-greenman/srs-web/issues/364) |
+| `Count` | `count` `subtotal?` (shown after Σ) `label?` (visible prefix) `class?`; an empty count keeps a blank row | `.count` | srs-web [#648](https://github.com/the-greenman/srs-web/issues/648) |
 | `AnnotationMargin` | `annotations` (`Annotation[]`, src/lib/annotations.ts) `variant?` (`compact` \| `expanded`) `active?` `max?` `onopen` `onremove?` `ondownload?` (file annotations: kind `file`) | `.margin` | srs-web [#374](https://github.com/the-greenman/srs-web/issues/374) |
 | `BlockStack` | `items` `source` `ondrop` `row` snippet `nest?` `onfiles?` (a file drag over a row shows `is-drop-file`; absent = file drags ignored) | `.block-stack` | #328 |
 | `Panel` | `title` `aside?` `open?` `persistKey?` `collapsible?` `actions?` | `.panel` `.panel-rail` | srs-web [#362](https://github.com/the-greenman/srs-web/issues/362) |

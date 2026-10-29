@@ -337,13 +337,7 @@
   }
   /* The gutter is now at the right edge: the popover flips inline when it would overflow, so the list opens leftward. */
 }
-/* Word / character count (essay): small, muted, right-aligned under the body; the title attribute is the hover. */
+/* The count slot (a Count): right-aligned under the body; the look is the Count's. */
 .block__count {
-  margin: 0;
   text-align: right;
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  color: var(--color-muted);
-  font-variant-numeric: tabular-nums;
-  cursor: help;
 }

@@ -31,11 +31,6 @@
 }
 .essay-shell__count {
   margin: 0 0 var(--space-sm);
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  color: var(--color-muted);
-  font-variant-numeric: tabular-nums;
-  cursor: help;
 }
 .essay-shell__purpose {
   margin: 0 0 var(--space-md);

@@ -75,8 +75,8 @@
     onattach?: (files: AttachFile[]) => void | Promise<void>;
     /** The one right-margin slot: comment badge, attachment glyphs. */
     margin?: Snippet;
-    /** Word / character count under the body: small `text`, full `title` on hover and for screen readers. */
-    count?: { text: string; title: string };
+    /** Under the body (the essay passes a Count). */
+    count?: Snippet;
   } = $props();
 
   let editingTitle = $state(false);
@@ -251,9 +251,7 @@
         onkeydown={bodyKeydown}
       />
     {/if}
-    {#if count}
-      <p class="block__count" data-testid="block-count" title={count.title}><span aria-hidden="true">{count.text}</span><span class="sr-only">{count.title}</span></p>
-    {/if}
+    {#if count}<div class="block__count" data-part="count">{@render count()}</div>{/if}
   </div>
   {#if margin && !(hidden || inherited)}<div class="block__margin" data-part="margin">{@render margin()}</div>{/if}
 </article>
