@@ -32,6 +32,7 @@
   import Collection from "$lib/lens/Collection.svelte";
   import Focus from "$lib/lens/Focus.svelte";
   import Context from "$lib/lens/Context.svelte";
+  import ReadPage from "$lib/read/ReadPage.svelte";
   import Icons from "./styleguide/icons";
   import { initWasm } from "$lib/srs-client";
   import * as fx from "./styleguide/fixtures";
@@ -55,6 +56,7 @@
     ["shell", "Page frame"],
     ["records", "Records and map"],
     ["lenses", "Lenses"],
+    ["read", "Read"],
     ["method", "Method board"],
     ["chooser", "Source chooser"],
     ["landing", "Landing"],
@@ -581,6 +583,19 @@
         <RelationGraph view="container" graph={fx.cappedContainerMap} onOpen={noop} />
       </figure>
     </div>
+  </section>
+
+  <section id="read">
+    <h2>Read</h2>
+    <p class="sg__note">The Read view (ADR-029): one column. A page is a record read through RecordProse (ADR-024), or a note's sections,
+      then what its outline nests under it, in the author's order, each with its kind and first line; › marks an item that opens onto more.
+      More than 15 items (a wall) come grouped, one closed group per kind, so a reader picks a group before an item.</p>
+    <Frame width="var(--content-max)" caption="A page: the record, then Inside" testid="sg-read-page">
+      <div class="read-main"><ReadPage page={fx.readPage} href={() => "#"} onOpen={noop} /></div>
+    </Frame>
+    <Frame width="var(--content-max)" caption="A note page with a wall of 17 items, grouped by kind" testid="sg-read-wall">
+      <div class="read-main"><ReadPage page={fx.readWall} href={() => "#"} onOpen={noop} /></div>
+    </Frame>
   </section>
 
   <section id="lenses">

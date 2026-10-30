@@ -53,6 +53,7 @@
   import { EDITORS, availableEditors, creatableEditors, installEditor as installEditorPackages, isBuiltInView, usableEditor, type EditorDefinition } from "$lib/editors/registry.js";
   import { type Address, parseAddress, replaceAddress } from "$lib/address.js";
   import LensShell from "$lib/lens/LensShell.svelte";
+  import ReadShell from "$lib/read/ReadShell.svelte";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
   import { installedPackages, upgradeNoticeText } from "$lib/package-upgrade.js";
@@ -93,7 +94,7 @@
   // ---------------------------------------------------------------------------
 
   type AppState = "boot" | "idle" | "migrate" | "loaded" | "error";
-  /** A built-in view ("generic", "lenses": BUILT_IN_VIEWS) or an EditorDefinition id from $lib/editors/registry. */
+  /** A built-in view ("generic", "lenses", "read": BUILT_IN_VIEWS) or an EditorDefinition id from $lib/editors/registry. */
   type EditorMode = string;
 
   let appState = $state<AppState>("boot");
@@ -165,7 +166,8 @@
   /**
    * The one hash address and its one listener (ADR-023). Back, Forward, a pasted link and a script
    * writing location.hash all fire popstate; App keeps the parsed address and history.state (the link
-   * trail) and chooses the shell: a `lens` key selects Lenses, none leaves Lenses for the explorer.
+   * trail) and chooses the shell: a `lens` key selects Lenses, a `read` key the Read view (ADR-029),
+   * neither leaves either for the explorer.
    * Shells receive both as props and add no listener of their own (Essay's onpopstate is the one
    * stated exception until #426).
    */
@@ -177,14 +179,15 @@
   }
   function chooseShellForAddress(): void {
     if (address.lens) editorMode = "lenses";
-    else if (editorMode === "lenses") editorMode = "generic";
+    else if (address.read) editorMode = "read";
+    else if (editorMode === "lenses" || editorMode === "read") editorMode = "generic";
   }
   function onPopState(): void {
     readAddress();
     if (appState !== "loaded") return;
     chooseShellForAddress();
   }
-  /** Opening another repository: a stale lens never applies to a different one. */
+  /** Opening another repository: a stale lens or read page never applies to a different one. */
   function clearLensAddress(): void {
     const { essayId, paragraphId, zoomId } = parseAddress(location.hash);
     replaceAddress({ essayId, paragraphId, zoomId });
@@ -197,6 +200,7 @@
     addressCheckedFor = repo;
     untrack(() => {
       if (address.lens) editorMode = "lenses";
+      else if (address.read) editorMode = "read";
     });
   });
   $effect(() => {
@@ -1301,6 +1305,44 @@
   />
 
 <!-- =========================================================================
+     Loaded state — the built-in Read view (ADR-022, ADR-029)
+     ========================================================================= -->
+{:else if editorMode === "read"}
+  <ReadShell
+    repo={repo!}
+    repoName={repoName}
+    documentTitle={documentTitle}
+    documentProvider={activeDocument?.provider ?? "local"}
+    onExport={handleExportArchive}
+    onExportSrsj={handleExport}
+    onSave={readOnlyHost ? undefined : activeDocument === null || activeDocument.capabilities.write ? handleSave : undefined}
+    readOnly={readOnlyHost !== null}
+    onSaveCopy={readOnlyHost ? saveCopy : undefined}
+    readOnlyReason={readOnlyText ?? activeDocument?.readOnlyReason ?? null}
+    {saving}
+    documentDirty={documentDirty}
+    documentRevision={documentRevision}
+    onOpenAgents={openDock}
+    onOpenPackages={canUpgrade ? () => (packagesOpen = true) : undefined}
+    onOpenExplorer={() => {
+      readAddress();
+      editorMode = "generic";
+    }}
+    onOpenAnother={() => {
+      void clearWorkingCopy();
+      cachedSession = null;
+      clearNotices();
+      clearLensAddress();
+      repo = null;
+      activeDocument = null;
+      editorMode = "generic";
+      appState = "idle";
+    }}
+    {address}
+    {addressState}
+  />
+
+<!-- =========================================================================
      Loaded state — generic shell
      ========================================================================= -->
 {:else if !activeEditor}
@@ -1325,6 +1367,10 @@
     onOpenLenses={() => {
       readAddress();
       editorMode = "lenses";
+    }}
+    onOpenRead={() => {
+      readAddress();
+      editorMode = "read";
     }}
     onOpenAnother={() => {
       void clearWorkingCopy();

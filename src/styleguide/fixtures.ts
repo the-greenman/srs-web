@@ -22,6 +22,7 @@ import type { ByOption } from "$lib/lens/lens-distinctions";
 import type { PairingResponse } from "$lib/mcp/relay-protocol";
 import type { MethodDomain, MethodProblem, MethodRemedy } from "$lib/method/method-document";
 import type { InstalledPackage } from "$lib/package-upgrade";
+import type { ReadItem, ReadPage } from "$lib/read/read-model";
 import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor, SrsRecord, UpgradePackageResult } from "$lib/srs-client";
 
@@ -1419,3 +1420,88 @@ export const proposals: ProposalView[] = [
     answers: { [human.id]: "disagree" },
   },
 ];
+
+// ── Read view (ADR-029): a page, then what is inside it; a wall comes grouped ──
+const readItem = (
+  id: string,
+  label: string,
+  typeName: string,
+  first: string,
+  more = false,
+  group?: string
+): ReadItem => ({
+  id,
+  label,
+  typeName,
+  depth: 0,
+  first,
+  hasChildren: more,
+  group,
+});
+export const readPage: ReadPage = {
+  containerId: "c-root",
+  id: lensReadBlock.id,
+  title: lensReadBlock.label,
+  record: lensReadBlock,
+  items: [
+    readItem(
+      "r-1",
+      "The case",
+      "section",
+      "Why a group decides better when it can see its own reasoning.",
+      true
+    ),
+    readItem(
+      "r-2",
+      "Evidence",
+      "section",
+      "What we have found, from primary texts to precedent.",
+      true
+    ),
+    readItem(
+      "r-3",
+      "A note on method",
+      "",
+      "How the arguments were tested before they were written down."
+    ),
+  ],
+};
+export const readWall: ReadPage = {
+  containerId: "c-wall",
+  id: null,
+  title: "Findings",
+  note: {
+    instanceId: "n-wall",
+    title: "Findings",
+    sections: [
+      {
+        name: "narrative",
+        label: "What belongs here",
+        content: "Traps, gaps and observations found while working.",
+      },
+    ],
+  },
+  groupedBy: "type",
+  items: [
+    ...Array.from({ length: 9 }, (_, k) =>
+      readItem(
+        `w-${k}`,
+        `Finding ${k + 1}`,
+        "finding",
+        "What happened, its impact and what to do instead.",
+        false,
+        "finding"
+      )
+    ),
+    ...Array.from({ length: 8 }, (_, k) =>
+      readItem(
+        `d-${k}`,
+        `Decision ${k + 1}`,
+        "decision",
+        "What was decided and why.",
+        false,
+        "decision"
+      )
+    ),
+  ],
+};

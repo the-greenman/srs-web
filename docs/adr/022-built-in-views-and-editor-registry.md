@@ -55,7 +55,7 @@ the rule #338 put in place, now recorded.
 - They work on read-only documents. Editing controls inside them follow the document's
   read-only state, as Generic's do (ADR-021).
 - Built-in views are listed in one constant in `registry.ts`:
-  `BUILT_IN_VIEWS = ["generic", "lenses"] as const`, with the guard
+  `BUILT_IN_VIEWS = ["generic", "lenses", "read"] as const` (`read`: [ADR-029](029-read-view.md)), with the guard
   `isBuiltInView(mode)`. Each value is a **reserved `editorMode`**. App's gating
   `$effect` exempts every value `isBuiltInView` accepts from the `usableEditor` gate.
   No `EDITORS` id may equal a built-in view; a unit test enforces it.

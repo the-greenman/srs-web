@@ -7,7 +7,13 @@
  * whose identity record is a note tagged `conversation`, vignettes are notes tagged `vignette`, and a
  * derived record points at its vignette with `derived-from`.
  */
-import { getContainer, getNote, getRecord, listContainers, listRelations } from "$lib/srs-client.js";
+import {
+  getContainer,
+  getNote,
+  getRecord,
+  listContainers,
+  listRelations,
+} from "$lib/srs-client.js";
 import type { NoteInstance, SrsRepository } from "$lib/srs-client.js";
 import type { Entity, MethodModel, ProblemStatus } from "./method-document.js";
 

@@ -53,6 +53,7 @@ lib/guides/            GuidesShell: blueprint-schema-driven guides editor (ADR-0
 lib/essay/             EssayShell: essays as structured paragraphs
 lib/generic/           GenericSrsShell: the repository-first explorer
 lib/lens/              LensShell: the Lenses view (set, focus, links; ADR-025)
+lib/read/              ReadShell: the Read view (one column, page by page; ADR-029)
 lib/address.ts        the one URL-hash address for every shell (ADR-023)
 lib/labels.ts         shared label helpers (humanise, fieldLabel)
 lib/mcp/               the MCP relay host behind the Agents panel
@@ -71,6 +72,7 @@ A repository opens in the editor that matches its types, or in the generic explo
 - **Guides editor**: a blueprint-schema-driven editor whose forms are generated generically from `blueprintSchema()`.
 - **Essay editor**: essays as structured paragraphs, with the Agents panel in its rail and addressable paragraphs (see [Paragraph addresses](#paragraph-addresses)).
 - **Generic explorer**: a repository-first reader that renders only what the engine resolves (Compositions, navigation, container membership, discovery results) and works on any valid repository.
+- **Read** (Explore > Read in the explorer): any repository as a document, one column. It opens on the repository's identity record. Each page is a record or note, then what its outline nests under it, in the author's order, each with its first line; click to go deeper, and Back or the breadcrumb to return. More than 15 items under one page are grouped by kind. Read-only, and works on read-only links. See [ADR-029](docs/adr/029-read-view.md).
 - **Lenses** (Explore > Lenses in the explorer): any repository as three panes: the set you are working through, one record in focus, and its links grouped by direction. Lenses come from the repository's navigation sections, compositions and types. Each pane has a "Tell apart by" control, including links that stay inside the set or leave it. Focus reads a record as prose, reads the whole set as one document, or edits a block in place. Four layouts: trail, reader, board (the set as a table) and graph (the record's links, inside or leaving the set). Select records, add what they link to, and show them as "My set" (kept in this browser). Works on read-only links. See [ADR-025](docs/adr/025-lenses.md).
 
 ---
@@ -396,6 +398,7 @@ Contributions to this repository are made under the terms of the [Developer Cert
 Every shell's place lives in one URL-hash address, parsed and written only by `src/lib/address.ts` ([ADR-023](docs/adr/023-one-hash-address.md)). Ids are instance UUIDs, so an address is stable and an agent can write it.
 
 - **Essay:** `#e=<essayId>&p=<paragraphId>` opens an essay and scrolls to and focuses a paragraph (rendered, not editing); `&z=<paragraphId>` zooms into it instead.
+- **Read:** `#read=<containerId>&id=<instanceId>` opens the Read view on that page of that container's outline; `#read=<containerId>` alone opens the container's identity or anchor.
 - **Lenses:** `#lens=<lensId>&id=<instanceId>` opens a lens on a record; `&by=` and `&ctxby=` keep the "Tell apart by" choices. Lens ids are `nav:<containerId>`, `comp:<compositionId>`, `type:<typeId>`, `find` or `set` (My set).
 
 Selecting a record adds a browser history entry, so Back and reload work. Generic, Governance and Guides move onto the same address under #426.
