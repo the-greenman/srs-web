@@ -4,6 +4,7 @@ import {
   observeSession,
   pushWrite,
   rpcInfo,
+  START_PAGE_INSTRUCTIONS,
   UI_TOOLS,
   type UiHost,
   verb,
@@ -353,4 +354,32 @@ it("passes every other call, and unparseable frames, to the engine", () => {
   expect(h.handle(call("find"))).toBe("ok");
   expect(h.handle("not json")).toBe("ok");
   expect(seen).toEqual([call("find"), "not json"]);
+});
+
+it("adds the start page to the engine's initialize instructions (srs-web#674)", () => {
+  const init = (instructions?: string) => ({
+    handle: (t: string) =>
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id: JSON.parse(t).id,
+        result: { protocolVersion: "x", ...(instructions ? { instructions } : {}) },
+      }),
+  });
+  const req = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}';
+  const withOwn = JSON.parse(withUiTools(init("Engine rules."), host()).handle(req)!).result
+    .instructions;
+  expect(withOwn).toBe(`Engine rules.\n\n${START_PAGE_INSTRUCTIONS}`);
+  expect(JSON.parse(withUiTools(init(), host()).handle(req)!).result.instructions).toBe(
+    START_PAGE_INSTRUCTIONS
+  );
+  expect(START_PAGE_INSTRUCTIONS).toContain("ui_help");
+});
+
+it("the start page ends with the open editor's brief, or is the brief alone when there is no manual", () => {
+  const text = (ui: UiHost) =>
+    JSON.parse(withUiTools(toolEngine(), ui).handle(call("ui_help"))!).result.content[0]
+      .text as string;
+  const page = text(host({ brief: () => "How to work on this essay\n- rule" }));
+  expect(page.indexOf("Layers")).toBeLessThan(page.indexOf("How to work on this essay"));
+  expect(text(host({ help: () => [], brief: () => "Only rules" }))).toBe("Only rules");
 });

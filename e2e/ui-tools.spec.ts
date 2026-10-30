@@ -13,6 +13,9 @@ const text = (r: { result?: { content?: { text: string }[] } }) => r.result?.con
 
 test("an agent reads the essay's manual and points at the screen", async ({ page }) => {
   const { rpc, tool } = await connectAgents(page, ESSAY, 1);
+  // the start page is discoverable: the host's paragraph is in the server instructions (srs-web#674)
+  const init = await rpc(1, "initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "probe", version: "0" } });
+  expect(init.result.instructions).toContain("Start here: call ui_help");
   const list = await rpc(1, "tools/list", {});
   const names = list.result.tools.map((t: { name: string }) => t.name);
   expect(names).toContain("ui_help");
@@ -21,6 +24,7 @@ test("an agent reads the essay's manual and points at the screen", async ({ page
   const manual = text(await tool(1, "ui_help", {}));
   expect(manual.indexOf("Connect your AI")).toBeLessThan(manual.indexOf("Your name"));
   expect(manual).toContain("`essay.layers`, on the page now");
+  expect(manual).toContain("How to work on this essay"); // the essay's own rules close the start page
 
   const shown = await tool(1, "ui_highlight", { featureId: "essay.layers", message: "This is Layers." });
   expect(JSON.parse(text(shown))).toEqual({ shown: true });
