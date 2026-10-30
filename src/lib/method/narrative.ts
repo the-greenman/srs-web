@@ -7,18 +7,9 @@
  * whose identity record is a note tagged `conversation`, vignettes are notes tagged `vignette`, and a
  * derived record points at its vignette with `derived-from`.
  */
-import { getContainer, getRecord, listContainers, listRelations } from "$lib/srs-client.js";
-import type { SrsRepository } from "$lib/srs-client.js";
+import { getContainer, getNote, getRecord, listContainers, listRelations } from "$lib/srs-client.js";
+import type { NoteInstance, SrsRepository } from "$lib/srs-client.js";
 import type { Entity, MethodModel, ProblemStatus } from "./method-document.js";
-
-/** A note as the engine returns it (the client's NoteRecord type predates title, tags and named sections). */
-interface RawNote {
-  instanceId: string;
-  title?: string;
-  tags?: string[];
-  createdAt?: string;
-  sections?: { name?: string; label?: string; content?: string }[];
-}
 
 export interface Conversation {
   containerId: string;
@@ -44,24 +35,14 @@ export interface VignetteView {
   derived: DerivedView[];
 }
 
-/** A note, or null for a record or an unknown id. Read one by one: `list_notes` summaries carry no tags. */
-const note = (repo: SrsRepository, id: string): RawNote | null => {
-  try {
-    const i = repo.get_instance(id) as { kind?: string; note?: RawNote } | null;
-    return i?.kind === "note" && i.note ? i.note : null;
-  } catch {
-    return null;
-  }
-};
-
-const section = (n: RawNote, name: string) =>
+const section = (n: NoteInstance, name: string) =>
   n.sections?.find((s) => s.name === name)?.content ?? "";
 
 /** Conversation containers (identity note tagged `conversation`), newest title first (titles start with the date). */
 export function listConversations(repo: SrsRepository): Conversation[] {
   return listContainers(repo)
     .map((c) => ({ c, id: getContainer(repo, c.containerId).identityInstanceId }))
-    .filter(({ id }) => !!id && !!note(repo, id)?.tags?.includes("conversation"))
+    .filter(({ id }) => !!id && !!getNote(repo, id)?.tags?.includes("conversation"))
     .map(({ c }) => ({ containerId: c.containerId, title: c.title }))
     .sort((a, b) => b.title.localeCompare(a.title));
 }
@@ -95,8 +76,8 @@ export function loadConversation(
     };
   };
   return (getContainer(repo, containerId).memberInstanceIds ?? [])
-    .map((e) => note(repo, e.instanceId))
-    .filter((n): n is RawNote => !!n?.tags?.includes("vignette"))
+    .map((e) => getNote(repo, e.instanceId))
+    .filter((n): n is NoteInstance => !!n?.tags?.includes("vignette"))
     .map((n) => ({
       id: n.instanceId,
       title: n.title ?? "",
