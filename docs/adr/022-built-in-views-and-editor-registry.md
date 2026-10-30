@@ -92,3 +92,5 @@ the rule #338 put in place, now recorded.
   `BUILT_IN_VIEWS`, so the gating `$effect` and the collision test read the same list.
 - Making Lenses the default landing later is a one-line change (the initial
   `editorMode`). It still needs its own owner decision; this ADR does not grant it.
+- The owner decided the default landing on 2026-10-30, as an experiment: a repository with a front door
+  opens on Read, and a viewer can turn that off ([ADR-029](029-read-view.md)).

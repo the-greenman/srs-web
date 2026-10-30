@@ -5,7 +5,8 @@
   `read=<containerId>&id=<instanceId>` with the link trail (ADR-023); Back and the breadcrumb are
   history.go(-n), so they agree with browser Back. App owns the one popstate listener and passes the
   parsed `address` and `addressState`; this screen adds no listener. Go > Explorer pushes the address
-  without the `read` key. Read-only by design: it never writes a record.
+  without the `read` key. View > Open repositories in Read is the viewer's choice of landing (ADR-029).
+  Read-only by design: it never writes a record.
 -->
 <script lang="ts">
   import { untrack } from "svelte";
@@ -16,10 +17,19 @@
   import Main from "$lib/components/Main.svelte";
   import Notice from "$lib/components/Notice.svelte";
   import Toolbar from "$lib/components/Toolbar.svelte";
+  import type { ToolbarAction } from "$lib/components/menu-action.js";
   import { BASE_GROUPS } from "$lib/components/shell-actions.js";
   import type { EditorShellProps } from "$lib/editors/registry.js";
   import { lensActions } from "$lib/lens/toolbar-actions.js";
-  import { type ReadItem, type ReadPage as Page, frontDoor, openTarget, readPage } from "$lib/read/read-model.js";
+  import {
+    type ReadItem,
+    type ReadPage as Page,
+    frontDoor,
+    openOnReadPreferred,
+    openTarget,
+    readPage,
+    setOpenOnReadPreferred,
+  } from "$lib/read/read-model.js";
   import { ShellState } from "$lib/shell-context.svelte.js";
   import ReadPage from "./ReadPage.svelte";
 
@@ -108,8 +118,22 @@
     pushAddress({ essayId: a.essayId, paragraphId: a.paragraphId, zoomId: a.zoomId });
     onOpenExplorer?.();
   }
-  const barActions = $derived(
-    lensActions(
+  let openOnRead = $state(openOnReadPreferred());
+  const openOnReadAction: ToolbarAction = $derived({
+    id: "open-on-read",
+    group: "view",
+    kind: "toggle",
+    checked: openOnRead,
+    label: "Open repositories in Read",
+    testid: "open-on-read",
+    enabled: true,
+    run: () => {
+      openOnRead = !openOnRead;
+      setOpenOnReadPreferred(openOnRead);
+    },
+  });
+  const barActions = $derived([
+    ...lensActions(
       {
         onsave: onSave && !readOnly ? () => void onSave() : undefined,
         onexport: onExport,
@@ -121,8 +145,9 @@
         onopenexplorer: openExplorer,
       },
       { shell, saving, dirty: documentDirty }
-    )
-  );
+    ),
+    openOnReadAction,
+  ]);
 </script>
 
 {#snippet mainPane()}

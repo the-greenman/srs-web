@@ -34,6 +34,13 @@ The client derives no nesting, membership or label of its own.
 
 **Address** (ADR-023): `read=<containerId>` selects the view and names the outline being read, and the shell-neutral `id` names the page. App chooses Read for a `read` key, as it chooses Lenses for `lens`. Opening an entry pushes the address with the link trail; Back and the breadcrumb are `history.go(-n)`. Entering with no `read` key (from the explorer) pushes the front door's address, once: Read always enters at the front door. Lenses instead returns to its last visit; Read's place is its address. A hash with both `lens` and `read` opens Lenses.
 
+**Default landing: an experiment** (the owner, 2026-10-30, srs-programme vignette `33e22c92`: "lets try the default to read view. It is a worthwhile experiment. We need to see if it makes reading these repos easier by default.").
+- A repository that has an identity record and at least one navigation section opens on Read, unless the address names another view (`lens`, an essay).
+- Any other repository opens in the explorer, as before.
+- The viewer can turn the default off with View > Open repositories in Read. The setting is stored per viewer (`localStorage` `srs-web.open-on-read`). Explore > Read always works.
+- The end-to-end suite stores that setting as off, so specs written for the explorer keep their landing; `e2e/read.spec.ts` tests the default.
+- What a repository itself declares as its default view (the owner: "A repo should probably be able to specify a default way to be seen. Packages will define what editors/ renderers are available.") is not decided here. It needs the spec and is an open exercise.
+
 **Read-only by design.** The view never writes. Edits stay in Generic, Lenses and the package editors.
 
 **Layers** (ADR-027):
@@ -46,7 +53,7 @@ The client derives no nesting, membership or label of its own.
 ## Alternatives considered
 
 - **A fifth Lenses layout.** It would add no new address key, but Lenses' layouts arrange the same three panes, and the evidence is that one column without panes is what reads. It would also carry Lenses' selection, set and distinction state into a view that needs none of it. Rejected.
-- **Make Read the default landing now.** This would answer SP-48 fully, but ADR-022 leaves the default landing to its own owner decision after use. Deferred, and asked in the PR.
+- **Leave the explorer as the landing, with Read one click away.** This was the status quo, which ADR-022 left to its own owner decision. The owner chose the default-Read experiment instead (PR #673, ask A1).
 - **Group walls by linked record (for example a finding's component) or walk relations by category.** The Readers measurements show link grouping reads best where it exists. But it needs per-item relation reads or an engine group-by, and the reach rule is a spec question (srs#726). Deferred.
 
 ## Consequences

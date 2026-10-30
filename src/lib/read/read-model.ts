@@ -49,6 +49,39 @@ export function frontDoor(repo: SrsRepository): ReadTarget {
   return { containerId: nav.rootContainerId, id: nav.identity?.instanceId || undefined };
 }
 
+const OPEN_ON_READ = "srs-web.open-on-read";
+
+/** The viewer's choice (View > Open repositories in Read): on unless turned off. Storage may be unavailable. */
+export function openOnReadPreferred(): boolean {
+  try {
+    return localStorage.getItem(OPEN_ON_READ) !== "0";
+  } catch {
+    return true;
+  }
+}
+
+export function setOpenOnReadPreferred(on: boolean): void {
+  try {
+    if (on) localStorage.removeItem(OPEN_ON_READ);
+    else localStorage.setItem(OPEN_ON_READ, "0");
+  } catch {}
+}
+
+/**
+ * Whether a repository opens on Read by default (ADR-029, the owner's experiment of 2026-10-30): the viewer
+ * has not turned it off, and the repository has an identity record to open on and at least one navigation
+ * section to go to. Otherwise (a new or unstructured repository) it opens in the explorer.
+ */
+export function opensOnRead(repo: SrsRepository): boolean {
+  if (!openOnReadPreferred()) return false;
+  try {
+    const nav = repositoryNavigation(repo);
+    return !!nav.identity?.instanceId && nav.sections.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 const noteText = (n: NoteInstance) => n.sections?.find((s) => s.content?.trim())?.content ?? "";
 
 /** The item with its first line; a note is named as one, so its kind, group and label agree. */

@@ -54,6 +54,7 @@
   import { type Address, parseAddress, replaceAddress } from "$lib/address.js";
   import LensShell from "$lib/lens/LensShell.svelte";
   import ReadShell from "$lib/read/ReadShell.svelte";
+  import { opensOnRead } from "$lib/read/read-model.js";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
   import { installedPackages, upgradeNoticeText } from "$lib/package-upgrade.js";
@@ -193,7 +194,8 @@
     replaceAddress({ essayId, paragraphId, zoomId });
     readAddress();
   }
-  // The same lens check runs once after every successful load.
+  // The same lens check runs once after every successful load. With no lens or read key and nothing else
+  // chosen, a repository with a front door opens on Read (ADR-029: the default-landing experiment).
   let addressCheckedFor: SrsRepository | null = null;
   $effect(() => {
     if (appState !== "loaded" || !repo || repo === addressCheckedFor) return;
@@ -201,6 +203,7 @@
     untrack(() => {
       if (address.lens) editorMode = "lenses";
       else if (address.read) editorMode = "read";
+      else if (editorMode === "generic" && !address.essayId && opensOnRead(repo!)) editorMode = "read";
     });
   });
   $effect(() => {

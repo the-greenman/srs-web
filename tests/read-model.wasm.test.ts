@@ -105,6 +105,11 @@ describe.skipIf(!haveBindings)("Read view pages on the real engine", () => {
     expect(notes.every((i) => i.typeName === "Note")).toBe(true);
   });
 
+  it("opens on Read only with a front door: an identity record and a navigation section", () => {
+    expect(read.opensOnRead(spec)).toBe(true);
+    expect(read.opensOnRead(method)).toBe(false); // identity, no sections: the explorer
+  });
+
   it("a note page carries its text", () => {
     const pages = client.listContainers(method).map((c) => read.readPage(method, c.containerId));
     const page = pages.find((p) => p.note);

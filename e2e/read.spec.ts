@@ -1,7 +1,11 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
+import { READ_DEFAULT } from "../playwright.config";
 import { openRead } from "./helpers.js";
+
+// The viewer's default setting: no stored choice, so a repository with a front door opens on Read.
+test.use({ storageState: READ_DEFAULT });
 
 /**
  * read.spec.ts — srs-web#670: the built-in Read view (ADR-022, ADR-029) on the published spec bundle:
@@ -24,8 +28,8 @@ test("Read opens on the identity record and drills two levels; Back, the breadcr
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await openSpec(page);
-  await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 30000 });
-  await openRead(page);
+  // a repository with a front door opens on Read by default
+  await expect(page.getByTestId("read-shell")).toBeVisible({ timeout: 30000 });
 
   const front = (await heading(page).textContent())?.trim();
   expect(front).toBeTruthy();
@@ -57,4 +61,18 @@ test("Read opens on the identity record and drills two levels; Back, the breadcr
   await expect(heading(page)).toHaveText(section!);
 
   expect(errors).toEqual([]);
+});
+
+test("the viewer can turn the default off: the next repository opens in the explorer, and Explore > Read still works", async ({ page }) => {
+  await page.goto("/");
+  await openSpec(page);
+  await expect(page.getByTestId("read-shell")).toBeVisible({ timeout: 30000 });
+  await page.getByRole("button", { name: /^View/ }).click();
+  await page.getByTestId("open-on-read").click();
+  expect(await page.evaluate(() => localStorage.getItem("srs-web.open-on-read"))).toBe("0");
+  await page.goto("/");
+  await openSpec(page);
+  await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 30000 });
+  await openRead(page);
+  await expect(page.getByTestId("read-page")).toBeVisible();
 });
