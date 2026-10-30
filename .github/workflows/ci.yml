@@ -79,10 +79,14 @@ jobs:
         run: npm test
 
   e2e:
-    name: E2E (Playwright)
+    name: E2E (Playwright) ${{ matrix.shard }}/3
     runs-on: ubuntu-latest
     # Hard backstop so a misbehaving/hanging run can never sit for 20+ minutes.
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
 
     steps:
       - uses: actions/checkout@v4
@@ -104,12 +108,50 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E tests
-        run: npm run e2e
+        run: npm run e2e -- --shard=${{ matrix.shard }}/3
+
+      # always(): a job cancelled at its timeout still keeps its evidence (srs-web#675).
+      - name: Upload blob report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: blob-report/
+          retention-days: 1
+
+  e2e-report:
+    name: E2E (Playwright)
+    # The one check name branch protection and the board read: green only when every shard is.
+    if: always()
+    needs: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download blob reports
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+
+      - name: Merge into one HTML report
+        run: npx playwright merge-reports --reporter html ./all-blob-reports
 
       - name: Upload Playwright report
-        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+
+      - name: Every shard passed
+        run: test "${{ needs.e2e.result }}" = "success"
