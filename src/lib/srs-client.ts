@@ -768,6 +768,25 @@ export function getRecord(repo: SrsRepository, instanceId: string): SrsRecord | 
   return normalizeRecordSummary(raw);
 }
 
+/** A Tier 0 note as `get_instance` returns it (NoteRecord, from `list_notes`, predates title, tags and named sections). */
+export interface NoteInstance {
+  instanceId: string;
+  title?: string;
+  tags?: string[];
+  createdAt?: string;
+  sections?: { name?: string; label?: string; content?: string }[];
+}
+
+/** A note, or null for a record or an unknown id (srs-rust#1379). Read one by one: `list_notes` summaries carry no tags. */
+export function getNote(repo: SrsRepository, instanceId: string): NoteInstance | null {
+  try {
+    const i = repo.get_instance(instanceId) as { kind?: string; note?: NoteInstance } | null;
+    return i?.kind === "note" && i.note ? i.note : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Create a new record of the given type.
  */

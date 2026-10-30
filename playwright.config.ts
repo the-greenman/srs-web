@@ -13,9 +13,19 @@ const pinnedChromium = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 const actor = { kind: "human", id: "local:e2e-ada", name: "Ada" }
 // First-run help (srs-web#642) is dismissed for every spec, so its dialog never covers the page; a spec
 // that tests it uses FIRST_RUN (no actor, nothing dismissed).
-const helpDismissed = [{ name: "srs-web.help.dismissed.essay", value: "1" }]
+// Repositories with a front door open on Read (ADR-029); specs written for the explorer keep it as their
+// landing with the viewer's own setting. e2e/read.spec.ts clears it to test the default.
+const helpDismissed = [
+  { name: "srs-web.help.dismissed.essay", value: "1" },
+  { name: "srs-web.open-on-read", value: "0" },
+]
 export const FIRST_RUN = { cookies: [], origins: [] }
 export const NO_ACTOR = { cookies: [], origins: [{ origin: baseURL, localStorage: helpDismissed }] }
+// The viewer's default landing (no stored choice): a repository with a front door opens on Read.
+export const READ_DEFAULT = {
+  cookies: [],
+  origins: [{ origin: baseURL, localStorage: [{ name: "srs-web.actor", value: JSON.stringify(actor) }, helpDismissed[0]] }],
+}
 
 export default defineConfig({
   testDir: "./e2e",
