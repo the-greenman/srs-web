@@ -36,6 +36,7 @@
   import { applyActor, onActorChange, refreshSignedInActor } from "$lib/actor.js";
   import type { AgentPanelCtx, UiHost } from "$lib/agent-activity.js";
   import { helpFor } from "$lib/help/help.js";
+  import { agentBrief } from "$lib/help/agent-brief.js";
   import UiSpot from "$lib/components/UiSpot.svelte";
   import { AgentLibrary } from "$lib/agent-library.svelte.js";
   import { fetchArchiveFile, parseNewLink, parseOpenUrl, parseRepoLink, withoutBootLinks, type RepoLink } from "$lib/open-url.js";
@@ -465,6 +466,8 @@
         return []; // no help repository for this editor
       }
     },
+    editor: () => (appState === "loaded" ? activeEditor?.label : undefined),
+    brief: agentBrief,
     onScreen: (id) => Array.from(document.querySelectorAll(`[data-feature="${CSS.escape(id)}"]`)).some(visible),
     highlight({ featureId, blockId, message }) {
       const sel = featureId ? `[data-feature="${CSS.escape(featureId)}"]` : `[data-block-id="${CSS.escape(blockId ?? "")}"]`;

@@ -8,10 +8,11 @@
     "feature_id": "shell.teach-me",
     "placement": "concept",
     "title": "Ask your AI to teach you",
-    "summary": "Once connected, your AI can read this editor's manual and point at things on your screen. Copy this prompt into your AI: _Use the ui_help tool, then teach me this editor one feature at a time, using ui_highlight to show me each one._"
+    "summary": "Once connected, just ask your AI to teach you this editor. It finds the editor's start page by itself and can point at things on your screen as it explains them. If it doesn't, ask it to use its ui_help tool.",
+    "ai_guidance": "Start with ui_help (the start page); then teach one feature at a time, showing each with ui_highlight before you explain it."
   },
   "createdAt": "2026-10-29T14:42:45.993689799+00:00",
-  "updatedAt": "2026-10-29T14:42:45.993695119+00:00",
+  "updatedAt": "2026-10-30T14:40:55.822557654+00:00",
   "createdBy": {
     "kind": "ai",
     "id": "agent:claude-code",

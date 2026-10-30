@@ -185,6 +185,10 @@ export interface AgentStatus {
 export interface UiHost {
   /** The open editor's help, in order; [] when it has none. */
   help(): HelpItem[];
+  /** The open editor's name, for the start page's heading. */
+  editor?(): string | undefined;
+  /** The open editor's own rules for agents (the essay: its handoff), appended to the start page. */
+  brief?(): string | undefined;
   /** Whether a feature is on the page now (rendered; ui_highlight scrolls it into view). */
   onScreen(featureId: string): boolean;
   /** Point at a feature or a paragraph; `shown: false` with the reason when it is not on screen. */
@@ -199,7 +203,7 @@ export const UI_TOOLS = [
   {
     name: "ui_help",
     description:
-      "Read the manual of the editor the writer has open: each feature's id, what it is, how to teach it, and whether it is on the page now. Use it to teach the writer the editor, one feature at a time. Read-only.",
+      "The editor's start page: call it first. It returns the manual of the editor the writer has open (each feature's id, what it is, how to teach it, whether it is on the page now) and the rules for working on the open document. Read-only.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     annotations: { title: "Editor manual", ...READ_ONLY },
   },
@@ -227,29 +231,42 @@ const UI_TOOL_NAMES = new Set(UI_TOOLS.map((t) => t.name));
 /** The manual ui_help returns: every feature, with where it is now and how to teach it. */
 export function uiManual(ui: UiHost): string {
   const items = ui.help();
-  if (!items.length) return "This editor has no manual yet.";
-  const head =
-    "# How to use this editor\n\nTeach the writer one feature at a time, in this order. Show each one with ui_highlight (featureId) before you explain it; for a paragraph, use its instanceId as blockId.\n";
-  return [
-    head,
-    ...items.map((i) => {
-      const where =
-        i.placement === "concept"
-          ? "an idea, not one place on screen"
-          : ui.onScreen(i.featureId)
-            ? "on the page now"
-            : "not on the page now";
-      return [
-        `## ${i.title} (\`${i.featureId}\`, ${where})`,
-        i.summary,
-        i.explanation,
-        i.aiGuidance && `How to teach it: ${i.aiGuidance}`,
-      ]
-        .filter(Boolean)
-        .join("\n\n");
-    }),
-  ].join("\n");
+  const brief = ui.brief?.() || undefined;
+  const name = ui.editor?.() || "this editor";
+  const head = [
+    `# Start page: ${name}`,
+    `The writer has this editor open in their browser; you work through that tab. Below: its features in order, how to teach each one, and whether it is on the page now${
+      brief
+        ? ", then this editor's own rules for working on the open document."
+        : ". This editor adds no rules of its own."
+    }`,
+    "When the writer asks you to teach them the editor, go one feature at a time, in this order, and show each one with ui_highlight (featureId) before you explain it; for a paragraph, use its instanceId as blockId.",
+  ].join("\n\n");
+  const manual = items.length
+    ? items.map((i) => {
+        const where =
+          i.placement === "concept"
+            ? "an idea, not one place on screen"
+            : ui.onScreen(i.featureId)
+              ? "on the page now"
+              : "not on the page now";
+        return [
+          `## ${i.title} (\`${i.featureId}\`, ${where})`,
+          i.summary,
+          i.explanation,
+          i.aiGuidance && `How to teach it: ${i.aiGuidance}`,
+        ]
+          .filter(Boolean)
+          .join("\n\n");
+      })
+    : ["This editor has no feature manual yet."];
+  return [head, ...manual, ...(brief ? [brief] : [])].join("\n\n");
 }
+
+/** What the host adds to the server's instructions: clients load these into the agent's context, so it finds the start page by itself. */
+// Universal (every editor): editor-specific help and rules live behind ui_help, never here (owner, vignette 65d24a1e).
+export const START_PAGE_INSTRUCTIONS =
+  "This repository is open in a SemanticOps editor in the writer's browser, and you work through that tab. Start here: call ui_help, the start page of whichever editor is open (its features, how to teach them, and any rules that editor has for working on the document). Use ui_highlight to show the writer where a feature or a paragraph is on their screen. Both only read and point; neither changes the document.";
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : undefined);
 
@@ -295,20 +312,36 @@ export function withUiTools(inner: FrameHandler, ui: UiHost): FrameHandler {
       const out = inner.handle(text);
       if (out !== undefined && !inner.sessionUnknown?.() && m?.method !== "initialize")
         ready = true;
-      if (m?.method === "tools/list" && out !== undefined && m.params?.cursor === undefined) {
-        try {
-          const r = JSON.parse(out);
-          if (Array.isArray(r?.result?.tools)) {
-            r.result.tools.push(...UI_TOOLS);
-            return JSON.stringify(r);
-          }
-        } catch {}
-      }
+      if (m?.method === "initialize")
+        return patchResult(out, (r) => {
+          const own = typeof r.instructions === "string" ? r.instructions : "";
+          r.instructions = own ? `${own}\n\n${START_PAGE_INSTRUCTIONS}` : START_PAGE_INSTRUCTIONS;
+        });
+      if (m?.method === "tools/list" && m.params?.cursor === undefined)
+        return patchResult(out, (r) => {
+          if (Array.isArray(r.tools)) (r.tools as unknown[]).push(...UI_TOOLS);
+        });
       return out;
     },
     // a host-answered call is never an unknown session, whatever the engine said last
     sessionUnknown: () => !hostAnswered && (inner.sessionUnknown?.() ?? false),
   };
+}
+
+/** Change a JSON-RPC reply's `result` in place; a reply without one, or that does not parse, passes unchanged. */
+function patchResult(
+  out: string | undefined,
+  f: (result: Record<string, unknown>) => void
+): string | undefined {
+  if (out === undefined) return out;
+  try {
+    const r = JSON.parse(out);
+    if (!r?.result || typeof r.result !== "object") return out;
+    f(r.result);
+    return JSON.stringify(r);
+  } catch {
+    return out;
+  }
 }
 
 function callUiTool(ui: UiHost, name: string, a: Record<string, unknown>) {

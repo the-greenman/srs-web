@@ -168,8 +168,10 @@ export async function connectAgents(page: Page, essayPath: string, count: number
   for (let i = 1; i < count; i++) await page.getByTestId("mcp-connect-agent").click();
   await expect(page.getByTestId("mcp-status")).toHaveCount(count);
   const names = ["alpha", "beta", "gamma", "delta"];
+  /** Each agent's initialize reply, so a spec can read what the host told it (srs-web#674). */
+  const inits: Record<string, any>[] = [];
   for (let a = 1; a <= count; a++)
-    await rpc(a, "initialize", {
+    inits[a] = await rpc(a, "initialize", {
       protocolVersion: "2025-06-18",
       capabilities: {},
       clientInfo: { name: names[a - 1], version: "0" },
@@ -222,7 +224,7 @@ export async function connectAgents(page: Page, essayPath: string, count: number
     });
     expect(rel.result?.isError, JSON.stringify(rel)).not.toBe(true);
   }
-  return { rpc, tool, comment, attach, relate };
+  return { rpc, tool, comment, attach, relate, inits };
 }
 
 /** Open menus and popovers; the toast host is a popover too, and is not a menu. */

@@ -37,6 +37,7 @@
   import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
   import HelpDialog from "$lib/components/HelpDialog.svelte";
   import { helpDismissed, helpFor, setHelpDismissed, type HelpItem } from "$lib/help/help.js";
+  import { provideAgentBrief } from "$lib/help/agent-brief.js";
   import AppShell from "$lib/components/AppShell.svelte";
   import Inspector from "$lib/components/Inspector.svelte";
   import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
@@ -580,11 +581,11 @@
     }
   }
 
-  /** Copy the agent handoff (srs-web#411): the whole essay, or `focusId` as the paragraph to look at. */
-  async function copyForAgent(focusId?: string) {
+  /** The agent handoff (srs-web#411): the whole essay, or `focusId` as the paragraph to look at. */
+  function handoff(focusId?: string): string | undefined {
     const m = model;
-    if (!m) return;
-    const text = agentHandoff({
+    if (!m) return undefined;
+    return agentHandoff({
       repositoryId: repositoryId(repo),
       essay: { id: m.essayId, title: m.title },
       containerId: m.containerId,
@@ -597,6 +598,14 @@
       bundleContainerId: m.bundleContainerId,
       focus: focusId ? { id: focusId, title: m.paragraphs[focusId] ? label(focusId) : "untitled" } : undefined,
     });
+  }
+  // The same rules close every agent's start page (ui_help, srs-web#674), so an agent needs no copy.
+  $effect(() => provideAgentBrief(() => handoff()));
+
+  /** Copy the agent handoff: the whole essay, or `focusId` as the paragraph to look at. */
+  async function copyForAgent(focusId?: string) {
+    const text = handoff(focusId);
+    if (!text) return;
     if (await copyText(text)) {
       linkFallback = null;
       notify({ kind: "success", key: "copy-agent", text: "Copied for agent", testid: "address-notice" });
