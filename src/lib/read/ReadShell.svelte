@@ -8,6 +8,7 @@
   without the `read` key. Read-only by design: it never writes a record.
 -->
 <script lang="ts">
+  import { untrack } from "svelte";
   import { type Address, type TrailEntry, formatAddress, parseAddress, pushAddress, readTrail } from "$lib/address.js";
   import AppShell from "$lib/components/AppShell.svelte";
   import Breadcrumb from "$lib/components/Breadcrumb.svelte";
@@ -57,9 +58,20 @@
   /** Where we are and how we got here: set on a click, re-applied from App's address on popstate. */
   let where = $state<{ containerId: string; id?: string }>({ containerId: "" });
   let trail = $state<TrailEntry[]>([]);
+  /** Re-apply App's address; entered with no read key (from the explorer), open the front door once. */
+  let entered = false;
   $effect(() => {
-    where = address.read ? { containerId: address.read, id: address.instanceId } : door;
-    trail = readTrail(addressState);
+    const read = address.read, id = address.instanceId, state = addressState;
+    untrack(() => {
+      if (read) {
+        where = { containerId: read, id };
+        trail = readTrail(state);
+      } else if (!entered) {
+        // the address names the front door, so Back returns here
+        go(door, []);
+      }
+      entered = true;
+    });
   });
   const loaded = $derived.by((): { page?: Page; error?: string } => {
     void documentRevision;
@@ -71,11 +83,6 @@
     }
   });
   const title = $derived(loaded.page?.title || documentTitle);
-
-  // Entered with no read key (from the explorer): the address names the front door, so Back returns.
-  $effect(() => {
-    if (!address.read) pushAddress({ read: door.containerId, instanceId: door.id });
-  });
 
   const href = (i: ReadItem) => {
     const t = openTarget(loaded.page!, i);

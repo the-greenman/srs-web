@@ -51,13 +51,18 @@ export function frontDoor(repo: SrsRepository): ReadTarget {
 
 const noteText = (n: NoteInstance) => n.sections?.find((s) => s.content?.trim())?.content ?? "";
 
-function firstOf(repo: SrsRepository, item: Item): string {
+/** The item with its first line; a note is named as one, so its kind, group and label agree. */
+function withFirst(repo: SrsRepository, item: Item): ReadItem {
   if (item.record) {
     const r = loadRead(repo, item.id, item.label, item.record);
-    return firstLine(proseView(item.record, r.fields, r.composites).body);
+    return { ...item, first: firstLine(proseView(item.record, r.fields, r.composites).body) };
   }
   const n = getNote(repo, item.id);
-  return n ? firstLine(noteText(n)) : "";
+  return {
+    ...item,
+    typeName: item.typeName ?? (n ? "Note" : undefined),
+    first: n ? firstLine(noteText(n)) : "",
+  };
 }
 
 /**
@@ -73,13 +78,14 @@ export function readPage(repo: SrsRepository, containerId: string, id?: string):
   const under = top ? null : pageId;
   let items: ReadItem[] = memberItems(repo, containerId)
     .filter((i) => (i.parentId ?? null) === under)
-    .map((i) => ({
-      ...i,
-      depth: 0,
-      // the page's own section container is where we are, not somewhere to go
-      sectionContainerId: i.sectionContainerId === containerId ? undefined : i.sectionContainerId,
-      first: firstOf(repo, i),
-    }));
+    .map((i) =>
+      withFirst(repo, {
+        ...i,
+        depth: 0,
+        // the page's own section container is where we are, not somewhere to go
+        sectionContainerId: i.sectionContainerId === containerId ? undefined : i.sectionContainerId,
+      })
+    );
   let groupedBy: CollectionBy | undefined;
   if (items.length > WALL) {
     groupedBy = splittingBy(items, collectionOptions(items, false), "type");
@@ -99,7 +105,11 @@ export function readPage(repo: SrsRepository, containerId: string, id?: string):
   };
 }
 
-/** Where opening an item leads: into its own section container when it roots one, else deeper here. */
+/**
+ * Where opening an item leads: into its own section container when it roots one, else deeper here. The
+ * section container wins: entries the current outline also nests under a section anchor are not shown
+ * (ADR-029); the readability audit reports that as a data fix.
+ */
 export function openTarget(page: ReadPage, item: Item): ReadTarget {
   return { containerId: item.sectionContainerId ?? page.containerId, id: item.id };
 }

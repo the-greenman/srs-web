@@ -497,4 +497,22 @@ describe("GenericSrsShell built-in views (ADR-022)", () => {
     await fireEvent.click(item);
     expect(onOpenLenses).toHaveBeenCalledOnce();
   });
+
+  it("Explore group offers Read first when onOpenRead is given", async () => {
+    const props = { repo: {} as never, repoName: "Example repository", onExport: vi.fn(), onOpenAnother: vi.fn() };
+    const without = render(GenericSrsShell, { props });
+    await screen.findByText("Explore");
+    expect(screen.queryByTestId("open-read")).toBeNull();
+    without.unmount();
+
+    const onOpenRead = vi.fn();
+    render(GenericSrsShell, { props: { ...props, onOpenRead, onOpenLenses: vi.fn() } });
+    const item = await screen.findByTestId("open-read");
+    const explore = item.closest('[data-part="explore"]');
+    expect(explore).not.toBeNull();
+    expect(item.textContent).toBe("Read");
+    expect(explore?.querySelector(".nav__item")).toBe(item);
+    await fireEvent.click(item);
+    expect(onOpenRead).toHaveBeenCalledOnce();
+  });
 });

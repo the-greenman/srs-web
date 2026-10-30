@@ -24,15 +24,15 @@ A built-in engine view, `read` (one more `BUILT_IN_VIEWS` entry, ADR-022), reach
 - the front door is `repositoryNavigation`'s root container, opened on its identity record;
 - an entry's children are the core outline's body entries whose `parentInstanceId` is that entry. When the page is the container's identity or anchor, they are the entries whose parent is null;
 - labels, records and `sectionContainerId` come from the resolved container view;
-- an entry that roots a section container opens in that container.
+- an entry that roots a section container opens in that container. The section container wins: if the current outline also nests entries under that entry, they are not shown. That is a data fix, reported by the readability audit.
 
 The client derives no nesting, membership or label of its own.
 
 **First lines** come from the same body choice `RecordProse` makes, moved to the pure `proseView` (`src/lib/prose.ts`), so a page and its listing never pick different text.
 
-**A wall** is more than `WALL` (15) entries under one page. It is grouped by ADR-025's presentation grouping (`splittingBy` over `collectionOptions`, then `groupItems`). Each group is a closed `<details>`, so a reader picks a group before an item.
+**A wall** is more than `WALL` (15) entries under one page. It is grouped by ADR-025's presentation grouping (`splittingBy` over `collectionOptions`, then `groupItems`). Each group is a closed `<details>`, so a reader picks a group before an item. When no distinction splits the wall (every item the same kind, with no state or creator), it stays one list. A note is named "Note", so its kind, its group and its label agree.
 
-**Address** (ADR-023): `read=<containerId>` selects the view and names the outline being read, and the shell-neutral `id` names the page. App chooses Read for a `read` key, as it chooses Lenses for `lens`. Opening an entry pushes the address with the link trail; Back and the breadcrumb are `history.go(-n)`. Entering with no `read` key pushes the front door's address.
+**Address** (ADR-023): `read=<containerId>` selects the view and names the outline being read, and the shell-neutral `id` names the page. App chooses Read for a `read` key, as it chooses Lenses for `lens`. Opening an entry pushes the address with the link trail; Back and the breadcrumb are `history.go(-n)`. Entering with no `read` key (from the explorer) pushes the front door's address, once: Read always enters at the front door. Lenses instead returns to its last visit; Read's place is its address. A hash with both `lens` and `read` opens Lenses.
 
 **Read-only by design.** The view never writes. Edits stay in Generic, Lenses and the package editors.
 
@@ -40,6 +40,8 @@ The client derives no nesting, membership or label of its own.
 - headless: `src/lib/prose.ts`, `src/lib/read/read-model.ts`;
 - component: `ReadPage.svelte`, specimen on `/styleguide`;
 - screen: `ReadShell.svelte`.
+
+**Help** (the `data-feature` contract) is not given yet; Lenses has none either. It is srs-web#672.
 
 ## Alternatives considered
 

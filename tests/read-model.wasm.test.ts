@@ -21,6 +21,7 @@ describe.skipIf(!haveBindings)("Read view pages on the real engine", () => {
   let spec: SrsRepository;
   let musrs: SrsRepository;
   let method: SrsRepository;
+  let loadSpec: () => SrsRepository;
   let client: typeof import("../src/lib/srs-client.js");
   let read: typeof import("../src/lib/read/read-model.js");
 
@@ -31,7 +32,8 @@ describe.skipIf(!haveBindings)("Read view pages on the real engine", () => {
     // biome-ignore lint/suspicious/noExplicitAny: the private bindings module
     const mod: any = await import(/* @vite-ignore */ path.join(dir, "read-model.mjs"));
     mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
-    spec = mod.SrsRepository.load_archive(readFileSync(fixture("srs-spec.srs")));
+    loadSpec = () => mod.SrsRepository.load_archive(readFileSync(fixture("srs-spec.srs")));
+    spec = loadSpec();
     musrs = mod.SrsRepository.load(readFileSync(fixture("muSrs.srsj"), "utf8"));
     method = mod.SrsRepository.load(readFileSync(fixture("method.srsj"), "utf8"));
     client = await import("../src/lib/srs-client.js");
@@ -66,7 +68,8 @@ describe.skipIf(!haveBindings)("Read view pages on the real engine", () => {
   });
 
   it("drills a second level through nested outline entries", () => {
-    // no fixture nests entries, so nest one: the second top-level entry of a section goes into the first
+    // no fixture nests entries, so nest one (in a fresh copy): a section's second top-level entry into its first
+    const spec = loadSpec();
     const door = read.frontDoor(spec);
     const section = read.readPage(spec, door.containerId, door.id).items.find((i) => i.sectionContainerId)!;
     const cid = section.sectionContainerId!;
@@ -93,6 +96,13 @@ describe.skipIf(!haveBindings)("Read view pages on the real engine", () => {
     }
     const withText = walls.flatMap((p) => p.items).filter((i) => i.first.length > 0);
     expect(withText.length).toBeGreaterThan(0);
+  });
+
+  it("a note in a list is named as one", () => {
+    const pages = client.listContainers(method).map((c) => read.readPage(method, c.containerId));
+    const notes = pages.flatMap((p) => p.items).filter((i) => !i.record);
+    expect(notes.length).toBeGreaterThan(0);
+    expect(notes.every((i) => i.typeName === "Note")).toBe(true);
   });
 
   it("a note page carries its text", () => {

@@ -77,7 +77,8 @@ export function proseView(
  */
 export function firstLine(text: string): string {
   const s = text
-    .replace(/[#>*_`]+/g, "")
+    .replace(/[#>*`]+/g, "")
+    .replace(/(^|\s)_+|_+(?=\s|$|[.,;:!?])/g, "$1")
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\s+/g, " ")
     .trim();

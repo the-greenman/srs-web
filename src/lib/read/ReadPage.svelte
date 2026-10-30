@@ -32,7 +32,7 @@
     }
     return [...m];
   });
-  const kind = (i: ReadItem) => i.typeName || (i.record ? "" : "note");
+  const kind = (i: ReadItem) => i.typeName ?? "";
   const open = (e: MouseEvent, i: ReadItem) => {
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
