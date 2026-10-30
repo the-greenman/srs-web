@@ -62,14 +62,32 @@ export const byTime = (a: string, b: string): number =>
   (Date.parse(a) || Number.POSITIVE_INFINITY) - (Date.parse(b) || Number.POSITIVE_INFINITY) || 0;
 
 /**
+ * The latest-by-time item per `keyFn` group, among items whose `kindOf` is in `kinds`. On a tie the
+ * later input wins. Shared by `taskState` here and `currentAnswers` (link-proposals.ts) — both are
+ * the same "latest response of a kind wins" reducer, one ungrouped, one grouped by author.
+ */
+export function latestByKind<T extends { createdAt: string }>(
+  items: T[],
+  kinds: readonly string[],
+  kindOf: (item: T) => string,
+  keyFn: (item: T) => string = () => ""
+): Map<string, T> {
+  const latest = new Map<string, T>();
+  for (const item of items) {
+    if (!kinds.includes(kindOf(item))) continue;
+    const key = keyFn(item);
+    const prev = latest.get(key);
+    if (!prev || byTime(prev.createdAt, item.createdAt) <= 0) latest.set(key, item);
+  }
+  return latest;
+}
+
+/**
  * A task's state: the latest settling response wins, `withdrawn` reopens. Pure. Any author's response
  * counts (ponytail: an essay has one writer; per-author state when a second writer arrives).
  */
 export function taskState(responses: Comment[]): TaskState {
-  let latest: Comment | undefined;
-  for (const r of responses)
-    if (SETTLES.includes(r.kind ?? "") && (!latest || byTime(latest.createdAt, r.createdAt) <= 0))
-      latest = r;
+  const latest = latestByKind(responses, SETTLES, (r) => r.kind ?? "").get("");
   if (!latest || latest.kind === "withdrawn") return { state: "open" };
   const state = latest.kind as "done" | "rejected";
   return {
