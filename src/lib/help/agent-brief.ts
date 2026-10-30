@@ -1,7 +1,8 @@
 /**
- * The open editor's working rules for agents (srs-web#674): what `ui_help` adds after the feature
- * manual, so an agent's start page holds everything it needs. The open shell registers a provider
- * (the essay: its handoff) and clears it when it closes; one shell is open at a time.
+ * The open editor's own rules for agents (srs-web#674): what the universal `ui_help` start page adds
+ * after that editor's feature manual. Each editor's shell registers its provider (the essay: its
+ * handoff) and clears it when it closes (owner: editors add their own help and instructions).
+ * ponytail: one provider, as one shell is open at a time; key it by editor id if shells ever coexist.
  */
 let provider: (() => string | undefined) | null = null;
 

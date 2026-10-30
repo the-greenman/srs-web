@@ -466,6 +466,7 @@
         return []; // no help repository for this editor
       }
     },
+    editor: () => (appState === "loaded" ? activeEditor?.label : undefined),
     brief: agentBrief,
     onScreen: (id) => Array.from(document.querySelectorAll(`[data-feature="${CSS.escape(id)}"]`)).some(visible),
     highlight({ featureId, blockId, message }) {

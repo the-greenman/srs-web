@@ -23,8 +23,11 @@ Open `help/` in the editor (Open → Folder on this device), edit the records, a
 
 ## Giving an editor help
 
+The help *mechanism* is universal: the dialog, Go > Editor help…, and the agent tools `ui_help` (the start page) and `ui_highlight` work the same in every editor, and the host tells every connecting agent to start with `ui_help` (its MCP server instructions). Each editor adds only its own content:
+
 1. Create a container in `help/` named after the editor id (its registry `id`).
 2. Add `ui-feature` records to it, or add existing `shell.*` records as members.
 3. Put `data-feature` on the elements that present the `ui` features.
+4. Optionally, give agents the editor's own rules: its shell calls `provideAgentBrief(() => text)` (`agent-brief.ts`) and clears it on unmount. `ui_help` appends that text after the editor's features. The essay gives its handoff.
 
 `helpFor(editorId)` (`help.ts`) returns the editor's help in order. An editor with no container has no help.

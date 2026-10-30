@@ -381,5 +381,9 @@ it("the start page ends with the open editor's brief, or is the brief alone when
       .text as string;
   const page = text(host({ brief: () => "How to work on this essay\n- rule" }));
   expect(page.indexOf("Layers")).toBeLessThan(page.indexOf("How to work on this essay"));
-  expect(text(host({ help: () => [], brief: () => "Only rules" }))).toBe("Only rules");
+  const bare = text(host({ help: () => [], brief: () => "Only rules", editor: () => "Lens" }));
+  expect(bare).toContain("# Start page: Lens");
+  expect(bare).toContain("no feature manual yet");
+  expect(bare.endsWith("Only rules")).toBe(true);
+  expect(text(host())).toContain("This editor adds no rules of its own.");
 });
