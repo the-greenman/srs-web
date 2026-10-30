@@ -35,6 +35,13 @@ it("currentAnswers: latest per author wins, withdrawn clears, other kinds ignore
   ).toEqual({ "human:owner": "disagree" });
 });
 
+it("currentAnswers orders by time, not by string: a Z stamp and an offset stamp in the same second", () => {
+  const agree = { author: owner, kind: "agree", createdAt: "2026-10-29T10:00:03Z" };
+  const withdraw = { author: owner, kind: "withdrawn", createdAt: "2026-10-29T10:00:03.5+00:00" };
+  expect(currentAnswers([agree, withdraw])).toEqual({});
+  expect(currentAnswers([withdraw, agree])).toEqual({});
+});
+
 it("proposeLink writes a suggestion comment at the newest comment version, then both relations", () => {
   const id = proposeLink({} as never, "para", "problem", "com.semanticops.method/answers", "it answers SP-1");
   expect(id).toBe("c1");
