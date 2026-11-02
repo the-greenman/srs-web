@@ -1,4 +1,4 @@
-import { SO_COMMENTS_ON, SO_COMMENT_TYPE_ID } from "$lib/comments.js";
+import { SO_COMMENTS_ON, SO_COMMENT_TYPE_ID, latestByKind } from "$lib/comments.js";
 /**
  * Affirm in context (srs-web#617, remedy 2910ac1e): an agent proposes a link as one comment on the
  * record it starts from, and the owner answers on that comment with a tick or a deny. Headless: no
@@ -61,17 +61,16 @@ export interface ProposalView {
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
-/** The latest answer per author, oldest first in, latest wins; `withdrawn` clears. Pure. */
+/** The latest answer per author, by time (format-independent); `withdrawn` clears. Pure. */
 export function currentAnswers(
   responses: { author?: Actor; kind: string; createdAt: string }[]
 ): Record<string, Exclude<Answer, "withdrawn">> {
-  const latest = new Map<string, { kind: string; createdAt: string }>();
-  for (const r of responses) {
-    if (!ANSWERS.includes(r.kind)) continue;
-    const who = r.author?.id ?? "";
-    const prev = latest.get(who);
-    if (!prev || prev.createdAt <= r.createdAt) latest.set(who, r);
-  }
+  const latest = latestByKind(
+    responses,
+    ANSWERS,
+    (r) => r.kind,
+    (r) => r.author?.id ?? ""
+  );
   const out: Record<string, Exclude<Answer, "withdrawn">> = {};
   for (const [who, r] of latest)
     if (r.kind !== "withdrawn") out[who] = r.kind as "agree" | "disagree";
