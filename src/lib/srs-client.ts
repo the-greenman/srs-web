@@ -793,6 +793,12 @@ export function getNote(repo: SrsRepository, instanceId: string): NoteInstance |
   }
 }
 
+/** A record, or null for a note or an unknown id: a container's anchor may be either. */
+export function getRecordOrNull(repo: SrsRepository, instanceId: string): SrsRecord | null {
+  const i = repo.get_instance(instanceId) as { kind?: string } | null;
+  return i?.kind === "record" ? getRecord(repo, instanceId) : null;
+}
+
 /**
  * Create a new record of the given type.
  */

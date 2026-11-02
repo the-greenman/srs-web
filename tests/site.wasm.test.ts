@@ -80,6 +80,11 @@ describe.skipIf(!haveBindings)("site core on the real engine", () => {
       "primary-cta",
     ]);
     expect(blocks[2].items.map((i) => i.record.fieldValues.faq_item_key)).toEqual(["q1", "q2"]);
+    // a note on the about page is not a block
+    expect(pageBlocks(repo, about).map((b) => b.record.typeName)).toEqual([
+      "hero",
+      "homepage-prose",
+    ]);
   });
 
   it("writes settings as tags and keeps a tag it does not own", async () => {
