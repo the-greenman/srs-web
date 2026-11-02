@@ -67,3 +67,32 @@ it("kindsIn needs the SemanticOps comment at v2 (v1 has no kind)", async () => {
   expect(kindsIn([{ id: SO, version: 1 }, { id: SO, version: 2 }])).toBe(true);
   expect(kindsIn([])).toBe(false);
 });
+
+const resp = (kind: string, createdAt: string): Comment => ({ id: kind + createdAt, text: kind, createdAt, kind });
+
+it("verdictOf: the latest agree or disagree wins, withdrawn clears, task settlements are ignored", async () => {
+  const { verdictOf } = await import("../src/lib/comments");
+  expect(verdictOf([])).toBeUndefined();
+  expect(verdictOf([resp("agree", "1")])).toBe("agree");
+  expect(verdictOf([resp("agree", "1"), resp("disagree", "2")])).toBe("disagree");
+  expect(verdictOf([resp("disagree", "2"), resp("agree", "1")])).toBe("disagree");
+  expect(verdictOf([resp("agree", "1"), resp("withdrawn", "2")])).toBeUndefined();
+  expect(verdictOf([resp("withdrawn", "1"), resp("agree", "2")])).toBe("agree");
+  expect(verdictOf([resp("agree", "1"), resp("done", "2")])).toBe("agree");
+});
+
+it("verdictTotals: the latest verdict on each of an agent's comments, per agent; humans are not counted", async () => {
+  const { verdictTotals } = await import("../src/lib/comments");
+  const by = (id: string, verdict?: "agree" | "disagree", kind: "ai" | "human" = "ai"): Comment => ({
+    id: id + Math.random(),
+    text: "",
+    createdAt: "",
+    author: { kind, id },
+    ...(verdict ? { verdict } : {}),
+  });
+  const t = verdictTotals({
+    p1: [by("a", "agree"), by("a", "disagree"), by("b", "agree"), by("a")],
+    p2: [by("a", "agree"), by("h", "agree", "human")],
+  });
+  expect(t).toEqual({ a: { up: 2, down: 1 }, b: { up: 1, down: 0 } });
+});

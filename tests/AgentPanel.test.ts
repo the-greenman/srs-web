@@ -68,7 +68,7 @@ it("a saved agent row: name, relay, last connected, Connect; no heading", () => 
 it("an open agent: one status word, Disconnect, last activity", () => {
   const { getByTestId, queryByTestId } = render(AgentPanel, {
     ...base,
-    ctx: { lastActivity: () => "titled ¶ Opening · 2 min ago" },
+    ctx: { lastActivity: () => "titled ¶ Opening · 2 min ago", verdicts: () => ({ up: 0, down: 0 }) },
     agents: [
       agent({ state: { status: "online", callerUrl: "https://relay.test/c", error: null } }),
     ],
@@ -216,4 +216,13 @@ it("Forget is disabled with a reason while the channel is in use in another tab 
     expect(f.title).toBe(want ? "In use in another tab" : "");
     r.unmount();
   }
+});
+
+it("shows the writer's thumbs on an agent's comments, and nothing while there are none", () => {
+  const ctx = (up: number, down: number) => ({ lastActivity: () => "", verdicts: () => ({ up, down }) });
+  const one = render(AgentPanel, { ...base, ctx: ctx(3, 1), agents: [agent()] });
+  expect(one.getByTestId("agent-verdicts").textContent).toBe("Helpful 3 · Not helpful 1");
+  one.unmount();
+  const none = render(AgentPanel, { ...base, ctx: ctx(0, 0), agents: [agent()] });
+  expect(none.queryByTestId("agent-verdicts")).toBeNull();
 });

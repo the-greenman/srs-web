@@ -7,5 +7,5 @@
 </script>
 
 <EssayShell {...(rest as never)} {agentStatus}>
-  {#snippet agentPanel(ctx)}<span>controls {ctx?.lastActivity('agent:a')}</span>{/snippet}
+  {#snippet agentPanel(ctx)}<span>controls {ctx?.lastActivity("agent:a")}</span>{/snippet}
 </EssayShell>

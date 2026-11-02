@@ -47,7 +47,8 @@
   color: var(--color-muted);
 }
 .comments__filter,
-.comments__task {
+.comments__task,
+.comments__verdict {
   display: flex;
   flex-wrap: wrap;
   align-items: center;

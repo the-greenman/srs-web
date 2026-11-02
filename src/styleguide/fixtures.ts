@@ -119,6 +119,7 @@ export const kindComments: Comment[] = [
     createdAt: "2026-10-04T11:40:00Z",
     author: agents[1],
     kind: "question",
+    verdict: "agree",
   },
   {
     id: "k2",
@@ -143,6 +144,7 @@ export const kindComments: Comment[] = [
     author: agents[0],
     kind: "task",
     task: { state: "rejected", reason: "Out of scope for this paragraph.", author: human },
+    verdict: "disagree",
   },
   {
     id: "k5",

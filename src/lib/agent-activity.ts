@@ -165,6 +165,8 @@ export function verb(w: Pick<AgentWrite, "tool" | "changed">): string {
 export interface AgentPanelCtx {
   /** "titled ¶ Opening · 2 min ago" for the agent's latest write, or "No activity yet". */
   lastActivity(agentId: string): string;
+  /** The writer's thumbs on this agent's comments in the open essay (srs-web#592). */
+  verdicts(agentId: string): { up: number; down: number };
 }
 
 /** What the shell needs to present agent activity; computed once in App. */

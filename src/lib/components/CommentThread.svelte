@@ -9,7 +9,9 @@
   box also asks for a display name once. Ctrl/Cmd+Enter submits. A comment's kind (comments 1.1.0)
   shows as a label, and the thread filters by kind; with `onrespond`, a task offers Done, Reject (an
   optional reason) and Reopen, each a response comment (ruling ff946eb1); with `kinds` the reply box
-  picks a kind. Story: srs-web#591.
+  picks a kind. With `onrespond` and `kinds` (comments 1.1.0), an agent's comment offers a thumb up and a
+  thumb down: one click sets it, the same click clears it (`withdrawn`), the other thumb switches it
+  (ruling ff946eb1). Story: srs-web#591, #592.
   Wraps .comments (src/styles/components/comments.css). Story: muDemocracy.org#227, srs-web#422
 -->
 <script lang="ts">
@@ -18,9 +20,12 @@
   import { CONTENT_KINDS, EARLIER_THRESHOLD, groupRuns, plainText } from '$lib/comments.js';
   import { relativeTime } from '$lib/relative-time.js';
   import type { Comment, ContentKind } from '$lib/comments.js';
+  import ThumbsDown from '@lucide/svelte/icons/thumbs-down';
+  import ThumbsUp from '@lucide/svelte/icons/thumbs-up';
   import ActorChip from './ActorChip.svelte';
   import ActorMark from './ActorMark.svelte';
   import Button from './Button.svelte';
+  import IconButton from './IconButton.svelte';
   import Input from './Input.svelte';
   import MarkdownView from './MarkdownView.svelte';
   import Select from './Select.svelte';
@@ -45,7 +50,7 @@
     kinds?: boolean;
     onadd: (text: string, name?: string, kind?: ContentKind) => void;
     /** Optional: settle a task (done, rejected with an optional reason) or reopen it (withdrawn). */
-    onrespond?: (commentId: string, kind: 'done' | 'rejected' | 'withdrawn', text?: string) => void;
+    onrespond?: (commentId: string, kind: 'done' | 'rejected' | 'withdrawn' | 'agree' | 'disagree', text?: string) => void;
     /** Optional: shows a "Hide comments" control beside Comment (the shell owns the visibility state). */
     onclose?: () => void;
   } & Omit<HTMLAttributes<HTMLElement>, "onclose"> = $props(); // other attributes (e.g. data-feature, src/lib/help) go on the root
@@ -151,6 +156,12 @@
             </div>
             {#if overflowing.has(c.id) || expanded.has(c.id)}
               <Button size="sm" variant="ghost" class="comments__more" data-part="more" aria-expanded={expanded.has(c.id)} onclick={() => toggle(c.id)}>{expanded.has(c.id) ? 'Show less' : 'Show more'}</Button>
+            {/if}
+            {#if onrespond && kinds && c.author?.kind === 'ai'}
+              <div class="comments__verdict" role="group" aria-label="Was this helpful?" data-part="verdict">
+                <IconButton icon={ThumbsUp} size="sm" label="Thumbs up" pressed={c.verdict === 'agree'} data-testid="verdict-up" onclick={() => onrespond(c.id, c.verdict === 'agree' ? 'withdrawn' : 'agree')} />
+                <IconButton icon={ThumbsDown} size="sm" label="Thumbs down" pressed={c.verdict === 'disagree'} data-testid="verdict-down" onclick={() => onrespond(c.id, c.verdict === 'disagree' ? 'withdrawn' : 'disagree')} />
+              </div>
             {/if}
             {#if c.task?.reason}<p class="comments__reason" data-part="reason">{c.task.reason}</p>{/if}
             {#if c.task?.state === 'open' && onrespond}

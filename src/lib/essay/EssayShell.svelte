@@ -89,9 +89,10 @@
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
   import { EssayHistory, snapshotEssay } from "./essay-history.js";
   import { canShow, isShown, setOpen, summary, toggle, toggleAll } from "./thread-visibility.js";
-  import { addComment } from "$lib/comments.js";
+  import { addComment, verdictTotals } from "$lib/comments.js";
   import type { ContentKind } from "$lib/comments.js";
   import { respond } from "$lib/link-proposals.js";
+  import type { ResponseKind } from "$lib/link-proposals.js";
   import { annotationsFor } from "$lib/annotations.js";
   import type { Annotation } from "$lib/annotations.js";
   import { essaySource } from "./annotation-source.js";
@@ -466,8 +467,8 @@
     void run(() => addComment(repo, paragraphId, text, model?.commentsContainerId, kind));
   }
 
-  /** Settle or reopen a task: the writer's own response comment on it (ruling ff946eb1, srs-web#591). */
-  function settle(commentId: string, kind: "done" | "rejected" | "withdrawn", text?: string) {
+  /** Settle or reopen a task, or give or clear a thumb: the writer's own response comment (ruling ff946eb1, srs-web#591, #592). */
+  function settle(commentId: string, kind: ResponseKind, text?: string) {
     void run(() => respond(repo, commentId, kind, text, model?.commentsContainerId));
   }
 
@@ -619,7 +620,9 @@
   const clock = setInterval(() => (now = Date.now()), 15000);
   onDestroy(() => clearInterval(clock));
   const paragraphLabel = (id: string) => (model?.paragraphs[id] ? label(id) : undefined);
+  const totals = $derived(verdictTotals(model?.comments ?? {}));
   const panelCtx: AgentPanelCtx = {
+    verdicts: (agentId) => totals[agentId] ?? { up: 0, down: 0 },
     lastActivity(agentId) {
       const w = agentStatus?.writes.find((x) => x.agentId === agentId);
       if (!w) return "No activity yet";

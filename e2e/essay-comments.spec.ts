@@ -376,3 +376,114 @@ test("kinds label and filter the thread; a task is done, reopened and rejected w
   await expect(thread).toContainText("Out of scope.");
   await expect(thread.getByTestId("comment")).toHaveCount(2); // responses stay out of the thread
 });
+
+/**
+ * srs-web#592: a thumb on an agent's comment. The writer's verdict is a response comment on it
+ * (ruling ff946eb1): set, switch and clear survive a reload, and the Agents panel totals them per agent.
+ */
+test("a thumb on an agent's comment is set, switched and cleared; the Agents panel totals it", async ({
+  page,
+}) => {
+  await routeRelayChannels(page, { fixed: true });
+  let toExecutor: (frame: unknown) => void = () => {};
+  const replies = new Map<string, (r: { status: number; body?: string }) => void>();
+  let executorUrl = "";
+  await page.routeWebSocket(/relay\.test.*executor/, (ws) => {
+    executorUrl = ws.url();
+    toExecutor = (f) => ws.send(JSON.stringify(f));
+    ws.onMessage((m) => {
+      const f = JSON.parse(String(m));
+      replies.get(f.requestId)?.(f.response);
+    });
+  });
+  let n = 0;
+  async function rpc(method: string, params?: unknown) {
+    const requestId = `req${++n}`;
+    const generation = new URL(executorUrl).searchParams.get("generation") as string;
+    const done = new Promise<{ status: number; body?: string }>((res) =>
+      replies.set(requestId, res)
+    );
+    toExecutor({
+      version: 1,
+      type: "request",
+      requestId,
+      executorGeneration: generation,
+      deadlineUnixMs: Date.now() + 30000,
+      request: {
+        method: "POST",
+        contentType: "application/json",
+        headers: {},
+        body: Buffer.from(JSON.stringify({ jsonrpc: "2.0", id: n, method, params })).toString(
+          "base64url"
+        ),
+      },
+    });
+    const r = await done;
+    return JSON.parse(Buffer.from(r.body ?? "", "base64url").toString());
+  }
+  const tool = (name: string, args: unknown) => rpc("tools/call", { name, arguments: args });
+  await page.addInitScript(() =>
+    localStorage.setItem("srs-web.mcp-relay-url", "https://relay.test")
+  );
+  await page.goto("/");
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+  await page
+    .locator('input[type="file"]#srsj-file')
+    .setInputFiles(path.join(path.dirname(ESSAY), "essay-1.5.0.srsj"));
+  await page.getByTestId("package-upgrade-notice-action").click();
+  await page.getByTestId("upgrade-apply").click();
+  await expect(page.getByTestId("upgrade-modal")).toHaveCount(0);
+  await page.getByTestId("package-editor-essay").click();
+  await page.getByRole("button", { name: "New essay" }).click();
+  await page.getByTestId("first-paragraph").click();
+  await page.locator(".essay-shell__page .block__body").first().click();
+  await page.keyboard.type("Opening line.");
+  await page.getByTestId("mcp-library-connect").first().click();
+  await expect(page.getByTestId("mcp-status")).toHaveText("Connected", { timeout: 15000 });
+  await rpc("initialize", {
+    protocolVersion: "2025-06-18",
+    capabilities: {},
+    clientInfo: { name: "agent-test", version: "0" },
+  });
+  const paragraph = (await items(page)
+    .nth(0)
+    .locator("[data-block-id]")
+    .getAttribute("data-block-id")) as string;
+  const ids: string[] = [];
+  for (const text of ["Cite the budget.", "Too strong."]) {
+    const rec = await tool("record_create", {
+      type: "com.semanticops.comments/comment",
+      fieldValues: { comment_text: text, kind: "suggestion" },
+    });
+    expect(rec.result?.isError, JSON.stringify(rec)).not.toBe(true);
+    const id = /[0-9a-f]{8}-[0-9a-f-]{27}/.exec(JSON.stringify(rec.result))?.[0] as string;
+    const rel = await tool("relation_create", {
+      relationType: "com.semanticops.comments/comments-on",
+      sourceInstanceId: id,
+      targetInstanceId: paragraph,
+    });
+    expect(rel.result?.isError, JSON.stringify(rel)).not.toBe(true);
+    ids.push(id);
+  }
+
+  const thread = items(page).nth(0);
+  await openThread(page, 0);
+  await expect(thread.getByTestId("comment")).toHaveCount(2);
+  const up = (i: number) => thread.getByTestId("comment").nth(i).getByTestId("verdict-up");
+  const down = (i: number) => thread.getByTestId("comment").nth(i).getByTestId("verdict-down");
+  const totals = page.getByTestId("agent-verdicts");
+
+  await up(0).click(); // set
+  await expect(up(0)).toHaveAttribute("aria-pressed", "true");
+  await down(1).click();
+  await expect(down(1)).toHaveAttribute("aria-pressed", "true");
+  await expect(totals).toHaveText("Helpful 1 · Not helpful 1");
+  await down(0).click(); // switch
+  await expect(down(0)).toHaveAttribute("aria-pressed", "true");
+  await expect(up(0)).toHaveAttribute("aria-pressed", "false");
+  await expect(totals).toHaveText("Helpful 0 · Not helpful 2");
+  await down(1).click(); // clear
+  await expect(down(1)).toHaveAttribute("aria-pressed", "false");
+  await expect(totals).toHaveText("Helpful 0 · Not helpful 1");
+  await expect(thread.getByTestId("comment")).toHaveCount(2); // responses stay out of the thread
+});
