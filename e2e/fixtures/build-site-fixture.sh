@@ -44,7 +44,9 @@ cont "{\"title\":\"Home\",\"tags\":[\"published\",\"closing-mark\"],\"anchorInst
 AP=$(rec $N/homepage '{"fieldValues":{"page_key":"about","page_title":"About","page_intent":"About us.","primary_audience":"brief audience","tone_guidance":"brief tone"}}')
 A1=$(rec $N/hero "{\"fieldValues\":{${brief/KEY/opening},\"eyebrow\":\"\",\"headline\":\"About.\",\"supporting_copy\":\"Who we are.\"}}")
 A2=$(rec $N/homepage-prose "{\"fieldValues\":{${brief/KEY/story},\"section_heading\":\"Our story\",\"section_body\":\"It began.\"}}")
-cont "{\"title\":\"About\",\"tags\":[\"published\",\"draft\",\"layout:essay\"],\"anchorInstanceId\":\"$AP\",\"memberInstanceIds\":[{\"instanceId\":\"$AP\"},{\"instanceId\":\"$A1\"},{\"instanceId\":\"$A2\"}]}" >/dev/null
+# a note on a page (a comment, say) is not a block
+AN=$(echo '{"title":"A note on the page","sections":[{"name":"body","label":"Body","content":"Not a block."}]}' | srs note create --repo $W | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d["payload"]["note"]["instanceId"] if d.get("ok") else sys.exit(str(d)))')
+cont "{\"title\":\"About\",\"tags\":[\"published\",\"draft\",\"layout:essay\"],\"anchorInstanceId\":\"$AP\",\"memberInstanceIds\":[{\"instanceId\":\"$AP\"},{\"instanceId\":\"$A1\"},{\"instanceId\":\"$AN\"},{\"instanceId\":\"$A2\"}]}" >/dev/null
 # scratch, not published
 SP=$(rec $N/homepage '{"fieldValues":{"page_key":"scratch","page_title":"Scratch","page_intent":"Not yet.","primary_audience":"brief audience","tone_guidance":"brief tone"}}')
 S1=$(rec $N/homepage-prose "{\"fieldValues\":{${brief/KEY/note},\"section_heading\":\"Draft\",\"section_body\":\"Not yet.\"}}")
