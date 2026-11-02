@@ -53,9 +53,15 @@ export interface Comment {
   kind?: string;
   /** Only on a `task`. */
   task?: TaskState;
+  /** The writer's current thumb on this comment (latest `agree` / `disagree` response; absent = none or withdrawn). */
+  verdict?: Verdict;
 }
 
+/** A thumb: `agree` is up, `disagree` is down (ruling ff946eb1; cleared by `withdrawn`). */
+export type Verdict = "agree" | "disagree";
+
 const SETTLES = ["done", "rejected", "withdrawn"];
+const VERDICTS = ["agree", "disagree", "withdrawn"];
 
 /** Chronological order of two createdAt stamps (format-independent: Z, offsets, fractions); unparsable last. */
 export const byTime = (a: string, b: string): number =>
@@ -95,6 +101,41 @@ export function taskState(responses: Comment[]): TaskState {
     author: latest.author,
     ...(latest.text && latest.text !== state ? { reason: latest.text } : {}),
   };
+}
+
+/**
+ * A comment's verdict, from the responses on it: the latest `agree`, `disagree` or `withdrawn` wins,
+ * `withdrawn` clears. Pure. Any author's response counts (ponytail: an essay has one writer, as `taskState`).
+ */
+export function verdictOf(responses: Comment[]): Verdict | undefined {
+  let latest: Comment | undefined;
+  for (const r of responses)
+    if (VERDICTS.includes(r.kind ?? "") && (!latest || byTime(latest.createdAt, r.createdAt) <= 0))
+      latest = r;
+  return latest?.kind === "agree" || latest?.kind === "disagree" ? latest.kind : undefined;
+}
+
+/** Up and down verdicts on one agent's comments. */
+export interface VerdictTotals {
+  up: number;
+  down: number;
+}
+
+/**
+ * Verdict totals per agent id (`createdBy`), counting the latest verdict on each of that agent's
+ * comments (ruling ff946eb1). Only AI-authored comments count; a human's comment has no agent to tell.
+ */
+export function verdictTotals(comments: Record<string, Comment[]>): Record<string, VerdictTotals> {
+  const out: Record<string, VerdictTotals> = {};
+  for (const list of Object.values(comments))
+    for (const c of list) {
+      if (!c.verdict || c.author?.kind !== "ai") continue;
+      out[c.author.id] ??= { up: 0, down: 0 };
+      const t = out[c.author.id];
+      if (c.verdict === "agree") t.up++;
+      else t.down++;
+    }
+  return out;
 }
 
 /** Comment v2 (comments 1.1.0) adds `kind`; v1 has only `comment_text`. */
@@ -161,7 +202,11 @@ export function loadComments(repo: SrsRepository, types: TypeSummary[]): Record<
   for (const list of Object.values(out)) list.sort((a, b) => byTime(a.createdAt, b.createdAt));
   // Responses comment on the comment they answer, so they sit under its id, never in a thread.
   for (const list of Object.values(out))
-    for (const c of list) if (c.kind === "task") c.task = taskState(out[c.id] ?? []);
+    for (const c of list) {
+      if (c.kind === "task") c.task = taskState(out[c.id] ?? []);
+      const verdict = verdictOf(out[c.id] ?? []);
+      if (verdict) c.verdict = verdict;
+    }
   commentCache.set(repo, { key, comments: out });
   return out;
 }

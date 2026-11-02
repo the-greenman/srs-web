@@ -282,6 +282,7 @@
               </div>
             </div>
             {#if ctx && a.state}<p class="agent-panel__meta" data-testid="agent-last">{ctx.lastActivity(a.conn.id)}</p>{/if}
+            {#if ctx}{@const v = ctx.verdicts(a.conn.id)}{#if v.up || v.down}<p class="agent-panel__meta" data-testid="agent-verdicts" aria-label="Verdicts on its comments">Helpful {v.up} · Not helpful {v.down}</p>{/if}{/if}
             {#if a.state}
               {#if viewShown(a, 'pair')}
                 <PairingLoader pair={() => pair(a.conn.id)} {now} scope={() => rowEl(a.conn.id)} bind:view={liveView} bind:retry={liveRetry} />

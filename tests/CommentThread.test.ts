@@ -73,3 +73,30 @@ it("without onrespond there are no task controls; with kinds the reply carries t
   await fireEvent.keyDown(getByLabelText("Reply"), { key: "Enter", ctrlKey: true });
   expect(onadd).toHaveBeenCalledWith("Too strong.", undefined, "objection");
 });
+
+it("an agent's comment offers a thumb: one click sets it, the same click clears it, the other switches it", async () => {
+  const onrespond = vi.fn();
+  const agent = { kind: "ai" as const, id: "agent:a" };
+  const human = { kind: "human" as const, id: "h" };
+  const comments: Comment[] = [
+    { id: "a1", text: "Cite it.", createdAt: "1", author: agent },
+    { id: "a2", text: "Too strong.", createdAt: "2", author: agent, verdict: "agree" },
+    { id: "h1", text: "Mine.", createdAt: "3", author: human },
+  ];
+  const { getAllByTestId, queryAllByTestId, rerender } = render(CommentThread, {
+    comments,
+    kinds: true,
+    onadd: () => {},
+    onrespond,
+  });
+  expect(getAllByTestId("verdict-up")).toHaveLength(2); // none on the human's comment
+  expect(getAllByTestId("verdict-up")[1].getAttribute("aria-pressed")).toBe("true");
+  await fireEvent.click(getAllByTestId("verdict-up")[0]);
+  expect(onrespond).toHaveBeenLastCalledWith("a1", "agree");
+  await fireEvent.click(getAllByTestId("verdict-up")[1]);
+  expect(onrespond).toHaveBeenLastCalledWith("a2", "withdrawn");
+  await fireEvent.click(getAllByTestId("verdict-down")[1]);
+  expect(onrespond).toHaveBeenLastCalledWith("a2", "disagree");
+  await rerender({ comments, kinds: false, onadd: () => {}, onrespond });
+  expect(queryAllByTestId("verdict-up")).toHaveLength(0);
+});
