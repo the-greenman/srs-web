@@ -1,0 +1,3260 @@
+{
+  "srsj": "2",
+  "manifest": {
+    "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+    "createdAt": "2026-11-02T14:32:27.924813731+00:00",
+    "dataModelRevision": 11,
+    "namespace": "org.example.site",
+    "packageRefs": [
+      {
+        "mode": "local",
+        "path": "packages/website"
+      }
+    ],
+    "repositoryId": "78272fb1-69ad-4b12-901f-cdaaf99a35b1",
+    "rootContainerId": "78272fb1-69ad-4b12-901f-cdaaf99a35b1",
+    "srsVersion": "2.0-draft",
+    "title": "Site fixture"
+  },
+  "data": {
+    "containers/1a897de5-d598-4dff-9b70-fad219fdcf9e/container.json": {
+      "anchorInstanceId": "07158798-c367-431d-afe8-027853d350b6",
+      "containerId": "1a897de5-d598-4dff-9b70-fad219fdcf9e",
+      "containerType": "guide",
+      "title": "Guide · Recording a decision"
+    },
+    "containers/1a897de5-d598-4dff-9b70-fad219fdcf9e/entries/07158798-c367-431d-afe8-027853d350b6.json": {
+      "containerId": "1a897de5-d598-4dff-9b70-fad219fdcf9e",
+      "instanceId": "07158798-c367-431d-afe8-027853d350b6",
+      "key": "a0"
+    },
+    "containers/1a897de5-d598-4dff-9b70-fad219fdcf9e/entries/f586652d-64c7-496b-9131-da181244d467.json": {
+      "containerId": "1a897de5-d598-4dff-9b70-fad219fdcf9e",
+      "instanceId": "f586652d-64c7-496b-9131-da181244d467",
+      "key": "a1"
+    },
+    "containers/25b5f2a5-f08b-4e12-991f-953c09616733/container.json": {
+      "anchorInstanceId": "ad7360c9-6bc1-4697-b874-117d18fbad23",
+      "containerId": "25b5f2a5-f08b-4e12-991f-953c09616733",
+      "tags": [
+        "published",
+        "draft",
+        "layout:essay"
+      ],
+      "title": "About"
+    },
+    "containers/25b5f2a5-f08b-4e12-991f-953c09616733/entries/398d5d74-659e-4f63-93b7-aabf66eea139.json": {
+      "containerId": "25b5f2a5-f08b-4e12-991f-953c09616733",
+      "instanceId": "398d5d74-659e-4f63-93b7-aabf66eea139",
+      "key": "a1"
+    },
+    "containers/25b5f2a5-f08b-4e12-991f-953c09616733/entries/ad7360c9-6bc1-4697-b874-117d18fbad23.json": {
+      "containerId": "25b5f2a5-f08b-4e12-991f-953c09616733",
+      "instanceId": "ad7360c9-6bc1-4697-b874-117d18fbad23",
+      "key": "a0"
+    },
+    "containers/25b5f2a5-f08b-4e12-991f-953c09616733/entries/d10b86bd-46fb-4437-81d5-d38571a5ced4.json": {
+      "containerId": "25b5f2a5-f08b-4e12-991f-953c09616733",
+      "instanceId": "d10b86bd-46fb-4437-81d5-d38571a5ced4",
+      "key": "a2"
+    },
+    "containers/61537fbd-5458-4a1b-890a-3dd2dad9e3d2/container.json": {
+      "anchorInstanceId": "f060111f-8ec0-4ca6-adef-cbc9465d7acd",
+      "containerId": "61537fbd-5458-4a1b-890a-3dd2dad9e3d2",
+      "title": "Scratch"
+    },
+    "containers/61537fbd-5458-4a1b-890a-3dd2dad9e3d2/entries/0357aa9a-fb01-4666-92fd-cbee4e23fce7.json": {
+      "containerId": "61537fbd-5458-4a1b-890a-3dd2dad9e3d2",
+      "instanceId": "0357aa9a-fb01-4666-92fd-cbee4e23fce7",
+      "key": "a1"
+    },
+    "containers/61537fbd-5458-4a1b-890a-3dd2dad9e3d2/entries/f060111f-8ec0-4ca6-adef-cbc9465d7acd.json": {
+      "containerId": "61537fbd-5458-4a1b-890a-3dd2dad9e3d2",
+      "instanceId": "f060111f-8ec0-4ca6-adef-cbc9465d7acd",
+      "key": "a0"
+    },
+    "containers/78272fb1-69ad-4b12-901f-cdaaf99a35b1/container.json": {
+      "containerId": "78272fb1-69ad-4b12-901f-cdaaf99a35b1",
+      "identityInstanceId": "c6ae0696-dc76-44a5-9cf4-d550127d7f3b",
+      "title": "Site fixture"
+    },
+    "containers/78272fb1-69ad-4b12-901f-cdaaf99a35b1/entries/c6ae0696-dc76-44a5-9cf4-d550127d7f3b.json": {
+      "containerId": "78272fb1-69ad-4b12-901f-cdaaf99a35b1",
+      "instanceId": "c6ae0696-dc76-44a5-9cf4-d550127d7f3b",
+      "key": "a0"
+    },
+    "containers/f55bc55f-d9b3-49c7-9ec1-b8e32422bffa/container.json": {
+      "anchorInstanceId": "36cc3127-ea1c-451b-9377-cda13223df89",
+      "containerId": "f55bc55f-d9b3-49c7-9ec1-b8e32422bffa",
+      "tags": [
+        "published",
+        "closing-mark"
+      ],
+      "title": "Home"
+    },
+    "containers/f55bc55f-d9b3-49c7-9ec1-b8e32422bffa/entries/14b0ad9b-d7a3-4a7a-bcc7-5a4c83ea3978.json": {
+      "containerId": "f55bc55f-d9b3-49c7-9ec1-b8e32422bffa",
+      "instanceId": "14b0ad9b-d7a3-4a7a-bcc7-5a4c83ea3978",
+      "key": "a0",
+      "parent": "95a154f3-4154-469b-8451-84fe3d056456"
+    },
+    "containers/f55bc55f-d9b3-49c7-9ec1-b8e32422bffa/entries/30550763-18c3-4ea0-a4e4-d9b09eb67df5.json": {
+      "containerId": "f55bc55f-d9b3-49c7-9ec1-b8e32422bffa",
+      "instanceId": "30550763-18c3-4ea0-a4e4-d9b09eb67df5",
+      "key": "a2"
+    },
+    "containers/f55bc55f-d9b3-49c7-9ec1-b8e32422bffa/entries/36cc3127-ea1c-451b-9377-cda13223df89.json": {
+      "containerId": "f55bc55f-d9b3-49c7-9ec1-b8e32422bffa",
+      "instanceId": "36cc3127-ea1c-451b-9377-cda13223df89",
+      "key": "a0"
+    },
+    "containers/f55bc55f-d9b3-49c7-9ec1-b8e32422bffa/entries/8232a6de-8884-4d99-8ada-6e11012ac204.json": {
+      "containerId": "f55bc55f-d9b3-49c7-9ec1-b8e32422bffa",
+      "instanceId": "8232a6de-8884-4d99-8ada-6e11012ac204",
+      "key": "a3"
+    },
+    "containers/f55bc55f-d9b3-49c7-9ec1-b8e32422bffa/entries/95a154f3-4154-469b-8451-84fe3d056456.json": {
+      "containerId": "f55bc55f-d9b3-49c7-9ec1-b8e32422bffa",
+      "instanceId": "95a154f3-4154-469b-8451-84fe3d056456",
+      "key": "a5"
+    },
+    "containers/f55bc55f-d9b3-49c7-9ec1-b8e32422bffa/entries/9999261d-787b-4ff8-9987-301e707f3579.json": {
+      "containerId": "f55bc55f-d9b3-49c7-9ec1-b8e32422bffa",
+      "instanceId": "9999261d-787b-4ff8-9987-301e707f3579",
+      "key": "a1",
+      "parent": "8232a6de-8884-4d99-8ada-6e11012ac204"
+    },
+    "containers/f55bc55f-d9b3-49c7-9ec1-b8e32422bffa/entries/b12eb150-3b77-4ee2-af38-9f347216a0b0.json": {
+      "containerId": "f55bc55f-d9b3-49c7-9ec1-b8e32422bffa",
+      "instanceId": "b12eb150-3b77-4ee2-af38-9f347216a0b0",
+      "key": "a4"
+    },
+    "containers/f55bc55f-d9b3-49c7-9ec1-b8e32422bffa/entries/b625e4e2-04cf-463e-bb5b-3e42ceda7f35.json": {
+      "containerId": "f55bc55f-d9b3-49c7-9ec1-b8e32422bffa",
+      "instanceId": "b625e4e2-04cf-463e-bb5b-3e42ceda7f35",
+      "key": "a1"
+    },
+    "containers/f55bc55f-d9b3-49c7-9ec1-b8e32422bffa/entries/fc21618a-e6b3-474d-be84-e2e6bd06c215.json": {
+      "containerId": "f55bc55f-d9b3-49c7-9ec1-b8e32422bffa",
+      "instanceId": "fc21618a-e6b3-474d-be84-e2e6bd06c215",
+      "key": "a0",
+      "parent": "8232a6de-8884-4d99-8ada-6e11012ac204"
+    },
+    "package/fields/slug-2e3be0f8.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "URL-safe identifier for the entity"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "URL-safe identifier for the entity",
+      "fieldType": {
+        "datatype": "string"
+      },
+      "id": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+      "name": "slug",
+      "namespace": "com.mudemocracy",
+      "version": 1
+    },
+    "package/fields/title-e5b359b0.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Human-readable title of the guide"
+      },
+      "createdAt": "2026-06-04T00:00:00Z",
+      "description": "Human-readable title of the guide",
+      "fieldType": {
+        "datatype": "string"
+      },
+      "id": "e5b359b0-8f8b-4807-bae9-b841adbd6248",
+      "name": "title",
+      "namespace": "com.mudemocracy",
+      "version": 1
+    },
+    "package/package.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
+      "blueprints": [],
+      "compositions": [],
+      "createdAt": "2026-01-01T00:00:00Z",
+      "description": "",
+      "fields": [
+        "fields/slug-2e3be0f8.json",
+        "fields/title-e5b359b0.json"
+      ],
+      "id": "88246433-150c-48b9-ad51-a8c8f9970b85",
+      "lifecycles": [],
+      "name": "primary",
+      "namespace": "org.example.site",
+      "protocols": [],
+      "relationTypes": [
+        "relation-types/uses-ce533644.json"
+      ],
+      "status": "active",
+      "themes": [],
+      "title": "primary",
+      "types": [
+        "types/guide-8f138dd6.json"
+      ],
+      "version": "1.0.0",
+      "views": [],
+      "vocabularies": []
+    },
+    "package/relation-types/uses-ce533644.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "category": "association",
+      "createdAt": "2026-09-11T12:32:07.051932227+00:00",
+      "description": "Source includes the target canonical text by reference rather than copying it. The canonical text is edited in one place and every user follows; a canonical text with incoming uses edges is in service and must be updated rather than superseded.",
+      "id": "ce533644-9514-40bb-aa39-8cc5ae3d2007",
+      "key": "uses",
+      "label": "Uses",
+      "namespace": "com.mudemocracy",
+      "version": 1
+    },
+    "package/types/guide-8f138dd6.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-11-02T14:32:25.218585339+00:00",
+      "description": "Fixture guide: slug and title only.",
+      "fields": [
+        {
+          "fieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+          "order": 0,
+          "required": true
+        },
+        {
+          "fieldId": "e5b359b0-8f8b-4807-bae9-b841adbd6248",
+          "order": 1,
+          "required": true
+        }
+      ],
+      "id": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
+      "identityFieldId": "2e3be0f8-0497-4754-a8b2-62ce6b05493f",
+      "name": "guide",
+      "namespace": "com.mudemocracy",
+      "version": 1
+    },
+    "packages/website/blueprints/homepage-3c9069fa.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/blueprint.json",
+      "aiGuidance": {
+        "purpose": "Create an argument-led homepage as an ordered composition. Require a hero and a final CTA, treat middle blocks as optional, and ensure the order carries the reader from concern to proof to immediate action. Do NOT author contains Relations between a page and its blocks (a group block DOES contain its items: a feature group contains its feature cards and a decision record contains its items, ordered among themselves by precedes): blocks are shared across page variants by Container membership, and order lives in the Composition. Use projects Relations to make every substantive block reviewable against the SRS records it stands on. A hero and a final CTA are REQUIRED in every homepage variant. That requirement cannot currently be declared structurally: Blueprint.requiredTypes is validated against relation structure, and this document has none by design, so the requirement is stated here and enforced by review."
+      },
+      "createdAt": "2026-09-14T17:08:39.806335947+00:00",
+      "description": "A compositional homepage. Block membership and page order are presentational and are declared by a Container whose ordered entries carry the page order (RFC-043), not by contains Relations (a group block contains its own items): page structure at this level is presentation, not a part-of claim about the world (RFC-034 I-148 — a Container is a declared selection, a Relation is a semantic claim).",
+      "id": "3c9069fa-5804-40a9-9010-c0713b339619",
+      "name": "homepage",
+      "namespace": "com.mudemocracy.website",
+      "requiredTypes": [
+        {
+          "typeId": "704c2742-9b02-4d08-89c5-7fa1ffa85697",
+          "typeVersion": 1
+        },
+        {
+          "typeId": "3751bf69-e00f-4e77-bbb2-fb7e3d3dfcf7",
+          "typeVersion": 1
+        }
+      ],
+      "rootTypes": [
+        {
+          "typeId": "5de26162-3fd5-4fc9-b32e-567db46bb552",
+          "typeVersion": 1
+        }
+      ],
+      "structure": [
+        {
+          "cardinality": "one-to-one",
+          "relationType": "precedes",
+          "required": true,
+          "sourceType": {
+            "typeId": "704c2742-9b02-4d08-89c5-7fa1ffa85697",
+            "typeVersion": 1
+          },
+          "targetType": {
+            "typeId": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+            "typeVersion": 1
+          }
+        },
+        {
+          "cardinality": "one-to-one",
+          "relationType": "precedes",
+          "required": true,
+          "sourceType": {
+            "typeId": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+            "typeVersion": 1
+          },
+          "targetType": {
+            "typeId": "3751bf69-e00f-4e77-bbb2-fb7e3d3dfcf7",
+            "typeVersion": 1
+          }
+        },
+        {
+          "cardinality": "one-to-many",
+          "relationType": "contains",
+          "required": false,
+          "sourceType": {
+            "typeId": "ead43ed4-de39-4439-b852-55346429128b",
+            "typeVersion": 1
+          },
+          "targetType": {
+            "typeId": "4db1ede3-1690-4087-bcc6-4e0ecded3135",
+            "typeVersion": 1
+          }
+        },
+        {
+          "cardinality": "one-to-many",
+          "relationType": "contains",
+          "required": false,
+          "sourceType": {
+            "typeId": "1e5fbfea-7a89-49a0-af86-31134a090305",
+            "typeVersion": 1
+          },
+          "targetType": {
+            "typeId": "0b0f6a5f-0682-4552-9e84-36d9e24e54a6",
+            "typeVersion": 1
+          }
+        }
+      ],
+      "version": 1
+    },
+    "packages/website/compositions/site-56ae2210.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/composition.json",
+      "aiGuidance": {
+        "purpose": "The link between the website package and the site's components: typeDispatch says which View draws each block type. Add a block type here, with its View, before the site or the editor can use it."
+      },
+      "createdAt": "2026-11-02T12:00:47Z",
+      "description": "A website page: the page container's own entry order, each block drawn through the View of its type. The site build maps each View to the component that draws it, and the site editor offers only types this Composition dispatches.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "id": "56ae2210-f98b-4ce8-82e2-9657ea7fdcb1",
+      "name": "site",
+      "namespace": "com.mudemocracy.website",
+      "rootTypeRefs": [
+        {
+          "typeId": "5de26162-3fd5-4fc9-b32e-567db46bb552",
+          "typeVersion": 1
+        }
+      ],
+      "sections": [
+        {
+          "emptyBehavior": "hide",
+          "order": 0,
+          "ordering": {
+            "source": "arranged"
+          },
+          "sectionId": "blocks",
+          "source": {
+            "type": "container-subset",
+            "typeFilter": [
+              "com.mudemocracy.website/action-card",
+              "com.mudemocracy.website/bio",
+              "com.mudemocracy.website/explainer",
+              "com.mudemocracy.website/faq-group",
+              "com.mudemocracy.website/faq-item",
+              "com.mudemocracy.website/guide-section",
+              "com.mudemocracy.website/hero",
+              "com.mudemocracy.website/homepage-cta",
+              "com.mudemocracy.website/homepage-decision-record",
+              "com.mudemocracy.website/homepage-decision-record-item",
+              "com.mudemocracy.website/homepage-feature",
+              "com.mudemocracy.website/homepage-feature-group",
+              "com.mudemocracy.website/homepage-hero",
+              "com.mudemocracy.website/homepage-prose",
+              "com.mudemocracy.website/homepage-quote",
+              "com.mudemocracy.website/primary-cta"
+            ]
+          },
+          "typeDispatch": {
+            "com.mudemocracy.website/action-card": "a91e7ae4-610f-4653-be3b-1cb751e30f2c",
+            "com.mudemocracy.website/bio": "f7d956ab-0744-4987-8622-1547a71be954",
+            "com.mudemocracy.website/explainer": "952cb650-3a7a-41a0-8d1e-4458b01ae681",
+            "com.mudemocracy.website/faq-group": "d3c7cafd-e002-4f7e-a1e8-98d13891be15",
+            "com.mudemocracy.website/faq-item": "5c63a9d8-49e2-4162-92e7-fadfa9ab3b21",
+            "com.mudemocracy.website/guide-section": "36a95874-d726-4e34-8a5a-f3712507908b",
+            "com.mudemocracy.website/hero": "5eee2746-5c02-4ecd-a03e-e753cfaf0e85",
+            "com.mudemocracy.website/homepage-cta": "a0469295-3a87-4bb9-8ebb-12df3ce27013",
+            "com.mudemocracy.website/homepage-decision-record": "6ee29738-8c9b-49b5-80bf-fca3e7ad9bf4",
+            "com.mudemocracy.website/homepage-decision-record-item": "8480c393-f233-4393-ad42-98475311cdbd",
+            "com.mudemocracy.website/homepage-feature": "2c989e4a-abe3-40da-a429-3b9e28312984",
+            "com.mudemocracy.website/homepage-feature-group": "0c6ebdfc-f660-4d82-bc50-581e5aefb2fb",
+            "com.mudemocracy.website/homepage-hero": "5eee2746-5c02-4ecd-a03e-e753cfaf0e85",
+            "com.mudemocracy.website/homepage-prose": "f5cce8f7-a847-4397-93fc-d3a58883af2b",
+            "com.mudemocracy.website/homepage-quote": "6fb50612-3aa7-4ef0-b6d4-c95abb1aa587",
+            "com.mudemocracy.website/primary-cta": "84f5f085-8b83-4aee-83c9-50514be28aa0"
+          }
+        }
+      ],
+      "tags": [
+        "site"
+      ],
+      "themeRef": {
+        "mode": "bundled",
+        "themeId": "cbd967a2-c7b9-47f9-9204-c6e41f6fbbb9"
+      },
+      "version": 1
+    },
+    "packages/website/fields/actionhref-3212e6db.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Use a stable destination; no publishable placeholders."
+      },
+      "createdAt": "2026-09-14T17:07:39.662901821+00:00",
+      "description": "CTA destination.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "3212e6db-310c-4b07-b490-d516d41c0567",
+      "name": "action_href",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/actionintent-acc4c3d9.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "State the intended action or explicitly say None; it is not button text."
+      },
+      "createdAt": "2026-09-14T17:07:38.491135162+00:00",
+      "description": "Non-rendered intended next action.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+      "name": "action_intent",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/actionlabel-e8237a7c.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Name one immediate action in active, plain language."
+      },
+      "createdAt": "2026-09-14T17:07:39.603960823+00:00",
+      "description": "Visible CTA label.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "e8237a7c-f977-405a-9c57-fe216df24d48",
+      "name": "action_label",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/biokey-2446c2f7.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "A short slug; never shown."
+      },
+      "createdAt": "2026-10-23T10:31:40.021955675+00:00",
+      "description": "Stable key of a person's bio on a page.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "2446c2f7-38de-4ae4-858b-2bc13ba87493",
+      "name": "bio_key",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/bioname-b230d787.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "The name the person goes by. A label, not a claim."
+      },
+      "createdAt": "2026-10-23T10:31:40.060974694+00:00",
+      "description": "The person's name, as shown on their bio card.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "b230d787-8023-4b57-85fe-30ecb3e955c1",
+      "name": "bio_name",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/biophoto-d2456270.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "A path like /images/people/name.jpg. Never invent one: the file must exist in the site."
+      },
+      "createdAt": "2026-10-23T10:31:40.149172430+00:00",
+      "description": "Site path of the person's photo (public/images/people/, 600px square).",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "d2456270-f641-4177-ae67-6afa0bc13a2c",
+      "name": "bio_photo",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/biorole-7bc84f28.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Their role in the project and any credential, in a short line. A label, not a claim."
+      },
+      "createdAt": "2026-10-23T10:31:40.103385797+00:00",
+      "description": "The person's role, one line under their name.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "7bc84f28-c758-4d7f-b91b-f4f01a5741e8",
+      "name": "bio_role",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/biotext-ad073964.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Who they are and why they are here, in the owner's voice. Statements about a real person: keep them ones the person would sign."
+      },
+      "createdAt": "2026-10-23T10:31:40.189340213+00:00",
+      "description": "A line or two about the person (markdown).",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "ad073964-6bb3-4564-a7ff-296950fb42dd",
+      "name": "bio_text",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/callout-befb5992.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Use for a concise guardrail, proof point, or transition; do not introduce an untraced claim."
+      },
+      "createdAt": "2026-09-14T17:07:38.857673970+00:00",
+      "description": "Optional highlighted supporting text.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "befb5992-70a7-4957-8b65-1d66cd13533b",
+      "name": "callout",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/cardkey-acf279b1.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "A short slug; never shown."
+      },
+      "createdAt": "2026-10-19T11:31:30Z",
+      "description": "Stable key of an action card within its call to action.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "acf279b1-a2f2-4362-9379-603382eca6d5",
+      "name": "card_key",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/cardlines-ef744378.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Two or three short lines that make the action feel small and concrete."
+      },
+      "createdAt": "2026-10-19T11:31:30Z",
+      "description": "The short lines of an action card, one per line.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "ef744378-7c33-4361-bd16-5611ff219813",
+      "name": "card_lines",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/destinationhref-3cf91740.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Use a stable internal path or URL."
+      },
+      "createdAt": "2026-09-14T17:07:39.167901234+00:00",
+      "description": "Feature destination.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "3cf91740-38ba-40de-bb06-af3ce1124e69",
+      "name": "destination_href",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/editorialobjective-40527886.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Describe what the reader should understand, feel, or be ready to do."
+      },
+      "createdAt": "2026-09-14T17:07:38.433032381+00:00",
+      "description": "Concrete objective for this block.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "40527886-7a33-4328-b478-9352c6e116d6",
+      "name": "editorial_objective",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/explainerkey-097ca1d8.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "The name of the explainer's scene set in the site code, for example decision-recording."
+      },
+      "createdAt": "2026-10-19T11:31:30Z",
+      "description": "Which video explainer an explainer block shows.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "097ca1d8-626c-4b6f-8adb-4d2391abe634",
+      "name": "explainer_key",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/eyebrow-7be1eac3.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Use a compact orienting phrase; do not duplicate the headline."
+      },
+      "createdAt": "2026-09-14T17:07:38.550303662+00:00",
+      "description": "Optional short hero overline.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "7be1eac3-08be-408b-ac66-74baaac076a0",
+      "name": "eyebrow",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/faqanswer-7ec03889.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Short and direct; markdown links allowed. An answer that asserts something about the world needs evidence like any other statement."
+      },
+      "createdAt": "2026-10-19T11:31:30Z",
+      "description": "The answer to an FAQ question.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "7ec03889-d4fd-49ff-87ad-c5c2352ec033",
+      "name": "faq_answer",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/faqitemkey-eb1af15a.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "A short slug; never shown."
+      },
+      "createdAt": "2026-10-19T11:31:30Z",
+      "description": "Stable key of a question within its FAQ group.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "eb1af15a-28ac-4df4-ba73-8425039bfa24",
+      "name": "faq_item_key",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/faqquestion-87eef92c.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "In the reader's own words, as they would ask it."
+      },
+      "createdAt": "2026-10-19T11:31:30Z",
+      "description": "A question a reader asks.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "87eef92c-b253-49fd-b4b4-8f705fefee40",
+      "name": "faq_question",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/featurebody-28e727e2.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Explain what the reader can do or learn next in concrete sentences."
+      },
+      "createdAt": "2026-09-14T17:07:39.105537688+00:00",
+      "description": "Feature-card explanation.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "28e727e2-8f79-4eaa-9514-60e6f5825f9c",
+      "name": "feature_body",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/featureintro-bbe8f46a.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Set up a small practical route without repeating feature cards."
+      },
+      "createdAt": "2026-09-14T17:07:38.920106555+00:00",
+      "description": "Optional feature-group introduction.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "bbe8f46a-4390-46b2-b0db-49c7bd75b207",
+      "name": "feature_intro",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/featurekey-bd4f93be.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Use a lower-case hyphenated key."
+      },
+      "createdAt": "2026-09-14T17:07:38.980170407+00:00",
+      "description": "Stable identity for a feature card.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "bd4f93be-1093-4aae-9575-ba552d291276",
+      "name": "feature_key",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/featuretitle-9e8c3227.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Name one practical learning path or destination in plain language."
+      },
+      "createdAt": "2026-09-14T17:07:39.039988876+00:00",
+      "description": "Feature-card title.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "9e8c3227-4d7b-405e-b048-e88696352970",
+      "name": "feature_title",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/headline-3c11109b.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Make one strong proposition; do not explain the full argument here."
+      },
+      "createdAt": "2026-09-14T17:07:38.611744158+00:00",
+      "description": "Primary public headline.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "3c11109b-37b1-42f6-9ec6-81dd876c2748",
+      "name": "headline",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/kicker-43d00955.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "A few words that turn the headline toward the reader; not a sentence of argument."
+      },
+      "createdAt": "2026-10-19T11:52:33Z",
+      "description": "A short line under the headline that frames it, set larger than body copy.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "43d00955-41e2-4f15-9dfe-06e4d22d64b5",
+      "name": "kicker",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/metaobjective-9772acd5.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "State the rhetorical job; do not write copy here."
+      },
+      "createdAt": "2026-09-14T17:07:38.312748213+00:00",
+      "description": "Reader-state change for this block.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "9772acd5-c431-4dec-a71f-531295d084d7",
+      "name": "meta_objective",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/pageintent-771554ab.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Describe the page job before writing public copy."
+      },
+      "createdAt": "2026-09-14T17:07:38.065122512+00:00",
+      "description": "The reader change the page is designed to make.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "771554ab-2578-453e-8342-ed3f736b4239",
+      "name": "page_intent",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/pagekey-b8d5620d.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Use a short stable key such as home. Never derive it from volatile public wording."
+      },
+      "createdAt": "2026-09-14T17:07:37.931531352+00:00",
+      "description": "Stable page identity.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "b8d5620d-9284-46f4-a1b3-a5c97c6b14cb",
+      "name": "page_key",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/pagetitle-ea10cb6a.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Name the page for editors and navigation; it is not necessarily the public hero headline."
+      },
+      "createdAt": "2026-09-14T17:07:37.996242233+00:00",
+      "description": "Internal page title.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "ea10cb6a-7a33-4b95-a13f-db8304e1a125",
+      "name": "page_title",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/presentation-6b684bcb.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "A layout choice, not copy. One of: default, large, large-people."
+      },
+      "createdAt": "2026-10-19T11:59:23Z",
+      "description": "How a hero is laid out: default, large (the headline sized to its column), or large-people (large, with the people photo beside it).",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "6b684bcb-6551-4640-989e-0f797a70a073",
+      "name": "presentation",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/primaryaudience-d326cf4a.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Name the primary human reader and their situation; do not use a marketing segment."
+      },
+      "createdAt": "2026-09-14T17:07:38.125886423+00:00",
+      "description": "Primary reader and situation.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "d326cf4a-fcfe-4ca4-b676-740a6e23c2cf",
+      "name": "primary_audience",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/quoteattribution-f3445277.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Name the speaker or author and work where known."
+      },
+      "createdAt": "2026-09-14T17:07:39.537258278+00:00",
+      "description": "Source attribution for a quotation.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "f3445277-2e20-41d8-8785-a963edbc28d7",
+      "name": "quote_attribution",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/quotetext-92adcada.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Use only a verified quotation; never use it as primary evidence."
+      },
+      "createdAt": "2026-09-14T17:07:39.476175020+00:00",
+      "description": "Attributed quotation.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "92adcada-f75e-41b1-856e-31ca2e21033a",
+      "name": "quote_text",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/recordanswer-fa597040.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Use a bounded, intelligible answer; never invent a transcript."
+      },
+      "createdAt": "2026-09-14T17:07:39.415149801+00:00",
+      "description": "Worked-record answer.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "fa597040-9e48-4e1a-9588-2667bea70f78",
+      "name": "record_answer",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/recordcaption-85cbe666.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Explain what the example proves and state that a record does not itself make power democratic."
+      },
+      "createdAt": "2026-09-14T17:07:39.229505452+00:00",
+      "description": "Caption for a worked decision record.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "85cbe666-a1d5-46d6-b6d8-c06c1263f029",
+      "name": "record_caption",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/recorditemkey-ce797d19.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Use a lower-case hyphenated key such as decided or revisit."
+      },
+      "createdAt": "2026-09-14T17:07:39.289074965+00:00",
+      "description": "Stable identity for a decision-record item.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "ce797d19-0d62-4d25-9461-2070d87869a0",
+      "name": "record_item_key",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/recordquestion-bee790d9.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Use the question exactly as a reader should encounter it."
+      },
+      "createdAt": "2026-09-14T17:07:39.349092011+00:00",
+      "description": "Visible worked-record question.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "bee790d9-28e6-4e9f-9011-38b5109dabbf",
+      "name": "record_question",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/renderas-366afa11.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "One of: hero (a guide's title, subtitle and intro, as a page opening), section (the section as the guide renders it), record (an example table shown as one decision record in a deck). The words stay the guide's."
+      },
+      "createdAt": "2026-10-19T11:31:30Z",
+      "description": "How a guide-section block shows the guide record it uses.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "366afa11-15d4-4a10-8336-64033dbba6a0",
+      "name": "render_as",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/sectionaudience-2bf57b24.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Name the reader state or situation this block addresses."
+      },
+      "createdAt": "2026-09-14T17:07:38.372702381+00:00",
+      "description": "Reader this block addresses.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+      "name": "section_audience",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/sectionbody-1a9d942b.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Make at most one abstract move before a concrete route, example, or consequence."
+      },
+      "createdAt": "2026-09-14T17:07:38.796312444+00:00",
+      "description": "Main public prose for a homepage section.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "1a9d942b-8eee-4d70-aac9-55451eeeee00",
+      "name": "section_body",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/sectionheading-a0a3c18e.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Name the public subject in plain language, or omit it."
+      },
+      "createdAt": "2026-09-14T17:07:38.736232357+00:00",
+      "description": "Optional visible section heading.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+      "name": "section_heading",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/sectionkey-45fbb93a.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Use a lower-case hyphenated identity such as ground or learn-the-practice."
+      },
+      "createdAt": "2026-09-14T17:07:38.251209319+00:00",
+      "description": "Stable key for this homepage block.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+      "name": "section_key",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/supportingcopy-204f2ac9.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Resolve unfamiliar language quickly and make the next section feel necessary."
+      },
+      "createdAt": "2026-09-14T17:07:38.672621269+00:00",
+      "description": "Supporting public copy below a headline.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "204f2ac9-1563-4a52-a516-6ed9666e3193",
+      "name": "supporting_copy",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/toneguidance-bcd90b37.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "State public voice and prohibitions that copy must preserve."
+      },
+      "createdAt": "2026-09-14T17:07:38.187019140+00:00",
+      "description": "Voice constraints for the page.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "bcd90b37-3d90-49ae-bb03-72f301072116",
+      "name": "tone_guidance",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/package.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/package-manifest.json",
+      "blueprints": [
+        "blueprints/homepage-3c9069fa.json"
+      ],
+      "compositions": [
+        "compositions/site-56ae2210.json"
+      ],
+      "createdAt": "2026-11-02T14:32:25.086502020+00:00",
+      "description": "",
+      "fields": [
+        "fields/explainerkey-097ca1d8.json",
+        "fields/sectionbody-1a9d942b.json",
+        "fields/supportingcopy-204f2ac9.json",
+        "fields/biokey-2446c2f7.json",
+        "fields/featurebody-28e727e2.json",
+        "fields/sectionaudience-2bf57b24.json",
+        "fields/actionhref-3212e6db.json",
+        "fields/renderas-366afa11.json",
+        "fields/headline-3c11109b.json",
+        "fields/destinationhref-3cf91740.json",
+        "fields/editorialobjective-40527886.json",
+        "fields/kicker-43d00955.json",
+        "fields/sectionkey-45fbb93a.json",
+        "fields/presentation-6b684bcb.json",
+        "fields/pageintent-771554ab.json",
+        "fields/biorole-7bc84f28.json",
+        "fields/eyebrow-7be1eac3.json",
+        "fields/faqanswer-7ec03889.json",
+        "fields/recordcaption-85cbe666.json",
+        "fields/faqquestion-87eef92c.json",
+        "fields/quotetext-92adcada.json",
+        "fields/metaobjective-9772acd5.json",
+        "fields/featuretitle-9e8c3227.json",
+        "fields/sectionheading-a0a3c18e.json",
+        "fields/actionintent-acc4c3d9.json",
+        "fields/cardkey-acf279b1.json",
+        "fields/biotext-ad073964.json",
+        "fields/bioname-b230d787.json",
+        "fields/pagekey-b8d5620d.json",
+        "fields/featureintro-bbe8f46a.json",
+        "fields/toneguidance-bcd90b37.json",
+        "fields/featurekey-bd4f93be.json",
+        "fields/recordquestion-bee790d9.json",
+        "fields/callout-befb5992.json",
+        "fields/recorditemkey-ce797d19.json",
+        "fields/biophoto-d2456270.json",
+        "fields/primaryaudience-d326cf4a.json",
+        "fields/actionlabel-e8237a7c.json",
+        "fields/pagetitle-ea10cb6a.json",
+        "fields/faqitemkey-eb1af15a.json",
+        "fields/cardlines-ef744378.json",
+        "fields/quoteattribution-f3445277.json",
+        "fields/recordanswer-fa597040.json"
+      ],
+      "id": "b3603f72-990a-408a-b6fc-28764ebabe78",
+      "lifecycles": [],
+      "name": "website",
+      "namespace": "com.mudemocracy.website",
+      "protocols": [],
+      "relationTypes": [
+        "relation-types/projects-f4358083.json"
+      ],
+      "status": "active",
+      "themes": [
+        "themes/site-theme-cbd967a2.json"
+      ],
+      "title": "website",
+      "types": [
+        "types/homepage-section-03de48d7.json",
+        "types/homepage-prose-058e5281.json",
+        "types/homepage-decision-record-item-0b0f6a5f.json",
+        "types/homepage-decision-record-1e5fbfea.json",
+        "types/homepage-quote-21df1e65.json",
+        "types/homepage-cta-3751bf69.json",
+        "types/homepage-feature-4db1ede3.json",
+        "types/bio-52b0ae4d.json",
+        "types/homepage-5de26162.json",
+        "types/guide-section-6e1b9a5c.json",
+        "types/homepage-hero-704c2742.json",
+        "types/explainer-7f2c0b6d.json",
+        "types/faq-group-8a3d1c7e.json",
+        "types/faq-item-9b4e2d8f.json",
+        "types/primary-cta-a5c3e1f7.json",
+        "types/action-card-b6d4f2a8.json",
+        "types/hero-c7e5a3b9.json",
+        "types/homepage-feature-group-ead43ed4.json"
+      ],
+      "version": "0.2.0",
+      "views": [
+        "views/feature-grid-view-0c6ebdfc.json",
+        "views/feature-view-2c989e4a.json",
+        "views/guide-section-view-36a95874.json",
+        "views/faq-item-view-5c63a9d8.json",
+        "views/hero-view-5eee2746.json",
+        "views/decision-record-view-6ee29738.json",
+        "views/quote-view-6fb50612.json",
+        "views/decision-record-item-view-8480c393.json",
+        "views/primary-cta-view-84f5f085.json",
+        "views/explainer-view-952cb650.json",
+        "views/cta-view-a0469295.json",
+        "views/action-card-view-a91e7ae4.json",
+        "views/faq-view-d3c7cafd.json",
+        "views/page-view-f19f9400.json",
+        "views/prose-view-f5cce8f7.json",
+        "views/bio-view-f7d956ab.json"
+      ],
+      "vocabularies": []
+    },
+    "packages/website/relation-types/projects-f4358083.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation-type.json",
+      "category": "association",
+      "createdAt": "2026-09-14T17:08:39.751489496+00:00",
+      "description": "A homepage section presents a public-facing projection of the target supporting record. It may simplify language for readers but must preserve the target’s scope, counter-claims, and epistemic posture.",
+      "id": "f4358083-6af0-4150-b087-b7990f1e958d",
+      "key": "projects",
+      "label": "Projects",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/themes/site-theme-cbd967a2.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/theme.json",
+      "createdAt": "2026-11-02T12:00:37Z",
+      "description": "The muDemocracy site's look: its design tokens, served by the site at a stable path, so an editor canvas can draw blocks as the site does.",
+      "id": "cbd967a2-c7b9-47f9-9204-c6e41f6fbbb9",
+      "name": "site-theme",
+      "namespace": "com.mudemocracy.website",
+      "stylesheet": {
+        "mode": "remote",
+        "url": "https://mudemocracy.org/site-tokens.css"
+      },
+      "targets": [
+        "html"
+      ],
+      "version": 1
+    },
+    "packages/website/types/action-card-b6d4f2a8.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "A heading, two or three short lines, and an optional button. Relate it to a guide list with uses to show that list's items."
+      },
+      "createdAt": "2026-10-19T11:31:30Z",
+      "description": "One action card inside a primary call to action.",
+      "fieldOrder": [
+        "acf279b1-a2f2-4362-9379-603382eca6d5",
+        "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+        "ef744378-7c33-4361-bd16-5611ff219813",
+        "e8237a7c-f977-405a-9c57-fe216df24d48",
+        "3212e6db-310c-4b07-b490-d516d41c0567"
+      ],
+      "fields": [
+        {
+          "fieldId": "acf279b1-a2f2-4362-9379-603382eca6d5",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 2,
+          "required": true
+        },
+        {
+          "fieldId": "ef744378-7c33-4361-bd16-5611ff219813",
+          "order": 3,
+          "required": false
+        },
+        {
+          "fieldId": "e8237a7c-f977-405a-9c57-fe216df24d48",
+          "order": 4,
+          "required": false
+        },
+        {
+          "fieldId": "3212e6db-310c-4b07-b490-d516d41c0567",
+          "order": 5,
+          "required": false
+        }
+      ],
+      "id": "b6d4f2a8-7c9e-4b1d-8f3a-8c0e6d7b9a1f",
+      "identityFieldId": "acf279b1-a2f2-4362-9379-603382eca6d5",
+      "name": "action-card",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/bio-52b0ae4d.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-10-23T10:31:40.230394454+00:00",
+      "description": "A person on a page: photo, name, role and a line or two of bio. Consecutive bios render as one grid.",
+      "fields": [
+        {
+          "fieldId": "2446c2f7-38de-4ae4-858b-2bc13ba87493",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "b230d787-8023-4b57-85fe-30ecb3e955c1",
+          "order": 2,
+          "required": true
+        },
+        {
+          "fieldId": "7bc84f28-c758-4d7f-b91b-f4f01a5741e8",
+          "order": 3,
+          "required": false
+        },
+        {
+          "fieldId": "d2456270-f641-4177-ae67-6afa0bc13a2c",
+          "order": 4,
+          "required": false
+        },
+        {
+          "fieldId": "ad073964-6bb3-4564-a7ff-296950fb42dd",
+          "order": 5,
+          "required": false
+        }
+      ],
+      "id": "52b0ae4d-5379-4b74-bb32-4a79e472ef2c",
+      "name": "bio",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/explainer-7f2c0b6d.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Place a video explainer; its scenes live in the site code, named by explainer_key."
+      },
+      "createdAt": "2026-10-19T11:31:30Z",
+      "description": "A video explainer block.",
+      "extendsTypeId": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+      "extendsTypeVersion": 1,
+      "fieldOrder": [
+        "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+        "9772acd5-c431-4dec-a71f-531295d084d7",
+        "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+        "40527886-7a33-4328-b478-9352c6e116d6",
+        "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+        "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+        "097ca1d8-626c-4b6f-8adb-4d2391abe634"
+      ],
+      "fields": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 1,
+          "required": false
+        },
+        {
+          "fieldId": "097ca1d8-626c-4b6f-8adb-4d2391abe634",
+          "order": 2,
+          "required": true
+        }
+      ],
+      "id": "7f2c0b6d-3e5a-4d9f-8b1c-4e6a2f3d5c7b",
+      "identityFieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+      "name": "explainer",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/faq-group-8a3d1c7e.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Answer the questions readers actually ask, grouped by theme. Holds faq-item records with contains."
+      },
+      "createdAt": "2026-10-19T11:31:30Z",
+      "description": "A group of questions and answers under one heading.",
+      "extendsTypeId": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+      "extendsTypeVersion": 1,
+      "fieldOrder": [
+        "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+        "9772acd5-c431-4dec-a71f-531295d084d7",
+        "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+        "40527886-7a33-4328-b478-9352c6e116d6",
+        "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+        "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b"
+      ],
+      "fields": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 1,
+          "required": true
+        }
+      ],
+      "id": "8a3d1c7e-4f6b-4eaa-9c2d-5f7b3a4e6d8c",
+      "identityFieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+      "name": "faq-group",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/faq-item-9b4e2d8f.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "One question in the reader's words, and a short answer."
+      },
+      "createdAt": "2026-10-19T11:31:30Z",
+      "description": "One question and its answer, inside an faq-group.",
+      "fieldOrder": [
+        "eb1af15a-28ac-4df4-ba73-8425039bfa24",
+        "87eef92c-b253-49fd-b4b4-8f705fefee40",
+        "7ec03889-d4fd-49ff-87ad-c5c2352ec033"
+      ],
+      "fields": [
+        {
+          "fieldId": "eb1af15a-28ac-4df4-ba73-8425039bfa24",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "87eef92c-b253-49fd-b4b4-8f705fefee40",
+          "order": 2,
+          "required": true
+        },
+        {
+          "fieldId": "7ec03889-d4fd-49ff-87ad-c5c2352ec033",
+          "order": 3,
+          "required": true
+        }
+      ],
+      "id": "9b4e2d8f-5a7c-4fbb-8d3e-6a8c4b5f7e9d",
+      "identityFieldId": "eb1af15a-28ac-4df4-ba73-8425039bfa24",
+      "name": "faq-item",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/guide-section-6e1b9a5c.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Show a guide's opening or one of its sections on a page without copying it. Relate the block to the guide record with uses; set render_as. A heading here replaces the guide's heading on this page only."
+      },
+      "createdAt": "2026-10-19T11:31:30Z",
+      "description": "A block that shows a guide's record by reference: the words stay the guide's, edited in one place.",
+      "extendsTypeId": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+      "extendsTypeVersion": 1,
+      "fieldOrder": [
+        "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+        "9772acd5-c431-4dec-a71f-531295d084d7",
+        "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+        "40527886-7a33-4328-b478-9352c6e116d6",
+        "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+        "366afa11-15d4-4a10-8336-64033dbba6a0",
+        "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+        "85cbe666-a1d5-46d6-b6d8-c06c1263f029"
+      ],
+      "fields": [
+        {
+          "fieldId": "366afa11-15d4-4a10-8336-64033dbba6a0",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 2,
+          "required": false
+        },
+        {
+          "fieldId": "85cbe666-a1d5-46d6-b6d8-c06c1263f029",
+          "order": 3,
+          "required": false
+        }
+      ],
+      "id": "6e1b9a5c-2f4d-4c8e-9a7b-3d5f1e2c4b6a",
+      "identityFieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+      "name": "guide-section",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/hero-c7e5a3b9.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Open the page: a headline that lands the proposition, a kicker that turns it toward the reader, and a few sentences of support."
+      },
+      "createdAt": "2026-10-19T11:52:33Z",
+      "description": "A page opening: eyebrow, headline, a kicker under it, and supporting copy.",
+      "extendsTypeId": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+      "extendsTypeVersion": 1,
+      "fieldOrder": [
+        "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+        "9772acd5-c431-4dec-a71f-531295d084d7",
+        "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+        "40527886-7a33-4328-b478-9352c6e116d6",
+        "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+        "7be1eac3-08be-408b-ac66-74baaac076a0",
+        "3c11109b-37b1-42f6-9ec6-81dd876c2748",
+        "43d00955-41e2-4f15-9dfe-06e4d22d64b5",
+        "204f2ac9-1563-4a52-a516-6ed9666e3193",
+        "6b684bcb-6551-4640-989e-0f797a70a073"
+      ],
+      "fields": [
+        {
+          "fieldId": "7be1eac3-08be-408b-ac66-74baaac076a0",
+          "order": 1,
+          "required": false
+        },
+        {
+          "fieldId": "3c11109b-37b1-42f6-9ec6-81dd876c2748",
+          "order": 2,
+          "required": true
+        },
+        {
+          "fieldId": "43d00955-41e2-4f15-9dfe-06e4d22d64b5",
+          "order": 3,
+          "required": false
+        },
+        {
+          "fieldId": "204f2ac9-1563-4a52-a516-6ed9666e3193",
+          "order": 4,
+          "required": false
+        },
+        {
+          "fieldId": "6b684bcb-6551-4640-989e-0f797a70a073",
+          "order": 5,
+          "required": false
+        }
+      ],
+      "id": "c7e5a3b9-8d0f-4c2e-a14b-9d1f7e8c0b2a",
+      "identityFieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+      "name": "hero",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/homepage-5de26162.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Model the homepage as an argument-led public document. Move a reader from distant concern to one immediate, credible action. Preserve momentum and proof density: no more than one abstract move before something concrete."
+      },
+      "createdAt": "2026-09-14T17:08:18.395189044+00:00",
+      "description": "Root record for an editable homepage composition.",
+      "fieldOrder": [
+        "b8d5620d-9284-46f4-a1b3-a5c97c6b14cb",
+        "ea10cb6a-7a33-4b95-a13f-db8304e1a125",
+        "771554ab-2578-453e-8342-ed3f736b4239",
+        "d326cf4a-fcfe-4ca4-b676-740a6e23c2cf",
+        "bcd90b37-3d90-49ae-bb03-72f301072116"
+      ],
+      "fields": [
+        {
+          "fieldId": "b8d5620d-9284-46f4-a1b3-a5c97c6b14cb",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "ea10cb6a-7a33-4b95-a13f-db8304e1a125",
+          "order": 2,
+          "required": true
+        },
+        {
+          "fieldId": "771554ab-2578-453e-8342-ed3f736b4239",
+          "order": 3,
+          "required": true
+        },
+        {
+          "fieldId": "d326cf4a-fcfe-4ca4-b676-740a6e23c2cf",
+          "order": 4,
+          "required": true
+        },
+        {
+          "fieldId": "bcd90b37-3d90-49ae-bb03-72f301072116",
+          "order": 5,
+          "required": true
+        }
+      ],
+      "id": "5de26162-3fd5-4fc9-b32e-567db46bb552",
+      "identityFieldId": "b8d5620d-9284-46f4-a1b3-a5c97c6b14cb",
+      "name": "homepage",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/homepage-cta-3751bf69.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Name one smallest next action. Remove needless permission, platform, and expertise barriers so beginning feels lighter than not beginning."
+      },
+      "createdAt": "2026-09-14T17:08:19.020149359+00:00",
+      "description": "The final lowest-friction action block.",
+      "extendsTypeId": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+      "extendsTypeVersion": 1,
+      "fieldOrder": [
+        "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+        "9772acd5-c431-4dec-a71f-531295d084d7",
+        "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+        "40527886-7a33-4328-b478-9352c6e116d6",
+        "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+        "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+        "1a9d942b-8eee-4d70-aac9-55451eeeee00",
+        "e8237a7c-f977-405a-9c57-fe216df24d48",
+        "3212e6db-310c-4b07-b490-d516d41c0567"
+      ],
+      "fields": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "1a9d942b-8eee-4d70-aac9-55451eeeee00",
+          "order": 2,
+          "required": true
+        },
+        {
+          "fieldId": "e8237a7c-f977-405a-9c57-fe216df24d48",
+          "order": 3,
+          "required": true
+        },
+        {
+          "fieldId": "3212e6db-310c-4b07-b490-d516d41c0567",
+          "order": 4,
+          "required": true
+        }
+      ],
+      "id": "3751bf69-e00f-4e77-bbb2-fb7e3d3dfcf7",
+      "identityFieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+      "name": "homepage-cta",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/homepage-decision-record-1e5fbfea.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Show a real, bounded decision rather than a transcript or generic template. The example proves practice can be concrete; it must not claim that recording alone makes power democratic."
+      },
+      "createdAt": "2026-09-14T17:08:18.812319512+00:00",
+      "description": "A worked decision-record proof block.",
+      "extendsTypeId": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+      "extendsTypeVersion": 1,
+      "fieldOrder": [
+        "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+        "9772acd5-c431-4dec-a71f-531295d084d7",
+        "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+        "40527886-7a33-4328-b478-9352c6e116d6",
+        "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+        "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+        "85cbe666-a1d5-46d6-b6d8-c06c1263f029"
+      ],
+      "fields": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 1,
+          "required": false
+        },
+        {
+          "fieldId": "85cbe666-a1d5-46d6-b6d8-c06c1263f029",
+          "order": 2,
+          "required": true
+        }
+      ],
+      "id": "1e5fbfea-7a89-49a0-af86-31134a090305",
+      "identityFieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+      "name": "homepage-decision-record",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/homepage-decision-record-item-0b0f6a5f.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Keep question and answer intelligible in isolation. Record a decision, reason, alternative, or return condition without turning the example into narrative minutes."
+      },
+      "createdAt": "2026-09-14T17:08:18.885911886+00:00",
+      "description": "One question and answer inside a worked decision record.",
+      "fieldOrder": [
+        "ce797d19-0d62-4d25-9461-2070d87869a0",
+        "bee790d9-28e6-4e9f-9011-38b5109dabbf",
+        "fa597040-9e48-4e1a-9588-2667bea70f78"
+      ],
+      "fields": [
+        {
+          "fieldId": "ce797d19-0d62-4d25-9461-2070d87869a0",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "bee790d9-28e6-4e9f-9011-38b5109dabbf",
+          "order": 2,
+          "required": true
+        },
+        {
+          "fieldId": "fa597040-9e48-4e1a-9588-2667bea70f78",
+          "order": 3,
+          "required": true
+        }
+      ],
+      "id": "0b0f6a5f-0682-4552-9e84-36d9e24e54a6",
+      "identityFieldId": "ce797d19-0d62-4d25-9461-2070d87869a0",
+      "name": "homepage-decision-record-item",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/homepage-feature-4db1ede3.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Present one learning path or practical destination. Be specific about what it helps a group do next and keep the promise proportionate."
+      },
+      "createdAt": "2026-09-14T17:08:18.742502845+00:00",
+      "description": "One linked practical learning card.",
+      "fieldOrder": [
+        "bd4f93be-1093-4aae-9575-ba552d291276",
+        "9e8c3227-4d7b-405e-b048-e88696352970",
+        "28e727e2-8f79-4eaa-9514-60e6f5825f9c",
+        "3cf91740-38ba-40de-bb06-af3ce1124e69"
+      ],
+      "fields": [
+        {
+          "fieldId": "bd4f93be-1093-4aae-9575-ba552d291276",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "9e8c3227-4d7b-405e-b048-e88696352970",
+          "order": 2,
+          "required": true
+        },
+        {
+          "fieldId": "28e727e2-8f79-4eaa-9514-60e6f5825f9c",
+          "order": 3,
+          "required": true
+        },
+        {
+          "fieldId": "3cf91740-38ba-40de-bb06-af3ce1124e69",
+          "order": 4,
+          "required": true
+        }
+      ],
+      "id": "4db1ede3-1690-4087-bcc6-4e0ecded3135",
+      "identityFieldId": "bd4f93be-1093-4aae-9575-ba552d291276",
+      "name": "homepage-feature",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/homepage-feature-group-ead43ed4.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Show a concrete, progressive route that is usable without software, special permission, or prior expertise."
+      },
+      "createdAt": "2026-09-14T17:08:18.674337278+00:00",
+      "description": "A grouped set of practical next steps.",
+      "extendsTypeId": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+      "extendsTypeVersion": 1,
+      "fieldOrder": [
+        "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+        "9772acd5-c431-4dec-a71f-531295d084d7",
+        "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+        "40527886-7a33-4328-b478-9352c6e116d6",
+        "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+        "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+        "bbe8f46a-4390-46b2-b0db-49c7bd75b207"
+      ],
+      "fields": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 1,
+          "required": false
+        },
+        {
+          "fieldId": "bbe8f46a-4390-46b2-b0db-49c7bd75b207",
+          "order": 2,
+          "required": false
+        }
+      ],
+      "id": "ead43ed4-de39-4439-b852-55346429128b",
+      "identityFieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+      "name": "homepage-feature-group",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/homepage-hero-704c2742.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Arrest attention with one proposition. Do not explain everything here. Resolve strange language immediately below the headline and do not presume a formal group."
+      },
+      "createdAt": "2026-09-14T17:08:18.538583547+00:00",
+      "description": "A homepage opening block.",
+      "extendsTypeId": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+      "extendsTypeVersion": 1,
+      "fieldOrder": [
+        "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+        "9772acd5-c431-4dec-a71f-531295d084d7",
+        "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+        "40527886-7a33-4328-b478-9352c6e116d6",
+        "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+        "7be1eac3-08be-408b-ac66-74baaac076a0",
+        "3c11109b-37b1-42f6-9ec6-81dd876c2748",
+        "204f2ac9-1563-4a52-a516-6ed9666e3193"
+      ],
+      "fields": [
+        {
+          "fieldId": "7be1eac3-08be-408b-ac66-74baaac076a0",
+          "order": 1,
+          "required": false
+        },
+        {
+          "fieldId": "3c11109b-37b1-42f6-9ec6-81dd876c2748",
+          "order": 2,
+          "required": true
+        },
+        {
+          "fieldId": "204f2ac9-1563-4a52-a516-6ed9666e3193",
+          "order": 3,
+          "required": true
+        }
+      ],
+      "id": "704c2742-9b02-4d08-89c5-7fa1ffa85697",
+      "identityFieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+      "name": "homepage-hero",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/homepage-prose-058e5281.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Make one rhetorical move at a time. Pair social diagnosis with a concrete consequence or route. Do not imply that records, transparency, or participation automatically create legitimacy."
+      },
+      "createdAt": "2026-09-14T17:08:18.606397603+00:00",
+      "description": "An argument or explanatory prose block.",
+      "extendsTypeId": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+      "extendsTypeVersion": 1,
+      "fieldOrder": [
+        "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+        "9772acd5-c431-4dec-a71f-531295d084d7",
+        "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+        "40527886-7a33-4328-b478-9352c6e116d6",
+        "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+        "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+        "1a9d942b-8eee-4d70-aac9-55451eeeee00",
+        "befb5992-70a7-4957-8b65-1d66cd13533b"
+      ],
+      "fields": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 1,
+          "required": false
+        },
+        {
+          "fieldId": "1a9d942b-8eee-4d70-aac9-55451eeeee00",
+          "order": 2,
+          "required": true
+        },
+        {
+          "fieldId": "befb5992-70a7-4957-8b65-1d66cd13533b",
+          "order": 3,
+          "required": false
+        }
+      ],
+      "id": "058e5281-dc40-4ecd-bfe7-08edf650e4bd",
+      "identityFieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+      "name": "homepage-prose",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/homepage-quote-21df1e65.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Use a verified quotation to illuminate a point already made by the argument. Never use it as a substitute for evidence."
+      },
+      "createdAt": "2026-09-14T17:08:18.953661197+00:00",
+      "description": "An optional attributed quotation block.",
+      "extendsTypeId": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+      "extendsTypeVersion": 1,
+      "fieldOrder": [
+        "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+        "9772acd5-c431-4dec-a71f-531295d084d7",
+        "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+        "40527886-7a33-4328-b478-9352c6e116d6",
+        "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+        "92adcada-f75e-41b1-856e-31ca2e21033a",
+        "f3445277-2e20-41d8-8785-a963edbc28d7"
+      ],
+      "fields": [
+        {
+          "fieldId": "92adcada-f75e-41b1-856e-31ca2e21033a",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "f3445277-2e20-41d8-8785-a963edbc28d7",
+          "order": 2,
+          "required": false
+        }
+      ],
+      "id": "21df1e65-f244-4c42-97ca-442360f5ba7e",
+      "identityFieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+      "name": "homepage-quote",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/homepage-section-03de48d7.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Every section has one reader-state change and one editorial job. Preserve the page argument without duplicating it. Do not introduce unsupported claims, hide disagreement, or confuse editorial objective with public copy."
+      },
+      "createdAt": "2026-09-14T17:08:18.468152225+00:00",
+      "description": "Shared editorial metadata for every renderable homepage block.",
+      "fieldOrder": [
+        "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+        "9772acd5-c431-4dec-a71f-531295d084d7",
+        "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+        "40527886-7a33-4328-b478-9352c6e116d6",
+        "acc4c3d9-adae-424b-86a8-5dafbb7d7682"
+      ],
+      "fields": [
+        {
+          "fieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "9772acd5-c431-4dec-a71f-531295d084d7",
+          "order": 2,
+          "required": true
+        },
+        {
+          "fieldId": "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+          "order": 3,
+          "required": true
+        },
+        {
+          "fieldId": "40527886-7a33-4328-b478-9352c6e116d6",
+          "order": 4,
+          "required": true
+        },
+        {
+          "fieldId": "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+          "order": 5,
+          "required": false
+        }
+      ],
+      "id": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+      "identityFieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+      "name": "homepage-section",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/primary-cta-a5c3e1f7.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "aiGuidance": {
+        "purpose": "Name the next step and make it feel small: a heading, a one-line lede, and action cards (contains). A card can show a guide's list by reference (uses)."
+      },
+      "createdAt": "2026-10-19T11:31:30Z",
+      "description": "A call to action with a lede and up to three action cards.",
+      "extendsTypeId": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
+      "extendsTypeVersion": 1,
+      "fieldOrder": [
+        "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+        "9772acd5-c431-4dec-a71f-531295d084d7",
+        "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+        "40527886-7a33-4328-b478-9352c6e116d6",
+        "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+        "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+        "1a9d942b-8eee-4d70-aac9-55451eeeee00",
+        "befb5992-70a7-4957-8b65-1d66cd13533b"
+      ],
+      "fields": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "1a9d942b-8eee-4d70-aac9-55451eeeee00",
+          "order": 2,
+          "required": true
+        },
+        {
+          "fieldId": "befb5992-70a7-4957-8b65-1d66cd13533b",
+          "order": 3,
+          "required": false
+        }
+      ],
+      "id": "a5c3e1f7-6b8d-4a0c-9e2f-7b9d5c6a8f0e",
+      "identityFieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+      "name": "primary-cta",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/action-card-view-a91e7ae4.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component PrimaryCta card. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/action-card"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "One card inside a primary call to action.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "ef744378-7c33-4361-bd16-5611ff219813",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "fieldId": "e8237a7c-f977-405a-9c57-fe216df24d48",
+          "order": 2,
+          "visible": true
+        },
+        {
+          "fieldId": "3212e6db-310c-4b07-b490-d516d41c0567",
+          "order": 3,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "acf279b1-a2f2-4362-9379-603382eca6d5",
+          "order": 4,
+          "visible": false
+        }
+      ],
+      "id": "a91e7ae4-610f-4653-be3b-1cb751e30f2c",
+      "name": "action-card-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/bio-view-f7d956ab.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component BioCard. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/bio"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "A person's bio, drawn by BioCard (consecutive bios form one grid).",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "b230d787-8023-4b57-85fe-30ecb3e955c1",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "7bc84f28-c758-4d7f-b91b-f4f01a5741e8",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "fieldId": "d2456270-f641-4177-ae67-6afa0bc13a2c",
+          "order": 2,
+          "visible": true
+        },
+        {
+          "fieldId": "ad073964-6bb3-4564-a7ff-296950fb42dd",
+          "order": 3,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "2446c2f7-38de-4ae4-858b-2bc13ba87493",
+          "order": 4,
+          "visible": false
+        }
+      ],
+      "id": "f7d956ab-0744-4987-8622-1547a71be954",
+      "name": "bio-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/cta-view-a0469295.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component CtaBlock. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/homepage-cta"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "A call to action, drawn by CtaBlock.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "1a9d942b-8eee-4d70-aac9-55451eeeee00",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "fieldId": "e8237a7c-f977-405a-9c57-fe216df24d48",
+          "order": 2,
+          "visible": true
+        },
+        {
+          "fieldId": "3212e6db-310c-4b07-b490-d516d41c0567",
+          "order": 3,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+          "order": 4,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "9772acd5-c431-4dec-a71f-531295d084d7",
+          "order": 5,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+          "order": 6,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "40527886-7a33-4328-b478-9352c6e116d6",
+          "order": 7,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+          "order": 8,
+          "visible": false
+        }
+      ],
+      "id": "a0469295-3a87-4bb9-8ebb-12df3ce27013",
+      "name": "cta-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/decision-record-item-view-8480c393.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component DecisionRecordCard row. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/homepage-decision-record-item"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "One question and answer of a worked decision record.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "bee790d9-28e6-4e9f-9011-38b5109dabbf",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "fa597040-9e48-4e1a-9588-2667bea70f78",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "ce797d19-0d62-4d25-9461-2070d87869a0",
+          "order": 2,
+          "visible": false
+        }
+      ],
+      "id": "8480c393-f233-4393-ad42-98475311cdbd",
+      "name": "decision-record-item-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/decision-record-view-6ee29738.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component RecordDeck / DecisionRecordCard. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/homepage-decision-record"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "A worked decision record, drawn as a card or in a deck.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "85cbe666-a1d5-46d6-b6d8-c06c1263f029",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+          "order": 2,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "9772acd5-c431-4dec-a71f-531295d084d7",
+          "order": 3,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+          "order": 4,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "40527886-7a33-4328-b478-9352c6e116d6",
+          "order": 5,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+          "order": 6,
+          "visible": false
+        }
+      ],
+      "id": "6ee29738-8c9b-49b5-80bf-fca3e7ad9bf4",
+      "name": "decision-record-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/explainer-view-952cb650.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component Explainer. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/explainer"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "A motion explainer named by its key, drawn by Explainer.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 0,
+          "visible": false
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+          "order": 1,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "9772acd5-c431-4dec-a71f-531295d084d7",
+          "order": 2,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+          "order": 3,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "40527886-7a33-4328-b478-9352c6e116d6",
+          "order": 4,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+          "order": 5,
+          "visible": false
+        },
+        {
+          "displayHint": "setting",
+          "fieldId": "097ca1d8-626c-4b6f-8adb-4d2391abe634",
+          "order": 6,
+          "visible": false
+        }
+      ],
+      "id": "952cb650-3a7a-41a0-8d1e-4458b01ae681",
+      "name": "explainer-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/faq-item-view-5c63a9d8.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component Faq item. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/faq-item"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "One question and answer.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "87eef92c-b253-49fd-b4b4-8f705fefee40",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "7ec03889-d4fd-49ff-87ad-c5c2352ec033",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "eb1af15a-28ac-4df4-ba73-8425039bfa24",
+          "order": 2,
+          "visible": false
+        }
+      ],
+      "id": "5c63a9d8-49e2-4162-92e7-fadfa9ab3b21",
+      "name": "faq-item-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/faq-view-d3c7cafd.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component Faq. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/faq-group"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "A group of questions, drawn by Faq (consecutive groups form one FAQ).",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+          "order": 1,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "9772acd5-c431-4dec-a71f-531295d084d7",
+          "order": 2,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+          "order": 3,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "40527886-7a33-4328-b478-9352c6e116d6",
+          "order": 4,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+          "order": 5,
+          "visible": false
+        }
+      ],
+      "id": "d3c7cafd-e002-4f7e-a1e8-98d13891be15",
+      "name": "faq-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/feature-grid-view-0c6ebdfc.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component FeatureGridBlock. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/homepage-feature-group"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "A group of features, drawn by FeatureGridBlock.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "bbe8f46a-4390-46b2-b0db-49c7bd75b207",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+          "order": 2,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "9772acd5-c431-4dec-a71f-531295d084d7",
+          "order": 3,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+          "order": 4,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "40527886-7a33-4328-b478-9352c6e116d6",
+          "order": 5,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+          "order": 6,
+          "visible": false
+        }
+      ],
+      "id": "0c6ebdfc-f660-4d82-bc50-581e5aefb2fb",
+      "name": "feature-grid-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/feature-view-2c989e4a.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component FeatureGridBlock item. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/homepage-feature"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "One feature inside a feature group.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "9e8c3227-4d7b-405e-b048-e88696352970",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "28e727e2-8f79-4eaa-9514-60e6f5825f9c",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "fieldId": "3cf91740-38ba-40de-bb06-af3ce1124e69",
+          "order": 2,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "bd4f93be-1093-4aae-9575-ba552d291276",
+          "order": 3,
+          "visible": false
+        }
+      ],
+      "id": "2c989e4a-abe3-40da-a429-3b9e28312984",
+      "name": "feature-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/guide-section-view-36a95874.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component GuideRenderer. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/guide-section"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "A guide's section shown by reference, drawn by GuideRenderer.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "85cbe666-a1d5-46d6-b6d8-c06c1263f029",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+          "order": 2,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "9772acd5-c431-4dec-a71f-531295d084d7",
+          "order": 3,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+          "order": 4,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "40527886-7a33-4328-b478-9352c6e116d6",
+          "order": 5,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+          "order": 6,
+          "visible": false
+        },
+        {
+          "displayHint": "setting",
+          "fieldId": "366afa11-15d4-4a10-8336-64033dbba6a0",
+          "order": 7,
+          "visible": false
+        }
+      ],
+      "id": "36a95874-d726-4e34-8a5a-f3712507908b",
+      "name": "guide-section-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/hero-view-5eee2746.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component Hero. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/hero",
+        "com.mudemocracy.website/homepage-hero"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "A page opening, drawn by the site's Hero component.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "7be1eac3-08be-408b-ac66-74baaac076a0",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "3c11109b-37b1-42f6-9ec6-81dd876c2748",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "fieldId": "43d00955-41e2-4f15-9dfe-06e4d22d64b5",
+          "order": 2,
+          "visible": true
+        },
+        {
+          "fieldId": "204f2ac9-1563-4a52-a516-6ed9666e3193",
+          "order": 3,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+          "order": 4,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "9772acd5-c431-4dec-a71f-531295d084d7",
+          "order": 5,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+          "order": 6,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "40527886-7a33-4328-b478-9352c6e116d6",
+          "order": 7,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+          "order": 8,
+          "visible": false
+        },
+        {
+          "displayHint": "setting",
+          "fieldId": "6b684bcb-6551-4640-989e-0f797a70a073",
+          "order": 9,
+          "visible": false
+        }
+      ],
+      "id": "5eee2746-5c02-4ecd-a03e-e753cfaf0e85",
+      "name": "hero-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/page-view-f19f9400.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component the page shell (title, meta description). Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/homepage"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "A page: its title and meta description are shown; its brief stays in the editor.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "ea10cb6a-7a33-4b95-a13f-db8304e1a125",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "771554ab-2578-453e-8342-ed3f736b4239",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "b8d5620d-9284-46f4-a1b3-a5c97c6b14cb",
+          "order": 2,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "d326cf4a-fcfe-4ca4-b676-740a6e23c2cf",
+          "order": 3,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "bcd90b37-3d90-49ae-bb03-72f301072116",
+          "order": 4,
+          "visible": false
+        }
+      ],
+      "id": "f19f9400-8769-42c2-8d88-526703d4bdb1",
+      "name": "page-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/primary-cta-view-84f5f085.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component PrimaryCta. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/primary-cta"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "The primary call to action with its cards, drawn by PrimaryCta.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "1a9d942b-8eee-4d70-aac9-55451eeeee00",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "fieldId": "befb5992-70a7-4957-8b65-1d66cd13533b",
+          "order": 2,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+          "order": 3,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "9772acd5-c431-4dec-a71f-531295d084d7",
+          "order": 4,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+          "order": 5,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "40527886-7a33-4328-b478-9352c6e116d6",
+          "order": 6,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+          "order": 7,
+          "visible": false
+        }
+      ],
+      "id": "84f5f085-8b83-4aee-83c9-50514be28aa0",
+      "name": "primary-cta-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/prose-view-f5cce8f7.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component ProseBlock. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/homepage-prose"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "A prose section, drawn by ProseBlock (or an essay column on an essay page).",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "a0a3c18e-de7f-46b1-a9f9-a05f30aa823b",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "1a9d942b-8eee-4d70-aac9-55451eeeee00",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "fieldId": "befb5992-70a7-4957-8b65-1d66cd13533b",
+          "order": 2,
+          "visible": false
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+          "order": 3,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "9772acd5-c431-4dec-a71f-531295d084d7",
+          "order": 4,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+          "order": 5,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "40527886-7a33-4328-b478-9352c6e116d6",
+          "order": 6,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+          "order": 7,
+          "visible": false
+        }
+      ],
+      "id": "f5cce8f7-a847-4397-93fc-d3a58883af2b",
+      "name": "prose-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/views/quote-view-6fb50612.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/view.json",
+      "aiGuidance": {
+        "purpose": "Binds these types to the site component QuoteBlock. Hidden fields are not on the site: displayHint says whether a field is a brief, a setting or a key."
+      },
+      "compatibleTypes": [
+        "com.mudemocracy.website/homepage-quote"
+      ],
+      "createdAt": "2026-11-02T12:00:20Z",
+      "description": "A quotation on a dark band, drawn by QuoteBlock.",
+      "exportConfig": {
+        "format": "markdown"
+      },
+      "fieldViews": [
+        {
+          "fieldId": "92adcada-f75e-41b1-856e-31ca2e21033a",
+          "order": 0,
+          "visible": true
+        },
+        {
+          "fieldId": "f3445277-2e20-41d8-8785-a963edbc28d7",
+          "order": 1,
+          "visible": true
+        },
+        {
+          "displayHint": "key",
+          "fieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
+          "order": 2,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "9772acd5-c431-4dec-a71f-531295d084d7",
+          "order": 3,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "2bf57b24-bd34-4e9a-a306-962aa3c62418",
+          "order": 4,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "40527886-7a33-4328-b478-9352c6e116d6",
+          "order": 5,
+          "visible": false
+        },
+        {
+          "displayHint": "brief",
+          "fieldId": "acc4c3d9-adae-424b-86a8-5dafbb7d7682",
+          "order": 6,
+          "visible": false
+        }
+      ],
+      "id": "6fb50612-3aa7-4ef0-b6d4-c95abb1aa587",
+      "name": "quote-view",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "records/tier-2/action-card-14b0ad9b.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:26.387945191+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "card_key": "record",
+        "section_heading": "Record a decision",
+        "action_label": "Read the guide",
+        "action_href": "/guides/recording"
+      },
+      "instanceId": "14b0ad9b-d7a3-4a7a-bcc7-5a4c83ea3978",
+      "typeId": "b6d4f2a8-7c9e-4b1d-8f3a-8c0e6d7b9a1f",
+      "typeName": "action-card",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:26.387952998+00:00"
+    },
+    "records/tier-2/faq-group-8232a6de.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:25.893213136+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "section_key": "faq",
+        "meta_objective": "brief objective",
+        "section_audience": "brief audience",
+        "editorial_objective": "brief editorial",
+        "action_intent": "brief intent",
+        "section_heading": "Questions."
+      },
+      "instanceId": "8232a6de-8884-4d99-8ada-6e11012ac204",
+      "typeId": "8a3d1c7e-4f6b-4eaa-9c2d-5f7b3a4e6d8c",
+      "typeName": "faq-group",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:25.893219254+00:00"
+    },
+    "records/tier-2/faq-item-9999261d.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:26.084277996+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "faq_item_key": "q2",
+        "faq_question": "Second?",
+        "faq_answer": "No."
+      },
+      "instanceId": "9999261d-787b-4ff8-9987-301e707f3579",
+      "typeId": "9b4e2d8f-5a7c-4fbb-8d3e-6a8c4b5f7e9d",
+      "typeName": "faq-item",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:26.084298287+00:00"
+    },
+    "records/tier-2/faq-item-fc21618a.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:25.991405852+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "faq_item_key": "q1",
+        "faq_question": "First?",
+        "faq_answer": "Yes."
+      },
+      "instanceId": "fc21618a-e6b3-474d-be84-e2e6bd06c215",
+      "typeId": "9b4e2d8f-5a7c-4fbb-8d3e-6a8c4b5f7e9d",
+      "typeName": "faq-item",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:25.991412709+00:00"
+    },
+    "records/tier-2/guide-07158798.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:25.311025702+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "slug": "recording",
+        "title": "Recording a decision"
+      },
+      "instanceId": "07158798-c367-431d-afe8-027853d350b6",
+      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
+      "typeName": "guide",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:25.311034841+00:00"
+    },
+    "records/tier-2/guide-f586652d.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:25.403345597+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "slug": "four-questions",
+        "title": "The four questions"
+      },
+      "instanceId": "f586652d-64c7-496b-9131-da181244d467",
+      "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
+      "typeName": "guide",
+      "typeNamespace": "com.mudemocracy",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:25.403352098+00:00"
+    },
+    "records/tier-2/guide-section-b12eb150.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:26.192887126+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "section_key": "guide",
+        "meta_objective": "brief objective",
+        "section_audience": "brief audience",
+        "editorial_objective": "brief editorial",
+        "action_intent": "brief intent",
+        "render_as": "section",
+        "section_heading": "From the guide"
+      },
+      "instanceId": "b12eb150-3b77-4ee2-af38-9f347216a0b0",
+      "typeId": "6e1b9a5c-2f4d-4c8e-9a7b-3d5f1e2c4b6a",
+      "typeName": "guide-section",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:26.192907586+00:00"
+    },
+    "records/tier-2/hero-398d5d74.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:27.168591753+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "section_key": "opening",
+        "meta_objective": "brief objective",
+        "section_audience": "brief audience",
+        "editorial_objective": "brief editorial",
+        "action_intent": "brief intent",
+        "eyebrow": "",
+        "headline": "About.",
+        "supporting_copy": "Who we are."
+      },
+      "instanceId": "398d5d74-659e-4f63-93b7-aabf66eea139",
+      "typeId": "c7e5a3b9-8d0f-4c2e-a14b-9d1f7e8c0b2a",
+      "typeName": "hero",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:27.168599257+00:00"
+    },
+    "records/tier-2/hero-b625e4e2.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:25.697282970+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "section_key": "opening",
+        "meta_objective": "brief objective",
+        "section_audience": "brief audience",
+        "editorial_objective": "brief editorial",
+        "action_intent": "brief intent",
+        "eyebrow": "Eyebrow",
+        "headline": "Decisions power change.",
+        "kicker": "Together.",
+        "supporting_copy": "Supporting copy.",
+        "presentation": "large"
+      },
+      "instanceId": "b625e4e2-04cf-463e-bb5b-3e42ceda7f35",
+      "typeId": "c7e5a3b9-8d0f-4c2e-a14b-9d1f7e8c0b2a",
+      "typeName": "hero",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:25.697294813+00:00"
+    },
+    "records/tier-2/homepage-36cc3127.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:25.593646443+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "page_key": "home",
+        "page_title": "Home",
+        "page_intent": "The homepage.",
+        "primary_audience": "brief audience",
+        "tone_guidance": "brief tone"
+      },
+      "instanceId": "36cc3127-ea1c-451b-9377-cda13223df89",
+      "typeId": "5de26162-3fd5-4fc9-b32e-567db46bb552",
+      "typeName": "homepage",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:25.593656922+00:00"
+    },
+    "records/tier-2/homepage-ad7360c9.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:27.071518761+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "page_key": "about",
+        "page_title": "About",
+        "page_intent": "About us.",
+        "primary_audience": "brief audience",
+        "tone_guidance": "brief tone"
+      },
+      "instanceId": "ad7360c9-6bc1-4697-b874-117d18fbad23",
+      "typeId": "5de26162-3fd5-4fc9-b32e-567db46bb552",
+      "typeName": "homepage",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:27.071525690+00:00"
+    },
+    "records/tier-2/homepage-f060111f.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:27.463912335+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "page_key": "scratch",
+        "page_title": "Scratch",
+        "page_intent": "Not yet.",
+        "primary_audience": "brief audience",
+        "tone_guidance": "brief tone"
+      },
+      "instanceId": "f060111f-8ec0-4ca6-adef-cbc9465d7acd",
+      "typeId": "5de26162-3fd5-4fc9-b32e-567db46bb552",
+      "typeName": "homepage",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:27.463916155+00:00"
+    },
+    "records/tier-2/homepage-prose-0357aa9a.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:27.552801901+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "section_key": "note",
+        "meta_objective": "brief objective",
+        "section_audience": "brief audience",
+        "editorial_objective": "brief editorial",
+        "action_intent": "brief intent",
+        "section_heading": "Draft",
+        "section_body": "Not yet."
+      },
+      "instanceId": "0357aa9a-fb01-4666-92fd-cbee4e23fce7",
+      "typeId": "058e5281-dc40-4ecd-bfe7-08edf650e4bd",
+      "typeName": "homepage-prose",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:27.552808502+00:00"
+    },
+    "records/tier-2/homepage-prose-30550763.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:25.795213266+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "section_key": "why",
+        "meta_objective": "brief objective",
+        "section_audience": "brief audience",
+        "editorial_objective": "brief editorial",
+        "action_intent": "brief intent",
+        "section_heading": "Why",
+        "section_body": "A prose body."
+      },
+      "instanceId": "30550763-18c3-4ea0-a4e4-d9b09eb67df5",
+      "typeId": "058e5281-dc40-4ecd-bfe7-08edf650e4bd",
+      "typeName": "homepage-prose",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:25.795228902+00:00"
+    },
+    "records/tier-2/homepage-prose-d10b86bd.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:27.265632349+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "section_key": "story",
+        "meta_objective": "brief objective",
+        "section_audience": "brief audience",
+        "editorial_objective": "brief editorial",
+        "action_intent": "brief intent",
+        "section_heading": "Our story",
+        "section_body": "It began."
+      },
+      "instanceId": "d10b86bd-46fb-4437-81d5-d38571a5ced4",
+      "typeId": "058e5281-dc40-4ecd-bfe7-08edf650e4bd",
+      "typeName": "homepage-prose",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:27.265641521+00:00"
+    },
+    "records/tier-2/primary-cta-95a154f3.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:26.287998908+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "fieldValues": {
+        "section_key": "act",
+        "meta_objective": "brief objective",
+        "section_audience": "brief audience",
+        "editorial_objective": "brief editorial",
+        "action_intent": "brief intent",
+        "section_heading": "Start",
+        "section_body": "Pick one."
+      },
+      "instanceId": "95a154f3-4154-469b-8451-84fe3d056456",
+      "typeId": "a5c3e1f7-6b8d-4a0c-9e2f-7b9d5c6a8f0e",
+      "typeName": "primary-cta",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:26.288009345+00:00"
+    },
+    "records/tier-2/purpose-c6ae0696.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-02T14:32:25.013006521+00:00",
+      "fieldValues": {
+        "statement": "",
+        "title": "Site fixture"
+      },
+      "instanceId": "c6ae0696-dc76-44a5-9cf4-d550127d7f3b",
+      "typeId": "3c000001-0000-4000-a000-000000000001",
+      "typeName": "purpose",
+      "typeNamespace": "com.semanticops.core",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-02T14:32:25.013006521+00:00"
+    },
+    "relations/09707075-087e-4f6f-a408-64e00655baf9.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-11-02T14:32:26.672027858+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "relationId": "09707075-087e-4f6f-a408-64e00655baf9",
+      "relationType": "contains",
+      "sourceInstanceId": "95a154f3-4154-469b-8451-84fe3d056456",
+      "targetInstanceId": "14b0ad9b-d7a3-4a7a-bcc7-5a4c83ea3978"
+    },
+    "relations/b3e18e3a-21a2-4c9e-abe8-a59436aee0af.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-11-02T14:32:26.575760506+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "relationId": "b3e18e3a-21a2-4c9e-abe8-a59436aee0af",
+      "relationType": "contains",
+      "sourceInstanceId": "8232a6de-8884-4d99-8ada-6e11012ac204",
+      "targetInstanceId": "9999261d-787b-4ff8-9987-301e707f3579"
+    },
+    "relations/e4a8860d-f440-4be0-8e3d-f172b99dc3a6.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-11-02T14:32:26.480586765+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "relationId": "e4a8860d-f440-4be0-8e3d-f172b99dc3a6",
+      "relationType": "contains",
+      "sourceInstanceId": "8232a6de-8884-4d99-8ada-6e11012ac204",
+      "targetInstanceId": "fc21618a-e6b3-474d-be84-e2e6bd06c215"
+    },
+    "relations/f3415063-6150-49b9-90ca-aaf84ac684a7.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-11-02T14:32:26.864004071+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "relationId": "f3415063-6150-49b9-90ca-aaf84ac684a7",
+      "relationType": "uses",
+      "sourceInstanceId": "14b0ad9b-d7a3-4a7a-bcc7-5a4c83ea3978",
+      "targetInstanceId": "f586652d-64c7-496b-9131-da181244d467"
+    },
+    "relations/f3cadfff-2fe8-4df6-8ee2-6b065415ae73.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-11-02T14:32:26.764777120+00:00",
+      "createdBy": {
+        "id": "human:fixture",
+        "kind": "human"
+      },
+      "relationId": "f3cadfff-2fe8-4df6-8ee2-6b065415ae73",
+      "relationType": "uses",
+      "sourceInstanceId": "b12eb150-3b77-4ee2-af38-9f347216a0b0",
+      "targetInstanceId": "f586652d-64c7-496b-9131-da181244d467"
+    }
+  }
+}
