@@ -441,6 +441,26 @@ describe("GitHub storage adapter", () => {
     expect(putBody.sha).toBe("target-sha");
   });
 
+  it("saveToBranch reports GitHub's reason when a branch name is refused (srs-web#685)", async () => {
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { "Content-Type": "application/json" },
+      });
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(json({ object: { sha: "commit-1" } }))
+        .mockResolvedValueOnce(json({ message: "refs/heads/a b is not a valid ref name." }, 422))
+    );
+    const handle = new GitHubDocumentHandle("id:1", "repo.srsj", location, "sha-1", () => "token");
+
+    await expect(
+      handle.saveToBranch("{}", { branch: "a b", createFromCurrent: true })
+    ).rejects.toThrow(/not a valid ref name/);
+  });
+
   it("binds an opened document to the branch chosen while browsing", async () => {
     const provider = new GitHubProvider({ clientId: "c", redirectUri: "https://app.test/" });
     // biome-ignore lint/suspicious/noExplicitAny: test seam — skip the OAuth popup
@@ -856,6 +876,42 @@ describe("GitHub storage adapter", () => {
       expect(result.revision).toBe("commit-1");
       // No additional network calls — the diff found nothing changed.
       expect(fetchMock.mock.calls.length).toBe(callsBeforeCommit);
+    });
+
+    it("commitTree() to a new branch creates it at the base commit, not the remote head (srs-web#685)", async () => {
+      const bytes = new TextEncoder().encode('{"v":1}');
+      const b64 = btoa(String.fromCharCode(...bytes));
+      const realSha = await gitBlobSha(bytes);
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(json({ object: { sha: "commit-1" } }))
+        .mockResolvedValueOnce(json({ tree: { sha: "tree-root" } }))
+        .mockResolvedValueOnce(
+          json({
+            sha: "tree-root",
+            tree: [
+              { path: "governance", mode: "040000", type: "tree", sha: "sha-governance" },
+              { path: "governance/manifest.json", mode: "100644", type: "blob", sha: realSha },
+            ],
+          })
+        )
+        .mockResolvedValueOnce(json({ data: { repository: {} } }))
+        .mockResolvedValueOnce(json({ content: b64, encoding: "base64" }))
+        .mockResolvedValueOnce(json({ ref: "refs/heads/feature" }, 201)); // POST create ref
+      vi.stubGlobal("fetch", fetchMock);
+
+      const handle = new GitHubRepoTreeHandle("id:1", "gov", treeLocation, () => "token");
+      const files = await handle.readTree();
+      const callsBeforeCommit = fetchMock.mock.calls.length;
+
+      await handle.commitTree(files, { branch: "feature", createFromCurrent: true });
+      // Exactly one call — the ref POST; the remote head is never read.
+      const calls = fetchMock.mock.calls.slice(callsBeforeCommit);
+      expect(calls).toHaveLength(1);
+      expect(String(calls[0]?.[0])).toMatch(/\/git\/refs$/);
+      const body = JSON.parse(String((calls[0]?.[1] as RequestInit).body));
+      expect(body).toEqual({ ref: "refs/heads/feature", sha: "commit-1" });
+      expect(handle.branch).toBe("feature");
     });
 
     it("commitTree() sends only the changed path", async () => {

@@ -34,7 +34,8 @@
 
   function submit(): void {
     if (!canSave) return;
-    onSave({ mode, newBranch: newBranch.trim(), message: message.trim() });
+    // Git refuses whitespace in a ref name; the name typed is the name created (srs-web#685).
+    onSave({ mode, newBranch: newBranch.trim().replace(/\s+/g, "-"), message: message.trim() });
   }
 </script>
 

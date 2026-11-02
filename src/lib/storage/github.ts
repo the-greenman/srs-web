@@ -351,7 +351,13 @@ export class GitHubRepoTreeHandle implements DocumentHandle, GitBranchAware, Rep
     let base = this.base;
     if (switching) {
       const created = opts.createFromCurrent
-        ? await createBranch(this.location, this.token(), target, this.location.branch)
+        ? await createBranch(
+            this.location,
+            this.token(),
+            target,
+            this.location.branch,
+            this.base.commitSha
+          )
         : false;
       // A freshly created branch starts identical to the source — the retained base
       // still applies. An existing target branch may have diverged — re-read it.
