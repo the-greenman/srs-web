@@ -44,6 +44,9 @@ export interface Item {
   depth: number;
   /** A nested anchored container this entry roots; expandable one level. */
   sectionContainerId?: string;
+  /** Outline entries only: the core's parentInstanceId (null at the top) and whether entries nest under it. */
+  parentId?: string | null;
+  hasChildren?: boolean;
   /** Group heading (a section title, container title or distinction value). */
   group?: string;
   record?: SrsRecord;
@@ -111,7 +114,8 @@ const compositionTitle = (v: { name: string }) => humanise(v.name);
 // ponytail: ADR-025 gap 6 (srs#931) — schema-order field columns wait for engine field ids.
 const FIXED_COLUMNS: Column[] = [{ kind: "label" }, { kind: "type" }, { kind: "state" }];
 
-function memberItems(repo: SrsRepository, containerId: string, group?: string): Item[] {
+/** A container's body entries in arranged order, each joined with its resolved member (label, record). */
+export function memberItems(repo: SrsRepository, containerId: string, group?: string): Item[] {
   const view = resolveContainerView(repo, containerId);
   const byId = new Map(view.members.map((m) => [m.instanceId, m]));
   return getContainerOutline(repo, containerId).body.map((e) => {
@@ -125,6 +129,8 @@ function memberItems(repo: SrsRepository, containerId: string, group?: string): 
       createdBy: m?.record?.createdBy,
       depth: e.depth,
       sectionContainerId: m?.sectionContainerId,
+      parentId: e.parentInstanceId ?? null,
+      hasChildren: e.hasChildren,
       group,
       record: m?.record,
     };

@@ -1,8 +1,8 @@
 /**
  * The one URL hash address (ADR-023): the only module that parses, formats or writes the hash.
  * Keys, in order: `e` essay, `p` paragraph (scroll + focus), `z` zoom, `lens` lens id (ADR-025),
- * `id` the shell-neutral selected instance, `by` Collection "Tell apart by", `ctxby` Context
- * "Tell apart by". Ids are instance UUIDs. The query string stays reserved for boot links
+ * `read` the container the Read view reads (ADR-029), `id` the shell-neutral selected instance,
+ * `by` Collection "Tell apart by", `ctxby` Context "Tell apart by". Ids are instance UUIDs. The query string stays reserved for boot links
  * (ADR-021); the link trail lives in `history.state`.
  */
 
@@ -29,12 +29,15 @@ export type ContextBy = "link-type" | "none" | "boundary";
 export const LENS_ID = /^(?:(?:nav|comp|type|pkg):[^\s&#=]+|find|set)$/;
 export const COLLECTION_BY = /^(?:none|type|nesting|container|state|created-by|field:[^\s&#=]+)$/;
 export const CONTEXT_BY = /^(?:link-type|none|boundary)$/;
+/** A container id for the Read view (ADR-029). */
+export const READ_CONTAINER = /^[^\s&#=]+$/;
 
 export interface Address {
   essayId?: string; // e
   paragraphId?: string; // p
   zoomId?: string; // z
   lens?: LensId; // lens   (dropped unless LENS_ID matches)
+  read?: string; // read   (the container the Read view reads, ADR-029)
   instanceId?: string; // id     (shell-neutral selected instance, ADR-023)
   by?: CollectionBy; // by     (dropped unless COLLECTION_BY matches)
   ctxBy?: ContextBy; // ctxby  (dropped unless CONTEXT_BY matches)
@@ -45,6 +48,7 @@ const KEYS: [keyof Address, string, RegExp?][] = [
   ["paragraphId", "p"],
   ["zoomId", "z"],
   ["lens", "lens", LENS_ID],
+  ["read", "read", READ_CONTAINER],
   ["instanceId", "id"],
   ["by", "by", COLLECTION_BY],
   ["ctxBy", "ctxby", CONTEXT_BY],
@@ -61,7 +65,7 @@ export function parseAddress(hash: string): Address {
   return out as Address;
 }
 
-/** "" or "#…"; keys in the order e, p, z, lens, id, by, ctxby; empty values omitted; URLSearchParams encoding. */
+/** "" or "#…"; keys in the order e, p, z, lens, read, id, by, ctxby; empty values omitted; URLSearchParams encoding. */
 export function formatAddress(a: Address): string {
   const q = new URLSearchParams();
   for (const [field, key] of KEYS) {

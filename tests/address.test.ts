@@ -31,6 +31,12 @@ describe("address", () => {
     expect(parseAddress("#e=&p=")).toEqual({});
     expect(parseAddress("#x=1&e=a")).toEqual({ essayId: "a" });
   });
+  it("round-trips the read key, in order before id, and drops a malformed one", () => {
+    const a: Address = { read: "c5000000-0000-4000-a000-000000000020", instanceId: "646519f0" };
+    expect(parseAddress(formatAddress(a))).toEqual(a);
+    expect(formatAddress(a)).toBe("#read=c5000000-0000-4000-a000-000000000020&id=646519f0");
+    expect(parseAddress("#read=a%20b&id=x")).toEqual({ instanceId: "x" });
+  });
   it("round-trips lens keys", () => {
     const a: Address = {
       lens: "nav:97838af7-50f8-4da2-9d8f-d7dbf9296c80",

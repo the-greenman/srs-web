@@ -29,6 +29,7 @@ writes the URL hash. It owns one `Address` type:
 | `p` | `paragraphId` | paragraph to scroll to and focus | Essay |
 | `z` | `zoomId` | paragraph to zoom into | Essay |
 | `lens` | `lens` | lens id, a `LensId` ([ADR-025](./025-lenses.md)) | Lenses |
+| `read` | `read` | the container the Read view reads ([ADR-029](./029-read-view.md)) | Read |
 | `id` | `instanceId` | the selected instance id | every shell (Lenses in #547; Generic, Governance, Guides under #426) |
 | `by` | `by` | the Collection's "Tell apart by" choice | Lenses |
 | `ctxby` | `ctxBy` | the Context pane's "Tell apart by" choice | Lenses |
@@ -73,7 +74,7 @@ an event); they call:
   two entries with the same hash fires only `popstate`). So `popstate` is the one event.
 - **App owns the one listener.** It parses the address, keeps it with `history.state`,
   and **chooses the shell** (ADR-022): a `lens` key selects Lenses, no `lens` key
-  leaves Lenses for Generic. It passes the parsed address and the history state to the
+  leaves Lenses for Generic. A `read` key selects Read ([ADR-029](./029-read-view.md)) the same way. It passes the parsed address and the history state to the
   shell as props; a shell re-applies them and adds no window listener of its own.
   Only if a supported browser proves not to fire `popstate` on a direct hash write does
   App also route `hashchange` to the same handler.

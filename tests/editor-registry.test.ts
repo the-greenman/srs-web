@@ -239,10 +239,11 @@ describe("built-in views (ADR-022)", () => {
     expect(EDITORS.some((e) => (BUILT_IN_VIEWS as readonly string[]).includes(e.id))).toBe(false);
   });
 
-  it("isBuiltInView accepts generic and lenses only", () => {
-    expect(BUILT_IN_VIEWS).toEqual(["generic", "lenses"]);
+  it("isBuiltInView accepts generic, lenses and read only", () => {
+    expect(BUILT_IN_VIEWS).toEqual(["generic", "lenses", "read"]);
     expect(isBuiltInView("generic")).toBe(true);
     expect(isBuiltInView("lenses")).toBe(true);
-    for (const m of ["essay", "governance", "Lenses", "lens", "", "generic "]) expect(isBuiltInView(m)).toBe(false);
+    expect(isBuiltInView("read")).toBe(true);
+    for (const m of ["essay", "governance", "Lenses", "lens", "Read", "reader", "", "generic "]) expect(isBuiltInView(m)).toBe(false);
   });
 });

@@ -89,6 +89,8 @@
     onOpenPackages?: () => void;
     /** Open the built-in Lenses view (ADR-022); absent = no Explore > Lenses item. */
     onOpenLenses?: () => void;
+    /** Open the built-in Read view (ADR-029); absent = no Explore > Read item. */
+    onOpenRead?: () => void;
   }
 
   let {
@@ -111,6 +113,7 @@
     onReviewUpgrade,
     onOpenPackages,
     onOpenLenses,
+    onOpenRead,
   }: Props = $props();
 
   let installing = $state<string | null>(null);
@@ -466,7 +469,8 @@
 
     <section class="nav__group" data-part="explore">
       <h2 class="nav__group-label">Explore</h2>
-      <!-- First, not last: Lenses switches shells, Records and Map are surfaces of this one. -->
+      <!-- First, not last: Read and Lenses switch shells, Records and Map are surfaces of this one. -->
+      {#if onOpenRead}<button class="nav__item" data-testid="open-read" onclick={onOpenRead}>Read</button>{/if}
       {#if onOpenLenses}<button class="nav__item" data-testid="open-lenses" onclick={onOpenLenses}>Lenses</button>{/if}
       <button class="nav__item" class:nav__item--active={surface === "records"} onclick={openRecords}>Records</button>
       <button class="nav__item" class:nav__item--active={surface === "map"} onclick={openMap}>Map</button>

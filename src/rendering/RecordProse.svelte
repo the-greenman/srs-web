@@ -5,7 +5,7 @@
   composites are tables. Lifecycle and createdBy belong to the host's header (Lenses: Focus). Empty fields, aiGuidance, descriptions
   and required markers are never shown, and the field equal to the display label is not repeated.
   Props only, no shell context, so it renders in any shell. Labels come from src/lib/labels.ts
-  (fieldLabel, already applied by definitionToFields). Wraps .record-prose (lens.css).
+  (fieldLabel, already applied by definitionToFields). The split itself is proseView ($lib/prose.ts), shared with the Read view's first lines. Wraps .record-prose (lens.css).
   Parts: title, meta, body, more, label, composite.
 -->
 <script lang="ts">
@@ -13,7 +13,7 @@
   import TagChip from "$lib/components/TagChip.svelte";
   import type { CompositeFormDef } from "$lib/editor/blueprint-fields.js";
   import type { FieldFormDef } from "$lib/governance/types.js";
-  import { fieldLabel } from "$lib/labels.js";
+  import { proseView, str } from "$lib/prose.js";
   import type { SrsRecord } from "$lib/srs-client.js";
 
   let {
@@ -29,59 +29,11 @@
     heading?: "h2" | "h3";
   } = $props();
 
-  const str = (v: unknown) => (v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v));
   const http = (v: unknown) => typeof v === "string" && /^https?:\/\//.test(v);
-  const has = (v: unknown) => v != null && v !== "" && !(Array.isArray(v) && v.length === 0);
   const isTable = (entries: Record<string, unknown>[]) =>
     entries.some((e) => Array.isArray(e.columns) && Array.isArray(e.rows));
 
-  /** The record split into what prose shows: body, secondary long fields, meta chips, composites. */
-  const view = $derived.by(() => {
-    const vals = record.fieldValues;
-    const composite = new Set(composites.map((c) => c.name));
-    const all: { name: string; label: string; valueType: string }[] =
-      fields.length > 0
-        ? fields
-        : Object.keys(vals)
-            .filter((name) => !composite.has(name))
-            .map((name) => ({ name, label: fieldLabel({ name }), valueType: "string" }));
-    const shown = all.filter((f) => has(vals[f.name]) && vals[f.name] !== record.displayLabel);
-    // ponytail: presentation limit, no ADR-025 gap — "long" = a markdown field, a text field over 40
-    // characters, any other value over 80, or a line break (a short plain-text id like "C-08" stays a
-    // chip); a presentation heuristic, not a schema fact.
-    const isLong = (f: (typeof shown)[number]) => {
-      const v = vals[f.name];
-      return (
-        !Array.isArray(v) &&
-        (f.valueType === "markdown" ||
-          str(v).length > (f.valueType === "text" ? 40 : 80) ||
-          str(v).includes("\n"))
-      );
-    };
-    const long = shown.filter(isLong);
-    const body = long.find((f) => f.valueType === "markdown") ?? long[0];
-    const meta = shown
-      .filter((f) => !isLong(f))
-      .flatMap((f) =>
-        (Array.isArray(vals[f.name]) ? (vals[f.name] as unknown[]) : [vals[f.name]])
-          .filter((x) => x != null && typeof x !== "object")
-          .map((x) => ({ label: f.label, value: String(x) }))
-      );
-    const tables = composites
-      .map((c) => ({
-        ...c,
-        entries: (Array.isArray(vals[c.name]) ? vals[c.name] : []) as Record<string, unknown>[],
-      }))
-      .filter((c) => c.entries.length > 0);
-    return {
-      body: body ? str(vals[body.name]) : "",
-      secondary: long
-        .filter((f) => f !== body)
-        .map((f) => ({ label: f.label, value: str(vals[f.name]) })),
-      meta,
-      tables,
-    };
-  });
+  const view = $derived(proseView(record, fields, composites));
 </script>
 
 <div class="record-prose" data-testid="record-prose">

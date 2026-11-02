@@ -271,7 +271,7 @@ export function usableEditor(offered: OfferedEditor[], mode: string): EditorDefi
  * read engine structures only, work on every repository (read-only links included) and are exempt
  * from the `usableEditor` gate. No `EDITORS` id may equal one.
  */
-export const BUILT_IN_VIEWS = ["generic", "lenses"] as const;
+export const BUILT_IN_VIEWS = ["generic", "lenses", "read"] as const;
 export type BuiltInView = (typeof BUILT_IN_VIEWS)[number];
 export const isBuiltInView = (mode: string): mode is BuiltInView =>
   (BUILT_IN_VIEWS as readonly string[]).includes(mode);

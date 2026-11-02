@@ -1,0 +1,66 @@
+/* ============================================================================
+   Read view (ADR-029): one column, a page then what is inside it.
+   The column is the shells' one content cap; the prose is RecordProse's (.record-prose).
+   ========================================================================== */
+.read-main {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-sm) var(--space-gutter) var(--space-lg);
+}
+.read-page__eyebrow {
+  margin: 0;
+}
+.read-page__kind {
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+}
+.read-page__inside {
+  margin-top: var(--space-md);
+}
+.read-page__note {
+  margin: 0 0 var(--space-xs);
+  color: var(--color-muted);
+  font-size: var(--size-sm);
+}
+.read-page__list {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-xs);
+  padding: 0;
+  list-style: none;
+}
+.read-page__item {
+  display: block;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-decoration: none;
+}
+.read-page__item:hover {
+  border-color: var(--color-text);
+}
+.read-page__item:focus-visible {
+  outline: var(--focus-ring);
+}
+.read-page__label {
+  font-weight: 600;
+  margin-right: var(--space-xs);
+}
+.read-page__first {
+  display: block;
+  margin-top: var(--space-2xs);
+  color: var(--color-muted);
+  font-size: var(--size-sm);
+}
+.read-page__group > summary {
+  padding: var(--space-2xs) 0;
+  font-weight: 600;
+  cursor: pointer;
+}
+.read-page__count {
+  color: var(--color-muted);
+  font-weight: 400;
+}
