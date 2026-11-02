@@ -1,0 +1,111 @@
+[
+  {
+    "key": "about",
+    "title": "About",
+    "intent": "About us.",
+    "draft": true,
+    "closingMark": false,
+    "layout": "essay",
+    "blocks": [
+      {
+        "type": "hero",
+        "view": "5eee2746-5c02-4ecd-a03e-e753cfaf0e85",
+        "fields": {
+          "section_key": "opening",
+          "eyebrow": "",
+          "headline": "About.",
+          "supporting_copy": "Who we are."
+        }
+      },
+      {
+        "type": "homepage-prose",
+        "view": "f5cce8f7-a847-4397-93fc-d3a58883af2b",
+        "fields": {
+          "section_key": "story",
+          "section_heading": "Our story",
+          "section_body": "It began."
+        }
+      }
+    ]
+  },
+  {
+    "key": "home",
+    "title": "Home",
+    "intent": "The homepage.",
+    "draft": false,
+    "closingMark": true,
+    "blocks": [
+      {
+        "type": "hero",
+        "view": "5eee2746-5c02-4ecd-a03e-e753cfaf0e85",
+        "fields": {
+          "section_key": "opening",
+          "eyebrow": "Eyebrow",
+          "headline": "Decisions power change.",
+          "kicker": "Together.",
+          "supporting_copy": "Supporting copy.",
+          "presentation": "large"
+        }
+      },
+      {
+        "type": "homepage-prose",
+        "view": "f5cce8f7-a847-4397-93fc-d3a58883af2b",
+        "fields": {
+          "section_key": "why",
+          "section_heading": "Why",
+          "section_body": "A prose body."
+        }
+      },
+      {
+        "type": "faq-group",
+        "view": "d3c7cafd-e002-4f7e-a1e8-98d13891be15",
+        "fields": {
+          "section_key": "faq",
+          "section_heading": "Questions."
+        },
+        "items": [
+          {
+            "faq_item_key": "q1",
+            "faq_question": "First?",
+            "faq_answer": "Yes."
+          },
+          {
+            "faq_item_key": "q2",
+            "faq_question": "Second?",
+            "faq_answer": "No."
+          }
+        ]
+      },
+      {
+        "type": "guide-section",
+        "view": "36a95874-d726-4e34-8a5a-f3712507908b",
+        "fields": {
+          "section_key": "guide",
+          "render_as": "section",
+          "section_heading": "From the guide"
+        },
+        "guide": "recording",
+        "section": "four-questions"
+      },
+      {
+        "type": "primary-cta",
+        "view": "84f5f085-8b83-4aee-83c9-50514be28aa0",
+        "fields": {
+          "section_key": "act",
+          "section_heading": "Start",
+          "section_body": "Pick one."
+        },
+        "items": [
+          {
+            "card_key": "record",
+            "section_heading": "Record a decision",
+            "action_label": "Read the guide",
+            "action_href": "/guides/recording",
+            "guide": "recording",
+            "section": "four-questions"
+          }
+        ]
+      }
+    ]
+  }
+]

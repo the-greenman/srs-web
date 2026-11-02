@@ -176,6 +176,12 @@ export interface SrsRepository {
   compositions_for_container(container_id: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listDocumentViews()
   list_compositions(filter_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getComposition()
+  get_composition(id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getView()
+  get_view(id: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listFields()
+  list_fields(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in createRecordSuccessor()
   create_record_successor(predecessor_id: string, input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; null for missing/unknown field (srs-web#179)
@@ -1238,6 +1244,7 @@ export interface Container {
   memberInstanceIds?: ContainerEntry[];
   /** RFC-034: declared child containers (a slice carries them with their members). */
   childContainerIds?: string[];
+  tags?: string[];
 }
 
 /** One entry of a container's ordered member outline (RFC-043). */
@@ -1848,6 +1855,8 @@ export interface DocumentSection {
   order: number;
   source: Record<string, unknown>;
   emptyBehavior?: string;
+  /** RFC-008: a type key (`namespace/name`) to the View id that renders it in this section. */
+  typeDispatch?: Record<string, string>;
 }
 
 /**
@@ -1867,6 +1876,7 @@ export interface DocumentView {
   format?: string;
   preamble?: string;
   createdAt: string;
+  tags?: string[];
 }
 
 /**
@@ -1925,6 +1935,45 @@ export function listDocumentViews(
   filter: DocumentViewListFilter = {}
 ): DocumentViewSummary[] {
   return repo.list_compositions(JSON.stringify(filter)) as DocumentViewSummary[];
+}
+
+/** One Composition by id, or null. */
+export function getComposition(repo: SrsRepository, id: string): DocumentView | null {
+  return (repo.get_composition(id) as DocumentView | null) ?? null;
+}
+
+/** An L1 View's per-field presentation: order, whether it is shown, and a free display hint. */
+export interface FieldView {
+  fieldId: string;
+  order: number;
+  visible?: boolean;
+  displayHint?: string;
+}
+
+export interface View {
+  id: string;
+  namespace: string;
+  name: string;
+  version: number;
+  compatibleTypes?: string[];
+  fieldViews: FieldView[];
+}
+
+export interface FieldSummary {
+  id: string;
+  namespace: string;
+  name: string;
+  version: number;
+}
+
+/** Field definitions across the effective package set. */
+export function listFields(repo: SrsRepository): FieldSummary[] {
+  return repo.list_fields("{}") as FieldSummary[];
+}
+
+/** One View by id, or null. */
+export function getView(repo: SrsRepository, id: string): View | null {
+  return (repo.get_view(id) as View | null) ?? null;
 }
 
 // ---------------------------------------------------------------------------

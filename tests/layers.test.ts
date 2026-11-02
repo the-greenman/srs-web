@@ -2,6 +2,7 @@
 //  1. A headless module (a `.ts` / `.svelte.ts` file under src/lib) imports no `.svelte` file and
 //     does not touch `document`.
 //  2. Every shared component in src/lib/components/ is mounted by the styleguide.
+//  3. The generic site core (src/lib/site/*.ts) imports no site's own layer (src/lib/site/<site>/), ADR-029.
 // Existing offenders are the baseline: the lists only shrink, and each entry names its follow-up.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -118,5 +119,20 @@ describe("shared components (ADR-027)", () => {
 
   it("are each mounted by the styleguide", () => {
     expect(unmounted).toEqual(Object.keys(NO_SPECIMEN).sort());
+  });
+});
+
+/** ADR-029: the site core is generic; a site's own layer (src/lib/site/<site>/) may import it, never the reverse. */
+describe("site core (ADR-029)", () => {
+  const core = readdirSync(join(ROOT, "src/lib/site")).filter(
+    (n) => /\.ts$/.test(n) && !/\.d\.ts$/.test(n)
+  );
+  // `from "..."`, a bare `import "..."` and a dynamic `import("...")` of ./<site>/ or $lib/site/<site>/
+  const SITE_LAYER = /(?:\bfrom|\bimport)\s*\(?\s*["'](?:\.\/|\$lib\/site\/)[a-z0-9-]+\//;
+  it("imports no site's own layer", () => {
+    const offending = core.filter((n) =>
+      SITE_LAYER.test(stripComments(readFileSync(join(ROOT, "src/lib/site", n), "utf8")))
+    );
+    expect(offending).toEqual([]);
   });
 });
