@@ -11,6 +11,7 @@ import {
   type SrsRepository,
   getContainer,
   getRecord,
+  getRecordOrNull,
   listContainers,
   listRelations,
   updateContainer,
@@ -52,7 +53,7 @@ export function listPages(repo: SrsRepository, site: Site): PageRef[] {
   const pages: PageRef[] = [];
   for (const { containerId } of listContainers(repo)) {
     const c = getContainer(repo, containerId);
-    const anchor = c.anchorInstanceId ? getRecord(repo, c.anchorInstanceId) : null;
+    const anchor = c.anchorInstanceId ? getRecordOrNull(repo, c.anchorInstanceId) : null;
     if (!anchor || anchor.typeId !== site.pageTypeId) continue;
     pages.push({
       containerId,
@@ -70,7 +71,10 @@ export const outgoing = (repo: SrsRepository, id: string, relationType: string):
 
 /** A page's blocks in arranged order; a group's items (what it `contains` on the page) sit under it. */
 export function pageBlocks(repo: SrsRepository, page: PageRef): Block[] {
-  const ids = memberIds(getContainer(repo, page.containerId)).filter((id) => id !== page.anchorId);
+  // Blocks are records; a note on the page (a comment, say) is not a block.
+  const ids = memberIds(getContainer(repo, page.containerId)).filter(
+    (id) => id !== page.anchorId && getRecordOrNull(repo, id) !== null
+  );
   const children = new Map(
     ids.map((id) => [id, outgoing(repo, id, "contains").filter((x) => ids.includes(x))])
   );

@@ -49,5 +49,8 @@ cont "{\"title\":\"About\",\"tags\":[\"published\",\"draft\",\"layout:essay\"],\
 SP=$(rec $N/homepage '{"fieldValues":{"page_key":"scratch","page_title":"Scratch","page_intent":"Not yet.","primary_audience":"brief audience","tone_guidance":"brief tone"}}')
 S1=$(rec $N/homepage-prose "{\"fieldValues\":{${brief/KEY/note},\"section_heading\":\"Draft\",\"section_body\":\"Not yet.\"}}")
 cont "{\"title\":\"Scratch\",\"anchorInstanceId\":\"$SP\",\"memberInstanceIds\":[{\"instanceId\":\"$SP\"},{\"instanceId\":\"$S1\"}]}" >/dev/null
+# a container anchored on a Tier-0 note (as a conversation is in muSrs): not a page, and must not break listing
+NOTE=$(echo '{"title":"A conversation","sections":[{"name":"narrative","label":"Narrative","content":"Not a page."}]}' | srs note create --repo $W | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d["payload"]["note"]["instanceId"] if d.get("ok") else sys.exit(str(d)))')
+cont "{\"title\":\"A conversation\",\"anchorInstanceId\":\"$NOTE\",\"identityInstanceId\":\"$NOTE\",\"memberInstanceIds\":[{\"instanceId\":\"$NOTE\"}]}" >/dev/null
 srs repo validate --repo $W | python3 -c "import sys,json; s=json.load(sys.stdin)[\"payload\"][\"summary\"]; print(s); sys.exit(1 if s[\"errors\"] else 0)"
 srs repo copy --from $W --to "$OUT" >/dev/null

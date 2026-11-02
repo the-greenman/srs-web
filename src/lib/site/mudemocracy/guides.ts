@@ -4,7 +4,12 @@
  * section from the guide's own export. This adds `{guide, section}` (slugs) to what it exports.
  * Site-specific: the generic core never imports this directory.
  */
-import { type SrsRepository, getContainer, getRecord, listContainers } from "$lib/srs-client.js";
+import {
+  type SrsRepository,
+  getContainer,
+  getRecordOrNull,
+  listContainers,
+} from "$lib/srs-client.js";
 import type { BlockExtra } from "../site-export.js";
 import { outgoing } from "../site-model.js";
 
@@ -17,12 +22,12 @@ export function guideReferences(repo: SrsRepository): BlockExtra {
     if (containerType !== "guide") continue;
     const c = getContainer(repo, containerId);
     if (!c.anchorInstanceId) continue;
-    const guide = String(getRecord(repo, c.anchorInstanceId)?.fieldValues.slug ?? "");
+    const guide = String(getRecordOrNull(repo, c.anchorInstanceId)?.fieldValues.slug ?? "");
     for (const { instanceId } of c.memberInstanceIds ?? []) {
       const section =
         instanceId === c.anchorInstanceId
           ? null
-          : String(getRecord(repo, instanceId)?.fieldValues.slug ?? "");
+          : String(getRecordOrNull(repo, instanceId)?.fieldValues.slug ?? "");
       where.set(instanceId, { guide, section });
     }
   }
