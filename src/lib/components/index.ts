@@ -100,6 +100,7 @@ export { default as ActionMenu } from "./ActionMenu.svelte";
 export { default as ActionBar } from "./ActionBar.svelte";
 export { default as Toolbar } from "./Toolbar.svelte";
 export { default as BinTray } from "./BinTray.svelte";
+export { default as NotesTray } from "./NotesTray.svelte";
 export { default as ReferencesTray } from "./ReferencesTray.svelte";
 export { default as MarkdownHelp } from "./MarkdownHelp.svelte";
 export { default as MarkdownText } from "./MarkdownText.svelte";

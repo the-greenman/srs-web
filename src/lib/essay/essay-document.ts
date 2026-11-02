@@ -42,6 +42,7 @@ import {
   getAttachmentBytes,
   getContainer,
   getContainerOutline,
+  getNote,
   getRecord,
   linkAttachment,
   listAttachments,
@@ -87,6 +88,16 @@ export interface Paragraph {
 export interface EssaySummary {
   id: string;
   title: string;
+}
+/** A vignette in the essay's notes area: the conversation the essay grew from (srs-web#624). */
+export interface EssayNote {
+  id: string;
+  title: string;
+  /** The note's sections, blank-line joined (verbatim words first). */
+  text: string;
+  tags: string[];
+  /** The records derived from this note (`derived-from` the note), so the note shows what it produced. */
+  produced: { id: string; label: string }[];
 }
 /** A collected source, claim or problem; `paragraphIds` come from inverting the paragraphs' context. */
 export interface Reference {
@@ -136,6 +147,10 @@ export interface EssayModel {
   commentsContainerId: string | null;
   /** The essay's collected references container (essay package 1.7.0; null as above). */
   referencesContainerId: string | null;
+  /** The essay's notes container (null until the editor has made it). */
+  notesContainerId: string | null;
+  /** The notes in it, in container order, apart from the essay's records. */
+  notes: EssayNote[];
   /** The references container's records, each with the paragraphs it is linked to (none = unlinked). */
   references: Reference[];
   /** Whether the installed document-state type can record a bundle (older packages cannot: no Export snapshot). */
@@ -410,6 +425,7 @@ export function loadEssay(
     try {
       if (!state) state = addEditorState(repo, types, essayId, title);
       else state = repairAreas(repo, types, state, title, essayId);
+      ensureContainer(repo, areaId(essayId, "notes"), areaTitle(title, "notes"));
     } catch (e) {
       repairError = e instanceof Error ? e.message : String(e);
     }
@@ -467,6 +483,8 @@ export function loadEssay(
         };
       })
     : [];
+  const notesContainerId = existingContainer(repo, areaId(essayId, "notes"));
+  const notes = notesContainerId ? loadNotes(repo, notesContainerId) : [];
   const hiddenRaw = state?.fieldValues.hidden_instance_ids;
   return {
     essayId,
@@ -486,6 +504,8 @@ export function loadEssay(
     repairError,
     commentsContainerId,
     referencesContainerId,
+    notesContainerId,
+    notes,
     references,
     bundleContainerId: str(state?.fieldValues.bundle_container_id) || null,
     canSnapshot: !!state && hasField(repo, types, DOCUMENT_STATE_TYPE_ID, "bundle_container_id"),
@@ -539,6 +559,37 @@ export const setEssayPurpose = (repo: SrsRepository, essayId: string, purpose: s
  * ids of everything it consists of, where to read it (MCP resources) and the rules for working on
  * it. `focus` = the paragraph (or zoom target) to look at. Lines for absent ids are omitted.
  */
+const existingContainer = (repo: SrsRepository, id: string): string | null => {
+  try {
+    return getContainer(repo, id).containerId;
+  } catch {
+    return null;
+  }
+};
+
+/** The notes in a container, in its order, each with the records derived from it. Read-only: notes are written by agents and chats. */
+function loadNotes(repo: SrsRepository, containerId: string): EssayNote[] {
+  const out: EssayNote[] = [];
+  for (const e of getContainerOutline(repo, containerId).entries) {
+    const n = getNote(repo, e.instanceId);
+    if (!n) continue;
+    const produced = listRelations(repo, { relationType: "derived-from", target: n.instanceId })
+      .map((r) => r.sourceInstanceId)
+      .map((id) => ({ id, label: getRecord(repo, id)?.displayLabel || id }));
+    out.push({
+      id: n.instanceId,
+      title: n.title || n.instanceId,
+      text: (n.sections ?? [])
+        .map((x) => x.content ?? "")
+        .filter(Boolean)
+        .join("\n\n"),
+      tags: n.tags ?? [],
+      produced,
+    });
+  }
+  return out;
+}
+
 export function agentHandoff(a: {
   repositoryId: string;
   essay: { id: string; title: string };
@@ -549,6 +600,8 @@ export function agentHandoff(a: {
   binContainerId?: string | null;
   commentsContainerId?: string | null;
   referencesContainerId?: string | null;
+  /** The notes container: vignettes of the conversation behind the essay (srs-web#624). */
+  notesContainerId?: string | null;
   /** The snapshot bundle, once an Export snapshot has made one. */
   bundleContainerId?: string | null;
   focus?: { id: string; title: string };
@@ -560,6 +613,7 @@ export function agentHandoff(a: {
     a.binContainerId && `bin ${a.binContainerId}`,
     a.commentsContainerId && `comments ${a.commentsContainerId}`,
     a.referencesContainerId && `references ${a.referencesContainerId}`,
+    a.notesContainerId && `notes ${a.notesContainerId}`,
   ].filter(Boolean);
   const c = a.commentsContainerId;
   const r = a.referencesContainerId;
@@ -577,8 +631,13 @@ export function agentHandoff(a: {
       : []),
     "",
     "How to work on this essay",
-    `- The text is the writer's. Never edit a paragraph body, the essay title or purpose, or any container except comments and references: the engine refuses these writes.`,
+    `- The text is the writer's. Never edit a paragraph body, the essay title or purpose, or any container except comments, references and notes: the engine refuses these writes.`,
     `- Comment: record_create com.semanticops.comments/comment {comment_text, kind}${c ? ` with containerId ${c}` : ""}, then relation_create com.semanticops.comments/comments-on from the comment to the paragraph. kind says what it asks of the writer: question, objection, evidence, suggestion or task (exactly one thing to do). On an essay older than essay 1.8.0 (no such type), use com.mudemocracy.essay/comment and com.mudemocracy.essay/comments-on, without a kind. One comment per paragraph per point. Don't write an author: your session's identity is stamped.`,
+    ...(a.notesContainerId
+      ? [
+          `- Notes: when the writer's words say what something is or why it matters, record them verbatim as a Tier-0 note (note_create) and add it to the notes container ${a.notesContainerId}. A record you derive from a note gets a derived-from relation to it. Notes are the conversation; the essay's records are what emerged from it.`,
+        ]
+      : []),
     "- Responses: the writer answers your comment with a comment on it (comments-on your comment): agree or disagree is their verdict, done or rejected settles your task (the text is the reason), withdrawn clears either; the latest one counts. Never propose a task again whose latest response is rejected, and never reply to a response.",
     `- Gather: a source, claim or problem worth having for this essay goes in references: create it${r ? ` with containerId ${r}` : ""}, or container_member_add an existing one. Read references first so you don't duplicate.`,
     `- The writer's own material is in references too: com.mudemocracy.argument/source records (a source_url for a web page; a text file attached to the record, e.g. a transcript or paper). To read attached text: for each sourceRefs entry with sourceType repository-document, read ${uri}/attachment/<its sourceId>.`,
@@ -594,7 +653,7 @@ export function agentHandoff(a: {
 /** A side area's container title (draft / bin), from its essay's (one convention for new, copy and rename). */
 const areaTitle = (
   title: string,
-  area: "draft" | "bin" | "snapshot" | "comments" | "references"
+  area: "draft" | "bin" | "snapshot" | "comments" | "references" | "notes"
 ): string => `${title} (${area})`;
 
 /** Rename the essay record and its containers (the document's, its draft's and its bin's). */
