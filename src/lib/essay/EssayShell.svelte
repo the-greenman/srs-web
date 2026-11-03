@@ -557,7 +557,7 @@
     }
   }
 
-  /** Export references (srs-web#278): the material the essay refers to, as markdown, from the bundle. */
+  /** Export references (srs-web#278): the material the essay refers to, as markdown, from the essay container. */
   function exportReferences() {
     try {
       downloadText(essayReferences(repo, model!), "text/markdown", `${model!.title} (references).md`);
@@ -565,11 +565,11 @@
     } catch (e) {
       error = msg(e);
     } finally {
-      reload(); // the bundle may be new: model, write guard and handoff learn it
+      reload();
     }
   }
 
-  /** Export snapshot (srs-web#417): refresh the bundle, then the core's slice of it as a `.srs`. */
+  /** Export snapshot (srs-web#417): the core's slice of the essay container (which declares the whole essay) as a `.srs`. */
   function exportSnapshot() {
     try {
       const { bytes } = essaySnapshot(repo, model!);
@@ -578,7 +578,7 @@
     } catch (e) {
       error = msg(e);
     } finally {
-      reload(); // the bundle may be new (even if the export was refused): model, write guard and handoff learn it
+      reload();
     }
   }
 

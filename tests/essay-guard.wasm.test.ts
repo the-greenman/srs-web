@@ -1,7 +1,7 @@
 // @vitest-environment node
 /**
- * The essay write guard against the REAL engine (srs-web#494): with a snapshot bundle present (its
- * children include the comments and references containers) an agent session can still file a comment
+ * The essay write guard against the REAL engine (srs-web#494): with the essay container declaring the
+ * comments and references containers as children an agent session can still file a comment
  * into the comments container, and still cannot edit a paragraph body.
  */
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
@@ -38,9 +38,11 @@ describe.skipIf(!haveBindings)("essayWriteGuard on the real engine", () => {
     const p = doc.addParagraph(repo, m);
     doc.setBody(repo, p, "Writer's text.");
     m = doc.loadEssay(repo, essayId);
-    doc.refreshBundle(repo, m); // the bundle now has the comments and references containers as children
     m = doc.loadEssay(repo, essayId);
-    expect(m.bundleContainerId).toBeTruthy();
+    // srs-web#634: the essay container itself declares the comments and references containers as children
+    const kids = repo.get_container(m.containerId).childContainerIds ?? [];
+    expect(kids).toContain(m.commentsContainerId);
+    expect(kids).toContain(m.referencesContainerId);
 
     const session = repo.open_mcp_session();
     session.set_write_guard(JSON.stringify(doc.essayWriteGuard(m)));

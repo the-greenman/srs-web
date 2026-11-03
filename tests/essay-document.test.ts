@@ -81,7 +81,6 @@ import {
   loadEssay,
   moveEntry,
   newEssay,
-  refreshBundle,
   removeAttachment,
   removeReference,
   repoBytes,
@@ -505,64 +504,6 @@ describe("essayMarkdown (srs-web#416)", () => {
   });
 });
 
-describe("refreshBundle (srs-web#417)", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: a hand-built model with only what the refresh reads
-  const model = (over: Record<string, unknown> = {}): any => ({
-    essayId: "E",
-    title: "T",
-    containerId: "C",
-    draftContainerId: "D",
-    binContainerId: null,
-    stateId: "S",
-    canSnapshot: true,
-    bundleContainerId: null,
-    paragraphs: { p1: {}, p2: {} },
-    comments: { p1: [{ id: "c1" }] },
-    attachments: { p2: [{ neighbourId: "prob" }] },
-    ...over,
-  });
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    m.getRecord.mockReturnValue({ instanceId: "S", fieldValues: { essay: "E" } });
-  });
-
-  it("first use: creates the bundle declaring the containers as children and the records as members, and links it from the state", () => {
-    m.createContainer.mockReturnValue({ containerId: "B" });
-    expect(refreshBundle({} as never, model())).toBe("B");
-    const input = m.createContainer.mock.calls[0][1];
-    expect(input.childContainerIds).toEqual(["C", "D"]);
-    expect(input.memberInstanceIds.map((e: { instanceId: string }) => e.instanceId).sort()).toEqual(
-      ["E", "S", "c1", "prob"]
-    );
-    expect(m.updateRecord.mock.calls[0][2].fieldValues.bundle_container_id).toBe("B");
-  });
-
-  it("later: applies only the difference with the member ops, and children once", () => {
-    m.getContainer.mockReturnValue({
-      childContainerIds: ["C", "D"],
-      memberInstanceIds: [{ instanceId: "E" }, { instanceId: "S" }, { instanceId: "gone" }],
-    });
-    refreshBundle({} as never, model({ bundleContainerId: "B" }));
-    expect(m.createContainer).not.toHaveBeenCalled();
-    expect(m.updateContainer).not.toHaveBeenCalled();
-    expect(m.removeContainerMember).toHaveBeenCalledWith(expect.anything(), "B", "gone");
-    expect(m.addContainerMember.mock.calls.map((c) => c[2]).sort()).toEqual(["c1", "prob"]);
-  });
-
-  it("a new bin is declared as a child on the next refresh", () => {
-    m.getContainer.mockReturnValue({ childContainerIds: ["C", "D"], memberInstanceIds: [] });
-    refreshBundle({} as never, model({ bundleContainerId: "B", binContainerId: "X" }));
-    expect(m.updateContainer).toHaveBeenCalledWith(expect.anything(), "B", {
-      childContainerIds: ["C", "D", "X"],
-    });
-  });
-
-  it("refuses when the package cannot record a bundle", () => {
-    expect(() => refreshBundle({} as never, model({ canSnapshot: false }))).toThrow();
-  });
-});
-
 describe("essayReferences (srs-web#278)", () => {
   it("refreshes the bundle, then renders the essay-references composition for it", async () => {
     const { essayReferences } = await import("../src/lib/essay/essay-document.js");
@@ -821,34 +762,6 @@ describe("comments and references containers (srs-web#494, #495, #496)", () => {
       essayWriteGuard({ essayId: "E", containerId: "C", bundleContainerId: "Z" } as never)
         .containerIds
     ).toEqual(["C"]); // the bundle's closure includes comments and references
-  });
-
-  it("the snapshot bundle declares both containers as children and drops the per-comment member loop", () => {
-    m.getRecord.mockReturnValue({ instanceId: "S", fieldValues: { essay: "E" } });
-    m.createContainer.mockReturnValue({ containerId: "Z" });
-    // biome-ignore lint/suspicious/noExplicitAny: hand-built model
-    const model: any = {
-      essayId: "E",
-      title: "T",
-      containerId: "C",
-      draftContainerId: "D",
-      binContainerId: null,
-      commentsContainerId: "K",
-      referencesContainerId: "F",
-      stateId: "S",
-      canSnapshot: true,
-      bundleContainerId: null,
-      paragraphs: { p1: {} },
-      comments: { p1: [{ id: "c0" }, { id: "c1" }] },
-      attachments: { p1: [{ neighbourId: "prob" }] },
-    };
-    m.getContainerOutline.mockReturnValue({ entries: [{ instanceId: "c0" }], body: [] });
-    refreshBundle({} as never, model);
-    const input = m.createContainer.mock.calls[0][1];
-    expect(input.childContainerIds).toEqual(["C", "D", "K", "F"]);
-    expect(input.memberInstanceIds.map((e: { instanceId: string }) => e.instanceId).sort()).toEqual(
-      ["E", "S", "c1", "prob"] // c0 is filed in K; the unfiled c1 (a read-only doc never sweeps) is a member
-    );
   });
 
   it("repair is tried once per essay per repo handle: a failure is reported once and not retried", () => {

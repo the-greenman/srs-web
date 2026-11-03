@@ -112,7 +112,7 @@ export interface EssayModel {
   /** The Bin: created on the first delete (null until then). */
   binContainerId: string | null;
   binEntries: OutlineEntry[];
-  /** The snapshot bundle (srs-web#417): created on the first Export snapshot (null until then). */
+  /** A legacy snapshot bundle (srs-web#417), only on essays exported before srs-web#634; no longer created. */
   bundleContainerId: string | null;
   /** Set when this load's repair failed (tried once per essay per repo handle; the shell shows it as a notice). */
   repairError?: string | null;
@@ -122,7 +122,7 @@ export interface EssayModel {
   referencesContainerId: string | null;
   /** The references container's records, each with the paragraphs it is linked to (none = unlinked). */
   references: Reference[];
-  /** Whether the installed document-state type can record a bundle (older packages cannot: no Export snapshot). */
+  /** Whether the essay has an editor state, so its container declares the whole essay and can be exported (srs-web#634). */
   canSnapshot: boolean;
   /** Comments here can carry a kind (comment v2, comments 1.1.0): read once per load, not per render. */
   canKind: boolean;
@@ -141,8 +141,8 @@ export interface EssayModel {
 /**
  * Owner ruling (muDemocracy.org#226): agents never write the essay text — they comment via
  * new records and relations. Labels are metadata: fillable only while empty. The comments and
- * references containers are deliberately NOT guarded (nor is the snapshot bundle: the engine guards a
- * container's whole closure, and the bundle's children include them; refreshBundle re-declares it): agents file into them (containerId on create,
+ * references containers are deliberately NOT guarded (nor is their parent: the engine guards a
+ * container's whole closure, but the guard lists containers explicitly, so declaring them as children of the essay container leaves them open): agents file into them (containerId on create,
  * or container_member_add); every other container stays protected.
  */
 export function essayWriteGuard(m: EssayModel): AgentWriteGuard {
@@ -394,6 +394,7 @@ export function loadEssay(
     try {
       if (!state) state = addEditorState(repo, types, essayId, title);
       else state = repairAreas(repo, types, state, title, essayId);
+      declareEssayContainment(repo, containerId, state); // essays made before srs-web#634
     } catch (e) {
       repairError = e instanceof Error ? e.message : String(e);
     }
@@ -466,7 +467,7 @@ export function loadEssay(
     referencesContainerId,
     references,
     bundleContainerId: str(state?.fieldValues.bundle_container_id) || null,
-    canSnapshot: !!state && hasField(repo, types, DOCUMENT_STATE_TYPE_ID, "bundle_container_id"),
+    canSnapshot: !!state,
     canKind: kindsIn(types),
     comments,
     attachments: context.attachments,
@@ -744,6 +745,8 @@ export function binParagraph(repo: SrsRepository, m: EssayModel, id: string): vo
       { bin_container_id: bin },
       typeVersion(repo, DOCUMENT_STATE_TYPE_ID)
     );
+    const cur = getContainer(repo, m.containerId).childContainerIds ?? [];
+    if (!cur.includes(bin)) updateContainer(repo, m.containerId, { childContainerIds: [...cur, bin] });
   }
   transfer(repo, m.containerId, bin, id);
 }
@@ -776,6 +779,36 @@ const repairTried = (repo: SrsRepository): Set<string> => {
   repairedCache.set(repo, hit);
   return hit;
 };
+
+/**
+ * The essay container declares everything the essay needs (srs-web#634): its draft, Bin, comments
+ * and references containers as `childContainerIds` and the document-state record as a member, so a
+ * slice export of the essay container carries the whole essay. Idempotent: only the difference is
+ * written, and a repository where everything is already declared is not touched. Membership is
+ * declared here, never derived. (The write guard lists its containers explicitly, so declaring the
+ * comments and references containers as children does not guard them.)
+ */
+export function declareEssayContainment(
+  repo: SrsRepository,
+  containerId: string,
+  state: SrsRecord
+): void {
+  const f = state.fieldValues;
+  const want = [
+    "draft_container_id",
+    "bin_container_id",
+    "comments_container_id",
+    "references_container_id",
+  ]
+    .map((k) => str(f[k]))
+    .filter(Boolean);
+  const cur = getContainer(repo, containerId);
+  const children = cur.childContainerIds ?? [];
+  const missing = want.filter((c) => !children.includes(c));
+  if (missing.length) updateContainer(repo, containerId, { childContainerIds: [...children, ...missing] });
+  if (!(cur.memberInstanceIds ?? []).some((e) => e.instanceId === state.instanceId))
+    addContainerMember(repo, containerId, state.instanceId);
+}
 
 /**
  * Create the comments / references containers the installed document-state type can record
@@ -840,13 +873,14 @@ export function newEssay(repo: SrsRepository, title: string): string {
   const essay = createRecord(repo, ESSAY_TYPE_ID, typeVersion(repo, ESSAY_TYPE_ID), {
     fieldValues: { title },
   });
-  createContainer(repo, {
+  const container = createContainer(repo, {
     title,
     anchorInstanceId: essay.instanceId,
     identityInstanceId: essay.instanceId,
     memberInstanceIds: [{ instanceId: essay.instanceId }],
   });
-  addEditorState(repo, listTypes(repo), essay.instanceId, title);
+  const state = addEditorState(repo, listTypes(repo), essay.instanceId, title);
+  declareEssayContainment(repo, container.containerId, state);
   return essay.instanceId;
 }
 
@@ -861,7 +895,8 @@ export function copyEssay(repo: SrsRepository, m: EssayModel): string {
   const essayId = copy.container.anchorInstanceId;
   if (!essayId) throw new Error("The copied document has no essay record");
   patchRecord(repo, essayId, { title }); // copyContainer already titled the container
-  addEditorState(repo, listTypes(repo), essayId, title);
+  const state = addEditorState(repo, listTypes(repo), essayId, title);
+  declareEssayContainment(repo, copy.container.containerId, state);
   return essayId;
 }
 
@@ -890,76 +925,17 @@ export function essayMarkdown(repo: SrsRepository, m: EssayModel): string {
   return renderDocumentView(repo, view.id, "markdown", m.containerId, null, exclude).rendered;
 }
 
-/**
- * (Re)declare the snapshot bundle (srs-web#417): its `childContainerIds` are the essay, draft and
- * bin, comments and references containers (RFC-034 I-151: their paragraphs, comments and gathered
- * references come with them) and its own members the essay record, document-state, (on a package
- * without a comments container) this essay's comments, and the one-hop non-structural
- * neighbours of its paragraphs (problems, sources, claims). Created on first use and linked from
- * document-state; later refreshes apply only the difference. Membership is declared here, never
- * derived. Returns the bundle's container id.
- */
-export function refreshBundle(repo: SrsRepository, m: EssayModel): string {
-  if (!m.stateId || !m.canSnapshot)
-    throw new Error("This essay's package cannot record a snapshot bundle.");
-  // The comments and references containers are children: they carry every comment and the gathered
-  // references (linked to a paragraph or not); the attachments loop below stays for older essays.
-  const children = [
-    m.containerId,
-    m.draftContainerId,
-    m.binContainerId,
-    m.commentsContainerId,
-    m.referencesContainerId,
-  ].filter((c): c is string => !!c);
-  const own = new Set<string>([m.essayId, m.stateId]);
-  for (const id of Object.keys(m.paragraphs)) {
-    for (const a of m.attachments[id] ?? []) own.add(a.neighbourId);
-  }
-  // Comments not yet filed in the comments container (a read-only document never sweeps) are members.
-  const filed = new Set(
-    m.commentsContainerId
-      ? getContainerOutline(repo, m.commentsContainerId).entries.map((e) => e.instanceId)
-      : []
-  );
-  for (const c of paragraphComments(m.comments, Object.keys(m.paragraphs)))
-    if (!filed.has(c.id)) own.add(c.id);
-  let bundle = m.bundleContainerId;
-  if (!bundle) {
-    bundle = createContainer(repo, {
-      title: areaTitle(m.title, "snapshot"),
-      childContainerIds: children,
-      memberInstanceIds: [...own].map((instanceId) => ({ instanceId })),
-    }).containerId;
-    // v1 state records upgrade to the installed type in the same write that records the bundle.
-    patchRecord(
-      repo,
-      m.stateId,
-      { bundle_container_id: bundle },
-      typeVersion(repo, DOCUMENT_STATE_TYPE_ID)
-    );
-    return bundle;
-  }
-  const cur = getContainer(repo, bundle);
-  if (children.join() !== (cur.childContainerIds ?? []).join())
-    updateContainer(repo, bundle, { childContainerIds: children });
-  const have = new Set((cur.memberInstanceIds ?? []).map((e) => e.instanceId));
-  for (const id of have) if (!own.has(id)) removeContainerMember(repo, bundle, id);
-  for (const id of own) if (!have.has(id)) addContainerMember(repo, bundle, id);
-  return bundle;
-}
-
-/** Export snapshot: refresh the bundle, then the core slice of it (`.srs` bytes). Refusals come from the core. */
+/** Export snapshot: the core slice of the essay container itself, which declares the whole essay (srs-web#634). Refusals come from the core. */
 export function essaySnapshot(
   repo: SrsRepository,
   m: EssayModel
 ): { bundleId: string; bytes: Uint8Array<ArrayBuffer> } {
-  const bundleId = refreshBundle(repo, m);
-  return { bundleId, bytes: exportSlice(repo, bundleId) };
+  return { bundleId: m.containerId, bytes: exportSlice(repo, m.containerId) };
 }
 
 /**
- * Export references (srs-web#278): refresh the bundle, then the core render of the package's
- * `essay-references` composition for the bundle container (its sections filter the bundle's members
+ * Export references (srs-web#278): the core render of the package's
+ * `essay-references` composition for the essay container (its sections filter its members
  * by type). The markdown export stays content only; this is the separate referenced-material export.
  */
 export function essayReferences(repo: SrsRepository, m: EssayModel): string {
@@ -971,5 +947,5 @@ export function essayReferences(repo: SrsRepository, m: EssayModel): string {
     throw new Error(
       "This repository's essay package has no references composition (needs essay 1.6.0)."
     );
-  return renderDocumentView(repo, view.id, "markdown", refreshBundle(repo, m)).rendered;
+  return renderDocumentView(repo, view.id, "markdown", m.containerId).rendered;
 }
