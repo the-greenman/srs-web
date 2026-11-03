@@ -26,9 +26,10 @@
         aria-controls={open ? id : undefined}
         data-testid="changes-toggle"
         onclick={() => (open = !open)}
-      >Unsaved changes{#if count > 0}<span class="unsaved__count" data-testid="changes-count"> ({count})</span>{/if}</button>
+      >Unsaved changes</button>
     {:else}Unsaved changes{/if}
   </span>
+  {#if dc && count > 0}<span class="unsaved__count" data-testid="changes-count">({count})</span>{/if}
   {#if dc && open}
     <div {id} class="unsaved__popover" data-part="popover">
       <ChangesPanel changes={dc.view} onOpen={(item) => { open = false; onOpen?.(item); }} />

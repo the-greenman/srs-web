@@ -76,3 +76,6 @@
 .changes__by {
   color: var(--color-muted-strong);
 }
+.unsaved__count {
+  margin-inline-start: var(--space-xs);
+}
