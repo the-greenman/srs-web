@@ -50,6 +50,7 @@
   } from "$lib/recent-repos.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
   import { DocumentMutationTracker } from "$lib/document-mutations.js";
+  import { DocumentChangesState, setDocumentChanges } from "$lib/document-changes.svelte.js";
 
   import { EDITORS, availableEditors, creatableEditors, installEditor as installEditorPackages, isBuiltInView, usableEditor, type EditorDefinition } from "$lib/editors/registry.js";
   import { type Address, parseAddress, replaceAddress } from "$lib/address.js";
@@ -369,6 +370,9 @@
     notify({ kind, key: "save", text, testid: "save-status", duration });
   };
 
+  /** What changed since the last save, for the "Unsaved changes" status in every shell (#587). */
+  const documentChanges = setDocumentChanges(new DocumentChangesState());
+
   function beginDocument({ dirty = false }: { dirty?: boolean } = {}): void {
     pendingNew = null; // a document opened: a held ?new offer, and any ?new error, are spent
     newLinkError = null;
@@ -385,6 +389,7 @@
     const revision = documentMutations.beginDocument(repo?.write_epoch() ?? 0, { dirty });
     documentDirty = documentMutations.dirty;
     documentRevision = revision.revision;
+    documentChanges.saved(repo); // the document as opened is the save point
   }
 
   /** Whether the last recovery-copy write succeeded (srs-web#312). */
@@ -428,6 +433,7 @@
     if (!repo || !documentMutations.sync(repo.write_epoch())) return workingCopySaved;
     documentDirty = documentMutations.dirty;
     documentRevision = documentMutations.current.revision;
+    documentChanges.refresh(repo);
     workingCopy.schedule();
     return workingCopySaved;
   }
@@ -436,6 +442,7 @@
     const savedCurrentRevision = documentMutations.completeSave(snapshot);
     documentDirty = documentMutations.dirty;
     if (savedCurrentRevision) {
+      documentChanges.saved(repo);
       workingCopy.cancel();
       void clearWorkingCopy();
     }

@@ -52,6 +52,12 @@ export const MUTATING_METHODS: ReadonlySet<string> = new Set([
 
 /** Methods that do not change repository data (reads, exports, session/actor plumbing, `free`). */
 export const NON_MUTATING_METHODS: ReadonlySet<string> = new Set([
+  "changes", // the engine's diff since the save point (srs-rust#1522); a read
+  "clear_attention", // in memory only, never written to the corpus (srs-rust#1344)
+  "get_attachment_policy",
+  "get_attention",
+  "mark_saved", // moves the in-memory save baseline; not a write (srs-rust#1522)
+  "set_attention", // in memory only, never written to the corpus
   "available_migrations",
   "blueprint_schema",
   "check_package_requirements",

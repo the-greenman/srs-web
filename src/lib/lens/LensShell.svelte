@@ -58,6 +58,7 @@
   import Notice from "$lib/components/Notice.svelte";
   import Select from "$lib/components/Select.svelte";
   import Toolbar from "$lib/components/Toolbar.svelte";
+  import UnsavedStatus from "$lib/components/UnsavedStatus.svelte";
   import RelationGraph from "$lib/generic/RelationGraph.svelte";
   import { focusLayout } from "$lib/generic/map-layout.js";
   import { BASE_GROUPS } from "$lib/components/shell-actions.js";
@@ -770,7 +771,7 @@
         {#snippet lead()}<NavTrigger />{/snippet}
         {#snippet trail()}<InspectorTrigger />{/snippet}
         {#snippet status()}
-          {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
+          {#if documentDirty}<UnsavedStatus />{/if}
           <label class="lens-layout">
             <span>Layout</span>
             <Select bind:value={layout} options={layouts} data-testid="lens-layout" />

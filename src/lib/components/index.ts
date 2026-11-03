@@ -86,6 +86,8 @@ export type {
 
 // MCP relay connection (srs-web#307)
 export { default as McpConnection } from "./McpConnection.svelte";
+export { default as ChangesPanel } from "./ChangesPanel.svelte";
+export { default as UnsavedStatus } from "./UnsavedStatus.svelte";
 export { default as AgentPanel } from "./AgentPanel.svelte";
 export { default as Disclosure } from "./Disclosure.svelte";
 export type { PanelAgent } from "./agent-panel.js";

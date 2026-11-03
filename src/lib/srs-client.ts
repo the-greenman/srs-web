@@ -52,6 +52,10 @@ export interface SrsRepository {
   open_mcp_session(): McpSession;
   /** Engine write counter (srs-rust#1160): the one "repository changed" signal for UI and MCP writers. */
   write_epoch(): number;
+  /** What changed since `"saved"` (srs-rust#1522), as JSON; the engine computes it, the UI only renders it. */
+  changes(since: string): string;
+  /** Record the repository as it is now as the save point (srs-rust#1522); in memory, not a write. */
+  mark_saved(saved_at?: string | null): void;
   /** RFC-046 session actor for this handle's writes (engine stamps `createdBy`; never put in a payload). */
   set_actor(json: string): void;
   clear_actor(): void;

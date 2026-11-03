@@ -17,6 +17,7 @@
   import Main from "$lib/components/Main.svelte";
   import Notice from "$lib/components/Notice.svelte";
   import Toolbar from "$lib/components/Toolbar.svelte";
+  import UnsavedStatus from "$lib/components/UnsavedStatus.svelte";
   import type { ToolbarAction } from "$lib/components/menu-action.js";
   import { BASE_GROUPS } from "$lib/components/shell-actions.js";
   import type { EditorShellProps } from "$lib/editors/registry.js";
@@ -155,7 +156,7 @@
     {#snippet bar()}
       <Toolbar title={documentTitle} actions={barActions} groups={BASE_GROUPS}>
         {#snippet status()}
-          {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
+          {#if documentDirty}<UnsavedStatus />{/if}
         {/snippet}
       </Toolbar>
     {/snippet}
