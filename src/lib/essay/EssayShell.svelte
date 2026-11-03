@@ -25,6 +25,7 @@
   import type { DropTarget } from "$lib/components/BlockStack.svelte";
   import CommentThread from "$lib/components/CommentThread.svelte";
   import BinTray from "$lib/components/BinTray.svelte";
+  import NotesTray from "$lib/components/NotesTray.svelte";
   import ReferencesTray from "$lib/components/ReferencesTray.svelte";
   import DraftTray from "$lib/components/DraftTray.svelte";
   import Panel from "$lib/components/Panel.svelte";
@@ -285,6 +286,7 @@
     const live = new Set([
       ...Object.values(model.attachments).flat().map((a) => a.id),
       ...model.references.map((r) => r.id),
+      ...model.notes.map((n) => n.id),
     ]);
     const kept = untrack(() => pinnedIds).filter((id) => live.has(id));
     if (kept.length !== untrack(() => pinnedIds).length) untrack(() => setPins(kept));
@@ -323,6 +325,7 @@
   };
   /** References pinned from the tray (by instance id, linked or not), then pinned margin attachments. */
   const pinnedRefs = $derived((model?.references ?? []).filter((r) => pinnedIds.includes(r.id)));
+  const pinnedNotes = $derived((model?.notes ?? []).filter((n) => pinnedIds.includes(n.id)));
   const pinned = $derived([
     ...pinnedRefs.map((r) => ({
       id: r.id,
@@ -333,6 +336,7 @@
       href: r.url || undefined,
       removable: false,
     })),
+    ...pinnedNotes.map((n) => ({ id: n.id, kind: "note", title: n.title, text: n.text, removable: false })),
     ...openedDomain.map((o) => ({ id: o.id, kind: o.kind, title: o.title, text: o.text, removable: false })),
     ...Object.values(model?.attachments ?? {})
       .flat()
@@ -613,6 +617,7 @@
       binContainerId: m.binContainerId,
       commentsContainerId: m.commentsContainerId,
       referencesContainerId: m.referencesContainerId,
+      notesContainerId: m.notesContainerId,
       bundleContainerId: m.bundleContainerId,
       focus: focusId ? { id: focusId, title: m.paragraphs[focusId] ? label(focusId) : "untitled" } : undefined,
     });
@@ -1048,6 +1053,11 @@
               onchoose={chooseBoundary}
               onopen={openDomainRecord}
             />
+          </Panel>
+        {/if}
+        {#if model.notesContainerId}
+          <Panel title="Notes" aside={model.notes.length} persistKey="essay.notes" collapseWhen={NARROW}>
+            <NotesTray items={model.notes} onopen={openReference} onopenrecord={openDomainRecord} />
           </Panel>
         {/if}
         {#if model.referencesContainerId}

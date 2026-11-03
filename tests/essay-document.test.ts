@@ -18,6 +18,7 @@ const m = vi.hoisted(() => ({
   getRecord: vi.fn(),
   getContainerOutline: vi.fn(),
   getContainer: vi.fn(),
+  getNote: vi.fn(() => null),
   exportSlice: vi.fn(() => new Uint8Array([1])),
   listContainers: vi.fn(() => [{ containerId: "C", title: "t" }]),
   listTypes: vi.fn(() => [
@@ -705,6 +706,7 @@ describe("comments and references containers (srs-web#494, #495, #496)", () => {
     vi.clearAllMocks();
     withState([stateRec({ comments_container_id: "K", references_container_id: "F" })]);
     m.getContainerOutline.mockReturnValue({ entries: [], body: [] });
+    m.getContainer.mockReturnValue({ containerId: "N" }); // the notes area already exists
     loadEssay(repo(), "E", { repair: true });
     expect(m.createContainer).not.toHaveBeenCalled();
     expect(m.updateRecord).not.toHaveBeenCalled();

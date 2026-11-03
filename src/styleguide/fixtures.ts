@@ -346,6 +346,15 @@ export const draftItems = [
   { id: "d2", label: "Old intro" }, // no body: no preview button,
 ];
 export const binItems = [{ id: "x1", label: "Deleted paragraph" }];
+export const noteItems = [
+  {
+    id: "n1",
+    title: "First conversation: why the call matters",
+    produced: [{ id: "c1", label: "Funding is the constraint" }],
+  },
+  { id: "n2", title: "Timeline of the pilot", produced: [] },
+];
+
 export const referenceItems = [
   {
     id: "r1",

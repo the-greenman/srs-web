@@ -19,6 +19,8 @@ const model: EssayModel = {
   binEntries: [],
   commentsContainerId: null,
   referencesContainerId: null,
+  notesContainerId: null,
+  notes: [],
   references: [],
   comments: {},
   attachments: {},

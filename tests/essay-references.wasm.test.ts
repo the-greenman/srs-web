@@ -167,4 +167,22 @@ describe.skipIf(!haveBindings)("references pool on the real engine", () => {
     const again = doc.loadEssay(reopened, m.essayId);
     expect(again.references.map((r) => r.id)).toContain(id);
   });
+
+  it("repair makes the notes container; an essay with no notes lists none, and the handoff names the container (srs-web#624)", async () => {
+    const doc = await import("../src/lib/essay/essay-document.js");
+    const repo = (await engine()).SrsRepository.load(fixture());
+    const m = doc.loadEssay(repo, doc.listEssays(repo)[0].id, { repair: true });
+    expect(m.notesContainerId).toBeTruthy();
+    expect(m.notes).toEqual([]);
+    const text = doc.agentHandoff({
+      repositoryId: "r",
+      essay: { id: m.essayId, title: m.title },
+      containerId: m.containerId,
+      notesContainerId: m.notesContainerId,
+    });
+    expect(text).toContain(`notes ${m.notesContainerId}`);
+    expect(text).toContain("verbatim");
+    const report = repo.validate();
+    expect(report.diagnostics.filter((d: { severity: string }) => d.severity === "error")).toEqual([]);
+  });
 });
