@@ -1,7 +1,7 @@
 /** Client-side checks for files offered to AttachDrop (#503). Pure; no SRS semantics (ADR-001). */
 import { formatBytes } from "../format-bytes.js";
 
-/** Mirrors RFC-017 attachment_policy (repo_settings); real values arrive through srs-rust#638. */
+/** Mirrors RFC-017 attachment_policy (repo_settings), as `attachmentPolicy()` returns it (srs-rust#638, shipped in #1554). */
 export interface AttachPolicy {
   allowedMimeTypes?: string[];
   maxPerFileBytes?: number;
@@ -13,7 +13,7 @@ export interface AttachFile {
   bytes: Uint8Array;
 }
 
-// ponytail: client defaults only until srs-rust#638 gives the policy; the core policy is authoritative.
+// Type and per-file defaults apply where the policy names none; there is no default total (core: no policy, no limit).
 const DEFAULT_TEXT = [
   "application/json",
   "application/xml",
@@ -22,8 +22,8 @@ const DEFAULT_TEXT = [
   "application/csv",
 ];
 const DEFAULT_MAX_FILE = 1_048_576;
-// ponytail: interim 5 MB total budget for a repository held in the browser (owner ruling); the policy binding (srs-rust#638) replaces it.
-export const DEFAULT_MAX_TOTAL = 5 * 1_048_576;
+/** The browser-memory budget for a whole repository: a warning on the meter, never a refusal (owner ruling, srs-web#234). */
+export const BROWSER_BUDGET = 5 * 1_048_576;
 const BY_EXT: Record<string, string> = {
   md: "text/markdown",
   txt: "text/plain",
@@ -54,13 +54,13 @@ const mimeOf = (f: FileMeta) =>
 export function checkFiles<T extends FileMeta>(
   files: T[],
   policy: AttachPolicy | undefined,
-  usedBytes: number
+  attachedBytes: number
 ): { accepted: T[]; rejected: { name: string; reason: string }[] } {
   const accepted: T[] = [];
   const rejected: { name: string; reason: string }[] = [];
   const maxFile = policy?.maxPerFileBytes ?? DEFAULT_MAX_FILE;
-  const maxTotal = policy?.maxTotalBytes ?? DEFAULT_MAX_TOTAL;
-  let used = usedBytes;
+  const maxTotal = policy?.maxTotalBytes;
+  let used = attachedBytes;
   for (const f of files) {
     const mime = mimeOf(f);
     const typeOk = policy?.allowedMimeTypes
@@ -71,8 +71,8 @@ export function checkFiles<T extends FileMeta>(
     else if (!typeOk) reason = mime ? `not a text file (${mime})` : "unknown file type";
     else if (f.size > maxFile)
       reason = `${formatBytes(f.size)} is over the ${formatBytes(maxFile)} limit`;
-    else if (used + f.size > maxTotal)
-      reason = `would take the repository past ${formatBytes(maxTotal)}`;
+    else if (maxTotal !== undefined && used + f.size > maxTotal)
+      reason = `would take attachments past the repository's ${formatBytes(maxTotal)} limit`;
     if (reason) rejected.push({ name: f.name, reason });
     else {
       accepted.push(f);
@@ -109,9 +109,9 @@ export async function readFile(file: File): Promise<Uint8Array> {
 export async function takeFiles(
   files: File[],
   policy: AttachPolicy | undefined,
-  usedBytes: number
+  attachedBytes: number
 ): Promise<{ accepted: AttachFile[]; rejected: { name: string; reason: string }[] }> {
-  const { accepted, rejected } = checkFiles(files, policy, usedBytes);
+  const { accepted, rejected } = checkFiles(files, policy, attachedBytes);
   return {
     accepted: await Promise.all(
       accepted.map(async (f) => ({ name: f.name, type: f.type, bytes: await readFile(f) }))

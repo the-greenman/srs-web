@@ -16,7 +16,7 @@
 
   let {
     policy,
-    usedBytes = 0,
+    attachedBytes = 0,
     onfiles,
     onurls,
     busy = false,
@@ -28,7 +28,8 @@
     ...rest
   }: {
     policy?: AttachPolicy;
-    usedBytes?: number;
+    /** Bytes already attached: what the policy's total counts. */
+    attachedBytes?: number;
     onfiles: (files: AttachFile[]) => void | Promise<void>;
     onurls?: (urls: string[]) => void | Promise<void>;
     busy?: boolean;
@@ -46,7 +47,7 @@
   const hint = $derived(`Drop, paste or choose text files${onurls ? ' or a URL' : ''} · up to ${formatBytes(policy?.maxPerFileBytes ?? 1_048_576)} each`);
 
   async function take(files: File[]) {
-    const result = await takeFiles(files, policy, usedBytes);
+    const result = await takeFiles(files, policy, attachedBytes);
     rejected = result.rejected;
     if (result.accepted.length) await onfiles(result.accepted);
   }

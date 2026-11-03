@@ -26,11 +26,11 @@ describe("checkFiles", () => {
     );
     expect(checkFiles([big], { maxPerFileBytes: 2 * MB }, 0).accepted).toHaveLength(1);
   });
-  it("limits the total, counting used bytes and files already accepted", () => {
+  it("limits the policy total, counting attached bytes and files already accepted", () => {
     const p = { maxTotalBytes: 100 };
     const r = checkFiles([f("a.txt", "text/plain", 30), f("b.txt", "text/plain", 30)], p, 50);
     expect(r.accepted.map((x) => x.name)).toEqual(["a.txt"]);
-    expect(r.rejected[0].reason).toBe("would take the repository past 100 B");
+    expect(r.rejected[0].reason).toBe("would take attachments past the repository's 100 B limit");
   });
   it("lets a policy allow-list replace the defaults", () => {
     const p = { allowedMimeTypes: ["image/png"] };
@@ -49,11 +49,10 @@ describe("references budget and URLs (#519)", () => {
       { name: "p2.pdf", reason: "unknown file type" },
     ]);
   });
-  it("defaults the total to 5 MB when there is no policy: a file that would pass it is rejected", () => {
-    const r = checkFiles([f("a.txt", "text/plain", 0.8 * MB)], undefined, 4.5 * MB);
-    expect(r.rejected[0].reason).toBe("would take the repository past 5 MB");
-    expect(checkFiles([f("a.txt", "text/plain", 0.4 * MB)], undefined, 4.5 * MB).accepted).toHaveLength(1);
-    expect(checkFiles([f("a.txt", "text/plain", 0.8 * MB)], { maxTotalBytes: 10 * MB }, 4.5 * MB).accepted).toHaveLength(1);
+  it("has no total limit without a policy, as the core: a repository past the browser budget still attaches (#234)", () => {
+    expect(checkFiles([f("a.txt", "text/plain", 0.8 * MB)], undefined, 50 * MB).accepted).toHaveLength(1);
+    expect(checkFiles([f("a.txt", "text/plain", 0.8 * MB)], { maxPerFileBytes: 2 * MB }, 50 * MB).accepted).toHaveLength(1);
+    expect(checkFiles([f("a.txt", "text/plain", 0.8 * MB)], { maxTotalBytes: 5 * MB }, 4.5 * MB).rejected).toHaveLength(1);
   });
   it("asUrls: a bare URL or a uri-list is URLs; anything else is ordinary text", () => {
     expect(asUrls(" https://example.org/a?b=1 \n")).toEqual(["https://example.org/a?b=1"]);

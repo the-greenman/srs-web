@@ -222,6 +222,8 @@ export interface SrsRepository {
   order_by_precedes(input_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listAttachments()
   list_attachments(filter_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in attachmentPolicy()
+  get_attachment_policy(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in addAttachment()
   add_attachment(input_json: string, file_bytes: Uint8Array): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in linkAttachment()
@@ -2473,6 +2475,25 @@ export function listAttachments(
   filter: Record<string, unknown> = {}
 ): AttachmentListResult {
   return repo.list_attachments(JSON.stringify(filter)) as AttachmentListResult;
+}
+
+/** The repository's RFC-017 attachment policy (srs-rust#638, shipped in #1554). An absent limit is no limit. */
+export interface AttachmentPolicyResult {
+  policyRecordPresent: boolean;
+  allowedMimeTypes?: string[];
+  maxPerFileBytes?: number;
+  maxDocBytes?: number;
+  maxTotalBytes?: number;
+}
+
+/** ADR-001: pure WASM pass-through over the core `read_attachment_policy`. */
+export function attachmentPolicy(repo: SrsRepository): AttachmentPolicyResult {
+  return repo.get_attachment_policy() as AttachmentPolicyResult;
+}
+
+/** Bytes of the stored attachments: what the policy's `maxTotalBytes` counts (the core's `check_attachment`). */
+export function attachedBytes(repo: SrsRepository): number {
+  return listAttachments(repo).entries.reduce((n, e) => n + (e.sizeBytes ?? 0), 0);
 }
 
 /**

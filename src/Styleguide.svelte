@@ -773,7 +773,7 @@
 
   <section id="attachments">
     <h2>Attachments</h2>
-    <p class="sg__note">AttachDrop takes text files by drop, paste or picker; RepoSize shows the repository against its limit. The forced states are for this page only.</p>
+    <p class="sg__note">AttachDrop takes text files by drop, paste or picker; RepoSize shows the whole repository against the browser budget, a warning only (#234). The forced states are for this page only.</p>
     <h3>AttachDrop</h3>
     <div class="stack">
       <AttachDrop data-specimen data-testid="sg-attach-idle" onfiles={noop} />

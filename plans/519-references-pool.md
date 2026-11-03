@@ -50,6 +50,7 @@ You want a document-level pool: conversation transcripts, research papers (as te
    - Exploded-tree saves already carry `source-documents/`: `export_tree` is the raw MemVfs snapshot (`srs-rust/crates/srs-repository/src/tree_session.rs:68`), so they need no code change. Add a test that round-trips a tree with an attachment through `exportTree` and `openTree`.
    - A single-file `.srsj` on GitHub still refuses to save with attachments (#510). File an issue (Answers: …) for the `.srsj` envelope to carry text attachments. Until then the save message points those users to the exploded-tree layout.
 8. **Size budget: 5 MB in the browser (owner: treat it as a useful constraint)**
+   - *Superseded by srs-web#234 (owner ruling 2026-11-02, option b):* refusals now come from the core attachment policy, counting attachment bytes; the 5 MB is a whole-repository warning on the meter only.
    - When a repository has no policy, `attach-check.ts` gets a default total limit (`max_total_bytes`) of 5 MB, next to the existing 1 MB per-file default. Mark it `ponytail:` as interim until the policy binding (srs-rust#638).
    - Mount `RepoSize` in the References tray, with `maxBytes` set to the budget and `pendingBytes` set to the size of the files being dropped.
    - `usedBytes` = the sum of the `exportTree(repo)` byte lengths, recomputed on the write epoch. Mark it `ponytail:` until srs-rust#1328 (`repo_size`).
