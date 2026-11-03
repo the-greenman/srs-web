@@ -191,6 +191,12 @@ describe.skipIf(!haveBindings)("site editor on the real engine", () => {
     expect(model.pageSettings(repo, page).publish).toBe("no");
     expect(model.pageBlocks(repo, page)).toEqual([]);
     expect(repo.validate().summary.errors).toBe(0);
+    // keys are addresses: a new page never takes one in use, and a key is never set empty or duplicate
+    expect(edit.newPage(repo, site, "Home again", "home").key).toBe("home-2");
+    expect(() => edit.setPageKey(repo, site, page, " ")).toThrow("needs a key");
+    expect(() => edit.setPageKey(repo, site, page, "about")).toThrow("already has");
+    edit.setPageKey(repo, site, page, "contact-us");
+    expect(model.listPages(repo, site).map((p) => p.key)).toContain("contact-us");
   });
 
   it("keeps the page's areas where muSrs has them, and skips notes", async () => {

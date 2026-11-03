@@ -48,6 +48,7 @@
     nestItems,
     newPage,
     setField,
+    setPageKey,
     snapshotPage,
     swapIn,
     toBin,
@@ -76,7 +77,6 @@
   // readOnlyReason says the document cannot be saved back (it can be exported): editing is allowed,
   // but the open-time repair of a page's nesting is not made on it, as the essay does not repair.
   const repair = $derived(!readOnlyReason);
-  const readonly = false;
 
   let site = $state<Site | null>(null);
   let pages = $state<PageRef[]>([]);
@@ -111,6 +111,7 @@
       body = p ? getContainerOutline(repo, p.containerId).body : [];
       drafts = p ? entriesOf(draftsIdFor(p)) : [];
       bin = p ? entriesOf(binIdFor(p)) : [];
+      if (selectedId && !body.some((e) => e.instanceId === selectedId)) selectedId = null; // undone, moved away
       error = null;
     } catch (e) {
       error = msg(e);
@@ -132,25 +133,37 @@
     return h;
   };
 
-  /** Every write: one undo step; nothing writes on a read-only document. */
-  function run(fn: (p: PageRef) => void): void {
+  /**
+   * Every write is one undo step. A write that fails partway still leaves its writes, so they too
+   * become a step to undo. The write bumps `documentRevision`, which reloads (as the essay does).
+   * Returns whether it succeeded.
+   */
+  function run(fn: (p: PageRef) => void): boolean {
     const p = page;
-    if (!p || readonly) return;
+    if (!p) return false;
+    let before: ReturnType<typeof snapshotPage> | null = null;
     try {
       ensureAreas(repo, p);
-      const before = snapshotPage(repo, p);
+      before = snapshotPage(repo, p);
       fn(p);
-      history()?.push(before, snapshotPage(repo, p));
       error = null;
+      return true;
     } catch (e) {
       error = msg(e);
+      return false;
+    } finally {
+      try {
+        if (before) history()?.push(before, snapshotPage(repo, p));
+      } catch {
+        // the page itself is gone: nothing to undo into
+      }
     }
   }
 
   function step(redo: boolean): void {
     const h = history();
     try {
-      if (redo ? h?.redo(repo) : h?.undo(repo)) reload();
+      redo ? h?.redo(repo) : h?.undo(repo); // the restore writes; the revision bump reloads
     } catch (e) {
       error = msg(e);
     }
@@ -175,8 +188,8 @@
       },
       { shell, saving }
     ),
-    { id: "undo", group: "document", kind: "action", label: "Undo", testid: "site-undo", enabled: !readonly, run: () => step(false) },
-    { id: "redo", group: "document", kind: "action", label: "Redo", testid: "site-redo", enabled: !readonly, run: () => step(true) },
+    { id: "undo", group: "document", kind: "action", label: "Undo", testid: "site-undo", enabled: true, run: () => step(false) },
+    { id: "redo", group: "document", kind: "action", label: "Redo", testid: "site-redo", enabled: true, run: () => step(true) },
     { id: "brief", group: "view", kind: "toggle", label: "Show briefs", testid: "site-brief", checked: showBrief, enabled: true, run: () => (showBrief = !showBrief) },
   ]);
 
@@ -185,18 +198,20 @@
       ? offeredTypes(site).map((key) => ({
           id: key,
           label: label(viewFor(site as Site, key)?.viewName ?? key) + ` (${label(key)})`,
-          enabled: !readonly,
+          enabled: true,
           run: () => run((p) => (selectedId = addBlock(repo, site as Site, p, key, selectedId ? { id: selectedId, zone: "after" } : undefined))),
         }))
       : []
   );
 
-  function onDrop(from: "page" | "drafts", payload: DragPayload, t: DropTarget): void {
+  /** Drag sources: the page's BlockStack is "page"; DraftTray's is "draft". */
+  type Source = "page" | "draft";
+  function onDrop(to: Source, payload: DragPayload, t: DropTarget): void {
+    const from = payload.from as Source;
     const zone = t.zone === "before" ? "before" : "after";
-    if (from === "page") {
-      if (payload.from === "page") run((p) => moveBlock(repo, p, payload.id, { id: t.id, zone }));
-      else if (payload.from === "drafts") run((p) => fromDrafts(repo, p, payload.id, { id: t.id, zone }));
-    } else if (payload.from === "page") run((p) => toDrafts(repo, p, payload.id));
+    if (to === "page" && from === "page") run((p) => moveBlock(repo, p, payload.id, { id: t.id, zone }));
+    else if (to === "page" && from === "draft") run((p) => fromDrafts(repo, p, payload.id, { id: t.id, zone }));
+    else if (to === "draft" && from === "page") run((p) => toDrafts(repo, p, payload.id));
   }
 
   const selected = $derived(selectedId ? fieldsOf(selectedId) : null);
@@ -210,7 +225,8 @@
   });
   const titleOf = (id: string) => {
     const { rec, view } = fieldsOf(id);
-    const first = view?.fields.find((f) => f.visible);
+    // its first visible field with words in it (a hero's eyebrow may be empty)
+    const first = view?.fields.find((f) => f.visible && String(rec?.fieldValues[f.name] ?? "").trim());
     return String((first && rec?.fieldValues[first.name]) || label(rec?.typeName ?? id));
   };
 </script>
@@ -222,6 +238,7 @@
       e.preventDefault();
       step(e.shiftKey);
     }
+    if (e.key === "Escape" && !(e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]")) selectedId = null;
   }}
 />
 
@@ -261,7 +278,6 @@
             <Notice kind="info">This repository has no website: install a website package with a site Composition.</Notice>
           {:else}
             <div class="cluster">
-              {#if !readonly}
                 <Button
                   size="sm"
                   variant="mono"
@@ -278,12 +294,12 @@
                 {#if page}
                   <ActionMenu actions={addActions} label="Add block" title="Add block" triggerLabel="Add block" testid="site-add-block" data-feature="site.add-block" />
                 {/if}
-              {/if}
             </div>
             {#if page}
-              <div data-feature="site.canvas">
+              <!-- A click on the page around the blocks deselects (a block's own click stops here); Esc does too. -->
+              <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+              <div data-feature="site.canvas" onclick={() => (selectedId = null)}>
                 <SiteCanvas label={page.title}>
-                  {#key version}
                     <BlockStack
                       items={body.map((e) => ({ id: e.instanceId, depth: e.depth }))}
                       source="page"
@@ -294,21 +310,18 @@
                       {#snippet row(item, handle)}
                         {@const { rec, view } = fieldsOf(item.id)}
                         {#if rec}
-                          <div {...handle} class="site-shell__row">
                             <SiteBlock
                               typeLabel={label(view?.viewName ?? rec.typeName ?? "")}
                               selected={selectedId === item.id}
-                              {readonly}
+                              {handle}
                               brief={showBrief && view ? view.fields.filter((f) => f.hint === "brief").map((f) => ({ label: label(f.name), value: String(rec.fieldValues[f.name] ?? "") })) : null}
                               fields={(view?.fields ?? []).filter((f) => f.visible).map((f) => ({ name: f.name, label: label(f.name), value: rec.fieldValues[f.name], editable: true }))}
                               onselect={() => (selectedId = item.id)}
                               onedit={(name, value) => run(() => setField(repo, item.id, name, value))}
                             />
-                          </div>
                         {/if}
                       {/snippet}
                     </BlockStack>
-                  {/key}
                 </SiteCanvas>
               </div>
             {:else}
@@ -330,7 +343,6 @@
                 <Field label={label(f.name)}>
                   <Input
                     value={String(rec.fieldValues[f.name] ?? "")}
-                    readonly={readonly}
                     onchange={(e) => run(() => setField(repo, rec.instanceId, f.name, e.currentTarget.value))}
                   />
                 </Field>
@@ -338,11 +350,11 @@
               {#if showBrief}
                 {#each (view?.fields ?? []).filter((f) => f.hint === "brief") as f (f.name)}
                   <Field label={label(f.name)}>
-                    <Input value={String(rec.fieldValues[f.name] ?? "")} readonly={readonly} onchange={(e) => run(() => setField(repo, rec.instanceId, f.name, e.currentTarget.value))} />
+                    <Input value={String(rec.fieldValues[f.name] ?? "")} onchange={(e) => run(() => setField(repo, rec.instanceId, f.name, e.currentTarget.value))} />
                   </Field>
                 {/each}
               {/if}
-              {#if !readonly}
+              {#if page}
                 {@const alts = alternativesFor(repo, page, rec.instanceId)}
                 {#each alts as alt (alt)}
                   <p>Alternative: {titleOf(alt)} <Button size="sm" variant="mono" onclick={() => run((p) => swapIn(repo, p, alt, rec.instanceId))}>Swap in</Button></p>
@@ -360,19 +372,24 @@
                 <Select
                   data-testid="site-publish"
                   value={settings.publish}
-                  disabled={readonly}
                   options={[{ value: "no", label: "Not published" }, { value: "draft", label: "Published as draft" }, { value: "yes", label: "Published" }]}
                   onchange={(e) => { const publish = e.currentTarget.value as Publish; run((p) => setPageSettings(repo, p, { publish })); }}
                 />
               </Field>
-              <Checkbox checked={settings.closingMark} disabled={readonly} onchange={(e) => { const closingMark = e.currentTarget.checked; run((p) => setPageSettings(repo, p, { closingMark })); }}>Closing mark</Checkbox>
+              <Checkbox checked={settings.closingMark} onchange={(e) => { const closingMark = e.currentTarget.checked; run((p) => setPageSettings(repo, p, { closingMark })); }}>Closing mark</Checkbox>
               <Field label="Layout">
-                <Input value={settings.layout} readonly={readonly} onchange={(e) => { const layout = e.currentTarget.value.trim() || "standard"; run((p) => setPageSettings(repo, p, { layout })); }} />
+                <Input value={settings.layout} onchange={(e) => { const layout = e.currentTarget.value.trim() || "standard"; run((p) => setPageSettings(repo, p, { layout })); }} />
               </Field>
               {#if anchor}
                 {#each Object.entries(anchor.fieldValues).filter(([, v]) => typeof v === "string") as [name, value] (name)}
                   <Field label={label(name)}>
-                    <Input value={String(value)} readonly={readonly} onchange={(e) => run(() => setField(repo, anchor.instanceId, name, e.currentTarget.value))} />
+                    <Input
+                      value={String(value)}
+                      onchange={(e) => {
+                        const v = e.currentTarget.value;
+                        run((p) => (name === "page_key" ? setPageKey(repo, site as Site, p, v) : setField(repo, anchor.instanceId, name, v)));
+                      }}
+                    />
                   </Field>
                 {/each}
               {/if}
@@ -382,7 +399,7 @@
             <Panel title="Drafts" aside={drafts.length} data-feature="site.drafts">
               <DraftTray
                 items={drafts.map((id) => ({ id, label: titleOf(id) }))}
-                ondrop={(payload, t) => onDrop("drafts", payload, t)}
+                ondrop={(payload, t) => onDrop("draft", payload, t)}
                 onputback={(id) => run((p) => fromDrafts(repo, p, id))}
               />
             </Panel>
@@ -391,8 +408,7 @@
                 items={bin.map((id) => ({ id, label: titleOf(id) }))}
                 onrestore={(id) => run((p) => fromBin(repo, p, id))}
                 onforget={(id) => {
-                  run((p) => deleteForever(repo, p, id));
-                  history()?.clear(); // a deleted record cannot come back under its id
+                  if (run((p) => deleteForever(repo, p, id))) history()?.clear(); // a deleted record cannot come back under its id
                 }}
               />
             </Panel>

@@ -1,6 +1,6 @@
 <!--
   SiteSpecimen — the site editor canvas (srs-web#680, ADR-029 E1): a hero, a selected prose block
-  with its brief shown and one empty field, and a group with two items. Specimens only; edits are
+  with its brief shown and one empty field, and a group and its two items. Specimens only; edits are
   no-ops.
 -->
 <script lang="ts">
@@ -42,19 +42,19 @@
     onselect={() => (selected = "faq")}
     onedit={noop}
     fields={[{ name: "section_heading", label: "Heading", value: "Questions.", editable: true }]}
-  >
-    {#each [["Who decides?", "The group, in the open."], ["What is recorded?", "The decision, and why."]] as [q, a] (q)}
-      <SiteBlock
-        typeLabel="Question"
-        onselect={noop}
-        onedit={noop}
-        fields={[
-          { name: "faq_question", label: "Question", value: q, editable: true },
-          { name: "faq_answer", label: "Answer", value: a, editable: true },
-        ]}
-      />
-    {/each}
-  </SiteBlock>
+  />
+  <!-- A group's items are blocks of their own; on the page the shell indents them under the group. -->
+  {#each [["Who decides?", "The group, in the open."], ["What is recorded?", "The decision, and why."]] as [q, a] (q)}
+    <SiteBlock
+      typeLabel="Question"
+      onselect={noop}
+      onedit={noop}
+      fields={[
+        { name: "faq_question", label: "Question", value: q, editable: true },
+        { name: "faq_answer", label: "Answer", value: a, editable: true },
+      ]}
+    />
+  {/each}
 </SiteCanvas>
 <p class="sg__note">One field on its own, read-only:</p>
 <SiteText value="A read-only field" label="Read-only field" readonly oncommit={noop} />

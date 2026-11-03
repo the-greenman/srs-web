@@ -40,36 +40,56 @@ test("edit a page of the site: a field, undo, the Bin, publishing", async ({ pag
   await page.keyboard.press("Control+z");
   await expect(headline).toHaveText("Decisions power change.");
 
+  // Leaving a field commits it and the next field keeps the caret: the canvas is not rebuilt.
+  const support = page.getByRole("textbox", { name: "Supporting copy" }).first();
+  await headline.click();
+  await page.keyboard.press("End");
+  await page.keyboard.type("!");
+  await support.click();
+  await page.keyboard.type("x");
+  await expect(support).toBeFocused();
+  await expect(headline).toHaveText("Decisions power change.!");
+
   // The FAQ group to the Bin, with its items, and back.
-  await page
+  const questions = page
     .getByRole("textbox", { name: "Section heading" })
-    .filter({ hasText: "Questions." })
-    .click();
+    .filter({ hasText: "Questions." });
+  await questions.click();
   await openInspectorDrawer(page);
   await page.getByTestId("site-to-bin").click();
-  await expect(
-    page.getByRole("textbox", { name: "Section heading" }).filter({ hasText: "Questions." })
-  ).toHaveCount(0);
-  const bin = page
-    .getByRole("region", { name: "Bin" })
-    .or(page.locator('[data-feature="site.bin"]'));
+  await expect(questions).toHaveCount(0);
+  const bin = page.locator('[data-feature="site.bin"]');
   await bin
     .getByRole("button", { name: /Restore/ })
     .first()
     .click();
-  await expect(
-    page.getByRole("textbox", { name: "Section heading" }).filter({ hasText: "Questions." })
-  ).toHaveCount(1);
+  await expect(questions).toHaveCount(1);
   await expect(page.getByRole("textbox", { name: "Faq question" })).toHaveCount(2);
 
-  // Page settings: with no block selected, publish as a draft.
+  // A draft dragged from the Drafts tray onto the page.
+  const drafts = page.locator('[data-feature="site.drafts"]');
+  await drafts.getByText("Another opening.").dragTo(page.locator(".site-block__type").first());
+  await expect(
+    page.getByRole("textbox", { name: "Headline" }).filter({ hasText: "Another opening." })
+  ).toHaveCount(1);
+  await expect(drafts.getByText("Another opening.")).toHaveCount(0);
+
+  // Add block: a quote after the selected block.
+  await page.getByTestId("site-add-block").click();
+  await page.getByRole("menuitem", { name: /Quote/ }).click();
+  await expect(page.getByRole("textbox", { name: "Quote text" })).toHaveCount(1);
+
+  // Page settings: Esc deselects; publish as a draft, and it is still a draft after leaving the page.
+  await page.locator("body").click({ position: { x: 1, y: 1 } });
   await page.keyboard.press("Escape");
   await pagePicker.selectOption({ label: "Scratch (/scratch)" });
   await openInspectorDrawer(page);
   const publish = page.getByTestId("site-publish");
   await expect(publish).toHaveValue("no");
   await publish.selectOption("draft");
-  await expect(publish).toHaveValue("draft");
+  await pagePicker.selectOption({ label: "Home (/home)" });
+  await pagePicker.selectOption({ label: "Scratch (/scratch)" });
+  await expect(page.getByTestId("site-publish")).toHaveValue("draft");
 
   expect(errors).toEqual([]);
 });

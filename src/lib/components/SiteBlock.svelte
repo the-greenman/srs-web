@@ -2,11 +2,10 @@
   SiteBlock — one block of a website page on the site editor canvas (srs-web#680, ADR-029 E1): its
   visible fields in its View's order, each edited in place; the first reads as the block's heading.
   A value that is not text (a list, a table) shows as a muted note. The brief (editor-only intent)
-  shows above when that layer is on. A group's items are its children.
+  shows above when that layer is on. Drag it by its type label. A group's items are rows of their own.
   Wraps .site-block (src/styles/components/site.css).
 -->
 <script lang="ts">
-  import type { Snippet } from "svelte";
   import SiteText from "./SiteText.svelte";
 
   export interface SiteBlockField {
@@ -24,7 +23,7 @@
     readonly = false,
     onselect,
     onedit,
-    children,
+    handle,
   }: {
     typeLabel: string;
     fields: SiteBlockField[];
@@ -33,7 +32,8 @@
     readonly?: boolean;
     onselect: () => void;
     onedit: (name: string, value: string) => void;
-    children?: Snippet;
+    /** Drag attributes (BlockStack's row handle): on the type label only, so selecting text never drags. */
+    handle?: Record<string, unknown>;
   } = $props();
 </script>
 
@@ -49,7 +49,7 @@
   }}
   onfocusin={() => onselect()}
 >
-  <p class="site-block__type">{typeLabel}</p>
+  <p class="site-block__type" class:site-block__type--handle={!!handle} {...handle}>{typeLabel}</p>
   {#if brief?.length}
     <dl class="site-block__brief">
       {#each brief as b (b.label)}
@@ -73,5 +73,4 @@
       <p class="site-block__note">{f.label}: edited elsewhere</p>
     {/if}
   {/each}
-  {#if children}<div class="site-block__items">{@render children()}</div>{/if}
 </section>

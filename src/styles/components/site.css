@@ -52,11 +52,8 @@
   font-size: var(--size-sm);
   color: var(--color-muted);
 }
-.site-block__items {
-  display: grid;
-  gap: var(--space-xs);
-  padding-left: var(--space-md);
-  border-left: 2px solid var(--color-line);
+.site-block__type--handle {
+  cursor: grab;
 }
 .site-text {
   white-space: pre-wrap;
