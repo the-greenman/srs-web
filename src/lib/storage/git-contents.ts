@@ -150,36 +150,46 @@ export async function readGitFileSha(
 }
 
 /**
- * Create `newBranch` pointing at the head of `fromBranch`. Returns true if it was
- * created, false if it already existed. Lets a Clerk save to a fresh branch
- * instead of a protected default.
+ * Create `newBranch` pointing at `fromSha` when given (the commit the edits are based
+ * on, so a stale base still fast-forwards — srs-web#685), else at the head of
+ * `fromBranch`. Returns true if it was created, false if it already existed. Lets a
+ * Clerk save to a fresh branch instead of a protected default.
  */
 export async function createBranch(
   location: Pick<GitContentsLocation, "apiBase" | "owner" | "repo">,
   token: string,
   newBranch: string,
-  fromBranch: string
+  fromBranch: string,
+  fromSha?: string
 ): Promise<boolean> {
   const base = `${location.apiBase}/repos/${location.owner}/${location.repo}`;
-  const headRes = await fetch(`${base}/git/ref/heads/${encodeURIComponent(fromBranch)}`, {
-    headers: contentsHeaders(token),
-  });
-  if (!headRes.ok) {
-    throw new StorageFetchError(
-      `Could not read branch "${fromBranch}": ${await parseError(headRes)}`
-    );
+  let sha = fromSha;
+  if (!sha) {
+    const headRes = await fetch(`${base}/git/ref/heads/${encodeURIComponent(fromBranch)}`, {
+      headers: contentsHeaders(token),
+    });
+    if (!headRes.ok) {
+      throw new StorageFetchError(
+        `Could not read branch "${fromBranch}": ${await parseError(headRes)}`
+      );
+    }
+    const head = (await headRes.json()) as { object?: { sha?: string } };
+    sha = head.object?.sha;
+    if (!sha) throw new StorageFetchError(`Branch "${fromBranch}" has no head commit.`);
   }
-  const head = (await headRes.json()) as { object?: { sha?: string } };
-  const sha = head.object?.sha;
-  if (!sha) throw new StorageFetchError(`Branch "${fromBranch}" has no head commit.`);
 
   const createRes = await fetch(`${base}/git/refs`, {
     method: "POST",
     headers: { ...contentsHeaders(token), "Content-Type": "application/json" },
     body: JSON.stringify({ ref: `refs/heads/${newBranch}`, sha }),
   });
-  // 422 == ref already exists; report it so the caller can resolve the real SHA.
-  if (createRes.status === 422) return false;
+  // 422 is also GitHub's answer to an invalid name; only "already exists" means the
+  // caller should resolve the real SHA — anything else is reported (srs-web#685).
+  if (createRes.status === 422) {
+    const reason = await parseError(createRes);
+    if (/already exists/i.test(reason)) return false;
+    throw new StorageFetchError(`Could not create branch "${newBranch}": ${reason}`);
+  }
   if (createRes.status === 403) {
     throw new StorageFetchError(
       `Creating a branch was denied (403: ${await parseError(createRes)}). The GitHub App needs Contents: Read & write and must be installed on this repository.`
