@@ -403,6 +403,8 @@
       kind: r.kind,
       url: r.url,
       context: r.context,
+      ...(r.foundBy ? { foundBy: r.foundBy.name || r.foundBy.id } : {}),
+      ...(r.verdict ? { verdict: r.verdict } : {}),
       paragraphs: r.paragraphIds.map((id) => ({ id, label: label(id) })),
     })),
   );
@@ -1040,6 +1042,7 @@
               onurls={(urls) => addRefs({ urls })}
               oncontext={addContext}
               onlink={(id, paragraphId) => run(() => linkReference(repo, id, paragraphId))}
+              onanswer={hasActor ? (id, kind) => run(() => respond(repo, id, kind, '', model?.commentsContainerId)) : undefined}
             />
           </Panel>
         {/if}
