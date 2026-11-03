@@ -1,0 +1,22 @@
+{
+  "instanceId": "b7d35b68-d54e-4d2c-8a13-aed7a8de723e",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay-home.where-it-lives",
+    "placement": "concept",
+    "title": "Where your essay lives",
+    "summary": "While you work, and until you save, a recovery copy lives in this browser. **Save to…** writes it to a file on your device, Dropbox or Google Drive (GitHub when the essay was opened from GitHub).",
+    "explanation": "The browser copy is per-browser. It is cleared by \"Open another\" and also when you save. A device file downloads, and the next Save asks again. A cloud copy becomes the open document."
+  },
+  "createdAt": "2026-11-03T18:51:42.141114487+00:00",
+  "updatedAt": "2026-11-03T18:56:02.230274264+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

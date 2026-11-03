@@ -1516,3 +1516,42 @@ export const readWall: ReadPage = {
     ),
   ],
 };
+
+/** The essay-home help items, as `helpFor("essay-home")` returns them (specimen words only). */
+const helpItem = (
+  featureId: string,
+  placement: "ui" | "concept",
+  title: string,
+  summary: string,
+  explanation?: string
+) => ({ instanceId: featureId, featureId, placement, title, summary, explanation });
+export const essayHomeItems = [
+  helpItem(
+    "essay-home.human-in-charge",
+    "concept",
+    "You write, your AI supports",
+    "You own every word. A connected AI reads and questions; it never writes.",
+    "Fixing AI text is slower than writing."
+  ),
+  helpItem("shell.connect-ai", "ui", "Connect an AI", "Pair an agent so it can read your essay."),
+  helpItem(
+    "essay-home.start",
+    "ui",
+    "Start an essay",
+    "One click opens an untitled essay. Nothing is written outside this browser until you choose where."
+  ),
+  helpItem(
+    "essay-home.where-it-lives",
+    "concept",
+    "Where your essay lives",
+    "A recovery copy lives in this browser.",
+    "Save to… writes it elsewhere."
+  ),
+  helpItem(
+    "essay-home.examples",
+    "ui",
+    "Try an example",
+    "Finished essays open read-only.",
+    "- [An example](?open=/examples/a.srsj&editor=essay)"
+  ),
+];

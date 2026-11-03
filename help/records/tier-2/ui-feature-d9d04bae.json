@@ -8,10 +8,10 @@
     "feature_id": "shell.save",
     "placement": "ui",
     "title": "Saving",
-    "summary": "Your essay lives in this browser tab until you save it. **Save** writes it where you choose: a file, GitHub, Dropbox or Google Drive."
+    "summary": "Your essay lives in this browser tab until you save it. **Save** writes it where you choose: a file on your device, Dropbox or Google Drive (GitHub when the essay was opened from GitHub)."
   },
   "createdAt": "2026-10-29T14:42:46.891120092+00:00",
-  "updatedAt": "2026-10-29T14:42:46.891141008+00:00",
+  "updatedAt": "2026-11-03T18:51:58.430400272+00:00",
   "createdBy": {
     "kind": "ai",
     "id": "agent:claude-code",
