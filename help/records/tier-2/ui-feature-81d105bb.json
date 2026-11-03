@@ -1,0 +1,22 @@
+{
+  "instanceId": "81d105bb-c2e2-4eb6-9ed2-c416fae755d1",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "site.drafts",
+    "placement": "ui",
+    "title": "Drafts",
+    "summary": "Blocks set aside from the page. Drag a block here to set it aside, and back onto the page to place it; Put back adds it at the end.",
+    "explanation": "Nothing is deleted by taking it off the page: a block in Drafts keeps its words. A draft derived from a block on the page is that block's alternative, offered in the inspector.",
+    "ai_guidance": "Agents may draft alternatives here, but the writer decides what reaches the page."
+  },
+  "createdAt": "2026-11-03T10:25:31.757496473+00:00",
+  "updatedAt": "2026-11-03T10:25:31.757502030+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "claude-code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

@@ -1,0 +1,22 @@
+{
+  "instanceId": "16a15328-2e6e-4a21-bd39-5bdc12468edf",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "site.inspector",
+    "placement": "ui",
+    "title": "Inspector",
+    "summary": "The selected block's other fields (settings, keys and, with Show briefs on, its brief), its alternatives, and Move to drafts or Move to bin.",
+    "explanation": "Fields the site does not draw are edited here: a block's key, its settings, and its brief (the editor-only intent, shown with View > Show briefs). Alternatives are drafts derived from the block; Swap in puts one in its place.",
+    "ai_guidance": "Point the writer at the brief before they write: it says who a block is for and what it must do."
+  },
+  "createdAt": "2026-11-03T10:25:31.644635386+00:00",
+  "updatedAt": "2026-11-03T10:25:31.644640287+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "claude-code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

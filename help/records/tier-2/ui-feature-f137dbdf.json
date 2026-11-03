@@ -1,0 +1,22 @@
+{
+  "instanceId": "f137dbdf-2cd3-4fd6-a290-3e7fa349601b",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "site.add-block",
+    "placement": "ui",
+    "title": "Add block",
+    "summary": "Add a block of any type the site offers, after the selected block or at the end.",
+    "explanation": "The site's package decides which block types a page can hold (its site Composition dispatches each to a View). Add block lists them; a new block starts empty, with a key of its own.",
+    "ai_guidance": "Suggest the block type that matches what the writer wants to say; never invent a type the menu does not list."
+  },
+  "createdAt": "2026-11-03T10:25:31.588855615+00:00",
+  "updatedAt": "2026-11-03T10:25:31.588860513+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "claude-code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

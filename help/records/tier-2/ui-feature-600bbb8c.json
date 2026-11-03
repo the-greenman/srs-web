@@ -1,0 +1,22 @@
+{
+  "instanceId": "600bbb8c-eaf1-437b-b776-cc14ae7f9daa",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "site.bin",
+    "placement": "ui",
+    "title": "Bin",
+    "summary": "Blocks moved to the bin. Restore puts one back at the end of the page; Delete forever removes it for good, unless another page uses it or something derives from it.",
+    "explanation": "Deleting goes through the Bin. Delete forever keeps a record that another container holds or that an alternative derives from: it only leaves the Bin.",
+    "ai_guidance": "Never delete for the writer; say what Delete forever keeps."
+  },
+  "createdAt": "2026-11-03T10:25:31.814492181+00:00",
+  "updatedAt": "2026-11-03T10:25:31.814500106+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "claude-code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

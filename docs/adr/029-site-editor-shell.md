@@ -45,3 +45,17 @@ The muDemocracy site editor was a separate Vite app that reached into srs-web's 
 - **Adding a block kind:** the site adds a type, a View and a dispatch entry to its package, plus a component and its specimen in the site. The editor needs no change.
 - **muDemocracy:** its site build calls `exportSite` (muDemocracy.org#415) instead of its own script.
 - **Pending core work:** srs-rust#1553 will replace the TS projection. Its acceptance test is `tests/fixtures/site-export.golden.json`.
+
+## Editing (amendment, srs-web#680 B1, 2026-11-03)
+
+The `site` editor (`src/lib/site/SiteShell.svelte`, registered for the website package's page type) edits a site's pages through the headless `src/lib/site/site-edit.ts`. Its decisions:
+
+- **E1. Canvas look (owner, 2026-11-03): site tokens, generic layout.** A block shows its View's visible fields in order, the first as its heading (`SiteCanvas`, `SiteBlock`, `SiteText`, specimen on `/styleguide#site`). The site's tokens come from its Theme's remote stylesheet once the engine can read a Theme (srs-rust#1558); until then srs-web's tokens. A `displayHint` for heading or body on visible fields is a later package refinement.
+- **E2. Drafts and Bin ids.** Drafts keep the prototype's id, `uuid5("6f1d2c4e-8a3b-5c7d-9e0f-1a2b3c4d5e6f", "<pageContainerId>:drafts")`, because muSrs already holds such containers; the Bin is `areaId(anchorId, "bin")`.
+- **E3. A group's items: `contains` says what a group holds, depth arranges it.** `nestItems` repairs depth from `contains`, never the reverse. Blocks move before or after only, never into; an item never leaves its group; a block dropped beside an item lands beside its group.
+- **E4. The page type's `page_key` and `page_title`** are an implicit contract of the core (read by `listPages` and the export, written by `newPage`). Declaring them in the page View is a later step.
+- **E5. Item types:** "Add item" offers the types of the items a group already holds.
+- **E6. No agent write guard** (owner ruling 2026-10-22, srs-web#601).
+- **Read-only.** `readOnlyReason` means the document cannot be saved back (it can be exported). The shell still edits, as the other shells do, but makes no open-time repair on such a document.
+
+The muDemocracy layer (evidence, authorship, comments, the agent brief, guide sections by reference) is B2, in `src/lib/site/mudemocracy/`.

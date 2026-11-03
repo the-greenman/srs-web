@@ -1,0 +1,22 @@
+{
+  "instanceId": "47da373b-9619-4672-8bba-3173ff8151fd",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "site.pages",
+    "placement": "ui",
+    "title": "Pages",
+    "summary": "Choose the page to edit from the page list in the bar. Each page is a container of blocks; New page starts one.",
+    "explanation": "A website's pages are the containers anchored on a record of its page type, as its site Composition names it. Choose one in the bar to edit it; **New page** starts an empty page with its own key, which becomes its address on the site once it is published.",
+    "ai_guidance": "Tell the writer which page they are on, and that a new page needs a key (its address) and must be published in Page settings before the site shows it."
+  },
+  "createdAt": "2026-11-03T10:25:31.470823091+00:00",
+  "updatedAt": "2026-11-03T10:25:31.470826058+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "claude-code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}
