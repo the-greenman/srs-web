@@ -28,6 +28,8 @@ describe("parseOpenUrl", () => {
     "javascript:alert(1)",
     "data:text/plain,x",
     "ftp://x/a.srs",
+    "//evil.test/a.srs",
+    "/\\evil.test/a.srs",
   ])("refuses %s", (u) => {
     expect(() => parseOpenUrl(u, true)).toThrow(OpenUrlError);
   });

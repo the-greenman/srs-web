@@ -16,7 +16,9 @@ const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 export function parseOpenUrl(raw: string, allowLocalHttp = import.meta.env.DEV): URL {
   let url: URL;
   try {
-    url = new URL(raw, raw.startsWith("/") ? globalThis.location?.origin : undefined); // a same-origin path, for the home page's example links
+    // a same-origin path, for the home page's example links; `//host/x` is protocol-relative, not a path
+    const samePath = raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\");
+    url = new URL(raw, samePath ? globalThis.location?.origin : undefined);
   } catch {
     throw new OpenUrlError("That is not a valid link.");
   }
