@@ -34,5 +34,12 @@
         "sha256": "42b43b87bb7d8c5d69c77d48f511a296596526c89dbf27e383ace1d8fdb82b2d"
       }
     ]
+  },
+  {
+    "packageId": "b3603f72-990a-408a-b6fc-28764ebabe78",
+    "name": "website",
+    "version": "0.2.0",
+    "url": "https://github.com/the-greenman/srs-web/releases/download/packages-website-0.2.0/website.srspkg",
+    "sha256": "c387a8a4e69c6efd5eb6c1418267680e0bb400d8b5b32a9cc412d2361810c6e0"
   }
 ]

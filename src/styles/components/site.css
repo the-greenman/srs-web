@@ -1,0 +1,76 @@
+/* ============================================================================
+   component: site editor canvas (.site-canvas, .site-block, .site-text)
+   ----------------------------------------------------------------------------
+   A website page as the site editor shows it (srs-web#680, ADR-029 E1): blocks laid out
+   generically, a block's first field as its heading, the rest as body. Every class is `site-`
+   prefixed (srs-web#577). The site's own tokens replace these once a Theme can be read.
+   ========================================================================== */
+.site-canvas {
+  display: grid;
+  gap: var(--space-md);
+  max-width: 46rem;
+  margin: 0 auto;
+}
+.site-block {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+}
+.site-block:hover {
+  border-color: var(--color-line);
+}
+.site-block--selected {
+  border-color: var(--color-focus);
+}
+.site-block__type {
+  margin: 0;
+  font-size: var(--size-xs);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.site-block__brief {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px var(--space-sm);
+  margin: 0;
+  padding: var(--space-xs);
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+  border: 1px dashed var(--color-line);
+}
+.site-block__brief dt {
+  font-weight: var(--weight-bold);
+}
+.site-block__brief dd {
+  margin: 0;
+}
+.site-block__note {
+  margin: 0;
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+}
+.site-block__items {
+  display: grid;
+  gap: var(--space-xs);
+  padding-left: var(--space-md);
+  border-left: 2px solid var(--color-line);
+}
+.site-text {
+  white-space: pre-wrap;
+  outline: none;
+  min-height: 1.4em;
+}
+.site-text--heading {
+  font-size: var(--size-lg);
+  font-weight: var(--weight-bold);
+}
+.site-text:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-focus);
+}
+.site-text:empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-muted);
+}

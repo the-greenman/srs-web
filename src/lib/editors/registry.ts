@@ -8,6 +8,9 @@ import GuidesShell from "$lib/guides/GuidesShell.svelte";
 import MethodShell from "$lib/method/MethodShell.svelte";
 import { PROBLEM_TYPE_ID } from "$lib/method/method-document.js";
 import { bundledPackage } from "$lib/packages/bundles.js";
+import SiteShell from "$lib/site/SiteShell.svelte";
+import { newPage } from "$lib/site/site-edit.js";
+import { findSite } from "$lib/site/site-views.js";
 import {
   type AgentWriteGuard,
   type PackageRequirement,
@@ -134,6 +137,27 @@ export const EDITORS: EditorDefinition[] = [
       newEssay(repo, "Untitled essay");
     },
     component: EssayShell,
+  },
+  {
+    id: "site",
+    label: "Site",
+    description: "Website page editor: pages built from the site's own blocks (ADR-029).",
+    // The page type of the website package; the package's `site` Composition names it.
+    entryTypeId: "5de26162-3fd5-4fc9-b32e-567db46bb552",
+    requires: [
+      {
+        packageId: "b3603f72-990a-408a-b6fc-28764ebabe78",
+        namespace: "com.mudemocracy.website",
+        name: "website",
+        version: "0.2.0",
+      },
+    ],
+    create: (repo) => {
+      const site = findSite(repo);
+      if (!site) throw new Error("The website package has no site Composition");
+      newPage(repo, site, "Home", "home");
+    },
+    component: SiteShell,
   },
   {
     id: "method",
