@@ -44,6 +44,8 @@ export interface EditorShellProps {
   onExport: () => void;
   onExportSrsj?: () => void;
   onSave?: () => Promise<void>;
+  /** Document > Save a copy…, on a read-only document only (#699). */
+  onSaveCopy?: () => void;
   saving?: boolean;
   documentDirty?: boolean;
   documentRevision?: number;
@@ -58,6 +60,8 @@ export interface EditorShellProps {
   onOpenPackages?: () => void;
   documentProvider: string;
   readOnlyReason?: string | null;
+  /** The document is read-only (opened from a link, #699): a shell with `readOnly` on its definition must not offer writes. */
+  readOnly?: boolean;
   /** A shell declares (or, with null, withdraws) the write guard App applies to agent MCP writes. */
   /** `replacing` = the guard being withdrawn; App ignores a null from a shell whose guard is no longer current. */
   onAgentWriteGuard?: (guard: AgentWriteGuard | null, replacing?: AgentWriteGuard) => void;
@@ -90,6 +94,8 @@ export interface EditorDefinition {
   component: Component<EditorShellProps>;
   /** The shell renders `agentPanel` in its own layout, so App hides the floating agent dock. */
   hostsAgentPanel?: boolean;
+  /** The shell renders a read-only document (`readOnlyReason`), so it is offered on a read-only link (#699). */
+  readOnly?: true;
 }
 
 export const EDITORS: EditorDefinition[] = [
@@ -123,6 +129,7 @@ export const EDITORS: EditorDefinition[] = [
     id: "essay",
     label: "Essay",
     hostsAgentPanel: true,
+    readOnly: true,
     description: "Structured essay editor.",
     entryTypeId: ESSAY_TYPE_ID,
     requires: [
