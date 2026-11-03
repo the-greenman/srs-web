@@ -34,12 +34,19 @@ export function parseNewLink(search: string): string | null {
   return new URLSearchParams(search).get("new")?.trim().toLowerCase() || null;
 }
 
-/** The address without its boot links: `open`, `new`, and a `repo` link with its `ref`, `path` and `editor`. */
+/** The editor requested beside `open` (`?open=<url>&editor=<id>`, #699), lower-cased; "" when absent. A request: App selects it only when usable. */
+export function parseOpenEditor(search: string): string {
+  return new URLSearchParams(search).get("editor")?.trim().toLowerCase() ?? "";
+}
+
+/** The address without its boot links: `open` (with its `editor`), `new`, and a `repo` link with its `ref`, `path` and `editor`. */
 export function withoutBootLinks(href: string): string {
   const url = new URL(href);
   const keys = url.searchParams.has("repo")
     ? ["open", "new", "repo", "ref", "path", "editor"]
-    : ["open", "new"];
+    : url.searchParams.has("open")
+      ? ["open", "new", "editor"]
+      : ["open", "new"];
   for (const k of keys) url.searchParams.delete(k);
   return url.pathname + url.search + url.hash;
 }

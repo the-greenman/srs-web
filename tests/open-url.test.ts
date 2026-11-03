@@ -4,6 +4,7 @@ import {
   OpenUrlError,
   fetchArchiveFile,
   parseNewLink,
+  parseOpenEditor,
   parseOpenUrl,
   parseRepoLink,
   sniffArchive,
@@ -154,5 +155,18 @@ describe("parseNewLink / withoutBootLinks (#640)", () => {
     expect(withoutBootLinks("https://app.example/?new=essay&repo=a/b&open=x&ref=m")).toBe("/");
     // ref, path and editor are a repo link's own: without repo they belong to someone else
     expect(withoutBootLinks("https://app.example/?path=foo&ref=r&editor=x")).toBe("/?path=foo&ref=r&editor=x");
+  });
+});
+
+describe("editor on open (#699)", () => {
+  it("reads the editor request beside open, lower-cased; empty when absent", () => {
+    expect(parseOpenEditor("?open=https%3A%2F%2Fa.test%2Fx.srsj&editor=Essay")).toBe("essay");
+    expect(parseOpenEditor("?open=x&editor=%20site%20")).toBe("site");
+    expect(parseOpenEditor("?open=x")).toBe("");
+  });
+
+  it("clears editor with open, and leaves a stray editor alone", () => {
+    expect(withoutBootLinks("https://app.test/?open=x&editor=essay&theme=dark#h")).toBe("/?theme=dark#h");
+    expect(withoutBootLinks("https://app.test/?editor=essay")).toBe("/?editor=essay");
   });
 });

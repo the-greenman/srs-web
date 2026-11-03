@@ -107,8 +107,10 @@
     repoName,
     documentTitle = repoName,
     readOnlyReason = null,
+    readOnly = false,
     onExport,
     onSave,
+    onSaveCopy,
     saving = false,
     documentDirty = false,
     documentRevision = 0,
@@ -126,12 +128,16 @@
     onExportSrsj?: () => void;
     /** Set when the repository was opened read-only: no repair writes on load. */
     readOnlyReason?: string | null;
+    /** The document is read-only (opened from a link, srs-web#699): inert page, no new/copy, Save a copy… */
+    readOnly?: boolean;
     repo: SrsRepository;
     repoName: string;
     /** The Toolbar's displayed title (srs-web#480) — see EditorShellProps. */
     documentTitle?: string;
     onExport: () => void;
     onSave?: () => void;
+    /** Present only on a read-only document (srs-web#699). */
+    onSaveCopy?: () => void;
     saving?: boolean;
     documentDirty?: boolean;
     /** Bumped by App on every in-place mutation, including MCP/agent writes. */
@@ -787,8 +793,9 @@
   const barActions = $derived(
     headerActions(
       {
-        onnew: createEssay,
-        oncopy: model ? copyDocument : undefined,
+        onnew: readOnly ? undefined : createEssay,
+        onsavecopy: readOnly ? onSaveCopy : undefined,
+        oncopy: model && !readOnly ? copyDocument : undefined,
         onhelp: () => { helpOpen = true; },
         oncomments: () => (openThreads = toggleAll(openThreads, shownIds)),
         onsave: onSave,
@@ -879,7 +886,9 @@
     </Notice>
   {/if}
   {#if error}<Notice kind="error" testid="essay-error">{error}</Notice>{/if}
-  {#if needsName}
+  {#if readOnly}
+    <Notice kind="info" testid="read-only-note">{readOnlyReason}</Notice>
+  {:else if needsName}
     <form class="essay-shell__name-gate" data-testid="name-gate" data-feature="essay.name-gate" onsubmit={saveWriterName}>
       <Notice kind="info">This essay is read-only until we know who is writing. Give your name, or sign in, to edit.</Notice>
       <Input aria-label="Your name" data-testid="name-gate-input" bind:value={writerName} />
@@ -892,7 +901,7 @@
   {#if !model}
     <div class="essay-shell__empty">
       <p>No essay in this repository yet.</p>
-      <Button variant="primary" onclick={createEssay}>New essay</Button>
+      {#if !readOnly}<Button variant="primary" onclick={createEssay}>New essay</Button>{/if}
     </div>
   {:else}
       <!-- A file dropped past the paragraphs goes to the references pool, linked to nothing. -->
@@ -900,7 +909,7 @@
       <article
         class="essay-shell__page"
         aria-label={model.title}
-        inert={needsName}
+        inert={needsName || readOnly}
         ondragover={poolDrop ? (e) => dropKinds(e) && e.preventDefault() : undefined}
         ondrop={poolDrop
           ? (e) => {
@@ -1011,7 +1020,7 @@
     <Inspector label="Panels">
       <div class="panel-rail" data-testid="rail">
 {#if model}
-        <Panel title="Layers" data-feature="essay.layers" persistKey="essay.layers" collapseWhen={NARROW}>
+        <Panel inert={readOnly} title="Layers" data-feature="essay.layers" persistKey="essay.layers" collapseWhen={NARROW}>
           <LayersPanel
             {layers}
             candrop={essayDrop}
@@ -1023,7 +1032,7 @@
             onkey={onKey}
           />
         </Panel>
-        <Panel title="Draft" aside={draftItems.length} persistKey="essay.draft" collapseWhen={NARROW}>
+        <Panel inert={readOnly} title="Draft" aside={draftItems.length} persistKey="essay.draft" collapseWhen={NARROW}>
           <DraftTray
             items={draftItems}
             available={!!model.draftContainerId}
@@ -1033,7 +1042,7 @@
             onputback={putBack}
           />
         </Panel>
-        <Panel title="Bin" aside={binItems.length} persistKey="essay.bin" collapseWhen={NARROW}>
+        <Panel inert={readOnly} title="Bin" aside={binItems.length} persistKey="essay.bin" collapseWhen={NARROW}>
           <BinTray
             items={binItems}
             onrestore={restore}
@@ -1061,7 +1070,7 @@
           </Panel>
         {/if}
         {#if model.referencesContainerId}
-          <Panel title="References" data-feature="essay.sources" aside={referenceItems.length} persistKey="essay.references" collapseWhen={NARROW}>
+          <Panel inert={readOnly} title="References" data-feature="essay.sources" aside={referenceItems.length} persistKey="essay.references" collapseWhen={NARROW}>
             <ReferencesTray
               items={referenceItems}
               paragraphs={paragraphChoices}
