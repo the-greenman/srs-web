@@ -8,7 +8,7 @@ Help is data (decision 9441693e, srs-web#639). The words live in **`help/`** at 
   - `title` and `summary`, the words the help dialog shows
   - `explanation`, shown on More and given to agents
   - `ai_guidance`, how an agent should teach it
-- **An editor's help** is the container whose `name` is the editor id (`essay`). Its entry order is the order shown. A shared record can be a member of several editors' containers.
+- **An editor's help** is the container whose `name` is the editor id (`essay`). Its entry order is the order shown. A shared record can be a member of several editors' containers. A container may also be named after a screen (`essay-home`, the essay editor's front page); `helpFor("essay-home")` returns it.
 - **A component** names the feature it presents with a plain attribute, `data-feature="essay.add-paragraph"` (a string literal), on an element or on a component that passes attributes through (`Button`, `Panel`). It never holds help text.
 - **No drift.** `tests/help-contract.test.ts` fails when:
   - a `data-feature` has no record

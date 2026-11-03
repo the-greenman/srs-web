@@ -38,6 +38,17 @@ describe.skipIf(!haveBindings)("helpFor on the real engine", () => {
     const repo = mod.SrsRepository.load_tree(tree(HELP));
 
     expect(helpFor("no-such-editor", repo)).toEqual([]);
+    const home = helpFor("essay-home", repo);
+    expect(home.map((i) => i.featureId)).toEqual([
+      "essay-home.human-in-charge",
+      "shell.connect-ai",
+      "essay-home.start",
+      "essay-home.where-it-lives",
+      "essay-home.examples",
+    ]);
+    const essayIds = helpFor("essay", repo).map((i) => i.featureId);
+    expect(essayIds).toContain("essay-home.human-in-charge");
+    expect(essayIds).toContain("essay-home.where-it-lives");
     const essay = client.listContainers(repo).find((c) => c.title === "Essay editor help");
     expect(essay).toBeDefined();
     const before = helpFor("essay", repo).length;

@@ -18,6 +18,7 @@
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
   import Landing from "$lib/components/Landing.svelte";
+  import EssayHome from "$lib/components/EssayHome.svelte";
   import LandingFrame from "$lib/components/LandingFrame.svelte";
   import FolderOpen from "@lucide/svelte/icons/folder-open";
   import GitBranch from "@lucide/svelte/icons/git-branch";
@@ -772,6 +773,13 @@
     <h3>Landing</h3>
     <div class="sg__landing" data-testid="sg-landing-plain">
       <Landing providers={fx.landingProviders(true)} onOpen={async () => {}} onOpenUrl={async () => {}} onCreate={async () => {}} />
+    </div>
+    <h3>Essay home</h3>
+    <div class="sg__landing" data-testid="sg-essay-home">
+      {#snippet essayHome()}
+        <EssayHome items={fx.essayHomeItems} onNew={noop} providers={fx.landingProviders(true)} onOpen={async () => {}} onOpenUrl={async () => {}} />
+      {/snippet}
+      {@render gated(essayHome)}
     </div>
     <h3>Restore pending</h3>
     <div class="sg__landing" data-testid="sg-landing-restore">

@@ -1,0 +1,22 @@
+{
+  "instanceId": "1ad705aa-1d4c-4bc0-b672-6f081b367c6a",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay-home.examples",
+    "placement": "ui",
+    "title": "Try an example",
+    "summary": "Finished essays open read-only in the essay editor. **Document > Save a copy…** makes one your own.",
+    "explanation": "- [Autonomy against coordination](?open=/examples/autonomy-against-coordination.srsj&editor=essay)\n- [Nobody owns the commons](?open=/examples/nobody-owns-the-commons.srsj&editor=essay)\n- [On small democracy](?open=/examples/on-small-democracy.srsj&editor=essay)"
+  },
+  "createdAt": "2026-11-03T18:51:42.191338683+00:00",
+  "updatedAt": "2026-11-03T18:51:42.191340578+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}
