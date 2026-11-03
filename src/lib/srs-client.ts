@@ -2477,7 +2477,7 @@ export function listAttachments(
   return repo.list_attachments(JSON.stringify(filter)) as AttachmentListResult;
 }
 
-/** The repository's RFC-017 attachment policy (srs-rust#638). An absent limit is no limit. */
+/** The repository's RFC-017 attachment policy (srs-rust#638, shipped in #1554). An absent limit is no limit. */
 export interface AttachmentPolicyResult {
   policyRecordPresent: boolean;
   allowedMimeTypes?: string[];

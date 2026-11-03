@@ -959,6 +959,7 @@
                 oncopylink={() => copyLink(p.id)}
                 oncopyagent={() => copyForAgent(p.id)}
                 onattach={(files) => attach(p.id, files)}
+                attachPolicy={policy}
                 onbody={(v) => run(() => setBody(repo, p.id, v))}
                 ontitle={(v) => run(() => setTitle(repo, p.id, v))}
                 onhide={(h) => run(() => setHidden(repo, model!, p.id, h))}

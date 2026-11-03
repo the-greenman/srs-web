@@ -18,7 +18,7 @@
   import InlineText from './InlineText.svelte';
   import MarkdownText from './MarkdownText.svelte';
   import AttachDrop from './AttachDrop.svelte';
-  import type { AttachFile } from './attach-check.js';
+  import type { AttachFile, AttachPolicy } from './attach-check.js';
   import Popover from './Popover.svelte';
   import { keyMove } from './dnd';
   import type { KeyMove } from './dnd';
@@ -45,6 +45,7 @@
     oncopylink,
     oncopyagent,
     onattach,
+    attachPolicy,
     margin,
     count,
   }: {
@@ -73,6 +74,8 @@
     oncopyagent?: () => void;
     /** Attach files to this paragraph (paste or picker, from the menu's "Attach file…"); absent = no such action. */
     onattach?: (files: AttachFile[]) => void | Promise<void>;
+    /** The repository's attachment policy, so the menu's drop checks as the tray does (#234). */
+    attachPolicy?: AttachPolicy;
     /** The one right-margin slot: comment badge, attachment glyphs. */
     margin?: Snippet;
     /** Under the body (the essay passes a Count). */
@@ -220,7 +223,7 @@
     <ActionMenu class="block__menu" data-part="menu" {actions} label={shortLabel} focusKey={`menu:${id}`} />
     {#if onattach}
       <Popover bind:open={attachOpen} label={`Attach files to ${shortLabel}`} anchor={article} placement="bottom-start">
-        {#if attachOpen}<AttachDrop compact label="Attach text files" onfiles={attach} data-testid="attach-drop" />{/if}
+        {#if attachOpen}<AttachDrop compact label="Attach text files" policy={attachPolicy} onfiles={attach} data-testid="attach-drop" />{/if}
       </Popover>
     {/if}
   </div>

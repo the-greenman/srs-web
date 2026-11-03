@@ -1,7 +1,7 @@
 /** Client-side checks for files offered to AttachDrop (#503). Pure; no SRS semantics (ADR-001). */
 import { formatBytes } from "../format-bytes.js";
 
-/** Mirrors RFC-017 attachment_policy (repo_settings), as `attachmentPolicy()` returns it (srs-rust#638). */
+/** Mirrors RFC-017 attachment_policy (repo_settings), as `attachmentPolicy()` returns it (srs-rust#638, shipped in #1554). */
 export interface AttachPolicy {
   allowedMimeTypes?: string[];
   maxPerFileBytes?: number;
