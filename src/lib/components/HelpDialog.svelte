@@ -58,6 +58,7 @@
   {/if}
   {#snippet actions()}
     <Checkbox bind:checked={hide} data-testid="help-dont-show">Don't show again</Checkbox>
+    {#if !last}<Button size="sm" data-testid="help-close" onclick={() => onclose(hide)}>Close</Button>{/if}
     <Button size="sm" disabled={step === 0} data-testid="help-back" onclick={() => go(step - 1)}>Back</Button>
     {#if last}
       <Button size="sm" variant="primary" data-testid="help-done" onclick={() => onclose(hide)}>Done</Button>
