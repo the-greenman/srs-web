@@ -1,7 +1,14 @@
 import { STRUCTURAL_CATEGORIES } from "$lib/annotations.js";
 import type { Attachment, FileAttachment, Related } from "$lib/annotations.js";
-import { COMMENTS_ON, SO_COMMENTS_ON, isCommentsOn, kindsIn, loadComments } from "$lib/comments.js";
-import type { Comment } from "$lib/comments.js";
+import {
+  COMMENTS_ON,
+  SO_COMMENTS_ON,
+  isCommentsOn,
+  kindsIn,
+  loadComments,
+  verdictOf,
+} from "$lib/comments.js";
+import type { Comment, Verdict } from "$lib/comments.js";
 import type { AttachFile } from "$lib/components/attach-check.js";
 import {
   type Target,
@@ -52,6 +59,7 @@ import {
   updateRecord,
 } from "$lib/srs-client.js";
 import type {
+  Actor,
   AgentWriteGuard,
   ContextRelation,
   OutlineEntry,
@@ -95,6 +103,14 @@ export interface Reference {
   context: boolean;
   /** The record's description, citation and statement (those it has), blank-line joined. */
   text: string;
+  /**
+   * Who found it, when an agent put it in the pool (the engine-stamped `createdBy`, kind `ai`); absent
+   * for the writer's own references. An agent's find is a candidate until the writer answers (#626).
+   */
+  foundBy?: Actor;
+  foundAt?: string;
+  /** The writer's current tick (`agree`) or deny (`disagree`) on it; absent = unanswered. */
+  verdict?: Verdict;
 }
 export interface EssayModel {
   essayId: string;
@@ -430,20 +446,26 @@ export function loadEssay(
     }
   }
   const references: Reference[] = referencesContainerId
-    ? listRecords(repo, { containerId: referencesContainerId }).map((r) => ({
-        id: r.instanceId,
-        label: r.displayLabel || r.instanceId,
-        typeName: r.typeName ?? "",
-        kind: str(r.fieldValues.source_kind),
-        url: str(r.fieldValues.source_url),
-        context: str(r.fieldValues.source_kind) === CONTEXT_KIND,
-        text: TEXT_FIELDS.map((k) => str(r.fieldValues[k]))
-          .filter(Boolean)
-          .join("\n\n"),
-        paragraphIds: Object.keys(context.attachments).filter((pid) =>
-          context.attachments[pid].some((a) => a.neighbourId === r.instanceId)
-        ),
-      }))
+    ? listRecords(repo, { containerId: referencesContainerId }).map((r) => {
+        const verdict = verdictOf(comments[r.instanceId] ?? []);
+        const agent = r.createdBy?.kind === "ai" && str(r.fieldValues.source_kind) !== CONTEXT_KIND;
+        return {
+          ...(agent ? { foundBy: r.createdBy, foundAt: r.createdAt } : {}),
+          ...(agent && verdict ? { verdict } : {}),
+          id: r.instanceId,
+          label: r.displayLabel || r.instanceId,
+          typeName: r.typeName ?? "",
+          kind: str(r.fieldValues.source_kind),
+          url: str(r.fieldValues.source_url),
+          context: str(r.fieldValues.source_kind) === CONTEXT_KIND,
+          text: TEXT_FIELDS.map((k) => str(r.fieldValues[k]))
+            .filter(Boolean)
+            .join("\n\n"),
+          paragraphIds: Object.keys(context.attachments).filter((pid) =>
+            context.attachments[pid].some((a) => a.neighbourId === r.instanceId)
+          ),
+        };
+      })
     : [];
   const hiddenRaw = state?.fieldValues.hidden_instance_ids;
   return {

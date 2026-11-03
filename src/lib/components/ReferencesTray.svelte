@@ -38,6 +38,10 @@
     context?: boolean;
     /** The paragraphs it is linked to; none = not linked yet. */
     paragraphs: { id: string; label: string }[];
+    /** Set when an agent put it in the pool: its name, so the writer sees who found it (#626). */
+    foundBy?: string;
+    /** The writer's tick (`agree`) or deny (`disagree`) on an agent's find; absent = unanswered candidate. */
+    verdict?: 'agree' | 'disagree';
   }
 
   let {
@@ -53,6 +57,7 @@
     onfiles,
     onurls,
     onlink,
+    onanswer,
     oncontext,
   }: {
     items: ReferenceItem[];
@@ -71,6 +76,8 @@
     onfiles?: (files: AttachFile[]) => void | Promise<void>;
     onurls?: (urls: string[]) => void | Promise<void>;
     onlink?: (referenceId: string, paragraphId: string) => void;
+    /** Tick (`agree`), deny (`disagree`) or clear (`withdrawn`) an agent's find. Absent: no buttons. */
+    onanswer?: (referenceId: string, kind: 'agree' | 'disagree' | 'withdrawn') => void;
     /** Absent: no context-document form. */
     oncontext?: (docs: { files?: AttachFile[]; urls?: string[]; texts?: { title: string; body: string }[] }) => void | Promise<void>;
   } = $props();
@@ -117,6 +124,14 @@
     <div class="refs-tray__item" data-testid="reference-row">
       <TrayRow label={`${r.label} (${r.type}${r.kind ? ` · ${r.kind}` : ''})`}>
         {#snippet actions()}
+          {#if r.foundBy && onanswer}
+            {#if r.verdict}
+              <Button size="sm" data-testid="reference-reset" onclick={() => onanswer(r.id, 'withdrawn')}>Undo</Button>
+            {:else}
+              <Button size="sm" data-testid="reference-tick" aria-label={`Keep ${r.label}`} onclick={() => onanswer(r.id, 'agree')}>Keep</Button>
+              <Button size="sm" data-testid="reference-deny" aria-label={`Deny ${r.label}`} onclick={() => onanswer(r.id, 'disagree')}>Deny</Button>
+            {/if}
+          {/if}
           <IconButton icon={BookOpen} variant="outline" label={`Open ${r.label}`} onclick={() => onopen(r.id)} />
           {#if onlink && free.length}
             <ActionMenu
@@ -131,6 +146,9 @@
           <IconButton icon={X} variant="outline" label={`Remove ${r.label} from references`} onclick={() => onremove(r.id)} />
         {/snippet}
       </TrayRow>
+      {#if r.foundBy}
+        <p class="tray__empty" data-testid="reference-found">{r.verdict === 'agree' ? 'Kept' : r.verdict === 'disagree' ? 'Denied' : 'Suggested, not yet kept'} · found by {r.foundBy}</p>
+      {/if}
       {#if r.paragraphs.length || r.url}
         <div class="tray__chips">
           {#if r.url}

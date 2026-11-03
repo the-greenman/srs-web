@@ -127,3 +127,28 @@ it("lists context documents apart from references and adds pasted text and a URL
   await fireEvent.submit(getByTestId("context-url").closest("form")!);
   expect(oncontext).toHaveBeenCalledWith({ urls: ["https://example.org/call"] });
 });
+
+it("an agent's find shows who found it and is kept or denied in place; the writer's own rows have no buttons (#626)", async () => {
+  const onanswer = vi.fn();
+  const found = [
+    { id: "c1", label: "Candidate", type: "source", paragraphs: [], foundBy: "agent:research" },
+    { id: "c2", label: "Kept one", type: "source", paragraphs: [], foundBy: "agent:research", verdict: "agree" as const },
+    { id: "own", label: "Mine", type: "source", paragraphs: [] },
+  ];
+  const { getAllByTestId, getByTestId, getByLabelText } = render(ReferencesTray, {
+    items: found,
+    onopen: vi.fn(),
+    onfocus: vi.fn(),
+    onremove: vi.fn(),
+    onanswer,
+  });
+  expect(getAllByTestId("reference-found").map((n) => n.textContent)).toEqual([
+    "Suggested, not yet kept · found by agent:research",
+    "Kept · found by agent:research",
+  ]);
+  expect(getAllByTestId("reference-tick")).toHaveLength(1);
+  await fireEvent.click(getByLabelText("Keep Candidate"));
+  await fireEvent.click(getByLabelText("Deny Candidate"));
+  await fireEvent.click(getByTestId("reference-reset"));
+  expect(onanswer.mock.calls).toEqual([["c1", "agree"], ["c1", "disagree"], ["c2", "withdrawn"]]);
+});
