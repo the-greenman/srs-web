@@ -1,8 +1,8 @@
 <!--
   EssayHome — the essay editor's front page: LandingFrame with four numbered sections, "01 Start",
   "02 Examples", "03 Open" (SourceChooser) and "04 How it works". Presentation only (ADR-027): every
-  word comes from `items` (the essay-home help container, `helpFor("essay-home")`); the caller owns
-  opening and starting. `notices` is the slot above the sections. Extra attributes go to the frame root.
+  help word comes from `items` (the essay-home help container, `helpFor("essay-home")`); the section
+  labels, the eyebrow and "More" are literal chrome, as in Landing.svelte. The caller owns opening and starting. `notices` is the slot above the sections. Extra attributes go to the frame root.
 -->
 <script lang="ts">
   import type { Snippet, ComponentProps } from 'svelte';
@@ -30,8 +30,11 @@
   } & ComponentProps<typeof SourceChooser> &
     Omit<ComponentProps<typeof LandingFrame>, 'title' | 'standfirst' | 'eyebrow' | 'children' | 'notices'> = $props();
 
-  const concepts = $derived(items.filter((i) => i.placement === 'concept'));
   const byId = (id: string) => items.find((i) => i.featureId === id);
+  const heading = $derived(byId('essay-home.human-in-charge'));
+  const concepts = $derived(
+    items.filter((i) => i.placement === 'concept' && i.featureId !== 'essay-home.human-in-charge')
+  );
   const start = $derived(byId('essay-home.start'));
   const examples = $derived(byId('essay-home.examples'));
   const connect = $derived(byId('shell.connect-ai'));
@@ -39,8 +42,8 @@
 
 <LandingFrame
   eyebrow="Essay editor"
-  title={concepts[0]?.title ?? 'Write with your AI, not under it'}
-  standfirst={concepts[0]?.summary}
+  title={heading?.title}
+  standfirst={heading?.summary}
   {notices}
   {...rest}
 >
@@ -65,7 +68,7 @@
     </section>
     <section class="landing__section">
       <SectionHeader number="04" label="How it works" />
-      {#each [...concepts.slice(1), ...(connect ? [connect] : [])] as item (item.instanceId)}
+      {#each [...concepts, ...(connect ? [connect] : [])] as item (item.instanceId)}
         <h3>{item.title}</h3>
         <MarkdownView value={item.summary} />
         {#if item.explanation}

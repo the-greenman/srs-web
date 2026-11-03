@@ -8,10 +8,10 @@
     "feature_id": "essay-home.start",
     "placement": "ui",
     "title": "Start an essay",
-    "summary": "One click opens an untitled essay. Nothing is saved until you choose where."
+    "summary": "One click opens an untitled essay. Nothing is written outside this browser until you choose where."
   },
   "createdAt": "2026-11-03T18:51:42.092171218+00:00",
-  "updatedAt": "2026-11-03T18:51:42.092175740+00:00",
+  "updatedAt": "2026-11-03T18:56:02.175327045+00:00",
   "createdBy": {
     "kind": "ai",
     "id": "agent:claude-code",

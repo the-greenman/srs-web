@@ -8,11 +8,11 @@
     "feature_id": "essay-home.where-it-lives",
     "placement": "concept",
     "title": "Where your essay lives",
-    "summary": "While you work, a recovery copy lives in this browser. **Save to…** writes it to a file on your device, Dropbox or Google Drive (GitHub when the essay was opened from GitHub).",
-    "explanation": "The browser copy is per-browser and is cleared by \"Open another\". A device file downloads, and the next Save asks again. A cloud copy becomes the open document."
+    "summary": "While you work, and until you save, a recovery copy lives in this browser. **Save to…** writes it to a file on your device, Dropbox or Google Drive (GitHub when the essay was opened from GitHub).",
+    "explanation": "The browser copy is per-browser. It is cleared by \"Open another\" and also when you save. A device file downloads, and the next Save asks again. A cloud copy becomes the open document."
   },
   "createdAt": "2026-11-03T18:51:42.141114487+00:00",
-  "updatedAt": "2026-11-03T18:51:42.141118146+00:00",
+  "updatedAt": "2026-11-03T18:56:02.230274264+00:00",
   "createdBy": {
     "kind": "ai",
     "id": "agent:claude-code",

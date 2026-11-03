@@ -1534,7 +1534,12 @@ export const essayHomeItems = [
     "Fixing AI text is slower than writing."
   ),
   helpItem("shell.connect-ai", "ui", "Connect an AI", "Pair an agent so it can read your essay."),
-  helpItem("essay-home.start", "ui", "Start an essay", "One click opens an untitled essay."),
+  helpItem(
+    "essay-home.start",
+    "ui",
+    "Start an essay",
+    "One click opens an untitled essay. Nothing is written outside this browser until you choose where."
+  ),
   helpItem(
     "essay-home.where-it-lives",
     "concept",
