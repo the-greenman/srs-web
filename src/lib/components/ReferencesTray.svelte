@@ -16,8 +16,8 @@
   import X from '@lucide/svelte/icons/x';
   import ActionMenu from './ActionMenu.svelte';
   import AttachDrop from './AttachDrop.svelte';
-  import type { AttachFile } from './attach-check.js';
-  import { DEFAULT_MAX_TOTAL } from './attach-check.js';
+  import type { AttachFile, AttachPolicy } from './attach-check.js';
+  import { BROWSER_BUDGET } from './attach-check.js';
   import Button from './Button.svelte';
   import IconButton from './IconButton.svelte';
   import Input from './Input.svelte';
@@ -44,7 +44,9 @@
     items,
     paragraphs = [],
     usedBytes = 0,
-    maxBytes = DEFAULT_MAX_TOTAL,
+    maxBytes = BROWSER_BUDGET,
+    policy,
+    attachedBytes = 0,
     onopen,
     onfocus,
     onremove,
@@ -56,8 +58,12 @@
     items: ReferenceItem[];
     /** Every paragraph a reference can be linked to. Absent/empty: no link action. */
     paragraphs?: { id: string; label: string }[];
+    /** The whole repository's bytes, against `maxBytes` (the browser budget) on the meter: a warning only. */
     usedBytes?: number;
     maxBytes?: number;
+    /** The repository's attachment policy and the bytes already attached: they gate a drop. */
+    policy?: AttachPolicy;
+    attachedBytes?: number;
     onopen: (id: string) => void;
     onfocus: (paragraphId: string) => void;
     onremove: (id: string) => void;
@@ -101,7 +107,7 @@
 
 <section class="tray refs-tray" aria-label="References" data-testid="references">
   {#if onfiles}
-    <AttachDrop compact label="Add to references" {usedBytes} onfiles={files} {onurls} data-testid="references-drop" />
+    <AttachDrop compact label="Add to references" {policy} {attachedBytes} onfiles={files} {onurls} data-testid="references-drop" />
     <RepoSize totalBytes={usedBytes} {maxBytes} pendingBytes={pending} />
   {/if}
   {#if otherItems.length === 0}<p class="tray__empty">Sources, claims and problems that agents and attach flows collect for this essay wait here.</p>{/if}
@@ -144,7 +150,7 @@
       <h3 class="tray__subhead">Context documents</h3>
       <p class="tray__empty">Documents this essay answers, such as the funding call. Every connected agent reads them.</p>
       {@render rows(contextItems)}
-      <AttachDrop compact label="Add a context file" {usedBytes} onfiles={(f) => oncontext({ files: f })} data-testid="context-drop" />
+      <AttachDrop compact label="Add a context file" {policy} {attachedBytes} onfiles={(f) => oncontext({ files: f })} data-testid="context-drop" />
       <form class="refs-tray__form" onsubmit={(e) => { e.preventDefault(); addUrl(); }}>
         <Input type="url" bind:value={ctxUrl} aria-label="Context URL" placeholder="Context URL" data-testid="context-url" />
         <Button type="submit" size="sm" disabled={!ctxUrl.trim()}>Add URL</Button>

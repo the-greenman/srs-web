@@ -10,7 +10,7 @@
   import { onDestroy, onMount, tick, untrack } from "svelte";
   import type { Snippet } from "svelte";
   import { copyHtml, copyText } from "$lib/clipboard.js";
-  import { getRecord, renderMarkdown, repositoryId } from "$lib/srs-client.js";
+  import { attachedBytes, attachmentPolicy, getRecord, renderMarkdown, repositoryId } from "$lib/srs-client.js";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import AgentFeed from "$lib/components/AgentFeed.svelte";
   import Count from "$lib/components/Count.svelte";
@@ -411,8 +411,11 @@
   function openReference(id: string) {
     if (!pinnedIds.includes(id)) togglePin(id);
   }
-  /** The repository's size against the browser budget: the check and the tray's meter share it. */
+  /** The repository's size against the browser budget: the tray's meter, a warning only. */
   const usedBytes = $derived(model ? repoBytes(repo) : 0);
+  /** What gates an attachment: the repository's policy and the bytes it counts (owner ruling, srs-web#234). */
+  const policy = $derived(model ? attachmentPolicy(repo) : undefined);
+  const attached = $derived(model ? attachedBytes(repo) : 0);
   /** The page background takes drops into the pool only when the essay has a pool. */
   const poolDrop = $derived(!!model?.referencesContainerId);
   const dropKinds = (e: DragEvent) =>
@@ -430,15 +433,15 @@
       text: rejected.map((r) => `${r.name}: ${r.reason}`).join("; "),
       testid: "attach-rejected",
     });
-  /** The paragraph's ⋯ Attach file…: the same budget check as a drop, then the pool. */
+  /** The paragraph's ⋯ Attach file…: the same policy check as a drop, then the pool. */
   async function attach(paragraphId: string, files: AttachFile[]) {
-    const { accepted, rejected } = checkFiles(files.map((f) => ({ ...f, size: f.bytes.length })), undefined, usedBytes);
+    const { accepted, rejected } = checkFiles(files.map((f) => ({ ...f, size: f.bytes.length })), policy, attached);
     warnRejected(rejected);
     if (accepted.length) await addRefs({ files: accepted }, paragraphId);
   }
   /** Files dropped on a paragraph (or, with no id, on the page): checked before they are read, rejections as a warning toast. */
   async function dropFiles(paragraphId: string | undefined, files: File[]) {
-    const { accepted, rejected } = await takeFiles(files, undefined, usedBytes);
+    const { accepted, rejected } = await takeFiles(files, policy, attached);
     warnRejected(rejected);
     if (accepted.length) await addRefs({ files: accepted }, paragraphId);
   }
@@ -1033,6 +1036,8 @@
               items={referenceItems}
               paragraphs={paragraphChoices}
               {usedBytes}
+              {policy}
+              attachedBytes={attached}
               onopen={openReference}
               onfocus={(id) => focusParagraph(id)}
               onremove={dropReference}

@@ -27,6 +27,18 @@ async function engine() {
 const fixture = () => readFileSync(path.join(__dirname, "../e2e/fixtures/essay-pool.srsj"), "utf8");
 
 describe.skipIf(!haveBindings)("references pool on the real engine", () => {
+  it("reads the core attachment policy and counts attached bytes, not the whole repository (#234)", async () => {
+    const doc = await import("../src/lib/essay/essay-document.js");
+    const client = await import("../src/lib/srs-client.js");
+    const repo = (await engine()).SrsRepository.load(fixture());
+    const m = doc.loadEssay(repo, doc.listEssays(repo)[0].id, { repair: true });
+    expect(client.attachmentPolicy(repo)).toEqual({ policyRecordPresent: false });
+    const before = client.attachedBytes(repo);
+    const bytes = new TextEncoder().encode("# Notes\n");
+    doc.addReferences(repo, m, { files: [{ name: "notes.md", type: "text/markdown", bytes }] });
+    expect(client.attachedBytes(repo)).toBe(before + bytes.length);
+    expect(client.attachedBytes(repo)).toBeLessThan(doc.repoBytes(repo));
+  });
   it("adds files and URLs as sources, links them to a paragraph, reads the text back, validates clean", async () => {
     const doc = await import("../src/lib/essay/essay-document.js");
     const repo = (await engine()).SrsRepository.load(fixture());
