@@ -29,6 +29,7 @@
   import DraftTray from "$lib/components/DraftTray.svelte";
   import Panel from "$lib/components/Panel.svelte";
   import DomainMap from "$lib/components/DomainMap.svelte";
+  import EssayBrowser from "$lib/components/EssayBrowser.svelte";
   import LayersPanel from "$lib/components/LayersPanel.svelte";
   import type { DragPayload, KeyMove } from "$lib/components/dnd.js";
   import Button from "$lib/components/Button.svelte";
@@ -85,6 +86,7 @@
   import { essayMarkdown, essayReferences, essaySnapshot, essayWriteGuard } from "./essay-document.js";
   import { downloadText, triggerDownload } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
+  import { browseEssays } from "./essay-browse.js";
   import { domainMap, listBoundaries, setBoundary } from "./essay-domain.js";
   import { formatAddress, parseAddress, pushAddress } from "$lib/address.js";
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
@@ -290,6 +292,15 @@
   /** The essay's domain (srs-web#571): recomputed with the model, which reloads on every write. */
   const domain = $derived(model ? domainMap(repo, model.essayId) : null);
   const boundaries = $derived(model ? listBoundaries(repo) : []);
+  /** Every essay by domain and family (srs-web#623): recomputed with the model, which reloads on every write. */
+  const browsed = $derived(model && essays.length > 1 ? browseEssays(repo) : []);
+  function openEssay(id: string) {
+    essayId = id;
+    zoomId = null;
+    loadViewState(id);
+    reload();
+    push();
+  }
   /** Domain records opened into the pinned pane (this session only; they are not attachments). */
   let openedDomain = $state<{ id: string; title: string; kind: string; text: string }[]>([]);
   function openDomainRecord(id: string) {
@@ -1022,6 +1033,11 @@
             onforget={forget}
           />
         </Panel>
+        {#if essays.length > 1}
+          <Panel title="Essays" aside={essays.length} persistKey="essay.browse" collapseWhen={NARROW}>
+            <EssayBrowser groups={browsed} currentId={essayId} onopen={openEssay} />
+          </Panel>
+        {/if}
         {#if boundaries.length || domain}
           <Panel title="Domain" aside={domain ? domain.problems.touched.length + "/" + (domain.problems.touched.length + domain.problems.untouched.length) : undefined} persistKey="essay.domain" collapseWhen={NARROW}>
             <DomainMap

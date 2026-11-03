@@ -25,6 +25,7 @@
   import LiveRegions from "$lib/components/LiveRegions.svelte";
   import { notify } from "$lib/notices.svelte";
   import { pairingMinutesLeft } from "$lib/components/agent-panel";
+  import EssayBrowser from "$lib/components/EssayBrowser.svelte";
   import ToolbarSpecimen from "./styleguide/ToolbarSpecimen.svelte";
   import ShellSpecimen from "./styleguide/ShellSpecimen.svelte";
   import Frame from "./styleguide/Frame.svelte";
@@ -331,6 +332,23 @@
       <ActorStack actors={fx.manyActors} />
       <ActorStack actors={[fx.unattributed, fx.agents[0]]} />
     </div>
+  </section>
+
+  <section id="essay-browser">
+    <h2>Essay browser</h2>
+    <p>Essays grouped by domain, newest first, each with its family: the essay it was copied from or to, and the paragraphs it shares. Essays with no domain come last.</p>
+    <EssayBrowser
+      currentId="e1"
+      onopen={noop}
+      groups={[
+        { boundaryId: "b", label: "Small groups", depth: 0, essays: [
+          { id: "e2", title: "Copy of On small democracy", createdAt: "2026-10-02", sharedParagraphs: 3, family: [{ essayId: "e1", title: "On small democracy", shared: 3, kind: "parent" }] },
+          { id: "e1", title: "On small democracy", createdAt: "2026-10-01", sharedParagraphs: 3, family: [{ essayId: "e2", title: "Copy of On small democracy", shared: 3, kind: "child" }] },
+        ] },
+        { boundaryId: "n", label: "Local governance", depth: 1, essays: [{ id: "e4", title: "Councils", createdAt: "2026-09-20", sharedParagraphs: 0, family: [] }] },
+        { boundaryId: null, label: "No domain yet", depth: 0, essays: [{ id: "e3", title: "Loose notes", createdAt: "", sharedParagraphs: 0, family: [] }] },
+      ]}
+    />
   </section>
 
   <section id="wordmark">
