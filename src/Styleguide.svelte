@@ -28,6 +28,7 @@
   import EssayBrowser from "$lib/components/EssayBrowser.svelte";
   import ToolbarSpecimen from "./styleguide/ToolbarSpecimen.svelte";
   import ShellSpecimen from "./styleguide/ShellSpecimen.svelte";
+  import SiteSpecimen from "./styleguide/SiteSpecimen.svelte";
   import Frame from "./styleguide/Frame.svelte";
   import RecordsView from "$lib/generic/RecordsView.svelte";
   import RelationGraph from "$lib/generic/RelationGraph.svelte";
@@ -590,6 +591,15 @@
         </figure>
       {/each}
     </div>
+  </section>
+
+  <section id="site">
+    <h2>Site editor canvas</h2>
+    <p class="sg__note">A website page in the site editor (ADR-029): each block's visible fields in its View's order, edited in place;
+      the first field reads as the block's heading. Click a block to select it; the brief (editor-only intent) shows above a block when
+      that layer is on; a group's items sit indented under it. Laid out generically in srs-web's tokens; the site's own tokens replace
+      them once a Theme can be read.</p>
+    <SiteSpecimen />
   </section>
 
   <section id="records">

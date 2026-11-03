@@ -29,14 +29,15 @@ import {
 } from "$lib/srs-client.js";
 import { typeVersion } from "$lib/type-version.js";
 import { uuid5 } from "$lib/uuid5.js";
-import { type PageRef, outgoing, pageBlocks, typeKey } from "./site-model.js";
+import { type PageRef, listPages, outgoing, pageBlocks, typeKey } from "./site-model.js";
 import { type Site, viewFor } from "./site-views.js";
 
 /**
  * A new page: a record of the site's page type (its `page_key` and `page_title`, ADR-029 E4) and
  * the container anchored on it, the record its first entry, as a new essay is made.
  */
-export function newPage(repo: SrsRepository, site: Site, title: string, key: string): PageRef {
+export function newPage(repo: SrsRepository, site: Site, title: string, wanted: string): PageRef {
+  const key = freeKey(repo, site, wanted);
   // Every other field the page type requires starts empty; the writer fills it in the inspector.
   const required =
     (typeSchema(repo, site.pageTypeId).schema.required as string[] | undefined) ?? [];
@@ -53,6 +54,24 @@ export function newPage(repo: SrsRepository, site: Site, title: string, key: str
     memberInstanceIds: [{ instanceId: anchor.instanceId }],
   });
   return { containerId: container.containerId, anchorId: anchor.instanceId, title, key };
+}
+
+/** `key`, or `key-2`, `key-3`, ...: the first a page of the site does not already have (it is the page's address). */
+function freeKey(repo: SrsRepository, site: Site, key: string): string {
+  const taken = new Set(listPages(repo, site).map((p) => p.key));
+  if (!taken.has(key)) return key;
+  let n = 2;
+  while (taken.has(`${key}-${n}`)) n++;
+  return `${key}-${n}`;
+}
+
+/** Change a page's key (its address on the site): never empty, never another page's. */
+export function setPageKey(repo: SrsRepository, site: Site, page: PageRef, key: string): void {
+  const k = key.trim();
+  if (!k) throw new Error("A page needs a key: it is the page's address on the site");
+  if (listPages(repo, site).some((p) => p.key === k && p.containerId !== page.containerId))
+    throw new Error(`Another page already has the key "${k}"`);
+  setField(repo, page.anchorId, "page_key", k);
 }
 
 // --- a page's areas (ADR-029 E2) -----------------------------------------------------------------

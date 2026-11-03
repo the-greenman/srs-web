@@ -350,10 +350,13 @@ test.describe("Generic on the frame", () => {
     await scroller.evaluate((el) => {
       el.scrollTop = el.scrollHeight;
     });
+    // the last navigation item (the package editors below it switch shells); in view before the
+    // baseline is taken, so the click itself is what must not scroll (more editors below it push it up)
+    const last = page.locator('.app__nav .nav__item:not([data-testid^="package-editor"])').last();
+    await last.scrollIntoViewIfNeeded();
     const before = await scroller.evaluate((el) => el.scrollTop);
     expect(before).toBeGreaterThan(0);
-    // the last navigation item (the package editors below it switch shells)
-    await page.locator('.app__nav .nav__item:not([data-testid^="package-editor"])').last().click();
+    await last.click();
     await expect.poll(() => scrollY(page)).toBe(0);
     expect(await scroller.evaluate((el) => el.scrollTop)).toBe(before);
     expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(

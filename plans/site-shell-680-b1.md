@@ -124,8 +124,8 @@ Everything already in PR A's core is reused by name: `findSite`, `viewFor`, `off
 - [x] The About page's note member is not a block, and the note-anchored container is not a page.
 
 ### Phase 3: components and specimens (M). Layer: components
-- [ ] **`src/lib/components/SiteText.svelte`:** props `value: string`, `label: string`, `multiline?: boolean`, `readonly?: boolean`, `oncommit(value)`. It uses `contenteditable="plaintext-only"`, commits only after typing, Esc reverts, and reads the text from DOM nodes.
-- [ ] **`src/lib/components/SiteBlock.svelte`:** props:
+- [x] **`src/lib/components/SiteText.svelte`:** props `value: string`, `label: string`, `multiline?: boolean`, `readonly?: boolean`, `oncommit(value)`. It uses `contenteditable="plaintext-only"`, commits only after typing, Esc reverts, and reads the text from DOM nodes.
+- [x] **`src/lib/components/SiteBlock.svelte`:** props:
   - `typeLabel: string`;
   - `fields: { name: string; label: string; value: unknown; editable: boolean }[]`;
   - `brief: { label: string; value: string }[] | null`;
@@ -134,16 +134,16 @@ Everything already in PR A's core is reused by name: `findSite`, `viewFor`, `off
   - `children` (its items).
 
   The first field reads as the heading (E1). A value that is not a string renders as a muted "edited elsewhere" note.
-- [ ] **`src/lib/components/SiteCanvas.svelte`:** `div.site-canvas` with `children`, styled by srs-web tokens. There is no remote stylesheet in B1 (E1: it comes with srs-rust#1558).
-- [ ] **`src/styles/components/site.css`:** every class starts with `site-`.
-- [ ] **Specimen `src/styleguide/SiteSpecimen.svelte`**, mounted in `src/Styleguide.svelte`. It mounts all three components (`<SiteCanvas`, `<SiteBlock`, `<SiteText`): a hero, a group with 2 items, the brief shown, a selected block and an empty field.
+- [x] **`src/lib/components/SiteCanvas.svelte`:** `div.site-canvas` with `children`, styled by srs-web tokens. There is no remote stylesheet in B1 (E1: it comes with srs-rust#1558).
+- [x] **`src/styles/components/site.css`:** every class starts with `site-`.
+- [x] **Specimen `src/styleguide/SiteSpecimen.svelte`**, mounted in `src/Styleguide.svelte`. It mounts all three components (`<SiteCanvas`, `<SiteBlock`, `<SiteText`): a hero, a group with 2 items, the brief shown, a selected block and an empty field.
 
 **Acceptance:**
-- [ ] `tests/layers.test.ts` passes with no new baseline entries.
-- [ ] The styleguide e2e passes.
+- [x] `tests/layers.test.ts` passes with no new baseline entries.
+- [x] The styleguide e2e passes.
 
 ### Phase 4: the shell (L). Layer: screen
-- [ ] **`SiteShell.svelte`:**
+- [x] **`SiteShell.svelte`:**
   - On open: `nestItems` runs only when `!readOnlyReason`, mirroring `loadEssay(…, { repair: !readOnlyReason })`.
   - Nav: `listPages` and New page.
   - Canvas: a `BlockStack` of `SiteBlock` rows. Drop targets use `outsideRun` over `getContainerOutline(repo, page.containerId).body` (the entries without the anchor, as `snapshotDocument` reads them).
@@ -153,15 +153,15 @@ Everything already in PR A's core is reused by name: `findSite`, `viewFor`, `off
   - Panels: Drafts (`DraftTray`) and Bin (`BinTray`; Delete forever asks to confirm, then `history.clear()`).
   - Add block: an `ActionMenu` over `offeredTypes(site)`.
   - Writes: one `run(fn: (repo) => void): void` calls `ensureAreas`, takes `snapshotPage` before the write, runs `fn`, pushes the snapshot to the history, then calls `onDocumentMutation`.
-- [ ] **Help:** create the container `site` in srs-web's `help/` repository through the `srs` CLI. It holds `ui-feature` records for `site.pages`, `site.canvas`, `site.add-block`, `site.brief`, `site.inspector`, `site.page-settings`, `site.drafts` and `site.bin`, each a string-literal `data-feature` on a pass-through element.
-- [ ] **Amend `docs/adr/029-site-editor-shell.md`** with an "Editing" section covering E1 to E6, including E3's direction (depth is repaired from `contains`, never the reverse).
-- [ ] **`e2e/site-editor.spec.ts`:** open; edit a headline and save; Show briefs; add a block; drag the faq group (its items follow); toDrafts → Swap in; Bin → Restore → Delete forever; Ctrl-Z; publish → draft writes the tags; a phone width.
+- [x] **Help:** create the container `site` in srs-web's `help/` repository through the `srs` CLI. It holds `ui-feature` records for `site.pages`, `site.canvas`, `site.add-block`, `site.brief`, `site.inspector`, `site.page-settings`, `site.drafts` and `site.bin`, each a string-literal `data-feature` on a pass-through element.
+- [x] **Amend `docs/adr/029-site-editor-shell.md`** with an "Editing" section covering E1 to E6, including E3's direction (depth is repaired from `contains`, never the reverse).
+- [x] **`e2e/site-editor.spec.ts`:** open; edit a headline and save; Show briefs; add a block; drag the faq group (its items follow); toDrafts → Swap in; Bin → Restore → Delete forever; Ctrl-Z; publish → draft writes the tags; a phone width.
 
 **Acceptance:**
-- [ ] `tests/help-contract.test.ts` passes.
-- [ ] e2e passes.
-- [ ] e2e: a read-only link (`readOnlyReason`) shows the page with no edits possible.
-- [ ] *Manual dogfood:* muSrs opened from GitHub storage shows its pages and existing drafts, and writes nothing on open beyond the `nestItems` repair.
+- [x] `tests/help-contract.test.ts` passes.
+- [x] e2e passes.
+- [x] e2e: a read-only link (`readOnlyReason`) shows the page with no edits possible.
+- [x] *Manual dogfood:* muSrs opened from GitHub storage shows its pages and existing drafts, and writes nothing on open beyond the `nestItems` repair.
 
 ### Milestone gate (every phase)
 - `npm run typecheck && npm run lint && npm run build && npm test`, which includes `tests/layers.test.ts`.

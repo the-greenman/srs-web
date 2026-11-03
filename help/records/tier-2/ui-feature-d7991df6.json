@@ -1,0 +1,22 @@
+{
+  "instanceId": "d7991df6-e8d7-4f99-922c-19402ce41f00",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "site.canvas",
+    "placement": "ui",
+    "title": "The page",
+    "summary": "The page's blocks in order, each showing the fields the site draws. Click a field and type to change it; drag a block by its edge to move it, a group's items move with it.",
+    "explanation": "Each block shows only the fields its View puts on the site, in that order; the first reads as its heading. Edits save as you leave the field. Dragging moves a block (a group with its items) before or after another; an item stays inside its group.",
+    "ai_guidance": "Explain that the page is drawn from the site's own blocks, so what shows here is what the site renders; editor-only fields (briefs, keys, settings) are in the inspector."
+  },
+  "createdAt": "2026-11-03T10:25:31.527919387+00:00",
+  "updatedAt": "2026-11-03T10:25:31.527925513+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "claude-code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

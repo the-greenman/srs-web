@@ -1,0 +1,22 @@
+{
+  "instanceId": "f4e9ea96-f01c-4853-973f-18f09325caab",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "site.page-settings",
+    "placement": "ui",
+    "title": "Page settings",
+    "summary": "With no block selected: publish the page (or publish it as a draft, not indexed), end it with the closing mark, choose its layout, and edit its title and other page fields.",
+    "explanation": "How a page sits in the site is set on the page itself: Published puts it on the site at its key's address at the next build; Published as draft serves it but asks search engines not to index it. The closing mark and layout are the site's own options.",
+    "ai_guidance": "Remind the writer that publishing takes effect when the site is next built from the repository, after the change is saved."
+  },
+  "createdAt": "2026-11-03T10:25:31.702173673+00:00",
+  "updatedAt": "2026-11-03T10:25:31.702177376+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "claude-code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}
