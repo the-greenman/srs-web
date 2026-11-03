@@ -3,7 +3,8 @@
 # `site` Composition and Theme), installed as a site would install it. muDemocracy's guides are
 # not in that bundle, so the `uses` relation type and a minimal `com.mudemocracy/guide` type
 # (slug and title, the real ids) are copied from muSrs. Pages:
-#   home    published, closing-mark: hero, prose, faq-group (2 items), guide-section, primary-cta (1 card that uses a guide record)
+#   home    published, closing-mark: hero, prose, faq-group (2 items), guide-section, primary-cta (1 card that uses a guide record);
+#           drafts: an alternative derived-from faq item q1, and an unrelated hero; its prose is also in "Shared prose"
 #   about   published, draft, layout:essay: hero, prose
 #   scratch not published: prose
 # srs CLI build.576 (the bindings srs-web pins).
@@ -40,6 +41,15 @@ AC=$(rec $N/action-card '{"fieldValues":{"card_key":"record","section_heading":"
 rel contains $FQ $F1; rel contains $FQ $F2; rel contains $PC $AC
 rel uses $GB $GS; rel uses $AC $GS
 cont "{\"title\":\"Home\",\"tags\":[\"published\",\"closing-mark\"],\"anchorInstanceId\":\"$HP\",\"memberInstanceIds\":[{\"instanceId\":\"$HP\"},{\"instanceId\":\"$H1\"},{\"instanceId\":\"$H2\"},{\"instanceId\":\"$FQ\"},{\"instanceId\":\"$F1\",\"depth\":1},{\"instanceId\":\"$F2\",\"depth\":1},{\"instanceId\":\"$GB\"},{\"instanceId\":\"$PC\"},{\"instanceId\":\"$AC\",\"depth\":1}]}" >/dev/null
+# home's drafts (srs-web site editor ADR-029 E2: the prototype's id), with an alternative for q1 and
+# an unrelated draft; and the prose block shared with a plain, non-page container
+HC=$(srs container list --repo $W | python3 -c 'import sys,json; d=json.load(sys.stdin)["payload"]["containers"]; print([c["containerId"] for c in d if c["title"]=="Home"][0])')
+DRAFTS=$(python3 -c 'import sys,uuid; print(uuid.uuid5(uuid.UUID("6f1d2c4e-8a3b-5c7d-9e0f-1a2b3c4d5e6f"), sys.argv[1]+":drafts"))' $HC)
+D1=$(rec $N/faq-item '{"fieldValues":{"faq_item_key":"q1-alt","faq_question":"First, again?","faq_answer":"Yes, again."}}')
+D2=$(rec $N/hero "{\"fieldValues\":{${brief/KEY/opening-alt},\"eyebrow\":\"\",\"headline\":\"Another opening.\",\"supporting_copy\":\"Draft copy.\"}}")
+rel derived-from $D1 $F1
+cont "{\"containerId\":\"$DRAFTS\",\"title\":\"Drafts · Home\",\"memberInstanceIds\":[{\"instanceId\":\"$D1\"},{\"instanceId\":\"$D2\"}]}" >/dev/null
+cont "{\"title\":\"Shared prose\",\"memberInstanceIds\":[{\"instanceId\":\"$H2\"}]}" >/dev/null
 # about
 AP=$(rec $N/homepage '{"fieldValues":{"page_key":"about","page_title":"About","page_intent":"About us.","primary_audience":"brief audience","tone_guidance":"brief tone"}}')
 A1=$(rec $N/hero "{\"fieldValues\":{${brief/KEY/opening},\"eyebrow\":\"\",\"headline\":\"About.\",\"supporting_copy\":\"Who we are.\"}}")
