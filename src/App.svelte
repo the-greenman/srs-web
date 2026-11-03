@@ -62,6 +62,7 @@
   import { installedPackages, upgradeNoticeText } from "$lib/package-upgrade.js";
   import { adoptByPackage } from "$lib/upgrade-plan.js";
   import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
+  import EssayHome from "$lib/components/EssayHome.svelte";
   import Landing from "$lib/components/Landing.svelte";
   import LandingFrame from "$lib/components/LandingFrame.svelte";
   import Button from "$lib/components/Button.svelte";
@@ -99,6 +100,8 @@
   type AppState = "boot" | "idle" | "migrate" | "loaded" | "error";
   /** A built-in view ("generic", "lenses", "read": BUILT_IN_VIEWS) or an EditorDefinition id from $lib/editors/registry. */
   type EditorMode = string;
+
+  let { home = null }: { home?: "essay" | null } = $props();
 
   let appState = $state<AppState>("boot");
   let errorMsg = $state<string | null>(null);
@@ -1145,6 +1148,71 @@
 <!-- =========================================================================
      Boot state
      ========================================================================= -->
+{#snippet landingNotices()}
+  {#if cachedSession !== null}
+    <Notice kind="info" testid="restore-notice">
+      Unsaved session: <strong>{cachedSession.name}</strong>
+      <div class="landing__actions">
+        <Button size="sm" variant="primary" data-testid="restore-session" onclick={() => {
+        restoreError = null;
+        const entry = cachedSession;
+        if (!entry) return;
+        try {
+          const restored = entry.bytes ? loadRepoFromArchive(entry.bytes) : loadRepo(entry.srsj ?? "");
+          repo = restored;
+          readOnlyHost = null;
+          gateOnMigration(restored, entry.name, () => {
+            // A restored session is unsaved work, unless its migration was declined (read-only, #611):
+            // then it is neither dirty nor written back, so the stored copy stays as it was.
+            const editable = !readOnlyHost;
+            repo = restored;
+            beginDocument({ dirty: editable });
+            repoName = entry.name;
+            documentTitle = resolveRepositoryTitle(restored, repoName);
+            activeDocument = null;
+            appState = "loaded";
+            editorMode = "generic";
+            cachedSession = null;
+            if (editable) void saveWorkingCopy(repoName, () => exportArchive(restored));
+          });
+        } catch (e: unknown) {
+          void clearWorkingCopy();
+          restoreError = `Could not restore session: ${e instanceof Error ? e.message : String(e)}`;
+        }
+      }}>Restore session</Button>
+        <Button size="sm" data-testid="restore-discard" onclick={() => { void clearWorkingCopy(); cachedSession = null; restoreError = null; pendingNew = null; }}>Discard</Button>
+      </div>
+    </Notice>
+    {#if restoreError}<Notice kind="error" testid="restore-error">{restoreError}</Notice>{/if}
+  {/if}
+  {#if repoLink}
+    {@const link = repoLink}
+    <Notice kind="info" testid="repo-link">
+      Open <strong>{link.owner}/{link.name}</strong>{link.ref ? ` (${link.ref})` : ""} from GitHub. You sign in to GitHub first if you have not already.
+      <div class="landing__actions">
+        <Button size="sm" variant="primary" data-testid="repo-link-open" disabled={repoLinkBusy} onclick={() => void openRepoLink(link)}>{repoLinkBusy ? "Opening…" : "Open from GitHub"}</Button>
+        <Button size="sm" onclick={() => { repoLink = null; repoLinkError = null; }}>Dismiss</Button>
+      </div>
+    </Notice>
+  {/if}
+  {#if pendingNew}
+    {@const editor = pendingNew}
+    <Notice kind="info" testid="new-link">
+      You followed a link to start a new {editor.label.toLowerCase()}. You also have unsaved work in this browser: restore it above, or start the new {editor.label.toLowerCase()} (the unsaved work is replaced once you edit it).
+      <div class="landing__actions">
+        <Button size="sm" variant="primary" data-testid="new-link-start" onclick={() => void startNew(editor)}>Start a new {editor.label.toLowerCase()}</Button>
+        <Button size="sm" onclick={() => { pendingNew = null; }}>Dismiss</Button>
+      </div>
+    </Notice>
+  {/if}
+  {#if newLinkError}
+    <Notice kind="error" testid="new-link-error">{newLinkError}</Notice>
+  {/if}
+  {#if repoLinkError}
+    <Notice kind="error" testid="repo-link-error">{repoLinkError}</Notice>
+  {/if}
+{/snippet}
+
 {#if appState === "boot"}
   <LandingFrame>
     <p class="landing__status">{openingHost ? `Opening from ${openingHost}…` : "Loading engine…"}</p>
@@ -1199,88 +1267,36 @@
      Idle state — open a repository or start one
      ========================================================================= -->
 {:else if appState === "idle"}
-  <Landing
-    data-testid="generic-file-picker"
-    providers={storageProviders}
-    onOpen={loadDocument}
-    onOpenArchive={loadArchiveDocument}
-    onOpenUrl={openFromUrl}
-    onCreate={createRepository}
-    {recent}
-    onOpenRecent={openRecent}
-    onToggleStar={(key) => editRecent((list) => toggleStar(list, key))}
-    onRemoveRecent={(key) => {
-      recentError = null;
-      editRecent((list) => removeRecent(list, key));
-    }}
-    {recentError}
-    {recentBusyKey}
-  >
-    {#snippet notices()}
-      {#if cachedSession !== null}
-        <Notice kind="info" testid="restore-notice">
-          Unsaved session: <strong>{cachedSession.name}</strong>
-          <div class="landing__actions">
-            <Button size="sm" variant="primary" data-testid="restore-session" onclick={() => {
-            restoreError = null;
-            const entry = cachedSession;
-            if (!entry) return;
-            try {
-              const restored = entry.bytes ? loadRepoFromArchive(entry.bytes) : loadRepo(entry.srsj ?? "");
-              repo = restored;
-              readOnlyHost = null;
-              gateOnMigration(restored, entry.name, () => {
-                // A restored session is unsaved work, unless its migration was declined (read-only, #611):
-                // then it is neither dirty nor written back, so the stored copy stays as it was.
-                const editable = !readOnlyHost;
-                repo = restored;
-                beginDocument({ dirty: editable });
-                repoName = entry.name;
-                documentTitle = resolveRepositoryTitle(restored, repoName);
-                activeDocument = null;
-                appState = "loaded";
-                editorMode = "generic";
-                cachedSession = null;
-                if (editable) void saveWorkingCopy(repoName, () => exportArchive(restored));
-              });
-            } catch (e: unknown) {
-              void clearWorkingCopy();
-              restoreError = `Could not restore session: ${e instanceof Error ? e.message : String(e)}`;
-            }
-          }}>Restore session</Button>
-            <Button size="sm" data-testid="restore-discard" onclick={() => { void clearWorkingCopy(); cachedSession = null; restoreError = null; pendingNew = null; }}>Discard</Button>
-          </div>
-        </Notice>
-        {#if restoreError}<Notice kind="error" testid="restore-error">{restoreError}</Notice>{/if}
-      {/if}
-      {#if repoLink}
-        {@const link = repoLink}
-        <Notice kind="info" testid="repo-link">
-          Open <strong>{link.owner}/{link.name}</strong>{link.ref ? ` (${link.ref})` : ""} from GitHub. You sign in to GitHub first if you have not already.
-          <div class="landing__actions">
-            <Button size="sm" variant="primary" data-testid="repo-link-open" disabled={repoLinkBusy} onclick={() => void openRepoLink(link)}>{repoLinkBusy ? "Opening…" : "Open from GitHub"}</Button>
-            <Button size="sm" onclick={() => { repoLink = null; repoLinkError = null; }}>Dismiss</Button>
-          </div>
-        </Notice>
-      {/if}
-      {#if pendingNew}
-        {@const editor = pendingNew}
-        <Notice kind="info" testid="new-link">
-          You followed a link to start a new {editor.label.toLowerCase()}. You also have unsaved work in this browser: restore it above, or start the new {editor.label.toLowerCase()} (the unsaved work is replaced once you edit it).
-          <div class="landing__actions">
-            <Button size="sm" variant="primary" data-testid="new-link-start" onclick={() => void startNew(editor)}>Start a new {editor.label.toLowerCase()}</Button>
-            <Button size="sm" onclick={() => { pendingNew = null; }}>Dismiss</Button>
-          </div>
-        </Notice>
-      {/if}
-      {#if newLinkError}
-        <Notice kind="error" testid="new-link-error">{newLinkError}</Notice>
-      {/if}
-      {#if repoLinkError}
-        <Notice kind="error" testid="repo-link-error">{repoLinkError}</Notice>
-      {/if}
-    {/snippet}
-  </Landing>
+  {#if home === "essay"}
+    <EssayHome
+      items={helpFor("essay-home")}
+      onNew={() => void startNew(creatableEditors().find((e) => e.id === "essay")!)}
+      notices={landingNotices}
+      providers={storageProviders}
+      onOpen={loadDocument}
+      onOpenArchive={loadArchiveDocument}
+      onOpenUrl={openFromUrl}
+    />
+  {:else}
+    <Landing
+      data-testid="generic-file-picker"
+      providers={storageProviders}
+      onOpen={loadDocument}
+      onOpenArchive={loadArchiveDocument}
+      onOpenUrl={openFromUrl}
+      onCreate={createRepository}
+      {recent}
+      onOpenRecent={openRecent}
+      onToggleStar={(key) => editRecent((list) => toggleStar(list, key))}
+      onRemoveRecent={(key) => {
+        recentError = null;
+        editRecent((list) => removeRecent(list, key));
+      }}
+      {recentError}
+      {recentBusyKey}
+      notices={landingNotices}
+    />
+  {/if}
 
 <!-- =========================================================================
      Loaded state — the built-in Lenses view (ADR-022, ADR-025)

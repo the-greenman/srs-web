@@ -3,6 +3,7 @@ import {
   MAX_ARCHIVE_BYTES,
   OpenUrlError,
   fetchArchiveFile,
+  parseHome,
   parseNewLink,
   parseOpenEditor,
   parseOpenUrl,
@@ -168,5 +169,15 @@ describe("editor on open (#699)", () => {
   it("clears editor with open, and leaves a stray editor alone", () => {
     expect(withoutBootLinks("https://app.test/?open=x&editor=essay&theme=dark#h")).toBe("/?theme=dark#h");
     expect(withoutBootLinks("https://app.test/?editor=essay")).toBe("/?editor=essay");
+  });
+});
+
+describe("parseHome (#700)", () => {
+  it("names the essay home by host or by path", () => {
+    expect(parseHome("essay.semanticops.com", "/")).toBe("essay");
+    expect(parseHome("app.semanticops.com", "/essay")).toBe("essay");
+    expect(parseHome("app.semanticops.com", "/essay/")).toBe("essay");
+    expect(parseHome("app.semanticops.com", "/")).toBeNull();
+    expect(parseHome("app.semanticops.com", "/essays")).toBeNull();
   });
 });
