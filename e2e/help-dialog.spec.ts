@@ -44,6 +44,13 @@ test("Don't show again sticks; Go > Editor help… brings it back", async ({ pag
   await expect(dialog(page)).toBeVisible();
 });
 
+test("Close dismisses the help from any step", async ({ page }) => {
+  await newEssay(page);
+  await page.getByTestId("help-next").click();
+  await page.getByTestId("help-close").click();
+  await expect(dialog(page)).toHaveCount(0);
+});
+
 test("Connect your AI opens the Agents panel", async ({ page }) => {
   await newEssay(page);
   await page.getByTestId("help-action").click();
