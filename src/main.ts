@@ -8,6 +8,7 @@ import "@fontsource/ibm-plex-sans/700.css";
 import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/500.css";
 import "./styles/index.css";
+import { parseHome } from "$lib/open-url.js";
 
 const target = document.getElementById("app");
 if (!target) {
@@ -28,11 +29,10 @@ const handledOAuth =
 
 // Hidden, unlinked live styleguide (ADR-019): lazy so it never reaches the app chunk.
 const isStyleguide = location.pathname.replace(/\/$/, "") === "/styleguide";
-const Root = handledOAuth
+const app = handledOAuth
   ? null
   : isStyleguide
-    ? (await import("./Styleguide.svelte")).default
-    : App;
-const app = Root ? mount(Root, { target }) : null;
+    ? mount((await import("./Styleguide.svelte")).default, { target })
+    : mount(App, { target, props: { home: parseHome(location.hostname, location.pathname) } });
 
 export default app;

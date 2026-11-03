@@ -1,6 +1,6 @@
 # srs-web
 
-A browser editor for SRS repositories: edit them entirely client-side, on storage you own, with an agents panel for connecting MCP agents to the open document. Deployed as a Cloudflare Worker at [`app.semanticops.com`](https://app.semanticops.com) (also served at `app.mudemocracy.org` until the governance editor replaces it there).
+A browser editor for SRS repositories: edit them entirely client-side, on storage you own, with an agents panel for connecting MCP agents to the open document. Deployed as a Cloudflare Worker at [`app.semanticops.com`](https://app.semanticops.com) (also served at `app.mudemocracy.org` until the governance editor replaces it there; `essay.semanticops.com` is a third custom domain on the same Worker and shows the essay editor's home page, as does `/essay`).
 
 SRS (pronounced "source") is an open standard for portable semantic documents that people and AI can both understand and use. [semanticops.com](https://semanticops.com) explains it (agents start at [`/llms.txt`](https://semanticops.com/llms.txt)); [srs.semanticops.com](https://srs.semanticops.com) hosts the specification and schemas.
 

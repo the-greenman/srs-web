@@ -6,7 +6,7 @@
 	"compatibility_date": "2026-07-06",
 	"main": "./worker/index.ts",
 	"vars": {
-		"APP_ORIGINS": "https://app.semanticops.com,https://app.mudemocracy.org",
+		"APP_ORIGINS": "https://app.semanticops.com,https://app.mudemocracy.org,https://essay.semanticops.com",
 		"GITHUB_CLIENT_ID": "Iv23liFJ9ym1hcYQ6TuN"
 	},
 	"observability": {
@@ -32,7 +32,8 @@
 	},
 	"routes": [
 		{ "pattern": "app.semanticops.com", "custom_domain": true },
-		{ "pattern": "app.mudemocracy.org", "custom_domain": true }
+		{ "pattern": "app.mudemocracy.org", "custom_domain": true },
+		{ "pattern": "essay.semanticops.com", "custom_domain": true }
 	],
 	"env": {
 		// Preview environment — stable workers.dev deployment for pre-prod OAuth testing.

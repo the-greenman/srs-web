@@ -16,7 +16,9 @@ const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 export function parseOpenUrl(raw: string, allowLocalHttp = import.meta.env.DEV): URL {
   let url: URL;
   try {
-    url = new URL(raw);
+    // a same-origin path, for the home page's example links; `//host/x` is protocol-relative, not a path
+    const samePath = raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\");
+    url = new URL(raw, samePath ? globalThis.location?.origin : undefined);
   } catch {
     throw new OpenUrlError("That is not a valid link.");
   }
@@ -32,6 +34,14 @@ export function parseOpenUrl(raw: string, allowLocalHttp = import.meta.env.DEV):
 /** The editor id in a `?new=<editor>` link (#640), lower-cased; null when absent or empty. */
 export function parseNewLink(search: string): string | null {
   return new URLSearchParams(search).get("new")?.trim().toLowerCase() || null;
+}
+
+/** The editor home a host or path asks for (#700): `essay.semanticops.com` or `/essay`; null for the generic landing. */
+// ponytail: one host; table when a second editor wants its own host
+export function parseHome(hostname: string, pathname: string): "essay" | null {
+  return hostname === "essay.semanticops.com" || pathname.replace(/\/$/, "") === "/essay"
+    ? "essay"
+    : null;
 }
 
 /** The editor requested beside `open` (`?open=<url>&editor=<id>`, #699), lower-cased; "" when absent. A request: App selects it only when usable. */
