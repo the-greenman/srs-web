@@ -48,6 +48,7 @@
   import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
   import NavTrigger from "$lib/components/NavTrigger.svelte";
   import Toolbar from "$lib/components/Toolbar.svelte";
+  import UnsavedStatus from "$lib/components/UnsavedStatus.svelte";
   import { BASE_GROUPS } from "$lib/components/shell-actions.js";
   import { ShellState } from "$lib/shell-context.svelte.js";
   import { governanceActions } from "./toolbar-actions.js";
@@ -968,7 +969,7 @@
       <Breadcrumb items={activeView === "migrations" ? [{ label: repoName }, { label: "Migrations" }] : governanceCrumbItems()} />
     {/snippet}
     {#snippet status()}
-      {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
+      {#if documentDirty}<UnsavedStatus />{/if}
     {/snippet}
     {#snippet trail()}<InspectorTrigger />{/snippet}
   </Toolbar>

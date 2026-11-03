@@ -1,0 +1,81 @@
+/* ============================================================================
+   component: changes-panel (.changes) and the unsaved status that opens it (.unsaved)
+   srs-web#587: what changed since the last save, grouped, with who made it.
+   ========================================================================== */
+.unsaved {
+  position: relative;
+  display: inline-flex;
+}
+.unsaved__button {
+  all: unset;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.unsaved__button:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.unsaved__popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: var(--z-raised);
+  width: min(28rem, 90vw);
+  max-height: 60vh;
+  overflow: auto;
+  margin-top: var(--space-xs);
+}
+.changes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border: 1px solid var(--color-line-strong);
+  background: var(--color-surface-raised);
+  font-size: var(--size-xs);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.changes__empty {
+  margin: 0;
+}
+.changes__heading {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--size-xs);
+  text-transform: uppercase;
+}
+.changes__count {
+  font-weight: normal;
+}
+.changes__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+.changes__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  align-items: baseline;
+}
+.changes__link {
+  all: unset;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.changes__link:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.changes__kind,
+.changes__by {
+  color: var(--color-muted-strong);
+}
+.unsaved__count {
+  margin-inline-start: var(--space-xs);
+}

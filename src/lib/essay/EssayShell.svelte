@@ -43,6 +43,7 @@
   import InspectorTrigger from "$lib/components/InspectorTrigger.svelte";
   import Main from "$lib/components/Main.svelte";
   import Toolbar from "$lib/components/Toolbar.svelte";
+  import UnsavedStatus from "$lib/components/UnsavedStatus.svelte";
   import { ShellState } from "$lib/shell-context.svelte.js";
   import ArrowLeft from "@lucide/svelte/icons/arrow-left";
   import LinkIcon from "@lucide/svelte/icons/link";
@@ -836,7 +837,7 @@
           Writing as {actor.name ?? actor.id}{actor.id.startsWith("local:") ? " (this browser)" : ""}
         </span>
       {/if}
-      {#if documentDirty}<span data-testid="document-dirty-status" role="status">Unsaved changes</span>{/if}
+      {#if documentDirty}<UnsavedStatus />{/if}
     {/snippet}
   </Toolbar>
   {/snippet}

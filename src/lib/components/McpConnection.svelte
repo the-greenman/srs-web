@@ -7,6 +7,7 @@
   parts `pairing direct`. srs-web#307, #442, #447
 -->
 <script lang="ts">
+  import { getDocumentChanges } from '../document-changes.svelte.js';
   import Button from './Button.svelte';
   import CopyField from './CopyField.svelte';
   import Notice from './Notice.svelte';
@@ -30,6 +31,8 @@
     onClosePair?: () => void;
     onRetryPair?: () => void;
   } = $props();
+  const changes = getDocumentChanges();
+  const unsaved = $derived(changes?.view.total ?? 0);
 </script>
 
 {#if error || callerUrl || pairingView || status === 'rejected' || status === 'replaced'}
@@ -43,6 +46,7 @@
         <CopyField value={pairingView.data.code} label="Pairing code" buttonLabel="Copy pairing code" testid="pair-code" />
         <p class="mcp-conn__expiry" data-testid="pair-countdown">{pairingView.minutes === 0 ? 'Refreshing…' : `Expires in about ${pairingView.minutes} min`}</p>
         <p class="mcp-conn__note" data-testid="pair-security">Anyone with this code can connect to this document until it refreshes. Changes stay unsaved until you Save or Export.</p>
+      {#if changes}<p class="mcp-conn__note" data-testid="pair-unsaved">{unsaved === 0 ? 'Nothing unsaved.' : `${unsaved} unsaved ${unsaved === 1 ? 'change' : 'changes'}.`}</p>{/if}
       {:else if !pairingView.error}
         <p class="mcp-conn__note" data-testid="pair-loading">Getting a pairing code…</p>
       {/if}

@@ -4,12 +4,15 @@
   The theme switcher sets data-theme on <html>; demo.css is imported here only.
 -->
 <script lang="ts">
+  import { DocumentChangesState, setDocumentChanges } from "$lib/document-changes.svelte.js";
+  const sgChanges = setDocumentChanges(new DocumentChangesState());
+  sgChanges.view = { total: 3, unsaved: true, groups: [] };
   import "./styles/themes/demo.css";
   import { onMount, type Snippet } from "svelte";
   import {
     ActionBar, ActionMenu, HelpDialog, UiSpot, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, Count, CommentThread, LinkProposals, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
-    LayersPanel, LinkedRecord, RemedyCard, MarkdownHelp, MarkdownText, MethodBoard, AgentPanel, McpConnection, Panel, ProblemCard, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
+    LayersPanel, LinkedRecord, RemedyCard, MarkdownHelp, MarkdownText, MethodBoard, AgentPanel, McpConnection, ChangesPanel, UnsavedStatus, Panel, ProblemCard, AnnotationMargin, PinnedPane, ReferencesTray, Select, Tag,
     TagChip, Textarea, Notice, SectionHeader, SourceRow, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
   } from "$lib/components";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
@@ -502,6 +505,24 @@
       <Frame width="var(--inspector-width)" caption="Inspector 20rem">{@render rail()}</Frame>
       <Frame width="15rem" caption="Narrow 15rem">{@render rail()}</Frame>
     </div>
+  </section>
+
+  <section id="changes">
+    <h2>Changes since the last save</h2>
+    <p class="sg__note">ChangesPanel: what was added, changed or removed, with who made it. It renders the engine's change read and computes nothing. Opens from the "Unsaved changes" status in every shell.</p>
+    <Frame width="22rem" caption="Grouped, with authors" testid="sg-changes-grouped">
+      <ChangesPanel changes={{ total: 3, unsaved: true, groups: [
+        { key: "added", label: "Added", items: [{ id: "a", kind: "record", title: "Paragraph on ENA contracts", by: "agent:claude" }] },
+        { key: "changed", label: "Changed", items: [{ id: "b", kind: "record", title: "Opening paragraph", by: "Ana" }] },
+        { key: "removed", label: "Removed", items: [{ kind: "relation", title: "Opening paragraph evidences Claim 4" }] },
+      ] }} />
+    </Frame>
+    <Frame width="22rem" caption="The status in a toolbar: opens the list" testid="sg-changes-status">
+      <UnsavedStatus />
+    </Frame>
+    <Frame width="22rem" caption="Empty after a save" testid="sg-changes-empty">
+      <ChangesPanel changes={{ total: 0, unsaved: false, groups: [] }} />
+    </Frame>
   </section>
 
   <section id="agents">
