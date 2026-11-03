@@ -14,7 +14,7 @@
     "containers/4cd37b83-6625-40ed-abad-31dea5a77800/container.json": {
       "containerId": "4cd37b83-6625-40ed-abad-31dea5a77800",
       "identityInstanceId": "0889e3d4-b259-4735-a439-d7216cee1956",
-      "title": "Essay fixture"
+      "title": "On small democracy"
     },
     "containers/4cd37b83-6625-40ed-abad-31dea5a77800/entries/0889e3d4-b259-4735-a439-d7216cee1956.json": {
       "containerId": "4cd37b83-6625-40ed-abad-31dea5a77800",
@@ -729,14 +729,14 @@
       "fieldValues": {
         "title": "On small democracy",
         "summary": "A short example essay.",
-        "purpose": "A short example essay with a few paragraphs and no apparatus: the simplest shape an essay takes. Try reading the paragraphs in order and open the document menu to see what you can do with it. This copy is read-only; use Document > Save a copy… to keep one you can edit."
+        "purpose": "A short example essay with a few paragraphs and no apparatus: the simplest shape an essay takes. Read the paragraphs in order, and open the Layers panel to see how they are arranged. This copy is read-only; use Document > Save a copy… to keep one you can edit."
       },
       "instanceId": "ae3d5221-b2ac-4ae8-a180-d90f84f49435",
       "typeId": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
       "typeName": "essay",
       "typeNamespace": "com.mudemocracy.essay",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T18:53:21.911408212+00:00"
+      "updatedAt": "2026-11-03T19:09:05.294732690+00:00"
     },
     "records/tier-2/paragraph-2027b81d.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
@@ -798,14 +798,14 @@
       "createdAt": "2026-10-02T22:01:11.887494754+00:00",
       "fieldValues": {
         "statement": "",
-        "title": "Essay fixture"
+        "title": "On small democracy"
       },
       "instanceId": "0889e3d4-b259-4735-a439-d7216cee1956",
       "typeId": "3c000001-0000-4000-a000-000000000001",
       "typeName": "purpose",
       "typeNamespace": "com.semanticops.core",
       "typeVersion": 1,
-      "updatedAt": "2026-10-02T22:01:11.887494754+00:00"
+      "updatedAt": "2026-11-03T19:08:47.872958418+00:00"
     }
   }
 }

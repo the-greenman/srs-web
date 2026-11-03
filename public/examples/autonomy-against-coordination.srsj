@@ -15,7 +15,7 @@
       "anchorInstanceId": "336adea2-e3fe-4d7b-9155-3efa73e37517",
       "containerId": "126122f9-3cb5-4ea2-a376-a2c549b15df2",
       "identityInstanceId": "336adea2-e3fe-4d7b-9155-3efa73e37517",
-      "title": "On small democracy"
+      "title": "Autonomy against coordination"
     },
     "containers/126122f9-3cb5-4ea2-a376-a2c549b15df2/entries/336adea2-e3fe-4d7b-9155-3efa73e37517.json": {
       "containerId": "126122f9-3cb5-4ea2-a376-a2c549b15df2",
@@ -44,7 +44,7 @@
     "containers/9934182a-419d-45ca-8e48-ca2abd2ddd17/container.json": {
       "containerId": "9934182a-419d-45ca-8e48-ca2abd2ddd17",
       "identityInstanceId": "cf579aa7-5f9b-4805-843b-2f4356f63262",
-      "title": "Essay fixture"
+      "title": "Autonomy against coordination"
     },
     "containers/9934182a-419d-45ca-8e48-ca2abd2ddd17/entries/cf579aa7-5f9b-4805-843b-2f4356f63262.json": {
       "containerId": "9934182a-419d-45ca-8e48-ca2abd2ddd17",
@@ -1257,14 +1257,14 @@
       "fieldValues": {
         "title": "Autonomy against coordination",
         "summary": "An example essay with a problem, a tension, a remedy and a source behind it.",
-        "purpose": "An example of an essay built on a structured argument: the tension, boundaries, remedy and source behind it sit in the side panels. Look through the argument and references panels to see how the paragraphs draw on them. This copy is read-only; use Document > Save a copy… to keep one you can edit."
+        "purpose": "An example of an essay grounded in a structured argument. Open the Domain panel to see the problems and boundaries the essay works within, and the Layers panel to see how its paragraphs are arranged. This copy is read-only; use Document > Save a copy… to keep one you can edit."
       },
       "instanceId": "336adea2-e3fe-4d7b-9155-3efa73e37517",
       "typeId": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
       "typeName": "essay",
       "typeNamespace": "com.mudemocracy.essay",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T18:53:21.611003785+00:00"
+      "updatedAt": "2026-11-03T19:09:04.900437052+00:00"
     },
     "records/tier-2/paragraph-538ae5c2.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
@@ -1341,14 +1341,14 @@
       "createdAt": "2026-10-24T20:25:11.989736850+00:00",
       "fieldValues": {
         "statement": "",
-        "title": "Essay fixture"
+        "title": "Autonomy against coordination"
       },
       "instanceId": "cf579aa7-5f9b-4805-843b-2f4356f63262",
       "typeId": "3c000001-0000-4000-a000-000000000001",
       "typeName": "purpose",
       "typeNamespace": "com.semanticops.core",
       "typeVersion": 1,
-      "updatedAt": "2026-10-24T20:25:11.989736850+00:00"
+      "updatedAt": "2026-11-03T19:08:47.206569182+00:00"
     },
     "records/tier-2/remedy-dc922a45.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",

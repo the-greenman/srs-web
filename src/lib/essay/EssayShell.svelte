@@ -901,7 +901,7 @@
   {#if !model}
     <div class="essay-shell__empty">
       <p>No essay in this repository yet.</p>
-      <Button variant="primary" onclick={createEssay}>New essay</Button>
+      {#if !readOnly}<Button variant="primary" onclick={createEssay}>New essay</Button>{/if}
     </div>
   {:else}
       <!-- A file dropped past the paragraphs goes to the references pool, linked to nothing. -->
@@ -1020,7 +1020,7 @@
     <Inspector label="Panels">
       <div class="panel-rail" data-testid="rail">
 {#if model}
-        <Panel title="Layers" data-feature="essay.layers" persistKey="essay.layers" collapseWhen={NARROW}>
+        <Panel inert={readOnly} title="Layers" data-feature="essay.layers" persistKey="essay.layers" collapseWhen={NARROW}>
           <LayersPanel
             {layers}
             candrop={essayDrop}
@@ -1032,7 +1032,7 @@
             onkey={onKey}
           />
         </Panel>
-        <Panel title="Draft" aside={draftItems.length} persistKey="essay.draft" collapseWhen={NARROW}>
+        <Panel inert={readOnly} title="Draft" aside={draftItems.length} persistKey="essay.draft" collapseWhen={NARROW}>
           <DraftTray
             items={draftItems}
             available={!!model.draftContainerId}
@@ -1042,7 +1042,7 @@
             onputback={putBack}
           />
         </Panel>
-        <Panel title="Bin" aside={binItems.length} persistKey="essay.bin" collapseWhen={NARROW}>
+        <Panel inert={readOnly} title="Bin" aside={binItems.length} persistKey="essay.bin" collapseWhen={NARROW}>
           <BinTray
             items={binItems}
             onrestore={restore}
@@ -1070,7 +1070,7 @@
           </Panel>
         {/if}
         {#if model.referencesContainerId}
-          <Panel title="References" data-feature="essay.sources" aside={referenceItems.length} persistKey="essay.references" collapseWhen={NARROW}>
+          <Panel inert={readOnly} title="References" data-feature="essay.sources" aside={referenceItems.length} persistKey="essay.references" collapseWhen={NARROW}>
             <ReferencesTray
               items={referenceItems}
               paragraphs={paragraphChoices}

@@ -157,7 +157,7 @@
    */
   const offeredEditors = $derived.by(() => {
     void documentRevision; // re-run after a mutation (a package install changes the answer)
-    return repo ? availableEditors(repo, listTypes(repo)).filter((o) => !readOnlyHost || (o.editor.readOnly && !o.unmet)) : [];
+    return repo ? availableEditors(repo, listTypes(repo)).filter((o) => !readOnlyHost || (readOnlyHost !== MIGRATION_DECLINED && o.editor.readOnly && !o.unmet)) : [];
   });
   const activeEditor = $derived(usableEditor(offeredEditors, editorMode));
   // An editor that stops being usable drops back to the generic shell for good, so a later
@@ -210,8 +210,10 @@
   });
   $effect(() => {
     if (appState !== "loaded" || !pendingEditor) return;
-    editorMode = pendingEditor;
+    const id = pendingEditor;
     pendingEditor = null;
+    // A request: taken only when usable, else the document lands where it would have (Read, generic…).
+    if (isBuiltInView(id) || usableEditor(offeredEditors, id)) editorMode = id;
   });
 
   /**

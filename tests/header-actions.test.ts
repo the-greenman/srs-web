@@ -129,3 +129,16 @@ describe("headerActions (srs-web#383)", () => {
     expect(headerActions(base, state).some((x) => x.id === "save")).toBe(false);
   });
 });
+
+describe("headerActions on a read-only document (srs-web#699)", () => {
+  it("offers Save a copy… and neither New nor Copy document", () => {
+    const ids = headerActions(
+      { ...base, onnew: undefined, oncopy: undefined, onsavecopy: noop },
+      state
+    ).map((a) => a.id);
+    expect(ids).toContain("save-copy");
+    expect(ids).not.toContain("new");
+    expect(ids).not.toContain("copy");
+    expect(ids).not.toContain("save");
+  });
+});

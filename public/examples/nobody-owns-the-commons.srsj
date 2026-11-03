@@ -15,7 +15,7 @@
       "anchorInstanceId": "ef448418-d010-43bb-9c88-5b914df2cf48",
       "containerId": "7a60ed6c-253b-4da7-b21e-c7fab82d0255",
       "identityInstanceId": "ef448418-d010-43bb-9c88-5b914df2cf48",
-      "title": "On small democracy"
+      "title": "Nobody owns the commons"
     },
     "containers/7a60ed6c-253b-4da7-b21e-c7fab82d0255/entries/32f73471-7591-4d07-befd-0b61ef8c4b56.json": {
       "containerId": "7a60ed6c-253b-4da7-b21e-c7fab82d0255",
@@ -44,7 +44,7 @@
     "containers/e62cc4d4-02cc-4a7f-bfda-b89d6998867e/container.json": {
       "containerId": "e62cc4d4-02cc-4a7f-bfda-b89d6998867e",
       "identityInstanceId": "0608cbf5-a4e2-48bf-acc2-a70d687f18ff",
-      "title": "Essay fixture"
+      "title": "Nobody owns the commons"
     },
     "containers/e62cc4d4-02cc-4a7f-bfda-b89d6998867e/entries/0608cbf5-a4e2-48bf-acc2-a70d687f18ff.json": {
       "containerId": "e62cc4d4-02cc-4a7f-bfda-b89d6998867e",
@@ -1132,15 +1132,15 @@
       "createdAt": "2026-10-05T21:47:28.951188564+00:00",
       "fieldValues": {
         "title": "Nobody owns the commons",
-        "summary": "An example essay that cites a source.",
-        "purpose": "An example of an essay that cites its sources. Open the references to see the source behind a paragraph and the problem the essay answers. This copy is read-only; use Document > Save a copy… to keep one you can edit."
+        "summary": "An example essay that answers a problem.",
+        "purpose": "A short example of an essay that answers a problem it names. Read the paragraphs in order, and open the Layers panel to see how they are arranged. This copy is read-only; use Document > Save a copy… to keep one you can edit."
       },
       "instanceId": "ef448418-d010-43bb-9c88-5b914df2cf48",
       "typeId": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
       "typeName": "essay",
       "typeNamespace": "com.mudemocracy.essay",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T18:53:21.751984805+00:00"
+      "updatedAt": "2026-11-03T19:09:05.100697110+00:00"
     },
     "records/tier-2/paragraph-32f73471.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
@@ -1203,14 +1203,14 @@
       "createdAt": "2026-10-05T21:47:28.731792902+00:00",
       "fieldValues": {
         "statement": "",
-        "title": "Essay fixture"
+        "title": "Nobody owns the commons"
       },
       "instanceId": "0608cbf5-a4e2-48bf-acc2-a70d687f18ff",
       "typeId": "3c000001-0000-4000-a000-000000000001",
       "typeName": "purpose",
       "typeNamespace": "com.semanticops.core",
       "typeVersion": 1,
-      "updatedAt": "2026-10-05T21:47:28.731792902+00:00"
+      "updatedAt": "2026-11-03T19:08:47.526887435+00:00"
     },
     "records/tier-2/source-86c58319.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
