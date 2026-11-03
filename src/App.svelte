@@ -39,7 +39,7 @@
   import { agentBrief } from "$lib/help/agent-brief.js";
   import UiSpot from "$lib/components/UiSpot.svelte";
   import { AgentLibrary } from "$lib/agent-library.svelte.js";
-  import { fetchArchiveFile, parseNewLink, parseOpenUrl, parseRepoLink, withoutBootLinks, type RepoLink } from "$lib/open-url.js";
+  import { fetchArchiveFile, parseNewLink, parseOpenEditor, parseOpenUrl, parseRepoLink, withoutBootLinks, type RepoLink } from "$lib/open-url.js";
   import type { GitHubProvider } from "$lib/storage/github.js";
   import { mayKeepWorkingCopy, readOnlyGuard, readOnlyRepo } from "$lib/read-only.js";
   import { listTypes, resolveRepositoryTitle, type AgentWriteGuard, type MigrationNotice, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
@@ -157,7 +157,7 @@
    */
   const offeredEditors = $derived.by(() => {
     void documentRevision; // re-run after a mutation (a package install changes the answer)
-    return repo && !readOnlyHost ? availableEditors(repo, listTypes(repo)) : [];
+    return repo ? availableEditors(repo, listTypes(repo)).filter((o) => !readOnlyHost || (readOnlyHost !== MIGRATION_DECLINED && o.editor.readOnly && !o.unmet)) : [];
   });
   const activeEditor = $derived(usableEditor(offeredEditors, editorMode));
   // An editor that stops being usable drops back to the generic shell for good, so a later
@@ -210,8 +210,10 @@
   });
   $effect(() => {
     if (appState !== "loaded" || !pendingEditor) return;
-    editorMode = pendingEditor;
+    const id = pendingEditor;
     pendingEditor = null;
+    // A request: taken only when usable, else the document lands where it would have (Read, generic…).
+    if (isBuiltInView(id) || usableEditor(offeredEditors, id)) editorMode = id;
   });
 
   /**
@@ -854,10 +856,12 @@
 
   /** `?open=`: the one shared path, with a failure taking the whole page (the chooser shows it inline instead). */
   async function openFromLink(raw: string): Promise<void> {
+    pendingEditor = parseOpenEditor(location.search) || null;
     history.replaceState(history.state, "", withoutBootLinks(location.href));
     try {
       await openFromUrl(raw);
     } catch (e: unknown) {
+      pendingEditor = null;
       errorMsg = e instanceof Error ? e.message : String(e);
       appState = "error";
     }
@@ -1408,8 +1412,10 @@
     documentProvider={activeDocument?.provider ?? "local"}
     onExport={handleExportArchive}
     onExportSrsj={handleExport}
-    onSave={activeDocument === null || activeDocument.capabilities.write ? handleSave : undefined}
-    readOnlyReason={activeDocument?.readOnlyReason ?? null}
+    onSave={readOnlyHost ? undefined : activeDocument === null || activeDocument.capabilities.write ? handleSave : undefined}
+    onSaveCopy={readOnlyHost ? saveCopy : undefined}
+    readOnly={readOnlyHost !== null}
+    readOnlyReason={readOnlyText ?? activeDocument?.readOnlyReason ?? null}
     saving={saving}
     documentDirty={documentDirty}
     documentRevision={documentRevision}

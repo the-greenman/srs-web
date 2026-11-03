@@ -28,7 +28,10 @@ export const HEADER_GROUPS: { id: HeaderGroup; label: string; icon: IconComponen
 ];
 
 export interface HeaderHandlers {
-  onnew: () => void;
+  /** Absent while the document is read-only (#699). */
+  onnew?: () => void;
+  /** Document > Save a copy…: present only on a read-only document (#699). */
+  onsavecopy?: () => void;
   oncopy?: () => void;
   onhelp: () => void;
   oncomments: () => void;
@@ -68,7 +71,7 @@ export function headerActions(
   const all: (HeaderAction | false | undefined)[] = [
     !!h.onsave &&
       (saveAction(h.onsave, { saving: s.saving, enabled: !s.saving && s.dirty }) as HeaderAction),
-    {
+    !!h.onnew && {
       id: "new",
       group: "document",
       kind: "action",
@@ -76,6 +79,15 @@ export function headerActions(
       run: h.onnew,
       enabled: true,
       testid: "new-document",
+    },
+    !!h.onsavecopy && {
+      id: "save-copy",
+      group: "document",
+      kind: "action",
+      label: "Save a copy…",
+      run: h.onsavecopy,
+      enabled: true,
+      testid: "save-copy",
     },
     !!h.oncopy && {
       id: "copy",
