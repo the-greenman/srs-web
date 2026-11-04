@@ -79,6 +79,7 @@ import {
   deleteForever,
   essayWriteGuard,
   linkReference,
+  quoteToParagraph,
   loadEssay,
   moveEntry,
   newEssay,
@@ -1124,5 +1125,46 @@ describe("references pool (srs-web#519)", () => {
       text: "2 KB",
       documentId: "d1",
     });
+  });
+});
+
+describe("quoteToParagraph (srs-web#525)", () => {
+  const QUOTATION = "00572b36-7e4f-4cc2-9de1-9eab16a496ef";
+  const pool = { referencesContainerId: "F" };
+  const q = { sourceId: "s1", paragraphId: "p2", text: "  the words ", sourceTitle: "Call", locator: "Method" };
+  beforeEach(() => {
+    m.listTypes.mockReturnValue([
+      ...m.listTypes(),
+      { id: QUOTATION, namespace: "n", name: "quotation", version: 1 },
+    ]);
+    m.createRecord.mockReset();
+    m.createRecord.mockReturnValue({ instanceId: "q1" });
+    m.createRelation.mockClear();
+    m.addContainerMember.mockClear();
+  });
+
+  it("files a quotation in the pool, derived-from the source and evidencing the paragraph", () => {
+    expect(quoteToParagraph({} as never, pool, q)).toBe("q1");
+    expect(m.createRecord).toHaveBeenCalledWith(expect.anything(), QUOTATION, 1, {
+      fieldValues: expect.objectContaining({ quote_text: "the words", locator: "Method" }),
+    });
+    expect(m.addContainerMember).toHaveBeenCalledWith(expect.anything(), "F", "q1");
+    expect(m.createRelation).toHaveBeenCalledWith(expect.anything(), {
+      relationType: "derived-from",
+      sourceInstanceId: "q1",
+      targetInstanceId: "s1",
+    });
+    expect(m.createRelation).toHaveBeenCalledWith(expect.anything(), {
+      relationType: "evidences",
+      sourceInstanceId: "q1",
+      targetInstanceId: "p2",
+    });
+  });
+
+  it("writes nothing for an empty selection or an essay without the quotation type", () => {
+    expect(() => quoteToParagraph({} as never, pool, { ...q, text: " " })).toThrow(/Select the words/);
+    m.listTypes.mockReturnValue(m.listTypes().filter((t: { id: string }) => t.id !== QUOTATION));
+    expect(() => quoteToParagraph({} as never, pool, q)).toThrow(/1\.9\.0/);
+    expect(m.createRecord).not.toHaveBeenCalled();
   });
 });

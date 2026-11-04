@@ -12,6 +12,8 @@
   import { NARROW } from '$lib/breakpoints';
   import { copyText } from '$lib/clipboard';
   import MarkdownView from './MarkdownView.svelte';
+  import ActionMenu from './ActionMenu.svelte';
+  import Quote from '@lucide/svelte/icons/quote';
 
   let open = $state<Set<string>>(new Set());
   let copied = $state<string | null>(null);
@@ -28,15 +30,31 @@
     }
   }
 
+  /** The words selected inside one open item's text (a reader's selection, kept until it changes). */
+  let selected = $state<{ id: string; text: string } | null>(null);
+  function track(e: Event) {
+    const sel = window.getSelection();
+    const text = sel && !sel.isCollapsed ? sel.toString().trim() : '';
+    const host = (e.currentTarget as HTMLElement).closest<HTMLElement>('[data-pinned-id]');
+    if (text && host?.contains(sel?.anchorNode ?? null) && host.querySelector('.pinned__full')?.contains(sel?.anchorNode ?? null))
+      selected = { id: host.dataset.pinnedId ?? '', text };
+    else if (selected?.id === host?.dataset.pinnedId) selected = null;
+  }
+
   let {
     items,
     onunpin,
     onremove,
+    paragraphs = [],
+    onquote,
   }: {
     /** `href`: an external link (a web source). `removable: false`: no "Remove link" (not a relation). */
     items: { id: string; kind: string; relation?: string; title: string; text: string; href?: string; removable?: boolean }[];
     onunpin: (id: string) => void;
     onremove?: (id: string) => void;
+    /** With `onquote`: the paragraphs a selected passage can be quoted to (srs-web#525). */
+    paragraphs?: { id: string; label: string }[];
+    onquote?: (itemId: string, text: string, paragraphId: string) => void;
   } = $props();
 </script>
 
@@ -46,7 +64,8 @@
   {:else}
     <ul class="pinned">
       {#each items as it (it.id)}
-        <li class="pinned__item">
+        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+        <li class="pinned__item" data-pinned-id={it.id} onmouseup={track} onkeyup={track}>
           <IconButton class="pinned__close" size="sm" icon={X} label={`Unpin ${it.title}`} onclick={() => onunpin(it.id)} />
           {#if open.has(it.id) && it.text}
             <AttachmentPreview kind={it.kind} title={it.title} relation={it.relation} />
@@ -60,6 +79,17 @@
               {#if it.text}
                 <Button size="sm" variant="ghost" aria-expanded={open.has(it.id)} onclick={() => toggle(it.id)}>{open.has(it.id) ? 'Close' : 'Open'}</Button>
                 <Button size="sm" variant="ghost" onclick={() => copy(it.id, it.text)}>{copied === it.id ? 'Copied' : 'Copy'}</Button>
+              {/if}
+              {#if onquote && paragraphs.length && selected?.id === it.id && open.has(it.id)}
+                {@const words = selected.text}
+                <ActionMenu
+                  testid="pinned-quote"
+                  title="Quote to paragraph"
+                  triggerIcon={Quote}
+                  label={`selection from ${it.title}`}
+                  actions={paragraphs.map((p) => ({ id: p.id, label: p.label, enabled: true, run: () => onquote(it.id, words, p.id) }))}
+                  itemTestid={(a) => `pinned-quote-${a.id}`}
+                />
               {/if}
               {#if onremove && it.removable !== false}<Button size="sm" variant="ghost" onclick={() => onremove(it.id)}>Remove link</Button>{/if}
             </div>
