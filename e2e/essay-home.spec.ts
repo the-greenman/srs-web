@@ -19,6 +19,17 @@ test("/essay?new=essay lands in the essay shell", async ({ page }) => {
   await expect(page.locator(".essay-shell__page")).toBeVisible({ timeout: 15000 });
 });
 
+test("a repository opened on the essay home lands in the essay shell, unasked (#710)", async ({ page }) => {
+  await page.goto("/essay?open=/examples/on-small-democracy.srsj");
+  await expect(page.locator(".essay-shell__page")).toBeVisible({ timeout: 15000 });
+});
+
+test("the same link on / does not choose the essay shell (#710)", async ({ page }) => {
+  await page.goto("/?open=/examples/on-small-democracy.srsj");
+  await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 15000 });
+  await expect(page.locator(".essay-shell__page")).toHaveCount(0);
+});
+
 test("/ keeps the generic landing", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });

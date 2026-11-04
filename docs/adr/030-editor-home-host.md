@@ -17,6 +17,7 @@ A person arriving to write an essay met the generic landing: a file picker for S
 3. **Examples are links (D3).** The example essays are static `.srsj` files under `public/examples`, linked as `?open=/examples/<file>.srsj&editor=essay`. `parseOpenUrl` resolves a path beginning with `/` against the current origin, so one link works on every host.
 4. **"New essay"** calls the same `startNew` that `?new=essay` does. The notices (restore, repository link, errors) are one snippet shared by both landings.
 5. **`ui_help` cannot reach the home.** No repository is loaded there, so a paired agent has nothing to ask. The concept records are shared into the `essay` help container, so an agent reads them once an essay is open.
+6. **The essay home opens the essay editor (srs-web#710).** A repository loaded from the home, with no lens or read key and no other choice, lands in the essay editor when it is usable, ahead of the ADR-029 Read default. A repository it cannot serve lands where it would anywhere else, and `?editor=` still wins.
 
 ## Consequences
 
