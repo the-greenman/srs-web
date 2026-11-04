@@ -10,7 +10,7 @@
   import Diagnostics from "$lib/components/Diagnostics.svelte";
   import Notice from "$lib/components/Notice.svelte";
   import { diagnosticsFromStrings } from "$lib/notices.svelte.js";
-  import { find } from "$lib/srs-client.js";
+  import { find, getContainerOutline } from "$lib/srs-client.js";
   import type { DiscoveryFacets, DiscoveryHit, DiscoveryQuery, SrsRepository } from "$lib/srs-client.js";
   import RecordsView, { type GroupView } from "./RecordsView.svelte";
   import { NOTES, PAGE, typeGroups } from "./records-model.js";
@@ -97,6 +97,26 @@
     untrack(runFlat);
   });
 
+  /**
+   * An unfiltered container view shows the container's own outline (RFC-043: order is data, no tool sorts
+   * entries), not discovery order. Reorders the loaded hits by outline position; depth rides along.
+   */
+  const outline = $derived.by(() => {
+    void revision;
+    if (!containerId) return null;
+    try {
+      return getContainerOutline(repo, containerId).entries;
+    } catch {
+      return null;
+    }
+  });
+  const depths = $derived(Object.fromEntries((outline ?? []).map((e) => [e.instanceId, e.depth])));
+  const ordered = $derived.by(() => {
+    if (!outline) return scope.hits;
+    const pos = new Map(outline.map((e, i) => [e.instanceId, i]));
+    const at = (h: DiscoveryHit) => pos.get(h.instanceId) ?? Number.MAX_SAFE_INTEGER;
+    return [...scope.hits].sort((a, b) => at(a) - at(b));
+  });
   const options = $derived(typeGroups(scope.facets));
   const filtering = $derived(Boolean(query || typeId));
   const grouped = $derived(!filtering && scope.total > PAGE);
@@ -138,7 +158,8 @@
   searching={Boolean(query)}
   total={filtering ? flat.total : scope.total}
   {groups}
-  hits={filtering ? flat.hits : scope.hits}
+  hits={filtering ? flat.hits : ordered}
+  depths={filtering ? {} : depths}
   {onOpen}
   onToggle={toggle}
   onMore={more}

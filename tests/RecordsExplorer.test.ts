@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   find: vi.fn(),
   neighbours: vi.fn(),
   listRelations: vi.fn(() => []),
+  getContainerOutline: vi.fn(),
   resolveContainerView: vi.fn(() => ({ members: [] })),
 }));
 vi.mock("../src/lib/srs-client.js", () => mocks);
@@ -247,5 +248,20 @@ describe("RelationMap", () => {
       props: { repo: {} as never, selected: null, containerId: null, onOpen: vi.fn() },
     });
     expect(screen.getByText("Select a record to see its relations.")).toBeTruthy();
+  });
+
+  it("a container's unfiltered view follows its outline order and depth, not discovery order (#668)", async () => {
+    const entry = (instanceId: string, depth: number) => ({ instanceId, depth, hasChildren: false, runSize: 1, runEnd: 0 });
+    mocks.getContainerOutline.mockReturnValue({
+      containerId: "c1",
+      entries: [entry("r2", 0), entry("r0", 1), entry("r1", 1)],
+      body: [],
+    });
+    mocks.find.mockImplementation(() => ({ hits: hits(3), total: 3, facets, diagnostics: [] }));
+    render(RecordsExplorer, { props: { ...props, containerId: "c1" } });
+
+    const rows = await screen.findAllByTestId("record-row");
+    expect(rows.map((r) => r.querySelector("strong")?.textContent)).toEqual(["Label r2", "Label r0", "Label r1"]);
+    expect(rows.map((r) => r.getAttribute("data-depth"))).toEqual(["0", "1", "1"]);
   });
 });
