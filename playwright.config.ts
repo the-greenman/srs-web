@@ -66,7 +66,9 @@ export default defineConfig({
       ? `npm run build && npx vite preview --port ${port} --strictPort`
       : `npm run dev -- --port ${port}`,
     url: baseURL,
-    reuseExistingServer: true,
+    // A busy port is an error, not a free server (srs-web#658): another worktree's dev server on the same
+    // port would be tested in place of this one. Opt in with PLAYWRIGHT_REUSE_SERVER=1 to reuse your own; CI never does.
+    reuseExistingServer: !process.env.CI && process.env.PLAYWRIGHT_REUSE_SERVER === "1",
     // A process variable beats every .env* file: a developer's .env.local relay cannot leak into the suite.
     env: { VITE_MCP_RELAY_URL: "" },
     timeout: process.env.CI ? 120000 : 30000,

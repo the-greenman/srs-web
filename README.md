@@ -29,7 +29,7 @@ npm run dev        # Vite dev server (proxies /api/* to a local Worker for GitHu
 npm run build      # prebuild fetches WASM bindings if missing, then vite build
 npm run preview    # preview a production build
 npm test           # Vitest unit tests
-npm run e2e        # Playwright e2e specs (stop any running dev server first: the suite reuses one on :5173)
+npm run e2e        # Playwright e2e specs (a busy port fails the run; use PLAYWRIGHT_PORT per worktree, or PLAYWRIGHT_REUSE_SERVER=1 to reuse your own server on :5173)
 npm run typecheck  # svelte-check
 npm run lint       # Biome
 ```
