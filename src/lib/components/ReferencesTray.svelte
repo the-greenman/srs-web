@@ -117,7 +117,7 @@
     <AttachDrop compact label="Add to references" {policy} {attachedBytes} onfiles={files} {onurls} data-testid="references-drop" />
     <RepoSize totalBytes={usedBytes} {maxBytes} pendingBytes={pending} />
   {/if}
-  {#if otherItems.length === 0}<p class="tray__empty">Sources, claims and problems that agents and attach flows collect for this essay wait here.</p>{/if}
+  {#if otherItems.length === 0}<p class="tray__empty">Sources, quotations and problems that agents and attach flows collect for this essay wait here.</p>{/if}
 {#snippet rows(list: ReferenceItem[])}
   {#each list as r (r.id)}
     {@const free = paragraphs.filter((p) => !r.paragraphs.some((q) => q.id === p.id))}
