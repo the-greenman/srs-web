@@ -28,6 +28,11 @@ async function engine() {
 
 describe.skipIf(!haveBindings)("essay building blocks on the real engine", () => {
   it("a new essay takes a dropped source, and an agent files and links all three under the guard", async () => {
+    const BLOCKS = {
+      source: "36e85cff-989b-4c6d-9361-3c8906cff87b",
+      quotation: "00572b36-7e4f-4cc2-9de1-9eab16a496ef",
+      problem: "6e955608-b469-4b8e-8855-5dccdb73fe11",
+    };
     const doc = await import("../src/lib/essay/essay-document.js");
     const { installBundles, listTypes } = await import("../src/lib/srs-client.js");
     const mod = await engine();
@@ -76,12 +81,31 @@ describe.skipIf(!haveBindings)("essay building blocks on the real engine", () =>
       expect(res.result.isError, JSON.stringify(res)).not.toBe(true);
     };
 
+    // The brief names each type and everything it requires, so an agent can follow it unaided.
+    const brief = doc.agentHandoff({
+      repositoryId: "r",
+      essay: { id: essayId, title: "Blocks" },
+      containerId: m.containerId,
+      referencesContainerId: m.referencesContainerId,
+    });
+    for (const [name, typeId] of Object.entries(BLOCKS)) {
+      expect(brief).toContain(`com.mudemocracy.argument/${name}`);
+      const res = tool("type_schema", { typeId });
+      expect(res.result.isError, JSON.stringify(res)).not.toBe(true);
+      const body = res.result.structuredContent ?? JSON.parse(res.result.content[0].text);
+      const required: string[] = (body.schema ?? body).required;
+      expect(required.length).toBeGreaterThan(0);
+      for (const field of required) expect(brief, `${name}.${field}`).toContain(field);
+    }
+    expect(brief).toContain("Document > Packages");
+    expect(brief).not.toMatch(/source(,| or) claim/);
+
     const source = create("source", { title: "A book", source_kind: "book" });
     const quote = create("quotation", {
       title: "A line",
       quote_text: "Exact words.",
       locator: "p. 1",
-      warrant_level: "not-read",
+      warrant_level: "secondary",
     });
     const problem = create("problem", {
       problem_id: "P-1",

@@ -1,5 +1,5 @@
 <!--
-  ReferencesTray — the essay's collected sources, claims and problems, and a drop zone to add more
+  ReferencesTray — the essay's collected sources, quotations and problems, and a drop zone to add more
   (a text file by drop, paste or picker; a URL by paste or drop). Each row shows the label, the type
   (and a source's kind), a link to its `url` when it has one, and a "¶ …" chip per paragraph it is
   linked to (a chip focuses its paragraph; no chips = not linked yet). Open reads the record in the
@@ -28,7 +28,7 @@
   export interface ReferenceItem {
     id: string;
     label: string;
-    /** Record type name (source, claim, problem...). */
+    /** Record type name (source, quotation, problem...). */
     type: string;
     /** A source's kind (transcript, web...); "" otherwise. */
     kind?: string;
