@@ -200,7 +200,8 @@
     readAddress();
   }
   // The same lens check runs once after every successful load. With no lens or read key and nothing else
-  // chosen, a repository with a front door opens on Read (ADR-029: the default-landing experiment).
+  // chosen, the essay home opens the essay editor when usable (ADR-030), and otherwise a repository with
+  // a front door opens on Read (ADR-029: the default-landing experiment).
   let addressCheckedFor: SrsRepository | null = null;
   $effect(() => {
     if (appState !== "loaded" || !repo || repo === addressCheckedFor) return;
@@ -208,6 +209,7 @@
     untrack(() => {
       if (address.lens) editorMode = "lenses";
       else if (address.read) editorMode = "read";
+      else if (editorMode === "generic" && home === "essay" && usableEditor(offeredEditors, "essay")) editorMode = "essay";
       else if (editorMode === "generic" && !address.essayId && opensOnRead(repo!)) editorMode = "read";
     });
   });
