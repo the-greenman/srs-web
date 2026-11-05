@@ -79,6 +79,8 @@
     list-style: none;
     margin: 0;
     padding: 0;
+    /* The section is a grid: without this a long repository name widens the page on a phone. */
+    min-width: 0;
   }
   .landing__recent-item {
     display: flex;
@@ -88,5 +90,11 @@
   .landing__recent-item :global(.source-row) {
     flex: 1;
     min-width: 0;
+  }
+  .landing__recent-item :global([data-part='label']) {
+    overflow-wrap: anywhere;
+  }
+  .landing__recent-item :global(.icon-btn[aria-pressed='true'] svg) {
+    fill: currentColor;
   }
 </style>

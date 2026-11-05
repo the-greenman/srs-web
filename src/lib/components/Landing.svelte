@@ -1,7 +1,7 @@
 <!--
   Landing — the idle page: LandingFrame with the two numbered sections, "01 Open" (SourceChooser) and
   "02 Start new" (CreateRepositoryPanel), side by side and stacking below the form breakpoint.
-  Above them, RecentRepos (srs-web#661). Presentation only (ADR-001): the caller owns opening and creating. `notices` is the slot above the
+  Above them, RecentRepos lists the repositories opened lately (srs-web#661). Presentation only (ADR-001): the caller owns opening and creating. `notices` is the slot above the
   sections for restore, link and error Notices. Extra attributes go to the frame root.
 -->
 <script lang="ts">
@@ -28,7 +28,6 @@
     onCreate: ComponentProps<typeof CreateRepositoryPanel>['onCreate'];
   } & ComponentProps<typeof SourceChooser> &
     Omit<ComponentProps<typeof LandingFrame>, 'title' | 'standfirst' | 'eyebrow' | 'children' | 'notices'> = $props();
-
 </script>
 
 <LandingFrame
@@ -49,4 +48,3 @@
     </section>
   </div>
 </LandingFrame>
-

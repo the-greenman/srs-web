@@ -47,7 +47,7 @@ test("Favourites and recent shows on the essay home only when it has entries (#7
               {
                 key: "github:o/r:main:d",
                 source: { kind: "github", where: "o/r:main:d" },
-                label: "o/r",
+                label: "a-rather-long-owner-name/a-rather-long-repository-name",
                 starred: false,
                 lastOpened: "2026-11-01T00:00:00.000Z",
               },
@@ -62,10 +62,17 @@ test("Favourites and recent shows on the essay home only when it has entries (#7
       })
   );
   await page.reload();
-  await expect(page.getByTestId("recent-item")).toContainText("o/r", { timeout: 15000 });
+  await expect(page.getByTestId("recent-item")).toContainText("a-rather-long-owner-name", { timeout: 15000 });
   await expect(page.locator(START)).toBeVisible();
   await page.getByTestId("recent-star").click();
   await expect(page.getByTestId("recent-star")).toHaveAttribute("aria-pressed", "true");
+  await page.setViewportSize({ width: 400, height: 800 });
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(400);
+  // Reopening reaches the GitHub path, which is not configured here, so it reports that.
+  await page.getByTestId("recent-item").locator(".source-row").click();
+  await expect(page.getByTestId("recent-error")).toContainText("Could not reopen");
   await page.getByTestId("recent-remove").click();
   await expect(page.getByTestId("recent-repos")).toHaveCount(0);
 });
