@@ -25,6 +25,7 @@
     total,
     groups = null,
     hits = [],
+    depths = {},
     onOpen,
     onToggle,
     onMore,
@@ -40,6 +41,8 @@
     /** Set: grouped view. Null: the flat list in `hits`. */
     groups?: GroupView[] | null;
     hits?: DiscoveryHit[];
+    /** Outline depth by instance id (a container's own order); absent ids are depth 0. */
+    depths?: Record<string, number>;
     onOpen: (instanceId: string) => void;
     /** Open or close a group (the explorer loads its first page). */
     onToggle?: (key: string) => void;
@@ -58,7 +61,12 @@
 </script>
 
 {#snippet row(hit: DiscoveryHit, withType: boolean)}
-  <button class="generic-record-row" data-testid="record-row" onclick={() => onOpen(hit.instanceId)}>
+  <button
+    class="generic-record-row"
+    data-testid="record-row"
+    data-depth={depths[hit.instanceId] ?? 0}
+    style:margin-left="calc(var(--space-sm) * {depths[hit.instanceId] ?? 0})"
+    onclick={() => onOpen(hit.instanceId)}>
     <strong>{plainLabel(hit.label, hit.instanceId.slice(0, 8))}</strong>
     <span>{subline(hit, withType)}</span>
     {#if snippet(hit)}<em class="generic-record-snippet">{snippet(hit)}</em>{/if}
