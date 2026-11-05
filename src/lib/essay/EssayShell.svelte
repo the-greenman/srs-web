@@ -545,6 +545,7 @@
         reload();
       } else notice = "That link points to an essay that is not here; showing the current one.";
     }
+    if (readOnly) return; // the reader shows the whole essay: no zoom, threads or focus
     const want = a.zoomId ?? a.paragraphId;
     if (want && !allItems.some((i) => i.id === want)) notice ??= "That paragraph is no longer here; showing the whole document.";
     zoomId = a.zoomId && allItems.some((i) => i.id === a.zoomId) ? a.zoomId : null;
@@ -827,7 +828,7 @@
 <svelte:window
   onkeydown={(e) => {
     // Typing inside a paragraph keeps the browser's own text undo; the history takes over everywhere else.
-    if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "z" && !(e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]:not([data-pristine])")) {
+    if (!readOnly && (e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "z" && !(e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]:not([data-pristine])")) {
       e.preventDefault();
       void stepHistory(e.shiftKey);
     }
