@@ -12,7 +12,7 @@ export class OpenUrlError extends Error {}
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
-/** https only; `http` only for a local host in development. Credentials in the URL are refused. */
+/** https only; `http` only for a local host in development, or on this app's own origin. Credentials in the URL are refused. */
 export function parseOpenUrl(raw: string, allowLocalHttp = import.meta.env.DEV): URL {
   let url: URL;
   try {
@@ -23,7 +23,13 @@ export function parseOpenUrl(raw: string, allowLocalHttp = import.meta.env.DEV):
     throw new OpenUrlError("That is not a valid link.");
   }
   const local = LOCAL_HOSTS.has(url.hostname);
-  if (url.protocol !== "https:" && !(allowLocalHttp && local && url.protocol === "http:")) {
+  // the parsed origin, not the raw string: browsers strip tabs, so "/\t/host" also starts with one slash
+  const ownOrigin = url.origin === globalThis.location?.origin;
+  if (
+    !ownOrigin &&
+    url.protocol !== "https:" &&
+    !(allowLocalHttp && local && url.protocol === "http:")
+  ) {
     throw new OpenUrlError("Only https:// links can be opened.");
   }
   if (url.username || url.password)
