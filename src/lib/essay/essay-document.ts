@@ -77,6 +77,7 @@ import {
   DOCUMENT_STATE_TYPE_ID,
   ESSAY_TYPE_ID,
   PARAGRAPH_TYPE_ID,
+  QUOTATION_TYPE_ID,
   SOURCE_TYPE_ID,
 } from "./type-registry.js";
 
@@ -785,6 +786,49 @@ export const linkReference = (repo: SrsRepository, sourceId: string, paragraphId
     targetInstanceId: paragraphId,
   });
 };
+
+/**
+ * Quote a passage of a source to a paragraph (srs-web#525): one `quotation` record (the words verbatim,
+ * where they are found) in the references container, `derived-from` the source and `evidences` the
+ * paragraph. Goes through the existing bindings; an essay older than 1.9.0 has no quotation type.
+ */
+export function quoteToParagraph(
+  repo: SrsRepository,
+  m: Pick<EssayModel, "referencesContainerId">,
+  q: { sourceId: string; paragraphId: string; text: string; sourceTitle: string; locator: string }
+): string {
+  const container = m.referencesContainerId;
+  if (!container) throw new Error("This essay has no references container");
+  const quote = q.text.trim();
+  if (!quote) throw new Error("Select the words to quote first");
+  let version: number;
+  try {
+    version = typeVersion(repo, QUOTATION_TYPE_ID);
+  } catch {
+    throw new Error("This essay cannot hold quotations yet (upgrade the essay package to 1.9.0)");
+  }
+  const id = createRecord(repo, QUOTATION_TYPE_ID, version, {
+    fieldValues: {
+      title: quote.length > 60 ? `${quote.slice(0, 57)}...` : quote,
+      quote_text: quote,
+      locator: q.locator || q.sourceTitle,
+      // A passage copied from the text is exact; whether it holds up is the writer's to settle.
+      warrant_level: "observed",
+    },
+  }).instanceId;
+  addContainerMember(repo, container, id);
+  createRelation(repo, {
+    relationType: "derived-from",
+    sourceInstanceId: id,
+    targetInstanceId: q.sourceId,
+  });
+  createRelation(repo, {
+    relationType: "evidences",
+    sourceInstanceId: id,
+    targetInstanceId: q.paragraphId,
+  });
+  return id;
+}
 
 /** Bytes held by the repository (the sum of the exploded tree), recomputed per engine write epoch. */
 const bytesCache = new WeakMap<object, { epoch: number; bytes: number }>();

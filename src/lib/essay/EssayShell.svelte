@@ -77,6 +77,7 @@
     shiftEntry,
     removeAttachment,
     linkReference,
+    quoteToParagraph,
     referenceText,
     removeReference,
     repoBytes,
@@ -88,6 +89,7 @@
   import { downloadText, triggerDownload } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { browseEssays } from "./essay-browse.js";
+  import { locatorFor } from "./quote.js";
   import { domainMap, listBoundaries, setBoundary } from "./essay-domain.js";
   import { formatAddress, parseAddress, pushAddress } from "$lib/address.js";
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
@@ -328,6 +330,20 @@
     } catch (e) {
       error = msg(e);
     }
+  };
+  /** Quote a passage selected in a pinned reference to a paragraph (srs-web#525). */
+  const quote = (itemId: string, text: string, paragraphId: string) => {
+    const item = pinned.find((p) => p.id === itemId);
+    if (!model || !item) return;
+    run(() => {
+      quoteToParagraph(repo, model!, {
+        sourceId: itemId,
+        paragraphId,
+        text,
+        sourceTitle: item.title,
+        locator: locatorFor(item.text, text),
+      });
+    });
   };
   /** References pinned from the tray (by instance id, linked or not), then pinned margin attachments. */
   const pinnedRefs = $derived((model?.references ?? []).filter((r) => pinnedIds.includes(r.id)));
@@ -1088,7 +1104,13 @@
             />
           </Panel>
         {/if}
-        <PinnedPane items={pinned} onunpin={togglePin} onremove={(id) => run(() => removeAttachment(repo, id))} />
+        <PinnedPane
+          items={pinned}
+          onunpin={togglePin}
+          onremove={(id) => run(() => removeAttachment(repo, id))}
+          paragraphs={readOnly || !model.referencesContainerId ? [] : paragraphChoices}
+          onquote={quote}
+        />
 {/if}
         {#if agentPanel}{@render agents()}{/if}
       </div>

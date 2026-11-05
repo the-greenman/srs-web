@@ -11,3 +11,8 @@ export const DOCUMENT_STATE_TYPE_ID = "9785968f-bdd4-4c91-81ef-0e62075f3503";
  * Fields: title, source_kind (vocabulary: transcript, document, report, web, ...), source_url.
  */
 export const SOURCE_TYPE_ID = "36e85cff-989b-4c6d-9361-3c8906cff87b";
+/**
+ * `com.mudemocracy.argument/quotation` (essay package 1.9.0, srs-web#525). Fields: title, quote_text,
+ * locator, warrant_level (all required), description.
+ */
+export const QUOTATION_TYPE_ID = "00572b36-7e4f-4cc2-9de1-9eab16a496ef";
