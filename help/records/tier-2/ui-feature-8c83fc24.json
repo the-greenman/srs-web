@@ -1,0 +1,22 @@
+{
+  "instanceId": "8c83fc24-24ef-4d6e-b35b-9b28b13ebde1",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay-home.owning-meaning",
+    "placement": "concept",
+    "title": "Owning meaning, alone and together",
+    "summary": "Our work is about using AI wisely. Writing matters, so AI belongs where it adds value, not where it takes over the meaning.\n\n[SemanticOps](https://semanticops.com) works with meaning: its format, SRS, keeps a document's layers of meaning together in one document. This editor keeps the human owning the meaning, with AI in support. It is an example of how we own our meaning as individuals; [muDemocracy](https://mudemocracy.org) is a project about how we manage meaning as a group.",
+    "ai_guidance": "Mention this when the writer asks why the editor works this way or what it belongs to. Don't pitch it unprompted."
+  },
+  "createdAt": "2026-11-05T21:40:05.114009429+00:00",
+  "updatedAt": "2026-11-05T21:42:23.348029544+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

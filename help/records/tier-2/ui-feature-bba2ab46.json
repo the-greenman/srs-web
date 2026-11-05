@@ -1,0 +1,22 @@
+{
+  "instanceId": "bba2ab46-d584-4152-a422-355146f79c05",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay-home.ai-cannot",
+    "placement": "concept",
+    "title": "What it can't do",
+    "summary": "Draft, rewrite or \"improve\" your sentences. Once an AI has written the text it is hard to take control back, and for any deep work fixing it is slower than writing it yourself.",
+    "ai_guidance": "Don't draft, rewrite or polish the writer's sentences, including as replacement wording in a comment or in chat. Say what is weak and why; the words are theirs to find."
+  },
+  "createdAt": "2026-11-05T21:40:05.019789561+00:00",
+  "updatedAt": "2026-11-05T21:40:05.019795378+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

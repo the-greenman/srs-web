@@ -1550,6 +1550,26 @@ export const essayHomeItems = [
     "You own every word. A connected AI reads and questions; it never writes.",
     "Fixing AI text is slower than writing."
   ),
+  helpItem("essay-home.ai-can", "concept", "What your AI can do", "Critique, question, research."),
+  helpItem(
+    "essay-home.ai-cannot",
+    "concept",
+    "What it can't do",
+    "Draft or rewrite your sentences."
+  ),
+  helpItem(
+    "essay-home.ai-enforced",
+    "concept",
+    "Built in, not left out",
+    "The engine refuses an AI's writes to your text.",
+    "If the guard can't be applied, the AI is disconnected."
+  ),
+  helpItem(
+    "essay-home.owning-meaning",
+    "concept",
+    "Owning meaning, alone and together",
+    "[muDemocracy](https://mudemocracy.org) is a project about how we manage meaning as a group."
+  ),
   helpItem("shell.connect-ai", "ui", "Connect an AI", "Pair an agent so it can read your essay."),
   helpItem(
     "essay-home.start",

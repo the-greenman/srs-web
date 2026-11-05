@@ -1,0 +1,23 @@
+{
+  "instanceId": "7a5ed114-2033-431b-aa47-455844b80e03",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay-home.ai-enforced",
+    "placement": "concept",
+    "title": "Built in, not left out",
+    "summary": "This is a design choice, and the editor enforces it. In the essay editor, every connected AI works behind a guard: the engine refuses its writes to your paragraphs, the essay's title and purpose, the draft and the bin.",
+    "explanation": "What an AI adds goes into comments, references and notes, marked with who wrote it, and you decide what stays. If the guard can't be applied, the AI is disconnected rather than let through.\n\nWhere the guard stops: an AI may title a paragraph that has no title, because titles are editor labels and never appear in the finished essay. The guard also covers only what an AI can write into the essay, so it can't check what an AI says in a comment or a chat, and you can still paste in whatever you choose.",
+    "ai_guidance": "If the writer asks you to write or rewrite text, explain that the editor is built this way on purpose, and offer critique, questions or research instead. Don't look for a way around the guard."
+  },
+  "createdAt": "2026-11-05T21:40:05.065419603+00:00",
+  "updatedAt": "2026-11-05T21:40:05.065423555+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

@@ -128,10 +128,25 @@
 .landing__recent {
   grid-column: 1 / -1;
 }
+.landing__different {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: var(--landing-column-gap);
+  align-items: start;
+}
+.landing__different > :first-child {
+  grid-column: 1 / -1;
+}
+.landing__different-item {
+  display: grid;
+  gap: var(--landing-section-gap);
+  min-width: 0;
+}
 
 /* bp: form */
 @media (max-width: 640px) {
-  .landing__body {
+  .landing__body,
+  .landing__different {
     grid-template-columns: minmax(0, 1fr);
   }
 }
