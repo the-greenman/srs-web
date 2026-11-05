@@ -525,6 +525,10 @@
     el?.scrollIntoView?.({ block: "center" });
   }
 
+  /** A paragraph of this essay with its body showing: the only entries of the changes list a click can focus. */
+  const canFocusParagraph = (id: string): boolean =>
+    !!model?.entries.some((e) => e.instanceId === id) && !hidden.has(id) && !inherited.has(id);
+
   /** Arrow past the first/last line: the nearest paragraph with a body editor (not hidden), in zoomed order. */
   function navigate(id: string, dir: "prev" | "next") {
     const at = items.findIndex((i) => i.id === id);
@@ -886,7 +890,7 @@
           Writing as {actor.name ?? actor.id}{actor.id.startsWith("local:") ? " (this browser)" : ""}
         </span>
       {/if}
-      {#if documentDirty}<UnsavedStatus />{/if}
+      {#if documentDirty}<UnsavedStatus onOpen={(id) => void focusParagraph(id)} canOpen={canFocusParagraph} />{/if}
     {/snippet}
   </Toolbar>
   {/snippet}

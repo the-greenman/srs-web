@@ -463,7 +463,7 @@
     pushAddress(current(), trail);
   }
   /** Following a link: remember where we were, then select. */
-  function follow(item: ContextItem): void {
+  function follow(item: Pick<ContextItem, "id" | "label">): void {
     if (selectedId && selectedId !== item.id) trail = [...trail, { id: selectedId, label: selectedLabel }];
     select(item);
     pushAddress(current(), trail);
@@ -771,7 +771,7 @@
         {#snippet lead()}<NavTrigger />{/snippet}
         {#snippet trail()}<InspectorTrigger />{/snippet}
         {#snippet status()}
-          {#if documentDirty}<UnsavedStatus />{/if}
+          {#if documentDirty}<UnsavedStatus onOpen={(id) => follow({ id, label: tryRecord(repo, id)?.displayLabel ?? id })} canOpen={resolvable} />{/if}
           <label class="lens-layout">
             <span>Layout</span>
             <Select bind:value={layout} options={layouts} data-testid="lens-layout" />

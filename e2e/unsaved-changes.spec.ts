@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test, type Locator } from "@playwright/test";
+import { openMenu } from "./helpers";
 
 /**
  * The "Unsaved changes" status opens the list of changes. The list sits inside the toolbar's status,
@@ -39,4 +40,30 @@ test("clicking Unsaved changes shows the list, not a clipped one", async ({ page
   await page.getByTestId("changes-toggle").click();
   await page.screenshot({ path: process.env.SHOT_ESSAY ?? "test-results/changes-panel-essay.png" });
   expect(await paintedAtCentre(panel)).toBe(true);
+  // nothing in a new essay is a paragraph yet, so nothing in the list is a link (srs-web#726)
+  await expect(panel.getByRole("button")).toHaveCount(0);
+
+  // a paragraph is a link, and following it closes the list and focuses that paragraph
+  await page.getByTestId("changes-toggle").click();
+  await page.getByTestId("first-paragraph").click();
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await page.getByTestId("changes-toggle").click();
+  await panel.getByRole("button").click();
+  await expect(panel).toHaveCount(0);
+  await expect(page.locator('[data-focus-key^="body:"]').first()).toBeFocused();
+
+  // Escape closes the list
+  await page.getByTestId("changes-toggle").click();
+  await expect(panel).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(panel).toHaveCount(0);
+
+  // the generic shell: a changed record is a link, and following it shows it in the inspector
+  await openMenu(page, "Go");
+  await page.getByTestId("toolbar-explorer").click();
+  await expect(page.getByTestId("generic-srs-shell")).toBeVisible();
+  await page.getByTestId("changes-toggle").click();
+  await panel.getByRole("button", { name: "Untitled essay" }).click();
+  await expect(panel).toHaveCount(0);
+  await expect(page.getByRole("complementary", { name: "Record" }).getByRole("heading", { name: "Untitled essay" })).toBeVisible();
 });

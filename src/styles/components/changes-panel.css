@@ -3,12 +3,7 @@
    srs-web#587: what changed since the last save, grouped, with who made it.
    ========================================================================== */
 .unsaved {
-  position: relative;
   display: inline-flex;
-}
-/* The toolbar's status clips its children for the ellipsis; that would hide the popover. */
-.toolbar__status > .unsaved {
-  overflow: visible;
 }
 .unsaved__button {
   all: unset;
@@ -21,15 +16,12 @@
   outline-offset: 2px;
 }
 .unsaved__popover {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: var(--z-raised);
   width: min(28rem, 90vw);
-  max-height: 60vh;
   overflow: auto;
-  margin-top: var(--space-xs);
   white-space: normal; /* the status is nowrap; a long record title must wrap here */
+}
+.unsaved__popover .changes {
+  border: 0; /* the popover draws the edge */
 }
 .changes {
   display: flex;

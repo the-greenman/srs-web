@@ -422,6 +422,13 @@
     formError = null;
   }
 
+  function selectGuide(id: string) {
+    selectedGuideId = id;
+    cancelForm();
+    refreshSections();
+    refreshPreview();
+  }
+
   function cancelForm() {
     formMode = null;
     activeFormDef = null;
@@ -576,12 +583,7 @@
                   testid="guides-guide-item"
                   label={guide.displayLabel ?? "Untitled Guide"}
                   active={guide.instanceId === selectedGuideId}
-                  onclick={() => {
-                    selectedGuideId = guide.instanceId;
-                    cancelForm();
-                    refreshSections();
-                    refreshPreview();
-                  }}
+                  onclick={() => selectGuide(guide.instanceId)}
                 />
               {/each}
               {#if guides.length === 0}
@@ -610,7 +612,7 @@
             {#snippet lead()}<NavTrigger />{/snippet}
             {#snippet titleSlot()}<Breadcrumb items={guideCrumbItems()} />{/snippet}
             {#snippet status()}
-              {#if documentDirty}<UnsavedStatus />{/if}
+              {#if documentDirty}<UnsavedStatus onOpen={selectGuide} canOpen={(id) => guides.some((g) => g.instanceId === id)} />{/if}
             {/snippet}
             {#snippet trail()}<InspectorTrigger />{/snippet}
           </Toolbar>
