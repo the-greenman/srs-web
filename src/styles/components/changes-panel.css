@@ -6,6 +6,10 @@
   position: relative;
   display: inline-flex;
 }
+/* The toolbar's status clips its children for the ellipsis; that would hide the popover. */
+.toolbar__status > .unsaved {
+  overflow: visible;
+}
 .unsaved__button {
   all: unset;
   cursor: pointer;
@@ -25,6 +29,7 @@
   max-height: 60vh;
   overflow: auto;
   margin-top: var(--space-xs);
+  white-space: normal; /* the status is nowrap; a long record title must wrap here */
 }
 .changes {
   display: flex;
