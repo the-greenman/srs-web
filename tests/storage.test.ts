@@ -640,6 +640,8 @@ describe("GitHub storage adapter", () => {
     expect(msg.accessToken).toBe("gha_new");
     expect(msg.refreshToken).toBe("ghr_new");
     expect(msg.refreshTokenExpiresAt as number).toBeGreaterThan(Date.now());
+    // The address holds the code: it must not reach the Worker logs as a Referer (#739).
+    expect(vi.mocked(fetch).mock.calls[0][1]?.referrerPolicy).toBe("origin");
   });
 
   describe("silent token refresh", () => {
@@ -679,6 +681,7 @@ describe("GitHub storage adapter", () => {
       expect((provider as any).accessToken).toBe("gha_new");
       // biome-ignore lint/suspicious/noExplicitAny: test seam
       expect((provider as any).refreshToken).toBe("ghr_new");
+      expect(vi.mocked(fetch).mock.calls[0][1]?.referrerPolicy).toBe("origin");
     });
 
     it("falls back to popup when the refresh endpoint returns an error", async () => {

@@ -152,6 +152,8 @@ export async function completeGitHubOAuthCallback(config: GitHubConfig): Promise
     const response = await fetch(TOKEN_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      // This page's address holds the sign-in code; a full Referer would put it in the Worker logs (#739).
+      referrerPolicy: "origin",
       body: JSON.stringify({
         code: code ?? "",
         code_verifier: verifier,
@@ -538,6 +540,7 @@ export class GitHubProvider implements StorageProvider {
       response = await fetch(GITHUB_REFRESH_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        referrerPolicy: "origin", // The page's address stays out of the Worker logs (#739).
         body: JSON.stringify({ refresh_token: this.refreshToken }),
       });
     } catch {
