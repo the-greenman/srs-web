@@ -99,11 +99,11 @@ export interface EssayNote {
   /** The records derived from this note (`derived-from` the note), so the note shows what it produced. */
   produced: { id: string; label: string }[];
 }
-/** A collected source, claim or problem; `paragraphIds` come from inverting the paragraphs' context. */
+/** A collected source, quotation or problem; `paragraphIds` come from inverting the paragraphs' context. */
 export interface Reference {
   id: string;
   label: string;
-  /** The record's type name (source, claim, problem...). */
+  /** The record's type name (source, quotation, problem...). */
   typeName: string;
   paragraphIds: string[];
   /** A source's `source_kind` ("" otherwise). */
@@ -639,9 +639,11 @@ export function agentHandoff(a: {
         ]
       : []),
     "- Responses: the writer answers your comment with a comment on it (comments-on your comment): agree or disagree is their verdict, done or rejected settles your task (the text is the reason), withdrawn clears either; the latest one counts. Never propose a task again whose latest response is rejected, and never reply to a response.",
-    `- Gather: a source, claim or problem worth having for this essay goes in references: create it${r ? ` with containerId ${r}` : ""}, or container_member_add an existing one. Read references first so you don't duplicate.`,
+    `- Gather: a source, quotation or problem worth having for this essay goes in references: create it${r ? ` with containerId ${r}` : ""}, or container_member_add an existing one. Read references first so you don't duplicate. The writer decides what stays; you suggest.`,
+    "- What to create: com.mudemocracy.argument/source for a work or page (title, source_kind). com.mudemocracy.argument/quotation for exact words you have in front of you, never from memory (title, quote_text, locator, warrant_level). warrant_level is the level actually reached: secondary if copied from a summary or translation. Never invent a locator. Then add a derived-from relation from it to its source. com.mudemocracy.argument/problem for what the writing speaks to (problem_id, statement, kind, persona, scale). persona and scale must be terms of their vocabularies, which were written for muDemocracy: if none fits, say so in a comment rather than forcing one.",
+    "- Missing types: on an essay older than essay 1.9.0 these types don't exist; ask the writer to upgrade under Document > Packages…. A type that isn't in this essay's packages, such as a claim, can't be created here: say so, and don't use another type in its place.",
     `- The writer's own material is in references too: com.mudemocracy.argument/source records (a source_url for a web page; a text file attached to the record, e.g. a transcript or paper). To read attached text: for each sourceRefs entry with sourceType repository-document, read ${uri}/attachment/<its sourceId>.`,
-    "- Attach: link a reference to a paragraph with com.mudemocracy.essay/bears-on (paragraph → problem), evidences (source or claim → paragraph, supports) or com.mudemocracy.essay/counters (source or claim → paragraph, opposes).",
+    "- Attach: link a reference to a paragraph with com.mudemocracy.essay/bears-on (paragraph → problem), evidences (source or quotation → paragraph, supports) or com.mudemocracy.essay/counters (source or quotation → paragraph, opposes).",
     "- Domain: you may propose the essay's boundary (its domain) as a comment; never set com.mudemocracy.argument/within-boundary yourself, the writer chooses it.",
     "- Titles: you may set paragraph_title only where it is empty.",
     "- Before creating a record of any type, read its type_schema; the aiGuidance there is authoritative.",
@@ -717,7 +719,7 @@ export function addReferences(
   try {
     version = typeVersion(repo, SOURCE_TYPE_ID);
   } catch {
-    throw new Error("This repository has no source type (install the argument package)");
+    throw new Error("This essay has no source type yet: upgrade it under Document > Packages…");
   }
   const files = refs.files ?? [];
   const taken = new Set(
@@ -976,7 +978,7 @@ export function essayMarkdown(repo: SrsRepository, m: EssayModel): string {
  * bin, comments and references containers (RFC-034 I-151: their paragraphs, comments and gathered
  * references come with them) and its own members the essay record, document-state, (on a package
  * without a comments container) this essay's comments, and the one-hop non-structural
- * neighbours of its paragraphs (problems, sources, claims). Created on first use and linked from
+ * neighbours of its paragraphs (problems, sources, quotations). Created on first use and linked from
  * document-state; later refreshes apply only the difference. Membership is declared here, never
  * derived. Returns the bundle's container id.
  */

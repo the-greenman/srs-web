@@ -29,7 +29,7 @@ describe.skipIf(!haveBindings)("comment kinds and task responses on the real eng
     const mod = await import(/* @vite-ignore */ path.join(dir, "comment-kinds.mjs"));
     mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
     const repo = mod.SrsRepository.create(JSON.stringify({ title: "Kinds" }));
-    installBundles(repo, [ESSAY_PACKAGE_ID]); // essay 1.8.0 brings comments 1.1.0 with it
+    installBundles(repo, [ESSAY_PACKAGE_ID]); // essay brings comments 1.1.0 with it
     expect(kindsAvailable(repo)).toBe(true);
 
     const essayId = doc.newEssay(repo, "Typed");
