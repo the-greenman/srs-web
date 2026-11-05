@@ -242,7 +242,8 @@
   function editRecent(edit: (list: RecentRepo[]) => RecentRepo[]): void {
     void recentLoaded.then(() => {
       recent = edit(recent);
-      void saveRecent(recent);
+      // A snapshot: IndexedDB cannot store a $state proxy (srs-web#728).
+      void saveRecent($state.snapshot(recent));
     });
   }
   let restoreError = $state<string | null>(null);
