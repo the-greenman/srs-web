@@ -70,7 +70,8 @@ export default defineConfig({
     // port would be tested in place of this one. Opt in with PLAYWRIGHT_REUSE_SERVER=1 to reuse your own; CI never does.
     reuseExistingServer: !process.env.CI && process.env.PLAYWRIGHT_REUSE_SERVER === "1",
     // A process variable beats every .env* file: a developer's .env.local relay cannot leak into the suite.
-    env: { VITE_MCP_RELAY_URL: "" },
+    // GitHub is configured as in the deployed build, so a dev-server run matches CI (srs-web#732).
+    env: { VITE_MCP_RELAY_URL: "", VITE_GITHUB_CLIENT_ID: "e2e" },
     timeout: process.env.CI ? 120000 : 30000,
   },
 })

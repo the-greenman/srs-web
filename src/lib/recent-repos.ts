@@ -6,6 +6,7 @@
  * storage unavailable the page simply shows no list. `RecentSource` is a union so the local-folder and
  * local-file entries (srs-web#662, #663) add variants without migrating stored entries.
  */
+import type { WorkingCopySource } from "./browser-cache.js";
 import { GitHubRepoTreeHandle } from "./storage/github.js";
 import type { DocumentHandle } from "./storage/types.js";
 
@@ -37,6 +38,12 @@ export function describeHandle(
     return { source: { kind: "github", where: handle.where }, label: handle.repoLabel };
   }
   return null;
+}
+
+/** What a recovery copy keeps to save back to `handle` after a reload, when it can (srs-web#732). */
+export function workingCopySource(handle: DocumentHandle | null): WorkingCopySource | undefined {
+  if (!(handle instanceof GitHubRepoTreeHandle) || !handle.revision) return undefined;
+  return { kind: "github", where: handle.where, commitSha: handle.revision };
 }
 
 function order(list: RecentRepo[]): RecentRepo[] {

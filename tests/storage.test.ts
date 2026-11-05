@@ -878,6 +878,64 @@ describe("GitHub storage adapter", () => {
       expect(fetchMock.mock.calls.length).toBe(callsBeforeCommit);
     });
 
+    describe("restored at a commit (srs-web#732)", () => {
+      /** The base as the pinned commit held it; the branch head is never served. */
+      async function pinnedBase() {
+        const realSha = await gitBlobSha(new TextEncoder().encode('{"v":1}'));
+        return vi
+          .fn()
+          .mockResolvedValueOnce(json({ tree: { sha: "tree-root" } }))
+          .mockResolvedValueOnce(
+            json({
+              sha: "tree-root",
+              tree: [
+                { path: "governance", mode: "040000", type: "tree", sha: "sha-governance" },
+                { path: "governance/manifest.json", mode: "100644", type: "blob", sha: realSha },
+                { path: "governance/.srs", mode: "040000", type: "tree", sha: "sha-srs" },
+                { path: "governance/.srs/.gitkeep", mode: "100644", type: "blob", sha: await gitBlobSha(new Uint8Array(0)) },
+              ],
+            })
+          );
+      }
+      const restored = () =>
+        new GitHubRepoTreeHandle("id:1", "gov", treeLocation, () => "token", "commit-old");
+      const unchanged = () => ({
+        "manifest.json": new TextEncoder().encode('{"v":1}'),
+        ".srs/.gitkeep": new Uint8Array(0),
+      });
+
+      it("needs no network until it commits, and knows its source", () => {
+        const fetchMock = vi.fn();
+        vi.stubGlobal("fetch", fetchMock);
+        const handle = restored();
+        expect(handle.revision).toBe("commit-old");
+        expect(handle.capabilities.write).toBe(true);
+        expect(fetchMock).not.toHaveBeenCalled();
+      });
+
+      it("diffs against the pinned commit, never the branch head", async () => {
+        const fetchMock = await pinnedBase();
+        vi.stubGlobal("fetch", fetchMock);
+        const result = await restored().commitTree(unchanged(), { branch: "main" });
+        // Nothing changed against the pinned commit, so nothing is committed.
+        expect(result.revision).toBe("commit-old");
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/git\/commits\/commit-old$/);
+        expect(fetchMock.mock.calls.some(([u]) => String(u).includes("/git/ref/"))).toBe(false);
+      });
+
+      it("starts a new branch from the pinned commit", async () => {
+        const fetchMock = await pinnedBase();
+        fetchMock.mockResolvedValueOnce(json({ ref: "refs/heads/keep" }, 201));
+        vi.stubGlobal("fetch", fetchMock);
+        const handle = restored();
+        await handle.commitTree(unchanged(), { branch: "keep", createFromCurrent: true });
+        const body = JSON.parse(String((fetchMock.mock.calls[2]?.[1] as RequestInit).body));
+        expect(body).toEqual({ ref: "refs/heads/keep", sha: "commit-old" });
+        expect(handle.branch).toBe("keep");
+      });
+    });
+
     it("commitTree() to a new branch creates it at the base commit, not the remote head (srs-web#685)", async () => {
       const bytes = new TextEncoder().encode('{"v":1}');
       const b64 = btoa(String.fromCharCode(...bytes));

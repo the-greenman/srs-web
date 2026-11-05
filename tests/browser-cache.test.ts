@@ -73,6 +73,24 @@ describe("browser-cache (.srs archive in IndexedDB, srs-web#505)", () => {
     expect(Number.isNaN(new Date(entry?.savedAt ?? "").getTime())).toBe(false);
   });
 
+  it("keeps the source a restored session saves back to (srs-web#732)", async () => {
+    setup();
+    const source = { kind: "github" as const, where: "o/r:main:", commitSha: "abc" };
+    await saveWorkingCopy("my-repo", () => BYTES, source);
+    expect((await loadWorkingCopy())?.source).toEqual(source);
+  });
+
+  it("restores a copy with no source or a malformed one, without a source (srs-web#732)", async () => {
+    setup();
+    await saveWorkingCopy("my-repo", () => BYTES);
+    expect((await loadWorkingCopy())?.source).toBeUndefined();
+    const bad = { kind: "github", where: "o/r:main:" } as never;
+    await saveWorkingCopy("my-repo", () => BYTES, bad);
+    const entry = await loadWorkingCopy();
+    expect(entry?.bytes).toEqual(BYTES);
+    expect(entry?.source).toBeUndefined();
+  });
+
   it("clearWorkingCopy empties it; load returns null when nothing is stored", async () => {
     setup();
     expect(await loadWorkingCopy()).toBeNull();

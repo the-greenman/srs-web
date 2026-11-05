@@ -45,7 +45,7 @@
   import { listTypes, resolveRepositoryTitle, type AgentWriteGuard, type MigrationNotice, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import {
-    describeHandle, loadRecent, recordOpened, removeRecent, saveRecent, toggleStar,
+    describeHandle, loadRecent, recordOpened, removeRecent, saveRecent, toggleStar, workingCopySource,
     type RecentRepo,
   } from "$lib/recent-repos.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
@@ -411,7 +411,7 @@
   const workingCopy = workingCopyScheduler(() => {
     const r = repo;
     if (r && mayKeepWorkingCopy(readOnlyHost, documentMutations.dirty)) {
-      void saveWorkingCopy(repoName, () => exportArchive(r)).then((ok) => {
+      void saveWorkingCopy(repoName, () => exportArchive(r), workingCopySource(activeDocument)).then((ok) => {
         if (r === repo) workingCopySaved = ok;
       });
     }
@@ -605,7 +605,7 @@
         cachedSession = null;
         if (dirty) {
           saveToast("info", "Migrated to the current data model. Unsaved - Save to keep it.", 8000);
-          if (!readOnlyHost) void saveWorkingCopy(repoName, () => exportArchive(loaded));
+          if (!readOnlyHost) void saveWorkingCopy(repoName, () => exportArchive(loaded), workingCopySource(handle));
         }
         const catalog = collectCatalogDiagnostics(loaded);
         if (catalog.length) {
@@ -957,6 +957,13 @@
     return current ? ["success", text] : ["info", `${text} Newer changes remain unsaved.`];
   }
 
+  /** A restored session's way back to its source, when it has one and that source is available here. */
+  function restoredSource(entry: WorkingCopyEntry): DocumentHandle | null {
+    const github = storageProviders.github as GitHubProvider | undefined;
+    if (!entry.source || !github?.configured) return null;
+    return github.restoreTree(entry.name, entry.source.where, entry.source.commitSha);
+  }
+
   function saveErrorMessage(e: unknown): string {
     const code =
       e instanceof StorageError
@@ -965,6 +972,10 @@
           ? (e as { code?: string }).code
           : null;
     if (code === "conflict") {
+      // A branch can take the work as it stands; reopening the file would clear the recovery copy.
+      if (activeDocument?.kind === "tree" && isGitBranchAware(activeDocument)) {
+        return "This branch changed since your work began. Save to a new branch to keep your work, then open a pull request on GitHub to merge it.";
+      }
       return "This file changed since you opened it. Use “Open another file” to reload the latest version, then re-apply your edits.";
     }
     return `Save failed: ${e instanceof Error ? e.message : String(e)}`;
@@ -1095,6 +1106,8 @@
     saving = true;
     gitSaveError = null;
     try {
+      // A session restored after a reload has no token yet; a valid one returns at once.
+      if (handle.provider === "github") await (storageProviders.github as GitHubProvider | undefined)?.authenticate();
       const branch = opts.mode === "new" ? opts.newBranch : handle.branch;
       // "new" only truly branches when the name differs from the current branch.
       const branchedOff = opts.mode === "new" && branch !== handle.branch;
@@ -1172,11 +1185,11 @@
             beginDocument({ dirty: editable });
             repoName = entry.name;
             documentTitle = resolveRepositoryTitle(restored, repoName);
-            activeDocument = null;
+            activeDocument = editable ? restoredSource(entry) : null;
             appState = "loaded";
             editorMode = "generic";
             cachedSession = null;
-            if (editable) void saveWorkingCopy(repoName, () => exportArchive(restored));
+            if (editable) void saveWorkingCopy(repoName, () => exportArchive(restored), workingCopySource(activeDocument));
           });
         } catch (e: unknown) {
           void clearWorkingCopy();

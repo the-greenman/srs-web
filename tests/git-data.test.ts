@@ -47,6 +47,20 @@ function refCommitTreeSequence(
 }
 
 describe("git-data: readBranchBase", () => {
+  it("reads a given commit without asking for the branch head (srs-web#732)", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ tree: { sha: "tree-root" } }))
+      .mockResolvedValueOnce(jsonResponse({ sha: "tree-root", tree: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const base = await readBranchBase(rootLocation, "token", "commit-old");
+    expect(base.commitSha).toBe("commit-old");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/git\/commits\/commit-old$/);
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes("/git/ref/"))).toBe(false);
+  });
+
   it('returns a dir-relative base map for the branch root (dir === "")', async () => {
     const fetchMock = vi.fn();
     for (const response of refCommitTreeSequence({

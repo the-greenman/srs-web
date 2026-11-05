@@ -294,13 +294,15 @@ export class GitHubRepoTreeHandle implements DocumentHandle, GitBranchAware, Rep
     readonly id: string,
     readonly name: string,
     location: GitDataLocation,
-    private readonly token: () => string
+    private readonly token: () => string,
+    /** A restored session's starting commit: the base to commit against, read at the first commit. */
+    private readonly pinnedCommit?: string
   ) {
     this.location = location;
   }
 
   get revision(): string | null {
-    return this.base?.commitSha ?? null;
+    return this.base?.commitSha ?? this.pinnedCommit ?? null;
   }
 
   get branch(): string {
@@ -341,6 +343,10 @@ export class GitHubRepoTreeHandle implements DocumentHandle, GitBranchAware, Rep
     files: Record<string, Uint8Array>,
     opts: { branch: string; createFromCurrent?: boolean; message?: string }
   ): Promise<WriteResult> {
+    // Never the branch head: diffing against a newer head would revert every commit since.
+    if (!this.base && this.pinnedCommit) {
+      this.base = await readBranchBase(this.location, this.token(), this.pinnedCommit);
+    }
     if (!this.base) {
       throw new StorageFetchError("Cannot commit a tree that has not been read yet.");
     }
@@ -626,6 +632,23 @@ export class GitHubProvider implements StorageProvider {
     if (!branch) throw new StorageFetchError("GitHub entry is missing a branch.");
     const location: GitDataLocation = { apiBase: GITHUB_API, owner, repo, branch, dir };
     return new GitHubRepoTreeHandle(entry.id, entry.name, location, () => this.requireToken());
+  }
+
+  /**
+   * Rebuild a handle for a restored session, based on the commit its work started from
+   * (srs-web#732). No network and no sign-in: those wait until the first save.
+   */
+  restoreTree(name: string, where: string, commitSha: string): GitHubRepoTreeHandle {
+    const { owner, repo, branch, dir } = parseGitHubPath(where);
+    if (!branch) throw new StorageFetchError("GitHub entry is missing a branch.");
+    const location: GitDataLocation = { apiBase: GITHUB_API, owner, repo, branch, dir };
+    return new GitHubRepoTreeHandle(
+      `${where}#repo`,
+      name,
+      location,
+      () => this.requireToken(),
+      commitSha
+    );
   }
 
   private async listRepos(): Promise<StorageEntry[]> {
