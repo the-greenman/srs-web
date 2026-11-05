@@ -369,6 +369,11 @@ export class GitHubRepoTreeHandle implements DocumentHandle, GitBranchAware, Rep
       // still applies. An existing target branch may have diverged — re-read it.
       if (!created) {
         base = await readBranchBase(targetLocation, this.token());
+        // Asked for a new branch and the name is taken: committing over it would undo its
+        // commits (srs-web#732). The same commit means a retry of a half-finished save.
+        if (opts.createFromCurrent && base.commitSha !== this.base.commitSha) {
+          throw new StorageFetchError(`Branch "${target}" already exists. Choose another name.`);
+        }
       }
     }
 

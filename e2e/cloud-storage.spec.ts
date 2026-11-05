@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
-import { openPackageEditor, navItem, newRecord, openMenu, closeMenus } from "./helpers.js";
+import { openPackageEditor, navItem, newRecord, openMenu, closeMenus, waitForRecoveryCopy } from "./helpers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // srs-web#312: richer fixtures reused through the same pending-write-controllable Dropbox
@@ -83,6 +83,7 @@ async function installFakeProviders(
           revision: "tree-commit-1",
           branch: "main",
           repoLabel: "octo/gov",
+          where: "octo/gov:main:governance",
           // Present only so isGitBranchAware() finds it, mirroring GitHubRepoTreeHandle —
           // App.svelte's kind-based dispatch calls commitTree() directly, never this.
           saveToBranch: async () => {
@@ -249,6 +250,11 @@ async function installFakeProviders(
             };
           },
           openTree: async () => treeHandle(),
+          restoreTree: (name: string, where: string, commitSha: string) => {
+            // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+            (window as any).__RESTORED_FROM__ = { name, where, commitSha };
+            return treeHandle();
+          },
           defaultBranchOf: async () => "main",
           // Native scan (ADR-018): at a branch root, discover the nested "governance"
           // exploded repo one request in, without the user navigating into it.
@@ -678,8 +684,115 @@ test.describe("Cloud storage sources", () => {
 
     await page.getByTestId("save-document").click();
     await page.getByTestId("git-save-confirm").click();
-    await expect(page.getByTestId("git-save-error")).toContainText("changed since you opened it");
+    await expect(page.getByTestId("git-save-error")).toContainText("Save to a new branch");
     await expect(page.getByTestId("git-save-modal")).toBeVisible();
+  });
+
+  // -------------------------------------------------------------------------
+  // A restored session keeps its source — srs-web#732. The commit against the pinned base
+  // is tested on the real handle in tests/storage.test.ts; this covers the app's wiring.
+  // -------------------------------------------------------------------------
+
+  const SOURCE = { kind: "github", where: "octo/gov:main:governance", commitSha: "abc123" };
+
+  /** Open a local file and edit it, so the recovery copy exists. */
+  async function editUntilRecoveryCopy(page: Page): Promise<void> {
+    await page.goto("/");
+    await page
+      .locator('input[type="file"]#srsj-file')
+      .setInputFiles(path.join(__dirname, "fixtures", "gallery.srsj"));
+    await openPackageEditor(page, "governance");
+    await page.getByTestId("attachments-file-input").setInputFiles({
+      name: "note.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("hello attachment"),
+    });
+    await waitForRecoveryCopy(page);
+  }
+
+  /** Read the stored recovery copy, first setting its source when one is given. */
+  function workingCopy(page: Page, source?: typeof SOURCE) {
+    return page.evaluate(
+      (source) =>
+        new Promise<{ source?: unknown }>((resolve, reject) => {
+          const open = indexedDB.open("srs-web", 1);
+          open.onerror = () => reject(open.error);
+          open.onsuccess = () => {
+            const store = open.result.transaction("working-copy", "readwrite").objectStore("working-copy");
+            const get = store.get("current");
+            get.onsuccess = () => {
+              const entry = source ? { ...get.result, source } : get.result;
+              store.put(entry, "current").onsuccess = () => resolve(entry);
+            };
+          };
+        }),
+      source
+    );
+  }
+
+  async function restore(page: Page): Promise<void> {
+    await page.reload();
+    await page.getByTestId("restore-notice").getByTestId("restore-session").click();
+    await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 5000 });
+  }
+
+  test("a copy taken from a GitHub tree carries its source, and commits back after a restore", async ({ page }) => {
+    await installFakeProviders(page);
+    await page.goto("/");
+    await browseToGovernanceDir(page);
+    await page.getByRole("button", { name: /Open as SRS repository/ }).click();
+    await openPackageEditor(page, "governance");
+    await page.getByTestId("attachments-file-input").setInputFiles({
+      name: "note.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("hello attachment"),
+    });
+    await waitForRecoveryCopy(page);
+    const stored = { kind: "github", where: "octo/gov:main:governance", commitSha: "tree-commit-1" };
+    await expect.poll(async () => (await workingCopy(page)).source).toEqual(stored);
+
+    await restore(page);
+    // The copy rewritten on restore still knows its source, so a second reload does not lose it.
+    await expect.poll(async () => (await workingCopy(page)).source).toEqual(stored);
+
+    // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+    expect(await page.evaluate(() => (window as any).__RESTORED_FROM__)).toMatchObject({
+      where: stored.where,
+      commitSha: stored.commitSha,
+    });
+
+    await page.getByTestId("save-document").click();
+    await expect(page.getByTestId("git-save-modal")).toContainText("octo/gov");
+    await page.getByTestId("git-save-confirm").click();
+    await expect(page.getByTestId("save-status")).toContainText("Saved.");
+    const calls = await page.evaluate(
+      // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+      () => (window as any).__TREE_COMMIT_CALLS__ as unknown[]
+    );
+    expect(calls).toHaveLength(1);
+  });
+
+  test("a restored session whose branch moved is pointed to a new branch, and keeps its work", async ({ page }) => {
+    await installFakeProviders(page, "conflict");
+    await editUntilRecoveryCopy(page);
+    await workingCopy(page, SOURCE);
+    await restore(page);
+
+    await page.getByTestId("save-document").click();
+    await page.getByTestId("git-save-confirm").click();
+    await expect(page.getByTestId("git-save-error")).toContainText("Save to a new branch");
+    expect(await workingCopy(page)).toBeTruthy();
+  });
+
+  test("a recovery copy with no source still asks where to save", async ({ page }) => {
+    await installFakeProviders(page);
+    await editUntilRecoveryCopy(page);
+    await restore(page);
+
+    // biome-ignore lint/suspicious/noExplicitAny: e2e fake-provider seam
+    expect(await page.evaluate(() => (window as any).__RESTORED_FROM__)).toBeUndefined();
+    await page.getByTestId("save-document").click();
+    await expect(page.getByTestId("git-save-modal")).toHaveCount(0);
   });
 
   // -------------------------------------------------------------------------

@@ -924,6 +924,41 @@ describe("GitHub storage adapter", () => {
         expect(fetchMock.mock.calls.some(([u]) => String(u).includes("/git/ref/"))).toBe(false);
       });
 
+      it("commits a change on top of the pinned commit, without force", async () => {
+        const fetchMock = await pinnedBase();
+        fetchMock.mockImplementation(async () => json({ sha: "new-sha", tree: { sha: "t" }, object: { sha: "x" } }));
+        vi.stubGlobal("fetch", fetchMock);
+        await restored().commitTree(
+          { ...unchanged(), "records/new.json": new TextEncoder().encode("{}") },
+          { branch: "main" }
+        );
+        const bodies = fetchMock.mock.calls.map(([u, init]) => ({
+          url: String(u),
+          body: (init as RequestInit | undefined)?.body ? JSON.parse(String((init as RequestInit).body)) : null,
+        }));
+        const commit = bodies.find((c) => /\/git\/commits$/.test(c.url));
+        expect(commit?.body.parents).toEqual(["commit-old"]);
+        const ref = bodies.find((c) => /\/git\/refs\/heads\//.test(c.url));
+        expect(ref?.body.force).toBe(false);
+        expect(JSON.stringify(bodies)).not.toContain("manifest.json");
+      });
+
+      it("refuses a new branch whose name is taken by other commits, committing nothing", async () => {
+        const fetchMock = await pinnedBase();
+        fetchMock
+          .mockResolvedValueOnce(json({ message: "Reference already exists" }, 422)) // create ref
+          .mockResolvedValueOnce(json({ object: { sha: "commit-other" } })) // its head
+          .mockResolvedValueOnce(json({ tree: { sha: "tree-other" } }))
+          .mockResolvedValueOnce(json({ sha: "tree-other", tree: [{ path: "governance", mode: "040000", type: "tree", sha: "s" }] }));
+        vi.stubGlobal("fetch", fetchMock);
+        const handle = restored();
+        await expect(
+          handle.commitTree(unchanged(), { branch: "taken", createFromCurrent: true })
+        ).rejects.toThrow(/already exists/);
+        expect(handle.branch).toBe("main");
+        expect(fetchMock.mock.calls.some(([u]) => /\/git\/(trees|commits)$/.test(String(u)))).toBe(false);
+      });
+
       it("starts a new branch from the pinned commit", async () => {
         const fetchMock = await pinnedBase();
         fetchMock.mockResolvedValueOnce(json({ ref: "refs/heads/keep" }, 201));

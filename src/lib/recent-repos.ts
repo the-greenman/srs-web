@@ -42,8 +42,9 @@ export function describeHandle(
 
 /** What a recovery copy keeps to save back to `handle` after a reload, when it can (srs-web#732). */
 export function workingCopySource(handle: DocumentHandle | null): WorkingCopySource | undefined {
-  if (!(handle instanceof GitHubRepoTreeHandle) || !handle.revision) return undefined;
-  return { kind: "github", where: handle.where, commitSha: handle.revision };
+  if (handle?.provider !== "github" || handle.kind !== "tree" || !handle.revision) return undefined;
+  const { where } = handle as DocumentHandle & { where?: string };
+  return where ? { kind: "github", where, commitSha: handle.revision } : undefined;
 }
 
 function order(list: RecentRepo[]): RecentRepo[] {

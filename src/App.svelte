@@ -453,6 +453,8 @@
       documentChanges.saved(repo);
       workingCopy.cancel();
       void clearWorkingCopy();
+    } else {
+      workingCopy.schedule(); // the save moved the source's commit: the copy must follow
     }
     return savedCurrentRevision;
   }
@@ -961,7 +963,11 @@
   function restoredSource(entry: WorkingCopyEntry): DocumentHandle | null {
     const github = storageProviders.github as GitHubProvider | undefined;
     if (!entry.source || !github?.configured) return null;
-    return github.restoreTree(entry.name, entry.source.where, entry.source.commitSha);
+    try {
+      return github.restoreTree(entry.name, entry.source.where, entry.source.commitSha);
+    } catch {
+      return null; // an unusable source must not cost the work: it asks where to save instead
+    }
   }
 
   function saveErrorMessage(e: unknown): string {
@@ -1107,7 +1113,10 @@
     gitSaveError = null;
     try {
       // A session restored after a reload has no token yet; a valid one returns at once.
-      if (handle.provider === "github") await (storageProviders.github as GitHubProvider | undefined)?.authenticate();
+      if (handle.provider === "github") {
+        await (storageProviders.github as GitHubProvider | undefined)?.authenticate();
+        void resolveSignedInActor();
+      }
       const branch = opts.mode === "new" ? opts.newBranch : handle.branch;
       // "new" only truly branches when the name differs from the current branch.
       const branchedOff = opts.mode === "new" && branch !== handle.branch;
@@ -1152,7 +1161,7 @@
       gitSaveOpen = false;
     } catch (e: unknown) {
       // Keep the dialog open so the install hint stays visible on a permission error.
-      gitSaveError = saveErrorMessage(e);
+      if ((e as { code?: string } | null)?.code !== "cancelled") gitSaveError = saveErrorMessage(e);
     } finally {
       saving = false;
     }
