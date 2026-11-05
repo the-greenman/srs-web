@@ -119,7 +119,8 @@ export async function loadRecent(): Promise<RecentRepo[]> {
 export async function saveRecent(list: RecentRepo[]): Promise<void> {
   try {
     await idb("readwrite", (s) => s.put(list, KEY));
-  } catch {
-    /* a convenience list: losing a write is fine */
+  } catch (e) {
+    // A convenience list: losing a write is fine, but say so (srs-web#728).
+    console.warn("Could not save the recent repositories:", e);
   }
 }
