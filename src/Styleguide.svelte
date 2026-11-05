@@ -27,6 +27,7 @@
   import { notify } from "$lib/notices.svelte";
   import { pairingMinutesLeft } from "$lib/components/agent-panel";
   import EssayBrowser from "$lib/components/EssayBrowser.svelte";
+  import EssayReader from "$lib/components/EssayReader.svelte";
   import ToolbarSpecimen from "./styleguide/ToolbarSpecimen.svelte";
   import ShellSpecimen from "./styleguide/ShellSpecimen.svelte";
   import SiteSpecimen from "./styleguide/SiteSpecimen.svelte";
@@ -335,6 +336,24 @@
       <ActorStack actors={fx.manyActors} />
       <ActorStack actors={[fx.unattributed, fx.agents[0]]} />
     </div>
+  </section>
+
+  <section id="essay-reader">
+    <h2>Essay reader</h2>
+    <p class="sg__note">A finished essay for someone reading it: title, purpose and paragraphs, with none of the writer's tools. A read-only essay shows this.</p>
+    {#snippet essayReader()}
+    <EssayReader
+      reading={{
+        title: "On small democracy",
+        purpose: "What groups of a few dozen people can decide for themselves.",
+        paragraphs: [
+          { id: "p1", body: "Most decisions that shape a life are made in small rooms." },
+          { id: "p2", body: "A group that keeps its own record can **check** what it decided, and [why](https://example.org)." },
+        ],
+      }}
+    />
+    {/snippet}
+    {@render gated(essayReader)}
   </section>
 
   <section id="essay-browser">

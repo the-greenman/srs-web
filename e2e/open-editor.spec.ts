@@ -30,14 +30,20 @@ for (const name of EXAMPLES)
   test(`editor=essay opens ${name} read-only in the essay editor`, async ({ page }) => {
     await page.goto(`/?open=${await example(page, name)}&editor=essay`);
     await expect(page.locator(".essay-shell__page")).toBeVisible({ timeout: 20000 });
-    await expect(page.locator(".essay-shell__page")).toHaveAttribute("inert", "");
+    await expect(page.getByTestId("essay-reader")).toBeVisible();
     await expect(page.getByTestId("read-only-note")).toBeVisible();
+    // A reader's page: none of the writer's tools (#716).
+    await expect(page.locator(".essay-reader__paragraph").first()).toBeVisible();
+    await expect(page.locator(".block-stack__item")).toHaveCount(0);
+    await expect(page.locator(".count")).toHaveCount(0);
+    await expect(page.getByTestId("rail")).toHaveCount(0);
     await expect(page.getByTestId("package-upgrade-notice")).toHaveCount(0);
     await expect(page.getByTestId("save-document")).toHaveCount(0);
     await openMenu(page, "Document");
     await expect(page.getByTestId("save-copy")).toBeVisible();
     await expect(page.getByTestId("new-document")).toHaveCount(0);
     await expect(page.getByTestId("copy-document")).toHaveCount(0);
+    await expect(page.getByTestId("export-snapshot")).toHaveCount(0);
     expect(new URL(page.url()).search).toBe("");
   });
 
