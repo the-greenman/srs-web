@@ -64,5 +64,6 @@ describe.skipIf(!haveBindings)("upgrade an editor's outdated package on the real
     expect(() => newEssay(repo, "First")).not.toThrow();
     // essay depends on comments 1.1.0 since 1.8.0: the upgrade installed it first (srs-web#591)
     expect(listTypes(repo).some((t: { id: string }) => t.id === "11cd0a5f-8c3f-4ec2-a055-5b9f56c5b0bc")).toBe(true);
-  });
+    // Real engine load plus upgrade takes about 5s, the default limit; give it margin (srs-web#736).
+  }, 30_000);
 });
