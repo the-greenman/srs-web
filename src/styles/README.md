@@ -68,6 +68,7 @@ src/styles/
     diagnostics.css    .diag         validation panel, grouped rows and the collapsible notice variant (#441)
     notice.css         .notice       the inline Notice (#441)
     toast.css          .toast        the toast host and rows (#441)
+    load-progress.css  .load-progress  how far along an open is (#737)
     lifecycle.css      .lifecycle    status transition control
     icon-button.css    .icon-btn     the one small icon control (Lucide)
     popover.css        .popover      the one floating surface (native top-layer popover)

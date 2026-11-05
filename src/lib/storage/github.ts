@@ -1,3 +1,4 @@
+import { reportLoad } from "../load-progress.svelte.js";
 import {
   StorageAuthenticationError,
   StorageCancelledError,
@@ -324,6 +325,7 @@ export class GitHubRepoTreeHandle implements DocumentHandle, GitBranchAware, Rep
   /** Read every file under this handle's directory into memory, retaining the base state
    * so a subsequent commitTree() can diff against it. */
   async readTree(): Promise<Record<string, Uint8Array>> {
+    reportLoad("finding");
     const base = await readBranchBase(this.location, this.token());
     this.base = base;
     const shas = Object.values(base.entries).map((entry) => entry.sha);

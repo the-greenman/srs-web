@@ -1,3 +1,4 @@
+import { advanceLoad, reportLoad } from "../load-progress.svelte.js";
 import {
   StorageAuthenticationError,
   StorageCancelledError,
@@ -514,17 +515,20 @@ export class DropboxProvider implements StorageProvider {
       throw new StorageFetchError("Dropbox did not return a usable repository path.");
     }
     const root = entry.path;
+    reportLoad("finding");
     const listed: DropboxMetadata[] = [];
     let response = await this.api<DropboxListResponse>("/files/list_folder", {
       path: root,
       recursive: true,
     });
     listed.push(...response.entries);
+    advanceLoad(listed.length);
     while (response.has_more) {
       response = await this.api<DropboxListResponse>("/files/list_folder/continue", {
         cursor: response.cursor,
       });
       listed.push(...response.entries);
+      advanceLoad(listed.length);
     }
 
     const prefix = root.toLowerCase();
@@ -544,6 +548,8 @@ export class DropboxProvider implements StorageProvider {
       wanted.push({ lower: item.path_lower, relative, rev: item.rev ?? null });
     }
 
+    reportLoad("reading", wanted.length);
+    let done = 0;
     const base: Record<string, TreeBaseFile> = {};
     const results = await settleBounded(wanted, async (file) => {
       const download = await fetch(`${CONTENT}/files/download`, {
@@ -562,6 +568,7 @@ export class DropboxProvider implements StorageProvider {
         bytes: new Uint8Array(await download.arrayBuffer()),
         rev: file.rev,
       };
+      advanceLoad(++done);
     });
     const failure = results.find((r): r is PromiseRejectedResult => r.status === "rejected");
     if (failure) throw failure.reason;

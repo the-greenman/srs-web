@@ -26,6 +26,7 @@
   import Input from "./Input.svelte";
   import SrsMark from "./SrsMark.svelte";
   import SourceRow from "./SourceRow.svelte";
+  import { endLoad, loadProgress } from "../load-progress.svelte.js";
   import Cloud from "@lucide/svelte/icons/cloud";
   import FolderOpen from "@lucide/svelte/icons/folder-open";
   import GitBranch from "@lucide/svelte/icons/git-branch";
@@ -47,6 +48,8 @@
   const BROWSE_LABEL: Record<BrowseId, string> = { dropbox: "Dropbox", github: "GitHub" };
 
   let busy = $state<Busy | null>(null);
+  /** A remote row connects first, then opens what was picked. */
+  const remoteBusyLabel = $derived(loadProgress.phase ? "Opening…" : "Connecting…");
   let error = $state<string | null>(null);
   let url = $state("");
   let urlValid = $state(false);
@@ -157,6 +160,7 @@
       }
     } finally {
       busy = null;
+      endLoad(); // a read that failed before reaching onOpen
     }
   }
 
@@ -326,7 +330,7 @@
       icon={GitBranch}
       label="GitHub"
       busy={busy === "github"}
-      busyLabel="Connecting…"
+      busyLabel={remoteBusyLabel}
       data-testid="source-github"
       unavailable={!providers.github?.configured}
       disabled={busy !== null}
@@ -338,7 +342,7 @@
       icon={Cloud}
       label="Dropbox"
       busy={busy === "dropbox"}
-      busyLabel="Connecting…"
+      busyLabel={remoteBusyLabel}
       data-testid="source-dropbox"
       unavailable={!providers.dropbox.configured}
       disabled={busy !== null}
@@ -350,7 +354,7 @@
       icon={HardDrive}
       label="Google Drive"
       busy={busy === "google-drive"}
-      busyLabel="Connecting…"
+      busyLabel={remoteBusyLabel}
       data-testid="source-google-drive"
       unavailable={!providers.googleDrive.configured}
       disabled={busy !== null}

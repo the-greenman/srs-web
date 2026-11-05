@@ -1,3 +1,4 @@
+import { loadProgress } from "../src/lib/load-progress.svelte.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DropboxProvider, DropboxTreeHandle } from "../src/lib/storage/dropbox.js";
 import { StorageConflictError } from "../src/lib/storage/errors.js";
@@ -100,6 +101,18 @@ describe("DropboxProvider.list repo detection", () => {
 });
 
 describe("DropboxProvider.openTree", () => {
+  it("reports every file it downloads (srs-web#737)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      dropboxFetch({ "manifest.json": "{}", "records/Board.srsj": "rec" }, [
+        file("manifest.json", "/org"),
+        file("Board.srsj", "/org/Records"),
+      ])
+    );
+    await signedIn().openTree(repoEntry);
+    expect({ ...loadProgress }).toEqual({ phase: "reading", done: 2, total: 2 });
+  });
+
   it("reads the folder recursively into dir-relative paths, skipping .git/node_modules", async () => {
     const fetchMock = dropboxFetch({ "manifest.json": "{}", "records/Board.srsj": "rec" }, [
       file("manifest.json", "/org"),

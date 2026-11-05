@@ -1,3 +1,4 @@
+import { loadProgress } from "../src/lib/load-progress.svelte.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { StorageConflictError, StorageFetchError } from "../src/lib/storage/errors.js";
 import {
@@ -262,6 +263,17 @@ describe("git-data: readBlob / readBlobs", () => {
     for (const [sha, text] of shaToText) {
       expect(new TextDecoder().decode(result.get(sha))).toBe(text);
     }
+  });
+
+  it("reports each distinct blob it reads (srs-web#737)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(jsonResponse({ content: btoa("x"), encoding: "base64" }))
+      )
+    );
+    await readBlobs(rootLocation, "token", ["sha-1", "sha-2", "sha-1"]);
+    expect({ ...loadProgress }).toEqual({ phase: "reading", done: 2, total: 2 });
   });
 
   it("threads readBlobs' concurrency parameter into the GraphQL batch worker pool", async () => {
