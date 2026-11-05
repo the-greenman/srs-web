@@ -21,8 +21,8 @@ describe("installedPackages", () => {
     ]);
     const got = installedPackages(repo, pins);
     expect(got).toEqual([
-      { packageId: "a", name: "essay", bundled: "1.7.0", installed: "1.5.0", outdated: true },
-      { packageId: "b", name: "guides", bundled: "2.0.0", installed: "2.0.0", outdated: false },
+      { packageId: "a", name: "essay", bundled: "1.7.0", installed: "1.5.0", outdated: true, upgradable: false },
+      { packageId: "b", name: "guides", bundled: "2.0.0", installed: "2.0.0", outdated: false, upgradable: false },
     ]);
     expect(upgradeNoticeText(got.filter((p) => p.outdated))).toBe("essay 1.7.0 is available (installed 1.5.0).");
   });

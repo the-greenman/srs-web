@@ -4,7 +4,7 @@
  * for the bundled version, never a comparison here (ADR-001). A package that is not installed is not
  * listed (installing is the editor Install path); one in another compatibility band is not offered.
  */
-import { PINNED } from "./packages/bundles.js";
+import { PINNED, bundledPackage } from "./packages/bundles.js";
 import {
   REQUIREMENT_VERSION_TOO_LOW,
   type SrsRepository,
@@ -20,6 +20,8 @@ export interface InstalledPackage {
   installed: string;
   /** The installed package is older than the bundle (the core says `version-too-low`). */
   outdated: boolean;
+  /** Its bundle is built into the app. ponytail: a catalog-only package shows as outdated but can't upgrade; add when one has a second published version. */
+  upgradable: boolean;
 }
 
 export function installedPackages(
@@ -44,13 +46,14 @@ export function installedPackages(
       bundled: p.version,
       installed: installed || "unknown",
       outdated,
+      upgradable: !!bundledPackage(p.packageId),
     });
   });
   return out;
 }
 
 export const outdatedPackages = (repo: SrsRepository): InstalledPackage[] =>
-  installedPackages(repo).filter((p) => p.outdated);
+  installedPackages(repo).filter((p) => p.outdated && p.upgradable);
 
 /** The pinned notice text for outdated packages ("essay 1.7.0 is available (installed 1.5.0)."). */
 export const upgradeNoticeText = (outdated: InstalledPackage[]): string =>

@@ -38,3 +38,5 @@ e2e/fixtures/_*.srsj
 
 # pinned package bundles — fetched by scripts/ensure-packages.mjs
 src/lib/packages/*.srspkg
+src/lib/packages/catalog.json
+public/packages/

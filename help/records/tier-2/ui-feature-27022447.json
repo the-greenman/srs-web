@@ -1,0 +1,22 @@
+{
+  "instanceId": "27022447-220c-4f78-a645-81f1ea9b1b33",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay.packages",
+    "placement": "concept",
+    "title": "Packages",
+    "summary": "A package adds kinds of record to your essay. Document > Packages… lists the published ones and what each is for. Install adds one with anything it needs, and you can use it straight away.",
+    "ai_guidance": "When the essay needs a kind of record it doesn't have, call ui_packages. If a published package has it, tell the writer why, then call ui_request_package. The writer confirms on screen; you can't install it yourself. Call ui_packages to see how it ended. Don't offer a package the writer has no use for."
+  },
+  "createdAt": "2026-11-05T13:30:09.880209203+00:00",
+  "updatedAt": "2026-11-05T13:30:09.880212076+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

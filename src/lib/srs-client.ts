@@ -587,6 +587,12 @@ export function renderMarkdown(md: string): string {
   return wasm(() => wasmFree.renderMarkdown(md));
 }
 
+/** Parse an ext:registry catalog; the core owns the format. */
+export function parseRegistry(catalogJson: string): { entries: unknown[] } {
+  requireWasm();
+  return wasm(() => wasmFree.parse_registry(catalogJson));
+}
+
 function requireWasm(): SrsRepositoryConstructor {
   if (wasmModule === null) {
     throw new Error("srs-bindings WASM not initialised — call initWasm() first");
@@ -1660,24 +1666,29 @@ export function installPackageBundle(
  * unsatisfied dependency throws before that bundle writes anything. A re-install of an
  * identical bundle is a core no-op. Earlier bundles stay installed if a later one throws.
  */
-export function installBundles(repo: SrsRepository, packageIds: string[]): InstallPackageResult[] {
-  return installWithDependencies(repo, packageIds, new Set());
+export function installBundles(
+  repo: SrsRepository,
+  packageIds: string[],
+  bundleOf: (packageId: string) => string | undefined = bundledPackage
+): InstallPackageResult[] {
+  return installWithDependencies(repo, packageIds, new Set(), bundleOf);
 }
 
 /** `installBundles`, first installing each bundle's missing pinned dependencies; `seen` stops a cycle. */
 function installWithDependencies(
   repo: SrsRepository,
   packageIds: string[],
-  seen: Set<string>
+  seen: Set<string>,
+  bundleOf: (packageId: string) => string | undefined
 ): InstallPackageResult[] {
   return [...new Set(packageIds)].flatMap((packageId) => {
     if (seen.has(packageId)) return [];
     seen.add(packageId);
-    const text = bundledPackage(packageId);
+    const text = bundleOf(packageId);
     if (!text) throw new Error(`No bundled package ${packageId}`);
     let outcomes = bundleRequirements(repo, text);
-    const missing = missingPinned(outcomes);
-    const deps = installWithDependencies(repo, missing, seen);
+    const missing = missingPinned(outcomes, bundleOf);
+    const deps = installWithDependencies(repo, missing, seen, bundleOf);
     if (missing.length) outcomes = bundleRequirements(repo, text); // re-checked only when something was installed
     const unmet = outcomes.find((o) => !o.satisfied);
     if (unmet) {
@@ -1688,7 +1699,7 @@ function installWithDependencies(
 }
 
 /** The core's outcome for each requirement a bundle declares (`check_package_requirements` reads the bundle text). */
-function bundleRequirements(repo: SrsRepository, bundleText: string): RequirementOutcome[] {
+export function bundleRequirements(repo: SrsRepository, bundleText: string): RequirementOutcome[] {
   const check = repo.check_package_requirements(bundleText);
   if (!Array.isArray(check?.dependencies)) throw new Error("malformed requirement check result");
   return check.dependencies as RequirementOutcome[];
@@ -1699,14 +1710,14 @@ function bundleRequirements(repo: SrsRepository, bundleText: string): Requiremen
  * so a package never waits on a dependency the editor ships (essay 1.8.0 needs comments 1.1.0,
  * srs-web#591). Outdated or incompatible ones are left to the core's refusal.
  */
-function missingPinned(outcomes: RequirementOutcome[]): string[] {
+function missingPinned(
+  outcomes: RequirementOutcome[],
+  bundleOf: (packageId: string) => string | undefined
+): string[] {
   return outcomes
     .filter(
       (o) =>
-        !o.satisfied &&
-        o.reason === REQUIREMENT_MISSING &&
-        o.packageId &&
-        bundledPackage(o.packageId)
+        !o.satisfied && o.reason === REQUIREMENT_MISSING && o.packageId && bundleOf(o.packageId)
     )
     .map((o) => o.packageId as string);
 }
@@ -1812,7 +1823,7 @@ export function upgradeBundles(
     if (!text) throw new Error(`No bundled package ${packageId}`);
     // A dependency the new version adds is installed AFTER the upgrade (the core only warns while it
     // is missing), so an upgrade that throws leaves nothing written; a dry run only names it.
-    const deps = missingPinned(bundleRequirements(repo, text));
+    const deps = missingPinned(bundleRequirements(repo, text), bundledPackage);
     const plan = upgradePackageBundle(repo, text, {
       dryRun: options.dryRun,
       priorBundles: priorBundles(repo, packageId),
