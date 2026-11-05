@@ -197,6 +197,7 @@ test("opening a slow folder shows the file count, then clears it (srs-web#737)",
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page.getByTestId("source-local-folder").click();
   await expect(page.getByTestId("load-progress")).toContainText("Reading files…");
+  await expect(page.getByTestId("load-progress-status")).toHaveText("Reading files…");
   await expect(page.getByTestId("load-progress-count")).toHaveText(/^\d+ of \d+$/);
   await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 30000 });
   await expect(page.getByTestId("load-progress")).toHaveCount(0);

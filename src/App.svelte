@@ -1551,5 +1551,5 @@
   />
 {/if}
 
-{#if loadProgress.phase}<LoadProgress phase={loadProgress.phase} done={loadProgress.done} total={loadProgress.total} />{/if}
+<LoadProgress phase={loadProgress.phase} done={loadProgress.done} total={loadProgress.total} />
 {#if spot}{#key spot}<UiSpot target={spot.target} message={spot.message} onclose={() => (spot = null)} />{/key}{/if}

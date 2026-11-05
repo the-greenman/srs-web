@@ -1,8 +1,9 @@
 <!--
   LoadProgress — how far along opening a repository is (srs-web#737). A native popover="manual"
   (top layer: above the source browser's modal, no z-index), bottom-centre of the viewport, faded in
-  after a delay so a quick open never flashes it. `inline` draws it in flow for /styleguide. The phase
-  is announced once (role="status"); the count is not, so a screen reader is not read every file.
+  after a delay so a quick open never flashes it. `inline` draws it in flow for /styleguide. Mounted
+  always, with no phase when idle: a live region must exist before its text changes to be announced.
+  Only the phase is announced, so a screen reader is not read every file.
   Wraps .load-progress (load-progress.css) on the .toast surface; tokens `--toast-*`.
 -->
 <script lang="ts">
@@ -13,13 +14,14 @@
     done = 0,
     total = 0,
     inline = false,
-  }: { phase: LoadPhase; done?: number; total?: number; inline?: boolean } = $props();
+  }: { phase: LoadPhase | null; done?: number; total?: number; inline?: boolean } = $props();
 
   const LABELS: Record<LoadPhase, string> = {
     finding: 'Finding files…',
     reading: 'Reading files…',
     preparing: 'Preparing repository…',
   };
+  const label = $derived(phase ? LABELS[phase] : '');
   const count = $derived(
     phase === 'reading'
       ? `${done.toLocaleString()} of ${total.toLocaleString()}`
@@ -36,12 +38,12 @@
 
 {#snippet row()}
   <div class="toast load-progress__row">
-    <span role="status" data-part="label">{LABELS[phase]}</span>
+    <span data-part="label">{label}</span>
     <span aria-hidden="true" data-part="count" data-testid="load-progress-count">{count}</span>
     {#if phase === 'reading'}
-      <progress aria-label={LABELS[phase]} value={done} max={total || 1}></progress>
+      <progress aria-label={label} value={done} max={total || 1}></progress>
     {:else}
-      <progress aria-label={LABELS[phase]}></progress>
+      <progress aria-label={label}></progress>
     {/if}
   </div>
 {/snippet}
@@ -49,5 +51,8 @@
 {#if inline}
   <div class="load-progress" data-testid="load-progress">{@render row()}</div>
 {:else}
-  <div class="load-progress" popover="manual" data-testid="load-progress" use:show>{@render row()}</div>
+  <span class="sr-only" role="status" data-testid="load-progress-status">{label}</span>
+  {#if phase}
+    <div class="load-progress" popover="manual" data-testid="load-progress" use:show>{@render row()}</div>
+  {/if}
 {/if}

@@ -17,7 +17,10 @@ export function reportLoad(phase: LoadPhase | null, total = 0): void {
   loadProgress.total = total;
 }
 
-/** Ignored once the load has ended: one failed read rejects the open while other reads still finish. */
+/**
+ * Ignored once the load has ended: one failed read rejects the open while other reads still finish.
+ * ponytail: a new open started in that window can see a stray count; a per-load token if it ever shows.
+ */
 export function advanceLoad(done: number): void {
   if (loadProgress.phase !== null) loadProgress.done = done;
 }
