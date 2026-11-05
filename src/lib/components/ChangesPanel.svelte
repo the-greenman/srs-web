@@ -2,16 +2,22 @@
   ChangesPanel — what changed since the last save, grouped Added / Changed / Removed, each entry
   with its title, kind and (when the engine knows) who made it. Presentation only: the diff comes
   from the engine's `changes` read (srs-rust#1522) via $lib/document-changes. `onOpen` is called
-  with an entry's id when it names a record, so the host decides how to show it. Wraps .changes*
+  with an entry's id when it names a record the host can show (`canOpen`, default all); any other
+  entry is plain text, never a link that does nothing. Wraps .changes*
   (src/styles/components/changes-panel.css). srs-web#587
 -->
 <script lang="ts">
-  import type { ChangeItem, DocumentChanges } from '../document-changes.js';
+  import type { DocumentChanges } from '../document-changes.js';
 
   let {
     changes,
     onOpen,
-  }: { changes: DocumentChanges; onOpen?: (item: ChangeItem) => void } = $props();
+    canOpen = () => true,
+  }: {
+    changes: DocumentChanges;
+    onOpen?: (id: string) => void;
+    canOpen?: (id: string) => boolean;
+  } = $props();
 </script>
 
 <section class="changes" data-testid="changes-panel" aria-label="Unsaved changes">
@@ -24,8 +30,8 @@
         <ul class="changes__list">
           {#each group.items as item, i (item.id ?? `${item.kind}-${i}`)}
             <li class="changes__item" data-kind={item.kind}>
-              {#if item.id && onOpen && group.key !== 'removed' && item.kind !== 'container'}
-                <button type="button" class="changes__link" onclick={() => onOpen(item)}>{item.title}</button>
+              {#if item.id && onOpen && group.key !== 'removed' && item.kind !== 'container' && canOpen(item.id)}
+                <button type="button" class="changes__link" onclick={() => onOpen(item.id!)}>{item.title}</button>
               {:else}
                 <span class="changes__title">{item.title}</span>
               {/if}

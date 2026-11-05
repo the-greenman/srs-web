@@ -242,7 +242,7 @@
         {#snippet bar()}
           <Toolbar title={documentTitle} actions={barActions} groups={BASE_GROUPS}>
             {#snippet status()}
-              {#if documentDirty}<UnsavedStatus />{/if}
+              {#if documentDirty}<UnsavedStatus onOpen={open} canOpen={(id) => !!model?.byId.has(id)} />{/if}
             {/snippet}
             {#snippet trail()}<InspectorTrigger />{/snippet}
           </Toolbar>

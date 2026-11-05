@@ -969,7 +969,7 @@
       <Breadcrumb items={activeView === "migrations" ? [{ label: repoName }, { label: "Migrations" }] : governanceCrumbItems()} />
     {/snippet}
     {#snippet status()}
-      {#if documentDirty}<UnsavedStatus />{/if}
+      {#if documentDirty}<UnsavedStatus onOpen={(id) => { activeView = "governance"; navigateToRecord(id); }} canOpen={(id) => formMode === null && !!containerIdForRecord(id)} />{/if}
     {/snippet}
     {#snippet trail()}<InspectorTrigger />{/snippet}
   </Toolbar>
