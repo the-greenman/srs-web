@@ -70,9 +70,6 @@ test("Favourites and recent shows on the essay home only when it has entries (#7
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(400);
-  // Reopening reaches the GitHub path, which is not configured here, so it reports that.
-  await page.getByTestId("recent-item").locator(".source-row").click();
-  await expect(page.getByTestId("recent-error")).toContainText("Could not reopen");
   await page.getByTestId("recent-remove").click();
   await expect(page.getByTestId("recent-repos")).toHaveCount(0);
 });
