@@ -1728,9 +1728,9 @@ describe("core relative outline ops (srs-rust#1156)", () => {
     );
   });
 
-  it("maps the WASM layer's bare-string rejections to Error, keeping the core's message", () => {
+  it("passes the WASM layer's Error rejections through, keeping message and code (ADR-053)", () => {
     const reject = () => {
-      throw "arrangement-target: cannot move into own run";
+      throw Object.assign(new Error("arrangement-target: cannot move into own run"), { code: "arrangement-target" });
     };
     const repo = mockRepo({
       move_container_member_relative: reject,
