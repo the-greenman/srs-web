@@ -14,6 +14,7 @@
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import AgentFeed from "$lib/components/AgentFeed.svelte";
   import Count from "$lib/components/Count.svelte";
+  import EssayReader from "$lib/components/EssayReader.svelte";
   import AgentPresence from "$lib/components/AgentPresence.svelte";
   import { verb } from "$lib/agent-activity.js";
   import { relativeTime } from "$lib/relative-time.js";
@@ -77,6 +78,7 @@
     shiftEntry,
     removeAttachment,
     linkReference,
+    quoteToParagraph,
     referenceText,
     removeReference,
     repoBytes,
@@ -84,10 +86,11 @@
     setTitle,
     transfer,
   } from "./essay-document.js";
-  import { essayMarkdown, essayReferences, essaySnapshot, essayWriteGuard } from "./essay-document.js";
+  import { essayMarkdown, essayReading, essayReferences, essaySnapshot, essayWriteGuard } from "./essay-document.js";
   import { downloadText, triggerDownload } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { browseEssays } from "./essay-browse.js";
+  import { locatorFor } from "./quote.js";
   import { domainMap, listBoundaries, setBoundary } from "./essay-domain.js";
   import { formatAddress, parseAddress, pushAddress } from "$lib/address.js";
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
@@ -128,7 +131,7 @@
     onExportSrsj?: () => void;
     /** Set when the repository was opened read-only: no repair writes on load. */
     readOnlyReason?: string | null;
-    /** The document is read-only (opened from a link, srs-web#699): inert page, no new/copy, Save a copy… */
+    /** The document is read-only (opened from a link, srs-web#699): the reader view, no new/copy, Save a copy… */
     readOnly?: boolean;
     repo: SrsRepository;
     repoName: string;
@@ -329,6 +332,20 @@
       error = msg(e);
     }
   };
+  /** Quote a passage selected in a pinned reference to a paragraph (srs-web#525). */
+  const quote = (itemId: string, text: string, paragraphId: string) => {
+    const item = pinned.find((p) => p.id === itemId);
+    if (!model || !item) return;
+    run(() => {
+      quoteToParagraph(repo, model!, {
+        sourceId: itemId,
+        paragraphId,
+        text,
+        sourceTitle: item.title,
+        locator: locatorFor(item.text, text),
+      });
+    });
+  };
   /** References pinned from the tray (by instance id, linked or not), then pinned margin attachments. */
   const pinnedRefs = $derived((model?.references ?? []).filter((r) => pinnedIds.includes(r.id)));
   const pinnedNotes = $derived((model?.notes ?? []).filter((n) => pinnedIds.includes(n.id)));
@@ -508,6 +525,10 @@
     el?.scrollIntoView?.({ block: "center" });
   }
 
+  /** A paragraph of this essay with its body showing: the only entries of the changes list a click can focus. */
+  const canFocusParagraph = (id: string): boolean =>
+    !!model?.entries.some((e) => e.instanceId === id) && !hidden.has(id) && !inherited.has(id);
+
   /** Arrow past the first/last line: the nearest paragraph with a body editor (not hidden), in zoomed order. */
   function navigate(id: string, dir: "prev" | "next") {
     const at = items.findIndex((i) => i.id === id);
@@ -544,6 +565,7 @@
         reload();
       } else notice = "That link points to an essay that is not here; showing the current one.";
     }
+    if (readOnly) return; // the reader shows the whole essay: no zoom, threads or focus
     const want = a.zoomId ?? a.paragraphId;
     if (want && !allItems.some((i) => i.id === want)) notice ??= "That paragraph is no longer here; showing the whole document.";
     zoomId = a.zoomId && allItems.some((i) => i.id === a.zoomId) ? a.zoomId : null;
@@ -754,8 +776,14 @@
   const createEssay = () => openNew(() => newEssay(repo, "Untitled essay"));
   const copyDocument = () => openNew(() => copyEssay(repo, model!));
   let agentsOpen = $state(true);
+  /** A reader's page has no Agents panel until they ask for one (srs-web#716). */
+  let agentsAsked = $state(false);
+  const showAgents = $derived(!!agentPanel && (!readOnly || agentsAsked));
+  /** No inspector column until there is something in it. A reader's only panels are the essay list and Agents. */
+  const showRail = $derived(showAgents || (readOnly ? !!model && essays.length > 1 : !!model));
   /** Go > Agents…: open the inspector (a drawer when narrow), expand the Agents panel, focus its first control. */
   async function openAgents() {
+    agentsAsked = true;
     shell.inspectorOpen = true;
     agentsOpen = true;
     await tick();
@@ -797,14 +825,14 @@
         onsavecopy: readOnly ? onSaveCopy : undefined,
         oncopy: model && !readOnly ? copyDocument : undefined,
         onhelp: () => { helpOpen = true; },
-        oncomments: () => (openThreads = toggleAll(openThreads, shownIds)),
+        oncomments: readOnly ? undefined : () => (openThreads = toggleAll(openThreads, shownIds)),
         onsave: onSave,
         onexport: onExport,
         onexportmd: model ? exportMarkdown : undefined,
         oncopymd: model ? () => copyEssayAs(false) : undefined,
         oncopyhtml: model ? () => copyEssayAs(true) : undefined,
-        onsnapshot: model?.canSnapshot ? exportSnapshot : undefined,
-        onreferences: model?.canSnapshot ? exportReferences : undefined,
+        onsnapshot: model?.canSnapshot && !readOnly ? exportSnapshot : undefined,
+        onreferences: model?.canSnapshot && !readOnly ? exportReferences : undefined,
         onexplorer: onOpenExplorer,
         onopenagents: agentPanel ? openAgents : undefined,
         oneditorhelp: help.length ? () => { guideOpen = true; } : undefined,
@@ -820,7 +848,7 @@
 <svelte:window
   onkeydown={(e) => {
     // Typing inside a paragraph keeps the browser's own text undo; the history takes over everywhere else.
-    if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "z" && !(e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]:not([data-pristine])")) {
+    if (!readOnly && (e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "z" && !(e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]:not([data-pristine])")) {
       e.preventDefault();
       void stepHistory(e.shiftKey);
     }
@@ -862,7 +890,7 @@
           Writing as {actor.name ?? actor.id}{actor.id.startsWith("local:") ? " (this browser)" : ""}
         </span>
       {/if}
-      {#if documentDirty}<UnsavedStatus />{/if}
+      {#if documentDirty}<UnsavedStatus onOpen={(id) => void focusParagraph(id)} canOpen={canFocusParagraph} />{/if}
     {/snippet}
   </Toolbar>
   {/snippet}
@@ -903,13 +931,15 @@
       <p>No essay in this repository yet.</p>
       {#if !readOnly}<Button variant="primary" onclick={createEssay}>New essay</Button>{/if}
     </div>
+  {:else if readOnly}
+    <EssayReader reading={essayReading(model)} />
   {:else}
       <!-- A file dropped past the paragraphs goes to the references pool, linked to nothing. -->
       <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
       <article
         class="essay-shell__page"
         aria-label={model.title}
-        inert={needsName || readOnly}
+        inert={needsName}
         ondragover={poolDrop ? (e) => dropKinds(e) && e.preventDefault() : undefined}
         ondrop={poolDrop
           ? (e) => {
@@ -1019,8 +1049,8 @@
 {#snippet inspectorPane()}
     <Inspector label="Panels">
       <div class="panel-rail" data-testid="rail">
-{#if model}
-        <Panel inert={readOnly} title="Layers" data-feature="essay.layers" persistKey="essay.layers" collapseWhen={NARROW}>
+{#if model && !readOnly}
+        <Panel title="Layers" data-feature="essay.layers" persistKey="essay.layers" collapseWhen={NARROW}>
           <LayersPanel
             {layers}
             candrop={essayDrop}
@@ -1032,7 +1062,7 @@
             onkey={onKey}
           />
         </Panel>
-        <Panel inert={readOnly} title="Draft" aside={draftItems.length} persistKey="essay.draft" collapseWhen={NARROW}>
+        <Panel title="Draft" aside={draftItems.length} persistKey="essay.draft" collapseWhen={NARROW}>
           <DraftTray
             items={draftItems}
             available={!!model.draftContainerId}
@@ -1042,18 +1072,20 @@
             onputback={putBack}
           />
         </Panel>
-        <Panel inert={readOnly} title="Bin" aside={binItems.length} persistKey="essay.bin" collapseWhen={NARROW}>
+        <Panel title="Bin" aside={binItems.length} persistKey="essay.bin" collapseWhen={NARROW}>
           <BinTray
             items={binItems}
             onrestore={restore}
             onforget={forget}
           />
         </Panel>
-        {#if essays.length > 1}
+{/if}
+{#if model && essays.length > 1}
           <Panel title="Essays" aside={essays.length} persistKey="essay.browse" collapseWhen={NARROW}>
             <EssayBrowser groups={browsed} currentId={essayId} onopen={openEssay} />
           </Panel>
-        {/if}
+{/if}
+{#if model && !readOnly}
         {#if boundaries.length || domain}
           <Panel title="Domain" aside={domain ? domain.problems.touched.length + "/" + (domain.problems.touched.length + domain.problems.untouched.length) : undefined} persistKey="essay.domain" collapseWhen={NARROW}>
             <DomainMap
@@ -1070,7 +1102,7 @@
           </Panel>
         {/if}
         {#if model.referencesContainerId}
-          <Panel inert={readOnly} title="References" data-feature="essay.sources" aside={referenceItems.length} persistKey="essay.references" collapseWhen={NARROW}>
+          <Panel title="References" data-feature="essay.sources" aside={referenceItems.length} persistKey="essay.references" collapseWhen={NARROW}>
             <ReferencesTray
               items={referenceItems}
               paragraphs={paragraphChoices}
@@ -1088,18 +1120,23 @@
             />
           </Panel>
         {/if}
-        <PinnedPane items={pinned} onunpin={togglePin} onremove={(id) => run(() => removeAttachment(repo, id))} />
+        <PinnedPane
+          items={pinned}
+          onunpin={togglePin}
+          onremove={(id) => run(() => removeAttachment(repo, id))}
+          paragraphs={readOnly || !model.referencesContainerId ? [] : paragraphChoices}
+          onquote={quote}
+        />
 {/if}
-        {#if agentPanel}{@render agents()}{/if}
+        {#if showAgents}{@render agents()}{/if}
       </div>
     </Inspector>
 {/snippet}
 
-<!-- No inspector column until there is something in it (an essay, or the agent panel). -->
-<AppShell {shell} main={mainPane} inspector={model || agentPanel ? inspectorPane : undefined} inspectorLabel="Panels" />
+<AppShell {shell} main={mainPane} inspector={showRail ? inspectorPane : undefined} inspectorLabel="Panels" />
 
 {#snippet agents()}
-  <Panel title="Agents" data-feature="shell.connect-ai" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey="essay.agents" collapseWhen={NARROW} bind:open={agentsOpen}>
+  <Panel title="Agents" data-feature="shell.connect-ai" aside={agentStatus ? `${agentStatus.connected}/${agentStatus.total}` : undefined} persistKey={readOnly ? undefined : "essay.agents"} collapseWhen={NARROW} bind:open={agentsOpen}>
     {#snippet actions()}{#if agentStatus}<AgentPresence status={agentStatus} />{/if}{/snippet}
     {#if model}
       <Button size="sm" variant="mono" data-testid="copy-for-agent" onclick={() => copyForAgent(zoomId ?? undefined)}>Copy essay handoff</Button>

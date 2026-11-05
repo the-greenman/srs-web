@@ -13,13 +13,14 @@
     ActionBar, ActionMenu, HelpDialog, UiSpot, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, Count, CommentThread, LinkProposals, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, LinkedRecord, RemedyCard, MarkdownHelp, MarkdownText, MethodBoard, AgentPanel, McpConnection, ChangesPanel, UnsavedStatus, Panel, ProblemCard, AnnotationMargin, PinnedPane, ReferencesTray, NotesTray, Select, Tag,
-    TagChip, Textarea, Notice, SectionHeader, SourceRow, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
+    TagChip, Textarea, Notice, LoadProgress, SectionHeader, SourceRow, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
   } from "$lib/components";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
   import InstallPlan from "$lib/components/InstallPlan.svelte";
   import Landing from "$lib/components/Landing.svelte";
   import EssayHome from "$lib/components/EssayHome.svelte";
+  import RecentRepos from "$lib/components/RecentRepos.svelte";
   import LandingFrame from "$lib/components/LandingFrame.svelte";
   import FolderOpen from "@lucide/svelte/icons/folder-open";
   import GitBranch from "@lucide/svelte/icons/git-branch";
@@ -28,6 +29,7 @@
   import { notify } from "$lib/notices.svelte";
   import { pairingMinutesLeft } from "$lib/components/agent-panel";
   import EssayBrowser from "$lib/components/EssayBrowser.svelte";
+  import EssayReader from "$lib/components/EssayReader.svelte";
   import ToolbarSpecimen from "./styleguide/ToolbarSpecimen.svelte";
   import ShellSpecimen from "./styleguide/ShellSpecimen.svelte";
   import SiteSpecimen from "./styleguide/SiteSpecimen.svelte";
@@ -336,6 +338,24 @@
       <ActorStack actors={fx.manyActors} />
       <ActorStack actors={[fx.unattributed, fx.agents[0]]} />
     </div>
+  </section>
+
+  <section id="essay-reader">
+    <h2>Essay reader</h2>
+    <p class="sg__note">A finished essay for someone reading it: title, purpose and paragraphs, with none of the writer's tools. A read-only essay shows this.</p>
+    {#snippet essayReader()}
+    <EssayReader
+      reading={{
+        title: "On small democracy",
+        purpose: "What groups of a few dozen people can decide for themselves.",
+        paragraphs: [
+          { id: "p1", body: "Most decisions that shape a life are made in small rooms." },
+          { id: "p2", body: "A group that keeps its own record can **check** what it decided, and [why](https://example.org)." },
+        ],
+      }}
+    />
+    {/snippet}
+    {@render gated(essayReader)}
   </section>
 
   <section id="essay-browser">
@@ -782,6 +802,10 @@
       {/snippet}
       {@render gated(essayHome)}
     </div>
+    <h3>Favourites and recent</h3>
+    <div class="sg__landing" data-testid="sg-recent-repos">
+      <RecentRepos recent={fx.recentRepos} onOpenRecent={noop} onToggleStar={noop} onRemoveRecent={noop} />
+    </div>
     <h3>Restore pending</h3>
     <div class="sg__landing" data-testid="sg-landing-restore">
       <Landing providers={fx.landingProviders(true)} onOpen={async () => {}} onOpenUrl={async () => {}} onCreate={async () => {}}>
@@ -808,6 +832,12 @@
     <h2>Notices</h2>
     <p class="sg__note">A toast is a transient event (bottom-centre of the main column; errors are sticky), a Notice is persistent
       state, Diagnostics groups the engine's findings by identical message. Specimens are drawn statically; the button fires the real toast.</p>
+    <h3>Opening a repository</h3>
+    <div class="stack" data-testid="sg-load-progress">
+      <LoadProgress inline phase="finding" done={1204} />
+      <LoadProgress inline phase="reading" done={1234} total={5800} />
+      <LoadProgress inline phase="preparing" />
+    </div>
     <h3>Toast</h3>
     <div class="stack">
       <Toast data-specimen kind="info" text="Saved. Newer changes remain unsaved." testid="specimen-toast-info" />

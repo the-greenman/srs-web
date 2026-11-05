@@ -23,6 +23,7 @@ import type { PairingResponse } from "$lib/mcp/relay-protocol";
 import type { MethodDomain, MethodProblem, MethodRemedy } from "$lib/method/method-document";
 import type { InstalledPackage } from "$lib/package-upgrade";
 import type { ReadItem, ReadPage } from "$lib/read/read-model";
+import type { RecentRepo } from "$lib/recent-repos";
 import { ShellState } from "$lib/shell-context.svelte";
 import type { Actor, SrsRecord, UpgradePackageResult } from "$lib/srs-client";
 
@@ -1561,6 +1562,22 @@ const helpItem = (
   summary: string,
   explanation?: string
 ) => ({ instanceId: featureId, featureId, placement, title, summary, explanation });
+export const recentRepos: RecentRepo[] = [
+  {
+    key: "github:the-greenman/muDemocracy.org:main:muSrs",
+    source: { kind: "github", where: "the-greenman/muDemocracy.org:main:muSrs" },
+    label: "the-greenman/muDemocracy.org",
+    starred: true,
+    lastOpened: "2026-11-05T09:00:00.000Z",
+  },
+  {
+    key: "github:the-greenman/srs-programme:master:",
+    source: { kind: "github", where: "the-greenman/srs-programme:master:" },
+    label: "the-greenman/srs-programme",
+    starred: false,
+    lastOpened: "2026-11-04T09:00:00.000Z",
+  },
+];
 export const essayHomeItems = [
   helpItem(
     "essay-home.human-in-charge",

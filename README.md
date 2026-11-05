@@ -112,8 +112,13 @@ with a **Restore session** banner. Clicking **Restore session** reloads the in-m
 from the cache and resumes editing. Clicking **Discard** or opening a different file clears the
 cache.
 
-The cache is a single `localStorage` slot (`srs-web:working-copy`). It is cleared whenever the
-user opens another file or explicitly discards the session.
+A copy taken from a GitHub repository remembers its source and the commit its work started from, so
+Save goes back to GitHub after a restore. The commit is diffed against that starting commit, never
+the branch head. If the branch has moved, the save is refused and the dialog points to a new branch.
+Other sources ask where to save.
+
+The cache is a single IndexedDB slot holding a `.srs` archive (`browser-cache.ts`). It is cleared
+on a completed save, and whenever the user opens another file or explicitly discards the session.
 
 ## Cloud storage
 

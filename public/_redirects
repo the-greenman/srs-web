@@ -1,0 +1,5 @@
+# Policies live once, on semanticops.com (semanticops.com#60).
+/terms https://semanticops.com/terms 301
+/terms/ https://semanticops.com/terms 301
+/privacy https://semanticops.com/privacy 301
+/privacy/ https://semanticops.com/privacy 301

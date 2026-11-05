@@ -185,4 +185,22 @@ describe.skipIf(!haveBindings)("references pool on the real engine", () => {
     const report = repo.validate();
     expect(report.diagnostics.filter((d: { severity: string }) => d.severity === "error")).toEqual([]);
   });
+
+  it("a source an agent adds reads back as a candidate with its finder; the writer's own does not (srs-web#626)", async () => {
+    const doc = await import("../src/lib/essay/essay-document.js");
+    const repo = (await engine()).SrsRepository.load(fixture());
+    const m = doc.loadEssay(repo, doc.listEssays(repo)[0].id, { repair: true });
+    const agent = { kind: "ai", id: "agent:research-loop", name: "Research loop" };
+    repo.set_actor(JSON.stringify(agent));
+    const [found] = doc.addReferences(repo, m, { urls: ["https://example.org/found-by-agent"] });
+    repo.set_actor(JSON.stringify({ kind: "human", id: "human:ada", name: "Ada" }));
+    const [own] = doc.addReferences(repo, m, { urls: ["https://example.org/mine"] });
+
+    const after = doc.loadEssay(repo, m.essayId);
+    const byId = (id: string) => after.references.find((r) => r.id === id);
+    expect(byId(found)?.foundBy).toEqual(agent);
+    expect(byId(found)?.foundAt).toBeTruthy();
+    expect(byId(found)?.verdict).toBeUndefined();
+    expect(byId(own)?.foundBy).toBeUndefined();
+  });
 });

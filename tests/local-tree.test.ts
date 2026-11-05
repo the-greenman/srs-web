@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from "vitest";
+import { loadProgress } from "../src/lib/load-progress.svelte.js";
 import {
   LocalDocumentHandle,
   LocalTreeHandle,
@@ -282,3 +283,19 @@ function pickHandle(dir: FileSystemDirectoryHandle): Promise<LocalTreeHandle> {
 function withPicker(impl: () => Promise<FileSystemDirectoryHandle>): void {
   (window as Window).showDirectoryPicker = impl;
 }
+
+describe("load progress (srs-web#737)", () => {
+  it("a folder reports every file it reads", async () => {
+    const { dir } = stubDirectory({ "manifest.json": "{}", "records/a.json": "a", "records/b.json": "b" });
+    (window as unknown as Record<string, unknown>).showDirectoryPicker = () => Promise.resolve(dir);
+    await pickLocalDirectory();
+    expect({ ...loadProgress }).toEqual({ phase: "reading", done: 3, total: 3 });
+  });
+
+  it("a directory input reports every file it reads", async () => {
+    const file = (path: string) =>
+      Object.assign(new File(["{}"], path.split("/").pop() as string), { webkitRelativePath: path });
+    await treeFromDirectoryInput([file("repo/manifest.json"), file("repo/records/a.json")]);
+    expect({ ...loadProgress }).toEqual({ phase: "reading", done: 2, total: 2 });
+  });
+});

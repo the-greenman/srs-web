@@ -1432,13 +1432,12 @@ export interface ContainerOutline {
   body: OutlineEntry[];
 }
 
-/** The WASM layer rejects with bare strings; run `f`, surfacing every rejection as an `Error`. */
+/**
+ * Run a WASM call and type its result. The bindings reject with a JS `Error` carrying `.message`,
+ * `.code` and `.details` (ADR-053), so rejections pass through untouched; callers branch on `.code`.
+ */
 function wasm<T>(f: () => unknown): T {
-  try {
-    return f() as T;
-  } catch (e) {
-    throw e instanceof Error ? e : new Error(String(e));
-  }
+  return f() as T;
 }
 
 /** The container's derived outline (parent / hasChildren / run bounds / body entries). */

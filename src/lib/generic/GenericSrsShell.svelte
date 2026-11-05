@@ -53,6 +53,7 @@
   import NavTrigger from "$lib/components/NavTrigger.svelte";
   import Toolbar from "$lib/components/Toolbar.svelte";
   import UnsavedStatus from "$lib/components/UnsavedStatus.svelte";
+  import { tryRecord } from "$lib/lens/lens-data.js";
   import { BASE_GROUPS } from "$lib/components/shell-actions.js";
   import { ShellState } from "$lib/shell-context.svelte.js";
   import { genericActions } from "./toolbar-actions.js";
@@ -494,7 +495,7 @@
       {#snippet lead()}<NavTrigger />{/snippet}
       {#snippet trail()}<InspectorTrigger />{/snippet}
       {#snippet status()}
-        {#if documentDirty}<UnsavedStatus />{/if}
+        {#if documentDirty}<UnsavedStatus onOpen={openRecord} canOpen={(id) => !!tryRecord(repo, id)} />{/if}
       {/snippet}
     </Toolbar>
     {/snippet}

@@ -69,7 +69,7 @@ describe("ChangesPanel", () => {
   });
   it("shows groups, kinds and authors, and opens an entry on click", async () => {
     const opened: string[] = [];
-    render(ChangesPanel, { changes: groupChanges(RAW), onOpen: (i) => opened.push(i.id ?? "") });
+    render(ChangesPanel, { changes: groupChanges(RAW), onOpen: (id) => opened.push(id) });
     expect(screen.getByText("Added")).toBeTruthy();
     expect(screen.getByText("by Agent X")).toBeTruthy();
     await fireEvent.click(screen.getByRole("button", { name: "New para" }));
@@ -87,5 +87,24 @@ describe("UnsavedStatus", () => {
     expect(screen.getByTestId("changes-count").textContent).toContain("5");
     await fireEvent.click(screen.getByTestId("changes-toggle"));
     expect(screen.getByTestId("changes-panel")).toBeTruthy();
+  });
+  it("a host with no way to show a record gets plain titles, not links", async () => {
+    const state = new DocumentChangesState();
+    state.refresh(fakeRepo(RAW));
+    render(Harness, { state });
+    await fireEvent.click(screen.getByTestId("changes-toggle"));
+    expect(screen.getByText("New para")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "New para" })).toBeNull();
+  });
+  it("links only what the host can show, and a click opens it and closes the list", async () => {
+    const state = new DocumentChangesState();
+    state.refresh(fakeRepo(RAW));
+    const opened: string[] = [];
+    render(Harness, { state, onOpen: (id: string) => opened.push(id), canOpen: (id: string) => id === "aaaaaaaa-1" });
+    await fireEvent.click(screen.getByTestId("changes-toggle"));
+    expect(screen.getAllByRole("button").filter((b) => b.classList.contains("changes__link"))).toHaveLength(1);
+    await fireEvent.click(screen.getByRole("button", { name: "New para" }));
+    expect(opened).toEqual(["aaaaaaaa-1"]);
+    expect(screen.queryByTestId("changes-panel")).toBeNull();
   });
 });

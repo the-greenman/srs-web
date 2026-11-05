@@ -349,6 +349,14 @@ test.describe("lenses — shell and address", () => {
     await expect(page.getByTestId("section-form")).toHaveCount(0);
     await expect(page.getByTestId("document-dirty-status")).toHaveText("Unsaved changes");
     await expect(page.getByTestId("save-document")).toBeEnabled();
+    // the changed record is a link in the list, and following it from elsewhere selects it (srs-web#726)
+    const changed = (await title(page).textContent()) ?? "";
+    await page.getByTestId("lens-collection").getByTestId("lens-item").filter({ hasNotText: /^Package/ }).first().click();
+    await expect(title(page)).not.toHaveText(changed);
+    await page.getByTestId("changes-toggle").click();
+    await page.getByTestId("changes-panel").getByRole("button").first().click();
+    await expect(page.getByTestId("changes-panel")).toHaveCount(0);
+    await expect(title(page)).toHaveText(changed);
     // at 1440, on the record with the longest label: "Unsaved changes" and Layout stay whole, and the
     // title keeps its room (it wraps to two lines before it ellipsises)
     const labels = await page.getByTestId("lens-collection").locator(".lens-list__label").allTextContents();

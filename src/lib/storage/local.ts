@@ -1,3 +1,4 @@
+import { advanceLoad, reportLoad } from "../load-progress.svelte.js";
 import { StorageError } from "./errors.js";
 import { isSrsArchiveName } from "./srs-detect.js";
 import { TREE_SKIP_DIRS, assertRepoTree, sameBytes } from "./tree-utils.js";
@@ -107,6 +108,7 @@ async function listFiles(
       await listFiles(handle as FileSystemDirectoryHandle, `${prefix}${name}/`, out);
     } else {
       out.push([`${prefix}${name}`, handle as FileSystemFileHandle]);
+      advanceLoad(out.length);
     }
   }
 }
@@ -117,17 +119,21 @@ async function listFiles(
  * sorted, so the tree never depends on which read finished first.
  */
 async function readDirectory(dir: FileSystemDirectoryHandle): Promise<Record<string, Uint8Array>> {
+  reportLoad("finding");
   const files: [string, FileSystemFileHandle][] = [];
   await listFiles(dir, "", files);
   files.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   const bytes: Uint8Array[] = new Array(files.length);
+  reportLoad("reading", files.length);
   let next = 0;
+  let done = 0;
   const worker = async () => {
     while (next < files.length) {
       const i = next++;
       // biome-ignore lint/style/noNonNullAssertion: i < files.length
       const file = await files[i]![1].getFile();
       bytes[i] = new Uint8Array(await file.arrayBuffer());
+      advanceLoad(++done);
     }
   };
   await Promise.all(Array.from({ length: Math.min(READ_CONCURRENCY, files.length) }, worker));
@@ -279,7 +285,10 @@ export async function treeFromDirectoryInput(
     throw new StorageError("unsupported", "That selection is not a folder.");
   }
   const files: Record<string, Uint8Array> = {};
+  reportLoad("reading", all.length);
+  let done = 0;
   for (const file of all) {
+    advanceLoad(++done);
     const segments = file.webkitRelativePath.split("/").slice(1);
     if (segments.length === 0) continue;
     if (segments.slice(0, -1).some((segment) => TREE_SKIP_DIRS.has(segment))) continue;

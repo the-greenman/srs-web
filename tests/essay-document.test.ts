@@ -79,6 +79,7 @@ import {
   deleteForever,
   essayWriteGuard,
   linkReference,
+  quoteToParagraph,
   loadEssay,
   moveEntry,
   newEssay,
@@ -503,6 +504,42 @@ describe("essayMarkdown (srs-web#416)", () => {
       "g1",
       "E",
     ]);
+  });
+});
+
+describe("essayReading (srs-web#716)", () => {
+  it("keeps visible paragraphs in order, leaving out hidden ones, their children, empties and non-paragraphs", async () => {
+    const { essayReading } = await import("../src/lib/essay/essay-document.js");
+    const paragraphs = Object.fromEntries(
+      ["h1", "c1", "g1", "v1", "e1", "v2"].map((id) => [id, { id, title: `T ${id}`, body: `body ${id}` }])
+    );
+    paragraphs.e1.body = "  \n";
+    const model = {
+      title: "An essay",
+      purpose: "Why",
+      hidden: ["h1"],
+      paragraphs,
+      comments: { v1: [{ text: "working comment" }] },
+      entries: [
+        { instanceId: "v1", parentInstanceId: null },
+        { instanceId: "h1", parentInstanceId: null },
+        { instanceId: "c1", parentInstanceId: "h1" },
+        { instanceId: "g1", parentInstanceId: "c1" },
+        { instanceId: "note", parentInstanceId: null },
+        { instanceId: "e1", parentInstanceId: null },
+        { instanceId: "v2", parentInstanceId: null },
+      ],
+    };
+    const reading = essayReading(model as never);
+    expect(reading).toEqual({
+      title: "An essay",
+      purpose: "Why",
+      paragraphs: [
+        { id: "v1", body: "body v1" },
+        { id: "v2", body: "body v2" },
+      ],
+    });
+    expect(JSON.stringify(reading)).not.toContain("working comment");
   });
 });
 
@@ -1124,5 +1161,46 @@ describe("references pool (srs-web#519)", () => {
       text: "2 KB",
       documentId: "d1",
     });
+  });
+});
+
+describe("quoteToParagraph (srs-web#525)", () => {
+  const QUOTATION = "00572b36-7e4f-4cc2-9de1-9eab16a496ef";
+  const pool = { referencesContainerId: "F" };
+  const q = { sourceId: "s1", paragraphId: "p2", text: "  the words ", sourceTitle: "Call", locator: "Method" };
+  beforeEach(() => {
+    m.listTypes.mockReturnValue([
+      ...m.listTypes(),
+      { id: QUOTATION, namespace: "n", name: "quotation", version: 1 },
+    ]);
+    m.createRecord.mockReset();
+    m.createRecord.mockReturnValue({ instanceId: "q1" });
+    m.createRelation.mockClear();
+    m.addContainerMember.mockClear();
+  });
+
+  it("files a quotation in the pool, derived-from the source and evidencing the paragraph", () => {
+    expect(quoteToParagraph({} as never, pool, q)).toBe("q1");
+    expect(m.createRecord).toHaveBeenCalledWith(expect.anything(), QUOTATION, 1, {
+      fieldValues: expect.objectContaining({ quote_text: "the words", locator: "Method" }),
+    });
+    expect(m.addContainerMember).toHaveBeenCalledWith(expect.anything(), "F", "q1");
+    expect(m.createRelation).toHaveBeenCalledWith(expect.anything(), {
+      relationType: "derived-from",
+      sourceInstanceId: "q1",
+      targetInstanceId: "s1",
+    });
+    expect(m.createRelation).toHaveBeenCalledWith(expect.anything(), {
+      relationType: "evidences",
+      sourceInstanceId: "q1",
+      targetInstanceId: "p2",
+    });
+  });
+
+  it("writes nothing for an empty selection or an essay without the quotation type", () => {
+    expect(() => quoteToParagraph({} as never, pool, { ...q, text: " " })).toThrow(/Select the words/);
+    m.listTypes.mockReturnValue(m.listTypes().filter((t: { id: string }) => t.id !== QUOTATION));
+    expect(() => quoteToParagraph({} as never, pool, q)).toThrow(/1\.9\.0/);
+    expect(m.createRecord).not.toHaveBeenCalled();
   });
 });

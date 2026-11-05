@@ -640,6 +640,8 @@ describe("GitHub storage adapter", () => {
     expect(msg.accessToken).toBe("gha_new");
     expect(msg.refreshToken).toBe("ghr_new");
     expect(msg.refreshTokenExpiresAt as number).toBeGreaterThan(Date.now());
+    // The address holds the code: it must not reach the Worker logs as a Referer (#739).
+    expect(vi.mocked(fetch).mock.calls[0][1]?.referrerPolicy).toBe("origin");
   });
 
   describe("silent token refresh", () => {
@@ -679,6 +681,7 @@ describe("GitHub storage adapter", () => {
       expect((provider as any).accessToken).toBe("gha_new");
       // biome-ignore lint/suspicious/noExplicitAny: test seam
       expect((provider as any).refreshToken).toBe("ghr_new");
+      expect(vi.mocked(fetch).mock.calls[0][1]?.referrerPolicy).toBe("origin");
     });
 
     it("falls back to popup when the refresh endpoint returns an error", async () => {
@@ -876,6 +879,99 @@ describe("GitHub storage adapter", () => {
       expect(result.revision).toBe("commit-1");
       // No additional network calls — the diff found nothing changed.
       expect(fetchMock.mock.calls.length).toBe(callsBeforeCommit);
+    });
+
+    describe("restored at a commit (srs-web#732)", () => {
+      /** The base as the pinned commit held it; the branch head is never served. */
+      async function pinnedBase() {
+        const realSha = await gitBlobSha(new TextEncoder().encode('{"v":1}'));
+        return vi
+          .fn()
+          .mockResolvedValueOnce(json({ tree: { sha: "tree-root" } }))
+          .mockResolvedValueOnce(
+            json({
+              sha: "tree-root",
+              tree: [
+                { path: "governance", mode: "040000", type: "tree", sha: "sha-governance" },
+                { path: "governance/manifest.json", mode: "100644", type: "blob", sha: realSha },
+                { path: "governance/.srs", mode: "040000", type: "tree", sha: "sha-srs" },
+                { path: "governance/.srs/.gitkeep", mode: "100644", type: "blob", sha: await gitBlobSha(new Uint8Array(0)) },
+              ],
+            })
+          );
+      }
+      const restored = () =>
+        new GitHubRepoTreeHandle("id:1", "gov", treeLocation, () => "token", "commit-old");
+      const unchanged = () => ({
+        "manifest.json": new TextEncoder().encode('{"v":1}'),
+        ".srs/.gitkeep": new Uint8Array(0),
+      });
+
+      it("needs no network until it commits, and knows its source", () => {
+        const fetchMock = vi.fn();
+        vi.stubGlobal("fetch", fetchMock);
+        const handle = restored();
+        expect(handle.revision).toBe("commit-old");
+        expect(handle.capabilities.write).toBe(true);
+        expect(fetchMock).not.toHaveBeenCalled();
+      });
+
+      it("diffs against the pinned commit, never the branch head", async () => {
+        const fetchMock = await pinnedBase();
+        vi.stubGlobal("fetch", fetchMock);
+        const result = await restored().commitTree(unchanged(), { branch: "main" });
+        // Nothing changed against the pinned commit, so nothing is committed.
+        expect(result.revision).toBe("commit-old");
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/git\/commits\/commit-old$/);
+        expect(fetchMock.mock.calls.some(([u]) => String(u).includes("/git/ref/"))).toBe(false);
+      });
+
+      it("commits a change on top of the pinned commit, without force", async () => {
+        const fetchMock = await pinnedBase();
+        fetchMock.mockImplementation(async () => json({ sha: "new-sha", tree: { sha: "t" }, object: { sha: "x" } }));
+        vi.stubGlobal("fetch", fetchMock);
+        await restored().commitTree(
+          { ...unchanged(), "records/new.json": new TextEncoder().encode("{}") },
+          { branch: "main" }
+        );
+        const bodies = fetchMock.mock.calls.map(([u, init]) => ({
+          url: String(u),
+          body: (init as RequestInit | undefined)?.body ? JSON.parse(String((init as RequestInit).body)) : null,
+        }));
+        const commit = bodies.find((c) => /\/git\/commits$/.test(c.url));
+        expect(commit?.body.parents).toEqual(["commit-old"]);
+        const ref = bodies.find((c) => /\/git\/refs\/heads\//.test(c.url));
+        expect(ref?.body.force).toBe(false);
+        expect(JSON.stringify(bodies)).not.toContain("manifest.json");
+      });
+
+      it("refuses a new branch whose name is taken by other commits, committing nothing", async () => {
+        const fetchMock = await pinnedBase();
+        fetchMock
+          .mockResolvedValueOnce(json({ message: "Reference already exists" }, 422)) // create ref
+          .mockResolvedValueOnce(json({ object: { sha: "commit-other" } })) // its head
+          .mockResolvedValueOnce(json({ tree: { sha: "tree-other" } }))
+          .mockResolvedValueOnce(json({ sha: "tree-other", tree: [{ path: "governance", mode: "040000", type: "tree", sha: "s" }] }));
+        vi.stubGlobal("fetch", fetchMock);
+        const handle = restored();
+        await expect(
+          handle.commitTree(unchanged(), { branch: "taken", createFromCurrent: true })
+        ).rejects.toThrow(/already exists/);
+        expect(handle.branch).toBe("main");
+        expect(fetchMock.mock.calls.some(([u]) => /\/git\/(trees|commits)$/.test(String(u)))).toBe(false);
+      });
+
+      it("starts a new branch from the pinned commit", async () => {
+        const fetchMock = await pinnedBase();
+        fetchMock.mockResolvedValueOnce(json({ ref: "refs/heads/keep" }, 201));
+        vi.stubGlobal("fetch", fetchMock);
+        const handle = restored();
+        await handle.commitTree(unchanged(), { branch: "keep", createFromCurrent: true });
+        const body = JSON.parse(String((fetchMock.mock.calls[2]?.[1] as RequestInit).body));
+        expect(body).toEqual({ ref: "refs/heads/keep", sha: "commit-old" });
+        expect(handle.branch).toBe("keep");
+      });
     });
 
     it("commitTree() to a new branch creates it at the base commit, not the remote head (srs-web#685)", async () => {

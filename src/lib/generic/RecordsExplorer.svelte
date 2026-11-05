@@ -10,7 +10,7 @@
   import Diagnostics from "$lib/components/Diagnostics.svelte";
   import Notice from "$lib/components/Notice.svelte";
   import { diagnosticsFromStrings } from "$lib/notices.svelte.js";
-  import { find } from "$lib/srs-client.js";
+  import { find, getContainerOutline } from "$lib/srs-client.js";
   import type { DiscoveryFacets, DiscoveryHit, DiscoveryQuery, SrsRepository } from "$lib/srs-client.js";
   import RecordsView, { type GroupView } from "./RecordsView.svelte";
   import { NOTES, PAGE, typeGroups } from "./records-model.js";
@@ -47,6 +47,8 @@
     hits: [],
   });
   let flat = $state<{ total: number; hits: DiscoveryHit[] }>({ total: 0, hits: [] });
+  /** Container scope only: how many outline rows are shown (paged by PAGE). */
+  let shown = $state(PAGE);
   let opened = $state<Record<string, DiscoveryHit[]>>({});
 
   $effect(() => {
@@ -64,7 +66,9 @@
   function runScope(): void {
     try {
       const base = find(repo, scoped(), { limit: PAGE, byTypeLimit: 0, facets: true });
-      scope = { total: base.total, facets: base.facets, hits: base.hits };
+      // A container shows its whole outline in its own order, so every member's label is needed to page it.
+      const hits = containerId && base.total > base.hits.length ? find(repo, scoped(), { limit: base.total }).hits : base.hits;
+      scope = { total: base.total, facets: base.facets, hits };
       diagnostics = base.diagnostics;
       error = null;
       for (const key of Object.keys(opened)) opened[key] = find(repo, withType(key), { limit: Math.max(PAGE, opened[key].length) }).hits;
@@ -97,9 +101,29 @@
     untrack(runFlat);
   });
 
+  /**
+   * An unfiltered container view shows the container's own outline (RFC-043: order is data, no tool sorts
+   * entries), not discovery order. Reorders the loaded hits by outline position; depth rides along.
+   */
+  const outline = $derived.by(() => {
+    void revision;
+    if (!containerId) return null;
+    try {
+      return getContainerOutline(repo, containerId).entries;
+    } catch {
+      return null;
+    }
+  });
+  const depths = $derived(Object.fromEntries((outline ?? []).map((e) => [e.instanceId, e.depth])));
+  const ordered = $derived.by(() => {
+    if (!outline) return scope.hits;
+    const pos = new Map(outline.map((e, i) => [e.instanceId, i]));
+    const at = (h: DiscoveryHit) => pos.get(h.instanceId) ?? Number.MAX_SAFE_INTEGER;
+    return [...scope.hits].sort((a, b) => at(a) - at(b));
+  });
   const options = $derived(typeGroups(scope.facets));
   const filtering = $derived(Boolean(query || typeId));
-  const grouped = $derived(!filtering && scope.total > PAGE);
+  const grouped = $derived(!filtering && !containerId && scope.total > PAGE);
 
   const groups = $derived<GroupView[] | null>(
     grouped ? options.map((g) => ({ ...g, open: g.key in opened, hits: opened[g.key] ?? [] })) : null,
@@ -120,6 +144,10 @@
   function more(key: string | null): void {
     try {
       if (key === null) {
+        if (containerId && !filtering) {
+          shown += PAGE;
+          return;
+        }
         const q: DiscoveryQuery = { ...(typeId ? withType(typeId) : scoped()), contentMatch: query || undefined };
         flat.hits = [...flat.hits, ...find(repo, q, { limit: PAGE, offset: flat.hits.length, rank: Boolean(query) }).hits];
       } else {
@@ -138,7 +166,8 @@
   searching={Boolean(query)}
   total={filtering ? flat.total : scope.total}
   {groups}
-  hits={filtering ? flat.hits : scope.hits}
+  hits={filtering ? flat.hits : containerId ? ordered.slice(0, shown) : ordered}
+  depths={filtering ? {} : depths}
   {onOpen}
   onToggle={toggle}
   onMore={more}

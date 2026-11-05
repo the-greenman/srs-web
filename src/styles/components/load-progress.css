@@ -1,0 +1,38 @@
+/* ============================================================================
+   component: load-progress (.load-progress) — how far along an open is (#737)
+   ----------------------------------------------------------------------------
+   The host is a native popover="manual" in the top layer, so it needs no z-index. The row is a
+   .toast surface. The delayed fade means a quick open never shows it. Tokens --toast-*.
+   ========================================================================== */
+.load-progress {
+  width: var(--toast-width);
+  margin: 0;
+  padding: 0;
+  color: var(--color-text);
+  background: none;
+  border: 0;
+  overflow: visible;
+}
+.load-progress:popover-open {
+  inset: auto 0 var(--toast-offset-bottom);
+  margin-inline: auto;
+  animation: load-progress-in 150ms 300ms both;
+}
+@keyframes load-progress-in {
+  from {
+    opacity: 0;
+  }
+}
+.load-progress__row {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: var(--space-xs) var(--space-sm);
+}
+.load-progress__row [data-part="count"] {
+  color: var(--color-muted-strong);
+  font-variant-numeric: tabular-nums;
+}
+.load-progress__row progress {
+  width: 100%;
+  accent-color: var(--color-text);
+}

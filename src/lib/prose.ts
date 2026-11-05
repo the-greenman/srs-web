@@ -37,17 +37,31 @@ export function proseView(
   // ponytail: presentation limit, no ADR-025 gap — "long" = a markdown field, a text field over 40
   // characters, any other value over 80, or a line break (a short plain-text id like "C-08" stays a
   // chip); a presentation heuristic, not a schema fact.
+  // A sentence in a plain string field (over 40 characters with spaces, srs-web#669) is long too: a chip
+  // is one nowrap line and would clip it. It reads as a labelled paragraph, never as the unlabelled body.
+  const isSentence = (f: (typeof shown)[number]) => {
+    const v = vals[f.name];
+    return (
+      !Array.isArray(v) &&
+      f.valueType !== "markdown" &&
+      f.valueType !== "text" &&
+      str(v).length <= 80 &&
+      str(v).length > 40 &&
+      /\s/.test(str(v))
+    );
+  };
   const isLong = (f: (typeof shown)[number]) => {
     const v = vals[f.name];
     return (
       !Array.isArray(v) &&
       (f.valueType === "markdown" ||
         str(v).length > (f.valueType === "text" ? 40 : 80) ||
-        str(v).includes("\n"))
+        str(v).includes("\n") ||
+        isSentence(f))
     );
   };
   const long = shown.filter(isLong);
-  const body = long.find((f) => f.valueType === "markdown") ?? long[0];
+  const body = long.find((f) => f.valueType === "markdown") ?? long.find((f) => !isSentence(f));
   const meta = shown
     .filter((f) => !isLong(f))
     .flatMap((f) =>

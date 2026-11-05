@@ -12,13 +12,24 @@ const KEY = "current";
 // ponytail: legacy localStorage `.srsj` recovery copy (pre-#505); delete LEGACY_KEY handling after a release or two.
 const LEGACY_KEY = "srs-web:working-copy";
 
+/** Where the copy came from: enough to save back, based on the commit the work started from (srs-web#732). */
+export interface WorkingCopySource {
+  kind: "github";
+  where: string;
+  commitSha: string;
+}
+
 /** `bytes` is the `.srs` archive; `srsj` is set only for a migrated legacy entry. */
 export interface WorkingCopyEntry {
   name: string;
   savedAt: string;
   bytes?: Uint8Array;
   srsj?: string;
+  source?: WorkingCopySource;
 }
+
+const isSource = (s: Partial<WorkingCopySource> | undefined): s is WorkingCopySource =>
+  s?.kind === "github" && typeof s.where === "string" && typeof s.commitSha === "string";
 
 // One cached connection: a write issued from `pagehide` then starts its transaction
 // synchronously (an async open would be torn down with the page). Reopened if it fails.
@@ -58,13 +69,15 @@ async function idb<T>(
  */
 export async function saveWorkingCopy(
   name: string,
-  exportBytes: () => Uint8Array
+  exportBytes: () => Uint8Array,
+  source?: WorkingCopySource
 ): Promise<boolean> {
   try {
     const entry: WorkingCopyEntry = {
       name,
       bytes: exportBytes(),
       savedAt: new Date().toISOString(),
+      ...(source && { source }),
     };
     await idb("readwrite", (s) => s.put(entry, KEY));
     try {
@@ -102,7 +115,12 @@ export async function loadWorkingCopy(): Promise<WorkingCopyEntry | null> {
       typeof e.savedAt === "string" &&
       e.bytes instanceof Uint8Array
     ) {
-      return { name: e.name, savedAt: e.savedAt, bytes: e.bytes };
+      return {
+        name: e.name,
+        savedAt: e.savedAt,
+        bytes: e.bytes,
+        ...(isSource(e.source) && { source: e.source }),
+      };
     }
   } catch {
     /* fall through to the legacy entry */

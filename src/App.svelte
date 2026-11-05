@@ -16,6 +16,8 @@
 -->
 <script lang="ts">
   import Notice from '$lib/components/Notice.svelte';
+  import LoadProgress from '$lib/components/LoadProgress.svelte';
+  import { endLoad, loadProgress, preparingLoad } from "$lib/load-progress.svelte.js";
   import {
     initWasm,
     loadRepo,
@@ -45,7 +47,7 @@
   import { listTypes, resolveRepositoryTitle, type AgentWriteGuard, type MigrationNotice, type SrsRepository, type UpgradePackageResult, upgradeBundles } from "$lib/srs-client.js";
     import { loadWorkingCopy, clearWorkingCopy, saveWorkingCopy, workingCopyScheduler } from "$lib/browser-cache.js";
   import {
-    describeHandle, loadRecent, recordOpened, removeRecent, saveRecent, toggleStar,
+    describeHandle, loadRecent, recordOpened, removeRecent, saveRecent, toggleStar, workingCopySource,
     type RecentRepo,
   } from "$lib/recent-repos.js";
   import type { WorkingCopyEntry } from "$lib/browser-cache.js";
@@ -241,10 +243,22 @@
   const recentLoaded = loadRecent().then((list) => {
     recent = list;
   });
+  const recents = $derived({
+    recent,
+    onOpenRecent: openRecent,
+    onToggleStar: (key: string) => editRecent((list) => toggleStar(list, key)),
+    onRemoveRecent: (key: string) => {
+      recentError = null;
+      editRecent((list) => removeRecent(list, key));
+    },
+    recentError,
+    recentBusyKey,
+  });
   function editRecent(edit: (list: RecentRepo[]) => RecentRepo[]): void {
     void recentLoaded.then(() => {
       recent = edit(recent);
-      void saveRecent(recent);
+      // A snapshot: IndexedDB cannot store a $state proxy (srs-web#728).
+      void saveRecent($state.snapshot(recent));
     });
   }
   let restoreError = $state<string | null>(null);
@@ -412,7 +426,7 @@
   const workingCopy = workingCopyScheduler(() => {
     const r = repo;
     if (r && mayKeepWorkingCopy(readOnlyHost, documentMutations.dirty)) {
-      void saveWorkingCopy(repoName, () => exportArchive(r)).then((ok) => {
+      void saveWorkingCopy(repoName, () => exportArchive(r), workingCopySource(activeDocument)).then((ok) => {
         if (r === repo) workingCopySaved = ok;
       });
     }
@@ -454,6 +468,8 @@
       documentChanges.saved(repo);
       workingCopy.cancel();
       void clearWorkingCopy();
+    } else {
+      workingCopy.schedule(); // the save moved the source's commit: the copy must follow
     }
     return savedCurrentRevision;
   }
@@ -591,16 +607,19 @@
         case "bytes": {
           if (!handle.readBytes) throw new Error("This storage provider does not support binary archive reads.");
           const bytes = await handle.readBytes();
+          await preparingLoad();
           repo = loadRepoFromArchive(bytes);
           break;
         }
         case "tree": {
           const files = await (handle as DocumentHandle & RepoTreeAware).readTree();
+          await preparingLoad();
           repo = loadRepoFromTree(files);
           break;
         }
         default: {
           const text = await handle.read();
+          await preparingLoad();
           repo = loadRepo(text);
         }
       }
@@ -619,7 +638,7 @@
         cachedSession = null;
         if (dirty) {
           saveToast("info", "Migrated to the current data model. Unsaved - Save to keep it.", 8000);
-          if (!readOnlyHost) void saveWorkingCopy(repoName, () => exportArchive(loaded));
+          if (!readOnlyHost) void saveWorkingCopy(repoName, () => exportArchive(loaded), workingCopySource(handle));
         }
         const catalog = collectCatalogDiagnostics(loaded);
         if (catalog.length) {
@@ -641,6 +660,8 @@
         `Failed to load repository: ${e instanceof Error ? e.message : String(e)}`,
         { cause: e },
       );
+    } finally {
+      endLoad();
     }
   }
 
@@ -880,6 +901,7 @@
     errorMsg = null;
     readOnlyHost = fromHost;
     try {
+      await preparingLoad();
       const loaded = loadRepoFromArchive(bytes);
       repo = loaded;
       gateOnMigration(loaded, name, (dirty) => {
@@ -902,6 +924,8 @@
         `Failed to load archive: ${e instanceof Error ? e.message : String(e)}`,
         { cause: e },
       );
+    } finally {
+      endLoad();
     }
   }
 
@@ -1040,6 +1064,17 @@
     return current ? ["success", text] : ["info", `${text} Newer changes remain unsaved.`];
   }
 
+  /** A restored session's way back to its source, when it has one and that source is available here. */
+  function restoredSource(entry: WorkingCopyEntry): DocumentHandle | null {
+    const github = storageProviders.github as GitHubProvider | undefined;
+    if (!entry.source || !github?.configured) return null;
+    try {
+      return github.restoreTree(entry.name, entry.source.where, entry.source.commitSha);
+    } catch {
+      return null; // an unusable source must not cost the work: it asks where to save instead
+    }
+  }
+
   function saveErrorMessage(e: unknown): string {
     const code =
       e instanceof StorageError
@@ -1048,6 +1083,10 @@
           ? (e as { code?: string }).code
           : null;
     if (code === "conflict") {
+      // A branch can take the work as it stands; reopening the file would clear the recovery copy.
+      if (activeDocument?.kind === "tree" && isGitBranchAware(activeDocument)) {
+        return "This branch changed since your work began. Save to a new branch to keep your work, then open a pull request on GitHub to merge it.";
+      }
       return "This file changed since you opened it. Use “Open another file” to reload the latest version, then re-apply your edits.";
     }
     return `Save failed: ${e instanceof Error ? e.message : String(e)}`;
@@ -1178,6 +1217,11 @@
     saving = true;
     gitSaveError = null;
     try {
+      // A session restored after a reload has no token yet; a valid one returns at once.
+      if (handle.provider === "github") {
+        await (storageProviders.github as GitHubProvider | undefined)?.authenticate();
+        void resolveSignedInActor();
+      }
       const branch = opts.mode === "new" ? opts.newBranch : handle.branch;
       // "new" only truly branches when the name differs from the current branch.
       const branchedOff = opts.mode === "new" && branch !== handle.branch;
@@ -1222,7 +1266,7 @@
       gitSaveOpen = false;
     } catch (e: unknown) {
       // Keep the dialog open so the install hint stays visible on a permission error.
-      gitSaveError = saveErrorMessage(e);
+      if ((e as { code?: string } | null)?.code !== "cancelled") gitSaveError = saveErrorMessage(e);
     } finally {
       saving = false;
     }
@@ -1255,11 +1299,11 @@
             beginDocument({ dirty: editable });
             repoName = entry.name;
             documentTitle = resolveRepositoryTitle(restored, repoName);
-            activeDocument = null;
+            activeDocument = editable ? restoredSource(entry) : null;
             appState = "loaded";
             editorMode = "generic";
             cachedSession = null;
-            if (editable) void saveWorkingCopy(repoName, () => exportArchive(restored));
+            if (editable) void saveWorkingCopy(repoName, () => exportArchive(restored), workingCopySource(activeDocument));
           });
         } catch (e: unknown) {
           void clearWorkingCopy();
@@ -1358,6 +1402,7 @@
       items={helpFor("essay-home")}
       onNew={() => void startNew(creatableEditors().find((e) => e.id === "essay")!)}
       notices={landingNotices}
+      {recents}
       providers={storageProviders}
       onOpen={loadDocument}
       onOpenArchive={loadArchiveDocument}
@@ -1371,15 +1416,7 @@
       onOpenArchive={loadArchiveDocument}
       onOpenUrl={openFromUrl}
       onCreate={createRepository}
-      {recent}
-      onOpenRecent={openRecent}
-      onToggleStar={(key) => editRecent((list) => toggleStar(list, key))}
-      onRemoveRecent={(key) => {
-        recentError = null;
-        editRecent((list) => removeRecent(list, key));
-      }}
-      {recentError}
-      {recentBusyKey}
+      {recents}
       notices={landingNotices}
     />
   {/if}
@@ -1623,4 +1660,5 @@
   />
 {/if}
 
+<LoadProgress phase={loadProgress.phase} done={loadProgress.done} total={loadProgress.total} />
 {#if spot}{#key spot}<UiSpot target={spot.target} message={spot.message} onclose={() => (spot = null)} />{/key}{/if}

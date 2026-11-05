@@ -2,7 +2,7 @@
    component: landing (.landing) — the front page frame (Landing.svelte, LandingFrame.svelte, #534)
    Left-aligned editorial layout after semanticops.com: a hairline header, a display headline with a
    mono eyebrow and a standfirst, then numbered sections. Tokens --landing-*; parts
-   header link hero notices body.
+   header link hero notices body footer.
    ========================================================================== */
 .landing {
   min-height: 100dvh;
@@ -55,6 +55,16 @@
 .landing__link:focus-visible {
   outline: var(--focus-ring);
   outline-offset: var(--focus-offset);
+}
+
+.landing__footer {
+  margin-top: auto;
+  border-top: var(--landing-header-rule);
+}
+.landing__footer .landing__inner {
+  display: flex;
+  gap: var(--space-sm);
+  padding-block: var(--landing-header-pad);
 }
 
 .landing__hero {

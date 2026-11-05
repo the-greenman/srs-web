@@ -14,6 +14,7 @@
  * against a retained base map can never see, and therefore can never infer a deletion for,
  * a path outside `dir` (ADR-016 §5).
  */
+import { advanceLoad, reportLoad } from "../load-progress.svelte.js";
 import { StorageConflictError, StorageFetchError } from "./errors.js";
 
 export interface GitDataLocation {
@@ -112,19 +113,11 @@ export async function fetchRecursiveTree(
   return { sha: tree.sha, tree: tree.tree, truncated: tree.truncated === true };
 }
 
-/**
- * Read a branch's base state, scoped to `location.dir`: the commit/root-tree/subtree SHAs
- * and a dir-relative map of every blob under `dir` (submodules and symlinks excluded).
- */
-export async function readBranchBase(
-  location: GitDataLocation,
-  token: string
-): Promise<RepoTreeBase> {
-  const base = repoBase(location);
-
-  const refRes = await fetch(`${base}/git/ref/heads/${encodeURIComponent(location.branch)}`, {
-    headers: authHeaders(token),
-  });
+async function readBranchHead(location: GitDataLocation, token: string): Promise<string> {
+  const refRes = await fetch(
+    `${repoBase(location)}/git/ref/heads/${encodeURIComponent(location.branch)}`,
+    { headers: authHeaders(token) }
+  );
   if (!refRes.ok) {
     throw new StorageFetchError(
       `Could not read branch "${location.branch}": ${await parseError(refRes)}`
@@ -133,6 +126,21 @@ export async function readBranchBase(
   const ref = (await refRes.json()) as { object?: { sha?: string } };
   const commitSha = ref.object?.sha;
   if (!commitSha) throw new StorageFetchError(`Branch "${location.branch}" has no head commit.`);
+  return commitSha;
+}
+
+/**
+ * Read a branch's base state, scoped to `location.dir`: the commit/root-tree/subtree SHAs
+ * and a dir-relative map of every blob under `dir` (submodules and symlinks excluded).
+ * `atCommit` reads that commit instead of the branch head (srs-web#732).
+ */
+export async function readBranchBase(
+  location: GitDataLocation,
+  token: string,
+  atCommit?: string
+): Promise<RepoTreeBase> {
+  const base = repoBase(location);
+  const commitSha = atCommit ?? (await readBranchHead(location, token));
 
   const commitRes = await fetch(`${base}/git/commits/${commitSha}`, {
     headers: authHeaders(token),
@@ -288,6 +296,7 @@ async function readBlobsGraphQL(
         if ((await gitBlobSha(bytes)) !== sha) continue;
         results.set(sha, bytes);
       }
+      advanceLoad(results.size);
     }
   }
   await Promise.all(Array.from({ length: Math.min(concurrency, batches.length) }, () => worker()));
@@ -301,6 +310,7 @@ export async function readBlobs(
   shas: string[],
   concurrency = 6
 ): Promise<Map<string, Uint8Array>> {
+  reportLoad("reading", new Set(shas).size);
   const results = await readBlobsGraphQL(location, token, shas, undefined, concurrency);
   const remaining = shas.filter((sha) => !results.has(sha));
   let next = 0;
@@ -309,6 +319,7 @@ export async function readBlobs(
       const index = next++;
       const sha = remaining[index];
       results.set(sha, await readBlob(location, token, sha));
+      advanceLoad(results.size);
     }
   }
   const workers = Array.from({ length: Math.min(concurrency, remaining.length) }, () => worker());
