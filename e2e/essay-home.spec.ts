@@ -30,6 +30,46 @@ test("the same link on / does not choose the essay shell (#710)", async ({ page 
   await expect(page.locator(".essay-shell__page")).toHaveCount(0);
 });
 
+test("Favourites and recent shows on the essay home only when it has entries (#730)", async ({ page }) => {
+  await page.goto("/essay");
+  await expect(page.locator(START)).toBeVisible({ timeout: 15000 });
+  await expect(page.getByTestId("recent-repos")).toHaveCount(0);
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const open = indexedDB.open("srs-web-recent", 1);
+        open.onupgradeneeded = () => open.result.createObjectStore("lists");
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const tx = open.result.transaction("lists", "readwrite");
+          tx.objectStore("lists").put(
+            [
+              {
+                key: "github:o/r:main:d",
+                source: { kind: "github", where: "o/r:main:d" },
+                label: "o/r",
+                starred: false,
+                lastOpened: "2026-11-01T00:00:00.000Z",
+              },
+            ],
+            "repos"
+          );
+          tx.oncomplete = () => {
+            open.result.close();
+            resolve();
+          };
+        };
+      })
+  );
+  await page.reload();
+  await expect(page.getByTestId("recent-item")).toContainText("o/r", { timeout: 15000 });
+  await expect(page.locator(START)).toBeVisible();
+  await page.getByTestId("recent-star").click();
+  await expect(page.getByTestId("recent-star")).toHaveAttribute("aria-pressed", "true");
+  await page.getByTestId("recent-remove").click();
+  await expect(page.getByTestId("recent-repos")).toHaveCount(0);
+});
+
 test("/ keeps the generic landing", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });

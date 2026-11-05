@@ -133,3 +133,4 @@ export { default as PinnedPane } from "./PinnedPane.svelte";
 export { default as SectionHeader } from "./SectionHeader.svelte";
 export { default as SourceRow } from "./SourceRow.svelte";
 export { default as EssayHome } from "./EssayHome.svelte";
+export { default as RecentRepos } from "./RecentRepos.svelte";

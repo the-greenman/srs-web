@@ -1,5 +1,5 @@
 <!--
-  EssayHome — the essay editor's front page: LandingFrame with four numbered sections, "01 Start",
+  EssayHome — the essay editor's front page: LandingFrame with RecentRepos (srs-web#730) above four numbered sections, "01 Start",
   "02 Examples", "03 Open" (SourceChooser) and "04 How it works". Presentation only (ADR-027): every
   help word comes from `items` (the essay-home help container, `helpFor("essay-home")`); the section
   labels, the eyebrow and "More" are literal chrome, as in Landing.svelte. The caller owns opening and starting. `notices` is the slot above the sections. Extra attributes go to the frame root.
@@ -11,6 +11,7 @@
   import Disclosure from './Disclosure.svelte';
   import LandingFrame from './LandingFrame.svelte';
   import MarkdownView from './MarkdownView.svelte';
+  import RecentRepos from './RecentRepos.svelte';
   import SectionHeader from './SectionHeader.svelte';
   import SourceChooser from './SourceChooser.svelte';
 
@@ -18,6 +19,7 @@
     items,
     onNew,
     notices,
+    recents = {},
     providers,
     onOpen,
     onOpenArchive,
@@ -27,6 +29,7 @@
     items: HelpItem[];
     onNew: () => void;
     notices?: Snippet;
+    recents?: ComponentProps<typeof RecentRepos>;
   } & ComponentProps<typeof SourceChooser> &
     Omit<ComponentProps<typeof LandingFrame>, 'title' | 'standfirst' | 'eyebrow' | 'children' | 'notices'> = $props();
 
@@ -48,6 +51,7 @@
   {...rest}
 >
   <div class="landing__body" data-part="body">
+    <RecentRepos {...recents} />
     {#if start}
       <section class="landing__section">
         <SectionHeader number="01" label="Start" />
