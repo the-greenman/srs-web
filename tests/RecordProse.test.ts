@@ -50,6 +50,19 @@ describe("RecordProse", () => {
     expect(meta[0].querySelectorAll(".tag-chip, [title]").length).toBeGreaterThanOrEqual(4);
   });
 
+  it("a sentence in a string field reads as a labelled paragraph, not a clipped chip (#669)", () => {
+    const sentence = "Teams running agents in production; SRE and platform teams asked to operate them";
+    const { container } = render(RecordProse, {
+      record: record({ id: "C-08", who_feels_it: sentence }),
+      fields: [f("id", "Id", "string"), f("who_feels_it", "Felt by", "string")],
+      composites: [],
+    });
+    const labels = [...container.querySelectorAll('[data-part="label"]')].map((e) => e.textContent);
+    expect(labels).toEqual(["Felt by"]);
+    expect(container.querySelector('[data-part="meta"]')?.textContent).not.toContain("Teams");
+    expect(container.querySelector('[data-part="meta"]')?.textContent).toContain("C-08");
+  });
+
   it("empty fields and aiGuidance are never shown", () => {
     const { container } = render(RecordProse, {
       record: record({ kind: "", body: "Body text that is long enough to read as a body.\nTwo lines." }),
