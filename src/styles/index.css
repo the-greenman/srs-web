@@ -68,6 +68,7 @@
 @import url("./components/file-drop.css") layer(components);
 @import url("./components/size-meter.css") layer(components);
 @import url("./components/toast.css") layer(components);
+@import url("./components/load-progress.css") layer(components);
 @import url("./components/lifecycle.css") layer(components);
 @import url("./components/mcp-connection.css") layer(components);
 @import url("./components/changes-panel.css") layer(components);

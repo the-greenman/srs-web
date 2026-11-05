@@ -16,6 +16,8 @@
 -->
 <script lang="ts">
   import Notice from '$lib/components/Notice.svelte';
+  import LoadProgress from '$lib/components/LoadProgress.svelte';
+  import { endLoad, loadProgress, preparingLoad } from "$lib/load-progress.svelte.js";
   import {
     initWasm,
     loadRepo,
@@ -588,16 +590,19 @@
         case "bytes": {
           if (!handle.readBytes) throw new Error("This storage provider does not support binary archive reads.");
           const bytes = await handle.readBytes();
+          await preparingLoad();
           repo = loadRepoFromArchive(bytes);
           break;
         }
         case "tree": {
           const files = await (handle as DocumentHandle & RepoTreeAware).readTree();
+          await preparingLoad();
           repo = loadRepoFromTree(files);
           break;
         }
         default: {
           const text = await handle.read();
+          await preparingLoad();
           repo = loadRepo(text);
         }
       }
@@ -638,6 +643,8 @@
         `Failed to load repository: ${e instanceof Error ? e.message : String(e)}`,
         { cause: e },
       );
+    } finally {
+      endLoad();
     }
   }
 
@@ -808,6 +815,7 @@
     errorMsg = null;
     readOnlyHost = fromHost;
     try {
+      await preparingLoad();
       const loaded = loadRepoFromArchive(bytes);
       repo = loaded;
       gateOnMigration(loaded, name, (dirty) => {
@@ -830,6 +838,8 @@
         `Failed to load archive: ${e instanceof Error ? e.message : String(e)}`,
         { cause: e },
       );
+    } finally {
+      endLoad();
     }
   }
 
@@ -1541,4 +1551,5 @@
   />
 {/if}
 
+{#if loadProgress.phase}<LoadProgress phase={loadProgress.phase} done={loadProgress.done} total={loadProgress.total} />{/if}
 {#if spot}{#key spot}<UiSpot target={spot.target} message={spot.message} onclose={() => (spot = null)} />{/key}{/if}

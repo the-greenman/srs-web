@@ -13,7 +13,7 @@
     ActionBar, ActionMenu, HelpDialog, UiSpot, ActorChip, ActorMark, ActorStack, AgentFeed, AttachmentGlyph, AttachmentPreview, BinTray, Block, BlockStack, Button, Checkbox, Modal,
     CommentBadge, Count, CommentThread, LinkProposals, DraftTray, EyeToggle, Field, HoverCard, IconButton, InlineText, Input,
     LayersPanel, LinkedRecord, RemedyCard, MarkdownHelp, MarkdownText, MethodBoard, AgentPanel, McpConnection, ChangesPanel, UnsavedStatus, Panel, ProblemCard, AnnotationMargin, PinnedPane, ReferencesTray, NotesTray, Select, Tag,
-    TagChip, Textarea, Notice, SectionHeader, SourceRow, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
+    TagChip, Textarea, Notice, LoadProgress, SectionHeader, SourceRow, AttachDrop, RepoSize, Diagnostics, Toast, ToastHost, SrsMark, Wordmark,
   } from "$lib/components";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
@@ -831,6 +831,12 @@
     <h2>Notices</h2>
     <p class="sg__note">A toast is a transient event (bottom-centre of the main column; errors are sticky), a Notice is persistent
       state, Diagnostics groups the engine's findings by identical message. Specimens are drawn statically; the button fires the real toast.</p>
+    <h3>Opening a repository</h3>
+    <div class="stack" data-testid="sg-load-progress">
+      <LoadProgress inline phase="finding" done={1204} />
+      <LoadProgress inline phase="reading" done={1234} total={5800} />
+      <LoadProgress inline phase="preparing" />
+    </div>
     <h3>Toast</h3>
     <div class="stack">
       <Toast data-specimen kind="info" text="Saved. Newer changes remain unsaved." testid="specimen-toast-info" />

@@ -49,8 +49,12 @@ const REV9_TREE = readTreeFixture(REV9_DIR);
  * `window.__DISK_WRITES__`. This is the only way to exercise the write side end
  * to end: Playwright cannot answer the real native picker dialog.
  */
-async function installFakeDirectoryPicker(page: Page, tree: Record<string, string>) {
-  await page.addInitScript((files: Record<string, string>) => {
+async function installFakeDirectoryPicker(
+  page: Page,
+  tree: Record<string, string>,
+  readDelayMs = 0
+) {
+  await page.addInitScript(({ files, readDelayMs }) => {
     const disk = new Map<string, Uint8Array>(
       Object.entries(files).map(([p, b64]) => [
         p,
@@ -66,7 +70,10 @@ async function installFakeDirectoryPicker(page: Page, tree: Record<string, strin
     const makeFile = (full: string) => ({
       kind: "file",
       name: full.split("/").pop(),
-      getFile: () => Promise.resolve(new Blob([disk.get(full) ?? new Uint8Array()])),
+      getFile: () =>
+        new Promise((resolve) =>
+          setTimeout(() => resolve(new Blob([disk.get(full) ?? new Uint8Array()])), readDelayMs)
+        ),
       createWritable: () =>
         Promise.resolve({
           write: async (chunk: ArrayBuffer | Blob) => {
@@ -104,7 +111,7 @@ async function installFakeDirectoryPicker(page: Page, tree: Record<string, strin
 
     (window as unknown as Record<string, unknown>).showDirectoryPicker = () =>
       Promise.resolve(makeDir(""));
-  }, tree);
+  }, { files: tree, readDelayMs });
 }
 
 test.describe("Open a folder from this device", () => {
@@ -180,7 +187,19 @@ test.describe("Open a folder from this device", () => {
       .setInputFiles(path.join(__dirname, "fixtures"));
 
     await expect(page.getByText(/not an SRS repository/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("load-progress")).toHaveCount(0);
   });
+});
+
+test("opening a slow folder shows the file count, then clears it (srs-web#737)", async ({ page }) => {
+  await installFakeDirectoryPicker(page, EXPLODED_TREE, 300);
+  await page.goto("/");
+  await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
+  await page.getByTestId("source-local-folder").click();
+  await expect(page.getByTestId("load-progress")).toContainText("Reading files…");
+  await expect(page.getByTestId("load-progress-count")).toHaveText(/^\d+ of \d+$/);
+  await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 30000 });
+  await expect(page.getByTestId("load-progress")).toHaveCount(0);
 });
 
 test.describe("Save a folder back to disk (File System Access)", () => {

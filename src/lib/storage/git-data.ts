@@ -14,6 +14,7 @@
  * against a retained base map can never see, and therefore can never infer a deletion for,
  * a path outside `dir` (ADR-016 §5).
  */
+import { advanceLoad, reportLoad } from "../load-progress.svelte.js";
 import { StorageConflictError, StorageFetchError } from "./errors.js";
 
 export interface GitDataLocation {
@@ -288,6 +289,7 @@ async function readBlobsGraphQL(
         if ((await gitBlobSha(bytes)) !== sha) continue;
         results.set(sha, bytes);
       }
+      advanceLoad(results.size);
     }
   }
   await Promise.all(Array.from({ length: Math.min(concurrency, batches.length) }, () => worker()));
@@ -301,6 +303,7 @@ export async function readBlobs(
   shas: string[],
   concurrency = 6
 ): Promise<Map<string, Uint8Array>> {
+  reportLoad("reading", new Set(shas).size);
   const results = await readBlobsGraphQL(location, token, shas, undefined, concurrency);
   const remaining = shas.filter((sha) => !results.has(sha));
   let next = 0;
@@ -309,6 +312,7 @@ export async function readBlobs(
       const index = next++;
       const sha = remaining[index];
       results.set(sha, await readBlob(location, token, sha));
+      advanceLoad(results.size);
     }
   }
   const workers = Array.from({ length: Math.min(concurrency, remaining.length) }, () => worker());
