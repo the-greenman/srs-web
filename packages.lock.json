@@ -1,5 +1,23 @@
 [
   {
+    "packageId": "1cd9622e-3d05-4214-a683-4cb81d0c44d9",
+    "name": "governance",
+    "version": "1.2.0",
+    "description": "Decisions, decision logs, roles and articles.",
+    "url": "https://github.com/the-greenman/srs-web/releases/download/packages-governance-1.2.0/governance.srspkg",
+    "sha256": "93e2ce69e2eb985efcddf64212fb43aae61b33483755b1402729bcb440a6a9b7",
+    "onInstall": true
+  },
+  {
+    "packageId": "126eeba4-3124-4ee6-a9e5-5a943cb87cb5",
+    "name": "argument",
+    "version": "1.4.0",
+    "description": "Build an argument: problems, hypotheses, options, tests and outcomes.",
+    "url": "https://github.com/the-greenman/srs-web/releases/download/packages-argument-1.4.0/argument.srspkg",
+    "sha256": "7da0ab61a2e3dbc1920a7877a1836ebc3d79427f89609bf4facd0309c9d412d3",
+    "onInstall": true
+  },
+  {
     "packageId": "9092f84e-fb94-4f81-a523-0f7ef5b02194",
     "name": "comments",
     "version": "1.1.0",

@@ -19,7 +19,7 @@ if (process.env.CI && !haveBindings) {
 const ESSAY = "5b14a4d4-ec08-4e5b-be75-c183aec90c40";
 const ARGUMENT = "126eeba4-3124-4ee6-a9e5-5a943cb87cb5";
 const GOVERNANCE = "1cd9622e-3d05-4214-a683-4cb81d0c44d9";
-const fixture = (f: string) => readFileSync(path.join(__dirname, "fixtures", f), "utf8");
+const served = (f: string) => readFileSync(path.resolve(__dirname, "../public/packages", f), "utf8");
 
 const entry = (packageId: string, packageName: string, packageVersion: string): CatalogEntry => ({
   packageId,
@@ -36,8 +36,8 @@ const ENTRIES = [
   entry(ARGUMENT, "argument", "1.4.0"),
 ];
 const fetchText = async (e: CatalogEntry) => {
-  if (e.packageId === ARGUMENT) return fixture("argument-1.4.0.srspkg");
-  if (e.packageId === GOVERNANCE) return fixture("governance-1.2.0.srspkg");
+  if (e.packageId === ARGUMENT) return served("argument-1.4.0.srspkg");
+  if (e.packageId === GOVERNANCE) return served("governance-1.2.0.srspkg");
   throw new Error(`nothing should fetch ${e.packageName}: it is installed`);
 };
 
