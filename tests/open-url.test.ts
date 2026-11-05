@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   MAX_ARCHIVE_BYTES,
   OpenUrlError,
@@ -18,6 +18,28 @@ const ok = (body: BodyInit | null, init: ResponseInit = {}) =>
   vi.fn(async () => new Response(body, init)) as unknown as typeof fetch;
 
 describe("parseOpenUrl", () => {
+  describe("on an http origin, as a built app on localhost is (#714)", () => {
+    beforeEach(() => vi.stubGlobal("location", { origin: "http://localhost:4173" }));
+    afterEach(() => vi.unstubAllGlobals());
+
+    it("opens the app's own origin, as a path and as the address a fetch reports back", () => {
+      expect(parseOpenUrl("/examples/a.srsj", false).href).toBe("http://localhost:4173/examples/a.srsj");
+      expect(parseOpenUrl("http://localhost:4173/examples/a.srsj", false).pathname).toBe("/examples/a.srsj");
+    });
+
+    it("fetches the app's own example", async () => {
+      const url = parseOpenUrl("/examples/a.srsj", false);
+      const f = (async () =>
+        Object.defineProperty(new Response('{"srsj":1}'), "url", { value: url.href })) as unknown as typeof fetch;
+      expect((await fetchArchiveFile(url, f)).name).toBe("a.srsj");
+    });
+
+    it("still refuses anything that resolves elsewhere over http", () => {
+      for (const u of ["http://localhost:9999/a.srs", "http://evil.test/a.srs", "//evil.test/a.srs", "/\\evil.test/a.srs", "/\t/evil.test/a.srs"])
+        expect(() => parseOpenUrl(u, false), u).toThrow(OpenUrlError);
+    });
+  });
+
   it("accepts https", () =>
     expect(parseOpenUrl("https://semanticops.com/try/meeting.srs", false).host).toBe(
       "semanticops.com"
