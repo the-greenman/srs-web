@@ -14,6 +14,13 @@ test("/essay shows the essay home; New essay lands in the essay shell", async ({
   await expect(page.locator(".essay-shell__page")).toBeVisible({ timeout: 15000 });
 });
 
+test("/essay says what makes the editor different and links to muDemocracy", async ({ page }) => {
+  await page.goto("/essay");
+  const different = page.getByTestId("essay-home-different");
+  await expect(different.getByRole("heading", { name: "What it can't do" })).toBeVisible({ timeout: 15000 });
+  await expect(different.getByRole("link", { name: "muDemocracy" })).toHaveAttribute("href", "https://mudemocracy.org");
+});
+
 test("/essay?new=essay lands in the essay shell", async ({ page }) => {
   await page.goto("/essay?new=essay");
   await expect(page.locator(".essay-shell__page")).toBeVisible({ timeout: 15000 });

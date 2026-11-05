@@ -8,12 +8,12 @@
     "feature_id": "essay-home.human-in-charge",
     "placement": "concept",
     "title": "You write, your AI supports",
-    "summary": "You own every word of your essay. A connected AI can read it, question it, find gaps and point at paragraphs, but it never writes the essay for you.",
-    "explanation": "\"Let the AI write, then fix it\" fails: once an AI has written the text it is hard to take control back, and for any deep work fixing is slower than writing. This editor keeps you in charge of your own meaning and gives the AI a way to support you. The agent guard refuses any write to essay text.",
-    "ai_guidance": "Your role here is to support the writer, never to draft essay text. Read, question, point at paragraphs and name gaps; leave every sentence to the human."
+    "summary": "An essay editor where AI can critique, question and research your work, but can't write a word of it. The AI advises and assists; every word is yours, so the meaning stays yours.",
+    "explanation": "This editor keeps you in charge of your own meaning and gives the AI a way to support you: it advises beside your text, and only you write in it.",
+    "ai_guidance": "Your role here is to advise and assist the writer: critique, question, suggest structure, research, validate and highlight. Every word of the essay is the writer's; leave every sentence to the human."
   },
   "createdAt": "2026-11-03T18:51:42.045050298+00:00",
-  "updatedAt": "2026-11-03T18:51:42.045053891+00:00",
+  "updatedAt": "2026-11-05T21:41:00.645358263+00:00",
   "createdBy": {
     "kind": "ai",
     "id": "agent:claude-code",

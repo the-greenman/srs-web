@@ -1,0 +1,22 @@
+{
+  "instanceId": "69cb79b7-97cc-44ad-bdbd-53bb9067b03a",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay-home.ai-can",
+    "placement": "concept",
+    "title": "What your AI can do",
+    "summary": "Everything around the words. It works in comments and references beside your text:\n\n- **Critique:** raise objections and name gaps.\n- **Question:** ask what a paragraph means or leaves out.\n- **Structure:** propose an order or a boundary for you to adopt.\n- **Research:** gather sources and quotations into the essay's references.\n- **Validate:** attach evidence for or against what a paragraph says.\n- **Highlight:** point at a paragraph on your screen as it explains.",
+    "ai_guidance": "Offer these as the ways you can help. Each one leaves the writer's text as it is and leaves the decision with the writer."
+  },
+  "createdAt": "2026-11-05T21:40:04.969003344+00:00",
+  "updatedAt": "2026-11-05T21:40:04.969006596+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

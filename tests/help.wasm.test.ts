@@ -41,6 +41,10 @@ describe.skipIf(!haveBindings)("helpFor on the real engine", () => {
     const home = helpFor("essay-home", repo);
     expect(home.map((i) => i.featureId)).toEqual([
       "essay-home.human-in-charge",
+      "essay-home.ai-can",
+      "essay-home.ai-cannot",
+      "essay-home.ai-enforced",
+      "essay-home.owning-meaning",
       "shell.connect-ai",
       "essay-home.start",
       "essay-home.where-it-lives",
@@ -49,6 +53,9 @@ describe.skipIf(!haveBindings)("helpFor on the real engine", () => {
     const essayIds = helpFor("essay", repo).map((i) => i.featureId);
     expect(essayIds).toContain("essay-home.human-in-charge");
     expect(essayIds).toContain("essay-home.where-it-lives");
+    expect(essayIds).toEqual(
+      expect.arrayContaining(["essay-home.ai-can", "essay-home.ai-cannot", "essay-home.ai-enforced", "essay-home.owning-meaning"])
+    );
     const essay = client.listContainers(repo).find((c) => c.title === "Essay editor help");
     expect(essay).toBeDefined();
     const before = helpFor("essay", repo).length;
