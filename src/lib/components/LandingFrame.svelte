@@ -1,8 +1,8 @@
 <!--
   LandingFrame — the front-page frame: a hairline header (SemanticOps wordmark left, "What is SRS?"
   right), then a left-aligned hero (mono eyebrow, display headline, optional standfirst), an optional
-  notices slot, and the body. Boot, error and migrate screens reuse it with their own title.
-  Wraps .landing (landing.css); tokens `--landing-*`; parts `header brand link hero notices body`.
+  notices slot, the body, and a footer of policy links. Boot, error and migrate screens reuse it with their own title.
+  Wraps .landing (landing.css); tokens `--landing-*`; parts `header brand link hero notices body footer`.
   Extra attributes (data-testid) go to the root.
 -->
 <script lang="ts">
@@ -46,4 +46,10 @@
     <div class="landing__notices" data-part="notices">{@render notices?.()}</div>
     {@render children?.()}
   </main>
+  <footer class="landing__footer" data-part="footer">
+    <div class="landing__inner">
+      <a class="landing__link" href="https://semanticops.com/privacy" target="_blank" rel="noopener">Privacy</a>
+      <a class="landing__link" href="https://semanticops.com/terms" target="_blank" rel="noopener">Terms</a>
+    </div>
+  </footer>
 </div>
