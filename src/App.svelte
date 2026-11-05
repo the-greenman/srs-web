@@ -239,6 +239,17 @@
   const recentLoaded = loadRecent().then((list) => {
     recent = list;
   });
+  const recents = $derived({
+    recent,
+    onOpenRecent: openRecent,
+    onToggleStar: (key: string) => editRecent((list) => toggleStar(list, key)),
+    onRemoveRecent: (key: string) => {
+      recentError = null;
+      editRecent((list) => removeRecent(list, key));
+    },
+    recentError,
+    recentBusyKey,
+  });
   function editRecent(edit: (list: RecentRepo[]) => RecentRepo[]): void {
     void recentLoaded.then(() => {
       recent = edit(recent);
@@ -1275,6 +1286,7 @@
       items={helpFor("essay-home")}
       onNew={() => void startNew(creatableEditors().find((e) => e.id === "essay")!)}
       notices={landingNotices}
+      {recents}
       providers={storageProviders}
       onOpen={loadDocument}
       onOpenArchive={loadArchiveDocument}
@@ -1288,15 +1300,7 @@
       onOpenArchive={loadArchiveDocument}
       onOpenUrl={openFromUrl}
       onCreate={createRepository}
-      {recent}
-      onOpenRecent={openRecent}
-      onToggleStar={(key) => editRecent((list) => toggleStar(list, key))}
-      onRemoveRecent={(key) => {
-        recentError = null;
-        editRecent((list) => removeRecent(list, key));
-      }}
-      {recentError}
-      {recentBusyKey}
+      {recents}
       notices={landingNotices}
     />
   {/if}

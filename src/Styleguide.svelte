@@ -19,6 +19,7 @@
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
   import Landing from "$lib/components/Landing.svelte";
   import EssayHome from "$lib/components/EssayHome.svelte";
+  import RecentRepos from "$lib/components/RecentRepos.svelte";
   import LandingFrame from "$lib/components/LandingFrame.svelte";
   import FolderOpen from "@lucide/svelte/icons/folder-open";
   import GitBranch from "@lucide/svelte/icons/git-branch";
@@ -799,6 +800,10 @@
         <EssayHome items={fx.essayHomeItems} onNew={noop} providers={fx.landingProviders(true)} onOpen={async () => {}} onOpenUrl={async () => {}} />
       {/snippet}
       {@render gated(essayHome)}
+    </div>
+    <h3>Favourites and recent</h3>
+    <div class="sg__landing" data-testid="sg-recent-repos">
+      <RecentRepos recent={fx.recentRepos} onOpenRecent={noop} onToggleStar={noop} onRemoveRecent={noop} />
     </div>
     <h3>Restore pending</h3>
     <div class="sg__landing" data-testid="sg-landing-restore">
