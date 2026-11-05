@@ -729,14 +729,14 @@
       "fieldValues": {
         "title": "On small democracy",
         "summary": "A short example essay.",
-        "purpose": "A short example essay with a few paragraphs and no apparatus: the simplest shape an essay takes. Read the paragraphs in order, and open the Layers panel to see how they are arranged. This copy is read-only; use Document > Save a copy… to keep one you can edit."
+        "purpose": "A short example essay with a few paragraphs and no apparatus: the simplest shape an essay takes. This copy is read-only; use Document > Save a copy… to keep one you can edit, and to see how it is arranged."
       },
       "instanceId": "ae3d5221-b2ac-4ae8-a180-d90f84f49435",
       "typeId": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
       "typeName": "essay",
       "typeNamespace": "com.mudemocracy.essay",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T19:09:05.294732690+00:00"
+      "updatedAt": "2026-11-05T13:28:33.326601537+00:00"
     },
     "records/tier-2/paragraph-2027b81d.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",

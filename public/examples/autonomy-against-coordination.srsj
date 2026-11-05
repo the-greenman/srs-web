@@ -1257,14 +1257,14 @@
       "fieldValues": {
         "title": "Autonomy against coordination",
         "summary": "An example essay with a problem, a tension, a remedy and a source behind it.",
-        "purpose": "An example of an essay grounded in a structured argument. Open the Domain panel to see the problems and boundaries the essay works within, and the Layers panel to see how its paragraphs are arranged. This copy is read-only; use Document > Save a copy… to keep one you can edit."
+        "purpose": "An example of an essay grounded in a structured argument. This copy is read-only; use Document > Save a copy… to keep one you can edit, and to see the problems and boundaries it works within."
       },
       "instanceId": "336adea2-e3fe-4d7b-9155-3efa73e37517",
       "typeId": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
       "typeName": "essay",
       "typeNamespace": "com.mudemocracy.essay",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T19:09:04.900437052+00:00"
+      "updatedAt": "2026-11-05T13:28:33.667569957+00:00"
     },
     "records/tier-2/paragraph-538ae5c2.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",

@@ -1133,14 +1133,14 @@
       "fieldValues": {
         "title": "Nobody owns the commons",
         "summary": "An example essay that answers a problem.",
-        "purpose": "A short example of an essay that answers a problem it names. Read the paragraphs in order, and open the Layers panel to see how they are arranged. This copy is read-only; use Document > Save a copy… to keep one you can edit."
+        "purpose": "A short example of an essay that answers a problem it names. This copy is read-only; use Document > Save a copy… to keep one you can edit, and to see how it is arranged."
       },
       "instanceId": "ef448418-d010-43bb-9c88-5b914df2cf48",
       "typeId": "0021ef06-4d6b-42fb-af5a-2d53d287138c",
       "typeName": "essay",
       "typeNamespace": "com.mudemocracy.essay",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T19:09:05.100697110+00:00"
+      "updatedAt": "2026-11-05T13:28:33.493493406+00:00"
     },
     "records/tier-2/paragraph-32f73471.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",

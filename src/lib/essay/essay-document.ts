@@ -1017,6 +1017,27 @@ export function essayMarkdown(repo: SrsRepository, m: EssayModel): string {
   return renderDocumentView(repo, view.id, "markdown", m.containerId, null, exclude).rendered;
 }
 
+/** A finished essay as a reader meets it (srs-web#716). Plain data, so a site's build can use it too. */
+export interface EssayReading {
+  title: string;
+  purpose: string | null;
+  paragraphs: { id: string; body: string }[];
+}
+
+/**
+ * What a reader sees: the same paragraphs as `essayMarkdown`, in order, one by one. Empty paragraphs
+ * are left out, and a paragraph's title stays editor metadata, as in the essay composition.
+ */
+export function essayReading(m: EssayModel): EssayReading {
+  const hidden = new Set(m.hidden);
+  const inherited = hiddenByAncestor(m.entries, hidden);
+  const paragraphs = m.entries.flatMap(({ instanceId: id }) => {
+    const body = m.paragraphs[id]?.body;
+    return body?.trim() && !hidden.has(id) && !inherited.has(id) ? [{ id, body }] : [];
+  });
+  return { title: m.title, purpose: m.purpose, paragraphs };
+}
+
 /**
  * (Re)declare the snapshot bundle (srs-web#417): its `childContainerIds` are the essay, draft and
  * bin, comments and references containers (RFC-034 I-151: their paragraphs, comments and gathered

@@ -34,7 +34,8 @@ export interface HeaderHandlers {
   onsavecopy?: () => void;
   oncopy?: () => void;
   onhelp: () => void;
-  oncomments: () => void;
+  /** Absent while the document is read-only: a reader does not see comments (#716). */
+  oncomments?: () => void;
   onsave?: () => void;
   onexport: () => void;
   /** Download the visible essay text as markdown. Absent while no essay is open. */
@@ -152,7 +153,7 @@ export function headerActions(
       testid: "export-snapshot",
     },
     wideAction(s.shell) as HeaderAction | undefined,
-    {
+    !!h.oncomments && {
       id: "comments",
       group: "view",
       kind: "toggle",

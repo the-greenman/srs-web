@@ -507,6 +507,42 @@ describe("essayMarkdown (srs-web#416)", () => {
   });
 });
 
+describe("essayReading (srs-web#716)", () => {
+  it("keeps visible paragraphs in order, leaving out hidden ones, their children, empties and non-paragraphs", async () => {
+    const { essayReading } = await import("../src/lib/essay/essay-document.js");
+    const paragraphs = Object.fromEntries(
+      ["h1", "c1", "g1", "v1", "e1", "v2"].map((id) => [id, { id, title: `T ${id}`, body: `body ${id}` }])
+    );
+    paragraphs.e1.body = "  \n";
+    const model = {
+      title: "An essay",
+      purpose: "Why",
+      hidden: ["h1"],
+      paragraphs,
+      comments: { v1: [{ text: "working comment" }] },
+      entries: [
+        { instanceId: "v1", parentInstanceId: null },
+        { instanceId: "h1", parentInstanceId: null },
+        { instanceId: "c1", parentInstanceId: "h1" },
+        { instanceId: "g1", parentInstanceId: "c1" },
+        { instanceId: "note", parentInstanceId: null },
+        { instanceId: "e1", parentInstanceId: null },
+        { instanceId: "v2", parentInstanceId: null },
+      ],
+    };
+    const reading = essayReading(model as never);
+    expect(reading).toEqual({
+      title: "An essay",
+      purpose: "Why",
+      paragraphs: [
+        { id: "v1", body: "body v1" },
+        { id: "v2", body: "body v2" },
+      ],
+    });
+    expect(JSON.stringify(reading)).not.toContain("working comment");
+  });
+});
+
 describe("refreshBundle (srs-web#417)", () => {
   // biome-ignore lint/suspicious/noExplicitAny: a hand-built model with only what the refresh reads
   const model = (over: Record<string, unknown> = {}): any => ({

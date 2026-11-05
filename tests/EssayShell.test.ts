@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { fireEvent, render } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { beforeEach, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { EssayModel } from "../src/lib/essay/essay-document.js";
 import EssayAgentHost from "./EssayAgentHost.svelte";
 
@@ -50,10 +50,12 @@ vi.mock("../src/lib/srs-client.js", () => ({
   renderMarkdown: (md: string) => `<p>${md}</p>`,
   listTypes: () => [],
   listRelationTypes: () => [],
+  listRelations: () => [],
 }));
 const addParagraph = vi.hoisted(() => vi.fn());
 const doc = vi.hoisted(() => ({
   listEssays: vi.fn(() => [{ id: "e", title: "Essay" }]),
+  essayReading: vi.fn((m: EssayModel) => ({ title: m.title, purpose: null, paragraphs: [] })),
   loadEssay: vi.fn(),
   setBody: vi.fn(),
   setEssayTitle: vi.fn(),
@@ -468,6 +470,34 @@ it("history that arrives after mount (no status at first) is seeded as seen, not
   await rerender({ agentStatus: status([write(6), write(5), write(4)]) });
   await tick();
   expect(getByTestId("inspector-badge").textContent).toBe("1");
+});
+
+describe("a read-only essay (srs-web#716)", () => {
+  const readOnlyProps = { repo: {} as never, repoName: "r", onExport: () => {}, documentRevision: 1, readOnly: true, readOnlyReason: "Opened from a link" };
+
+  it("shows the reader, with no writer panels, counts or comment markers", async () => {
+    doc.loadEssay.mockReturnValue(model);
+    const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
+    const { container, getByTestId, queryByTestId } = render(EssayShell, readOnlyProps);
+    await tick();
+    expect(getByTestId("essay-reader")).toBeTruthy();
+    expect(getByTestId("read-only-note")).toBeTruthy();
+    expect(queryByTestId("rail")).toBeNull();
+    expect(queryByTestId("count")).toBeNull();
+    expect(container.querySelector(".block-stack__item")).toBeNull();
+  });
+
+  it("keeps the essay list when the repository holds several essays, and only that", async () => {
+    doc.loadEssay.mockReturnValue(model);
+    doc.listEssays.mockReturnValue([{ id: "e", title: "One" }, { id: "f", title: "Two" }]);
+    const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
+    const { getByTestId } = render(EssayShell, readOnlyProps);
+    await tick();
+    const titles = [...getByTestId("rail").querySelectorAll("summary")].map((s) => s.textContent ?? "");
+    expect(titles).toHaveLength(1);
+    expect(titles[0]).toContain("Essays");
+    doc.listEssays.mockReturnValue([{ id: "e", title: "Essay" }]);
+  });
 });
 
 it("without an actor the essay is read-only behind a name prompt; a name unlocks it and the header names the writer (srs-web#618)", async () => {
