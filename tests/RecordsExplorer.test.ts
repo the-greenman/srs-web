@@ -264,4 +264,31 @@ describe("RelationMap", () => {
     expect(rows.map((r) => r.querySelector("strong")?.textContent)).toEqual(["Label r2", "Label r0", "Label r1"]);
     expect(rows.map((r) => r.getAttribute("data-depth"))).toEqual(["0", "1", "1"]);
   });
+
+  it("a container of more than one page stays one ordered, paged list (#668)", async () => {
+    const all = hits(120);
+    const reversed = [...all].reverse();
+    mocks.getContainerOutline.mockReturnValue({
+      containerId: "c1",
+      entries: reversed.map((h) => ({ instanceId: h.instanceId, depth: 0, hasChildren: false, runSize: 1, runEnd: 0 })),
+      body: [],
+    });
+    mocks.find.mockImplementation((_r: unknown, _q: object, o: { limit?: number } = {}) => ({
+      hits: all.slice(0, o.limit ?? all.length),
+      total: all.length,
+      facets,
+      diagnostics: [],
+    }));
+    render(RecordsExplorer, { props: { ...props, containerId: "c1" } });
+
+    expect(screen.queryAllByTestId("record-group")).toHaveLength(0);
+    const rows = await screen.findAllByTestId("record-row");
+    expect(rows).toHaveLength(50);
+    expect(rows[0].querySelector("strong")?.textContent).toBe("Label r119");
+
+    await fireEvent.click(screen.getByTestId("flat-more"));
+    const more = screen.getAllByTestId("record-row");
+    expect(more).toHaveLength(100);
+    expect(more[99].querySelector("strong")?.textContent).toBe("Label r20");
+  });
 });

@@ -47,6 +47,8 @@
     hits: [],
   });
   let flat = $state<{ total: number; hits: DiscoveryHit[] }>({ total: 0, hits: [] });
+  /** Container scope only: how many outline rows are shown (paged by PAGE). */
+  let shown = $state(PAGE);
   let opened = $state<Record<string, DiscoveryHit[]>>({});
 
   $effect(() => {
@@ -64,7 +66,9 @@
   function runScope(): void {
     try {
       const base = find(repo, scoped(), { limit: PAGE, byTypeLimit: 0, facets: true });
-      scope = { total: base.total, facets: base.facets, hits: base.hits };
+      // A container shows its whole outline in its own order, so every member's label is needed to page it.
+      const hits = containerId && base.total > base.hits.length ? find(repo, scoped(), { limit: base.total }).hits : base.hits;
+      scope = { total: base.total, facets: base.facets, hits };
       diagnostics = base.diagnostics;
       error = null;
       for (const key of Object.keys(opened)) opened[key] = find(repo, withType(key), { limit: Math.max(PAGE, opened[key].length) }).hits;
@@ -119,7 +123,7 @@
   });
   const options = $derived(typeGroups(scope.facets));
   const filtering = $derived(Boolean(query || typeId));
-  const grouped = $derived(!filtering && scope.total > PAGE);
+  const grouped = $derived(!filtering && !containerId && scope.total > PAGE);
 
   const groups = $derived<GroupView[] | null>(
     grouped ? options.map((g) => ({ ...g, open: g.key in opened, hits: opened[g.key] ?? [] })) : null,
@@ -140,6 +144,10 @@
   function more(key: string | null): void {
     try {
       if (key === null) {
+        if (containerId && !filtering) {
+          shown += PAGE;
+          return;
+        }
         const q: DiscoveryQuery = { ...(typeId ? withType(typeId) : scoped()), contentMatch: query || undefined };
         flat.hits = [...flat.hits, ...find(repo, q, { limit: PAGE, offset: flat.hits.length, rank: Boolean(query) }).hits];
       } else {
@@ -158,7 +166,7 @@
   searching={Boolean(query)}
   total={filtering ? flat.total : scope.total}
   {groups}
-  hits={filtering ? flat.hits : ordered}
+  hits={filtering ? flat.hits : containerId ? ordered.slice(0, shown) : ordered}
   depths={filtering ? {} : depths}
   {onOpen}
   onToggle={toggle}
