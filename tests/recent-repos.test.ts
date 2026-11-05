@@ -7,7 +7,9 @@ import {
   recordOpened,
   removeRecent,
   toggleStar,
+  workingCopySource,
 } from "../src/lib/recent-repos.js";
+import { GitHubRepoTreeHandle } from "../src/lib/storage/github.js";
 
 const gh = (n: number) => ({ kind: "github" as const, where: `o/r${n}:main:` });
 const at = (n: number) => new Date(2026, 0, 1, 0, 0, n).toISOString();
@@ -110,5 +112,19 @@ describe("recent-repos persistence", () => {
   it("does not throw when a write aborts", async () => {
     stubIndexedDB({ abortWrites: true });
     await expect(saveRecent(recordOpened([], gh(1), "o/r1", at(1)))).resolves.toBeUndefined();
+  });
+});
+
+describe("workingCopySource (srs-web#732)", () => {
+  const location = { apiBase: "https://x", owner: "o", repo: "r", branch: "main", dir: "gov" };
+
+  it("gives a restored handle's source and starting commit, as plain data", () => {
+    const handle = new GitHubRepoTreeHandle("i", "r", location, () => "t", "abc");
+    expect(workingCopySource(handle)).toEqual({ kind: "github", where: "o/r:main:gov", commitSha: "abc" });
+  });
+
+  it("gives nothing without a handle or before a base exists", () => {
+    expect(workingCopySource(null)).toBeUndefined();
+    expect(workingCopySource(new GitHubRepoTreeHandle("i", "r", location, () => "t"))).toBeUndefined();
   });
 });
