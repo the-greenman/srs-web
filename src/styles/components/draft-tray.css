@@ -30,6 +30,11 @@
   gap: 4px;
   margin-bottom: var(--space-xs);
 }
+.refs-tray__quotes {
+  margin-left: var(--space-sm);
+  padding-left: var(--space-xs);
+  border-left: 2px solid var(--color-line-soft);
+}
 .tray__row {
   display: flex;
   flex-wrap: wrap;
