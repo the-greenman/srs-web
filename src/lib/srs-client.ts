@@ -1333,7 +1333,7 @@ export interface NavigationNode {
  */
 export interface RepositoryNavigation {
   rootContainerId: string;
-  identity: NavigationNode;
+  identity?: NavigationNode;
   sections: NavigationNode[];
   diagnostics: string[];
 }
@@ -2311,10 +2311,10 @@ function normalizeNavigationNode(raw: any): NavigationNode {
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM RepositoryNavigation has unknown field case
-function normalizeRepositoryNavigation(raw: any): RepositoryNavigation {
+export function normalizeRepositoryNavigation(raw: any): RepositoryNavigation {
   return {
     rootContainerId: raw.rootContainerId ?? "",
-    identity: normalizeNavigationNode(raw.identity ?? {}),
+    identity: raw.identity ? normalizeNavigationNode(raw.identity) : undefined,
     sections: (raw.sections ?? []).map(normalizeNavigationNode),
     diagnostics: raw.diagnostics ?? [],
   };
@@ -2348,7 +2348,7 @@ export function repositoryNavigation(repo: SrsRepository): RepositoryNavigation 
 export function resolveRepositoryTitle(repo: SrsRepository, fallback: string): string {
   try {
     const navigation = repositoryNavigation(repo);
-    if (navigation.identity.displayLabel) return navigation.identity.displayLabel;
+    if (navigation.identity?.displayLabel) return navigation.identity.displayLabel;
     if (navigation.rootContainerId) {
       const container = getContainer(repo, navigation.rootContainerId);
       if (container.title) return container.title;
