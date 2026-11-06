@@ -17,6 +17,7 @@
   } from "$lib/components";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
+  import InstallPlan from "$lib/components/InstallPlan.svelte";
   import Landing from "$lib/components/Landing.svelte";
   import EssayHome from "$lib/components/EssayHome.svelte";
   import RecentRepos from "$lib/components/RecentRepos.svelte";
@@ -930,7 +931,8 @@
     {/snippet}
     <div data-testid="sg-help-dialog">{@render gated(helpDialog)}</div>
     <UpgradePlan inline testid="sg-upgrade-plan" plans={[fx.upgradePlan]} onApply={() => {}} onCancel={() => {}} />
-    <div data-testid="sg-packages-dialog"><PackagesDialog inline packages={fx.installedPackagesFx} onUpgrade={() => {}} onClose={() => {}} /></div>
+    <div data-testid="sg-packages-dialog"><PackagesDialog inline packages={fx.installedPackagesFx} available={fx.availablePackagesFx} onUpgrade={() => {}} onClose={() => {}} /></div>
+    <div data-testid="sg-install-plan"><InstallPlan inline fromAgent plan={fx.installPlanFx} onInstall={() => {}} onCancel={() => {}} /></div>
   </section>
 </main>
 <LiveRegions />

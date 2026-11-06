@@ -1,8 +1,27 @@
 [
   {
+    "packageId": "1cd9622e-3d05-4214-a683-4cb81d0c44d9",
+    "name": "governance",
+    "version": "1.2.0",
+    "description": "Decisions, decision logs, roles and articles.",
+    "url": "https://github.com/the-greenman/srs-web/releases/download/packages-governance-1.2.0/governance.srspkg",
+    "sha256": "93e2ce69e2eb985efcddf64212fb43aae61b33483755b1402729bcb440a6a9b7",
+    "onInstall": true
+  },
+  {
+    "packageId": "126eeba4-3124-4ee6-a9e5-5a943cb87cb5",
+    "name": "argument",
+    "version": "1.4.0",
+    "description": "Build an argument: problems, hypotheses, options, tests and outcomes.",
+    "url": "https://github.com/the-greenman/srs-web/releases/download/packages-argument-1.4.0/argument.srspkg",
+    "sha256": "7da0ab61a2e3dbc1920a7877a1836ebc3d79427f89609bf4facd0309c9d412d3",
+    "onInstall": true
+  },
+  {
     "packageId": "9092f84e-fb94-4f81-a523-0f7ef5b02194",
     "name": "comments",
     "version": "1.1.0",
+    "description": "Comments and tasks on any record.",
     "url": "https://github.com/the-greenman/srs-web/releases/download/packages-comments-1.1.0/comments.srspkg",
     "sha256": "a806f6fae2ec1231f6f58aacf2fea6d81429f8665ca5f6a7feb230c6d6699297"
   },
@@ -10,6 +29,7 @@
     "packageId": "5b14a4d4-ec08-4e5b-be75-c183aec90c40",
     "name": "essay",
     "version": "1.9.0",
+    "description": "Write an essay: paragraphs, sources, quotations and problems.",
     "url": "https://github.com/the-greenman/srs-web/releases/download/packages-essay-1.9.0/essay.srspkg",
     "sha256": "e7afc1747d9f8b3d0c3157ac4a4b06b13a3127957f44d6a8b449b0ead55988af",
     "history": [
@@ -44,6 +64,7 @@
     "packageId": "b3603f72-990a-408a-b6fc-28764ebabe78",
     "name": "website",
     "version": "0.2.0",
+    "description": "Pages and a menu for a website.",
     "url": "https://github.com/the-greenman/srs-web/releases/download/packages-website-0.2.0/website.srspkg",
     "sha256": "c387a8a4e69c6efd5eb6c1418267680e0bb400d8b5b32a9cc412d2361810c6e0"
   }

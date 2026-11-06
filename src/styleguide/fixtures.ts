@@ -805,9 +805,45 @@ export const upgradePlan: UpgradePackageResult = {
 
 /** Bundled packages installed in a document (PackagesDialog specimen, #450): one outdated, one current. */
 export const installedPackagesFx: InstalledPackage[] = [
-  { packageId: "p1", name: "essay", bundled: "1.7.0", installed: "1.5.0", outdated: true },
-  { packageId: "p2", name: "governance", bundled: "2.1.0", installed: "2.1.0", outdated: false },
+  {
+    packageId: "p1",
+    name: "essay",
+    bundled: "1.7.0",
+    installed: "1.5.0",
+    outdated: true,
+    upgradable: true,
+  },
+  {
+    packageId: "p2",
+    name: "governance",
+    bundled: "2.1.0",
+    installed: "2.1.0",
+    outdated: false,
+    upgradable: true,
+  },
 ];
+const argumentEntryFx = {
+  packageId: "p3",
+  packageName: "argument",
+  packageVersion: "1.4.0",
+  description: "Build an argument: problems, hypotheses, mechanisms and tests.",
+  fieldCount: 83,
+  typeCount: 26,
+  downloadUrl: "",
+  checksum: "",
+};
+/** A published package a document doesn't have (PackagesDialog specimen, #712). */
+export const availablePackagesFx = [argumentEntryFx];
+/** InstallPlan specimen: one dependency, nothing blocking. */
+export const installPlanFx = {
+  packageId: "p3",
+  packages: [
+    { ...argumentEntryFx, packageId: "p4", packageName: "governance", packageVersion: "1.2.0" },
+    argumentEntryFx,
+  ],
+  unmet: [],
+  bundles: new Map<string, string>(),
+};
 /** A read-only document's toolbar (#471): no Save; Save a copy… sits in the Document menu beside Export. */
 export const readOnlyToolbarActions: ToolbarAction[] = [
   { id: "export", group: "document", kind: "action", label: "Export", run: nop, enabled: true },

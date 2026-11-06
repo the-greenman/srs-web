@@ -182,6 +182,8 @@ export interface AgentStatus {
 // ui_help and ui_highlight are presentation, so the host answers them itself and the engine never
 // sees them: tools/list gets them appended, tools/call for them is answered here. They read and
 // point; they never change the document (domain rule: agents respond, they never write).
+// ui_packages and ui_request_package (srs-web#712, ADR-031) are answered the same way: the first
+// reads, the second only asks. The writer's confirmation on screen is what installs.
 
 /** What the screen gives the UI tools: the open editor's help and the writer's screen. */
 export interface UiHost {
@@ -198,6 +200,10 @@ export interface UiHost {
     shown: boolean;
     reason?: string;
   };
+  /** What is installed, what is published, and how the last request ended; absent, no package tools answer. */
+  packages?(): unknown;
+  /** Ask the writer to confirm an install, on screen. Returns at once: a frame can't wait for a person. */
+  requestPackage?(packageId: string): { requested: boolean; reason?: string };
 }
 
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
@@ -226,6 +232,30 @@ export const UI_TOOLS = [
       additionalProperties: false,
     },
     annotations: { title: "Point at the screen", ...READ_ONLY },
+  },
+  {
+    name: "ui_packages",
+    description:
+      "The packages in this document and the published packages it could install (what each is for, how many types it has), and how your last ui_request_package ended (asking, installed, declined or failed, with the reason). Read-only.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    annotations: { title: "List packages", ...READ_ONLY },
+  },
+  {
+    name: "ui_request_package",
+    description:
+      "Ask the writer to install a published package (a packageId from ui_packages) with its dependencies. The writer sees what it adds and confirms or declines on screen; you can't install it yourself. It returns at once, so tell the writer why you asked, then call ui_packages to see how it ended.",
+    inputSchema: {
+      type: "object",
+      properties: { packageId: { type: "string", description: "A packageId from ui_packages." } },
+      required: ["packageId"],
+      additionalProperties: false,
+    },
+    annotations: {
+      title: "Ask to install a package",
+      readOnlyHint: false,
+      destructiveHint: false,
+      openWorldHint: false,
+    },
   },
 ];
 const UI_TOOL_NAMES = new Set(UI_TOOLS.map((t) => t.name));
@@ -348,6 +378,23 @@ function patchResult(
 
 function callUiTool(ui: UiHost, name: string, a: Record<string, unknown>) {
   if (name === "ui_help") return { content: [{ type: "text", text: uiManual(ui) }] };
+  if (name === "ui_packages" || name === "ui_request_package") {
+    const packageId = str(a.packageId);
+    const answer =
+      name === "ui_packages"
+        ? ui.packages?.()
+        : packageId
+          ? ui.requestPackage?.(packageId)
+          : { requested: false, reason: "Give a packageId from ui_packages." };
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(answer ?? { reason: "This screen has no package list." }),
+        },
+      ],
+    };
+  }
   const t = { featureId: str(a.featureId), blockId: str(a.blockId), message: str(a.message) };
   if (!t.featureId && !t.blockId)
     return {

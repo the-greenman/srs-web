@@ -61,6 +61,8 @@
   import { opensOnRead } from "$lib/read/read-model.js";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
+  import InstallPlan from "$lib/components/InstallPlan.svelte";
+  import { type PackageInstallPlan, applyInstall, availablePackages, planInstall } from "$lib/packages/catalog.js";
   import { installedPackages, upgradeNoticeText } from "$lib/package-upgrade.js";
   import { adoptByPackage } from "$lib/upgrade-plan.js";
   import GenericSrsShell from "$lib/generic/GenericSrsShell.svelte";
@@ -521,6 +523,19 @@
       spot = { target: el, message }; // UiSpot follows it through the scroll and closes itself
       return { shown: true };
     },
+    packages: () => ({
+      installed: bundledPackages.map(({ packageId, name, installed }) => ({ packageId, name, installed })),
+      available: availableToInstall.map(({ packageId, packageName, packageVersion, description, typeCount }) => ({ packageId, name: packageName, version: packageVersion, description, typeCount })),
+      lastRequest,
+    }),
+    requestPackage(packageId) {
+      if (!canUpgrade) return { requested: false, reason: "This document can't be changed here." };
+      if (installPlanning || installFlow) return { requested: false, reason: "The writer is already looking at an install." };
+      if (!availableToInstall.some((p) => p.packageId === packageId)) return { requested: false, reason: "That is not a published package this document can install: read ui_packages." };
+      lastRequest = { packageId, outcome: "asking" };
+      void reviewInstall(packageId, true);
+      return { requested: true };
+    },
   };
   const agentLib = new AgentLibrary({ guard: currentGuard, onHandled: () => void syncDocument(), ui });
   $effect(() => {
@@ -712,7 +727,7 @@
 
   // The pinned offer: one notice per document while a bundled package installed here is outdated.
   $effect(() => {
-    const outdated = bundledPackages.filter((p) => p.outdated);
+    const outdated = bundledPackages.filter((p) => p.outdated && p.upgradable);
     untrack(() => {
       if (outdated.length === 0) return unpinNotice("package-upgrade");
       pinNotice({
@@ -725,6 +740,75 @@
       });
     });
   });
+
+  const availableToInstall = $derived.by(() => {
+    void documentRevision;
+    if (!repo || !canUpgrade) return [];
+    try {
+      return availablePackages(repo);
+    } catch (e: unknown) {
+      console.warn("package catalog check failed", e); // advisory, as above
+      return [];
+    }
+  });
+
+  // ── Install from the catalog (srs-web#712, ADR-031): one path for the writer and an agent's request.
+  let installFlow = $state<{ plan: PackageInstallPlan; fromAgent: boolean; error: string | null } | null>(null);
+  /** How the agent's last request ended, for ui_packages. */
+  let lastRequest: { packageId: string; outcome: "asking" | "installed" | "declined" | "failed"; reason?: string } | null = null;
+
+  /** A plan is being fetched: one install at a time, whoever asked. */
+  let installPlanning = $state(false);
+
+  // A plan belongs to the document it was made for.
+  $effect(() => {
+    void repo;
+    untrack(() => {
+      installFlow = null;
+      lastRequest = null;
+    });
+  });
+
+  async function reviewInstall(packageId: string, fromAgent = false): Promise<void> {
+    if (!repo || installPlanning || installFlow) return;
+    const forRepo = repo;
+    installPlanning = true;
+    try {
+      const plan = await planInstall(forRepo, packageId);
+      if (repo !== forRepo) return; // the writer moved on while it was fetching
+      installFlow = { plan, fromAgent, error: null };
+      packagesOpen = false;
+    } catch (e: unknown) {
+      if (repo !== forRepo) return;
+      const reason = e instanceof Error ? e.message : String(e);
+      if (fromAgent) lastRequest = { packageId, outcome: "failed", reason };
+      notify({ kind: "error", key: "install", text: `Could not plan the install: ${reason}` });
+    } finally {
+      installPlanning = false;
+    }
+  }
+
+  function applyPackageInstall(): void {
+    if (!repo || !installFlow) return;
+    const { plan, fromAgent } = installFlow;
+    try {
+      applyInstall(repo, plan);
+    } catch (e: unknown) {
+      const reason = e instanceof Error ? e.message : String(e);
+      installFlow.error = reason;
+      if (fromAgent) lastRequest = { packageId: plan.packageId, outcome: "failed", reason };
+      return;
+    } finally {
+      syncDocument();
+    }
+    if (fromAgent) lastRequest = { packageId: plan.packageId, outcome: "installed" };
+    installFlow = null;
+  }
+
+  function declineInstall(): void {
+    if (installFlow?.fromAgent) lastRequest = { packageId: installFlow.plan.packageId, outcome: "declined", reason: "The writer declined." };
+    installFlow = null;
+  }
 
   let packagesOpen = $state(false);
   let upgradeFlow = $state<{ ids: string[]; plans: UpgradePackageResult[]; openEditor?: string } | null>(null);
@@ -1501,7 +1585,10 @@
 {/if}
 
 {#if packagesOpen}
-  <PackagesDialog packages={bundledPackages} onUpgrade={(id) => reviewUpgrade([id])} onClose={() => (packagesOpen = false)} />
+  <PackagesDialog packages={bundledPackages} available={availableToInstall} busy={installPlanning} onUpgrade={(id) => reviewUpgrade([id])} onInstall={(id) => void reviewInstall(id)} onClose={() => (packagesOpen = false)} />
+{/if}
+{#if installFlow}
+  <InstallPlan plan={installFlow.plan} fromAgent={installFlow.fromAgent} error={installFlow.error} onInstall={applyPackageInstall} onCancel={declineInstall} />
 {/if}
 {#if upgradeFlow}
   <UpgradePlan
