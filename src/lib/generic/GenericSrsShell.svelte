@@ -443,7 +443,7 @@
 
     <section class="nav__group" data-part="structure">
       <h2 class="nav__group-label">Structure</h2>
-      {#if navigation}
+      {#if navigation?.identity}
         <p class="generic-tree-root">{navigation.identity.displayLabel}</p>
       {/if}
       {#each structureContainers as entry (entry.key)}
