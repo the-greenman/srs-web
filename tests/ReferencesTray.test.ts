@@ -152,3 +152,17 @@ it("an agent's find shows who found it and is kept or denied in place; the write
   await fireEvent.click(getByTestId("reference-reset"));
   expect(onanswer.mock.calls).toEqual([["c1", "agree"], ["c1", "disagree"], ["c2", "withdrawn"]]);
 });
+
+it("lists a quotation under its source, and as its own row when the source is not in the tray (srs-web#525)", () => {
+  const quote = { id: "q1", label: "the words", type: "quotation", sourceId: "r1", paragraphs: [{ id: "p1", label: "Opening" }] };
+  const props = { onopen: vi.fn(), onfocus: vi.fn(), onremove: vi.fn() };
+  const nested = render(ReferencesTray, { ...props, items: [...items, quote] });
+  expect(nested.getAllByTestId("reference-row")).toHaveLength(2);
+  const under = nested.getByTestId("reference-quotes");
+  expect(under.querySelectorAll('[data-testid="reference-quote"]')).toHaveLength(1);
+  expect(under.textContent).toContain("the words");
+  nested.unmount();
+  const orphan = render(ReferencesTray, { ...props, items: [items[1], quote] });
+  expect(orphan.getAllByTestId("reference-row")).toHaveLength(2);
+  expect(orphan.queryByTestId("reference-quotes")).toBeNull();
+});

@@ -111,6 +111,8 @@ export interface Reference {
   kind: string;
   /** A source's `source_url` ("" otherwise). */
   url: string;
+  /** A quotation's source (its `derived-from` target, srs-web#525); absent for other references. */
+  sourceId?: string;
   /** A context document (srs-web#568): the source marked `source_kind: context`, read by every agent. */
   context: boolean;
   /** The record's description, citation and statement (those it has), blank-line joined. */
@@ -462,6 +464,10 @@ export function loadEssay(
       repairError ??= e instanceof Error ? e.message : String(e);
     }
   }
+  const quotedFrom = new Map<string, string>();
+  if (referencesContainerId)
+    for (const rel of listRelations(repo, { relationType: "derived-from" }))
+      quotedFrom.set(rel.sourceInstanceId, rel.targetInstanceId);
   const references: Reference[] = referencesContainerId
     ? listRecords(repo, { containerId: referencesContainerId }).map((r) => {
         const verdict = verdictOf(comments[r.instanceId] ?? []);
@@ -474,6 +480,9 @@ export function loadEssay(
           typeName: r.typeName ?? "",
           kind: str(r.fieldValues.source_kind),
           url: str(r.fieldValues.source_url),
+          ...(r.typeName === "quotation" && quotedFrom.has(r.instanceId)
+            ? { sourceId: quotedFrom.get(r.instanceId) }
+            : {}),
           context: str(r.fieldValues.source_kind) === CONTEXT_KIND,
           text: TEXT_FIELDS.map((k) => str(r.fieldValues[k]))
             .filter(Boolean)
