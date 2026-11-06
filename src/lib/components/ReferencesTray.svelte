@@ -7,7 +7,8 @@
   only, never deletes the record. Shares the tray stylesheet (draft-tray.css).
   With `oncontext`, context documents (the call the essay answers) are listed first with a form to add
   one by file, URL or pasted text; the rest are the ordinary references.
-  Issues: https://github.com/the-greenman/srs-web/issues/495, #519, #568
+  With `onsearch` and `onadd`, a search adds a record the repository already holds, such as a claim.
+  Issues: https://github.com/the-greenman/srs-web/issues/495, #519, #568, #754
 -->
 <script lang="ts">
   import BookOpen from '@lucide/svelte/icons/book-open';
@@ -59,6 +60,8 @@
     onlink,
     onanswer,
     oncontext,
+    onsearch,
+    onadd,
   }: {
     items: ReferenceItem[];
     /** Every paragraph a reference can be linked to. Absent/empty: no link action. */
@@ -80,7 +83,14 @@
     onanswer?: (referenceId: string, kind: 'agree' | 'disagree' | 'withdrawn') => void;
     /** Absent: no context-document form. */
     oncontext?: (docs: { files?: AttachFile[]; urls?: string[]; texts?: { title: string; body: string }[] }) => void | Promise<void>;
+    /** The repository's records matching a search, that the tray doesn't hold. Absent: no search. */
+    onsearch?: (text: string) => { id: string; label: string; type: string }[];
+    onadd?: (id: string) => void;
   } = $props();
+
+  let query = $state('');
+  const found = $derived(onsearch ? onsearch(query) : []);
+  const searched = $derived(query.trim().length >= 2);
 
   const contextItems = $derived(items.filter((r) => r.context));
   const otherItems = $derived(items.filter((r) => !r.context));
@@ -116,6 +126,19 @@
   {#if onfiles}
     <AttachDrop compact label="Add to references" {policy} {attachedBytes} onfiles={files} {onurls} data-testid="references-drop" />
     <RepoSize totalBytes={usedBytes} {maxBytes} pendingBytes={pending} />
+  {/if}
+  {#if onsearch && onadd}
+    <form class="refs-tray__form" onsubmit={(e) => e.preventDefault()}>
+      <Input bind:value={query} aria-label="Find an existing claim or source" placeholder="Find an existing claim or source" data-testid="references-find" />
+    </form>
+    {#each found as f (f.id)}
+      <TrayRow label={`${f.label} (${f.type})`} data-testid="references-found">
+        {#snippet actions()}
+          <Button size="sm" aria-label={`Add ${f.label} to references`} onclick={() => { onadd(f.id); query = ''; }}>Add</Button>
+        {/snippet}
+      </TrayRow>
+    {/each}
+    {#if searched && found.length === 0}<p class="tray__empty" data-testid="references-found-none">Nothing in this repository matches.</p>{/if}
   {/if}
   {#if otherItems.length === 0}<p class="tray__empty">Sources, quotations and problems that agents and attach flows collect for this essay wait here.</p>{/if}
 {#snippet rows(list: ReferenceItem[])}

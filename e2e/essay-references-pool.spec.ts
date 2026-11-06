@@ -100,3 +100,28 @@ test("a file dropped on the page background joins the pool, linked to nothing", 
   await expect(row).toHaveCount(1);
   await expect(row.getByTestId("reference-chip")).toHaveCount(0);
 });
+
+test("the writer finds a record the repository already holds, adds it back and links it to a paragraph (srs-web#754)", async ({ page }) => {
+  await open(page);
+  const zone = page.getByTestId("references-drop");
+  const dt = await fileDrop(page, "held-elsewhere.md", "Some text.");
+  await zone.dispatchEvent("dragenter", { dataTransfer: dt });
+  await zone.dispatchEvent("drop", { dataTransfer: dt });
+  await page.getByLabel("Remove held-elsewhere.md from references").click();
+  await expect(rows(page).filter({ hasText: "held-elsewhere.md" })).toHaveCount(0);
+
+  const search = page.getByTestId("references-find");
+  await search.fill("held-elsewhere");
+  await page.getByLabel("Add held-elsewhere.md to references").click();
+  const row = rows(page).filter({ hasText: "held-elsewhere.md" });
+  await expect(row).toHaveCount(1);
+  await expect(search).toHaveValue("");
+  await search.fill("no such record anywhere");
+  await expect(page.getByTestId("references-found-none")).toBeVisible();
+  await search.fill("");
+
+  await row.getByTestId("reference-link").click();
+  await page.locator('[data-testid^="reference-link-"]').first().click();
+  await expect(row.getByTestId("reference-chip")).toHaveCount(1);
+  await expect(page.getByTestId("essay-error")).toHaveCount(0);
+});

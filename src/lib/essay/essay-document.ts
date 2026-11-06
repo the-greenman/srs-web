@@ -4,6 +4,7 @@ import {
   COMMENTS_ON,
   SO_COMMENTS_ON,
   isCommentsOn,
+  kindsAvailable,
   kindsIn,
   loadComments,
   verdictOf,
@@ -18,6 +19,7 @@ import {
   place,
   transfer,
 } from "$lib/document.js";
+import { respond } from "$lib/link-proposals.js";
 /**
  * Essay document operations: a thin composition of srs-client calls (no SRS semantics here —
  * validation, ordering and depth rules are the engine's). The shell calls these and reloads.
@@ -38,6 +40,7 @@ import {
   deleteRelation,
   exportSlice,
   exportTree,
+  find,
   forkRecord,
   getAttachmentBytes,
   getContainer,
@@ -640,11 +643,11 @@ export function agentHandoff(a: {
         ]
       : []),
     "- Responses: the writer answers your comment with a comment on it (comments-on your comment): agree or disagree is their verdict, done or rejected settles your task (the text is the reason), withdrawn clears either; the latest one counts. Never propose a task again whose latest response is rejected, and never reply to a response.",
-    `- Gather: a source, quotation or problem worth having for this essay goes in references: create it${r ? ` with containerId ${r}` : ""}, or container_member_add an existing one. Read references first so you don't duplicate. The writer decides what stays; you suggest.`,
+    `- Gather: a source, quotation or problem worth having for this essay goes in references: create it${r ? ` with containerId ${r}` : ""}, or container_member_add an existing one. The repository may hold more than this essay does, such as claims: search it with find before creating a record or saying something is missing. Read references first so you don't duplicate. The writer decides what stays; you suggest.`,
     "- What to create: com.mudemocracy.argument/source for a work or page (title, source_kind). com.mudemocracy.argument/quotation for exact words you have in front of you, never from memory (title, quote_text, locator, warrant_level). warrant_level is the level actually reached: secondary if copied from a summary or translation. Never invent a locator. Then add a derived-from relation from it to its source. com.mudemocracy.argument/problem for what the writing speaks to (problem_id, statement, kind, persona, scale). persona and scale must be terms of their vocabularies, which were written for muDemocracy: if none fits, say so in a comment rather than forcing one.",
-    "- Missing types: on an essay older than essay 1.9.0 these types don't exist; ask the writer to upgrade under Document > Packages…. For a type that isn't in this essay's packages, call ui_packages: if a published package has what the essay needs, tell the writer why and call ui_request_package. The writer confirms on screen; call ui_packages to see how it ended, then read the new type's type_schema. If no package has it, as with a claim today, say so, and don't use another type in its place.",
+    "- Missing types: on an essay older than essay 1.9.0 these types don't exist; ask the writer to upgrade under Document > Packages…. A type the repository holds is available whichever package it came from: check with find first. For a type the repository doesn't have, call ui_packages: if a published package has what the essay needs, tell the writer why and call ui_request_package. The writer confirms on screen; call ui_packages to see how it ended, then read the new type's type_schema. If no package has it, say so, and don't use another type in its place.",
     `- The writer's own material is in references too: com.mudemocracy.argument/source records (a source_url for a web page; a text file attached to the record, e.g. a transcript or paper). To read attached text: for each sourceRefs entry with sourceType repository-document, read ${uri}/attachment/<its sourceId>.`,
-    "- Attach: link a reference to a paragraph with com.mudemocracy.essay/bears-on (paragraph → problem), evidences (source or quotation → paragraph, supports) or com.mudemocracy.essay/counters (source or quotation → paragraph, opposes).",
+    "- Attach: link a reference to a paragraph with com.mudemocracy.essay/bears-on (paragraph → problem), evidences (source, quotation or existing claim → paragraph, supports) or com.mudemocracy.essay/counters (source, quotation or existing claim → paragraph, opposes).",
     "- Domain: you may propose the essay's boundary (its domain) as a comment; never set com.mudemocracy.argument/within-boundary yourself, the writer chooses it.",
     "- Titles: you may set paragraph_title only where it is empty.",
     "- Before creating a record of any type, read its type_schema; the aiGuidance there is authoritative.",
@@ -786,6 +789,41 @@ export const linkReference = (repo: SrsRepository, sourceId: string, paragraphId
     targetInstanceId: paragraphId,
   });
 };
+
+/** What a writer can bring in from the repository: the types `linkReference`'s `evidences` reads correctly for. */
+const EXISTING_REFERENCE_TYPES = ["claim", "source", "quotation"];
+
+/** Records of the repository matching `text` that this essay's references don't hold yet (srs-web#754). */
+export function findExistingReferences(
+  repo: SrsRepository,
+  m: Pick<EssayModel, "references">,
+  text: string
+): { id: string; label: string; type: string }[] {
+  const contentMatch = text.trim();
+  if (contentMatch.length < 2) return [];
+  const held = new Set(m.references.map((r) => r.id));
+  return EXISTING_REFERENCE_TYPES.flatMap(
+    (typeName) => find(repo, { typeName, contentMatch }, { limit: held.size + 5 }).hits
+  )
+    .filter((h) => !held.has(h.instanceId))
+    .map((h) => ({ id: h.instanceId, label: h.label, type: h.typeName }));
+}
+
+/**
+ * Put a record the repository already holds in the essay's references (srs-web#754). An agent's record
+ * would read as an agent's unanswered find, but here the writer chose it: `keep` records their tick.
+ */
+export function addExistingReference(
+  repo: SrsRepository,
+  m: Pick<EssayModel, "referencesContainerId" | "commentsContainerId">,
+  id: string,
+  keep: boolean
+): void {
+  if (!m.referencesContainerId) throw new Error("This essay has no references container");
+  addContainerMember(repo, m.referencesContainerId, id);
+  if (keep && kindsAvailable(repo) && getRecord(repo, id)?.createdBy?.kind === "ai")
+    respond(repo, id, "agree", "", m.commentsContainerId);
+}
 
 /**
  * Quote a passage of a source to a paragraph (srs-web#525): one `quotation` record (the words verbatim,
