@@ -803,7 +803,7 @@ export function findExistingReferences(
   if (contentMatch.length < 2) return [];
   const held = new Set(m.references.map((r) => r.id));
   return EXISTING_REFERENCE_TYPES.flatMap(
-    (typeName) => find(repo, { typeName, contentMatch }, { limit: 5 }).hits
+    (typeName) => find(repo, { typeName, contentMatch }, { limit: held.size + 5 }).hits
   )
     .filter((h) => !held.has(h.instanceId))
     .map((h) => ({ id: h.instanceId, label: h.label, type: h.typeName }));

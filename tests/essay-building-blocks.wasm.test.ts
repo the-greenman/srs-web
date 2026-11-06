@@ -115,6 +115,7 @@ describe.skipIf(!haveBindings)("essay building blocks on the real engine", () =>
     }
     expect(brief).toContain("Document > Packages");
     expect(brief).not.toMatch(/source(,| or) claim/);
+    expect(brief).not.toMatch(/creat\w*[^.]*claim/i); // an existing claim can be linked; none is promised (#754)
 
     const source = create("source", { title: "A book", source_kind: "book" });
     const quote = create("quotation", {
