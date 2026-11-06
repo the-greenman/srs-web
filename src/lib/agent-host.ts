@@ -14,10 +14,9 @@ import type { RelayHost } from "./mcp/relay-host.js";
 import {
   type AgentWriteGuard,
   type McpSession,
-  RFC046_MIGRATION_ID,
   type SrsRepository,
   listRelations,
-  neededMigrationIds,
+  needsRevisionUpTo,
 } from "./srs-client.js";
 
 /** One connection's relay host and the engine session it currently serves. */
@@ -71,7 +70,7 @@ export function applyAgentActor(
   conn: AgentConnection
 ): void {
   try {
-    if (neededMigrationIds(repo).includes(RFC046_MIGRATION_ID)) return;
+    if (needsRevisionUpTo(repo, 9)) return;
   } catch (e) {
     console.error("Agent actor not set: migration state unknown", e);
     return;
