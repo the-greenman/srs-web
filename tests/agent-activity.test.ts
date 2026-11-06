@@ -336,6 +336,30 @@ it("a UI call keeps the lifecycle: before the session has answered, a ping goes 
   expect(seen).toEqual(["ping", "ping"]); // ready: no more pings
 });
 
+it("an engine without ping (Method not found) still answers a UI call made before tools/list (#722)", () => {
+  const inner = {
+    handle: (t: string) =>
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id: JSON.parse(t).id,
+        error: { code: -32601, message: "Method not found: ping" },
+      }),
+    sessionUnknown: () => false,
+  };
+  const r = JSON.parse(withUiTools(inner, host()).handle(call("ui_help"))!);
+  expect(r.error).toBeUndefined();
+  expect(r.result.content[0].text).toContain("Layers");
+});
+
+it("any other ping error still stands", () => {
+  const inner = {
+    handle: (t: string) =>
+      JSON.stringify({ jsonrpc: "2.0", id: JSON.parse(t).id, error: { code: -32603, message: "x" } }),
+    sessionUnknown: () => false,
+  };
+  expect(JSON.parse(withUiTools(inner, host()).handle(call("ui_help"))!).error.code).toBe(-32603);
+});
+
 it("a UI call sent as a notification (no id) is the engine's", () => {
   const seen: string[] = [];
   const h = withUiTools({ handle: (t) => (seen.push(t), undefined) }, host());
