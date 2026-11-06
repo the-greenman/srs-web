@@ -186,6 +186,22 @@ describe.skipIf(!haveBindings)("references pool on the real engine", () => {
     expect(report.diagnostics.filter((d: { severity: string }) => d.severity === "error")).toEqual([]);
   });
 
+  it("adding an agent's record still works on an essay with no comments type: it stays a candidate (srs-web#754)", async () => {
+    const doc = await import("../src/lib/essay/essay-document.js");
+    const repo = (await engine()).SrsRepository.load(fixture());
+    const essay = doc.listEssays(repo)[0].id;
+    let m = doc.loadEssay(repo, essay, { repair: true });
+    repo.set_actor(JSON.stringify({ kind: "ai", id: "agent:x", name: "X" }));
+    const [id] = doc.addReferences(repo, m, { urls: ["https://example.org/agent-find"] });
+    repo.set_actor(JSON.stringify({ kind: "human", id: "human:ada", name: "Ada" }));
+    doc.removeReference(repo, m, id);
+    m = doc.loadEssay(repo, essay);
+    doc.addExistingReference(repo, m, id, true);
+    const ref = doc.loadEssay(repo, essay).references.find((r) => r.id === id);
+    expect(ref?.foundBy).toBeTruthy();
+    expect(ref?.verdict).toBeUndefined();
+  });
+
   it("a source an agent adds reads back as a candidate with its finder; the writer's own does not (srs-web#626)", async () => {
     const doc = await import("../src/lib/essay/essay-document.js");
     const repo = (await engine()).SrsRepository.load(fixture());

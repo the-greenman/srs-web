@@ -78,6 +78,8 @@
     shiftEntry,
     removeAttachment,
     linkReference,
+    findExistingReferences,
+    addExistingReference,
     quoteToParagraph,
     referenceText,
     removeReference,
@@ -499,6 +501,8 @@
     }
   }
   const dropReference = (id: string) => run(() => removeReference(repo, model!, id));
+  const findExisting = (text: string) => findExistingReferences(repo, model!, text);
+  const addExisting = (id: string) => run(() => addExistingReference(repo, model!, id, hasActor));
   const draftItems = $derived(
     (model?.draftEntries ?? []).map((e) => ({ id: e.instanceId, label: label(e.instanceId), body: model?.paragraphs[e.instanceId]?.body })),
   );
@@ -1115,6 +1119,8 @@
               onfiles={(files) => addRefs({ files })}
               onurls={(urls) => addRefs({ urls })}
               oncontext={addContext}
+              onsearch={findExisting}
+              onadd={addExisting}
               onlink={(id, paragraphId) => run(() => linkReference(repo, id, paragraphId))}
               onanswer={hasActor ? (id, kind) => run(() => respond(repo, id, kind, '', model?.commentsContainerId)) : undefined}
             />
