@@ -54,7 +54,12 @@ let seq = 0;
  * The only JSON-RPC parsing in the host (ADR-001), with `withUiTools` below: the method, the client's
  * name and whether the message carries an `error` member, from one parse. Never throws.
  */
-export function rpcInfo(text: string): { method?: string; clientName?: string; isError: boolean } {
+export function rpcInfo(text: string): {
+  method?: string;
+  clientName?: string;
+  isError: boolean;
+  errorCode?: number;
+} {
   try {
     const m = JSON.parse(text);
     const n = m?.params?.clientInfo?.name;
@@ -62,11 +67,14 @@ export function rpcInfo(text: string): { method?: string; clientName?: string; i
       method: typeof m?.method === "string" ? m.method : undefined,
       clientName: typeof n === "string" && n ? n : undefined,
       isError: m != null && typeof m === "object" && "error" in m,
+      errorCode: typeof m?.error?.code === "number" ? m.error.code : undefined,
     };
   } catch {
     return { isError: false };
   }
 }
+
+const METHOD_NOT_FOUND = -32601;
 
 const INITIALIZED = '{"jsonrpc":"2.0","method":"notifications/initialized"}';
 
@@ -331,7 +339,13 @@ export function withUiTools(inner: FrameHandler, ui: UiHost): FrameHandler {
       ) {
         if (!ready) {
           const pong = inner.handle(JSON.stringify({ jsonrpc: "2.0", id: m.id, method: "ping" }));
-          if (inner.sessionUnknown?.() || pong === undefined || rpcInfo(pong).isError) return pong;
+          // -32601 (method not found) is an answer: the engine's session may not implement `ping`, but it is initialized.
+          if (
+            inner.sessionUnknown?.() ||
+            pong === undefined ||
+            (rpcInfo(pong).isError && rpcInfo(pong).errorCode !== METHOD_NOT_FOUND)
+          )
+            return pong;
           ready = true;
         }
         hostAnswered = true;
