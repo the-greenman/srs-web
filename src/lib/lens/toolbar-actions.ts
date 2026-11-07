@@ -7,6 +7,7 @@ import type { ToolbarAction } from "../components/menu-action.js";
 import {
   agentsAction,
   exportActions,
+  mergeAction,
   openAnotherAction,
   packagesAction,
   saveAction,
@@ -25,6 +26,8 @@ export interface LensHandlers {
   onopenagents?: () => void;
   /** Absent while read-only. */
   onopenpackages?: () => void;
+  /** Absent while read-only. */
+  onopenmerge?: () => void;
   onopenexplorer: () => void;
 }
 
@@ -45,6 +48,7 @@ export function lensActions(
       testid: "save-copy",
     },
     !!h.onopenpackages && packagesAction(h.onopenpackages),
+    !!h.onopenmerge && mergeAction(h.onopenmerge),
     wideAction(s.shell),
     {
       id: "explorer",

@@ -1636,3 +1636,41 @@ export const essayHomeItems = [
     "- [An example](?open=/examples/a.srsj&editor=essay)"
   ),
 ];
+
+/** MergePlan specimen (srs-web#733): two new items (one unticked), one note, one item kept. Words as help/ holds them. */
+export const mergeHelpFx = [
+  {
+    instanceId: "h1",
+    featureId: "merge.intro",
+    placement: "ui" as const,
+    title: "Merge changes from a file",
+    summary: "Bring in the work another copy of this document has and this one does not.",
+  },
+  {
+    instanceId: "h2",
+    featureId: "merge.new",
+    placement: "ui" as const,
+    title: "New in the other copy",
+    summary: "Untick anything you do not want.",
+  },
+  {
+    instanceId: "h3",
+    featureId: "merge.left-out",
+    placement: "ui" as const,
+    title: "Not brought in",
+    summary: "These stay as they are in this copy.",
+  },
+];
+export const mergeChoicesFx = [
+  { id: "m1", kind: "record" as const, title: "Adopt the decision log" },
+  { id: "m2", kind: "record" as const, title: "Name the working groups" },
+  { id: "m3", kind: "note" as const, title: "Notes from Tuesday" },
+];
+export const mergeLeftOutFx = [
+  {
+    id: "m4",
+    kind: "instance",
+    title: "Charter",
+    why: "changed in both copies; this copy's version stays",
+  },
+];

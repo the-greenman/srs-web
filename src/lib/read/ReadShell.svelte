@@ -48,6 +48,7 @@
     onOpenExplorer,
     onOpenAgents,
     onOpenPackages,
+    onOpenMerge,
     readOnlyReason = null,
     readOnly = false,
     onSaveCopy,
@@ -143,6 +144,7 @@
         onopenanother: onOpenAnother,
         onopenagents: onOpenAgents,
         onopenpackages: readOnly ? undefined : onOpenPackages,
+        onopenmerge: readOnly ? undefined : onOpenMerge,
         onopenexplorer: openExplorer,
       },
       { shell, saving, dirty: documentDirty }

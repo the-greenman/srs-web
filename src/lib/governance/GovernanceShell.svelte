@@ -116,6 +116,7 @@
     /** Go > Agents…: open the agent library. */
     onOpenAgents?: () => void;
     onOpenPackages?: () => void;
+    onOpenMerge?: () => void;
     /** Part of the common EditorShellProps; unused by this shell. */
     onOpenExplorer?: () => void;
   }
@@ -136,6 +137,7 @@
     onOpenAnother,
     onOpenAgents,
     onOpenPackages,
+    onOpenMerge,
   }: Props = $props();
 
   const shell = new ShellState({ wideEnabled: true });
@@ -570,6 +572,7 @@
         onopenanother: onOpenAnother,
         onopenagents: onOpenAgents,
         onopenpackages: onOpenPackages,
+        onopenmerge: onOpenMerge,
         onnew:
           activeView === "governance" && formMode === null && activeSectionSchema
             ? () => {

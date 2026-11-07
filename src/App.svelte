@@ -22,6 +22,9 @@
     initWasm,
     loadRepo,
     loadRepoFromArchive,
+    getNote,
+    getRecordOrNull,
+    listRecords,
     loadRepoFromTree,
     exportSrsj,
     exportArchive,
@@ -60,6 +63,8 @@
   import ReadShell from "$lib/read/ReadShell.svelte";
   import { opensOnRead } from "$lib/read/read-model.js";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
+  import MergePlan from "$lib/components/MergePlan.svelte";
+  import { type MergeChoice, type MergeReport, applyMerge, leftOut, mergeChoices, previewMerge } from "$lib/merge.js";
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
   import InstallPlan from "$lib/components/InstallPlan.svelte";
   import { type PackageInstallPlan, applyInstall, availablePackages, planInstall } from "$lib/packages/catalog.js";
@@ -857,6 +862,73 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Merge changes from a file (srs-web#733): bring new items in from another copy. The engine
+  // previews and applies (srs-rust#1580); Apply goes through the write-observed repo, so what comes
+  // in shows as unsaved changes and saves normally. Offered where an upgrade is (`canUpgrade`).
+  // ---------------------------------------------------------------------------
+
+  let mergeInput = $state<HTMLInputElement | null>(null);
+  let mergeFlow = $state<{ archive: Uint8Array; report: MergeReport; choices: MergeChoice[] } | null>(null);
+  let mergeTicked = $state<string[]>([]);
+  let mergeError = $state<string | null>(null);
+  const titleIn = (id: string): string | undefined => {
+    if (!repo) return undefined;
+    try {
+      return getRecordOrNull(repo, id)?.displayLabel ?? getNote(repo, id)?.title;
+    } catch {
+      return undefined;
+    }
+  };
+
+  /**
+   * The engine's display labels for the other copy's records (the merge report titles notes only).
+   * ponytail: opens the copy a second time just to name rows; drop once the report carries labels.
+   * A copy that will not open on its own (it needs a migration) is named by short id instead.
+   */
+  function labelsIn(archive: Uint8Array): (id: string) => string | undefined {
+    try {
+      const source = loadRepoFromArchive(archive);
+      const labels = new Map(listRecords(source).map((r) => [r.instanceId, r.displayLabel]));
+      return (id) => labels.get(id) ?? undefined;
+    } catch {
+      return () => undefined;
+    }
+  }
+
+  // A preview belongs to the document it was made for.
+  $effect(() => {
+    void repo;
+    untrack(() => (mergeFlow = null));
+  });
+
+  async function reviewMerge(file: File): Promise<void> {
+    if (!repo || !canUpgrade) return;
+    try {
+      const archive = new Uint8Array(await file.arrayBuffer());
+      const report = previewMerge(repo, archive);
+      const choices = mergeChoices(report, labelsIn(archive));
+      mergeFlow = { archive, report, choices };
+      mergeTicked = choices.map((c) => c.id);
+      mergeError = null;
+    } catch (e: unknown) {
+      notify({ kind: "error", key: "merge", text: `Could not merge from ${file.name}: ${e instanceof Error ? e.message : String(e)}` });
+    }
+  }
+
+  function applyMergeFlow(): void {
+    if (!repo || !mergeFlow) return;
+    try {
+      applyMerge(repo, mergeFlow.archive, mergeFlow.report, new Set(mergeTicked));
+    } catch (e: unknown) {
+      mergeError = e instanceof Error ? e.message : String(e);
+      return;
+    } finally {
+      syncDocument();
+    }
+    mergeFlow = null;
+  }
+
+  // ---------------------------------------------------------------------------
   // Create new repository (srs-web#141, #341)
   // ---------------------------------------------------------------------------
 
@@ -1442,6 +1514,7 @@
     onDocumentMutation={syncDocument}
     onOpenAgents={openDock}
     onOpenPackages={canUpgrade ? () => (packagesOpen = true) : undefined}
+    onOpenMerge={canUpgrade ? () => mergeInput?.click() : undefined}
     onOpenExplorer={() => {
       readAddress();
       editorMode = "generic";
@@ -1480,6 +1553,7 @@
     documentRevision={documentRevision}
     onOpenAgents={openDock}
     onOpenPackages={canUpgrade ? () => (packagesOpen = true) : undefined}
+    onOpenMerge={canUpgrade ? () => mergeInput?.click() : undefined}
     onOpenExplorer={() => {
       readAddress();
       editorMode = "generic";
@@ -1519,6 +1593,7 @@
     onInstallEditor={installEditor}
     onReviewUpgrade={canUpgrade ? reviewEditorUpgrade : undefined}
     onOpenPackages={canUpgrade ? () => (packagesOpen = true) : undefined}
+    onOpenMerge={canUpgrade ? () => mergeInput?.click() : undefined}
     onOpenAgents={openDock}
     onOpenLenses={() => {
       readAddress();
@@ -1571,6 +1646,7 @@
     onOpenExplorer={() => { editorMode = "generic"; }}
     onOpenAgents={activeEditor!.hostsAgentPanel ? undefined : openDock}
     onOpenPackages={canUpgrade ? () => (packagesOpen = true) : undefined}
+    onOpenMerge={canUpgrade ? () => mergeInput?.click() : undefined}
     onOpenAnother={() => {
       void clearWorkingCopy();
       cachedSession = null;
@@ -1589,6 +1665,30 @@
 {/if}
 {#if installFlow}
   <InstallPlan plan={installFlow.plan} fromAgent={installFlow.fromAgent} error={installFlow.error} onInstall={applyPackageInstall} onCancel={declineInstall} />
+{/if}
+<input
+  bind:this={mergeInput}
+  type="file"
+  accept=".srs"
+  hidden
+  data-testid="merge-file"
+  onchange={(e) => {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
+    input.value = ""; // the same file can be picked again
+    if (file) void reviewMerge(file);
+  }}
+/>
+{#if mergeFlow}
+  <MergePlan
+    help={helpFor("merge-from-file")}
+    choices={mergeFlow.choices}
+    leftOut={leftOut(mergeFlow.report, titleIn)}
+    bind:ticked={mergeTicked}
+    error={mergeError}
+    onApply={applyMergeFlow}
+    onCancel={() => (mergeFlow = null)}
+  />
 {/if}
 {#if upgradeFlow}
   <UpgradePlan
