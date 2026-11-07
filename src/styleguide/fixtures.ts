@@ -837,7 +837,7 @@ const argumentEntryFx = {
   description: "Build an argument: problems, hypotheses, mechanisms and tests.",
   fieldCount: 83,
   typeCount: 26,
-  downloadUrl: "",
+  locator: { mode: "remote" as const, url: "" },
   checksum: "",
 };
 /** A published package a document doesn't have (PackagesDialog specimen, #712). */

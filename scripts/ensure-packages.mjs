@@ -71,6 +71,7 @@ const entries = lock.map((e) => {
   if (!e.onInstall) writeFileSync(join(publicDir, servedName(e)), text);
   const b = JSON.parse(text);
   return {
+    kind: "package",
     packageId: e.packageId,
     packageName: e.name,
     packageVersion: e.version,
@@ -81,12 +82,13 @@ const entries = lock.map((e) => {
     typeCount: count(b.types),
     viewCount: count(b.views),
     relationTypeCount: count(b.relationTypes),
-    downloadUrl: `/packages/${servedName(e)}`,
+    locator: { mode: "remote", url: `/packages/${servedName(e)}` },
     checksum: e.sha256,
   };
 });
 const catalog = `${JSON.stringify(
   {
+    registryRevision: 1, // RFC-049: kinded entries, `locator` in place of `downloadUrl`
     schemaVersion: "1.0",
     registryId: "6f1f7c52-4f0e-4c55-9d6a-7b6a1b0e7121",
     registryName: "SemanticOps packages",
