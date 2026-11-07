@@ -441,6 +441,7 @@
       type: r.typeName,
       kind: r.kind,
       url: r.url,
+      ...(r.sourceId ? { sourceId: r.sourceId } : {}),
       context: r.context,
       ...(r.foundBy ? { foundBy: r.foundBy.name || r.foundBy.id } : {}),
       ...(r.verdict ? { verdict: r.verdict } : {}),

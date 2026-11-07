@@ -366,6 +366,14 @@ export const referenceItems = [
       { id: "p2", label: "The second claim" },
     ],
   },
+  // #525: a quotation lists under its source
+  {
+    id: "r6",
+    label: '"A boundary is a relation"',
+    type: "quotation",
+    sourceId: "r1",
+    paragraphs: [{ id: "p1", label: "Opening" }],
+  },
   { id: "r2", label: "Nobody owns the edge", type: "claim", paragraphs: [] },
   // #568: a context document, listed apart from the references
   {
