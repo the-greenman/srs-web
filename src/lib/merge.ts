@@ -91,43 +91,56 @@ export function mergeChoices(
   ];
 }
 
-/** Links and outline entries are not ticked: they come with the items they join. */
-export function selectionFor(report: MergeReport, ticked: ReadonlySet<string>): MergeSelection {
+/** A report's `bring`, narrowed to `keep` (default all), as a selection an apply accepts. */
+function selectionOf(r: MergeReport, keep: (id: string) => boolean = () => true): MergeSelection {
   return {
-    instanceIds: report.bring.instances.map((i) => i.instanceId).filter((id) => ticked.has(id)),
-    containerIds: report.bring.containers.map((c) => c.containerId).filter((id) => ticked.has(id)),
-    relationIds: report.bring.relations.map((r) => r.relationId),
-    containerEntries: report.bring.containerEntries.map(({ containerId, instanceId }) => ({
+    instanceIds: r.bring.instances.map((i) => i.instanceId).filter(keep),
+    containerIds: r.bring.containers.map((c) => c.containerId).filter(keep),
+    relationIds: r.bring.relations.map((x) => x.relationId),
+    containerEntries: r.bring.containerEntries.map(({ containerId, instanceId }) => ({
       containerId,
       instanceId,
     })),
   };
 }
 
-/** Exactly what a report says comes in, as a selection an apply accepts. */
-const bringSelection = (r: MergeReport): MergeSelection => ({
-  instanceIds: r.bring.instances.map((i) => i.instanceId),
-  relationIds: r.bring.relations.map((x) => x.relationId),
-  containerIds: r.bring.containers.map((c) => c.containerId),
-  containerEntries: r.bring.containerEntries.map(({ containerId, instanceId }) => ({
-    containerId,
-    instanceId,
-  })),
-});
+/** What an apply brought in, and how many links and outline places could not come with the ticks. */
+export interface MergeOutcome {
+  report: MergeReport;
+  leftBehind: number;
+}
 
 /**
- * Bring in the ticked items and whatever links and entries can come with them. A link whose other
- * end was left unticked cannot come in, so the engine previews the ticks first and the apply asks
- * for exactly what that preview brings: an apply never refuses for a choice the writer did not make.
+ * Bring in the ticked items (links and outline entries are not ticked: they come with the items
+ * they join). A link whose other end was left unticked cannot come in, so the engine previews the
+ * ticks first and the apply asks for exactly what that preview brings: an apply never refuses for a
+ * choice the writer did not make, and `leftBehind` says how much stayed out so the host can tell them.
  */
 export function applyMerge(
   repo: SrsRepository,
   archive: Uint8Array,
   report: MergeReport,
   ticked: ReadonlySet<string>
-): MergeReport {
-  const plan = previewMerge(repo, archive, selectionFor(report, ticked));
-  return JSON.parse(repo.merge_apply(archive, JSON.stringify(bringSelection(plan)))) as MergeReport;
+): MergeOutcome {
+  const plan = previewMerge(
+    repo,
+    archive,
+    selectionOf(report, (id) => ticked.has(id))
+  );
+  const applied = JSON.parse(
+    repo.merge_apply(archive, JSON.stringify(selectionOf(plan)))
+  ) as MergeReport;
+  return { report: applied, leftBehind: plan.unavailable.length };
+}
+
+/** "Brought in 3 items and 2 links." plus what stayed out, for a notice. */
+export function outcomeText({ report, leftBehind }: MergeOutcome): string {
+  const n = (k: number, one: string) => `${k} ${one}${k === 1 ? "" : "s"}`;
+  const b = report.bring;
+  const text = `Brought in ${n(b.instances.length + b.containers.length, "item")} and ${n(b.relations.length, "link")}.`;
+  return leftBehind
+    ? `${text} ${n(leftBehind, "link or outline place")} stayed out with the unticked items.`
+    : text;
 }
 
 const REASONS: Record<string, string> = {

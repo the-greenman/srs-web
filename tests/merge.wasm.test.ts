@@ -34,36 +34,74 @@ describe.skipIf(!haveBindings)("merge from a file on the real engine", () => {
     source.set_actor(ACTOR);
 
     const [first, second] = c.listRecords(source);
-    const kept = c.createRecord(source, first.typeId, first.typeVersion, { fieldValues: first.fieldValues });
-    const dropped = c.createRecord(source, second.typeId, second.typeVersion, { fieldValues: second.fieldValues });
-    c.createRelation(source, { relationType: "refines", sourceInstanceId: kept.instanceId, targetInstanceId: dropped.instanceId });
-    c.createRelation(source, { relationType: "refines", sourceInstanceId: kept.instanceId, targetInstanceId: first.instanceId });
-    c.updateRecord(source, second.instanceId, { fieldValues: { ...second.fieldValues, title: "Changed over there" } });
+    const kept = c.createRecord(source, first.typeId, first.typeVersion, {
+      fieldValues: first.fieldValues,
+    });
+    const dropped = c.createRecord(source, second.typeId, second.typeVersion, {
+      fieldValues: second.fieldValues,
+    });
+    c.createRelation(source, {
+      relationType: "refines",
+      sourceInstanceId: kept.instanceId,
+      targetInstanceId: dropped.instanceId,
+    });
+    c.createRelation(source, {
+      relationType: "refines",
+      sourceInstanceId: kept.instanceId,
+      targetInstanceId: first.instanceId,
+    });
+    c.updateRecord(source, second.instanceId, {
+      fieldValues: { ...second.fieldValues, title: "Changed over there" },
+    });
     const archive = source.export_archive();
 
     const report = m.previewMerge(target, archive);
-    expect(m.mergeChoices(report).map((x) => x.id).sort()).toEqual([kept.instanceId, dropped.instanceId].sort());
+    expect(
+      m
+        .mergeChoices(report)
+        .map((x) => x.id)
+        .sort()
+    ).toEqual([kept.instanceId, dropped.instanceId].sort());
     expect(m.leftOut(report, () => "Second")).toEqual([
-      expect.objectContaining({ id: second.instanceId, title: "Second", why: expect.stringContaining("both copies") }),
+      expect.objectContaining({
+        id: second.instanceId,
+        title: "Second",
+        why: expect.stringContaining("both copies"),
+      }),
     ]);
 
     const before = target.write_epoch();
-    m.applyMerge(target, archive, report, new Set([kept.instanceId]));
+    const outcome = m.applyMerge(target, archive, report, new Set([kept.instanceId]));
+    expect(outcome.leftBehind).toBe(1); // the link to the unticked record
+    expect(m.outcomeText(outcome)).toBe(
+      "Brought in 1 item and 1 link. 1 link or outline place stayed out with the unticked items."
+    );
     expect(target.write_epoch()).not.toBe(before);
-    expect(c.getRecordOrNull(target, kept.instanceId)?.createdBy).toEqual({ kind: "human", id: "human:test" });
+    expect(c.getRecordOrNull(target, kept.instanceId)?.createdBy).toEqual({
+      kind: "human",
+      id: "human:test",
+    });
     expect(c.getRecordOrNull(target, dropped.instanceId)).toBeNull();
     const links = c.listRelations(target).filter((r) => r.sourceInstanceId === kept.instanceId);
     expect(links.map((r) => r.targetInstanceId)).toEqual([first.instanceId]);
-    expect(c.getRecord(target, second.instanceId)?.fieldValues.title).not.toBe("Changed over there");
+    expect(c.getRecord(target, second.instanceId)?.fieldValues.title).not.toBe(
+      "Changed over there"
+    );
   });
 
   it("refuses a copy of another repository with the engine's code and writes nothing", async () => {
     const m = await import("../src/lib/merge.js");
     const { SrsRepository } = await engine();
-    const target = SrsRepository.load(readFileSync(path.join(__dirname, "../e2e/fixtures/gallery.srsj"), "utf8"));
-    const other = SrsRepository.load(readFileSync(path.join(__dirname, "../e2e/fixtures/essay-domain.srsj"), "utf8"));
+    const target = SrsRepository.load(
+      readFileSync(path.join(__dirname, "../e2e/fixtures/gallery.srsj"), "utf8")
+    );
+    const other = SrsRepository.load(
+      readFileSync(path.join(__dirname, "../e2e/fixtures/essay-domain.srsj"), "utf8")
+    );
     const before = target.write_epoch();
-    expect(() => m.previewMerge(target, other.export_archive())).toThrow(expect.objectContaining({ code: "merge-repository-mismatch" }));
+    expect(() => m.previewMerge(target, other.export_archive())).toThrow(
+      expect.objectContaining({ code: "merge-repository-mismatch" })
+    );
     expect(target.write_epoch()).toBe(before);
   });
 });

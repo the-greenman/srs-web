@@ -64,7 +64,7 @@
   import { opensOnRead } from "$lib/read/read-model.js";
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import MergePlan from "$lib/components/MergePlan.svelte";
-  import { type MergeChoice, type MergeReport, applyMerge, leftOut, mergeChoices, previewMerge } from "$lib/merge.js";
+  import { type MergeChoice, type MergeLeftOut, type MergeReport, applyMerge, leftOut, mergeChoices, outcomeText, previewMerge } from "$lib/merge.js";
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
   import InstallPlan from "$lib/components/InstallPlan.svelte";
   import { type PackageInstallPlan, applyInstall, availablePackages, planInstall } from "$lib/packages/catalog.js";
@@ -868,7 +868,7 @@
   // ---------------------------------------------------------------------------
 
   let mergeInput = $state<HTMLInputElement | null>(null);
-  let mergeFlow = $state<{ archive: Uint8Array; report: MergeReport; choices: MergeChoice[] } | null>(null);
+  let mergeFlow = $state<{ archive: Uint8Array; report: MergeReport; choices: MergeChoice[]; leftOut: MergeLeftOut[] } | null>(null);
   let mergeTicked = $state<string[]>([]);
   let mergeError = $state<string | null>(null);
   const titleIn = (id: string): string | undefined => {
@@ -888,8 +888,12 @@
   function labelsIn(archive: Uint8Array): (id: string) => string | undefined {
     try {
       const source = loadRepoFromArchive(archive);
-      const labels = new Map(listRecords(source).map((r) => [r.instanceId, r.displayLabel]));
-      return (id) => labels.get(id) ?? undefined;
+      try {
+        const labels = new Map(listRecords(source).map((r) => [r.instanceId, r.displayLabel]));
+        return (id) => labels.get(id) ?? undefined;
+      } finally {
+        (source as { free?: () => void }).free?.(); // release the second copy's WASM memory now
+      }
     } catch {
       return () => undefined;
     }
@@ -902,12 +906,16 @@
   });
 
   async function reviewMerge(file: File): Promise<void> {
-    if (!repo || !canUpgrade) return;
+    const forRepo = repo;
+    if (!forRepo || !canUpgrade) return;
     try {
       const archive = new Uint8Array(await file.arrayBuffer());
-      const report = previewMerge(repo, archive);
-      const choices = mergeChoices(report, labelsIn(archive));
-      mergeFlow = { archive, report, choices };
+      if (repo !== forRepo) return; // the writer moved on while the file was read
+      const report = previewMerge(forRepo, archive);
+      const there = labelsIn(archive);
+      const choices = mergeChoices(report, there);
+      // A differing item is named as this copy has it; a held-back one exists only in the other copy.
+      mergeFlow = { archive, report, choices, leftOut: leftOut(report, (id) => titleIn(id) ?? there(id)) };
       mergeTicked = choices.map((c) => c.id);
       mergeError = null;
     } catch (e: unknown) {
@@ -918,7 +926,8 @@
   function applyMergeFlow(): void {
     if (!repo || !mergeFlow) return;
     try {
-      applyMerge(repo, mergeFlow.archive, mergeFlow.report, new Set(mergeTicked));
+      const outcome = applyMerge(repo, mergeFlow.archive, mergeFlow.report, new Set(mergeTicked));
+      notify({ kind: "info", key: "merge", text: outcomeText(outcome) });
     } catch (e: unknown) {
       mergeError = e instanceof Error ? e.message : String(e);
       return;
@@ -1683,7 +1692,7 @@
   <MergePlan
     help={helpFor("merge-from-file")}
     choices={mergeFlow.choices}
-    leftOut={leftOut(mergeFlow.report, titleIn)}
+    leftOut={mergeFlow.leftOut}
     bind:ticked={mergeTicked}
     error={mergeError}
     onApply={applyMergeFlow}
