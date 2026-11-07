@@ -16,3 +16,10 @@ export function locatorFor(full: string, selected: string): string {
   if (heading) return heading.replace(/^#{1,6}\s+/, "").trim();
   return first === last ? `line ${first}` : `lines ${first}-${last}`;
 }
+
+/** Where the quoted words sit in the source text (trimmed, first occurrence); null when the text no longer holds them. */
+export function passageIn(full: string, words: string): { start: number; end: number } | null {
+  const needle = words.trim();
+  const start = needle ? full.indexOf(needle) : -1;
+  return start < 0 ? null : { start, end: start + needle.length };
+}

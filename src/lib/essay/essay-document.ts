@@ -113,6 +113,8 @@ export interface Reference {
   url: string;
   /** A quotation's source (its `derived-from` target, srs-web#525); absent for other references. */
   sourceId?: string;
+  /** A quotation's words (its `quote_text`, srs-web#525); absent for other references. */
+  quote?: string;
   /** A context document (srs-web#568): the source marked `source_kind: context`, read by every agent. */
   context: boolean;
   /** The record's description, citation and statement (those it has), blank-line joined. */
@@ -482,6 +484,9 @@ export function loadEssay(
           url: str(r.fieldValues.source_url),
           ...(r.typeName === "quotation" && quotedFrom.has(r.instanceId)
             ? { sourceId: quotedFrom.get(r.instanceId) }
+            : {}),
+          ...(r.typeName === "quotation" && str(r.fieldValues.quote_text)
+            ? { quote: str(r.fieldValues.quote_text) }
             : {}),
           context: str(r.fieldValues.source_kind) === CONTEXT_KIND,
           text: TEXT_FIELDS.map((k) => str(r.fieldValues[k]))
