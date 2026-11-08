@@ -188,6 +188,8 @@
     try {
       compositions = listDocumentViews(repo);
       containers = listContainers(repo);
+      // Open containers reload their members (the effect below) after a mutation.
+      if (refresh) expandedMembers = {};
       try {
         navigation = repositoryNavigation(repo);
       } catch {
@@ -255,6 +257,8 @@
   $effect(() => {
     for (const containerId of expandedContainerIds) {
       if (expandedMembers[containerId]) continue;
+      // An id remembered from an earlier visit may no longer exist: skip it, silently.
+      if (!containers.some((c) => c.containerId === containerId)) continue;
       try {
         expandedMembers[containerId] = resolveContainerView(repo, containerId).members;
       } catch (error: unknown) {
@@ -393,7 +397,11 @@
   const structureNodes = $derived.by(() => {
     const out: NavTreeNode[] = [];
     const stack: { depth: number; id: string }[] = [];
+    const seen = new Set<string>();
     for (const entry of structureContainers) {
+      // Two sections may point at one container; the tree shows it once (node ids must be unique).
+      if (seen.has(entry.container.containerId)) continue;
+      seen.add(entry.container.containerId);
       while (stack.length > 0 && stack[stack.length - 1].depth >= entry.depth) stack.pop();
       const id = entry.container.containerId;
       const parentId = stack.length > 0 ? stack[stack.length - 1].id : null;

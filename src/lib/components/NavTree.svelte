@@ -65,6 +65,8 @@
   );
 
   function setOpen(id: string, open: boolean): void {
+    // While filtering, matches open their own ancestors; the remembered set is left alone.
+    if (filter.trim()) return;
     const next = new Set(expanded);
     if (open) next.add(id);
     else next.delete(id);
@@ -103,7 +105,7 @@
   $effect(() => {
     const id = activeId;
     if (!id) return;
-    void rows;
+    // Only a change of the active item scrolls; expanding or filtering must not move the rail.
     void tick().then(() => rowEl(id)?.scrollIntoView?.({ block: 'nearest' }));
   });
 </script>
