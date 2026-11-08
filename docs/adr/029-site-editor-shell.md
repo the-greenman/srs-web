@@ -69,6 +69,9 @@ The muDemocracy layer (evidence, authorship, comments, the agent brief, guide se
     - `nav_href`, for a code route.
 
     An item with neither is a dropdown heading.
-  - The menu belongs to no page, so it has its own undo history. Undo and Redo go to whichever history, page or menu, was edited last.
-  - `exportMenu` is the menu as a site draws it, with the checks muDemocracy's export made (muDemocracy.org#416). A site's build calls it instead of reading the container itself.
+  - The menu belongs to no page, so it has its own undo history. Undo takes the latest step, by the order the steps were made, from either the page in view or the menu.
+    - The menu snapshot also holds each item's `uses` (`snapshotDocument`'s `relationTypes`), so a redo that recreates an item keeps its page.
+    - The menu container is made on the first menu edit, outside the undo step, and stays (empty) after an undo.
+  - `uses` is not yet in the website package (muDemocracy.org#447). Until it is, Add page names the missing relation type.
+  - `exportMenu` is the menu as a site draws it, with the checks muDemocracy's export made (muDemocracy.org#416). It returns null when the site has no menu. A site's build calls it instead of reading the container itself; muDemocracy's switch is muDemocracy.org#448.
   - The page keyed `home` is addressed `/`.

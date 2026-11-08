@@ -55,7 +55,7 @@
     toBin,
     toDrafts,
   } from "./site-edit.js";
-  import { type MenuItem, addMenuLink, addMenuPage, ensureMenu, findMenu, menuItems, renameMenuItem, setMenuHref, shiftMenuItem } from "./site-menu.js";
+  import { MENU_RELATIONS, type MenuItem, addMenuLink, addMenuPage, ensureMenu, findMenu, menuItems, renameMenuItem, setMenuHref, shiftMenuItem } from "./site-menu.js";
   import { type PageRef, type Publish, listPages, pageSettings, setPageSettings, typeKey } from "./site-model.js";
   import { type Site, findSite, offeredTypes, viewFor } from "./site-views.js";
 
@@ -139,14 +139,24 @@
   };
 
   /**
+   * The menu's own undo history (it belongs to no page). `undone`/`redone` hold which history each
+   * step went to, page (its container id) or "menu", so Undo takes the latest step of the page in
+   * view or of the menu, in the order they were made (ADR-029 E7).
+   */
+  const menuHistory = new DocumentHistory();
+  const MENU = "menu";
+  let undone: string[] = [];
+  let redone: string[] = [];
+  const remember = (where: string) => {
+    undone.push(where);
+    redone = [];
+  };
+
+  /**
    * Every write is one undo step. A write that fails partway still leaves its writes, so they too
    * become a step to undo. The write bumps `documentRevision`, which reloads (as the essay does).
    * Returns whether it succeeded.
    */
-  /** The menu's own undo history (it belongs to no page); Undo goes to whichever was edited last. */
-  const menuHistory = new DocumentHistory();
-  let lastEdited: "page" | "menu" = "page";
-
   function run(fn: (p: PageRef) => void): boolean {
     const p = page;
     if (!p) return false;
@@ -162,25 +172,27 @@
       return false;
     } finally {
       try {
-        if (before) history()?.push(before, snapshotPage(repo, p));
-        lastEdited = "page";
+        if (before && history()?.push(before, snapshotPage(repo, p))) remember(p.containerId);
       } catch {
         // the page itself is gone: nothing to undo into
       }
     }
   }
 
-  /** A menu edit, one undo step in the menu's history; the menu is made on the first. */
+  /**
+   * A menu edit, one undo step in the menu's history. The menu container is made on the first edit,
+   * before the snapshot, so undo leaves it (empty) in place.
+   */
   function runMenu(fn: (menuId: string) => void): void {
     try {
       const menuId = ensureMenu(repo);
-      const before = snapshotDocument(repo, [menuId]);
+      const snap = () => snapshotDocument(repo, [menuId], [], MENU_RELATIONS);
+      const before = snap();
       try {
         fn(menuId);
         error = null;
       } finally {
-        menuHistory.push(before, snapshotDocument(repo, [menuId]));
-        lastEdited = "menu";
+        if (menuHistory.push(before, snap())) remember(MENU);
       }
     } catch (e) {
       error = msg(e);
@@ -188,13 +200,22 @@
   }
 
   function step(redo: boolean): void {
-    const can = (x: DocumentHistory | null) => (redo ? x?.canRedo : x?.canUndo);
-    const both = lastEdited === "menu" ? [menuHistory, history()] : [history(), menuHistory];
-    const h = both.find(can) ?? null;
-    try {
-      redo ? h?.redo(repo) : h?.undo(repo); // the restore writes; the revision bump reloads
-    } catch (e) {
-      error = msg(e);
+    const from = redo ? redone : undone;
+    const to = redo ? undone : redone;
+    // the latest step of the page in view or of the menu; a step its history no longer has is dropped
+    for (let i = from.length - 1; i >= 0; i--) {
+      const where = from[i];
+      if (where !== MENU && where !== page?.containerId) continue;
+      from.splice(i, 1);
+      const h = where === MENU ? menuHistory : (histories.get(where) ?? null);
+      if (!(redo ? h?.canRedo : h?.canUndo)) continue;
+      to.push(where);
+      try {
+        redo ? h?.redo(repo) : h?.undo(repo); // the restore writes; the revision bump reloads
+      } catch (e) {
+        error = msg(e);
+      }
+      return;
     }
   }
 
@@ -446,7 +467,7 @@
             <Panel title="Menu" aside={menu.length} data-feature="site.menu">
               <SiteMenu
                 items={menu}
-                pages={pages.map((p) => ({ value: p.containerId, label: `${p.title} (/${p.key})` }))}
+                pages={pages.map((p) => ({ value: p.containerId, label: `${p.title} (/${p.key})${pageSettings(repo, p).publish === "no" ? ", not published" : ""}` }))}
                 onrename={(id, l) => runMenu(() => renameMenuItem(repo, id, l))}
                 onhref={(id, href) => runMenu(() => setMenuHref(repo, id, href))}
                 onshift={(id, shift) => runMenu((m) => shiftMenuItem(repo, m, id, shift))}

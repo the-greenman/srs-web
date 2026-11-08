@@ -57,9 +57,9 @@ describe.skipIf(!haveBindings)("site menu on the real engine", () => {
       await open();
     const history = new DocumentHistory();
     const step = (fn: () => void) => {
-      const before = snapshotDocument(repo, [menuId]);
+      const before = snapshotDocument(repo, [menuId], [], menu.MENU_RELATIONS);
       fn();
-      history.push(before, snapshotDocument(repo, [menuId]));
+      history.push(before, snapshotDocument(repo, [menuId], [], menu.MENU_RELATIONS));
     };
     const start = shape();
     let id = "";
@@ -85,8 +85,12 @@ describe.skipIf(!haveBindings)("site menu on the real engine", () => {
     expect(shape().every(([, d]) => (d as number) <= 1)).toBe(true);
 
     // undo walks every step back, the add included
+    const end = shape();
     while (history.canUndo) history.undo(repo);
     expect(shape()).toEqual(start);
+    // redo recreates the item with its `uses`: it still goes to the About page
+    while (history.canRedo) history.redo(repo);
+    expect(shape()).toEqual(end);
   });
 
   it("refuses to put a dropdown inside another, and a page item's address is its page's", async () => {

@@ -16,6 +16,7 @@ import {
   getContainerOutline,
   getRecordOrNull,
   listContainers,
+  listRelationTypes,
   listTypes,
 } from "$lib/srs-client.js";
 import { typeVersion } from "$lib/type-version.js";
@@ -24,6 +25,8 @@ import { type PageRef, listPages, outgoing, pageSettings } from "./site-model.js
 import type { Site } from "./site-views.js";
 
 export const MENU_TAG = "site-menu";
+/** The relations a menu item holds: an undo snapshot of the menu keeps them with the item. */
+export const MENU_RELATIONS = ["uses"];
 const ITEM_TYPE = "nav-item";
 
 export interface MenuItem {
@@ -108,6 +111,10 @@ function newItem(repo: SrsRepository, site: Site, fieldValues: Record<string, st
 
 /** A new bar item, at the end, that goes to a page (`uses` its anchor), labelled with the page's title. */
 export function addMenuPage(repo: SrsRepository, site: Site, page: PageRef): string {
+  if (!listRelationTypes(repo).some((t) => t.key === "uses"))
+    throw new Error(
+      "A menu item points at a page by a uses relation, and this repository has no uses relation type"
+    );
   const id = newItem(repo, site, { nav_label: page.title });
   createRelation(repo, {
     relationType: "uses",

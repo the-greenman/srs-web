@@ -105,7 +105,7 @@ test("edit the menu: a page as a dropdown entry, renamed, reordered, back to the
   const labels = menu.getByRole("textbox", { name: "Menu label" });
   await expect(labels).toHaveCount(4);
 
-  await menu.getByTestId("site-menu-page").selectOption({ label: "Scratch (/scratch)" });
+  await menu.getByTestId("site-menu-page").selectOption({ label: "Scratch (/scratch), not published" });
   await menu.getByTestId("site-menu-add-page").click();
   await expect(labels).toHaveCount(5);
   await expect(labels.nth(4)).toHaveValue("Scratch");
