@@ -37,6 +37,8 @@
   import RecordsView from "$lib/generic/RecordsView.svelte";
   import RelationGraph from "$lib/generic/RelationGraph.svelte";
   import Breadcrumb from "$lib/components/Breadcrumb.svelte";
+  import NavTree from "$lib/components/NavTree.svelte";
+  import type { NavTreeNode } from "$lib/nav-tree.js";
   import LensSwitcher from "$lib/lens/LensSwitcher.svelte";
   import Collection from "$lib/lens/Collection.svelte";
   import Focus from "$lib/lens/Focus.svelte";
@@ -49,6 +51,19 @@
 
   const noop = () => {};
   const KEY = "srs-web.styleguide.theme";
+  const treeNodes: NavTreeNode[] = [
+    { id: "t-art", label: "Articles", parentId: null, detail: "section", lazy: true },
+    { id: "t-art-1", label: "Purpose and scope", parentId: "t-art", kind: "record", count: 2 },
+    { id: "t-art-2", label: "Membership", parentId: "t-art", detail: "section" },
+    { id: "t-art-2a", label: "Admitting a member", parentId: "t-art-2", kind: "record" },
+    { id: "t-art-2b", label: "Notes from the meeting", parentId: "t-art-2", detail: "note", kind: "note" },
+    { id: "t-roles", label: "Roles", parentId: null, detail: "section" },
+    { id: "t-roles-1", label: "Chair", parentId: "t-roles", kind: "record" },
+    { id: "t-log", label: "Decision log", parentId: null, detail: "section" },
+  ];
+  let treeOpen = $state(new Set<string>(["t-art"]));
+  let treeActive = $state<string | null>("t-art-1");
+  let treeOpenAll = $state(new Set<string>(["t-art", "t-art-2", "t-roles"]));
   const sections = [
     ["tokens", "Tokens"],
     ["buttons", "Buttons and icons"],
@@ -56,6 +71,7 @@
     ["menus", "Menus and popovers"],
     ["toolbar", "Toolbar"],
     ["chips", "Chips and badges"],
+    ["navtree", "Navigation tree"],
     ["actors", "Actors"],
     ["srs-mark", "SRS mark"],
     ["annotations", "Annotations and comments"],
@@ -320,6 +336,25 @@
       <AttachmentGlyph kind="spreadsheet" title="Budget" pinned />
       <EyeToggle label="Opening" />
       <EyeToggle hidden label="Opening" />
+    </div>
+  </section>
+
+  <section id="navtree">
+    <h2>Navigation tree</h2>
+    <p class="sg__note">NavTree: the rail's tree for a large repository. Collapsed by default, a filter box that opens the ancestors of every
+      match, the current item scrolled into view, arrow keys with Home and End, and the open set remembered when a storage key is given.
+      A note carries a mark; a count can trail a row. Left: one level open. Right: filtered to "member".</p>
+    <div class="sg__row">
+      <Frame width="20rem" caption="NavTree, filterable, one section open" testid="sg-navtree">
+        <div class="nav" style="padding: var(--space-xs) 0">
+          <NavTree label="Specimen structure" nodes={treeNodes} bind:expanded={treeOpen} activeId={treeActive} filterable onselect={(n) => (treeActive = n.id)} testid="sg-navtree-tree" />
+        </div>
+      </Frame>
+      <Frame width="20rem" caption="NavTree, everything open" testid="sg-navtree-open">
+        <div class="nav" style="padding: var(--space-xs) 0">
+          <NavTree label="Specimen structure, open" nodes={treeNodes} bind:expanded={treeOpenAll} activeId="t-art-2a" onselect={noop} />
+        </div>
+      </Frame>
     </div>
   </section>
 

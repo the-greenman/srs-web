@@ -1,0 +1,112 @@
+/* ============================================================================
+   component: nav-tree (.nav-tree) — collapsible, filterable navigation tree
+   ----------------------------------------------------------------------------
+   Lives in the dark .nav rail. Indent is one token step per level; rows reuse the
+   nav item colours so the tree reads as part of the rail. Tokens only.
+   Parts: tree, filter, row, toggle, label, detail, count, empty.
+   ========================================================================== */
+
+.nav-tree {
+  --nav-tree-indent: var(--space-sm);
+}
+.nav-tree__filter {
+  box-sizing: border-box;
+  width: calc(100% - 2 * var(--space-md));
+  margin: 0 var(--space-md) var(--space-xs);
+  padding: 4px var(--space-sm);
+  border: 1px solid var(--color-on-dark-line);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-on-dark);
+  font: inherit;
+  font-size: var(--size-xs);
+}
+.nav-tree__filter::placeholder {
+  color: var(--color-on-dark-muted);
+}
+.nav-tree__filter:focus-visible {
+  outline: 2px solid var(--color-on-dark);
+  outline-offset: 1px;
+}
+.nav-tree__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nav-tree__item {
+  margin: 0;
+  padding: 0;
+}
+.nav-tree__row {
+  display: flex;
+  align-items: stretch;
+  padding-left: calc(var(--nav-tree-level, 0) * var(--nav-tree-indent));
+  border-left: 2px solid transparent;
+  color: color-mix(in srgb, var(--color-on-dark) 70%, transparent);
+}
+.nav-tree__row:hover {
+  color: var(--color-on-dark);
+  background: var(--color-on-dark-hover);
+}
+.nav-tree__row--active {
+  color: var(--color-on-dark);
+  border-left-color: var(--color-on-dark);
+  background: var(--color-on-dark-hover);
+}
+.nav-tree__toggle {
+  flex: none;
+  box-sizing: border-box;
+  width: 2rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--size-base);
+  cursor: pointer;
+}
+.nav-tree__toggle--leaf {
+  cursor: default;
+}
+.nav-tree__label {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: 7px var(--space-sm) 7px 0;
+  font-size: var(--size-sm);
+  cursor: pointer;
+}
+.nav-tree__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-tree__item[data-kind="record"] .nav-tree__label,
+.nav-tree__item[data-kind="note"] .nav-tree__label {
+  font-size: var(--size-xs);
+}
+.nav-tree__detail,
+.nav-tree__count {
+  margin-left: auto;
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: color-mix(in srgb, var(--color-on-dark) 40%, transparent);
+}
+.nav-tree__detail + .nav-tree__count {
+  margin-left: 0;
+}
+.nav-tree__toggle:focus-visible,
+.nav-tree__label:focus-visible {
+  outline: 2px solid var(--color-on-dark);
+  outline-offset: -2px;
+}
+.nav-tree__empty {
+  margin: 0;
+  padding: 0 var(--space-md);
+  color: var(--color-on-dark-muted);
+  font-size: var(--size-xs);
+}

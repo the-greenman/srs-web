@@ -22,6 +22,7 @@ export { default as Wordmark } from "./Wordmark.svelte";
 export { default as Nav } from "./Nav.svelte";
 export { default as NavGroup } from "./NavGroup.svelte";
 export { default as NavItem } from "./NavItem.svelte";
+export { default as NavTree } from "./NavTree.svelte";
 
 // Inspector rail
 export { default as Inspector } from "./Inspector.svelte";
