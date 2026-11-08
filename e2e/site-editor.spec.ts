@@ -5,8 +5,9 @@ import { openInspectorDrawer, openPackageEditor } from "./helpers";
 
 /**
  * site-editor.spec.ts — srs-web#680 B1 (ADR-029): the site editor over site.srsj (website package
- * 0.2.0; pages home, about and scratch; home has drafts). Edit a field in place and undo it, take a
- * block to the Bin and restore it, publish a page as a draft, and fit a phone.
+ * 0.2.1; pages home, about and scratch; home has drafts; a menu). Edit a field in place and undo it,
+ * take a block to the Bin and restore it, publish a page as a draft, edit the menu (srs-web#681),
+ * and fit a phone.
  */
 const FIXTURE = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "site.srsj");
 
@@ -90,6 +91,42 @@ test("edit a page of the site: a field, undo, the Bin, publishing", async ({ pag
   await pagePicker.selectOption({ label: "Home (/home)" });
   await pagePicker.selectOption({ label: "Scratch (/scratch)" });
   await expect(page.getByTestId("site-publish")).toHaveValue("draft");
+
+  expect(errors).toEqual([]);
+});
+
+test("edit the menu: a page as a dropdown entry, renamed, reordered, back to the bar, undone", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await openSite(page);
+  await openInspectorDrawer(page);
+  const menu = page.locator('[data-feature="site.menu"]');
+  const items = menu.getByTestId("site-menu-item");
+  const labels = menu.getByRole("textbox", { name: "Menu label" });
+  await expect(labels).toHaveCount(4);
+
+  await menu.getByTestId("site-menu-page").selectOption({ label: "Scratch (/scratch)" });
+  await menu.getByTestId("site-menu-add-page").click();
+  await expect(labels).toHaveCount(5);
+  await expect(labels.nth(4)).toHaveValue("Scratch");
+
+  await menu.getByRole("button", { name: "Put Scratch in the dropdown above" }).click();
+  await expect(items.nth(4)).toHaveAttribute("data-depth", "1");
+
+  await labels.nth(4).fill("Notes");
+  await labels.nth(4).press("Enter");
+  await menu.getByRole("button", { name: "Move Notes up" }).click();
+  await expect(labels.nth(3)).toHaveValue("Notes");
+  await expect(labels.nth(4)).toHaveValue("Recording");
+
+  await menu.getByRole("button", { name: "Move Notes to the bar" }).click();
+  await expect(menu.locator('[data-testid="site-menu-item"][data-depth="1"]')).toHaveCount(1);
+
+  // Undo walks it all back, the add included.
+  // Focus is on a menu button, not a field, so Ctrl+Z is the shell's undo (the drawer hides the bar).
+  for (let i = 0; i < 5; i++) await page.keyboard.press("Control+z");
+  await expect(labels).toHaveCount(4);
+  await expect(labels.nth(3)).toHaveValue("Recording");
 
   expect(errors).toEqual([]);
 });

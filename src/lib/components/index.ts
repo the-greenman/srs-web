@@ -113,6 +113,8 @@ export { default as DraftTray } from "./DraftTray.svelte";
 export { default as SiteBlock } from "./SiteBlock.svelte";
 export type { SiteBlockField } from "./SiteBlock.svelte";
 export { default as SiteCanvas } from "./SiteCanvas.svelte";
+export { default as SiteMenu } from "./SiteMenu.svelte";
+export type { SiteMenuItem, SiteMenuShift } from "./SiteMenu.svelte";
 export { default as SiteText } from "./SiteText.svelte";
 export { default as CommentThread } from "./CommentThread.svelte";
 export { default as LinkProposals } from "./LinkProposals.svelte";

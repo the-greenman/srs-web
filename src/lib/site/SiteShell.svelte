@@ -23,12 +23,13 @@
   import Select from "$lib/components/Select.svelte";
   import SiteBlock from "$lib/components/SiteBlock.svelte";
   import SiteCanvas from "$lib/components/SiteCanvas.svelte";
+  import SiteMenu from "$lib/components/SiteMenu.svelte";
   import Toolbar from "$lib/components/Toolbar.svelte";
   import ActionMenu from "$lib/components/ActionMenu.svelte";
   import type { DragPayload } from "$lib/components/dnd.js";
   import type { ToolbarAction } from "$lib/components/menu-action.js";
   import { BASE_GROUPS, commonActions } from "$lib/components/shell-actions.js";
-  import { DocumentHistory } from "$lib/document.js";
+  import { DocumentHistory, snapshotDocument } from "$lib/document.js";
   import type { EditorShellProps } from "$lib/editors/registry.js";
   import { outsideRun } from "$lib/essay/essay-model.js";
   import { ShellState } from "$lib/shell-context.svelte.js";
@@ -54,6 +55,7 @@
     toBin,
     toDrafts,
   } from "./site-edit.js";
+  import { type MenuItem, addMenuLink, addMenuPage, ensureMenu, findMenu, menuItems, renameMenuItem, setMenuHref, shiftMenuItem } from "./site-menu.js";
   import { type PageRef, type Publish, listPages, pageSettings, setPageSettings, typeKey } from "./site-model.js";
   import { type Site, findSite, offeredTypes, viewFor } from "./site-views.js";
 
@@ -84,6 +86,7 @@
   let body = $state<OutlineEntry[]>([]);
   let drafts = $state<string[]>([]);
   let bin = $state<string[]>([]);
+  let menu = $state<MenuItem[]>([]);
   let selectedId = $state<string | null>(null);
   let showBrief = $state(false);
   let error = $state<string | null>(null);
@@ -111,6 +114,8 @@
       body = p ? getContainerOutline(repo, p.containerId).body : [];
       drafts = p ? entriesOf(draftsIdFor(p)) : [];
       bin = p ? entriesOf(binIdFor(p)) : [];
+      const menuId = site ? findMenu(repo) : null;
+      menu = menuId ? menuItems(repo, menuId) : [];
       if (selectedId && !body.some((e) => e.instanceId === selectedId)) selectedId = null; // undone, moved away
       error = null;
     } catch (e) {
@@ -138,6 +143,10 @@
    * become a step to undo. The write bumps `documentRevision`, which reloads (as the essay does).
    * Returns whether it succeeded.
    */
+  /** The menu's own undo history (it belongs to no page); Undo goes to whichever was edited last. */
+  const menuHistory = new DocumentHistory();
+  let lastEdited: "page" | "menu" = "page";
+
   function run(fn: (p: PageRef) => void): boolean {
     const p = page;
     if (!p) return false;
@@ -154,14 +163,34 @@
     } finally {
       try {
         if (before) history()?.push(before, snapshotPage(repo, p));
+        lastEdited = "page";
       } catch {
         // the page itself is gone: nothing to undo into
       }
     }
   }
 
+  /** A menu edit, one undo step in the menu's history; the menu is made on the first. */
+  function runMenu(fn: (menuId: string) => void): void {
+    try {
+      const menuId = ensureMenu(repo);
+      const before = snapshotDocument(repo, [menuId]);
+      try {
+        fn(menuId);
+        error = null;
+      } finally {
+        menuHistory.push(before, snapshotDocument(repo, [menuId]));
+        lastEdited = "menu";
+      }
+    } catch (e) {
+      error = msg(e);
+    }
+  }
+
   function step(redo: boolean): void {
-    const h = history();
+    const can = (x: DocumentHistory | null) => (redo ? x?.canRedo : x?.canUndo);
+    const both = lastEdited === "menu" ? [menuHistory, history()] : [history(), menuHistory];
+    const h = both.find(can) ?? null;
     try {
       redo ? h?.redo(repo) : h?.undo(repo); // the restore writes; the revision bump reloads
     } catch (e) {
@@ -410,6 +439,22 @@
                 onforget={(id) => {
                   if (run((p) => deleteForever(repo, p, id))) history()?.clear(); // a deleted record cannot come back under its id
                 }}
+              />
+            </Panel>
+          {/if}
+          {#if site}
+            <Panel title="Menu" aside={menu.length} data-feature="site.menu">
+              <SiteMenu
+                items={menu}
+                pages={pages.map((p) => ({ value: p.containerId, label: `${p.title} (/${p.key})` }))}
+                onrename={(id, l) => runMenu(() => renameMenuItem(repo, id, l))}
+                onhref={(id, href) => runMenu(() => setMenuHref(repo, id, href))}
+                onshift={(id, shift) => runMenu((m) => shiftMenuItem(repo, m, id, shift))}
+                onaddpage={(containerId) => {
+                  const p = pages.find((x) => x.containerId === containerId);
+                  if (p && site) runMenu(() => addMenuPage(repo, site as Site, p));
+                }}
+                onaddlink={() => runMenu(() => addMenuLink(repo, site as Site, "New link", "/"))}
               />
             </Panel>
           {/if}
