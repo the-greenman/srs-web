@@ -22,7 +22,7 @@ test("a container with a note and records lists every member, the note marked, a
   await expect(page.getByTestId("generic-srs-shell")).toBeVisible({ timeout: 30000 });
 
   await page.getByRole("button", { name: "Toggle Mixed bag" }).click();
-  await expect(page.locator(".generic-tree-members .nav__item")).toHaveCount(3);
+  await expect(page.locator("[data-part=row]:is([data-kind=record],[data-kind=note])")).toHaveCount(3);
   await expect(page.getByTestId("member-note-mark")).toHaveCount(1);
   await expect(page.getByRole("button", { name: /A loose note/ })).toBeVisible();
 

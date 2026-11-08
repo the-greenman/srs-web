@@ -50,6 +50,8 @@
   import Diagnostics from "$lib/components/Diagnostics.svelte";
   import { diagnosticsFromStrings } from "$lib/notices.svelte.js";
   import Nav from "$lib/components/Nav.svelte";
+  import NavTree from "$lib/components/NavTree.svelte";
+  import type { NavTreeNode } from "$lib/nav-tree.js";
   import NavTrigger from "$lib/components/NavTrigger.svelte";
   import Toolbar from "$lib/components/Toolbar.svelte";
   import UnsavedStatus from "$lib/components/UnsavedStatus.svelte";
@@ -249,19 +251,18 @@
     surface = "structure";
   }
 
-  function toggleContainer(containerId: string): void {
-    const next = new Set(expandedContainerIds);
-    if (next.has(containerId)) next.delete(containerId);
-    else {
+  /** Members of an open container load on demand; this also covers a set restored from storage. */
+  $effect(() => {
+    for (const containerId of expandedContainerIds) {
+      if (expandedMembers[containerId]) continue;
       try {
         expandedMembers[containerId] = resolveContainerView(repo, containerId).members;
-        next.add(containerId);
       } catch (error: unknown) {
+        expandedMembers[containerId] = [];
         recordError = message(error);
       }
     }
-    expandedContainerIds = next;
-  }
+  });
 
   function openRecords(): void {
     clearRecordSelection();
@@ -385,6 +386,49 @@
       : containers.map((container) => ({ container, label: container.title, key: container.containerId, depth: 0 }));
   });
 
+  /**
+   * The Structure tree as flat nodes: the engine's depth order gives the parent of each container,
+   * and an open container lists its loaded members before its sub-containers.
+   */
+  const structureNodes = $derived.by(() => {
+    const out: NavTreeNode[] = [];
+    const stack: { depth: number; id: string }[] = [];
+    for (const entry of structureContainers) {
+      while (stack.length > 0 && stack[stack.length - 1].depth >= entry.depth) stack.pop();
+      const id = entry.container.containerId;
+      const parentId = stack.length > 0 ? stack[stack.length - 1].id : null;
+      out.push({ id, label: entry.label, parentId, detail: entry.container.containerType ?? "container", lazy: true, kind: "container" });
+      stack.push({ depth: entry.depth, id });
+    }
+    for (const containerId of expandedContainerIds) {
+      const members = expandedMembers[containerId] ?? [];
+      // Members sit directly under their container; insert after it so they precede sub-containers.
+      const at = out.findIndex((n) => n.id === containerId);
+      if (at < 0) continue;
+      out.splice(
+        at + 1,
+        0,
+        ...members.map((member) => ({
+          id: `${containerId}:${member.instanceId}`,
+          label: member.displayLabel || member.instanceId.slice(0, 8),
+          parentId: containerId,
+          detail: member.tier === 0 ? "note" : undefined,
+          kind: member.tier === 0 ? "note" : "record",
+        })),
+      );
+    }
+    return out;
+  });
+  const activeStructureId = $derived(surface === "structure" ? selectedContainerId : null);
+
+  function selectStructureNode(node: NavTreeNode): void {
+    if (node.kind === "container") {
+      selectContainer(node.id);
+      return;
+    }
+    openRecord(node.id.slice(node.parentId ? node.parentId.length + 1 : 0));
+  }
+
   onMount(loadCatalog);
 
   const barActions = $derived(
@@ -446,27 +490,16 @@
       {#if navigation?.identity}
         <p class="generic-tree-root">{navigation.identity.displayLabel}</p>
       {/if}
-      {#each structureContainers as entry (entry.key)}
-        {@const container = entry.container}
-        <div class="generic-tree-item" data-depth={entry.depth} style:margin-left="{entry.depth}rem">
-          <button class="nav__item" class:nav__item--active={surface === "structure" && selectedContainerId === container.containerId} onclick={() => selectContainer(container.containerId)}>
-            <span>{entry.label}</span>
-            <small class="nav__item-count">{container.containerType ?? "container"}</small>
-          </button>
-          <button class="nav__item generic-tree-toggle" aria-label={`Toggle ${entry.label}`} aria-expanded={expandedContainerIds.has(container.containerId)} onclick={() => toggleContainer(container.containerId)}>
-            {expandedContainerIds.has(container.containerId) ? "−" : "+"}
-          </button>
-        </div>
-        {#if expandedContainerIds.has(container.containerId)}
-          {@const members = expandedMembers[container.containerId] ?? []}
-          <div class="generic-tree-members">
-            {#if members.length === 0}<span class="generic-muted">No members</span>{/if}
-            {#each members as member (member.instanceId)}
-              <button class="nav__item" onclick={() => openRecord(member.instanceId)}>{member.displayLabel || member.instanceId.slice(0, 8)}{#if member.tier === 0}<small class="nav__item-count" data-testid="member-note-mark">note</small>{/if}</button>
-            {/each}
-          </div>
-        {/if}
-      {/each}
+      <NavTree
+        label="Structure"
+        nodes={structureNodes}
+        activeId={activeStructureId}
+        bind:expanded={expandedContainerIds}
+        storageKey={`srs-web:nav-tree:structure:${repoName}`}
+        filterable
+        onselect={selectStructureNode}
+        testid="structure-tree"
+      />
     </section>
 
     <section class="nav__group" data-part="explore">
