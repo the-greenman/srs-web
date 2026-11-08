@@ -1,10 +1,11 @@
 <!--
   SiteSpecimen — the site editor canvas (srs-web#680, ADR-029 E1): a hero, a selected prose block
-  with its brief shown and one empty field, and a group and its two items. Specimens only; edits are
-  no-ops.
+  with its brief shown and one empty field, and a group and its two items; then the site menu
+  (srs-web#681, E7): two page items, a dropdown heading with a link entry and a page entry. Specimens
+  only; edits are no-ops.
 -->
 <script lang="ts">
-  import { SiteBlock, SiteCanvas, SiteText } from "$lib/components";
+  import { SiteBlock, SiteCanvas, SiteMenu, SiteText } from "$lib/components";
 
   const noop = () => {};
   let selected = $state("prose");
@@ -58,3 +59,19 @@
 </SiteCanvas>
 <p class="sg__note">One field on its own, read-only:</p>
 <SiteText value="A read-only field" label="Read-only field" readonly oncommit={noop} />
+<p class="sg__note">The site menu: page items show their page's address; a link item's is edited.</p>
+<SiteMenu
+  items={[
+    { id: "m1", label: "Home", depth: 0, pageKey: "home", href: "/" },
+    { id: "m2", label: "About", depth: 0, pageKey: "about", href: "/about" },
+    { id: "m3", label: "Guides", depth: 0 },
+    { id: "m4", label: "Recording", depth: 1, href: "/guides/recording" },
+    { id: "m5", label: "Community", depth: 1, pageKey: "community", href: "/community" },
+  ]}
+  pages={[{ value: "p1", label: "Contact (/contact)" }]}
+  onrename={noop}
+  onhref={noop}
+  onshift={noop}
+  onaddpage={noop}
+  onaddlink={noop}
+/>

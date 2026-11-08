@@ -1,34 +1,5 @@
 [
   {
-    "key": "about",
-    "title": "About",
-    "intent": "About us.",
-    "draft": true,
-    "closingMark": false,
-    "layout": "essay",
-    "blocks": [
-      {
-        "type": "hero",
-        "view": "5eee2746-5c02-4ecd-a03e-e753cfaf0e85",
-        "fields": {
-          "section_key": "opening",
-          "eyebrow": "",
-          "headline": "About.",
-          "supporting_copy": "Who we are."
-        }
-      },
-      {
-        "type": "homepage-prose",
-        "view": "f5cce8f7-a847-4397-93fc-d3a58883af2b",
-        "fields": {
-          "section_key": "story",
-          "section_heading": "Our story",
-          "section_body": "It began."
-        }
-      }
-    ]
-  },
-  {
     "key": "home",
     "title": "Home",
     "intent": "The homepage.",
@@ -105,6 +76,35 @@
             "section": "four-questions"
           }
         ]
+      }
+    ]
+  },
+  {
+    "key": "about",
+    "title": "About",
+    "intent": "About us.",
+    "draft": true,
+    "closingMark": false,
+    "layout": "essay",
+    "blocks": [
+      {
+        "type": "hero",
+        "view": "5eee2746-5c02-4ecd-a03e-e753cfaf0e85",
+        "fields": {
+          "section_key": "opening",
+          "eyebrow": "",
+          "headline": "About.",
+          "supporting_copy": "Who we are."
+        }
+      },
+      {
+        "type": "homepage-prose",
+        "view": "f5cce8f7-a847-4397-93fc-d3a58883af2b",
+        "fields": {
+          "section_key": "story",
+          "section_heading": "Our story",
+          "section_body": "It began."
+        }
       }
     ]
   }

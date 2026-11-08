@@ -156,7 +156,7 @@ export const EDITORS: EditorDefinition[] = [
         packageId: "b3603f72-990a-408a-b6fc-28764ebabe78",
         namespace: "com.mudemocracy.website",
         name: "website",
-        version: "0.2.0",
+        version: "0.2.1",
       },
     ],
     create: (repo) => {

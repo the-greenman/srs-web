@@ -1,5 +1,5 @@
 # Builds e2e/fixtures/site.srsj (srs-web#680): a small website repository for the site editor core.
-# The website package is the published bundle (packages-website-0.2.0: types, the 16 Views, the
+# The website package is the published bundle (packages-website-0.2.1: types (nav-item among them), the 16 Views, the
 # `site` Composition and Theme), installed as a site would install it. muDemocracy's guides are
 # not in that bundle, so the `uses` relation type and a minimal `com.mudemocracy/guide` type
 # (slug and title, the real ids) are copied from muSrs. Pages:
@@ -7,8 +7,9 @@
 #           drafts: an alternative derived-from faq item q1, and an unrelated hero; its prose is also in "Shared prose"
 #   about   published, draft, layout:essay: hero, prose
 #   scratch not published: prose
-# srs CLI build.576 (the bindings srs-web pins).
-# Usage: gh release download packages-website-0.2.0 -R the-greenman/srs-web -p website.srspkg
+#   menu    Home and About (uses their pages), Guides with one dropdown entry (nav_href)
+# srs CLI build.595 (the bindings srs-web pins).
+# Usage: gh release download packages-website-0.2.1 -R the-greenman/srs-web -p website.srspkg
 #        MU=<muDemocracy.org/muSrs> BUNDLE=website.srspkg bash build-site-fixture.sh <out.srsj>
 set -e
 OUT=${1:?out.srsj}; rm -f "$OUT"; W=$(mktemp -d)/site; MU=${MU:?muSrs dir}; BUNDLE=${BUNDLE:?website.srspkg}
@@ -61,6 +62,13 @@ cont "{\"title\":\"About\",\"tags\":[\"published\",\"draft\",\"layout:essay\"],\
 SP=$(rec $N/homepage '{"fieldValues":{"page_key":"scratch","page_title":"Scratch","page_intent":"Not yet.","primary_audience":"brief audience","tone_guidance":"brief tone"}}')
 S1=$(rec $N/homepage-prose "{\"fieldValues\":{${brief/KEY/note},\"section_heading\":\"Draft\",\"section_body\":\"Not yet.\"}}")
 cont "{\"title\":\"Scratch\",\"anchorInstanceId\":\"$SP\",\"memberInstanceIds\":[{\"instanceId\":\"$SP\"},{\"instanceId\":\"$S1\"}]}" >/dev/null
+# the menu (srs-web#681): the container tagged site-menu; Home and About use their pages, Guides is a
+# dropdown heading over one code route
+M1=$(rec $N/nav-item '{"fieldValues":{"nav_label":"Home"}}'); rel uses $M1 $HP
+M2=$(rec $N/nav-item '{"fieldValues":{"nav_label":"About"}}'); rel uses $M2 $AP
+M3=$(rec $N/nav-item '{"fieldValues":{"nav_label":"Guides"}}')
+M4=$(rec $N/nav-item '{"fieldValues":{"nav_label":"Recording","nav_href":"/guides/recording"}}')
+cont "{\"title\":\"Site menu\",\"tags\":[\"site-menu\"],\"memberInstanceIds\":[{\"instanceId\":\"$M1\"},{\"instanceId\":\"$M2\"},{\"instanceId\":\"$M3\"},{\"instanceId\":\"$M4\",\"depth\":1}]}" >/dev/null
 # a container anchored on a Tier-0 note (as a conversation is in muSrs): not a page, and must not break listing
 NOTE=$(echo '{"title":"A conversation","sections":[{"name":"narrative","label":"Narrative","content":"Not a page."}]}' | srs note create --repo $W | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d["payload"]["note"]["instanceId"] if d.get("ok") else sys.exit(str(d)))')
 cont "{\"title\":\"A conversation\",\"anchorInstanceId\":\"$NOTE\",\"identityInstanceId\":\"$NOTE\",\"memberInstanceIds\":[{\"instanceId\":\"$NOTE\"}]}" >/dev/null

@@ -71,3 +71,49 @@
   content: attr(data-placeholder);
   color: var(--color-muted);
 }
+
+/* The site menu (srs-web#681, ADR-029 E7): a dropdown entry is indented under its bar item. */
+.site-menu {
+  display: grid;
+  gap: var(--space-sm);
+}
+.site-menu__empty {
+  margin: 0;
+  color: var(--color-muted);
+}
+.site-menu__list {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.site-menu__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-xs);
+  align-items: center;
+}
+.site-menu__item--entry {
+  margin-inline-start: var(--space-md);
+  padding-inline-start: var(--space-sm);
+  border-inline-start: 2px solid var(--color-line);
+}
+.site-menu__href {
+  overflow: hidden;
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-menu__actions {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 2px;
+}
+.site-menu__add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  align-items: center;
+}
