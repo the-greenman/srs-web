@@ -2,7 +2,7 @@
   "srsj": "2",
   "manifest": {
     "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
-    "createdAt": "2026-11-03T10:09:27.384896975+00:00",
+    "createdAt": "2026-11-08T17:25:05.629489950+00:00",
     "dataModelRevision": 11,
     "namespace": "org.example.site",
     "packageRefs": [
@@ -11,90 +11,166 @@
         "path": "packages/website"
       }
     ],
-    "repositoryId": "3085d2ef-1766-4369-9f77-8b82e29d18c4",
-    "rootContainerId": "3085d2ef-1766-4369-9f77-8b82e29d18c4",
+    "repositoryId": "a772c2e1-3558-4ed2-adaf-b73371d90cd7",
+    "rootContainerId": "a772c2e1-3558-4ed2-adaf-b73371d90cd7",
     "srsVersion": "2.0-draft",
     "title": "Site fixture"
   },
   "data": {
-    "containers/3085d2ef-1766-4369-9f77-8b82e29d18c4/container.json": {
-      "containerId": "3085d2ef-1766-4369-9f77-8b82e29d18c4",
-      "identityInstanceId": "189410ea-8149-461e-8080-640534b73571",
-      "title": "Site fixture"
+    "containers/2d1caef7-327c-5aed-8206-fdd515ee3e3d/container.json": {
+      "containerId": "2d1caef7-327c-5aed-8206-fdd515ee3e3d",
+      "title": "Drafts · Home"
     },
-    "containers/3085d2ef-1766-4369-9f77-8b82e29d18c4/entries/189410ea-8149-461e-8080-640534b73571.json": {
-      "containerId": "3085d2ef-1766-4369-9f77-8b82e29d18c4",
-      "instanceId": "189410ea-8149-461e-8080-640534b73571",
+    "containers/2d1caef7-327c-5aed-8206-fdd515ee3e3d/entries/3891279a-022e-456f-9d52-c82dbab82f6f.json": {
+      "containerId": "2d1caef7-327c-5aed-8206-fdd515ee3e3d",
+      "instanceId": "3891279a-022e-456f-9d52-c82dbab82f6f",
+      "key": "a1"
+    },
+    "containers/2d1caef7-327c-5aed-8206-fdd515ee3e3d/entries/441d3157-2519-4fc6-aa30-2ce2398cfbac.json": {
+      "containerId": "2d1caef7-327c-5aed-8206-fdd515ee3e3d",
+      "instanceId": "441d3157-2519-4fc6-aa30-2ce2398cfbac",
       "key": "a0"
     },
-    "containers/6b359204-876f-4529-bb55-0edaaa2fc3f9/container.json": {
-      "anchorInstanceId": "6af8e1cb-4370-4ec9-b0c3-95ee032882bc",
-      "containerId": "6b359204-876f-4529-bb55-0edaaa2fc3f9",
+    "containers/45efac53-347e-4db3-93eb-3c90d5e3bd02/container.json": {
+      "anchorInstanceId": "7e41d49f-81da-4ffd-9725-0a0de6c18ad1",
+      "containerId": "45efac53-347e-4db3-93eb-3c90d5e3bd02",
+      "identityInstanceId": "7e41d49f-81da-4ffd-9725-0a0de6c18ad1",
+      "title": "A conversation"
+    },
+    "containers/45efac53-347e-4db3-93eb-3c90d5e3bd02/entries/7e41d49f-81da-4ffd-9725-0a0de6c18ad1.json": {
+      "containerId": "45efac53-347e-4db3-93eb-3c90d5e3bd02",
+      "instanceId": "7e41d49f-81da-4ffd-9725-0a0de6c18ad1",
+      "key": "a0"
+    },
+    "containers/4ceeec63-0ca1-495f-bdac-466b9bd20d5c/container.json": {
+      "anchorInstanceId": "fe619264-46df-4fb4-b1d6-2c6b9a0329c0",
+      "containerId": "4ceeec63-0ca1-495f-bdac-466b9bd20d5c",
+      "tags": [
+        "published",
+        "closing-mark"
+      ],
+      "title": "Home"
+    },
+    "containers/4ceeec63-0ca1-495f-bdac-466b9bd20d5c/entries/44e4e558-653d-4469-ab20-fab7aecf8df9.json": {
+      "containerId": "4ceeec63-0ca1-495f-bdac-466b9bd20d5c",
+      "instanceId": "44e4e558-653d-4469-ab20-fab7aecf8df9",
+      "key": "a3"
+    },
+    "containers/4ceeec63-0ca1-495f-bdac-466b9bd20d5c/entries/886cbb6b-0063-4919-89d9-c8990b316213.json": {
+      "containerId": "4ceeec63-0ca1-495f-bdac-466b9bd20d5c",
+      "instanceId": "886cbb6b-0063-4919-89d9-c8990b316213",
+      "key": "a0",
+      "parent": "44e4e558-653d-4469-ab20-fab7aecf8df9"
+    },
+    "containers/4ceeec63-0ca1-495f-bdac-466b9bd20d5c/entries/8d957334-1f7e-4859-be91-3156660f2587.json": {
+      "containerId": "4ceeec63-0ca1-495f-bdac-466b9bd20d5c",
+      "instanceId": "8d957334-1f7e-4859-be91-3156660f2587",
+      "key": "a0",
+      "parent": "b71472b5-878a-4758-89d3-eee75f468e98"
+    },
+    "containers/4ceeec63-0ca1-495f-bdac-466b9bd20d5c/entries/9616b5ab-02ea-466e-be68-ae0d0db9bb04.json": {
+      "containerId": "4ceeec63-0ca1-495f-bdac-466b9bd20d5c",
+      "instanceId": "9616b5ab-02ea-466e-be68-ae0d0db9bb04",
+      "key": "a2"
+    },
+    "containers/4ceeec63-0ca1-495f-bdac-466b9bd20d5c/entries/a69c74ea-91b9-4d88-88ce-cec2e2f5e76c.json": {
+      "containerId": "4ceeec63-0ca1-495f-bdac-466b9bd20d5c",
+      "instanceId": "a69c74ea-91b9-4d88-88ce-cec2e2f5e76c",
+      "key": "a1"
+    },
+    "containers/4ceeec63-0ca1-495f-bdac-466b9bd20d5c/entries/b71472b5-878a-4758-89d3-eee75f468e98.json": {
+      "containerId": "4ceeec63-0ca1-495f-bdac-466b9bd20d5c",
+      "instanceId": "b71472b5-878a-4758-89d3-eee75f468e98",
+      "key": "a5"
+    },
+    "containers/4ceeec63-0ca1-495f-bdac-466b9bd20d5c/entries/dfeebed3-0f95-43e5-a0fb-c1cb7933746e.json": {
+      "containerId": "4ceeec63-0ca1-495f-bdac-466b9bd20d5c",
+      "instanceId": "dfeebed3-0f95-43e5-a0fb-c1cb7933746e",
+      "key": "a4"
+    },
+    "containers/4ceeec63-0ca1-495f-bdac-466b9bd20d5c/entries/f0501093-b90d-4ab7-aa8d-350d1ec60aef.json": {
+      "containerId": "4ceeec63-0ca1-495f-bdac-466b9bd20d5c",
+      "instanceId": "f0501093-b90d-4ab7-aa8d-350d1ec60aef",
+      "key": "a1",
+      "parent": "44e4e558-653d-4469-ab20-fab7aecf8df9"
+    },
+    "containers/4ceeec63-0ca1-495f-bdac-466b9bd20d5c/entries/fe619264-46df-4fb4-b1d6-2c6b9a0329c0.json": {
+      "containerId": "4ceeec63-0ca1-495f-bdac-466b9bd20d5c",
+      "instanceId": "fe619264-46df-4fb4-b1d6-2c6b9a0329c0",
+      "key": "a0"
+    },
+    "containers/66de3a43-35ba-4da0-b4f4-9b65a53c2a5a/container.json": {
+      "anchorInstanceId": "bdf2ffe4-6409-4dd6-9533-8588b88cfeca",
+      "containerId": "66de3a43-35ba-4da0-b4f4-9b65a53c2a5a",
       "containerType": "guide",
       "title": "Guide · Recording a decision"
     },
-    "containers/6b359204-876f-4529-bb55-0edaaa2fc3f9/entries/6af8e1cb-4370-4ec9-b0c3-95ee032882bc.json": {
-      "containerId": "6b359204-876f-4529-bb55-0edaaa2fc3f9",
-      "instanceId": "6af8e1cb-4370-4ec9-b0c3-95ee032882bc",
+    "containers/66de3a43-35ba-4da0-b4f4-9b65a53c2a5a/entries/bdf2ffe4-6409-4dd6-9533-8588b88cfeca.json": {
+      "containerId": "66de3a43-35ba-4da0-b4f4-9b65a53c2a5a",
+      "instanceId": "bdf2ffe4-6409-4dd6-9533-8588b88cfeca",
       "key": "a0"
     },
-    "containers/6b359204-876f-4529-bb55-0edaaa2fc3f9/entries/ac868c07-a4ad-43d1-ac0a-671e2c9be04f.json": {
-      "containerId": "6b359204-876f-4529-bb55-0edaaa2fc3f9",
-      "instanceId": "ac868c07-a4ad-43d1-ac0a-671e2c9be04f",
+    "containers/66de3a43-35ba-4da0-b4f4-9b65a53c2a5a/entries/d471b13a-9e7b-4350-bc20-7d868acccc45.json": {
+      "containerId": "66de3a43-35ba-4da0-b4f4-9b65a53c2a5a",
+      "instanceId": "d471b13a-9e7b-4350-bc20-7d868acccc45",
       "key": "a1"
     },
-    "containers/85ab6aa7-9e5f-4b4c-ad85-c91478e45d78/container.json": {
-      "containerId": "85ab6aa7-9e5f-4b4c-ad85-c91478e45d78",
-      "title": "Shared prose"
+    "containers/a772c2e1-3558-4ed2-adaf-b73371d90cd7/container.json": {
+      "containerId": "a772c2e1-3558-4ed2-adaf-b73371d90cd7",
+      "identityInstanceId": "7bb1b918-a3b9-49a0-9c15-c43bdb86590f",
+      "title": "Site fixture"
     },
-    "containers/85ab6aa7-9e5f-4b4c-ad85-c91478e45d78/entries/7820b845-6510-4735-bcb8-633ed324e347.json": {
-      "containerId": "85ab6aa7-9e5f-4b4c-ad85-c91478e45d78",
-      "instanceId": "7820b845-6510-4735-bcb8-633ed324e347",
+    "containers/a772c2e1-3558-4ed2-adaf-b73371d90cd7/entries/7bb1b918-a3b9-49a0-9c15-c43bdb86590f.json": {
+      "containerId": "a772c2e1-3558-4ed2-adaf-b73371d90cd7",
+      "instanceId": "7bb1b918-a3b9-49a0-9c15-c43bdb86590f",
       "key": "a0"
     },
-    "containers/88023aac-090d-5087-8814-ebd1a5540c99/container.json": {
-      "containerId": "88023aac-090d-5087-8814-ebd1a5540c99",
-      "title": "Drafts · Home"
-    },
-    "containers/88023aac-090d-5087-8814-ebd1a5540c99/entries/09abca48-a02c-4092-a402-ec8c71050789.json": {
-      "containerId": "88023aac-090d-5087-8814-ebd1a5540c99",
-      "instanceId": "09abca48-a02c-4092-a402-ec8c71050789",
-      "key": "a1"
-    },
-    "containers/88023aac-090d-5087-8814-ebd1a5540c99/entries/4fd8bcf7-28c7-4671-bd73-4f1e31d04efa.json": {
-      "containerId": "88023aac-090d-5087-8814-ebd1a5540c99",
-      "instanceId": "4fd8bcf7-28c7-4671-bd73-4f1e31d04efa",
-      "key": "a0"
-    },
-    "containers/b2657b0c-b968-42f5-9d84-873b0d90230a/container.json": {
-      "anchorInstanceId": "e57911a9-75d9-452d-a21d-2c7cc59e9f68",
-      "containerId": "b2657b0c-b968-42f5-9d84-873b0d90230a",
+    "containers/a9985d4c-5460-468b-8699-973b4f6825de/container.json": {
+      "anchorInstanceId": "07528e7f-144a-4926-9e78-b6341bca99b5",
+      "containerId": "a9985d4c-5460-468b-8699-973b4f6825de",
       "title": "Scratch"
     },
-    "containers/b2657b0c-b968-42f5-9d84-873b0d90230a/entries/9ceb1251-fc54-4d79-8e37-2d5e5d7367df.json": {
-      "containerId": "b2657b0c-b968-42f5-9d84-873b0d90230a",
-      "instanceId": "9ceb1251-fc54-4d79-8e37-2d5e5d7367df",
+    "containers/a9985d4c-5460-468b-8699-973b4f6825de/entries/07528e7f-144a-4926-9e78-b6341bca99b5.json": {
+      "containerId": "a9985d4c-5460-468b-8699-973b4f6825de",
+      "instanceId": "07528e7f-144a-4926-9e78-b6341bca99b5",
+      "key": "a0"
+    },
+    "containers/a9985d4c-5460-468b-8699-973b4f6825de/entries/e42a6886-674c-4cb8-a494-0ead3fcfad6a.json": {
+      "containerId": "a9985d4c-5460-468b-8699-973b4f6825de",
+      "instanceId": "e42a6886-674c-4cb8-a494-0ead3fcfad6a",
       "key": "a1"
     },
-    "containers/b2657b0c-b968-42f5-9d84-873b0d90230a/entries/e57911a9-75d9-452d-a21d-2c7cc59e9f68.json": {
-      "containerId": "b2657b0c-b968-42f5-9d84-873b0d90230a",
-      "instanceId": "e57911a9-75d9-452d-a21d-2c7cc59e9f68",
+    "containers/b201455d-1e39-4a27-8484-e996538bfe4f/container.json": {
+      "containerId": "b201455d-1e39-4a27-8484-e996538bfe4f",
+      "tags": [
+        "site-menu"
+      ],
+      "title": "Site menu"
+    },
+    "containers/b201455d-1e39-4a27-8484-e996538bfe4f/entries/0554b680-e1b9-4b82-b251-3cf2a1c9347d.json": {
+      "containerId": "b201455d-1e39-4a27-8484-e996538bfe4f",
+      "instanceId": "0554b680-e1b9-4b82-b251-3cf2a1c9347d",
+      "key": "a1"
+    },
+    "containers/b201455d-1e39-4a27-8484-e996538bfe4f/entries/1e010f63-2555-4d86-a7c2-82c13c301c8f.json": {
+      "containerId": "b201455d-1e39-4a27-8484-e996538bfe4f",
+      "instanceId": "1e010f63-2555-4d86-a7c2-82c13c301c8f",
       "key": "a0"
     },
-    "containers/f2efb6e3-f9ea-4a98-9a74-f1b043b25ecd/container.json": {
-      "anchorInstanceId": "5a37107a-5065-4c75-a1bd-28c9fe879fef",
-      "containerId": "f2efb6e3-f9ea-4a98-9a74-f1b043b25ecd",
-      "identityInstanceId": "5a37107a-5065-4c75-a1bd-28c9fe879fef",
-      "title": "A conversation"
+    "containers/b201455d-1e39-4a27-8484-e996538bfe4f/entries/c5557dbb-9097-433e-acb4-23332efe76f1.json": {
+      "containerId": "b201455d-1e39-4a27-8484-e996538bfe4f",
+      "instanceId": "c5557dbb-9097-433e-acb4-23332efe76f1",
+      "key": "a2"
     },
-    "containers/f2efb6e3-f9ea-4a98-9a74-f1b043b25ecd/entries/5a37107a-5065-4c75-a1bd-28c9fe879fef.json": {
-      "containerId": "f2efb6e3-f9ea-4a98-9a74-f1b043b25ecd",
-      "instanceId": "5a37107a-5065-4c75-a1bd-28c9fe879fef",
-      "key": "a0"
+    "containers/b201455d-1e39-4a27-8484-e996538bfe4f/entries/fc225047-51fe-4613-8a53-72bfe35d31ea.json": {
+      "containerId": "b201455d-1e39-4a27-8484-e996538bfe4f",
+      "instanceId": "fc225047-51fe-4613-8a53-72bfe35d31ea",
+      "key": "a0",
+      "parent": "c5557dbb-9097-433e-acb4-23332efe76f1"
     },
-    "containers/f7581d2b-4b30-439c-a580-df868c7f51ec/container.json": {
-      "anchorInstanceId": "d6261644-41f3-4d68-85f7-2d28ed43d897",
-      "containerId": "f7581d2b-4b30-439c-a580-df868c7f51ec",
+    "containers/e8f469c7-94ef-4b51-9e27-31b59593c3b8/container.json": {
+      "anchorInstanceId": "36a4ab0b-7d48-41cb-b6b8-cc831176a4a5",
+      "containerId": "e8f469c7-94ef-4b51-9e27-31b59593c3b8",
       "tags": [
         "published",
         "draft",
@@ -102,82 +178,34 @@
       ],
       "title": "About"
     },
-    "containers/f7581d2b-4b30-439c-a580-df868c7f51ec/entries/3c2ceaf6-c47c-44a3-8d78-3a8008d554fe.json": {
-      "containerId": "f7581d2b-4b30-439c-a580-df868c7f51ec",
-      "instanceId": "3c2ceaf6-c47c-44a3-8d78-3a8008d554fe",
-      "key": "a2"
-    },
-    "containers/f7581d2b-4b30-439c-a580-df868c7f51ec/entries/64bfd9f5-481b-41a4-b210-2b304fe437fd.json": {
-      "containerId": "f7581d2b-4b30-439c-a580-df868c7f51ec",
-      "instanceId": "64bfd9f5-481b-41a4-b210-2b304fe437fd",
-      "key": "a3"
-    },
-    "containers/f7581d2b-4b30-439c-a580-df868c7f51ec/entries/d6261644-41f3-4d68-85f7-2d28ed43d897.json": {
-      "containerId": "f7581d2b-4b30-439c-a580-df868c7f51ec",
-      "instanceId": "d6261644-41f3-4d68-85f7-2d28ed43d897",
+    "containers/e8f469c7-94ef-4b51-9e27-31b59593c3b8/entries/36a4ab0b-7d48-41cb-b6b8-cc831176a4a5.json": {
+      "containerId": "e8f469c7-94ef-4b51-9e27-31b59593c3b8",
+      "instanceId": "36a4ab0b-7d48-41cb-b6b8-cc831176a4a5",
       "key": "a0"
     },
-    "containers/f7581d2b-4b30-439c-a580-df868c7f51ec/entries/da9cb5e9-fd9e-41a5-95fa-fcafc35c5e3b.json": {
-      "containerId": "f7581d2b-4b30-439c-a580-df868c7f51ec",
-      "instanceId": "da9cb5e9-fd9e-41a5-95fa-fcafc35c5e3b",
-      "key": "a1"
-    },
-    "containers/fb876742-d6c0-4990-b26a-65925ba1d6e3/container.json": {
-      "anchorInstanceId": "1c137670-f89c-415d-820a-25da7c3e4ce1",
-      "containerId": "fb876742-d6c0-4990-b26a-65925ba1d6e3",
-      "tags": [
-        "published",
-        "closing-mark"
-      ],
-      "title": "Home"
-    },
-    "containers/fb876742-d6c0-4990-b26a-65925ba1d6e3/entries/028023f2-882e-4ac5-bcba-513ec7d2f33c.json": {
-      "containerId": "fb876742-d6c0-4990-b26a-65925ba1d6e3",
-      "instanceId": "028023f2-882e-4ac5-bcba-513ec7d2f33c",
-      "key": "a3"
-    },
-    "containers/fb876742-d6c0-4990-b26a-65925ba1d6e3/entries/07938343-1c63-438e-b6cf-3a89b2c725b2.json": {
-      "containerId": "fb876742-d6c0-4990-b26a-65925ba1d6e3",
-      "instanceId": "07938343-1c63-438e-b6cf-3a89b2c725b2",
-      "key": "a1",
-      "parent": "028023f2-882e-4ac5-bcba-513ec7d2f33c"
-    },
-    "containers/fb876742-d6c0-4990-b26a-65925ba1d6e3/entries/1c137670-f89c-415d-820a-25da7c3e4ce1.json": {
-      "containerId": "fb876742-d6c0-4990-b26a-65925ba1d6e3",
-      "instanceId": "1c137670-f89c-415d-820a-25da7c3e4ce1",
-      "key": "a0"
-    },
-    "containers/fb876742-d6c0-4990-b26a-65925ba1d6e3/entries/487805cb-7388-42e3-90bc-3cb08e3f1032.json": {
-      "containerId": "fb876742-d6c0-4990-b26a-65925ba1d6e3",
-      "instanceId": "487805cb-7388-42e3-90bc-3cb08e3f1032",
-      "key": "a4"
-    },
-    "containers/fb876742-d6c0-4990-b26a-65925ba1d6e3/entries/54f81463-99c8-43d9-9db2-7eccc3cabcb5.json": {
-      "containerId": "fb876742-d6c0-4990-b26a-65925ba1d6e3",
-      "instanceId": "54f81463-99c8-43d9-9db2-7eccc3cabcb5",
-      "key": "a0",
-      "parent": "7acedea2-5853-49b9-861e-4007ab178b57"
-    },
-    "containers/fb876742-d6c0-4990-b26a-65925ba1d6e3/entries/7820b845-6510-4735-bcb8-633ed324e347.json": {
-      "containerId": "fb876742-d6c0-4990-b26a-65925ba1d6e3",
-      "instanceId": "7820b845-6510-4735-bcb8-633ed324e347",
+    "containers/e8f469c7-94ef-4b51-9e27-31b59593c3b8/entries/57a2cda4-da22-474c-98b9-6b1006aeac00.json": {
+      "containerId": "e8f469c7-94ef-4b51-9e27-31b59593c3b8",
+      "instanceId": "57a2cda4-da22-474c-98b9-6b1006aeac00",
       "key": "a2"
     },
-    "containers/fb876742-d6c0-4990-b26a-65925ba1d6e3/entries/7acedea2-5853-49b9-861e-4007ab178b57.json": {
-      "containerId": "fb876742-d6c0-4990-b26a-65925ba1d6e3",
-      "instanceId": "7acedea2-5853-49b9-861e-4007ab178b57",
-      "key": "a5"
+    "containers/e8f469c7-94ef-4b51-9e27-31b59593c3b8/entries/60a548b5-32fd-485a-914d-57c0ce1d1d67.json": {
+      "containerId": "e8f469c7-94ef-4b51-9e27-31b59593c3b8",
+      "instanceId": "60a548b5-32fd-485a-914d-57c0ce1d1d67",
+      "key": "a3"
     },
-    "containers/fb876742-d6c0-4990-b26a-65925ba1d6e3/entries/91f39ce5-3e6e-4046-ad5e-2f7556f0d2b7.json": {
-      "containerId": "fb876742-d6c0-4990-b26a-65925ba1d6e3",
-      "instanceId": "91f39ce5-3e6e-4046-ad5e-2f7556f0d2b7",
-      "key": "a0",
-      "parent": "028023f2-882e-4ac5-bcba-513ec7d2f33c"
-    },
-    "containers/fb876742-d6c0-4990-b26a-65925ba1d6e3/entries/9273bba7-9eb7-4ca4-b4cc-6594830d2b68.json": {
-      "containerId": "fb876742-d6c0-4990-b26a-65925ba1d6e3",
-      "instanceId": "9273bba7-9eb7-4ca4-b4cc-6594830d2b68",
+    "containers/e8f469c7-94ef-4b51-9e27-31b59593c3b8/entries/c9ac810e-17ec-4a90-b43f-de85927ea8de.json": {
+      "containerId": "e8f469c7-94ef-4b51-9e27-31b59593c3b8",
+      "instanceId": "c9ac810e-17ec-4a90-b43f-de85927ea8de",
       "key": "a1"
+    },
+    "containers/eee9f1d1-72f1-4d77-b4c3-ece78952e4db/container.json": {
+      "containerId": "eee9f1d1-72f1-4d77-b4c3-ece78952e4db",
+      "title": "Shared prose"
+    },
+    "containers/eee9f1d1-72f1-4d77-b4c3-ece78952e4db/entries/9616b5ab-02ea-466e-be68-ae0d0db9bb04.json": {
+      "containerId": "eee9f1d1-72f1-4d77-b4c3-ece78952e4db",
+      "instanceId": "9616b5ab-02ea-466e-be68-ae0d0db9bb04",
+      "key": "a0"
     },
     "package/fields/slug-2e3be0f8.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
@@ -219,7 +247,7 @@
         "fields/slug-2e3be0f8.json",
         "fields/title-e5b359b0.json"
       ],
-      "id": "6f36db6e-f164-4d57-ac65-4df318ff24ac",
+      "id": "15e2ee52-5d6a-4b8f-99c9-d75608042934",
       "lifecycles": [],
       "name": "primary",
       "namespace": "org.example.site",
@@ -250,7 +278,7 @@
     },
     "package/types/guide-8f138dd6.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
-      "createdAt": "2026-11-03T10:09:24.871484278+00:00",
+      "createdAt": "2026-11-08T17:25:02.927356493+00:00",
       "description": "Fixture guide: slug and title only.",
       "fields": [
         {
@@ -829,6 +857,38 @@
       "namespace": "com.mudemocracy.website",
       "version": 1
     },
+    "packages/website/fields/navhref-1fc35cad.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Only for routes the site renders in code. A menu item for a muSrs page leaves this empty and uses the page instead, so its address follows page_key."
+      },
+      "createdAt": "2026-11-04T09:12:28.014294679+00:00",
+      "description": "Where a menu item goes when it is not a muSrs page: a code route such as /guides.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "1fc35cad-961d-4219-829b-718a159faede",
+      "name": "nav_href",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/fields/navlabel-8ca79f48.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
+      "aiGuidance": {
+        "purpose": "Short, lower case, as the site menu reads (\"decision recording\"). A menu label names where it goes; it makes no claim."
+      },
+      "createdAt": "2026-11-04T09:12:27.980364756+00:00",
+      "description": "The words shown for a menu item.",
+      "fieldType": {
+        "datatype": "string",
+        "format": "plain"
+      },
+      "id": "8ca79f48-d672-484c-9778-5eb3eebba99a",
+      "name": "nav_label",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
     "packages/website/fields/pageintent-771554ab.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/field.json",
       "aiGuidance": {
@@ -1125,11 +1185,12 @@
       "compositions": [
         "compositions/site-56ae2210.json"
       ],
-      "createdAt": "2026-11-03T10:09:24.773833067+00:00",
+      "createdAt": "2026-11-08T17:25:02.840202759+00:00",
       "description": "",
       "fields": [
         "fields/explainerkey-097ca1d8.json",
         "fields/sectionbody-1a9d942b.json",
+        "fields/navhref-1fc35cad.json",
         "fields/supportingcopy-204f2ac9.json",
         "fields/biokey-2446c2f7.json",
         "fields/featurebody-28e727e2.json",
@@ -1148,6 +1209,7 @@
         "fields/faqanswer-7ec03889.json",
         "fields/recordcaption-85cbe666.json",
         "fields/faqquestion-87eef92c.json",
+        "fields/navlabel-8ca79f48.json",
         "fields/quotetext-92adcada.json",
         "fields/metaobjective-9772acd5.json",
         "fields/featuretitle-9e8c3227.json",
@@ -1189,6 +1251,7 @@
         "types/homepage-section-03de48d7.json",
         "types/homepage-prose-058e5281.json",
         "types/homepage-decision-record-item-0b0f6a5f.json",
+        "types/nav-item-1c468ba3.json",
         "types/homepage-decision-record-1e5fbfea.json",
         "types/homepage-quote-21df1e65.json",
         "types/homepage-cta-3751bf69.json",
@@ -1205,7 +1268,7 @@
         "types/hero-c7e5a3b9.json",
         "types/homepage-feature-group-ead43ed4.json"
       ],
-      "version": "0.2.0",
+      "version": "0.2.1",
       "views": [
         "views/feature-grid-view-0c6ebdfc.json",
         "views/feature-view-2c989e4a.json",
@@ -1940,6 +2003,27 @@
       "id": "03de48d7-f3b5-45da-89c7-7718e4e80d58",
       "identityFieldId": "45fbb93a-fd8d-4df6-a028-81ac07de1d5e",
       "name": "homepage-section",
+      "namespace": "com.mudemocracy.website",
+      "version": 1
+    },
+    "packages/website/types/nav-item-1c468ba3.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/type.json",
+      "createdAt": "2026-11-04T09:12:34.345428784+00:00",
+      "description": "One item in the site menu: a label and where it goes. It points at a muSrs page by a `uses` relation to the page record (its address follows page_key), or at a code route by nav_href. An item with neither is a dropdown heading. The menu is the container tagged site-menu; depth 0 is the bar, depth 1 a dropdown entry.",
+      "fields": [
+        {
+          "fieldId": "8ca79f48-d672-484c-9778-5eb3eebba99a",
+          "order": 1,
+          "required": true
+        },
+        {
+          "fieldId": "1fc35cad-961d-4219-829b-718a159faede",
+          "order": 2,
+          "required": false
+        }
+      ],
+      "id": "1c468ba3-3b54-430a-9128-2c4b9fc862ee",
+      "name": "nav-item",
       "namespace": "com.mudemocracy.website",
       "version": 1
     },
@@ -2877,13 +2961,13 @@
       "namespace": "com.mudemocracy.website",
       "version": 1
     },
-    "records/notes/a-conversation-5a37107a.json": {
+    "records/notes/a-conversation-7e41d49f.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/note.json",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
-      "instanceId": "5a37107a-5065-4c75-a1bd-28c9fe879fef",
+      "instanceId": "7e41d49f-81da-4ffd-9725-0a0de6c18ad1",
       "sections": [
         {
           "content": "Not a page.",
@@ -2893,13 +2977,13 @@
       ],
       "title": "A conversation"
     },
-    "records/notes/a-note-on-the-page-3c2ceaf6.json": {
+    "records/notes/a-note-on-the-page-57a2cda4.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/note.json",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
-      "instanceId": "3c2ceaf6-c47c-44a3-8d78-3a8008d554fe",
+      "instanceId": "57a2cda4-da22-474c-98b9-6b1006aeac00",
       "sections": [
         {
           "content": "Not a block.",
@@ -2909,12 +2993,12 @@
       ],
       "title": "A note on the page"
     },
-    "records/tier-2/action-card-54f81463.json": {
+    "records/tier-2/action-card-8d957334.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:25.696201470+00:00",
+      "createdAt": "2026-11-08T17:25:03.671496271+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "card_key": "record",
@@ -2922,19 +3006,19 @@
         "action_label": "Read the guide",
         "action_href": "/guides/recording"
       },
-      "instanceId": "54f81463-99c8-43d9-9db2-7eccc3cabcb5",
+      "instanceId": "8d957334-1f7e-4859-be91-3156660f2587",
       "typeId": "b6d4f2a8-7c9e-4b1d-8f3a-8c0e6d7b9a1f",
       "typeName": "action-card",
       "typeNamespace": "com.mudemocracy.website",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:25.696204771+00:00"
+      "updatedAt": "2026-11-08T17:25:03.671503418+00:00"
     },
-    "records/tier-2/faq-group-028023f2.json": {
+    "records/tier-2/faq-group-44e4e558.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:25.364877247+00:00",
+      "createdAt": "2026-11-08T17:25:03.357438880+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "section_key": "faq",
@@ -2944,112 +3028,112 @@
         "action_intent": "brief intent",
         "section_heading": "Questions."
       },
-      "instanceId": "028023f2-882e-4ac5-bcba-513ec7d2f33c",
+      "instanceId": "44e4e558-653d-4469-ab20-fab7aecf8df9",
       "typeId": "8a3d1c7e-4f6b-4eaa-9c2d-5f7b3a4e6d8c",
       "typeName": "faq-group",
       "typeNamespace": "com.mudemocracy.website",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:25.364881343+00:00"
+      "updatedAt": "2026-11-08T17:25:03.357446676+00:00"
     },
-    "records/tier-2/faq-item-07938343.json": {
+    "records/tier-2/faq-item-441d3157.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:25.498761056+00:00",
+      "createdAt": "2026-11-08T17:25:04.166158974+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
-      },
-      "fieldValues": {
-        "faq_item_key": "q2",
-        "faq_question": "Second?",
-        "faq_answer": "No."
-      },
-      "instanceId": "07938343-1c63-438e-b6cf-3a89b2c725b2",
-      "typeId": "9b4e2d8f-5a7c-4fbb-8d3e-6a8c4b5f7e9d",
-      "typeName": "faq-item",
-      "typeNamespace": "com.mudemocracy.website",
-      "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:25.498765169+00:00"
-    },
-    "records/tier-2/faq-item-4fd8bcf7.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:26.239891815+00:00",
-      "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "faq_item_key": "q1-alt",
         "faq_question": "First, again?",
         "faq_answer": "Yes, again."
       },
-      "instanceId": "4fd8bcf7-28c7-4671-bd73-4f1e31d04efa",
+      "instanceId": "441d3157-2519-4fc6-aa30-2ce2398cfbac",
       "typeId": "9b4e2d8f-5a7c-4fbb-8d3e-6a8c4b5f7e9d",
       "typeName": "faq-item",
       "typeNamespace": "com.mudemocracy.website",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:26.239901472+00:00"
+      "updatedAt": "2026-11-08T17:25:04.166170413+00:00"
     },
-    "records/tier-2/faq-item-91f39ce5.json": {
+    "records/tier-2/faq-item-886cbb6b.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:25.428189576+00:00",
+      "createdAt": "2026-11-08T17:25:03.419255084+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "faq_item_key": "q1",
         "faq_question": "First?",
         "faq_answer": "Yes."
       },
-      "instanceId": "91f39ce5-3e6e-4046-ad5e-2f7556f0d2b7",
+      "instanceId": "886cbb6b-0063-4919-89d9-c8990b316213",
       "typeId": "9b4e2d8f-5a7c-4fbb-8d3e-6a8c4b5f7e9d",
       "typeName": "faq-item",
       "typeNamespace": "com.mudemocracy.website",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:25.428193191+00:00"
+      "updatedAt": "2026-11-08T17:25:03.419262669+00:00"
     },
-    "records/tier-2/guide-6af8e1cb.json": {
+    "records/tier-2/faq-item-f0501093.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:24.959187921+00:00",
+      "createdAt": "2026-11-08T17:25:03.483555993+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
+      },
+      "fieldValues": {
+        "faq_item_key": "q2",
+        "faq_question": "Second?",
+        "faq_answer": "No."
+      },
+      "instanceId": "f0501093-b90d-4ab7-aa8d-350d1ec60aef",
+      "typeId": "9b4e2d8f-5a7c-4fbb-8d3e-6a8c4b5f7e9d",
+      "typeName": "faq-item",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-08T17:25:03.483561608+00:00"
+    },
+    "records/tier-2/guide-bdf2ffe4.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-08T17:25:02.981097219+00:00",
+      "createdBy": {
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "slug": "recording",
         "title": "Recording a decision"
       },
-      "instanceId": "6af8e1cb-4370-4ec9-b0c3-95ee032882bc",
+      "instanceId": "bdf2ffe4-6409-4dd6-9533-8588b88cfeca",
       "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
       "typeName": "guide",
       "typeNamespace": "com.mudemocracy",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:24.959195541+00:00"
+      "updatedAt": "2026-11-08T17:25:02.981104234+00:00"
     },
-    "records/tier-2/guide-ac868c07.json": {
+    "records/tier-2/guide-d471b13a.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:25.023536972+00:00",
+      "createdAt": "2026-11-08T17:25:03.046378689+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "slug": "four-questions",
         "title": "The four questions"
       },
-      "instanceId": "ac868c07-a4ad-43d1-ac0a-671e2c9be04f",
+      "instanceId": "d471b13a-9e7b-4350-bc20-7d868acccc45",
       "typeId": "8f138dd6-11d2-42a5-99ec-3d6e23bed54f",
       "typeName": "guide",
       "typeNamespace": "com.mudemocracy",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:25.023542330+00:00"
+      "updatedAt": "2026-11-08T17:25:03.046386762+00:00"
     },
-    "records/tier-2/guide-section-487805cb.json": {
+    "records/tier-2/guide-section-dfeebed3.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:25.563200950+00:00",
+      "createdAt": "2026-11-08T17:25:03.543932089+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "section_key": "guide",
@@ -3060,19 +3144,19 @@
         "render_as": "section",
         "section_heading": "From the guide"
       },
-      "instanceId": "487805cb-7388-42e3-90bc-3cb08e3f1032",
+      "instanceId": "dfeebed3-0f95-43e5-a0fb-c1cb7933746e",
       "typeId": "6e1b9a5c-2f4d-4c8e-9a7b-3d5f1e2c4b6a",
       "typeName": "guide-section",
       "typeNamespace": "com.mudemocracy.website",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:25.563207492+00:00"
+      "updatedAt": "2026-11-08T17:25:03.543937749+00:00"
     },
-    "records/tier-2/hero-09abca48.json": {
+    "records/tier-2/hero-3891279a.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:26.311850458+00:00",
+      "createdAt": "2026-11-08T17:25:04.232291770+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "section_key": "opening-alt",
@@ -3084,19 +3168,19 @@
         "headline": "Another opening.",
         "supporting_copy": "Draft copy."
       },
-      "instanceId": "09abca48-a02c-4092-a402-ec8c71050789",
+      "instanceId": "3891279a-022e-456f-9d52-c82dbab82f6f",
       "typeId": "c7e5a3b9-8d0f-4c2e-a14b-9d1f7e8c0b2a",
       "typeName": "hero",
       "typeNamespace": "com.mudemocracy.website",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:26.311857470+00:00"
+      "updatedAt": "2026-11-08T17:25:04.232297074+00:00"
     },
-    "records/tier-2/hero-9273bba7.json": {
+    "records/tier-2/hero-a69c74ea.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:25.228804500+00:00",
+      "createdAt": "2026-11-08T17:25:03.234266398+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "section_key": "opening",
@@ -3110,19 +3194,19 @@
         "supporting_copy": "Supporting copy.",
         "presentation": "large"
       },
-      "instanceId": "9273bba7-9eb7-4ca4-b4cc-6594830d2b68",
+      "instanceId": "a69c74ea-91b9-4d88-88ce-cec2e2f5e76c",
       "typeId": "c7e5a3b9-8d0f-4c2e-a14b-9d1f7e8c0b2a",
       "typeName": "hero",
       "typeNamespace": "com.mudemocracy.website",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:25.228808114+00:00"
+      "updatedAt": "2026-11-08T17:25:03.234272381+00:00"
     },
-    "records/tier-2/hero-da9cb5e9.json": {
+    "records/tier-2/hero-c9ac810e.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:26.663384029+00:00",
+      "createdAt": "2026-11-08T17:25:04.531325175+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "section_key": "opening",
@@ -3134,61 +3218,19 @@
         "headline": "About.",
         "supporting_copy": "Who we are."
       },
-      "instanceId": "da9cb5e9-fd9e-41a5-95fa-fcafc35c5e3b",
+      "instanceId": "c9ac810e-17ec-4a90-b43f-de85927ea8de",
       "typeId": "c7e5a3b9-8d0f-4c2e-a14b-9d1f7e8c0b2a",
       "typeName": "hero",
       "typeNamespace": "com.mudemocracy.website",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:26.663389171+00:00"
+      "updatedAt": "2026-11-08T17:25:04.531330339+00:00"
     },
-    "records/tier-2/homepage-1c137670.json": {
+    "records/tier-2/homepage-07528e7f.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:25.162327305+00:00",
+      "createdAt": "2026-11-08T17:25:04.776421943+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
-      },
-      "fieldValues": {
-        "page_key": "home",
-        "page_title": "Home",
-        "page_intent": "The homepage.",
-        "primary_audience": "brief audience",
-        "tone_guidance": "brief tone"
-      },
-      "instanceId": "1c137670-f89c-415d-820a-25da7c3e4ce1",
-      "typeId": "5de26162-3fd5-4fc9-b32e-567db46bb552",
-      "typeName": "homepage",
-      "typeNamespace": "com.mudemocracy.website",
-      "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:25.162335479+00:00"
-    },
-    "records/tier-2/homepage-d6261644.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:26.597564317+00:00",
-      "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
-      },
-      "fieldValues": {
-        "page_key": "about",
-        "page_title": "About",
-        "page_intent": "About us.",
-        "primary_audience": "brief audience",
-        "tone_guidance": "brief tone"
-      },
-      "instanceId": "d6261644-41f3-4d68-85f7-2d28ed43d897",
-      "typeId": "5de26162-3fd5-4fc9-b32e-567db46bb552",
-      "typeName": "homepage",
-      "typeNamespace": "com.mudemocracy.website",
-      "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:26.597569564+00:00"
-    },
-    "records/tier-2/homepage-e57911a9.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:26.920161896+00:00",
-      "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "page_key": "scratch",
@@ -3197,19 +3239,61 @@
         "primary_audience": "brief audience",
         "tone_guidance": "brief tone"
       },
-      "instanceId": "e57911a9-75d9-452d-a21d-2c7cc59e9f68",
+      "instanceId": "07528e7f-144a-4926-9e78-b6341bca99b5",
       "typeId": "5de26162-3fd5-4fc9-b32e-567db46bb552",
       "typeName": "homepage",
       "typeNamespace": "com.mudemocracy.website",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:26.920167534+00:00"
+      "updatedAt": "2026-11-08T17:25:04.776426926+00:00"
     },
-    "records/tier-2/homepage-prose-64bfd9f5.json": {
+    "records/tier-2/homepage-36a4ab0b.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:26.730364699+00:00",
+      "createdAt": "2026-11-08T17:25:04.471824466+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
+      },
+      "fieldValues": {
+        "page_key": "about",
+        "page_title": "About",
+        "page_intent": "About us.",
+        "primary_audience": "brief audience",
+        "tone_guidance": "brief tone"
+      },
+      "instanceId": "36a4ab0b-7d48-41cb-b6b8-cc831176a4a5",
+      "typeId": "5de26162-3fd5-4fc9-b32e-567db46bb552",
+      "typeName": "homepage",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-08T17:25:04.471828875+00:00"
+    },
+    "records/tier-2/homepage-fe619264.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-08T17:25:03.172874957+00:00",
+      "createdBy": {
+        "id": "claude-code",
+        "kind": "ai"
+      },
+      "fieldValues": {
+        "page_key": "home",
+        "page_title": "Home",
+        "page_intent": "The homepage.",
+        "primary_audience": "brief audience",
+        "tone_guidance": "brief tone"
+      },
+      "instanceId": "fe619264-46df-4fb4-b1d6-2c6b9a0329c0",
+      "typeId": "5de26162-3fd5-4fc9-b32e-567db46bb552",
+      "typeName": "homepage",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-08T17:25:03.172880121+00:00"
+    },
+    "records/tier-2/homepage-prose-60a548b5.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-08T17:25:04.595776485+00:00",
+      "createdBy": {
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "section_key": "story",
@@ -3220,19 +3304,19 @@
         "section_heading": "Our story",
         "section_body": "It began."
       },
-      "instanceId": "64bfd9f5-481b-41a4-b210-2b304fe437fd",
+      "instanceId": "60a548b5-32fd-485a-914d-57c0ce1d1d67",
       "typeId": "058e5281-dc40-4ecd-bfe7-08edf650e4bd",
       "typeName": "homepage-prose",
       "typeNamespace": "com.mudemocracy.website",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:26.730369906+00:00"
+      "updatedAt": "2026-11-08T17:25:04.595782784+00:00"
     },
-    "records/tier-2/homepage-prose-7820b845.json": {
+    "records/tier-2/homepage-prose-9616b5ab.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:25.298203065+00:00",
+      "createdAt": "2026-11-08T17:25:03.298204253+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "section_key": "why",
@@ -3243,19 +3327,19 @@
         "section_heading": "Why",
         "section_body": "A prose body."
       },
-      "instanceId": "7820b845-6510-4735-bcb8-633ed324e347",
+      "instanceId": "9616b5ab-02ea-466e-be68-ae0d0db9bb04",
       "typeId": "058e5281-dc40-4ecd-bfe7-08edf650e4bd",
       "typeName": "homepage-prose",
       "typeNamespace": "com.mudemocracy.website",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:25.298207631+00:00"
+      "updatedAt": "2026-11-08T17:25:03.298211985+00:00"
     },
-    "records/tier-2/homepage-prose-9ceb1251.json": {
+    "records/tier-2/homepage-prose-e42a6886.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:26.985591385+00:00",
+      "createdAt": "2026-11-08T17:25:04.836049300+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "section_key": "note",
@@ -3266,19 +3350,88 @@
         "section_heading": "Draft",
         "section_body": "Not yet."
       },
-      "instanceId": "9ceb1251-fc54-4d79-8e37-2d5e5d7367df",
+      "instanceId": "e42a6886-674c-4cb8-a494-0ead3fcfad6a",
       "typeId": "058e5281-dc40-4ecd-bfe7-08edf650e4bd",
       "typeName": "homepage-prose",
       "typeNamespace": "com.mudemocracy.website",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:26.985596463+00:00"
+      "updatedAt": "2026-11-08T17:25:04.836057253+00:00"
     },
-    "records/tier-2/primary-cta-7acedea2.json": {
+    "records/tier-2/nav-item-0554b680.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:25.626146825+00:00",
+      "createdAt": "2026-11-08T17:25:05.080147879+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
+      },
+      "fieldValues": {
+        "nav_label": "About"
+      },
+      "instanceId": "0554b680-e1b9-4b82-b251-3cf2a1c9347d",
+      "typeId": "1c468ba3-3b54-430a-9128-2c4b9fc862ee",
+      "typeName": "nav-item",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-08T17:25:05.080155628+00:00"
+    },
+    "records/tier-2/nav-item-1e010f63.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-08T17:25:04.960236609+00:00",
+      "createdBy": {
+        "id": "claude-code",
+        "kind": "ai"
+      },
+      "fieldValues": {
+        "nav_label": "Home"
+      },
+      "instanceId": "1e010f63-2555-4d86-a7c2-82c13c301c8f",
+      "typeId": "1c468ba3-3b54-430a-9128-2c4b9fc862ee",
+      "typeName": "nav-item",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-08T17:25:04.960243011+00:00"
+    },
+    "records/tier-2/nav-item-c5557dbb.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-08T17:25:05.204239948+00:00",
+      "createdBy": {
+        "id": "claude-code",
+        "kind": "ai"
+      },
+      "fieldValues": {
+        "nav_label": "Guides"
+      },
+      "instanceId": "c5557dbb-9097-433e-acb4-23332efe76f1",
+      "typeId": "1c468ba3-3b54-430a-9128-2c4b9fc862ee",
+      "typeName": "nav-item",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-08T17:25:05.204246304+00:00"
+    },
+    "records/tier-2/nav-item-fc225047.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-08T17:25:05.279000038+00:00",
+      "createdBy": {
+        "id": "claude-code",
+        "kind": "ai"
+      },
+      "fieldValues": {
+        "nav_label": "Recording",
+        "nav_href": "/guides/recording"
+      },
+      "instanceId": "fc225047-51fe-4613-8a53-72bfe35d31ea",
+      "typeId": "1c468ba3-3b54-430a-9128-2c4b9fc862ee",
+      "typeName": "nav-item",
+      "typeNamespace": "com.mudemocracy.website",
+      "typeVersion": 1,
+      "updatedAt": "2026-11-08T17:25:05.279007797+00:00"
+    },
+    "records/tier-2/primary-cta-b71472b5.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
+      "createdAt": "2026-11-08T17:25:03.605502576+00:00",
+      "createdBy": {
+        "id": "claude-code",
+        "kind": "ai"
       },
       "fieldValues": {
         "section_key": "act",
@@ -3289,98 +3442,122 @@
         "section_heading": "Start",
         "section_body": "Pick one."
       },
-      "instanceId": "7acedea2-5853-49b9-861e-4007ab178b57",
+      "instanceId": "b71472b5-878a-4758-89d3-eee75f468e98",
       "typeId": "a5c3e1f7-6b8d-4a0c-9e2f-7b9d5c6a8f0e",
       "typeName": "primary-cta",
       "typeNamespace": "com.mudemocracy.website",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:25.626149705+00:00"
+      "updatedAt": "2026-11-08T17:25:03.605508377+00:00"
     },
-    "records/tier-2/purpose-189410ea.json": {
+    "records/tier-2/purpose-7bb1b918.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/record.json",
-      "createdAt": "2026-11-03T10:09:24.726804976+00:00",
+      "createdAt": "2026-11-08T17:25:02.793458350+00:00",
       "fieldValues": {
         "statement": "",
         "title": "Site fixture"
       },
-      "instanceId": "189410ea-8149-461e-8080-640534b73571",
+      "instanceId": "7bb1b918-a3b9-49a0-9c15-c43bdb86590f",
       "typeId": "3c000001-0000-4000-a000-000000000001",
       "typeName": "purpose",
       "typeNamespace": "com.semanticops.core",
       "typeVersion": 1,
-      "updatedAt": "2026-11-03T10:09:24.726804976+00:00"
+      "updatedAt": "2026-11-08T17:25:02.793458350+00:00"
     },
-    "relations/12fc4eb9-d3e6-429b-ad76-8747df93d423.json": {
+    "relations/04c78b94-ca49-4950-9642-1e484229d742.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-11-03T10:09:25.823464608+00:00",
+      "createdAt": "2026-11-08T17:25:05.017753761+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
-      "relationId": "12fc4eb9-d3e6-429b-ad76-8747df93d423",
-      "relationType": "contains",
-      "sourceInstanceId": "028023f2-882e-4ac5-bcba-513ec7d2f33c",
-      "targetInstanceId": "07938343-1c63-438e-b6cf-3a89b2c725b2"
-    },
-    "relations/7ee340f3-9e26-4a71-9330-5315516d5791.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-11-03T10:09:26.020356023+00:00",
-      "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
-      },
-      "relationId": "7ee340f3-9e26-4a71-9330-5315516d5791",
+      "relationId": "04c78b94-ca49-4950-9642-1e484229d742",
       "relationType": "uses",
-      "sourceInstanceId": "54f81463-99c8-43d9-9db2-7eccc3cabcb5",
-      "targetInstanceId": "ac868c07-a4ad-43d1-ac0a-671e2c9be04f"
+      "sourceInstanceId": "1e010f63-2555-4d86-a7c2-82c13c301c8f",
+      "targetInstanceId": "fe619264-46df-4fb4-b1d6-2c6b9a0329c0"
     },
-    "relations/822c0241-4aa5-4250-bf3d-275e8b6f28b6.json": {
+    "relations/0f56839a-f2eb-4584-969a-ba250bf6fc82.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-11-03T10:09:25.887944124+00:00",
+      "createdAt": "2026-11-08T17:25:05.143227841+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
-      "relationId": "822c0241-4aa5-4250-bf3d-275e8b6f28b6",
-      "relationType": "contains",
-      "sourceInstanceId": "7acedea2-5853-49b9-861e-4007ab178b57",
-      "targetInstanceId": "54f81463-99c8-43d9-9db2-7eccc3cabcb5"
+      "relationId": "0f56839a-f2eb-4584-969a-ba250bf6fc82",
+      "relationType": "uses",
+      "sourceInstanceId": "0554b680-e1b9-4b82-b251-3cf2a1c9347d",
+      "targetInstanceId": "36a4ab0b-7d48-41cb-b6b8-cc831176a4a5"
     },
-    "relations/b04a2672-2f2c-4409-8da5-3e11c0ee45d1.json": {
+    "relations/1c87e635-2c77-41a5-873d-33cf59d60a25.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-11-03T10:09:25.760760286+00:00",
+      "createdAt": "2026-11-08T17:25:04.296056575+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
-      "relationId": "b04a2672-2f2c-4409-8da5-3e11c0ee45d1",
-      "relationType": "contains",
-      "sourceInstanceId": "028023f2-882e-4ac5-bcba-513ec7d2f33c",
-      "targetInstanceId": "91f39ce5-3e6e-4046-ad5e-2f7556f0d2b7"
-    },
-    "relations/b5809d98-05fc-442b-9991-049ab8fc8d9b.json": {
-      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-11-03T10:09:26.386546248+00:00",
-      "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
-      },
-      "relationId": "b5809d98-05fc-442b-9991-049ab8fc8d9b",
+      "relationId": "1c87e635-2c77-41a5-873d-33cf59d60a25",
       "relationType": "derived-from",
-      "sourceInstanceId": "4fd8bcf7-28c7-4671-bd73-4f1e31d04efa",
-      "targetInstanceId": "91f39ce5-3e6e-4046-ad5e-2f7556f0d2b7"
+      "sourceInstanceId": "441d3157-2519-4fc6-aa30-2ce2398cfbac",
+      "targetInstanceId": "886cbb6b-0063-4919-89d9-c8990b316213"
     },
-    "relations/e81b95b8-9fe0-43c1-9dc6-dcd8cb62ea6c.json": {
+    "relations/33eefa8d-c738-4baf-a39d-a466b03ab27c.json": {
       "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
-      "createdAt": "2026-11-03T10:09:25.956359167+00:00",
+      "createdAt": "2026-11-08T17:25:03.908458002+00:00",
       "createdBy": {
-        "id": "human:fixture",
-        "kind": "human"
+        "id": "claude-code",
+        "kind": "ai"
       },
-      "relationId": "e81b95b8-9fe0-43c1-9dc6-dcd8cb62ea6c",
+      "relationId": "33eefa8d-c738-4baf-a39d-a466b03ab27c",
       "relationType": "uses",
-      "sourceInstanceId": "487805cb-7388-42e3-90bc-3cb08e3f1032",
-      "targetInstanceId": "ac868c07-a4ad-43d1-ac0a-671e2c9be04f"
+      "sourceInstanceId": "dfeebed3-0f95-43e5-a0fb-c1cb7933746e",
+      "targetInstanceId": "d471b13a-9e7b-4350-bc20-7d868acccc45"
+    },
+    "relations/4c6b5fca-c8a6-4963-a735-a20a0dd0f0a1.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-11-08T17:25:03.732165655+00:00",
+      "createdBy": {
+        "id": "claude-code",
+        "kind": "ai"
+      },
+      "relationId": "4c6b5fca-c8a6-4963-a735-a20a0dd0f0a1",
+      "relationType": "contains",
+      "sourceInstanceId": "44e4e558-653d-4469-ab20-fab7aecf8df9",
+      "targetInstanceId": "886cbb6b-0063-4919-89d9-c8990b316213"
+    },
+    "relations/4f6dc0bb-deb0-446c-a6fc-fdd0ed325110.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-11-08T17:25:03.849026463+00:00",
+      "createdBy": {
+        "id": "claude-code",
+        "kind": "ai"
+      },
+      "relationId": "4f6dc0bb-deb0-446c-a6fc-fdd0ed325110",
+      "relationType": "contains",
+      "sourceInstanceId": "b71472b5-878a-4758-89d3-eee75f468e98",
+      "targetInstanceId": "8d957334-1f7e-4859-be91-3156660f2587"
+    },
+    "relations/5cc72beb-3409-46f8-880e-fd2d073465a0.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-11-08T17:25:03.791157687+00:00",
+      "createdBy": {
+        "id": "claude-code",
+        "kind": "ai"
+      },
+      "relationId": "5cc72beb-3409-46f8-880e-fd2d073465a0",
+      "relationType": "contains",
+      "sourceInstanceId": "44e4e558-653d-4469-ab20-fab7aecf8df9",
+      "targetInstanceId": "f0501093-b90d-4ab7-aa8d-350d1ec60aef"
+    },
+    "relations/7428b235-c8c8-48ed-929b-59778dfda886.json": {
+      "$schema": "https://srs.semanticops.com/schema/2.0/relation.json",
+      "createdAt": "2026-11-08T17:25:03.969595592+00:00",
+      "createdBy": {
+        "id": "claude-code",
+        "kind": "ai"
+      },
+      "relationId": "7428b235-c8c8-48ed-929b-59778dfda886",
+      "relationType": "uses",
+      "sourceInstanceId": "8d957334-1f7e-4859-be91-3156660f2587",
+      "targetInstanceId": "d471b13a-9e7b-4350-bc20-7d868acccc45"
     }
   }
 }

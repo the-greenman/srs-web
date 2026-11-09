@@ -56,6 +56,10 @@ export interface SrsRepository {
   changes(since: string): string;
   /** Record the repository as it is now as the save point (srs-rust#1522); in memory, not a write. */
   mark_saved(saved_at?: string | null): void;
+  /** What bringing items in from another copy (a `.srs` archive) would do, as JSON; writes nothing (srs-rust#1580). */
+  merge_preview(archive: Uint8Array, selection_json?: string | null): string;
+  /** Bring the selected items in, or throw (`.code`) and write nothing (srs-rust#1580). */
+  merge_apply(archive: Uint8Array, selection_json: string): string;
   /** RFC-046 session actor for this handle's writes (engine stamps `createdBy`; never put in a payload). */
   set_actor(json: string): void;
   clear_actor(): void;
@@ -478,6 +482,8 @@ export interface MigrationSummary {
   title: string;
   description: string;
   status: MigrationStatus;
+  /** The data-model revision step this entry performs; null for structural migrations (srs-rust#1466). */
+  revisionStep: { from: number; to: number } | null;
 }
 
 /** Result of `apply_migration(id)`. */
@@ -1333,7 +1339,7 @@ export interface NavigationNode {
  */
 export interface RepositoryNavigation {
   rootContainerId: string;
-  identity: NavigationNode;
+  identity?: NavigationNode;
   sections: NavigationNode[];
   diagnostics: string[];
 }
@@ -2311,10 +2317,10 @@ function normalizeNavigationNode(raw: any): NavigationNode {
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: raw WASM RepositoryNavigation has unknown field case
-function normalizeRepositoryNavigation(raw: any): RepositoryNavigation {
+export function normalizeRepositoryNavigation(raw: any): RepositoryNavigation {
   return {
     rootContainerId: raw.rootContainerId ?? "",
-    identity: normalizeNavigationNode(raw.identity ?? {}),
+    identity: raw.identity ? normalizeNavigationNode(raw.identity) : undefined,
     sections: (raw.sections ?? []).map(normalizeNavigationNode),
     diagnostics: raw.diagnostics ?? [],
   };
@@ -2348,7 +2354,7 @@ export function repositoryNavigation(repo: SrsRepository): RepositoryNavigation 
 export function resolveRepositoryTitle(repo: SrsRepository, fallback: string): string {
   try {
     const navigation = repositoryNavigation(repo);
-    if (navigation.identity.displayLabel) return navigation.identity.displayLabel;
+    if (navigation.identity?.displayLabel) return navigation.identity.displayLabel;
     if (navigation.rootContainerId) {
       const container = getContainer(repo, navigation.rootContainerId);
       if (container.title) return container.title;
@@ -2439,7 +2445,12 @@ export function availableMigrations(repo: SrsRepository): MigrationSummary[] {
             alreadyApplied: statusStr === "alreadyApplied",
             notApplicable: statusStr === "notApplicable",
           };
-    return { id: m.id, title: m.title, description: m.description, status };
+    const step = m.revisionStep;
+    const revisionStep =
+      step && typeof step.from === "number" && typeof step.to === "number"
+        ? { from: step.from, to: step.to }
+        : null;
+    return { id: m.id, title: m.title, description: m.description, status, revisionStep };
   });
 }
 
@@ -2659,33 +2670,27 @@ export function moveInPrecedesChain(
 }
 
 /**
- * Registry ids of the revision migrations the load gate offers
- * (RFC-043 7 -> 8, RFC-046 8 -> 9, RFC-052 9 -> 10, RFC-051 10 -> 11).
- * Listed here because `available_migrations()` does not say which entries are
- * revision steps (it also reports structural ones such as `migrate-identity`
- * as needed); srs-rust#1466 exposes that, after which this list goes.
+ * The needed revision-step migrations, in the engine's order. Which entries are revision steps is
+ * core knowledge (`revisionStep`, srs-rust#1466); structural `needed` entries such as
+ * `migrate-identity` stay out of the load gate. Throws if the engine cannot say.
  */
-export const RFC043_MIGRATION_ID = "rfc043-container-entries";
-export const RFC046_MIGRATION_ID = "rfc046-actor-provenance";
-export const RFC052_MIGRATION_ID = "rfc052-root-container";
-export const RFC051_MIGRATION_ID = "rfc051-container-entries";
+function neededRevisionSteps(repo: SrsRepository): MigrationSummary[] {
+  return availableMigrations(repo).filter((m) => m.status.needed && m.revisionStep != null);
+}
 
 /**
  * Revision migrations the load gate offers, in order, when the engine reports them needed.
  * `[]` means none are needed; if the engine cannot say, this throws (unknown is not "none").
  */
 export function neededMigrationIds(repo: SrsRepository): string[] {
-  const needed = new Set(
-    availableMigrations(repo)
-      .filter((m) => m.status.needed)
-      .map((m) => m.id)
+  return neededRevisionSteps(repo).map((m) => m.id);
+}
+
+/** True while a needed revision step still lands at or below `revision` (the data is older than it). */
+export function needsRevisionUpTo(repo: SrsRepository, revision: number): boolean {
+  return neededRevisionSteps(repo).some(
+    (m) => (m.revisionStep?.to ?? Number.POSITIVE_INFINITY) <= revision
   );
-  return [
-    RFC043_MIGRATION_ID,
-    RFC046_MIGRATION_ID,
-    RFC052_MIGRATION_ID,
-    RFC051_MIGRATION_ID,
-  ].filter((id) => needed.has(id));
 }
 
 // ---------------------------------------------------------------------------

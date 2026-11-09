@@ -1,0 +1,21 @@
+{
+  "instanceId": "b485fe4a-f740-480b-ab75-a0f6787a0605",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "merge.left-out",
+    "placement": "ui",
+    "title": "Not brought in",
+    "summary": "These stay as they are in this copy. Change them by hand if you need the other version."
+  },
+  "createdAt": "2026-11-07T16:17:59.563210786+00:00",
+  "updatedAt": "2026-11-07T16:17:59.563217735+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

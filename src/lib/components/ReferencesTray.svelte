@@ -35,6 +35,8 @@
     kind?: string;
     /** A source's URL; "" otherwise. */
     url?: string;
+    /** A quotation's source: it is listed under that source when the source is in the tray (#525). */
+    sourceId?: string;
     /** A context document (the call the essay answers): listed apart from ordinary references. */
     context?: boolean;
     /** The paragraphs it is linked to; none = not linked yet. */
@@ -94,6 +96,10 @@
 
   const contextItems = $derived(items.filter((r) => r.context));
   const otherItems = $derived(items.filter((r) => !r.context));
+  const ids = $derived(new Set(items.map((r) => r.id)));
+  /** Top-level rows: a quotation whose source is present nests under it instead. */
+  const topItems = $derived(otherItems.filter((r) => !(r.sourceId && ids.has(r.sourceId))));
+  const quotesOf = (id: string) => otherItems.filter((r) => r.sourceId === id);
   let ctxTitle = $state('');
   let ctxUrl = $state('');
   let ctxText = $state('');
@@ -141,10 +147,10 @@
     {#if searched && found.length === 0}<p class="tray__empty" data-testid="references-found-none">Nothing in this repository matches.</p>{/if}
   {/if}
   {#if otherItems.length === 0}<p class="tray__empty">Sources, quotations and problems that agents and attach flows collect for this essay wait here.</p>{/if}
-{#snippet rows(list: ReferenceItem[])}
+{#snippet rows(list: ReferenceItem[], nested = false)}
   {#each list as r (r.id)}
     {@const free = paragraphs.filter((p) => !r.paragraphs.some((q) => q.id === p.id))}
-    <div class="refs-tray__item" data-testid="reference-row">
+    <div class="refs-tray__item" class:refs-tray__item--nested={nested} data-testid={nested ? 'reference-quote' : 'reference-row'}>
       <TrayRow label={`${r.label} (${r.type}${r.kind ? ` · ${r.kind}` : ''})`}>
         {#snippet actions()}
           {#if r.foundBy && onanswer}
@@ -182,6 +188,12 @@
           {/each}
         </div>
       {/if}
+      {#if !nested}
+        {@const quotes = quotesOf(r.id)}
+        {#if quotes.length}
+          <div class="refs-tray__quotes" data-testid="reference-quotes">{@render rows(quotes, true)}</div>
+        {/if}
+      {/if}
     </div>
   {/each}
 {/snippet}
@@ -204,5 +216,5 @@
     </div>
     <h3 class="tray__subhead">References</h3>
   {/if}
-  {@render rows(otherItems)}
+  {@render rows(topItems)}
 </section>

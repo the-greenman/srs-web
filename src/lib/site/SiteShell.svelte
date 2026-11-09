@@ -23,12 +23,13 @@
   import Select from "$lib/components/Select.svelte";
   import SiteBlock from "$lib/components/SiteBlock.svelte";
   import SiteCanvas from "$lib/components/SiteCanvas.svelte";
+  import SiteMenu from "$lib/components/SiteMenu.svelte";
   import Toolbar from "$lib/components/Toolbar.svelte";
   import ActionMenu from "$lib/components/ActionMenu.svelte";
   import type { DragPayload } from "$lib/components/dnd.js";
   import type { ToolbarAction } from "$lib/components/menu-action.js";
   import { BASE_GROUPS, commonActions } from "$lib/components/shell-actions.js";
-  import { DocumentHistory } from "$lib/document.js";
+  import { DocumentHistory, snapshotDocument } from "$lib/document.js";
   import type { EditorShellProps } from "$lib/editors/registry.js";
   import { outsideRun } from "$lib/essay/essay-model.js";
   import { ShellState } from "$lib/shell-context.svelte.js";
@@ -54,6 +55,7 @@
     toBin,
     toDrafts,
   } from "./site-edit.js";
+  import { MENU_RELATIONS, type MenuItem, addMenuLink, addMenuPage, ensureMenu, findMenu, menuItems, renameMenuItem, setMenuHref, shiftMenuItem } from "./site-menu.js";
   import { type PageRef, type Publish, listPages, pageSettings, setPageSettings, typeKey } from "./site-model.js";
   import { type Site, findSite, offeredTypes, viewFor } from "./site-views.js";
 
@@ -70,6 +72,7 @@
     onOpenAnother,
     onOpenAgents,
     onOpenPackages,
+    onOpenMerge,
     readOnlyReason = null,
   }: EditorShellProps = $props();
 
@@ -84,6 +87,7 @@
   let body = $state<OutlineEntry[]>([]);
   let drafts = $state<string[]>([]);
   let bin = $state<string[]>([]);
+  let menu = $state<MenuItem[]>([]);
   let selectedId = $state<string | null>(null);
   let showBrief = $state(false);
   let error = $state<string | null>(null);
@@ -111,6 +115,8 @@
       body = p ? getContainerOutline(repo, p.containerId).body : [];
       drafts = p ? entriesOf(draftsIdFor(p)) : [];
       bin = p ? entriesOf(binIdFor(p)) : [];
+      const menuId = site ? findMenu(repo) : null;
+      menu = menuId ? menuItems(repo, menuId) : [];
       if (selectedId && !body.some((e) => e.instanceId === selectedId)) selectedId = null; // undone, moved away
       error = null;
     } catch (e) {
@@ -134,6 +140,20 @@
   };
 
   /**
+   * The menu's own undo history (it belongs to no page). `undone`/`redone` hold which history each
+   * step went to, page (its container id) or "menu", so Undo takes the latest step of the page in
+   * view or of the menu, in the order they were made (ADR-029 E7).
+   */
+  const menuHistory = new DocumentHistory();
+  const MENU = "menu";
+  let undone: string[] = [];
+  let redone: string[] = [];
+  const remember = (where: string) => {
+    undone.push(where);
+    redone = [];
+  };
+
+  /**
    * Every write is one undo step. A write that fails partway still leaves its writes, so they too
    * become a step to undo. The write bumps `documentRevision`, which reloads (as the essay does).
    * Returns whether it succeeded.
@@ -153,19 +173,50 @@
       return false;
     } finally {
       try {
-        if (before) history()?.push(before, snapshotPage(repo, p));
+        if (before && history()?.push(before, snapshotPage(repo, p))) remember(p.containerId);
       } catch {
         // the page itself is gone: nothing to undo into
       }
     }
   }
 
-  function step(redo: boolean): void {
-    const h = history();
+  /**
+   * A menu edit, one undo step in the menu's history. The menu container is made on the first edit,
+   * before the snapshot, so undo leaves it (empty) in place.
+   */
+  function runMenu(fn: (menuId: string) => void): void {
     try {
-      redo ? h?.redo(repo) : h?.undo(repo); // the restore writes; the revision bump reloads
+      const menuId = ensureMenu(repo);
+      const snap = () => snapshotDocument(repo, [menuId], [], MENU_RELATIONS);
+      const before = snap();
+      try {
+        fn(menuId);
+        error = null;
+      } finally {
+        if (menuHistory.push(before, snap())) remember(MENU);
+      }
     } catch (e) {
       error = msg(e);
+    }
+  }
+
+  function step(redo: boolean): void {
+    const from = redo ? redone : undone;
+    const to = redo ? undone : redone;
+    // the latest step of the page in view or of the menu; a step its history no longer has is dropped
+    for (let i = from.length - 1; i >= 0; i--) {
+      const where = from[i];
+      if (where !== MENU && where !== page?.containerId) continue;
+      from.splice(i, 1);
+      const h = where === MENU ? menuHistory : (histories.get(where) ?? null);
+      if (!(redo ? h?.canRedo : h?.canUndo)) continue;
+      to.push(where);
+      try {
+        redo ? h?.redo(repo) : h?.undo(repo); // the restore writes; the revision bump reloads
+      } catch (e) {
+        error = msg(e);
+      }
+      return;
     }
   }
 
@@ -184,6 +235,7 @@
         onexportsrsj: onExportSrsj,
         onopenagents: onOpenAgents,
         onopenpackages: onOpenPackages,
+        onopenmerge: onOpenMerge,
         onopenanother: onOpenAnother,
       },
       { shell, saving }
@@ -410,6 +462,22 @@
                 onforget={(id) => {
                   if (run((p) => deleteForever(repo, p, id))) history()?.clear(); // a deleted record cannot come back under its id
                 }}
+              />
+            </Panel>
+          {/if}
+          {#if site}
+            <Panel title="Menu" aside={menu.length} data-feature="site.menu">
+              <SiteMenu
+                items={menu}
+                pages={pages.map((p) => ({ value: p.containerId, label: `${p.title} (/${p.key})${pageSettings(repo, p).publish === "no" ? ", not published" : ""}` }))}
+                onrename={(id, l) => runMenu(() => renameMenuItem(repo, id, l))}
+                onhref={(id, href) => runMenu(() => setMenuHref(repo, id, href))}
+                onshift={(id, shift) => runMenu((m) => shiftMenuItem(repo, m, id, shift))}
+                onaddpage={(containerId) => {
+                  const p = pages.find((x) => x.containerId === containerId);
+                  if (p && site) runMenu(() => addMenuPage(repo, site as Site, p));
+                }}
+                onaddlink={() => runMenu(() => addMenuLink(repo, site as Site, "New link", "/"))}
               />
             </Panel>
           {/if}

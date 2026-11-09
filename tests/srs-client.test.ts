@@ -32,6 +32,8 @@ import {
   addContainerMemberRelative,
   applyMigration,
   availableMigrations,
+  neededMigrationIds,
+  needsRevisionUpTo,
   containersForInstance,
   createBlankRepository,
   createGovernanceDocument,
@@ -1572,12 +1574,14 @@ describe("availableMigrations", () => {
         title: "Migrate Identity",
         description: "Migrate Tier-0 identity to purpose record",
         status: { needed: true, alreadyApplied: false, notApplicable: false },
+        revisionStep: null,
       },
       {
         id: "repo-upgrade",
         title: "Upgrade Repository Paths",
         description: "Rename files to canonical slug-id8 form",
         status: { needed: false, alreadyApplied: true, notApplicable: false },
+        revisionStep: null,
       },
     ];
     const spy = vi.fn().mockReturnValue(migrations);
@@ -1597,6 +1601,26 @@ describe("availableMigrations", () => {
     const result = availableMigrations(repo);
     expect(result[0].status).toEqual({ needed: true, alreadyApplied: false, notApplicable: false });
     expect(result[1].status).toEqual({ needed: false, alreadyApplied: true, notApplicable: false });
+  });
+
+  it("gates the load on needed revision steps only, in the engine's order", () => {
+    const entry = (id: string, status: string, revisionStep: { from: number; to: number } | null) => ({
+      id,
+      title: id,
+      description: id,
+      status,
+      revisionStep,
+    });
+    const raw = [
+      entry("migrate-identity", "needed", null),
+      entry("rfc052-root-container", "needed", { from: 9, to: 10 }),
+      entry("rfc046-actor-provenance", "alreadyApplied", { from: 8, to: 9 }),
+      entry("rfc051-container-entries", "needed", { from: 10, to: 11 }),
+    ];
+    const repo = mockRepo({ available_migrations: vi.fn().mockReturnValue(raw) });
+    expect(neededMigrationIds(repo)).toEqual(["rfc052-root-container", "rfc051-container-entries"]);
+    expect(needsRevisionUpTo(repo, 9)).toBe(false);
+    expect(needsRevisionUpTo(repo, 10)).toBe(true);
   });
 });
 

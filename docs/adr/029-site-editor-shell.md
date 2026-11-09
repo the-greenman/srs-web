@@ -59,3 +59,19 @@ The `site` editor (`src/lib/site/SiteShell.svelte`, registered for the website p
 - **Read-only.** `readOnlyReason` means the document cannot be saved back (it can be exported). The shell still edits, as the other shells do, but makes no open-time repair on such a document.
 
 The muDemocracy layer (evidence, authorship, comments, the agent brief, guide sections by reference) is B2, in `src/lib/site/mudemocracy/`.
+
+## The menu (amendment, srs-web#681, 2026-11-08)
+
+- **E7. The menu is the container tagged `site-menu`, edited headlessly in `src/lib/site/site-menu.ts` and in the shell's Menu panel (`SiteMenu`).**
+  - Depth 0 is the bar and depth 1 a dropdown under the entry above. An indent that would go deeper is refused.
+  - An item is a record of the `nav-item` type in the page type's namespace (website package 0.2.1). It has a `nav_label`, and one of:
+    - a `uses` relation to a page's anchor, where its href follows `page_key`;
+    - `nav_href`, for a code route.
+
+    An item with neither is a dropdown heading.
+  - The menu belongs to no page, so it has its own undo history. Undo takes the latest step, by the order the steps were made, from either the page in view or the menu.
+    - The menu snapshot also holds each item's `uses` (`snapshotDocument`'s `relationTypes`), so a redo that recreates an item keeps its page.
+    - The menu container is made on the first menu edit, outside the undo step, and stays (empty) after an undo.
+  - `uses` is not yet in the website package (muDemocracy.org#447). Until it is, Add page names the missing relation type.
+  - `exportMenu` is the menu as a site draws it, with the checks muDemocracy's export made (muDemocracy.org#416). It returns null when the site has no menu. A site's build calls it instead of reading the container itself; muDemocracy's switch is muDemocracy.org#448.
+  - The page keyed `home` is addressed `/`.

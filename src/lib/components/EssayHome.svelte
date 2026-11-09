@@ -1,6 +1,6 @@
 <!--
   EssayHome — the essay editor's front page: LandingFrame with RecentRepos (srs-web#730) above five numbered sections, "01 Start",
-  "02 Examples", "03 What makes it different", "04 Open" (SourceChooser) and "05 How it works". Presentation only (ADR-027): every
+  "02 Examples", "03 Open" (SourceChooser), "04 How it works" and "05 What makes it different": practical first, the meaning last. Presentation only (ADR-027): every
   help word comes from `items` (the essay-home help container, `helpFor("essay-home")`); the section
   labels, the eyebrow and "More" are literal chrome, as in Landing.svelte. The caller owns opening and starting. `notices` is the slot above the sections. Extra attributes go to the frame root.
 -->
@@ -81,23 +81,23 @@
         {#if examples.explanation}<MarkdownView value={examples.explanation} />{/if}
       </section>
     {/if}
+    <section class="landing__section">
+      <SectionHeader number="03" label="Open" />
+      <SourceChooser {providers} {onOpen} {onOpenArchive} {onOpenUrl} />
+    </section>
+    <section class="landing__section">
+      <SectionHeader number="04" label="How it works" />
+      {#each [...concepts, ...(connect ? [connect] : [])] as item (item.instanceId)}
+        {@render concept(item)}
+      {/each}
+    </section>
     {#if different.length}
       <section class="landing__section landing__different" data-testid="essay-home-different">
-        <SectionHeader number="03" label="What makes it different" />
+        <SectionHeader number="05" label="What makes it different" />
         {#each different as item (item.instanceId)}
           <div class="landing__different-item">{@render concept(item)}</div>
         {/each}
       </section>
     {/if}
-    <section class="landing__section">
-      <SectionHeader number="04" label="Open" />
-      <SourceChooser {providers} {onOpen} {onOpenArchive} {onOpenUrl} />
-    </section>
-    <section class="landing__section">
-      <SectionHeader number="05" label="How it works" />
-      {#each [...concepts, ...(connect ? [connect] : [])] as item (item.instanceId)}
-        {@render concept(item)}
-      {/each}
-    </section>
   </div>
 </LandingFrame>

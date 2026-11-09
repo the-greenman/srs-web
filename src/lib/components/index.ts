@@ -22,6 +22,8 @@ export { default as Wordmark } from "./Wordmark.svelte";
 export { default as Nav } from "./Nav.svelte";
 export { default as NavGroup } from "./NavGroup.svelte";
 export { default as NavItem } from "./NavItem.svelte";
+export { default as NavTree } from "./NavTree.svelte";
+export { default as DocumentPicker } from "./DocumentPicker.svelte";
 
 // Inspector rail
 export { default as Inspector } from "./Inspector.svelte";
@@ -113,6 +115,8 @@ export { default as DraftTray } from "./DraftTray.svelte";
 export { default as SiteBlock } from "./SiteBlock.svelte";
 export type { SiteBlockField } from "./SiteBlock.svelte";
 export { default as SiteCanvas } from "./SiteCanvas.svelte";
+export { default as SiteMenu } from "./SiteMenu.svelte";
+export type { SiteMenuItem, SiteMenuShift } from "./SiteMenu.svelte";
 export { default as SiteText } from "./SiteText.svelte";
 export { default as CommentThread } from "./CommentThread.svelte";
 export { default as LinkProposals } from "./LinkProposals.svelte";

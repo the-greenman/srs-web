@@ -21,6 +21,16 @@ test("/essay says what makes the editor different and links to muDemocracy", asy
   await expect(different.getByRole("link", { name: "muDemocracy" })).toHaveAttribute("href", "https://mudemocracy.org");
 });
 
+test("on a phone, starting and opening come before what makes it different", async ({ page }) => {
+  await page.setViewportSize({ width: 400, height: 800 });
+  await page.goto("/essay");
+  const y = async (l: import("@playwright/test").Locator) => (await l.boundingBox())?.y ?? Number.NaN;
+  await expect(page.locator(START)).toBeVisible({ timeout: 15000 });
+  const different = await y(page.getByTestId("essay-home-different"));
+  expect(await y(page.locator(START))).toBeLessThan(different);
+  expect(await y(page.getByText("Open a file"))).toBeLessThan(different);
+});
+
 test("/essay?new=essay lands in the essay shell", async ({ page }) => {
   await page.goto("/essay?new=essay");
   await expect(page.locator(".essay-shell__page")).toBeVisible({ timeout: 15000 });

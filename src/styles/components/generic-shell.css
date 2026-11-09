@@ -29,29 +29,6 @@
   color: var(--color-on-dark-muted);
   font-size: var(--size-xs);
 }
-.generic-tree-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 2rem;
-  align-items: stretch;
-}
-.generic-tree-item > button:first-child {
-  min-width: 0;
-}
-.nav button.generic-tree-toggle {
-  justify-content: center;
-  align-items: center;
-  padding: 4px;
-  font-size: var(--size-base);
-}
-.generic-tree-members {
-  display: flex;
-  flex-direction: column;
-  margin: 0 0 4px var(--space-sm);
-  border-left: 1px solid var(--color-on-dark-line);
-}
-.generic-tree-members .nav__item {
-  font-size: var(--size-xs);
-}
 .nav .generic-muted {
   padding: 0 var(--space-sm);
   color: var(--color-on-dark-muted);

@@ -1,0 +1,22 @@
+{
+  "instanceId": "9b717f8f-7ae4-4fdc-b931-c794db3b0fd5",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "site.menu",
+    "placement": "ui",
+    "title": "Menu",
+    "summary": "The site menu: the bar and its dropdowns. Rename an item in place; Up and Down reorder it; Indent puts it in the dropdown of the item above, Outdent moves it back to the bar. Add page adds an item that goes to a page, Add link one that goes to an address.",
+    "explanation": "The menu is the container tagged site-menu. A page item uses the page, so its address follows the page key; a link item carries its own address; an item with neither is a dropdown heading. The menu has one dropdown level. Undo covers menu edits as it does page edits.",
+    "ai_guidance": "An item that goes to a page only shows on the site once that page is published. Tell the writer the menu has one dropdown level."
+  },
+  "createdAt": "2026-11-08T17:28:09.946476324+00:00",
+  "updatedAt": "2026-11-08T17:28:09.946485056+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "claude-code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

@@ -56,7 +56,7 @@
   import type { AttachFile } from "$lib/components/attach-check.js";
   import { downloadAttachment } from "$lib/attachment-download.js";
   import Input from "$lib/components/Input.svelte";
-  import Select from "$lib/components/Select.svelte";
+  import DocumentPicker from "$lib/components/DocumentPicker.svelte";
   import { NARROW } from "$lib/breakpoints";
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
@@ -92,7 +92,7 @@
   import { downloadText, triggerDownload } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { browseEssays } from "./essay-browse.js";
-  import { locatorFor } from "./quote.js";
+  import { locatorFor, passageIn } from "./quote.js";
   import { domainMap, listBoundaries, setBoundary } from "./essay-domain.js";
   import { formatAddress, parseAddress, pushAddress } from "$lib/address.js";
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
@@ -125,11 +125,13 @@
     agentPanel,
     agentStatus,
     onOpenPackages,
+    onOpenMerge,
   }: {
     // Common EditorShellProps this shell does not use (kept so every shell takes one prop set).
     documentProvider?: string;
     onOpenAgents?: () => void;
     onOpenPackages?: () => void;
+    onOpenMerge?: () => void;
     onExportSrsj?: () => void;
     /** Set when the repository was opened read-only: no repair writes on load. */
     readOnlyReason?: string | null;
@@ -366,8 +368,19 @@
     ...Object.values(model?.attachments ?? {})
       .flat()
       .filter((a) => pinnedIds.includes(a.id) && !pinnedRefs.some((r) => r.id === a.neighbourId))
-      .map((a) => ({ id: a.id, kind: a.neighbourType, relation: a.relationLabel, title: a.label, text: a.text })),
+      .map((a) => {
+        const q = a.neighbourType === "quotation" ? quotationOf(a.neighbourId) : undefined;
+        return { id: a.id, kind: a.neighbourType, relation: a.relationLabel, title: a.label, text: q?.words ?? a.text, source: q?.source };
+      }),
   ]);
+  /** A quotation's words, and its source's text when that still holds them (the passage is highlighted there; #525). */
+  function quotationOf(id: string) {
+    const ref = model?.references.find((r) => r.id === id);
+    if (!ref?.quote) return undefined;
+    const src = ref.sourceId ? model?.references.find((r) => r.id === ref.sourceId) : undefined;
+    const text = src ? [src.text, referenceText(repo, src.id)].filter(Boolean).join("\n\n") : "";
+    return { words: ref.quote, source: src && passageIn(text, ref.quote) ? { title: src.label, text, passage: ref.quote } : undefined };
+  }
 
   /** The frame's state: Wide is the one setter (`ShellState.toggleWide`, saved through `wide.ts`); `data-margin` on `.app` carries it. */
   const shell = new ShellState({ wideEnabled: true });
@@ -443,6 +456,7 @@
       type: r.typeName,
       kind: r.kind,
       url: r.url,
+      ...(r.sourceId ? { sourceId: r.sourceId } : {}),
       context: r.context,
       ...(r.foundBy ? { foundBy: r.foundBy.name || r.foundBy.id } : {}),
       ...(r.verdict ? { verdict: r.verdict } : {}),
@@ -841,6 +855,7 @@
         onopenagents: agentPanel ? openAgents : undefined,
         oneditorhelp: help.length ? () => { guideOpen = true; } : undefined,
         onopenpackages: onOpenPackages,
+        onopenmerge: onOpenMerge,
         onopenanother: onOpenAnother,
       },
       { shell, comments: summary(openThreads, shownIds), saving, dirty: documentDirty, help: { id: helpId, open: helpOpen } },
@@ -873,12 +888,14 @@
     {#snippet titleSlot()}
       <span class="eyebrow">{repoName}</span>
       {#if essays.length > 1}
-        <Select
-          aria-label="Essay"
-          value={essayId ?? ""}
-          options={essays.map((essay) => ({ value: essay.id, label: essay.title }))}
-          onchange={(e) => {
-            essayId = e.currentTarget.value;
+        <DocumentPicker
+          label="Essay"
+          options={essays}
+          currentId={essayId}
+          storageKey={`srs-web:recent-essays:${repoName}`}
+          onnew={readOnly ? undefined : createEssay}
+          onselect={(id) => {
+            essayId = id;
             zoomId = null;
             loadViewState(essayId);
             reload();

@@ -6,6 +6,7 @@
 import type { ToolbarAction } from "../components/menu-action.js";
 import {
   agentsAction,
+  mergeAction,
   openAnotherAction,
   packagesAction,
   saveAction,
@@ -24,6 +25,8 @@ export interface GenericHandlers {
   onopenagents?: () => void;
   /** Absent while the document is read-only (an upgrade writes). */
   onopenpackages?: () => void;
+  /** Absent while the document is read-only (a merge writes). */
+  onopenmerge?: () => void;
   /** Absent unless the open composition has a blueprint editor to preview. */
   onpreview?: () => void;
 }
@@ -62,6 +65,7 @@ export function genericActions(
       testid: "full-preview-toggle",
     },
     !!h.onopenpackages && packagesAction(h.onopenpackages),
+    !!h.onopenmerge && mergeAction(h.onopenmerge),
     wideAction(s.shell),
     !!h.onopenagents && agentsAction(h.onopenagents),
     openAnotherAction(h.onopenanother),

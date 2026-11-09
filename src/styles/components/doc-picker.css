@@ -1,0 +1,124 @@
+/* ============================================================================
+   component: doc-picker (.doc-picker) — the document title as a switcher
+   ----------------------------------------------------------------------------
+   The trigger has no field box at rest: it reads as the bar's title, with a chevron. The surface is the
+   shared Popover (sizing only here). A narrow screen opens it as a full-width sheet. Tokens only.
+   Parts: trigger, search, list, option, new, empty.
+   ========================================================================== */
+.doc-picker {
+  display: inline-flex;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.doc-picker > .popover {
+  min-width: 0;
+}
+.doc-picker__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  max-width: min(var(--toolbar-title-max), 100%);
+  padding: var(--space-xs) var(--space-sm);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--toolbar-title-size);
+  cursor: pointer;
+}
+.doc-picker__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.doc-picker__surface:popover-open {
+  display: flex;
+  flex-direction: column;
+  width: min(22rem, 90vw);
+}
+.popover__surface.is-open.doc-picker__surface:not([popover]) {
+  display: flex;
+  flex-direction: column;
+}
+.doc-picker__search {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 0;
+  border-bottom: 1px solid var(--popover-border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.doc-picker__list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.doc-picker__group {
+  padding: var(--space-xs) var(--space-md);
+  color: var(--color-muted);
+  font-size: var(--size-xs);
+}
+.doc-picker__option {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: flex-start;
+  min-height: 2.75rem;
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+}
+.doc-picker__option.is-active {
+  background: var(--color-surface);
+  outline: 1px solid var(--popover-border);
+  outline-offset: -1px;
+}
+.doc-picker__trigger:hover,
+.doc-picker__trigger[aria-expanded="true"] {
+  background: var(--color-surface);
+}
+.doc-picker__mark {
+  flex: none;
+  width: 1rem;
+}
+.doc-picker__text {
+  overflow-wrap: anywhere;
+}
+.doc-picker__empty {
+  padding: var(--space-md);
+  color: var(--color-muted);
+}
+.doc-picker__new {
+  min-height: 2.75rem;
+  padding: var(--space-sm) var(--space-md);
+  border: 0;
+  border-top: 1px solid var(--popover-border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.doc-picker__search:focus-visible,
+.doc-picker__trigger:focus-visible,
+.doc-picker__new:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
+@media (max-width: 30rem) {
+  .doc-picker__surface:popover-open {
+    /* The Popover's inline anchor placement would confine the sheet to the trigger's row; !important beats it. */
+    position: fixed;
+    /* biome-ignore lint/correctness/noUnknownProperty: CSS anchor positioning, newer than biome's property list */
+    position-area: none !important;
+    inset: 0 0 auto 0;
+    width: 100%;
+    max-width: none;
+    max-height: 100dvh;
+  }
+}

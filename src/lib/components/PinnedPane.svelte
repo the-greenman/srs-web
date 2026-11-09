@@ -48,8 +48,9 @@
     paragraphs = [],
     onquote,
   }: {
+    /** `source`: a quotation's source text still holding the words; opened, it shows them highlighted (#525). Without it the quotation shows its words alone. */
     /** `href`: an external link (a web source). `removable: false`: no "Remove link" (not a relation). */
-    items: { id: string; kind: string; relation?: string; title: string; text: string; href?: string; removable?: boolean }[];
+    items: { id: string; kind: string; relation?: string; title: string; text: string; href?: string; removable?: boolean; source?: { title: string; text: string; passage: string } }[];
     onunpin: (id: string) => void;
     onremove?: (id: string) => void;
     /** With `onquote`: the paragraphs a selected passage can be quoted to (srs-web#525). */
@@ -70,6 +71,10 @@
           {#if open.has(it.id) && it.text}
             <AttachmentPreview kind={it.kind} title={it.title} relation={it.relation} />
             <MarkdownView class="pinned__full" value={it.text} />
+            {#if it.source}
+              <p class="pinned__source" data-testid="pinned-source-title">From {it.source.title}</p>
+              <MarkdownView class="pinned__full" data-testid="pinned-source" value={it.source.text} mark={it.source.passage} />
+            {/if}
           {:else}
             <AttachmentPreview kind={it.kind} title={it.title} relation={it.relation} text={it.text} clamp />
           {/if}

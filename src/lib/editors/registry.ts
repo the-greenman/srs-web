@@ -58,6 +58,8 @@ export interface EditorShellProps {
   onOpenAgents?: () => void;
   /** Open Document > Packages… (#450). Absent while the document is read-only. */
   onOpenPackages?: () => void;
+  /** Document > Merge changes from a file… (srs-web#733); absent while read-only. */
+  onOpenMerge?: () => void;
   documentProvider: string;
   readOnlyReason?: string | null;
   /** The document is read-only (opened from a link, #699): a shell with `readOnly` on its definition must not offer writes. */
@@ -156,7 +158,7 @@ export const EDITORS: EditorDefinition[] = [
         packageId: "b3603f72-990a-408a-b6fc-28764ebabe78",
         namespace: "com.mudemocracy.website",
         name: "website",
-        version: "0.2.0",
+        version: "0.2.1",
       },
     ],
     create: (repo) => {

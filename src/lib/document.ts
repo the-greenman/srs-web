@@ -14,10 +14,12 @@ import {
   containersForInstance,
   createContainer,
   createRecord,
+  createRelation,
   deleteRecord,
   getContainer,
   getContainerOutline,
   getRecord,
+  listRelations,
   moveContainerMemberRelative,
   removeContainerMember,
   updateRecord,
@@ -170,16 +172,23 @@ interface Held {
 export interface DocumentSnapshot {
   containers: Record<string, Entry[]>;
   records: Record<string, Held>;
+  /** Each held record's outgoing relations of the types asked for, recreated with the record. */
+  relations?: Record<string, { relationType: string; targetInstanceId: string }[]>;
 }
 
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 
-/** Snapshot `containers` (outline and member records) and the extra `recordIds` (anchor, editor state). */
+/**
+ * Snapshot `containers` (outline and member records) and the extra `recordIds` (anchor, editor state).
+ * `relationTypes`: the held records' outgoing relations of these types are held too, so a record
+ * that undo or redo recreates gets them back (a menu item's `uses`, srs-web#681).
+ */
 export function snapshotDocument(
   repo: SrsRepository,
   containers: string[],
-  recordIds: string[] = []
+  recordIds: string[] = [],
+  relationTypes: string[] = []
 ): DocumentSnapshot {
   const out: DocumentSnapshot["containers"] = {};
   const ids = new Set(recordIds);
@@ -197,7 +206,18 @@ export function snapshotDocument(
         fieldValues: clone(r.fieldValues),
       };
   }
-  return { containers: out, records };
+  if (!relationTypes.length) return { containers: out, records };
+  const relations: NonNullable<DocumentSnapshot["relations"]> = {};
+  for (const id of Object.keys(records)) {
+    const held = relationTypes.flatMap((relationType) =>
+      listRelations(repo, { source: id, relationType }).map((r) => ({
+        relationType,
+        targetInstanceId: r.targetInstanceId,
+      }))
+    );
+    if (held.length) relations[id] = held;
+  }
+  return { containers: out, records, relations };
 }
 
 /** Write `target` back over the current state; the id of a recreated record is recorded in `alias`. */
@@ -209,6 +229,12 @@ function restore(repo: SrsRepository, target: DocumentSnapshot, alias: Map<strin
     if (!cur) {
       // A record cannot be recreated under its old id: it gets a new one, aliased for the rest of the history.
       alias.set(id, createRecord(repo, held.typeId, held.typeVersion, { fieldValues }).instanceId);
+      for (const r of target.relations?.[id] ?? [])
+        createRelation(repo, {
+          relationType: r.relationType,
+          sourceInstanceId: res(id),
+          targetInstanceId: res(r.targetInstanceId),
+        });
     } else if (!same(cur.fieldValues, held.fieldValues)) {
       updateRecord(repo, res(id), { fieldValues });
     }
@@ -271,11 +297,15 @@ export class DocumentHistory {
     return this.redos.length > 0;
   }
 
-  /** Remember an edit; a no-op (the snapshots are equal) is dropped and a new edit ends the redo line. */
-  push(before: DocumentSnapshot, after: DocumentSnapshot): void {
-    if (same(before, after)) return;
+  /**
+   * Remember an edit; a no-op (the snapshots are equal) is dropped and a new edit ends the redo line.
+   * Returns whether it was remembered.
+   */
+  push(before: DocumentSnapshot, after: DocumentSnapshot): boolean {
+    if (same(before, after)) return false;
     this.undos.push({ before, after });
     this.redos = [];
+    return true;
   }
 
   /** Forget everything, for an edit that cannot be reversed. */

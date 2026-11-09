@@ -66,6 +66,16 @@
   margin: var(--space-xs) 0 0;
   overflow-wrap: anywhere;
 }
+.pinned__full mark {
+  background: var(--color-hover);
+  color: inherit;
+  box-shadow: 0 -1px 0 var(--color-line-strong), 0 1px 0 var(--color-line-strong);
+}
+.pinned__source {
+  margin: var(--space-xs) 0 0;
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+}
 .pinned__link {
   display: block;
   margin-top: var(--space-xs);

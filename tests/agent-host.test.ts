@@ -1,9 +1,8 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
-const migrations = vi.hoisted(() => ({ needed: [] as string[] }));
+const migrations = vi.hoisted(() => ({ needed: [] as number[] }));
 vi.mock("../src/lib/srs-client", () => ({
-  RFC046_MIGRATION_ID: "rfc046-actor-provenance",
-  neededMigrationIds: () => migrations.needed,
+  needsRevisionUpTo: (_repo: unknown, rev: number) => migrations.needed.some((to) => to <= rev),
   listRelations: () => [],
 }));
 
@@ -76,7 +75,7 @@ it("fails closed: a guard that cannot be applied detaches the agent and never at
 
 it("the actor is set only on a revision-9 corpus", () => {
   const s = session();
-  migrations.needed = ["rfc046-actor-provenance"];
+  migrations.needed = [9];
   applyAgentActor(s as never, {} as never, conn);
   expect(s.set_actor).not.toHaveBeenCalled();
   migrations.needed = [];

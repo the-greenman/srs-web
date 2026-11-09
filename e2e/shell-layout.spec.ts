@@ -435,7 +435,7 @@ test.describe("Generic on the frame", () => {
       await page.getByTestId("nav-trigger").click();
       await nav.getByRole("button", { name: "Toggle Articles" }).click();
       await expect(nav).toBeVisible(); // a disclosure leaves the drawer open
-      await nav.locator(".generic-tree-members button").first().click();
+      await nav.locator("[data-part=row][data-kind=record] [data-part=label], [data-part=row][data-kind=note] [data-part=label]").first().click();
       await expect(nav).toBeHidden();
       await expect(insp).toBeVisible();
       await expect(insp.locator(".generic-inspector-head")).toBeVisible();
