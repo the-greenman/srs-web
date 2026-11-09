@@ -90,7 +90,7 @@
   import { downloadText, triggerDownload } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { browseEssays } from "./essay-browse.js";
-  import { locatorFor } from "./quote.js";
+  import { locatorFor, passageIn } from "./quote.js";
   import { domainMap, listBoundaries, setBoundary } from "./essay-domain.js";
   import { formatAddress, parseAddress, pushAddress } from "$lib/address.js";
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
@@ -364,8 +364,19 @@
     ...Object.values(model?.attachments ?? {})
       .flat()
       .filter((a) => pinnedIds.includes(a.id) && !pinnedRefs.some((r) => r.id === a.neighbourId))
-      .map((a) => ({ id: a.id, kind: a.neighbourType, relation: a.relationLabel, title: a.label, text: a.text })),
+      .map((a) => {
+        const q = a.neighbourType === "quotation" ? quotationOf(a.neighbourId) : undefined;
+        return { id: a.id, kind: a.neighbourType, relation: a.relationLabel, title: a.label, text: q?.words ?? a.text, source: q?.source };
+      }),
   ]);
+  /** A quotation's words, and its source's text when that still holds them (the passage is highlighted there; #525). */
+  function quotationOf(id: string) {
+    const ref = model?.references.find((r) => r.id === id);
+    if (!ref?.quote) return undefined;
+    const src = ref.sourceId ? model?.references.find((r) => r.id === ref.sourceId) : undefined;
+    const text = src ? [src.text, referenceText(repo, src.id)].filter(Boolean).join("\n\n") : "";
+    return { words: ref.quote, source: src && passageIn(text, ref.quote) ? { title: src.label, text, passage: ref.quote } : undefined };
+  }
 
   /** The frame's state: Wide is the one setter (`ShellState.toggleWide`, saved through `wide.ts`); `data-margin` on `.app` carries it. */
   const shell = new ShellState({ wideEnabled: true });
