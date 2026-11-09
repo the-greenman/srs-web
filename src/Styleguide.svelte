@@ -38,6 +38,7 @@
   import RelationGraph from "$lib/generic/RelationGraph.svelte";
   import Breadcrumb from "$lib/components/Breadcrumb.svelte";
   import NavTree from "$lib/components/NavTree.svelte";
+  import DocumentPicker from "$lib/components/DocumentPicker.svelte";
   import type { NavTreeNode } from "$lib/nav-tree.js";
   import LensSwitcher from "$lib/lens/LensSwitcher.svelte";
   import Collection from "$lib/lens/Collection.svelte";
@@ -51,6 +52,12 @@
 
   const noop = () => {};
   const KEY = "srs-web.styleguide.theme";
+  const pickerOptions = [
+    { id: "p1", title: "On small democracy" },
+    { id: "p2", title: "Beating the bounds: how a repository finds its edges and keeps them in view" },
+    { id: "p3", title: "Interview notes" },
+  ];
+  let pickerCurrent = $state("p2");
   const treeNodes: NavTreeNode[] = [
     { id: "t-art", label: "Articles", parentId: null, detail: "section", lazy: true },
     { id: "t-art-1", label: "Purpose and scope", parentId: "t-art", kind: "record", count: 2 },
@@ -72,6 +79,7 @@
     ["toolbar", "Toolbar"],
     ["chips", "Chips and badges"],
     ["navtree", "Navigation tree"],
+    ["docpicker", "Document picker"],
     ["actors", "Actors"],
     ["srs-mark", "SRS mark"],
     ["annotations", "Annotations and comments"],
@@ -354,6 +362,18 @@
         <div class="nav" style="padding: var(--space-xs) 0">
           <NavTree label="Specimen structure, open" nodes={treeNodes} bind:expanded={treeOpenAll} activeId="t-art-2a" onselect={noop} />
         </div>
+      </Frame>
+    </div>
+  </section>
+
+  <section id="docpicker">
+    <h2>Document picker</h2>
+    <p class="sg__note">DocumentPicker: the current document title is the control, with a chevron and no field box at rest. It opens a
+      searchable combobox: Recent documents first, then all, titles in full, the current one marked, and a "New document" row.
+      The full title shows on hover. Below 40rem the list opens as a full-width sheet.</p>
+    <div class="sg__row">
+      <Frame width="26rem" caption="DocumentPicker, closed" testid="sg-docpicker">
+        <DocumentPicker label="Essay" options={pickerOptions} currentId={pickerCurrent} onselect={(id) => (pickerCurrent = id)} onnew={noop} testid="sg-docpicker-ctl" />
       </Frame>
     </div>
   </section>
