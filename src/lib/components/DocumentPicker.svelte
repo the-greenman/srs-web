@@ -8,6 +8,7 @@
   Wraps .doc-picker (src/styles/components/doc-picker.css). Parts: trigger, search, list, option, new.
 -->
 <script lang="ts">
+  import { untrack } from 'svelte';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import Check from '@lucide/svelte/icons/check';
   import Popover from './Popover.svelte';
@@ -49,8 +50,10 @@
   // Opening resets the search and highlights the current document.
   $effect(() => {
     if (open) {
-      query = '';
-      active = pickerRows(options, recents, '').findIndex((r) => r.id === currentId);
+      untrack(() => {
+        query = '';
+        active = pickerRows(options, recents, '').findIndex((r) => r.id === currentId);
+      });
     }
   });
   $effect(() => {
@@ -84,6 +87,7 @@
         data-part="trigger"
         data-testid={`${testid}-trigger`}
         title={current?.title}
+        aria-haspopup="dialog"
         aria-label={current ? `${label}: ${current.title}. Switch` : `${label}: choose`}
         {...props}
       >
@@ -96,9 +100,9 @@
       data-part="search"
       data-autofocus
       data-testid={`${testid}-search`}
-      type="search"
+      type="text"
       role="combobox"
-      aria-label={`Search ${label.toLowerCase()}s`}
+      aria-label={`Search ${label.toLowerCase()} list`}
       aria-expanded="true"
       aria-controls={`${uid}-list`}
       aria-activedescendant={active >= 0 ? optionId(active) : undefined}
@@ -112,7 +116,7 @@
     <ul class="doc-picker__list" id={`${uid}-list`} role="listbox" aria-label={label} data-part="list">
       {#each rows as row, i (row.id)}
         {#if showGroups && (i === 0 || rows[i - 1].recent !== row.recent)}
-          <li class="doc-picker__group" role="presentation">{row.recent ? 'Recent' : 'All'}</li>
+          <li class="doc-picker__group" role="presentation" aria-hidden="true">{row.recent ? 'Recent' : 'All'}</li>
         {/if}
         <!-- svelte-ignore a11y_click_events_have_key_events -- keys are handled by the combobox input (aria-activedescendant) -->
         <li
@@ -130,9 +134,9 @@
           <span class="doc-picker__text">{row.title}</span>
         </li>
       {:else}
-        <li class="doc-picker__empty" role="presentation" data-part="empty">No match</li>
       {/each}
     </ul>
+    {#if rows.length === 0}<p class="doc-picker__empty" role="status" data-part="empty">No match</p>{/if}
     {#if onnew}
       <button
         type="button"

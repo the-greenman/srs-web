@@ -7,6 +7,10 @@
    ========================================================================== */
 .doc-picker {
   display: inline-flex;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.doc-picker > .popover {
   min-width: 0;
 }
 .doc-picker__trigger {
@@ -14,7 +18,7 @@
   align-items: center;
   gap: var(--space-xs);
   min-width: 0;
-  max-width: var(--toolbar-title-max);
+  max-width: min(var(--toolbar-title-max), 100%);
   padding: var(--space-xs) var(--space-sm);
   border: 0;
   border-radius: var(--radius-sm);
@@ -29,10 +33,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.doc-picker__surface {
+.doc-picker__surface:popover-open {
   display: flex;
   flex-direction: column;
-  width: min(24rem, 90vw);
+  width: min(22rem, 90vw);
+}
+.popover__surface.is-open.doc-picker__surface:not([popover]) {
+  display: flex;
+  flex-direction: column;
 }
 .doc-picker__search {
   box-sizing: border-box;
@@ -46,6 +54,7 @@
 }
 .doc-picker__list {
   flex: 1;
+  min-height: 0;
   margin: 0;
   padding: 0;
   overflow-y: auto;
@@ -65,8 +74,13 @@
   cursor: pointer;
 }
 .doc-picker__option.is-active {
+  background: var(--color-surface);
   outline: 1px solid var(--popover-border);
   outline-offset: -1px;
+}
+.doc-picker__trigger:hover,
+.doc-picker__trigger[aria-expanded="true"] {
+  background: var(--color-surface);
 }
 .doc-picker__mark {
   flex: none;
@@ -93,12 +107,15 @@
 .doc-picker__search:focus-visible,
 .doc-picker__trigger:focus-visible,
 .doc-picker__new:focus-visible {
-  outline: 2px solid currentColor;
+  outline: var(--focus-ring);
   outline-offset: -2px;
 }
-@media (max-width: 40rem) {
-  .doc-picker__surface {
+@media (max-width: 30rem) {
+  .doc-picker__surface:popover-open {
+    /* The Popover's inline anchor placement would confine the sheet to the trigger's row; !important beats it. */
     position: fixed;
+    /* biome-ignore lint/correctness/noUnknownProperty: CSS anchor positioning, newer than biome's property list */
+    position-area: none !important;
     inset: 0 0 auto 0;
     width: 100%;
     max-width: none;

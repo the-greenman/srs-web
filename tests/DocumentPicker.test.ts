@@ -50,7 +50,7 @@ describe("DocumentPicker", () => {
     const opts = getAllByTestId("doc-picker-option");
     expect(opts).toHaveLength(3);
     expect(opts[0].getAttribute("aria-selected")).toBe("true");
-    const search = getByRole("combobox", { name: /search essays/i });
+    const search = getByRole("combobox", { name: /search essay list/i });
     await fireEvent.input(search, { target: { value: "gam" } });
     expect(getAllByTestId("doc-picker-option")).toHaveLength(1);
     await fireEvent.keyDown(search, { key: "Enter" });
