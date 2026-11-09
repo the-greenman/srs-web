@@ -139,34 +139,39 @@ describe("browser-cache (.srs archive in IndexedDB, srs-web#505)", () => {
   });
 });
 
-describe("workingCopyScheduler (srs-web#353)", () => {
+describe("workingCopyScheduler (srs-web#353, #769)", () => {
   afterEach(() => vi.useRealTimers());
 
-  it("coalesces a burst into one write at the end of the window", () => {
+  it("writes once, after writes go quiet", () => {
     vi.useFakeTimers();
     const write = vi.fn();
-    const s = workingCopyScheduler(write, 2000);
-    for (let i = 0; i < 5; i++) s.schedule();
+    const s = workingCopyScheduler(write, 1500, 15000);
+    for (let i = 0; i < 5; i++) {
+      s.schedule();
+      vi.advanceTimersByTime(1000); // typing: never quiet for 1.5 s
+    }
     expect(write).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(1500);
+    expect(write).toHaveBeenCalledOnce();
+    vi.advanceTimersByTime(30000);
     expect(write).toHaveBeenCalledOnce();
   });
 
   it("is not starved by a steady write stream (a background agent)", () => {
     vi.useFakeTimers();
     const write = vi.fn();
-    const s = workingCopyScheduler(write, 2000);
-    for (let t = 0; t < 6000; t += 100) {
+    const s = workingCopyScheduler(write, 1500, 15000);
+    for (let t = 0; t < 31000; t += 100) {
       s.schedule();
       vi.advanceTimersByTime(100);
     }
-    expect(write).toHaveBeenCalledTimes(3);
+    expect(write).toHaveBeenCalledTimes(2);
   });
 
   it("flush writes a pending copy now; cancel drops it", () => {
     vi.useFakeTimers();
     const write = vi.fn();
-    const s = workingCopyScheduler(write, 2000);
+    const s = workingCopyScheduler(write, 1500, 15000);
     s.flush();
     expect(write).not.toHaveBeenCalled(); // nothing pending
     s.schedule();
@@ -174,7 +179,7 @@ describe("workingCopyScheduler (srs-web#353)", () => {
     expect(write).toHaveBeenCalledOnce();
     s.schedule();
     s.cancel();
-    vi.advanceTimersByTime(5000);
+    vi.advanceTimersByTime(30000);
     expect(write).toHaveBeenCalledOnce();
   });
 });
