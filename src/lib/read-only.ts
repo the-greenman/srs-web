@@ -48,10 +48,12 @@ export const MUTATING_METHODS: ReadonlySet<string> = new Set([
   "update_container",
   "update_record",
   "upgrade_package_bundle",
+  "merge_apply", // brings items in from another copy (srs-rust#1580)
 ]);
 
 /** Methods that do not change repository data (reads, exports, session/actor plumbing, `free`). */
 export const NON_MUTATING_METHODS: ReadonlySet<string> = new Set([
+  "merge_preview", // plans a merge from another copy; writes nothing (srs-rust#1580)
   "changes", // the engine's diff since the save point (srs-rust#1522); a read
   "clear_attention", // in memory only, never written to the corpus (srs-rust#1344)
   "get_attachment_policy",

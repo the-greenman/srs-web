@@ -18,6 +18,7 @@
   import UpgradePlan from "$lib/components/UpgradePlan.svelte";
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
   import InstallPlan from "$lib/components/InstallPlan.svelte";
+  import MergePlan from "$lib/components/MergePlan.svelte";
   import Landing from "$lib/components/Landing.svelte";
   import EssayHome from "$lib/components/EssayHome.svelte";
   import RecentRepos from "$lib/components/RecentRepos.svelte";
@@ -988,6 +989,10 @@
     <UpgradePlan inline testid="sg-upgrade-plan" plans={[fx.upgradePlan]} onApply={() => {}} onCancel={() => {}} />
     <div data-testid="sg-packages-dialog"><PackagesDialog inline packages={fx.installedPackagesFx} available={fx.availablePackagesFx} onUpgrade={() => {}} onClose={() => {}} /></div>
     <div data-testid="sg-install-plan"><InstallPlan inline fromAgent plan={fx.installPlanFx} onInstall={() => {}} onCancel={() => {}} /></div>
+    {#snippet mergePlan()}
+      <MergePlan inline help={fx.mergeHelpFx} choices={fx.mergeChoicesFx} leftOut={fx.mergeLeftOutFx} ticked={fx.mergeChoicesFx.slice(1).map((c) => c.id)} onApply={() => {}} onCancel={() => {}} />
+    {/snippet}
+    <div data-testid="sg-merge-plan">{@render gated(mergePlan)}</div>
   </section>
 </main>
 <LiveRegions />

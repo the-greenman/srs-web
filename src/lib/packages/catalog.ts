@@ -21,7 +21,8 @@ export interface CatalogEntry {
   description?: string;
   fieldCount: number;
   typeCount: number;
-  downloadUrl: string;
+  /** RFC-049: this catalog only serves bundles from this site, so always `remote`. */
+  locator: { mode: "remote"; url: string };
   checksum: string;
 }
 
@@ -59,7 +60,7 @@ const hex = (buffer: ArrayBuffer) =>
 
 /** A served bundle's text. A checksum that doesn't match refuses it, so nothing is installed. */
 export async function fetchBundle(entry: CatalogEntry): Promise<string> {
-  const res = await fetch(entry.downloadUrl);
+  const res = await fetch(entry.locator.url);
   if (!res.ok) throw new Error(`${entry.packageName}: download failed (${res.status})`);
   const bytes = await res.arrayBuffer();
   if (hex(await crypto.subtle.digest("SHA-256", bytes)) !== entry.checksum)

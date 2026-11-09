@@ -91,6 +91,7 @@
     onReviewUpgrade?: (id: string) => void;
     /** Open Document > Packages…; absent while the document is read-only. */
     onOpenPackages?: () => void;
+    onOpenMerge?: () => void;
     /** Open the built-in Lenses view (ADR-022); absent = no Explore > Lenses item. */
     onOpenLenses?: () => void;
     /** Open the built-in Read view (ADR-029); absent = no Explore > Read item. */
@@ -116,6 +117,7 @@
     onInstallEditor,
     onReviewUpgrade,
     onOpenPackages,
+    onOpenMerge,
     onOpenLenses,
     onOpenRead,
   }: Props = $props();
@@ -448,6 +450,7 @@
         onopenanother: onOpenAnother,
         onopenagents: onOpenAgents,
         onopenpackages: onOpenPackages,
+        onopenmerge: onOpenMerge,
         onpreview: surface === "document" && activeBlueprint && activeComposition && !readOnly ? () => (showFullPreview = !showFullPreview) : undefined,
       },
       { shell, saving, dirty: documentDirty, fullPreview: showFullPreview },

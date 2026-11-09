@@ -58,6 +58,8 @@ export interface EditorShellProps {
   onOpenAgents?: () => void;
   /** Open Document > Packages… (#450). Absent while the document is read-only. */
   onOpenPackages?: () => void;
+  /** Document > Merge changes from a file… (srs-web#733); absent while read-only. */
+  onOpenMerge?: () => void;
   documentProvider: string;
   readOnlyReason?: string | null;
   /** The document is read-only (opened from a link, #699): a shell with `readOnly` on its definition must not offer writes. */

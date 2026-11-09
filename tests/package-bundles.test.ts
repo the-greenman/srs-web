@@ -69,7 +69,8 @@ describe("pinned package bundles", () => {
     expect(entry).toMatchObject({
       packageId,
       typeCount: 1,
-      downloadUrl: "/packages/test-2.0.0.srspkg",
+      kind: "package",
+      locator: { mode: "remote", url: "/packages/test-2.0.0.srspkg" },
       checksum: sha(current),
     });
     expect(readFileSync(join(dir, `${packageId}@1.0.0.srspkg`), "utf8")).toBe("earlier");

@@ -72,6 +72,7 @@
     onOpenAnother,
     onOpenAgents,
     onOpenPackages,
+    onOpenMerge,
     readOnlyReason = null,
   }: EditorShellProps = $props();
 
@@ -234,6 +235,7 @@
         onexportsrsj: onExportSrsj,
         onopenagents: onOpenAgents,
         onopenpackages: onOpenPackages,
+        onopenmerge: onOpenMerge,
         onopenanother: onOpenAnother,
       },
       { shell, saving }

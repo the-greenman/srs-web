@@ -56,6 +56,10 @@ export interface SrsRepository {
   changes(since: string): string;
   /** Record the repository as it is now as the save point (srs-rust#1522); in memory, not a write. */
   mark_saved(saved_at?: string | null): void;
+  /** What bringing items in from another copy (a `.srs` archive) would do, as JSON; writes nothing (srs-rust#1580). */
+  merge_preview(archive: Uint8Array, selection_json?: string | null): string;
+  /** Bring the selected items in, or throw (`.code`) and write nothing (srs-rust#1580). */
+  merge_apply(archive: Uint8Array, selection_json: string): string;
   /** RFC-046 session actor for this handle's writes (engine stamps `createdBy`; never put in a payload). */
   set_actor(json: string): void;
   clear_actor(): void;

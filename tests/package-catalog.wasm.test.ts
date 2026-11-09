@@ -27,7 +27,7 @@ const entry = (packageId: string, packageName: string, packageVersion: string): 
   packageVersion,
   fieldCount: 0,
   typeCount: 0,
-  downloadUrl: "",
+  locator: { mode: "remote", url: "" },
   checksum: "",
 });
 const ENTRIES = [
@@ -118,15 +118,15 @@ describe.skipIf(!haveBindings)("the package catalog on the real engine", () => {
     for (const e of registry.entries as CatalogEntry[]) {
       expect(e.description, e.packageName).toBeTruthy();
       expect(
-        existsSync(path.resolve(__dirname, `../public${e.downloadUrl}`)),
-        e.downloadUrl
+        existsSync(path.resolve(__dirname, `../public${e.locator.url}`)),
+        e.locator.url
       ).toBe(true);
     }
   });
 });
 
 describe("a served bundle", () => {
-  const E = { ...entry("x", "x", "1.0.0"), downloadUrl: "/packages/x-1.0.0.srspkg" };
+  const E = { ...entry("x", "x", "1.0.0"), locator: { mode: "remote" as const, url: "/packages/x-1.0.0.srspkg" } };
   const serve = (body: string, status = 200) => {
     globalThis.fetch = async () => new Response(body, { status });
   };

@@ -123,11 +123,13 @@
     agentPanel,
     agentStatus,
     onOpenPackages,
+    onOpenMerge,
   }: {
     // Common EditorShellProps this shell does not use (kept so every shell takes one prop set).
     documentProvider?: string;
     onOpenAgents?: () => void;
     onOpenPackages?: () => void;
+    onOpenMerge?: () => void;
     onExportSrsj?: () => void;
     /** Set when the repository was opened read-only: no repair writes on load. */
     readOnlyReason?: string | null;
@@ -849,6 +851,7 @@
         onopenagents: agentPanel ? openAgents : undefined,
         oneditorhelp: help.length ? () => { guideOpen = true; } : undefined,
         onopenpackages: onOpenPackages,
+        onopenmerge: onOpenMerge,
         onopenanother: onOpenAnother,
       },
       { shell, comments: summary(openThreads, shownIds), saving, dirty: documentDirty, help: { id: helpId, open: helpOpen } },

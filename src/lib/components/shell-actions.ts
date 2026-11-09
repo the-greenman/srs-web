@@ -42,6 +42,17 @@ export const packagesAction = (run: () => void): ToolbarAction => ({
   run,
 });
 
+/** Document > Merge changes from a file… (srs-web#733): bring in new items from another copy. Present only while the document is writable. */
+export const mergeAction = (run: () => void): ToolbarAction => ({
+  id: "merge",
+  group: "document",
+  kind: "action",
+  label: "Merge changes from a file…",
+  testid: "toolbar-merge",
+  enabled: true,
+  run,
+});
+
 /** Document > Save, the bar's one primary. `enabled` is the shell's own rule (Essay and Generic gate on dirty; Governance and Guides only on not saving). */
 export const saveAction = (
   run: () => void,
@@ -103,6 +114,8 @@ export interface CommonHandlers {
   onopenagents?: () => void;
   /** Absent while the document is read-only (an upgrade writes). */
   onopenpackages?: () => void;
+  /** Absent while the document is read-only (a merge writes). */
+  onopenmerge?: () => void;
   onopenanother: () => void;
 }
 
@@ -115,6 +128,7 @@ export function commonActions(
     h.onsave ? saveAction(h.onsave, { saving: s.saving, enabled: !s.saving }) : undefined,
     ...exportActions(h),
     h.onopenpackages ? packagesAction(h.onopenpackages) : undefined,
+    h.onopenmerge ? mergeAction(h.onopenmerge) : undefined,
     wideAction(s.shell),
     h.onopenagents ? agentsAction(h.onopenagents) : undefined,
     openAnotherAction(h.onopenanother),

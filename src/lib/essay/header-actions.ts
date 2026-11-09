@@ -9,6 +9,7 @@ import type { ToolbarAction } from "../components/menu-action.js";
 import {
   BASE_GROUPS,
   agentsAction,
+  mergeAction,
   openAnotherAction,
   packagesAction,
   saveAction,
@@ -53,6 +54,8 @@ export interface HeaderHandlers {
   oneditorhelp?: () => void;
   /** Absent while the document is read-only (an upgrade writes). */
   onopenpackages?: () => void;
+  /** Absent while the document is read-only (a merge writes). */
+  onopenmerge?: () => void;
   onopenanother: () => void;
 }
 
@@ -172,6 +175,7 @@ export function headerActions(
       enabled: true,
     },
     !!h.onopenpackages && (packagesAction(h.onopenpackages) as HeaderAction),
+    !!h.onopenmerge && (mergeAction(h.onopenmerge) as HeaderAction),
     !!h.onopenagents && (agentsAction(h.onopenagents) as HeaderAction),
     !!h.oneditorhelp && {
       id: "editor-help",
