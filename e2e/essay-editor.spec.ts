@@ -448,7 +448,8 @@ test("copy a document: paragraphs are shared and badged; make local copy forks o
   await bodies(page).last().click(); // blur commits
 
   // the original is unchanged: old text, and the other two paragraphs are still shared
-  await page.getByLabel("Essay", { exact: true }).selectOption({ label: "On small democracy" });
+  await page.getByTestId("doc-picker-trigger").click();
+  await page.getByRole("option", { name: "On small democracy", exact: true }).click();
   await expect(page.getByRole("heading", { name: "On small democracy" })).toBeVisible();
   await expect(bodies(page)).toHaveText([
     "First paragraph.",

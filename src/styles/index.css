@@ -55,6 +55,7 @@
 @import url("./components/wordmark.css") layer(components);
 @import url("./components/nav.css") layer(components);
 @import url("./components/nav-tree.css") layer(components);
+@import url("./components/doc-picker.css") layer(components);
 @import url("./components/breadcrumb.css") layer(components);
 @import url("./components/governance.css") layer(components);
 @import url("./components/guides.css") layer(components);

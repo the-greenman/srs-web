@@ -56,7 +56,7 @@
   import type { AttachFile } from "$lib/components/attach-check.js";
   import { downloadAttachment } from "$lib/attachment-download.js";
   import Input from "$lib/components/Input.svelte";
-  import Select from "$lib/components/Select.svelte";
+  import DocumentPicker from "$lib/components/DocumentPicker.svelte";
   import { NARROW } from "$lib/breakpoints";
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
@@ -870,12 +870,14 @@
     {#snippet titleSlot()}
       <span class="eyebrow">{repoName}</span>
       {#if essays.length > 1}
-        <Select
-          aria-label="Essay"
-          value={essayId ?? ""}
-          options={essays.map((essay) => ({ value: essay.id, label: essay.title }))}
-          onchange={(e) => {
-            essayId = e.currentTarget.value;
+        <DocumentPicker
+          label="Essay"
+          options={essays}
+          currentId={essayId}
+          storageKey={`srs-web:recent-essays:${repoName}`}
+          onnew={readOnly ? undefined : createEssay}
+          onselect={(id) => {
+            essayId = id;
             zoomId = null;
             loadViewState(essayId);
             reload();
