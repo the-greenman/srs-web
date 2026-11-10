@@ -228,6 +228,9 @@ export interface SrsRepository {
   accept_migration(): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in orderByPrecedes()
   order_by_precedes(input_json: string): any;
+  /** Transitive subtypes of a Type, computed in the core (srs-rust#1147); `{ typeId, subtypes: [{id, ...}] }`. */
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in getTypeSubtypeIds()
+  get_type_subtypes(type_id: string, include_self?: boolean | null): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in listAttachments()
   list_attachments(filter_json: string): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in attachmentPolicy()
@@ -1538,6 +1541,28 @@ export interface TypeSummary {
 export function getTypeExtends(repo: SrsRepository, typeId: string): string | null {
   const type = repo.get_type(typeId) as { extendsTypeId?: string | null } | null;
   return type?.extendsTypeId ?? null;
+}
+
+/**
+ * The ids of every Type that (transitively) extends `typeId`, computed once in
+ * the core (`get_type_subtypes`, RFC-032 ext:type-inheritance). With
+ * `includeSelf` the Type itself is listed too. An ancestor check is
+ * membership in this list; the client never walks `extendsTypeId`.
+ * An unknown Type yields an empty list (plus itself when `includeSelf`).
+ */
+export function getTypeSubtypeIds(
+  repo: SrsRepository,
+  typeId: string,
+  includeSelf = false
+): string[] {
+  try {
+    const result = repo.get_type_subtypes(typeId, includeSelf) as {
+      subtypes?: { id: string }[];
+    };
+    return (result?.subtypes ?? []).map((t) => t.id);
+  } catch {
+    return includeSelf ? [typeId] : [];
+  }
 }
 
 /**

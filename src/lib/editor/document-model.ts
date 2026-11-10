@@ -34,7 +34,7 @@ import {
   blueprintSchema,
   blueprintStructure,
   documentViewsForContainer,
-  getTypeExtends,
+  getTypeSubtypeIds,
   listBlueprints,
   listContainers,
   listTypes,
@@ -201,36 +201,14 @@ export interface ComponentTypeDescriptor {
   description?: string;
 }
 
-/** `typeId` plus every type that (transitively) `extendsTypeId`s it — the RFC-032 inheritance chain, walked forward. */
-function typeAndSubtypes(
-  repo: SrsRepository,
-  types: { id: string }[],
-  typeId: string
-): Set<string> {
-  const result = new Set([typeId]);
-  let added = true;
-  while (added) {
-    added = false;
-    for (const t of types) {
-      if (result.has(t.id)) continue;
-      const parent = getTypeExtends(repo, t.id);
-      if (parent && result.has(parent)) {
-        result.add(t.id);
-        added = true;
-      }
-    }
-  }
-  return result;
+/** `typeId` plus every type that (transitively) `extendsTypeId`s it; the core computes the closure. */
+function typeAndSubtypes(repo: SrsRepository, typeId: string): Set<string> {
+  return new Set([typeId, ...getTypeSubtypeIds(repo, typeId, true)]);
 }
 
 /** True when `ancestorId` is `typeId` itself or one of its (transitive) `extendsTypeId` ancestors. */
 function isAncestorOrSelf(repo: SrsRepository, ancestorId: string, typeId: string): boolean {
-  let current: string | null = typeId;
-  for (let depth = 0; current && depth < 16; depth++) {
-    if (current === ancestorId) return true;
-    current = getTypeExtends(repo, current);
-  }
-  return false;
+  return ancestorId === typeId || getTypeSubtypeIds(repo, ancestorId).includes(typeId);
 }
 
 /**
@@ -276,19 +254,16 @@ export function componentTypes(
   // SRS has no abstract marker, so hide bases that have an offered subtype.
   const bases = new Set<string>();
   for (const typeId of seen.keys()) {
-    let parent = getTypeExtends(repo, typeId);
-    for (let depth = 0; parent && depth < 16; depth++) {
-      bases.add(parent);
-      parent = getTypeExtends(repo, parent);
-    }
+    if (getTypeSubtypeIds(repo, typeId).some((sub) => seen.has(sub))) bases.add(typeId);
   }
 
   const rootId = rootTypeId(schema);
   const nonRootChildIds = new Set<string>();
   for (const spec of blueprintStructure(repo, blueprint.id)) {
+    // "contains" is a canonical, spec-fixed relation type (spec: Canonical relation types), so a literal comparison is sound here.
     if (spec.relationType !== "contains") continue;
     if (spec.sourceTypeId === rootId) continue;
-    for (const t of typeAndSubtypes(repo, types, spec.targetTypeId)) nonRootChildIds.add(t);
+    for (const t of typeAndSubtypes(repo, spec.targetTypeId)) nonRootChildIds.add(t);
   }
 
   return [...seen.values()].filter((t) => !bases.has(t.typeId) && !nonRootChildIds.has(t.typeId));
@@ -311,9 +286,10 @@ export function childTypes(
 
   const seen = new Map<string, ComponentTypeDescriptor>();
   for (const spec of blueprintStructure(repo, blueprint.id)) {
+    // "contains" is a canonical, spec-fixed relation type (spec: Canonical relation types), so a literal comparison is sound here.
     if (spec.relationType !== "contains") continue;
     if (!isAncestorOrSelf(repo, spec.sourceTypeId, parentTypeId)) continue;
-    for (const typeId of typeAndSubtypes(repo, types, spec.targetTypeId)) {
+    for (const typeId of typeAndSubtypes(repo, spec.targetTypeId)) {
       if (seen.has(typeId)) continue;
       const type = typeById.get(typeId);
       seen.set(typeId, {
