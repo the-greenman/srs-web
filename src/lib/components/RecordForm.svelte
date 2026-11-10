@@ -9,6 +9,7 @@
   B9 edit forms: https://github.com/the-greenman/srs-web/issues/5
 -->
 <script lang="ts">
+  import { untrack } from "svelte";
   import type { SrsRecord, CreateRecordInput, UpdateRecordInput } from "$lib/srs-client.js";
   import type { TypeFormDef } from "$lib/governance/types.js";
   import Field from "$lib/components/Field.svelte";
@@ -69,12 +70,19 @@
   let fieldValues = $state<Record<string, string>>(initialStringValues);
   let originalNonStringValues = $state<Map<string, unknown>>(initialNonStringValues);
 
-  // Sync fieldValues when the record identity or schema changes (switching between records).
+  // Reset fieldValues only when the record identity or the field set really changes (switching
+  // between records). A rebuilt-but-equal schema object (an agent write bumps the document
+  // revision and the shell rebuilds its schemas) must not wipe what the person has typed
+  // (srs-web#772), so the last key is compared, not the prop identity.
+  const syncKey = () => `${record?.instanceId ?? ""}#${schema.fields.map((f) => `${f.name}:${f.valueType}`).join("|")}`;
+  let lastSyncKey = syncKey();
   $effect(() => {
-    // Access reactive props to create tracking dependencies before calling the helper.
-    void record?.instanceId;
-    void schema.fields.length;
-    [fieldValues, originalNonStringValues] = computeInitialValues();
+    const key = syncKey();
+    if (key === lastSyncKey) return;
+    lastSyncKey = key;
+    untrack(() => {
+      [fieldValues, originalNonStringValues] = computeInitialValues();
+    });
   });
 
   function handleSubmit(e: Event) {
