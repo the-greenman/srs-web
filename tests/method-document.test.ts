@@ -4,6 +4,7 @@ import {
   CONCERNS,
   DOMAIN_TYPE_ID,
   HELD_BY,
+  PERSONA_IN_DOMAIN_TYPE_ID,
   PERSONA_TYPE_ID,
   POLE_TYPE_ID,
   PROBLEM_TYPE_ID,
@@ -183,5 +184,28 @@ describe("remedies, clusters and personas", () => {
 
   it("the write guard covers Affirmed and Set aside whatever the kind", () => {
     expect(methodWriteGuard({ containers: { suggestions: "S", affirmed: "A", setAside: "X" } } as never)?.containerIds).toEqual(["A", "X"]);
+  });
+});
+
+describe("domains and personas-in-domain (srs-web#562)", () => {
+  const recs = [...records, rec("pid", PERSONA_IN_DOMAIN_TYPE_ID, { title: "Owner in writing" }), rec("fd", DOMAIN_TYPE_ID, { title: "Writing" })];
+
+  it("are openable with their entity and status; a held-by link to a persona-in-domain says so", () => {
+    const b = buildBoard({ records: recs, relations: [...relations, rel(HELD_BY, "p2", "pid")], containers: { suggestions: "S", affirmed: "A" }, members: { suggestions: ["d1", "pid", "p2"] } });
+    expect(b.byId.get("d1")).toMatchObject({ entity: "domain", status: "suggested" });
+    expect(b.byId.get("pid")).toMatchObject({ entity: "persona-in-domain", status: "suggested" });
+    expect(b.problems.find((p) => p.id === "p2")?.personas).toMatchObject([{ id: "pid", entity: "persona-in-domain" }]);
+  });
+
+  it("an affirmed domain fork stands for its original in the grouping", () => {
+    const b = buildBoard({
+      records: recs,
+      relations: [...relations, rel("derived-from", "fd", "d1")],
+      containers: { suggestions: "S", affirmed: "A" },
+      members: { suggestions: ["d1"], affirmed: ["fd"] },
+    });
+    expect(b.domains[0]).toMatchObject({ id: "fd", title: "Writing" });
+    expect(b.byId.has("d1")).toBe(false);
+    expect(b.byId.get("fd")).toMatchObject({ entity: "domain", status: "affirmed" });
   });
 });

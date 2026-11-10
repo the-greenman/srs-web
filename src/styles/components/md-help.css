@@ -29,6 +29,15 @@
   color: var(--color-muted);
 }
 
+.md-help__note {
+  margin: var(--space-xs) 0 0;
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+.md-help__note code {
+  font-family: var(--font-mono);
+}
+
 .md-help__close {
   float: right;
 }

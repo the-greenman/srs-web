@@ -143,28 +143,32 @@ export async function clearWorkingCopy(): Promise<void> {
 }
 
 /**
- * Coalesce recovery-copy writes (srs-web#353). The first `schedule()` arms one timer and
- * later calls ride along, so the copy is at most `delayMs` stale and costs at most one full
- * export per window, however fast the human or any background agent writes. A restarting
- * debounce would never fire under a steady agent write stream; this fixed window does.
+ * Coalesce recovery-copy writes (srs-web#353, srs-web#769). The export is a synchronous
+ * whole-repo serialise, so it must not land mid-typing: each `schedule()` restarts a
+ * `quietMs` timer and the write happens once writes pause. A `maxMs` cap from the first
+ * pending write means a steady background-agent stream cannot hold the copy off forever.
  * `flush()` writes now if a write is pending (page hide); `cancel()` drops it (save, new document).
  */
-export function workingCopyScheduler(write: () => void, delayMs: number) {
-  let timer: ReturnType<typeof setTimeout> | undefined;
+export function workingCopyScheduler(write: () => void, quietMs: number, maxMs: number) {
+  let quiet: ReturnType<typeof setTimeout> | undefined;
+  let cap: ReturnType<typeof setTimeout> | undefined;
+  const cancel = () => {
+    clearTimeout(quiet);
+    clearTimeout(cap);
+    quiet = cap = undefined;
+  };
   const flush = () => {
-    if (timer === undefined) return;
-    clearTimeout(timer);
-    timer = undefined;
+    if (quiet === undefined) return;
+    cancel();
     write();
   };
   return {
     schedule: () => {
-      timer ??= setTimeout(flush, delayMs);
+      clearTimeout(quiet);
+      quiet = setTimeout(flush, quietMs);
+      cap ??= setTimeout(flush, maxMs);
     },
     flush,
-    cancel: () => {
-      clearTimeout(timer);
-      timer = undefined;
-    },
+    cancel,
   };
 }

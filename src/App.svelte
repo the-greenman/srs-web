@@ -424,8 +424,8 @@
   let workingCopySaved = $state(true);
 
   /**
-   * The recovery copy exports the whole repository, so it is written at most once per
-   * window rather than on every commit (srs-web#353: ~45 ms per commit on muSrs). Skipped
+   * The recovery copy exports the whole repository, so it is written once typing pauses (1.5 s quiet, 15 s cap, srs-web#769)
+   * rather than on every commit (srs-web#353: ~45 ms per commit on muSrs). Skipped
    * when the document was closed or saved in the meantime.
    */
   const workingCopy = workingCopyScheduler(() => {
@@ -435,7 +435,7 @@
         if (r === repo) workingCopySaved = ok;
       });
     }
-  }, 2000);
+  }, 1500, 15000);
   $effect(() => {
     const flush = () => workingCopy.flush();
     const onHidden = () => document.visibilityState === "hidden" && flush();
