@@ -508,6 +508,25 @@ describe("essayMarkdown (srs-web#416)", () => {
 });
 
 describe("essayReading (srs-web#716)", () => {
+  it("puts image paragraphs in place, with no body, and leaves hidden ones out (srs-web#764)", async () => {
+    const { essayReading } = await import("../src/lib/essay/essay-document.js");
+    const image = { alt: "A", caption: "", size: "full-width", align: "centre", documentId: "d" };
+    const model = {
+      title: "T",
+      purpose: null,
+      hidden: ["i2"],
+      paragraphs: {
+        p1: { id: "p1", title: "", body: "Text" },
+        i1: { id: "i1", title: "", body: "", image },
+        i2: { id: "i2", title: "", body: "", image },
+      },
+      entries: ["p1", "i1", "i2"].map((instanceId) => ({ instanceId, parentInstanceId: null })),
+    };
+    expect(essayReading(model as never).paragraphs).toEqual([
+      { id: "p1", body: "Text" },
+      { id: "i1", image },
+    ]);
+  });
   it("keeps visible paragraphs in order, leaving out hidden ones, their children, empties and non-paragraphs", async () => {
     const { essayReading } = await import("../src/lib/essay/essay-document.js");
     const paragraphs = Object.fromEntries(

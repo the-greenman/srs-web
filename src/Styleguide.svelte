@@ -31,6 +31,7 @@
   import { pairingMinutesLeft } from "$lib/components/agent-panel";
   import EssayBrowser from "$lib/components/EssayBrowser.svelte";
   import EssayReader from "$lib/components/EssayReader.svelte";
+  import ImageParagraph from "$lib/components/ImageParagraph.svelte";
   import ToolbarSpecimen from "./styleguide/ToolbarSpecimen.svelte";
   import ShellSpecimen from "./styleguide/ShellSpecimen.svelte";
   import SiteSpecimen from "./styleguide/SiteSpecimen.svelte";
@@ -412,6 +413,16 @@
     />
     {/snippet}
     {@render gated(essayReader)}
+  </section>
+
+  <section id="image-paragraph">
+    <h2>Image paragraph</h2>
+    <p class="sg__note">One essay image (srs-web#764): full width, or its own size on the left, centre or right, never wrapped by text. Shown only as an image element. With no readable image, the alt text in a placeholder.</p>
+    <ImageParagraph alt="A white circle on green" caption="Full width, with a caption" bytes={fx.imageSvgFx} />
+    <ImageParagraph alt="Original size, left" size="original" align="left" bytes={fx.imageSvgFx} />
+    <ImageParagraph alt="Original size, centre" caption="Original size, centred" size="original" bytes={fx.imageSvgFx} />
+    <ImageParagraph alt="Original size, right" size="original" align="right" bytes={fx.imageSvgFx} />
+    <ImageParagraph alt="A picture that was never attached" />
   </section>
 
   <section id="essay-browser">

@@ -1674,3 +1674,7 @@ export const mergeLeftOutFx = [
     why: "changed in both copies; this copy's version stays",
   },
 ];
+/** An SVG image paragraph's bytes (srs-web#764): shown only through <img>. */
+export const imageSvgFx = new TextEncoder().encode(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="120" viewBox="0 0 240 120"><rect width="240" height="120" fill="#2e7d4f"/><circle cx="120" cy="60" r="40" fill="#fff"/></svg>'
+);
