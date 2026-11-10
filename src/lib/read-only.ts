@@ -57,6 +57,7 @@ export const NON_MUTATING_METHODS: ReadonlySet<string> = new Set([
   "changes", // the engine's diff since the save point (srs-rust#1522); a read
   "clear_attention", // in memory only, never written to the corpus (srs-rust#1344)
   "get_attachment_policy",
+  "schema_sql", // a derived SQL projection, never a store; a read
   "get_attention",
   "mark_saved", // moves the in-memory save baseline; not a write (srs-rust#1522)
   "set_attention", // in memory only, never written to the corpus
@@ -95,6 +96,7 @@ export const NON_MUTATING_METHODS: ReadonlySet<string> = new Set([
   "get_record",
   "get_record_attachments",
   "get_type",
+  "get_type_subtypes", // the core's transitive subtype closure (srs-rust#1147); a read
   "get_view",
   "list_attachments",
   "list_blueprint_structure",
