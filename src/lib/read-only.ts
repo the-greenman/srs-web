@@ -53,6 +53,8 @@ export const MUTATING_METHODS: ReadonlySet<string> = new Set([
 
 /** Methods that do not change repository data (reads, exports, session/actor plumbing, `free`). */
 export const NON_MUTATING_METHODS: ReadonlySet<string> = new Set([
+  "get_type_subtypes", // a Type's subtypes; a read (srs-rust#1147)
+  "schema_sql", // derived relational projection, never a store (srs-rust#1603)
   "merge_preview", // plans a merge from another copy; writes nothing (srs-rust#1580)
   "changes", // the engine's diff since the save point (srs-rust#1522); a read
   "clear_attention", // in memory only, never written to the corpus (srs-rust#1344)
