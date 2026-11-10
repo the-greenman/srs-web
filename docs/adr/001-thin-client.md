@@ -48,6 +48,10 @@ here so it isn't mistaken for acceptable presentation logic:
 - **Relation-chain traversal (ordering) — resolved** in srs-web#178: `orderByPrecedes`
   removed from `GuidesShell.svelte`; `srs-client.ts` now exports `orderByPrecedes(repo, ids)`
   delegating to `repo.order_by_precedes(...)` (WASM binding, srs-rust build 166).
+- **Type-inheritance closure — resolved** in srs-web#336: `document-model.ts` no longer
+  walks `extendsTypeId`; `getTypeSubtypeIds` in `srs-client.ts` delegates to
+  `repo.get_type_subtypes(...)` (WASM binding, srs-rust#1147, build 639). The `contains`
+  comparison stays: it is a canonical, spec-fixed relation type.
 - **Relation-chain traversal (mutation)** — `rebuildPrecedesChain` in `GuidesShell.svelte`
   orchestrates WASM mutation calls (`list_relations`, `delete_relation`, `create_relation`)
   to rebuild a linear precedes chain. It encodes domain knowledge about precedes-chain
