@@ -51,4 +51,34 @@ describe.skipIf(!haveBindings)("narrative affirmation on the real engine", () =>
     expect(after).toMatchObject({ layer: "affirmed", entity: undefined });
     expect(repo.validate().summary.errors).toBe(0);
   });
+
+  it("ticks a domain and a persona-in-domain beside their vignette (srs-web#562)", async () => {
+    const { listConversations, loadConversation } = await import("../src/lib/method/narrative.js");
+    const { affirmRecord, loadMethod, PERSONA_IN_DOMAIN_TYPE_ID, DOMAIN_TYPE_ID } = await import("../src/lib/method/method-document.js");
+    const { addContainerMember, createRecord, createRelation, listRecords } = await import("../src/lib/srs-client.js");
+    const repo = (await engine()).SrsRepository.load(fixture());
+    repo.set_actor(JSON.stringify({ kind: "human", id: "local:owner" }));
+    const [c] = listConversations(repo);
+    const m = loadMethod(repo);
+    const vignette = loadConversation(repo, c.containerId, m)[1].id;
+    const domain = listRecords(repo).find((r) => r.typeId === DOMAIN_TYPE_ID)!.instanceId;
+    const pid = createRecord(repo, PERSONA_IN_DOMAIN_TYPE_ID, 1, { fieldValues: { title: "Owner in writing" } }).instanceId;
+    for (const id of [domain, pid]) {
+      if (!m.byId.get(id)?.status) addContainerMember(repo, m.containers.suggestions!, id);
+      createRelation(repo, { relationType: "derived-from", sourceInstanceId: id, targetInstanceId: vignette });
+    }
+
+    const derived = () => loadConversation(repo, c.containerId, loadMethod(repo))[1].derived;
+    expect(derived().filter((d) => d.entity).map((d) => [d.typeName, d.entity, d.layer]).sort()).toEqual([
+      ["domain", "domain", "suggested"],
+      ["persona-in-domain", "persona-in-domain", "suggested"],
+    ]);
+    affirmRecord(repo, loadMethod(repo), domain, "domain");
+    affirmRecord(repo, loadMethod(repo), pid, "persona-in-domain");
+    expect(derived().filter((d) => d.id === domain || d.id === pid).map((d) => [d.layer, d.entity])).toEqual([
+      ["affirmed", undefined],
+      ["affirmed", undefined],
+    ]);
+    expect(repo.validate().summary.errors).toBe(0);
+  });
 });

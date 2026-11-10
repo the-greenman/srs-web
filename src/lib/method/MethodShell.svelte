@@ -131,14 +131,15 @@
   const problem = $derived(selected && entity === "problem" ? (selected as MethodProblem) : null);
   const remedy = $derived(selected && entity === "remedy" ? (selected as MethodRemedy) : null);
   const status = $derived(selected ? itemStatus(selected) : null);
-  /** The problems under the selected cluster, or held by the selected persona (what the owner is affirming). */
-  const members = $derived(
-    !selected || (entity !== "cluster" && entity !== "persona")
-      ? []
-      : (model?.problems ?? []).filter((p) =>
-          entity === "cluster" ? p.cluster?.id === selected.id : p.personas.some((x) => x.id === selected.id)
-        )
-  );
+  /** The problems under the selected cluster or domain, or held by the selected persona (what the owner is affirming). */
+  const members = $derived.by(() => {
+    if (!selected || entity === "problem" || entity === "remedy") return [];
+    if (entity === "domain")
+      return model?.domains.find((d) => d.id === selected.id)?.clusters.flatMap((c) => c.problems) ?? [];
+    return (model?.problems ?? []).filter((p) =>
+      entity === "cluster" ? p.cluster?.id === selected.id : p.personas.some((x) => x.id === selected.id)
+    );
+  });
   const hasComments = $derived.by(() => {
     void documentRevision;
     try {
@@ -315,7 +316,7 @@
                     </ul>
                   </CardField>
                 {/if}
-                {#if entity === "cluster" || entity === "persona"}
+                {#if entity !== "problem" && entity !== "remedy"}
                   <CardField label="Problems" empty={members.length === 0}>
                     <ul class="method-detail__links" data-testid="method-members">
                       {#each members as m (m.id)}<li><LinkedRecord id={m.id} label={m.title} status={m.status} onopen={open} /></li>{/each}
