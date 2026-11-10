@@ -29,6 +29,7 @@ export const PROBLEM_TYPE_ID = "b7d15218-cee6-4a58-8e2a-a4cb7f6ccf06";
 export const CLUSTER_TYPE_ID = "c6a8eab1-25bf-462c-8d48-6ea47c22f724";
 export const DOMAIN_TYPE_ID = "6e4d0e77-b30a-47d5-a686-5a595a077d4c";
 export const PERSONA_TYPE_ID = "c57aafdd-d002-4ee6-9a2b-ff3805107580";
+export const PERSONA_IN_DOMAIN_TYPE_ID = "872fbd42-6b0d-4839-8381-485ca165d523";
 export const REMEDY_TYPE_ID = "edd84bf8-6c07-4133-87c6-4ab540ac2a14";
 export const POLE_TYPE_ID = "e3b62684-70d8-403d-ac8f-164fcb4b60a9";
 export const TENSION_TYPE_ID = "91bd6f8a-417c-4728-87d2-26991e451221";
@@ -43,6 +44,8 @@ const CARRY: Record<Entity, "outgoing" | "all"> = {
   remedy: "outgoing",
   cluster: "all",
   persona: "all",
+  domain: "all",
+  "persona-in-domain": "all",
 };
 
 /** The three decision containers, found by title (srs-programme names them; Set aside may be absent). */
@@ -72,10 +75,11 @@ export interface Ref {
   label: string;
 }
 /** The kinds of record the owner decides on. */
-export type Entity = "problem" | "remedy" | "cluster" | "persona";
-/** A linked record (persona or cluster) with its decision state; opens in the inspector. */
+export type Entity = "problem" | "remedy" | "cluster" | "persona" | "domain" | "persona-in-domain";
+/** A linked record (not a problem or remedy) with its decision state; opens in the inspector. */
+export type LinkEntity = Exclude<Entity, "problem" | "remedy">;
 export interface MethodLink extends Ref {
-  entity: "cluster" | "persona";
+  entity: LinkEntity;
   status?: ProblemStatus | null;
   createdBy?: Actor;
 }
@@ -134,7 +138,7 @@ export interface MethodModel {
   remedies: MethodRemedy[];
   personas: MethodLink[];
   clusters: MethodLink[];
-  /** Every openable item by id (problem, remedy, cluster, persona). */
+  /** Every openable item by id (problem, remedy, cluster, persona, domain, persona-in-domain). */
   byId: Map<string, MethodItem>;
   containers: MethodContainers;
 }
@@ -219,7 +223,7 @@ export function buildBoard(input: BoardInput): MethodModel {
   /** The affirmed fork stands for its suggested original everywhere it is linked. */
   const canon = (id: string): string => forkOf.get(id) ?? id;
   const shown = (id: string): boolean => !(status(id) === "suggested" && affirmedOriginals.has(id));
-  const link = (id: string, entity: "cluster" | "persona"): MethodLink => ({
+  const link = (id: string, entity: LinkEntity): MethodLink => ({
     id,
     label: label(id),
     entity,
@@ -274,7 +278,9 @@ export function buildBoard(input: BoardInput): MethodModel {
               tradeOff: tensionId ? { id: tensionId, label: label(tensionId) } : undefined,
             }
           : undefined,
-        personas: uniq(personaIds.get(r.instanceId) ?? []).map((id) => link(id, "persona")),
+        personas: uniq(personaIds.get(r.instanceId) ?? []).map((id) =>
+          link(id, isType(id, PERSONA_IN_DOMAIN_TYPE_ID) ? "persona-in-domain" : "persona")
+        ),
         cluster: clusterId ? link(clusterId, "cluster") : undefined,
         remedies: remedies.filter((m) => m.answers.some((a) => a.id === r.instanceId)),
         sources: list(f.source_ref),
@@ -306,19 +312,22 @@ export function buildBoard(input: BoardInput): MethodModel {
     };
     clusters.set(id, c);
     const up = id ? (parentOf.get(id) ?? parentOf.get(originalOf.get(id) ?? "")) : undefined;
-    domainFor(up ?? "").clusters.push(c);
+    domainFor(up ? canon(up) : "").clusters.push(c);
     return c;
   };
   for (const p of problems) clusterFor(p.cluster?.id ?? "").problems.push(p);
   const out = [...domains.values()].sort(groupOrder);
   for (const d of out) d.clusters.sort(groupOrder);
-  const ofType = (typeId: string, entity: "cluster" | "persona") =>
+  const ofType = (typeId: string, entity: LinkEntity) =>
     input.records
       .filter((r) => r.typeId === typeId && shown(r.instanceId))
       .map((r) => link(r.instanceId, entity))
       .sort((a, b) => a.label.localeCompare(b.label));
   const personaList = ofType(PERSONA_TYPE_ID, "persona");
   const clusterList = ofType(CLUSTER_TYPE_ID, "cluster");
+  // Affirmable in the Conversations view (srs-web#562); the board does not list them yet.
+  const domainList = ofType(DOMAIN_TYPE_ID, "domain");
+  const personaInDomainList = ofType(PERSONA_IN_DOMAIN_TYPE_ID, "persona-in-domain");
   return {
     domains: out,
     problems,
@@ -326,7 +335,14 @@ export function buildBoard(input: BoardInput): MethodModel {
     personas: personaList,
     clusters: clusterList,
     byId: new Map<string, MethodItem>(
-      [...problems, ...remedies, ...personaList, ...clusterList].map((i) => [i.id, i])
+      [
+        ...problems,
+        ...remedies,
+        ...personaList,
+        ...clusterList,
+        ...domainList,
+        ...personaInDomainList,
+      ].map((i) => [i.id, i])
     ),
     containers: input.containers,
   };
@@ -420,7 +436,8 @@ export function sourceHref(ref: string): string | null {
 }
 
 /**
- * Affirm (srs-rust#1354): fork a problem, remedy, cluster or persona into Affirmed, carrying its relations
+ * Affirm (srs-rust#1354): fork a problem, remedy, cluster, persona, domain or persona-in-domain into
+ * Affirmed, carrying its relations
  * (`CARRY`), as one engine call. The fork is stamped with the signed-in human; the suggestion stays in
  * Suggestions and the board hides it behind the fork (`derived-from`). Only that record is forked
  * (Affirmed is flat). Returns the fork's id.
