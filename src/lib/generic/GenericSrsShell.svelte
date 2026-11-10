@@ -410,23 +410,43 @@
       out.push({ id, label: entry.label, parentId, detail: entry.container.containerType ?? "container", lazy: true, kind: "container" });
       stack.push({ depth: entry.depth, id });
     }
-    for (const containerId of expandedContainerIds) {
+    // A container's loaded members sit directly under it, before its sub-containers. A member that
+    // anchors a container of its own is itself a container node, expandable at any depth.
+    const placed = new Set<string>();
+    const place = (containerId: string): void => {
+      if (!expandedContainerIds.has(containerId) || placed.has(containerId)) return;
+      placed.add(containerId);
       const members = expandedMembers[containerId] ?? [];
-      // Members sit directly under their container; insert after it so they precede sub-containers.
       const at = out.findIndex((n) => n.id === containerId);
-      if (at < 0) continue;
-      out.splice(
-        at + 1,
-        0,
-        ...members.map((member) => ({
+      if (at < 0) return;
+      const added: NavTreeNode[] = [];
+      for (const member of members) {
+        const anchored = member.sectionContainerId;
+        if (anchored && !seen.has(anchored) && containers.some((c) => c.containerId === anchored)) {
+          seen.add(anchored);
+          added.push({
+            id: anchored,
+            label: member.displayLabel || member.instanceId.slice(0, 8),
+            parentId: containerId,
+            detail: containers.find((c) => c.containerId === anchored)?.containerType ?? "container",
+            lazy: true,
+            kind: "container",
+            recordId: member.instanceId,
+          });
+          continue;
+        }
+        added.push({
           id: `${containerId}:${member.instanceId}`,
           label: member.displayLabel || member.instanceId.slice(0, 8),
           parentId: containerId,
           detail: member.tier === 0 ? "note" : undefined,
           kind: member.tier === 0 ? "note" : "record",
-        })),
-      );
-    }
+        });
+      }
+      out.splice(at + 1, 0, ...added);
+      for (const node of added) if (node.kind === "container") place(node.id);
+    };
+    for (const entry of structureContainers) place(entry.container.containerId);
     return out;
   });
   const activeStructureId = $derived(surface === "structure" ? selectedContainerId : null);
@@ -434,6 +454,7 @@
   function selectStructureNode(node: NavTreeNode): void {
     if (node.kind === "container") {
       selectContainer(node.id);
+      if (node.recordId) openRecord(node.recordId);
       return;
     }
     openRecord(node.id.slice(node.parentId ? node.parentId.length + 1 : 0));
