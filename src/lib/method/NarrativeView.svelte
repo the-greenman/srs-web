@@ -1,7 +1,7 @@
 <!--
   NarrativeView — a conversation's vignettes in order, the owner's words verbatim, with every record
   derived from each vignette beside it (srs-web#622, remedy 2910ac1e). The owner affirms or sets aside
-  a derived problem, remedy, cluster or persona here, in the flow of the conversation that produced it,
+  a derived problem, remedy, cluster, persona, domain or persona-in-domain here, in the flow of the conversation that produced it,
   never in chat (clerk#197 R2). Other derived records (tensions, findings, decisions) show their layer
   or lifecycle state and are decided elsewhere. Presentation + events only: narrative.ts reads, the
   Method editor's own acts write.
