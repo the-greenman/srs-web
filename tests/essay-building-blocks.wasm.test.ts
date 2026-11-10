@@ -27,6 +27,22 @@ async function engine() {
 }
 
 describe.skipIf(!haveBindings)("essay building blocks on the real engine", () => {
+  it("a writer's pick of an agent's record reads as kept, not as an agent's unanswered find (srs-web#754)", async () => {
+    const doc = await import("../src/lib/essay/essay-document.js");
+    const { installBundles } = await import("../src/lib/srs-client.js");
+    const repo = (await engine()).SrsRepository.create(JSON.stringify({ title: "Kept" }));
+    installBundles(repo, [ESSAY_PACKAGE_ID]);
+    const essay = doc.newEssay(repo, "Kept");
+    let m = doc.loadEssay(repo, essay);
+    repo.set_actor(JSON.stringify({ kind: "ai", id: "agent:x", name: "X" }));
+    const [id] = doc.addReferences(repo, m, { urls: ["https://example.org/agent-find"] });
+    repo.set_actor(JSON.stringify({ kind: "human", id: "human:ada", name: "Ada" }));
+    doc.removeReference(repo, m, id);
+    m = doc.loadEssay(repo, essay);
+    doc.addExistingReference(repo, m, id, true);
+    expect(doc.loadEssay(repo, essay).references.find((r) => r.id === id)?.verdict).toBe("agree");
+  });
+
   it("a new essay takes a dropped source, and an agent files and links all three under the guard", async () => {
     const BLOCKS = {
       source: "36e85cff-989b-4c6d-9361-3c8906cff87b",
@@ -99,6 +115,7 @@ describe.skipIf(!haveBindings)("essay building blocks on the real engine", () =>
     }
     expect(brief).toContain("Document > Packages");
     expect(brief).not.toMatch(/source(,| or) claim/);
+    expect(brief).not.toMatch(/creat\w*[^.]*claim/i); // an existing claim can be linked; none is promised (#754)
 
     const source = create("source", { title: "A book", source_kind: "book" });
     const quote = create("quotation", {

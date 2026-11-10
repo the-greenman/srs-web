@@ -153,6 +153,24 @@ it("an agent's find shows who found it and is kept or denied in place; the write
   expect(onanswer.mock.calls).toEqual([["c1", "agree"], ["c1", "disagree"], ["c2", "withdrawn"]]);
 });
 
+it("a search lists the repository's matches and Add hands back the id; no search without the callbacks (#754)", async () => {
+  const onadd = vi.fn();
+  const onsearch = (q: string) =>
+    q === "small" ? [{ id: "c1", label: "Small groups decide", type: "claim" }] : [];
+  const base = { items: [], onopen: vi.fn(), onfocus: vi.fn(), onremove: vi.fn() };
+  const { getByTestId, getByLabelText, queryByTestId, rerender } = render(ReferencesTray, { ...base, onsearch, onadd });
+  const input = getByTestId("references-find");
+  await fireEvent.input(input, { target: { value: "small" } });
+  expect(getByTestId("references-found").textContent).toContain("Small groups decide (claim)");
+  await fireEvent.click(getByLabelText("Add Small groups decide to references"));
+  expect(onadd).toHaveBeenCalledWith("c1");
+  expect(queryByTestId("references-found")).toBeNull();
+  await fireEvent.input(input, { target: { value: "nothing" } });
+  expect(getByTestId("references-found-none")).toBeTruthy();
+  await rerender({ ...base, onsearch: undefined, onadd: undefined });
+  expect(queryByTestId("references-find")).toBeNull();
+});
+
 it("lists a quotation under its source, and as its own row when the source is not in the tray (srs-web#525)", () => {
   const quote = { id: "q1", label: "the words", type: "quotation", sourceId: "r1", paragraphs: [{ id: "p1", label: "Opening" }] };
   const props = { onopen: vi.fn(), onfocus: vi.fn(), onremove: vi.fn() };

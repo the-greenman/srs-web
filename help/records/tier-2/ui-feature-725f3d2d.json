@@ -8,11 +8,11 @@
     "feature_id": "essay.links",
     "placement": "concept",
     "title": "Problems and counter-evidence",
-    "summary": "A paragraph can be linked to the problem it speaks to, and to sources and quotations that support or oppose it. Your AI can suggest these links; you decide which stay.",
-    "ai_guidance": "create a source, quotation or problem in references, then link it to the paragraph; the agent brief says which relation does what. Suggest and let the writer decide. Offer this when the writer is making an argument; a story or a contract may not need it."
+    "summary": "A paragraph can be linked to the problem it speaks to, and to sources, quotations and claims that support or oppose it. If your repository already holds a claim or source, find it in References, add it, then link it to the paragraph. Your AI can suggest these links; you decide which stay.",
+    "ai_guidance": "create a source, quotation or problem in references, or add a claim or other record the repository already holds, then link it to the paragraph; search with find before saying something is missing, and don't create a claim unless the writer asks. The agent brief says which relation does what. Suggest and let the writer decide. Offer this when the writer is making an argument; a story or a contract may not need it."
   },
   "createdAt": "2026-10-29T14:42:46.555067964+00:00",
-  "updatedAt": "2026-11-04T14:34:49.924071427+00:00",
+  "updatedAt": "2026-11-06T14:32:54.910058709+00:00",
   "createdBy": {
     "kind": "ai",
     "id": "agent:claude-code",
