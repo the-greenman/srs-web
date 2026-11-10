@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import GenericSrsShell from "../src/lib/generic/GenericSrsShell.svelte";
 import { resetNotices } from "../src/lib/notices.svelte.js";
 
@@ -93,6 +93,22 @@ vi.mock("../src/lib/srs-client.js", () => mocks);
 // The frame turns the inspector into a closed drawer at <= 1100px (happy-dom is 1024 wide): these tests
 // exercise the desktop frame, so stub a wide viewport (#424).
 const store = new Map<string, string>();
+afterEach(() => {
+  mocks.listContainers.mockReturnValue([{ containerId: "container-1", title: "Foundation" }]);
+  mocks.repositoryNavigation.mockReturnValue({
+    rootContainerId: "root",
+    identity: {},
+    sections: [],
+    diagnostics: [],
+  } as never);
+  mocks.resolveContainerView.mockImplementation((() => ({
+    containerId: "container-1",
+    members: [{ instanceId: "record-1", displayLabel: "First", record: {} }],
+    columns: [],
+    excludeLifecycleStates: [],
+    diagnostics: [],
+  })) as never);
+});
 beforeEach(() => {
   resetNotices();
   store.clear();
@@ -270,6 +286,53 @@ describe("GenericSrsShell", () => {
     await fireEvent.click(await screen.findByRole("button", { name: "Toggle Foundation" }));
 
     expect(screen.getByRole("button", { name: "A declared title" })).toBeTruthy();
+  });
+
+  it("a member that anchors its own container is expandable, so its members are reachable (srs-web#425)", async () => {
+    mocks.listContainers.mockReturnValue([
+      { containerId: "container-1", title: "Foundation" },
+      { containerId: "container-2", title: "Problem findings" },
+    ]);
+    mocks.repositoryNavigation.mockReturnValue({
+      rootContainerId: "root",
+      identity: {},
+      sections: [
+        {
+          instanceId: "s1",
+          displayLabel: "Foundation",
+          depth: 0,
+          sectionContainerId: "container-1",
+        },
+      ],
+      diagnostics: [],
+    } as never);
+    mocks.resolveContainerView.mockImplementation(((_repo: unknown, id: string) => ({
+      containerId: id,
+      members:
+        id === "container-1"
+          ? [
+              {
+                instanceId: "problem-1",
+                displayLabel: "A problem",
+                sectionContainerId: "container-2",
+                record: {},
+              },
+            ]
+          : [{ instanceId: "finding-1", displayLabel: "A finding behind it", record: {} }],
+      columns: [],
+      excludeLifecycleStates: [],
+      diagnostics: [],
+    })) as never);
+    render(GenericSrsShell, {
+      props: { repo: {} as never, repoName: "r", onExport: vi.fn(), onOpenAnother: vi.fn() },
+    });
+
+    await fireEvent.click(await screen.findByRole("button", { name: "Toggle Foundation" }));
+    await fireEvent.click(await screen.findByRole("button", { name: "Toggle A problem" }));
+
+    expect(await screen.findByRole("button", { name: "A finding behind it" })).toBeTruthy();
+    await fireEvent.click(screen.getByRole("button", { name: /^A problem/ }));
+    expect(mocks.getRecord).toHaveBeenCalledWith(expect.anything(), "problem-1");
   });
 });
 
@@ -483,7 +546,12 @@ describe("GenericSrsShell note members (srs-web#483)", () => {
 
 describe("GenericSrsShell built-in views (ADR-022)", () => {
   it("Explore group offers Lenses when onOpenLenses is given", async () => {
-    const props = { repo: {} as never, repoName: "Example repository", onExport: vi.fn(), onOpenAnother: vi.fn() };
+    const props = {
+      repo: {} as never,
+      repoName: "Example repository",
+      onExport: vi.fn(),
+      onOpenAnother: vi.fn(),
+    };
     const without = render(GenericSrsShell, { props });
     await screen.findByText("Explore");
     expect(screen.queryByTestId("open-lenses")).toBeNull();
@@ -499,7 +567,12 @@ describe("GenericSrsShell built-in views (ADR-022)", () => {
   });
 
   it("Explore group offers Read first when onOpenRead is given", async () => {
-    const props = { repo: {} as never, repoName: "Example repository", onExport: vi.fn(), onOpenAnother: vi.fn() };
+    const props = {
+      repo: {} as never,
+      repoName: "Example repository",
+      onExport: vi.fn(),
+      onOpenAnother: vi.fn(),
+    };
     const without = render(GenericSrsShell, { props });
     await screen.findByText("Explore");
     expect(screen.queryByTestId("open-read")).toBeNull();

@@ -21,6 +21,8 @@ export interface NavTreeNode {
   lazy?: boolean;
   /** A kind of its own (a record rather than a container); styling and test hook only. */
   kind?: string;
+  /** A container node that is also a member's own record: selecting it opens that record too. */
+  recordId?: string;
 }
 
 export interface NavRow {
