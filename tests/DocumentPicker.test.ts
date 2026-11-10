@@ -2,7 +2,7 @@
 import { fireEvent, render } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import DocumentPicker from "../src/lib/components/DocumentPicker.svelte";
-import { moveActive, pickerRows, pushRecent } from "../src/lib/document-picker.js";
+import { moveActive, pickerRows, pushRecent, rowHeading, showHeadings } from "../src/lib/document-picker.js";
 
 const options = [
   { id: "a", title: "Alpha" },
@@ -21,6 +21,19 @@ describe("document-picker rules", () => {
     expect(rows.map((r) => r.id)).toEqual(["a", "b", "c"]);
     expect(rows.every((r) => !r.recent)).toBe(true);
     expect(pickerRows(options, [], "gam").map((r) => r.id)).toEqual(["c"]);
+  });
+  it("groups non-recent rows under their group heading, only when there is more than one heading", () => {
+    const grouped = [
+      { id: "a", title: "Alpha", group: "Small groups" },
+      { id: "b", title: "Beta", group: "Small groups" },
+      { id: "c", title: "Gamma", group: "No domain yet" },
+    ];
+    const rows = pickerRows(grouped, ["c"], "");
+    expect(rows.map(rowHeading)).toEqual(["Recent", "Small groups", "Small groups"]);
+    expect(showHeadings(rows, "")).toBe(true);
+    expect(showHeadings(rows, "a")).toBe(false);
+    expect(showHeadings(pickerRows(options, [], ""), "")).toBe(false);
+    expect(pickerRows(options, ["a"], "").map(rowHeading)).toEqual(["Recent", "All", "All"]);
   });
   it("pushRecent moves to the front without duplicates, capped at five", () => {
     expect(pushRecent(["a", "b"], "b")).toEqual(["b", "a"]);

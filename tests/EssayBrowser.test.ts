@@ -28,13 +28,19 @@ const groups = [
 ];
 
 describe("EssayBrowser", () => {
-  it("shows domains, essays in the order given, family links and shared counts", () => {
+  it("shows domains, essays in the order given and family links, with no shared counts", () => {
     render(EssayBrowser, { groups, onopen: () => {} });
     expect(screen.getAllByTestId("browse-domain").map((n) => n.textContent?.trim())).toEqual([
       "Small groups (2)",
       "No domain yet (1)",
     ]);
-    expect(screen.getByText("copied from Commons (3 shared paragraphs)")).toBeTruthy();
+    expect(screen.getByText("copied from Commons")).toBeTruthy();
+    expect(screen.queryByText(/shared paragraph/)).toBeNull();
+  });
+  it("has no headings when no essay has a domain", () => {
+    render(EssayBrowser, { groups: [groups[1]], onopen: () => {} });
+    expect(screen.queryAllByTestId("browse-domain")).toEqual([]);
+    expect(screen.getByText("Loose")).toBeTruthy();
   });
   it("opens an essay, but offers no Open for the current one", async () => {
     const onopen = vi.fn();

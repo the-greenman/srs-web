@@ -309,6 +309,12 @@
   const boundaries = $derived(model ? listBoundaries(repo) : []);
   /** Every essay by domain and family (srs-web#623): recomputed with the model, which reloads on every write. */
   const browsed = $derived(model && essays.length > 1 ? browseEssays(repo) : []);
+  /** The picker's options: grouped by domain once any essay has one (srs-web#785), else the plain list. */
+  const essayOptions = $derived(
+    browsed.some((g) => g.boundaryId)
+      ? browsed.flatMap((g) => g.essays.map((e) => ({ id: e.id, title: e.title, group: g.label })))
+      : essays,
+  );
   function openEssay(id: string) {
     essayId = id;
     zoomId = null;
@@ -890,7 +896,7 @@
       {#if essays.length > 1}
         <DocumentPicker
           label="Essay"
-          options={essays}
+          options={essayOptions}
           currentId={essayId}
           storageKey={`srs-web:recent-essays:${repoName}`}
           onnew={readOnly ? undefined : createEssay}
