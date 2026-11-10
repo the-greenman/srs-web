@@ -1,7 +1,7 @@
 <!--
   DocumentPicker — the document title as the control (srs-web#425, phase 6). The current title reads as the
   bar's title with a chevron; it opens a searchable combobox on the Popover: a filter input, Recent documents
-  first, then all, each title in full (wrapping), the current one marked, and an optional "New document" row.
+  first, then all (or one group per `group`, e.g. domain), each title in full (wrapping), the current one marked, and an optional "New document" row.
   ARIA combobox + listbox: focus stays in the input, `aria-activedescendant` names the highlighted option;
   Arrow keys, Home and End move, Enter chooses, Escape closes (the Popover). Rules: src/lib/document-picker.ts.
   Recents are remembered per repository when `storageKey` is given. Fills the Toolbar's `titleSlot`.
@@ -12,7 +12,7 @@
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import Check from '@lucide/svelte/icons/check';
   import Popover from './Popover.svelte';
-  import { loadRecents, moveActive, pickerRows, pushRecent, saveRecents, type PickerOption } from '../document-picker.js';
+  import { loadRecents, moveActive, pickerRows, pushRecent, rowHeading, saveRecents, showHeadings, type PickerOption } from '../document-picker.js';
 
   let {
     options,
@@ -45,7 +45,7 @@
   const current = $derived(options.find((o) => o.id === currentId));
   const rows = $derived(pickerRows(options, recents, query));
   const optionId = (i: number) => `${uid}-opt-${i}`;
-  const showGroups = $derived(!query.trim() && rows.some((r) => r.recent) && rows.some((r) => !r.recent));
+  const showGroups = $derived(showHeadings(rows, query));
 
   // Opening resets the search and highlights the current document.
   $effect(() => {
@@ -115,8 +115,8 @@
     />
     <ul class="doc-picker__list" id={`${uid}-list`} role="listbox" aria-label={label} data-part="list">
       {#each rows as row, i (row.id)}
-        {#if showGroups && (i === 0 || rows[i - 1].recent !== row.recent)}
-          <li class="doc-picker__group" role="presentation" aria-hidden="true">{row.recent ? 'Recent' : 'All'}</li>
+        {#if showGroups && (i === 0 || rowHeading(rows[i - 1]) !== rowHeading(row))}
+          <li class="doc-picker__group" role="presentation" aria-hidden="true">{rowHeading(row)}</li>
         {/if}
         <!-- svelte-ignore a11y_click_events_have_key_events -- keys are handled by the combobox input (aria-activedescendant) -->
         <li
