@@ -436,7 +436,8 @@ export function sourceHref(ref: string): string | null {
 }
 
 /**
- * Affirm (srs-rust#1354): fork a problem, remedy, cluster, persona, domain or persona-in-domain into Affirmed, carrying its relations
+ * Affirm (srs-rust#1354): fork a problem, remedy, cluster, persona, domain or persona-in-domain into
+ * Affirmed, carrying its relations
  * (`CARRY`), as one engine call. The fork is stamped with the signed-in human; the suggestion stays in
  * Suggestions and the board hides it behind the fork (`derived-from`). Only that record is forked
  * (Affirmed is flat). Returns the fork's id.
