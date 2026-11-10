@@ -41,4 +41,7 @@
       </dd>
     {/each}
   </dl>
+  <p class="md-help__note">
+    Pressing Enter once doesn't start a new line: leave a blank line for a new paragraph. Task lists and footnotes aren't supported. Anything in angle brackets, such as <code>{'<b>'}</code>, shows exactly as typed. A web address on its own doesn't become a link: write it as <code>[text](https://example.com)</code> or <code>{'<https://example.com>'}</code>.
+  </p>
 </Popover>
