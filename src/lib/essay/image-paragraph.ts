@@ -52,3 +52,48 @@ export function imageMime(bytes: Uint8Array): string | null {
   const head = new TextDecoder().decode(bytes.subarray(0, 1024)).replace(/^﻿/, "").trimStart();
   return head.startsWith("<") && head.includes("<svg") ? "image/svg+xml" : null;
 }
+
+/**
+ * Inserting and editing image paragraphs (srs-web#765) is OFF until srs-web#766 turns it on and
+ * deletes this flag: on only where this browser has `localStorage["srs-web.flag.essay-images"] = "1"`.
+ */
+export function imageParagraphsOn(): boolean {
+  try {
+    return localStorage.getItem("srs-web.flag.essay-images") === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** What the writer sets on an image paragraph (decisions b2b5c488, 72bcd83e). */
+export interface ImageFields {
+  alt: string;
+  caption: string;
+  size: ImageSize;
+  align: ImageAlign;
+}
+
+/** The record's field values for `f`: alt text trimmed, an empty caption left out, align only at original size. */
+export function imageFieldValues(f: ImageFields): Record<string, string | undefined> {
+  const caption = f.caption.trim();
+  return {
+    alt_text: f.alt.trim(),
+    caption: caption || undefined,
+    image_size: f.size,
+    image_align: f.size === "original" ? f.align : undefined,
+  };
+}
+
+/**
+ * The core's refusal of an image, in plain words, read from the error's `code` (ADR-048 rule 6,
+ * never the message): `svg-unsafe` (decision 866167c1) and `invalid-input` (the repository's
+ * attachment policy, or a name already taken).
+ */
+export function imageRefusal(e: unknown): string {
+  const code = typeof e === "object" && e !== null ? (e as { code?: unknown }).code : undefined;
+  if (code === "svg-unsafe")
+    return "This SVG contains a script or a link to another file, so it can't be used. Export it again as a plain SVG.";
+  if (code === "invalid-input")
+    return "This image breaks the document's rules for attached files (its type or size), so it can't be used.";
+  return "The image could not be added. Nothing was changed.";
+}

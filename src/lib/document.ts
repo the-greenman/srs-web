@@ -19,9 +19,11 @@ import {
   getContainer,
   getContainerOutline,
   getRecord,
+  linkAttachment,
   listRelations,
   moveContainerMemberRelative,
   removeContainerMember,
+  resolveAttachments,
   updateRecord,
 } from "./srs-client.js";
 import type { OutlineEntry, OutlineShift, SrsRepository } from "./srs-client.js";
@@ -166,6 +168,8 @@ interface Held {
   typeId: string;
   typeVersion: number;
   fieldValues: unknown;
+  /** The documents it `attaches` (an image paragraph's image, srs-web#765), linked again when it is recreated. */
+  attachments?: string[];
 }
 
 /** A document's own state: the outlines of its containers and the records in them (plus `recordIds`). */
@@ -206,6 +210,7 @@ export function snapshotDocument(
         fieldValues: clone(r.fieldValues),
       };
   }
+  holdAttachments(repo, records);
   if (!relationTypes.length) return { containers: out, records };
   const relations: NonNullable<DocumentSnapshot["relations"]> = {};
   for (const id of Object.keys(records)) {
@@ -220,6 +225,20 @@ export function snapshotDocument(
   return { containers: out, records, relations };
 }
 
+/** Note on each held record the documents it attaches; a repository that cannot say holds none. */
+function holdAttachments(repo: SrsRepository, records: DocumentSnapshot["records"]): void {
+  const ids = Object.keys(records);
+  if (!ids.length) return;
+  try {
+    for (const r of resolveAttachments(repo, ids).records) {
+      const docs = r.attachments.map((a) => a.documentId);
+      if (docs.length && records[r.instanceId]) records[r.instanceId].attachments = docs;
+    }
+  } catch {
+    /* no attachment resolution here: records are held without them */
+  }
+}
+
 /** Write `target` back over the current state; the id of a recreated record is recorded in `alias`. */
 function restore(repo: SrsRepository, target: DocumentSnapshot, alias: Map<string, string>): void {
   const res = (id: string) => alias.get(id) ?? id;
@@ -229,6 +248,8 @@ function restore(repo: SrsRepository, target: DocumentSnapshot, alias: Map<strin
     if (!cur) {
       // A record cannot be recreated under its old id: it gets a new one, aliased for the rest of the history.
       alias.set(id, createRecord(repo, held.typeId, held.typeVersion, { fieldValues }).instanceId);
+      for (const documentId of held.attachments ?? [])
+        linkAttachment(repo, { instanceId: res(id), documentId });
       for (const r of target.relations?.[id] ?? [])
         createRelation(repo, {
           relationType: r.relationType,

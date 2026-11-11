@@ -32,6 +32,7 @@
   import EssayBrowser from "$lib/components/EssayBrowser.svelte";
   import EssayReader from "$lib/components/EssayReader.svelte";
   import ImageParagraph from "$lib/components/ImageParagraph.svelte";
+  import ImageParagraphEditor from "$lib/components/ImageParagraphEditor.svelte";
   import ToolbarSpecimen from "./styleguide/ToolbarSpecimen.svelte";
   import ShellSpecimen from "./styleguide/ShellSpecimen.svelte";
   import SiteSpecimen from "./styleguide/SiteSpecimen.svelte";
@@ -423,6 +424,13 @@
     <ImageParagraph alt="Original size, centre" caption="Original size, centred" size="original" bytes={fx.imageSvgFx} />
     <ImageParagraph alt="Original size, right" size="original" align="right" bytes={fx.imageSvgFx} />
     <ImageParagraph alt="A picture that was never attached" />
+  </section>
+
+  <section id="image-paragraph-editor">
+    <h2>Image paragraph editor</h2>
+    <p class="sg__note">Adding or editing an essay image paragraph (srs-web#765, behind a flag until srs-web#766): the image by picker or drop, alt text (required), caption, size and, at original size, alignment. A refusal shows in plain words.</p>
+    <ImageParagraphEditor id="sg-image-new" onsave={async () => "This SVG contains a script or a link to another file, so it can't be used. Export it again as a plain SVG."} oncancel={() => {}} />
+    <ImageParagraphEditor id="sg-image-edit" initial={{ alt: "A white circle on green", caption: "Original size, right", size: "original", align: "right" }} bytes={fx.imageSvgFx} onsave={async () => null} oncancel={() => {}} />
   </section>
 
   <section id="essay-browser">

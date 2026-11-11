@@ -3,14 +3,15 @@
   Every path goes through checkFiles; accepted files go to `onfiles`, rejections show in a warning
   Notice. A drag without Files (the paragraph reorder, DRAG_MIME) is ignored. Paste is handled only
   while the zone has focus. With `onurls`, a pasted bare URL or a dropped `text/uri-list` goes there
-  instead (a reference by URL, #519). `state` and `rejected` only force a look, for the styleguide. Extra
+  instead (a reference by URL, #519). `kind="image"` takes one image instead (an essay image paragraph,
+  srs-web#765): the picker, the hint and the refusals say so. `state` and `rejected` only force a look, for the styleguide. Extra
   attributes go to the root. Wraps .file-drop (file-drop.css); tokens `--file-drop-*`;
   parts `icon label hint input`.
 -->
 <script lang="ts">
   import Paperclip from '@lucide/svelte/icons/paperclip';
   import type { HTMLAttributes } from 'svelte/elements';
-  import { ACCEPT, asUrls, takeFiles, type AttachFile, type AttachPolicy } from './attach-check.js';
+  import { ACCEPT, IMAGE_ACCEPT, IMAGE_WHAT, asUrls, takeFiles, type AttachFile, type AttachPolicy } from './attach-check.js';
   import { formatBytes } from '../format-bytes.js';
   import Notice from './Notice.svelte';
 
@@ -21,6 +22,7 @@
     onurls,
     busy = false,
     compact = false,
+    kind = 'text',
     label = 'Attach text files',
     state: forced,
     rejected: initialRejected = [],
@@ -34,6 +36,7 @@
     onurls?: (urls: string[]) => void | Promise<void>;
     busy?: boolean;
     compact?: boolean;
+    kind?: 'text' | 'image';
     label?: string;
     state?: 'idle' | 'over';
     rejected?: { name: string; reason: string }[];
@@ -44,10 +47,13 @@
   let rejected = $state(initialRejected);
   let input: HTMLInputElement;
   const isOver = $derived(forced ? forced === 'over' : over);
-  const hint = $derived(`Drop, paste or choose text files${onurls ? ' or a URL' : ''} · up to ${formatBytes(policy?.maxPerFileBytes ?? 1_048_576)} each`);
+  const image = $derived(kind === 'image');
+  const hint = $derived(
+    `Drop, paste or choose ${image ? 'a PNG, JPEG, WebP or SVG image' : 'text files'}${onurls ? ' or a URL' : ''} · up to ${formatBytes(policy?.maxPerFileBytes ?? 1_048_576)}${image ? '' : ' each'}`,
+  );
 
   async function take(files: File[]) {
-    const result = await takeFiles(files, policy, attachedBytes);
+    const result = await takeFiles(image ? files.slice(0, 1) : files, policy, attachedBytes, image ? IMAGE_WHAT : undefined);
     rejected = result.rejected;
     if (result.accepted.length) await onfiles(result.accepted);
   }
@@ -72,7 +78,7 @@
     if (busy) return;
     const files = Array.from(e.clipboardData?.files ?? []);
     const text = e.clipboardData?.getData('text/plain') ?? '';
-    if (!files.length && !text.trim()) return;
+    if (!files.length && (image || !text.trim())) return;
     e.preventDefault();
     const urls = !files.length && onurls ? asUrls(text) : null;
     if (urls) return void onurls?.(urls);
@@ -110,7 +116,7 @@
   <span class="file-drop__icon" data-part="icon"><Paperclip size={16} aria-hidden="true" /></span>
   <span class="file-drop__label" data-part="label">{busy ? 'Attaching…' : label}</span>
   {#if !compact && !busy}<span class="file-drop__hint" data-part="hint">{hint}</span>{/if}
-  <input bind:this={input} class="sr-only" data-part="input" type="file" multiple accept={ACCEPT} disabled={busy} tabindex="-1" onchange={pick} />
+  <input bind:this={input} class="sr-only" data-part="input" type="file" multiple={!image} accept={image ? IMAGE_ACCEPT : ACCEPT} disabled={busy} tabindex="-1" onchange={pick} />
 </div>
 {#if rejected.length}
   <Notice kind="warning">

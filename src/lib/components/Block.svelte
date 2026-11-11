@@ -3,7 +3,10 @@
   a small mono title above the body (InlineText) and the body in two states: rendered markdown
   (core renderMarkdown, already sanitized) until focused, then a plain-text source editor
   (`contenteditable="plaintext-only"`, no rich-text dependency). Hidden = collapsed in place.
-  Presentation + events only; the shell commits through the engine.
+  Presentation + events only; the shell commits through the engine. With `content` (an essay image
+  paragraph, srs-web#765) that snippet takes the body's place in one focusable block: arrows move
+  between paragraphs, Alt+Arrows move it, Ctrl/Cmd+Enter adds a paragraph after (nothing to split),
+  Enter calls `onedit`.
     Ctrl/Cmd+Enter  split at the caret (at the end: new block after this one)     Alt+Arrows  move / change level
     Tab at start    indent (Shift+Tab outdent)   F2 on the handle / click title  rename
   Wraps .block (src/styles/components/block.css).
@@ -46,6 +49,9 @@
     oncopyagent,
     onattach,
     attachPolicy,
+    onimage,
+    onedit,
+    content,
     margin,
     count,
   }: {
@@ -76,6 +82,12 @@
     onattach?: (files: AttachFile[]) => void | Promise<void>;
     /** The repository's attachment policy, so the menu's drop checks as the tray does (#234). */
     attachPolicy?: AttachPolicy;
+    /** Add an image paragraph below this one (srs-web#765); absent = no such action. */
+    onimage?: () => void;
+    /** Edit what `content` shows (Enter on it, or the menu); absent = no such action. */
+    onedit?: () => void;
+    /** Shown in place of the text body, as one block (an image paragraph). */
+    content?: Snippet;
     /** The one right-margin slot: comment badge, attachment glyphs. */
     margin?: Snippet;
     /** Under the body (the essay passes a Count). */
@@ -190,6 +202,15 @@
     }
   }
 
+  /** Keys on the `content` block itself (not on a control inside it). */
+  function contentKeydown(e: KeyboardEvent) {
+    if (e.target !== e.currentTarget) return;
+    if (e.key === 'Enter' && !(e.ctrlKey || e.metaKey || e.altKey || e.shiftKey)) {
+      e.preventDefault();
+      onedit?.();
+    } else if (e.key !== 'Tab') bodyKeydown(e, { flush: () => {}, replace: () => {}, rendered: true });
+  }
+
   function handleKeydown(e: KeyboardEvent) {
     const m = keyMove(e);
     if (m) {
@@ -202,7 +223,7 @@
   // The one action list: the hover strip (its `primary` entries) and the ellipsis menu are both rendered from it.
   const actions = $derived(
     paragraphActions(
-      { onnew, onmove, onindent, onhide, onpull, ondelete, onzoom, oncopylink, oncopyagent, onrename: () => (editingTitle = true), onattach: onattach && (() => (attachOpen = true)) },
+      { onnew, onimage, onedit, onmove, onindent, onhide, onpull, ondelete, onzoom, oncopylink, oncopyagent, onrename: () => (editingTitle = true), onattach: onattach && (() => (attachOpen = true)) },
       { label: shortLabel, hidden, inherited },
     ),
   );
@@ -244,6 +265,11 @@
     </div>
     {#if hidden || inherited}
       <p class="block__closed">{inherited && !hidden ? 'Hidden by parent' : 'Hidden paragraph'}</p>
+    {:else if content}
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+      <div class="image-paragraph-slot" role="group" tabindex="0" aria-label={`${shortLabel}${onedit ? '. Enter edits it.' : ''}`} data-focus-key={`body:${id}`} onkeydown={contentKeydown}>
+        {@render content()}
+      </div>
     {:else}
       <MarkdownText
         value={body}

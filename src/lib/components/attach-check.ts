@@ -37,6 +37,33 @@ const BY_EXT: Record<string, string> = {
   vtt: "text/plain",
 };
 
+/** An essay image paragraph's files (decision ca352740, D3): these types, up to 1 MB each. */
+export const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+const IMAGE_EXT: Record<string, string> = {
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  svg: "image/svg+xml",
+};
+export const IMAGE_ACCEPT = IMAGE_TYPES.join(",");
+/** What a refused image is not, in the writer's words. */
+export const IMAGE_WHAT = "a PNG, JPEG, WebP or SVG image";
+
+/**
+ * The policy for an image paragraph's file: the image types and 1 MB, or the repository's policy
+ * where that is stricter (fewer of those types, a smaller file); its total stays as it is.
+ */
+export function imagePolicy(repo: AttachPolicy | undefined): AttachPolicy {
+  return {
+    allowedMimeTypes: IMAGE_TYPES.filter(
+      (t) => !repo?.allowedMimeTypes || repo.allowedMimeTypes.includes(t)
+    ),
+    maxPerFileBytes: Math.min(DEFAULT_MAX_FILE, repo?.maxPerFileBytes ?? DEFAULT_MAX_FILE),
+    ...(repo?.maxTotalBytes !== undefined && { maxTotalBytes: repo.maxTotalBytes }),
+  };
+}
+
 /** For the input's `accept` attribute. */
 export const ACCEPT = `text/*,${DEFAULT_TEXT.join(",")},${Object.keys(BY_EXT)
   .map((e) => `.${e}`)
@@ -48,13 +75,17 @@ export interface FileMeta {
   size: number;
 }
 
-const mimeOf = (f: FileMeta) =>
-  f.type || BY_EXT[f.name.split(".").pop()?.toLowerCase() ?? ""] || "";
+const mimeOf = (f: FileMeta) => {
+  const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+  return f.type || BY_EXT[ext] || IMAGE_EXT[ext] || "";
+};
 
+/** `what`: the kind of file wanted, for the refusal ("not a text file" by default). */
 export function checkFiles<T extends FileMeta>(
   files: T[],
   policy: AttachPolicy | undefined,
-  attachedBytes: number
+  attachedBytes: number,
+  what?: string
 ): { accepted: T[]; rejected: { name: string; reason: string }[] } {
   const accepted: T[] = [];
   const rejected: { name: string; reason: string }[] = [];
@@ -67,8 +98,9 @@ export function checkFiles<T extends FileMeta>(
       ? policy.allowedMimeTypes.includes(mime)
       : mime.startsWith("text/") || DEFAULT_TEXT.includes(mime);
     let reason = "";
-    if (mime === "application/pdf") reason = "PDF: paste the paper's text or add its URL";
-    else if (!typeOk) reason = mime ? `not a text file (${mime})` : "unknown file type";
+    if (mime === "application/pdf" && !what) reason = "PDF: paste the paper's text or add its URL";
+    else if (!typeOk)
+      reason = mime ? `not ${what ?? "a text file"} (${mime})` : "unknown file type";
     else if (f.size > maxFile)
       reason = `${formatBytes(f.size)} is over the ${formatBytes(maxFile)} limit`;
     else if (maxTotal !== undefined && used + f.size > maxTotal)
@@ -109,9 +141,10 @@ export async function readFile(file: File): Promise<Uint8Array> {
 export async function takeFiles(
   files: File[],
   policy: AttachPolicy | undefined,
-  attachedBytes: number
+  attachedBytes: number,
+  what?: string
 ): Promise<{ accepted: AttachFile[]; rejected: { name: string; reason: string }[] }> {
-  const { accepted, rejected } = checkFiles(files, policy, attachedBytes);
+  const { accepted, rejected } = checkFiles(files, policy, attachedBytes, what);
   return {
     accepted: await Promise.all(
       accepted.map(async (f) => ({ name: f.name, type: f.type, bytes: await readFile(f) }))

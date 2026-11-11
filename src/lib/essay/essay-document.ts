@@ -76,7 +76,7 @@ import { hiddenByAncestor, toggled } from "./essay-model.js";
 
 // The document foundation, re-exported where the essay shell and tests already import it from.
 export { type Target, moveEntry, shiftEntry, transfer } from "$lib/document.js";
-import { type ImageSpec, toImage } from "./image-paragraph.js";
+import { type ImageFields, type ImageSpec, imageFieldValues, toImage } from "./image-paragraph.js";
 import {
   DOCUMENT_STATE_TYPE_ID,
   ESSAY_TYPE_ID,
@@ -584,6 +584,45 @@ export function addParagraph(repo: SrsRepository, m: EssayModel, t?: Target, bod
   place(repo, m.containerId, rec.instanceId, t);
   return rec.instanceId;
 }
+
+/**
+ * Add an image paragraph at `t` (srs-web#765): the file is attached first, so a refusal (the core's
+ * `svg-unsafe`, the policy) writes nothing; then the record, its place and its `attaches` link. The
+ * file goes under `essay-images/` with a unique name, its own name kept as the title. Returns its id.
+ */
+export function addImageParagraph(
+  repo: SrsRepository,
+  m: EssayModel,
+  t: Target | undefined,
+  fields: ImageFields,
+  file: AttachFile
+): string {
+  const { documentId } = addAttachment(
+    repo,
+    {
+      fileName: `${crypto.randomUUID().slice(0, 8)}-${file.name}`,
+      subdir: "essay-images",
+      title: file.name,
+      ...(file.type ? { contentType: file.type } : {}),
+    },
+    file.bytes
+  );
+  const rec = createRecord(
+    repo,
+    IMAGE_PARAGRAPH_TYPE_ID,
+    typeVersion(repo, IMAGE_PARAGRAPH_TYPE_ID),
+    {
+      fieldValues: imageFieldValues(fields),
+    }
+  );
+  place(repo, m.containerId, rec.instanceId, t);
+  linkAttachment(repo, { instanceId: rec.instanceId, documentId });
+  return rec.instanceId;
+}
+
+/** Write an image paragraph's alt text, caption and layout. */
+export const setImage = (repo: SrsRepository, id: string, fields: ImageFields): void =>
+  patchRecord(repo, id, imageFieldValues(fields));
 
 function patchRecord(
   repo: SrsRepository,

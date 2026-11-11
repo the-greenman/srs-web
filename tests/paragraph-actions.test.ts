@@ -101,3 +101,18 @@ it("attach is a non-primary action (menu only, never the hover strip), present o
   expect(onattach).toHaveBeenCalledOnce();
   expect(paragraphActions({}, { label: "Claim" }).some((a) => a.id === "attach")).toBe(false);
 });
+
+it("offers Add image below and Edit image… only when the shell passes them (srs-web#765, off by default)", () => {
+  expect(paragraphActions(handlers(), state).some((a) => a.id === "image" || a.id === "edit")).toBe(
+    false
+  );
+  const onimage = vi.fn();
+  const onedit = vi.fn();
+  const list = paragraphActions({ ...handlers(), onimage, onedit }, state);
+  expect(list.map((a) => a.id).slice(0, 3)).toEqual(["add", "image", "edit"]);
+  expect(list.find((a) => a.id === "image")?.label).toBe("Add image below");
+  list.find((a) => a.id === "image")?.run();
+  list.find((a) => a.id === "edit")?.run();
+  expect(onimage).toHaveBeenCalledOnce();
+  expect(onedit).toHaveBeenCalledOnce();
+});

@@ -16,6 +16,8 @@
   import Count from "$lib/components/Count.svelte";
   import EssayReader from "$lib/components/EssayReader.svelte";
   import ImageParagraph from "$lib/components/ImageParagraph.svelte";
+  import ImageParagraphEditor from "$lib/components/ImageParagraphEditor.svelte";
+  import { type ImageFields, imageParagraphsOn, imageRefusal } from "./image-paragraph.js";
   import AgentPresence from "$lib/components/AgentPresence.svelte";
   import { verb } from "$lib/agent-activity.js";
   import { relativeTime } from "$lib/relative-time.js";
@@ -61,6 +63,7 @@
   import { NARROW } from "$lib/breakpoints";
   import { currentActor, onActorChange, saveLocalName } from "$lib/actor.js";
   import {
+    addImageParagraph,
     addParagraph,
     addContextDocuments,
     addReferences,
@@ -86,6 +89,7 @@
     removeReference,
     repoBytes,
     setHidden,
+    setImage,
     setTitle,
     transfer,
   } from "./essay-document.js";
@@ -731,6 +735,46 @@
     liveTimers.add(t);
   });
 
+  /**
+   * Image paragraphs (srs-web#765), behind their flag until srs-web#766: the new one being added
+   * below a paragraph (its id), and the one being edited. Nothing is written until Save.
+   */
+  const imagesOn = imageParagraphsOn();
+  let imageDraftAfter = $state<string | null>(null);
+  let imageEditing = $state<string | null>(null);
+  async function openImageDraft(after: string) {
+    imageEditing = null;
+    imageDraftAfter = after;
+    await tick();
+    document.querySelector<HTMLElement>('[data-testid="image-drop"]')?.focus();
+  }
+  async function openImageEditor(id: string) {
+    imageDraftAfter = null;
+    imageEditing = id;
+    await tick();
+    document.querySelector<HTMLElement>('[data-testid="image-editor"] [data-testid="image-alt"]')?.focus();
+  }
+  async function closeImageEditor(focusId: string) {
+    imageDraftAfter = imageEditing = null;
+    await tick();
+    document.querySelector<HTMLElement>(`[data-focus-key="body:${focusId}"]`)?.focus();
+  }
+  /** Save a new image paragraph after `after`, or an edited one (`id`): one history step; the refusal, in plain words, or null. */
+  async function saveImage(id: string | null, after: string, fields: ImageFields, file: AttachFile | null): Promise<string | null> {
+    let refusal: string | null = null;
+    await run(() => {
+      try {
+        if (id) setImage(repo, id, fields);
+        else if (file) id = addImageParagraph(repo, model!, { id: after, zone: "after" }, fields, file);
+        return id ? `body:${id}` : undefined;
+      } catch (e) {
+        refusal = imageRefusal(e);
+      }
+    });
+    if (!refusal) imageDraftAfter = imageEditing = null;
+    return refusal;
+  }
+
   const newParagraphAfter = (id: string): string =>
     `body:${addParagraph(repo, model!, { id, zone: "after" })}`;
 
@@ -1018,8 +1062,42 @@
         <BlockStack {items} source="essay" label="Essay paragraphs" candrop={essayDrop} ondrop={(p, t) => onDrop("essay", p, t)} onfiles={dropFiles}>
           {#snippet row(item, handle)}
             {@const p = model!.paragraphs[item.id]}
-            {#if p?.image}
-              <!-- Read-only here until srs-web#765 adds its controls; never a text Block (no body field). -->
+            {#if p?.image && imagesOn}
+              {@const image = p.image}
+              {@const bytes = image.documentId ? attachmentBytes(repo, image.documentId) : null}
+              {#snippet imageContent()}
+                {#if imageEditing === p.id}
+                  <ImageParagraphEditor id={`image-${p.id}`} initial={image} {bytes} {policy} attachedBytes={attached} onsave={(f) => saveImage(p.id, p.id, f, null)} oncancel={() => closeImageEditor(p.id)} />
+                {:else}
+                  <ImageParagraph alt={image.alt} caption={image.caption} size={image.size} align={image.align} {bytes} />
+                {/if}
+              {/snippet}
+              <!-- An image paragraph is one block (srs-web#765): no text body, so nothing to split. -->
+              <Block
+                id={p.id}
+                title={p.title}
+                hidden={hidden.has(p.id)}
+                inherited={inherited.has(p.id)}
+                {handle}
+                content={imageContent}
+                onedit={() => openImageEditor(p.id)}
+                onimage={() => openImageDraft(p.id)}
+                onzoom={() => setZoom(p.id)}
+                oncopylink={() => copyLink(p.id)}
+                onbody={() => {}}
+                ontitle={(v) => run(() => setTitle(repo, p.id, v))}
+                onhide={(h) => run(() => setHidden(repo, model!, p.id, h))}
+                onnew={() => run(() => newParagraphAfter(p.id))}
+                onindent={(d) => onKey(p.id, d === 1 ? "in" : "out")}
+                onmove={(dir) => onKey(p.id, dir)}
+                onnavigate={(dir) => navigate(p.id, dir)}
+                onpull={model!.draftContainerId
+                  ? () => onDrop("draft", { id: p.id, from: "essay" }, { id: null, zone: "after" })
+                  : undefined}
+                ondelete={() => toBin(p.id)}
+              />
+            {:else if p?.image}
+              <!-- Read-only while image paragraphs are off (srs-web#765, on in srs-web#766); never a text Block (no body field). -->
               <ImageParagraph alt={p.image.alt} caption={p.image.caption} size={p.image.size} align={p.image.align} bytes={p.image.documentId ? attachmentBytes(repo, p.image.documentId) : null} />
             {:else if p}
               {#snippet margin()}
@@ -1049,6 +1127,7 @@
                 oncopyagent={() => copyForAgent(p.id)}
                 onattach={(files) => attach(p.id, files)}
                 attachPolicy={policy}
+                onimage={imagesOn ? () => openImageDraft(p.id) : undefined}
                 onbody={(v) => run(() => setBody(repo, p.id, v))}
                 ontitle={(v) => run(() => setTitle(repo, p.id, v))}
                 onhide={(h) => run(() => setHidden(repo, model!, p.id, h))}
@@ -1065,6 +1144,9 @@
               {#if showThread(p.id)}
                 <CommentThread data-feature="essay.comments" {now} comments={model!.comments[p.id] ?? []} needsName={!hasActor} kinds={model!.canKind} onadd={(t, n, k) => comment(p.id, t, n, k)} onrespond={hasActor ? settle : undefined} onclose={() => closeThread(p.id)} />
               {/if}
+            {/if}
+            {#if imageDraftAfter === item.id}
+              <ImageParagraphEditor id="image-new" {policy} attachedBytes={attached} onsave={(f, file) => saveImage(null, item.id, f, file)} oncancel={() => closeImageEditor(item.id)} />
             {/if}
           {/snippet}
         </BlockStack>
