@@ -4,9 +4,10 @@
  * the defaults the schema does not carry, format sniffing, and the component: alt, caption, placeholder,
  * and only ever an <img> (decision 866167c1).
  */
-import { render } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, waitFor } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
 import ImageParagraph from "../src/lib/components/ImageParagraph.svelte";
+import ImageParagraphEditor from "../src/lib/components/ImageParagraphEditor.svelte";
 import { imageClasses, imageMime, toImage } from "../src/lib/essay/image-paragraph.js";
 
 const enc = (s: string) => new TextEncoder().encode(s);
@@ -86,5 +87,131 @@ describe("ImageParagraph", () => {
   it("has no caption element without a caption", () => {
     const { container } = render(ImageParagraph, { alt: "A", bytes: PNG });
     expect(container.querySelector("figcaption")).toBeNull();
+  });
+});
+
+describe("editing (srs-web#765)", () => {
+  it("is off unless this browser's flag is set", async () => {
+    const { imageParagraphsOn } = await import("../src/lib/essay/image-paragraph.js");
+    const store = new Map<string, string>();
+    vi.stubGlobal("localStorage", { getItem: (k: string) => store.get(k) ?? null });
+    expect(imageParagraphsOn()).toBe(false);
+    store.set("srs-web.flag.essay-images", "1");
+    expect(imageParagraphsOn()).toBe(true);
+    vi.stubGlobal("localStorage", undefined); // storage blocked: off
+    expect(imageParagraphsOn()).toBe(false);
+    vi.unstubAllGlobals();
+  });
+  it("writes alt text trimmed, no empty caption, and alignment only at original size", async () => {
+    const { imageFieldValues } = await import("../src/lib/essay/image-paragraph.js");
+    expect(
+      imageFieldValues({ alt: " A ", caption: "  ", size: "full-width", align: "left" })
+    ).toEqual({
+      alt_text: "A",
+      caption: undefined,
+      image_size: "full-width",
+      image_align: undefined,
+    });
+    expect(imageFieldValues({ alt: "A", caption: "C", size: "original", align: "right" })).toEqual({
+      alt_text: "A",
+      caption: "C",
+      image_size: "original",
+      image_align: "right",
+    });
+  });
+  it("says a refusal in plain words, by the error's code and never its message", async () => {
+    const { imageRefusal } = await import("../src/lib/essay/image-paragraph.js");
+    const err = (code: string) => Object.assign(new Error("svg-unsafe raw text"), { code });
+    expect(imageRefusal(err("svg-unsafe"))).toMatch(
+      /^This SVG contains a script or a link to another file/
+    );
+    expect(imageRefusal(err("invalid-input"))).toMatch(/its type or size/);
+    expect(imageRefusal(err("some-other-code"))).toBe("The image could not be saved.");
+    expect(imageRefusal(new Error("Upgrade it first"))).toBe("Upgrade it first");
+  });
+});
+
+describe("ImageParagraphEditor (srs-web#765)", () => {
+  const png = () => new File([PNG], "band.png", { type: "image/png" });
+  const choose = (container: HTMLElement, file: File) =>
+    fireEvent.drop(container.querySelector('[data-testid="image-drop"]')!, {
+      dataTransfer: { types: ["Files"], files: [file] },
+    });
+  it("adds nothing until there is an image and alt text, then saves both", async () => {
+    const onsave = vi.fn(async () => null);
+    const { container, getByTestId } = render(ImageParagraphEditor, {
+      id: "n",
+      onsave,
+      oncancel: vi.fn(),
+    });
+    const save = getByTestId("image-save") as HTMLButtonElement;
+    expect(save.textContent).toBe("Add image");
+    expect(save.disabled).toBe(true);
+    await fireEvent.input(getByTestId("image-alt"), { target: { value: "A band" } });
+    expect(save.disabled).toBe(true); // no image yet
+    await choose(container, png());
+    await waitFor(() => expect(save.disabled).toBe(false));
+    expect(getByTestId("image-drop").getAttribute("aria-label")).toBe(
+      "Image: band.png (choose another)"
+    );
+    expect(container.querySelector("figure img")?.getAttribute("alt")).toBe("A band"); // the preview
+    await fireEvent.submit(container.querySelector("form")!);
+    expect(onsave).toHaveBeenCalledWith(
+      { alt: "A band", caption: "", size: "full-width", align: "centre" },
+      expect.objectContaining({ name: "band.png", type: "image/png" })
+    );
+  });
+  it("refuses a file that is not an image in plain words, and shows the core's refusal", async () => {
+    const onsave = vi.fn(
+      async () => "This SVG contains a script or a link to another file, so it can't be used."
+    );
+    const { container, getByTestId, findByText } = render(ImageParagraphEditor, {
+      id: "r",
+      onsave,
+      oncancel: vi.fn(),
+    });
+    await choose(container, new File(["x"], "notes.txt", { type: "text/plain" }));
+    await findByText(/notes\.txt: not a PNG, JPEG, WebP or SVG image \(text\/plain\)/);
+    await choose(container, png());
+    await fireEvent.input(getByTestId("image-alt"), { target: { value: "A" } });
+    await fireEvent.submit(container.querySelector("form")!);
+    expect(
+      (await findByText(/This SVG contains a script/)).closest('[data-testid="image-refusal"]')
+    ).not.toBeNull();
+  });
+  it("edits without a new file; alignment only at original size; Escape cancels", async () => {
+    const onsave = vi.fn(async () => null);
+    const oncancel = vi.fn();
+    const full = { alt: "A", caption: "C", size: "full-width" as const, align: "centre" as const };
+    const first = render(ImageParagraphEditor, {
+      id: "f",
+      initial: full,
+      bytes: PNG,
+      onsave,
+      oncancel,
+    });
+    expect((first.getByTestId("image-align") as HTMLSelectElement).disabled).toBe(true);
+    first.unmount();
+    // (a select's change is not driven here: happy-dom has no :checked; Playwright covers it)
+    const initial = { ...full, size: "original" as const, align: "left" as const };
+    const { container, getByTestId } = render(ImageParagraphEditor, {
+      id: "e",
+      initial,
+      bytes: PNG,
+      onsave,
+      oncancel,
+    });
+    expect(container.querySelector('input[type="file"]')).toBeNull();
+    expect((getByTestId("image-align") as HTMLSelectElement).disabled).toBe(false);
+    await fireEvent.input(getByTestId("image-alt"), { target: { value: "" } });
+    expect((getByTestId("image-save") as HTMLButtonElement).disabled).toBe(true); // alt text is required
+    await fireEvent.input(getByTestId("image-alt"), { target: { value: "B" } });
+    await fireEvent.submit(container.querySelector("form")!);
+    expect(onsave).toHaveBeenCalledWith(
+      { alt: "B", caption: "C", size: "original", align: "left" },
+      null
+    );
+    await fireEvent.keyDown(getByTestId("image-caption"), { key: "Escape" });
+    expect(oncancel).toHaveBeenCalled();
   });
 });

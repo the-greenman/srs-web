@@ -11,6 +11,7 @@ import ArrowUp from "@lucide/svelte/icons/arrow-up";
 import Bot from "@lucide/svelte/icons/bot";
 import Eye from "@lucide/svelte/icons/eye";
 import EyeOff from "@lucide/svelte/icons/eye-off";
+import ImagePlus from "@lucide/svelte/icons/image-plus";
 import Link from "@lucide/svelte/icons/link";
 import ListIndentDecrease from "@lucide/svelte/icons/list-indent-decrease";
 import ListIndentIncrease from "@lucide/svelte/icons/list-indent-increase";
@@ -22,6 +23,10 @@ import Trash from "@lucide/svelte/icons/trash";
 
 export interface ParagraphHandlers {
   onnew?: () => void;
+  /** Add an image paragraph below (srs-web#765, behind its flag: the shell passes it only when on). */
+  onimage?: () => void;
+  /** Edit an image paragraph's image, alt text, caption and layout. */
+  onedit?: () => void;
   onmove?: (dir: "up" | "down") => void;
   onindent?: (delta: 1 | -1) => void;
   onhide?: (hidden: boolean) => void;
@@ -36,6 +41,8 @@ export interface ParagraphHandlers {
 
 export type ParagraphActionId =
   | "add"
+  | "image"
+  | "edit"
   | "up"
   | "down"
   | "indent"
@@ -72,6 +79,20 @@ export function paragraphActions(
       label: "Add paragraph below",
       icon: Plus,
       run: h.onnew,
+      enabled: true,
+    },
+    !!h.onimage && {
+      id: "image",
+      label: "Add image below",
+      icon: ImagePlus,
+      run: h.onimage,
+      enabled: true,
+    },
+    !!h.onedit && {
+      id: "edit",
+      label: "Edit image…",
+      icon: Pencil,
+      run: h.onedit,
       enabled: true,
     },
     !!h.onmove && {

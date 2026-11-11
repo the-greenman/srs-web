@@ -99,3 +99,30 @@ it("renders no image for a markdown image, and keeps the stored text (srs-web#76
   await fireEvent.blur(ed);
   expect(onbody).not.toHaveBeenCalled();
 });
+
+it("with `content` (an image paragraph, srs-web#765) is one block: Enter edits, arrows navigate, Alt+arrows move, Ctrl+Enter adds after", async () => {
+  const { createRawSnippet } = await import("svelte");
+  const content = createRawSnippet(() => ({
+    render: () => `<figure data-testid="fig"><input data-testid="inner" /></figure>`,
+  }));
+  const onedit = vi.fn();
+  const onnavigate = vi.fn();
+  const p = { ...props(""), content, onedit, onnavigate };
+  const { container, getByTestId } = render(Block, p);
+  expect(container.querySelector(".block__render, .block__body")).toBeNull(); // no text body
+  const slot = container.querySelector<HTMLElement>('[data-focus-key="body:b"]')!;
+  expect(slot.contains(getByTestId("fig"))).toBe(true);
+  await fireEvent.keyDown(slot, { key: "Enter" });
+  expect(onedit).toHaveBeenCalledOnce();
+  await fireEvent.keyDown(slot, { key: "ArrowDown" });
+  expect(onnavigate).toHaveBeenCalledWith("next");
+  await fireEvent.keyDown(slot, { key: "ArrowUp", altKey: true });
+  expect(p.onmove).toHaveBeenCalledWith("up");
+  await fireEvent.keyDown(slot, { key: "Enter", ctrlKey: true });
+  expect(p.onnew).toHaveBeenCalledOnce();
+  // keys typed in a control inside (the editor) are the control's own
+  await fireEvent.keyDown(getByTestId("inner"), { key: "Enter" });
+  await fireEvent.keyDown(getByTestId("inner"), { key: "ArrowDown" });
+  expect(onedit).toHaveBeenCalledOnce();
+  expect(onnavigate).toHaveBeenCalledOnce();
+});

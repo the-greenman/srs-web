@@ -64,3 +64,43 @@ describe("references budget and URLs (#519)", () => {
     expect(asUrls("   ")).toBeNull();
   });
 });
+
+describe("imagePolicy (srs-web#765, decision ca352740)", () => {
+  it("takes PNG, JPEG, WebP and SVG up to 1 MB, and says what a refused file is not", async () => {
+    const { imagePolicy, IMAGE_WHAT } = await import("../src/lib/components/attach-check.js");
+    const r = checkFiles(
+      [
+        f("a.png", "image/png"),
+        f("b.jpg", ""),
+        f("c.webp", "image/webp"),
+        f("d.svg", "image/svg+xml"),
+        f("e.gif", "image/gif"),
+        f("f.png", "image/png", MB + 1),
+        f("g.pdf", "application/pdf"),
+      ],
+      imagePolicy(undefined),
+      0,
+      IMAGE_WHAT
+    );
+    expect(r.accepted.map((x) => x.name)).toEqual(["a.png", "b.jpg", "c.webp", "d.svg"]);
+    expect(r.rejected.map((x) => x.reason)).toEqual([
+      "not a PNG, JPEG, WebP or SVG image (image/gif)",
+      "1 MB is over the 1 MB limit",
+      "not a PNG, JPEG, WebP or SVG image (application/pdf)",
+    ]);
+  });
+  it("keeps the repository's policy where it is stricter, never looser", async () => {
+    const { imagePolicy } = await import("../src/lib/components/attach-check.js");
+    expect(
+      imagePolicy({
+        allowedMimeTypes: ["image/png", "text/plain"],
+        maxPerFileBytes: 1000,
+        maxTotalBytes: 5000,
+      })
+    ).toEqual({ allowedMimeTypes: ["image/png"], maxPerFileBytes: 1000, maxTotalBytes: 5000 });
+    expect(imagePolicy({ maxPerFileBytes: 10 * MB })).toEqual({
+      allowedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/svg+xml"],
+      maxPerFileBytes: MB,
+    });
+  });
+});

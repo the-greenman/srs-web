@@ -46,3 +46,32 @@
 .image-paragraph--right .image-paragraph__caption {
   text-align: right;
 }
+/* The image paragraph in the writer's page (srs-web#765): one focusable block; Enter opens the editor. */
+.image-paragraph-slot {
+  border-radius: var(--radius-md);
+}
+.image-paragraph-slot:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+/* ImageParagraphEditor: the form in place of the image. */
+.image-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+.image-editor__layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+.image-editor__layout > * {
+  flex: 1 1 10rem;
+}
+.image-editor__actions {
+  display: flex;
+  gap: var(--space-xs);
+}
