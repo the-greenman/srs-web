@@ -14,7 +14,7 @@ import {
   listRelations,
 } from "$lib/srs-client.js";
 import type { SrsRepository } from "$lib/srs-client.js";
-import { PARAGRAPH_TYPE_ID } from "./type-registry.js";
+import { isParagraphType } from "./type-registry.js";
 
 const ARG = "com.mudemocracy.argument";
 export const WITHIN_BOUNDARY = `${ARG}/within-boundary`;
@@ -99,7 +99,7 @@ function essayParagraphs(repo: SrsRepository, essayId: string): Set<string> {
   const c = listContainers(repo, { anchorInstanceId: essayId })[0];
   if (c)
     for (const r of listRecords(repo, { containerId: c.containerId }))
-      if (r.typeId === PARAGRAPH_TYPE_ID) out.add(r.instanceId);
+      if (isParagraphType(r.typeId)) out.add(r.instanceId);
   return out;
 }
 

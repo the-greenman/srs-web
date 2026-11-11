@@ -15,6 +15,7 @@
   import AgentFeed from "$lib/components/AgentFeed.svelte";
   import Count from "$lib/components/Count.svelte";
   import EssayReader from "$lib/components/EssayReader.svelte";
+  import ImageParagraph from "$lib/components/ImageParagraph.svelte";
   import AgentPresence from "$lib/components/AgentPresence.svelte";
   import { verb } from "$lib/agent-activity.js";
   import { relativeTime } from "$lib/relative-time.js";
@@ -88,7 +89,7 @@
     setTitle,
     transfer,
   } from "./essay-document.js";
-  import { essayMarkdown, essayReading, essayReferences, essaySnapshot, essayWriteGuard } from "./essay-document.js";
+  import { attachmentBytes, essayMarkdown, essayReading, essayReferences, essaySnapshot, essayWriteGuard } from "./essay-document.js";
   import { downloadText, triggerDownload } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { browseEssays } from "./essay-browse.js";
@@ -440,7 +441,7 @@
   });
   const essayDrop = (drag: string, target: string) => outsideRun(model?.entries ?? [], drag, target);
   const draftDrop = (drag: string, target: string) => outsideRun(model?.draftEntries ?? [], drag, target);
-  const label = (id: string) => model?.paragraphs[id]?.title || model?.paragraphs[id]?.body.slice(0, 40) || "untitled";
+  const label = (id: string) => model?.paragraphs[id]?.title || model?.paragraphs[id]?.body.slice(0, 40) || model?.paragraphs[id]?.image?.alt || "untitled";
   const layers = $derived(
     visibleEntries(model?.entries ?? [], folded).map((e) => ({
       id: e.instanceId,
@@ -959,7 +960,7 @@
       {#if !readOnly}<Button variant="primary" onclick={createEssay}>New essay</Button>{/if}
     </div>
   {:else if readOnly}
-    <EssayReader reading={essayReading(model)} />
+    <EssayReader reading={essayReading(model)} imageBytes={(d) => attachmentBytes(repo, d)} />
   {:else}
       <!-- A file dropped past the paragraphs goes to the references pool, linked to nothing. -->
       <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -1017,7 +1018,10 @@
         <BlockStack {items} source="essay" label="Essay paragraphs" candrop={essayDrop} ondrop={(p, t) => onDrop("essay", p, t)} onfiles={dropFiles}>
           {#snippet row(item, handle)}
             {@const p = model!.paragraphs[item.id]}
-            {#if p}
+            {#if p?.image}
+              <!-- Read-only here until srs-web#765 adds its controls; never a text Block (no body field). -->
+              <ImageParagraph alt={p.image.alt} caption={p.image.caption} size={p.image.size} align={p.image.align} bytes={p.image.documentId ? attachmentBytes(repo, p.image.documentId) : null} />
+            {:else if p}
               {#snippet margin()}
                 <AnnotationMargin
                   annotations={annotationsFor(essaySource(model!), p.id)}

@@ -76,18 +76,24 @@ import { hiddenByAncestor, toggled } from "./essay-model.js";
 
 // The document foundation, re-exported where the essay shell and tests already import it from.
 export { type Target, moveEntry, shiftEntry, transfer } from "$lib/document.js";
+import { type ImageSpec, toImage } from "./image-paragraph.js";
 import {
   DOCUMENT_STATE_TYPE_ID,
   ESSAY_TYPE_ID,
+  IMAGE_PARAGRAPH_TYPE_ID,
   PARAGRAPH_TYPE_ID,
   QUOTATION_TYPE_ID,
   SOURCE_TYPE_ID,
+  isParagraphType,
 } from "./type-registry.js";
 
 export interface Paragraph {
   id: string;
   title: string;
+  /** Markdown; "" for an image paragraph. */
   body: string;
+  /** Present when this is an image paragraph (essay 1.11.0, srs-web#764). */
+  image?: ImageSpec;
 }
 export interface EssaySummary {
   id: string;
@@ -205,10 +211,11 @@ export function listEssays(repo: SrsRepository): EssaySummary[] {
   }));
 }
 
-const toParagraph = (r: SrsRecord): Paragraph => ({
+const toParagraph = (r: SrsRecord, documentId: string | null = null): Paragraph => ({
   id: r.instanceId,
   title: str(r.fieldValues.paragraph_title),
   body: str(r.fieldValues.body),
+  ...(r.typeId === IMAGE_PARAGRAPH_TYPE_ID ? { image: toImage(r, documentId) } : {}),
 });
 
 const toAttachment =
@@ -216,7 +223,7 @@ const toAttachment =
   (r: ContextRelation): Attachment | null => {
     const n = r.neighbour;
     if (!n || isCommentsOn(r.relationType)) return null; // comments have their own thread
-    if (n.kind === "record" && n.typeId === PARAGRAPH_TYPE_ID) return null; // shown as `related`, not an attachment
+    if (n.kind === "record" && isParagraphType(n.typeId)) return null; // shown as `related`, not an attachment
     const outgoing = r.direction === "out";
     const label = (outgoing ? r.targetLabel : r.sourceLabel) ?? "";
     const text =
@@ -240,7 +247,7 @@ const toAttachment =
 
 const toRelated = (r: ContextRelation): Related | null => {
   const n = r.neighbour;
-  if (n?.kind !== "record" || n.typeId !== PARAGRAPH_TYPE_ID) return null;
+  if (n?.kind !== "record" || !isParagraphType(n.typeId)) return null;
   const outgoing = r.direction === "out";
   return {
     id: r.relationId,
@@ -271,6 +278,24 @@ function attachedText(repo: SrsRepository, documentId: string, max?: number): st
   } catch {
     return "";
   }
+}
+const imageBytesCache = new WeakMap<object, Map<string, Uint8Array | null>>();
+/**
+ * An attached file's bytes; null when the core cannot read them back (none, a `.srsj` as loaded).
+ * Kept per repository handle and document id, so a reload hands an image the same bytes and its
+ * blob URL is not remade on every write.
+ */
+export function attachmentBytes(repo: SrsRepository, documentId: string): Uint8Array | null {
+  const cache = imageBytesCache.get(repo) ?? new Map<string, Uint8Array | null>();
+  imageBytesCache.set(repo, cache);
+  if (!cache.has(documentId)) {
+    try {
+      cache.set(documentId, getAttachmentBytes(repo, documentId));
+    } catch {
+      cache.set(documentId, null);
+    }
+  }
+  return cache.get(documentId) ?? null;
 }
 /** The whole text of the first file attached to `id` (a source reference); "" when none or unreadable. */
 export function referenceText(repo: SrsRepository, id: string): string {
@@ -446,11 +471,22 @@ export function loadEssay(
   const referencesContainerId = str(state?.fieldValues.references_container_id) || null;
   const entries = getContainerOutline(repo, containerId).body;
   const paragraphs: Record<string, Paragraph> = {};
+  const images: SrsRecord[] = [];
   for (const c of [containerId, draftContainerId, binContainerId]) {
     if (!c) continue;
     for (const r of listRecords(repo, { containerId: c })) {
       if (r.typeId === PARAGRAPH_TYPE_ID) paragraphs[r.instanceId] = toParagraph(r);
+      else if (r.typeId === IMAGE_PARAGRAPH_TYPE_ID) images.push(r);
     }
+  }
+  if (images.length) {
+    const doc = new Map(
+      resolveAttachments(
+        repo,
+        images.map((r) => r.instanceId)
+      ).records.map((r) => [r.instanceId, r.attachments[0]?.documentId ?? null])
+    );
+    for (const r of images) paragraphs[r.instanceId] = toParagraph(r, doc.get(r.instanceId));
   }
   const context = loadContext(repo, Object.keys(paragraphs));
   const comments = loadComments(repo, types);
@@ -1073,19 +1109,26 @@ export function essayMarkdown(repo: SrsRepository, m: EssayModel): string {
 export interface EssayReading {
   title: string;
   purpose: string | null;
-  paragraphs: { id: string; body: string }[];
+  /** A text paragraph has `body`; an image paragraph has `image` instead. */
+  paragraphs: (
+    | { id: string; body: string; image?: undefined }
+    | { id: string; image: ImageSpec }
+  )[];
 }
 
 /**
- * What a reader sees: the same paragraphs as `essayMarkdown`, in order, one by one. Empty paragraphs
- * are left out, and a paragraph's title stays editor metadata, as in the essay composition.
+ * What a reader sees: the same paragraphs as `essayMarkdown`, in order, one by one, and the image
+ * paragraphs in their place (srs-web#764). Empty text paragraphs are left out, and a paragraph's
+ * title stays editor metadata, as in the essay composition.
  */
 export function essayReading(m: EssayModel): EssayReading {
   const hidden = new Set(m.hidden);
   const inherited = hiddenByAncestor(m.entries, hidden);
-  const paragraphs = m.entries.flatMap(({ instanceId: id }) => {
-    const body = m.paragraphs[id]?.body;
-    return body?.trim() && !hidden.has(id) && !inherited.has(id) ? [{ id, body }] : [];
+  const paragraphs = m.entries.flatMap(({ instanceId: id }): EssayReading["paragraphs"] => {
+    const p = m.paragraphs[id];
+    if (!p || hidden.has(id) || inherited.has(id)) return [];
+    if (p.image) return [{ id, image: p.image }];
+    return p.body.trim() ? [{ id, body: p.body }] : [];
   });
   return { title: m.title, purpose: m.purpose, paragraphs };
 }

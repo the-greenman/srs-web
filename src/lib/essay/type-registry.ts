@@ -16,3 +16,11 @@ export const SOURCE_TYPE_ID = "36e85cff-989b-4c6d-9361-3c8906cff87b";
  * locator, warrant_level (all required), description.
  */
 export const QUOTATION_TYPE_ID = "00572b36-7e4f-4cc2-9de1-9eab16a496ef";
+/**
+ * `com.mudemocracy.essay/image_paragraph` (essay package 1.11.0, srs-web#764). Fields: paragraph_title,
+ * alt_text (required), caption, image_size (full-width | original), image_align (left | centre | right).
+ */
+export const IMAGE_PARAGRAPH_TYPE_ID = "34548fd0-cf12-4a64-b3ec-ee705470e137";
+/** The types an essay's paragraphs are: text paragraphs and image paragraphs. */
+export const isParagraphType = (typeId: string): boolean =>
+  typeId === PARAGRAPH_TYPE_ID || typeId === IMAGE_PARAGRAPH_TYPE_ID;
