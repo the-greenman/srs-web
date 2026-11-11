@@ -192,7 +192,9 @@ export function snapshotDocument(
   repo: SrsRepository,
   containers: string[],
   recordIds: string[] = [],
-  relationTypes: string[] = []
+  relationTypes: string[] = [],
+  /** Also hold each record's attached documents (`Held.attachments`). */
+  attachments = false
 ): DocumentSnapshot {
   const out: DocumentSnapshot["containers"] = {};
   const ids = new Set(recordIds);
@@ -210,7 +212,7 @@ export function snapshotDocument(
         fieldValues: clone(r.fieldValues),
       };
   }
-  holdAttachments(repo, records);
+  if (attachments) holdAttachments(repo, records);
   if (!relationTypes.length) return { containers: out, records };
   const relations: NonNullable<DocumentSnapshot["relations"]> = {};
   for (const id of Object.keys(records)) {
@@ -249,7 +251,11 @@ function restore(repo: SrsRepository, target: DocumentSnapshot, alias: Map<strin
       // A record cannot be recreated under its old id: it gets a new one, aliased for the rest of the history.
       alias.set(id, createRecord(repo, held.typeId, held.typeVersion, { fieldValues }).instanceId);
       for (const documentId of held.attachments ?? [])
-        linkAttachment(repo, { instanceId: res(id), documentId });
+        try {
+          linkAttachment(repo, { instanceId: res(id), documentId });
+        } catch {
+          /* the file is gone: the record comes back without it */
+        }
       for (const r of target.relations?.[id] ?? [])
         createRelation(repo, {
           relationType: r.relationType,

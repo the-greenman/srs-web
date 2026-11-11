@@ -587,8 +587,8 @@ export function addParagraph(repo: SrsRepository, m: EssayModel, t?: Target, bod
 
 /**
  * Add an image paragraph at `t` (srs-web#765): the file is attached first, so a refusal (the core's
- * `svg-unsafe`, the policy) writes nothing; then the record, its place and its `attaches` link. The
- * file goes under `essay-images/` with a unique name, its own name kept as the title. Returns its id.
+ * `svg-unsafe`, the policy, an essay with no image type) writes nothing; then the record, its place
+ * and its `attaches` link. The file goes under `essay-images/` with a unique name. Returns its id.
  */
 export function addImageParagraph(
   repo: SrsRepository,
@@ -597,24 +597,28 @@ export function addImageParagraph(
   fields: ImageFields,
   file: AttachFile
 ): string {
+  let version: number;
+  try {
+    version = typeVersion(repo, IMAGE_PARAGRAPH_TYPE_ID);
+  } catch {
+    throw new Error(
+      "This essay has no image paragraphs yet: upgrade it under Document > Packages…"
+    );
+  }
+  const fileName = `${crypto.randomUUID().slice(0, 8)}-${file.name}`;
   const { documentId } = addAttachment(
     repo,
     {
-      fileName: `${crypto.randomUUID().slice(0, 8)}-${file.name}`,
+      fileName,
       subdir: "essay-images",
-      title: file.name,
+      title: fileName,
       ...(file.type ? { contentType: file.type } : {}),
     },
     file.bytes
   );
-  const rec = createRecord(
-    repo,
-    IMAGE_PARAGRAPH_TYPE_ID,
-    typeVersion(repo, IMAGE_PARAGRAPH_TYPE_ID),
-    {
-      fieldValues: imageFieldValues(fields),
-    }
-  );
+  const rec = createRecord(repo, IMAGE_PARAGRAPH_TYPE_ID, version, {
+    fieldValues: imageFieldValues(fields),
+  });
   place(repo, m.containerId, rec.instanceId, t);
   linkAttachment(repo, { instanceId: rec.instanceId, documentId });
   return rec.instanceId;

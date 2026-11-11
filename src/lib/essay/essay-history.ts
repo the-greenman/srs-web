@@ -1,9 +1,10 @@
 /**
  * The writer's undo history for one essay, for the browser session (srs-web#570): the document
  * history (`$lib/document`) over the essay's own state, the outlines of its essay, draft and Bin
- * containers with the records in them, plus the essay and document-state records. An agent's
- * comments, attachments and relations are not in the snapshot, so the writer's Ctrl-Z never undoes
- * them (agents never write the essay text).
+ * containers with the records in them (and the files they attach: an image paragraph's image,
+ * srs-web#765), plus the essay and document-state records. An agent's comments, references and
+ * relations are not in the snapshot, so the writer's Ctrl-Z never undoes them (agents never write
+ * the essay text).
  */
 import { DocumentHistory, type DocumentSnapshot, snapshotDocument } from "$lib/document.js";
 import { getRecord } from "$lib/srs-client.js";
@@ -26,5 +27,11 @@ export function snapshotEssay(repo: SrsRepository, refs: EssayRefs): EssaySnapsh
     const id = state?.fieldValues?.[k];
     if (typeof id === "string" && id) areas.push(id);
   }
-  return snapshotDocument(repo, areas, [refs.essayId, ...(refs.stateId ? [refs.stateId] : [])]);
+  return snapshotDocument(
+    repo,
+    areas,
+    [refs.essayId, ...(refs.stateId ? [refs.stateId] : [])],
+    [],
+    true
+  );
 }

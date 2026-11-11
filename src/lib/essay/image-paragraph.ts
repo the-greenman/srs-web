@@ -95,5 +95,7 @@ export function imageRefusal(e: unknown): string {
     return "This SVG contains a script or a link to another file, so it can't be used. Export it again as a plain SVG.";
   if (code === "invalid-input")
     return "This image breaks the document's rules for attached files (its type or size), so it can't be used.";
-  return "The image could not be added. Nothing was changed.";
+  // An error of this editor's own (no code) is already in plain words.
+  if (code === undefined && e instanceof Error) return e.message;
+  return "The image could not be saved.";
 }

@@ -52,6 +52,7 @@
     onimage,
     onedit,
     content,
+    contentLabel,
     margin,
     count,
   }: {
@@ -88,6 +89,8 @@
     onedit?: () => void;
     /** Shown in place of the text body, as one block (an image paragraph). */
     content?: Snippet;
+    /** What `content` is, for its accessible name (e.g. the image's alt text). */
+    contentLabel?: string;
     /** The one right-margin slot: comment badge, attachment glyphs. */
     margin?: Snippet;
     /** Under the body (the essay passes a Count). */
@@ -267,7 +270,7 @@
       <p class="block__closed">{inherited && !hidden ? 'Hidden by parent' : 'Hidden paragraph'}</p>
     {:else if content}
       <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
-      <div class="image-paragraph-slot" role="group" tabindex="0" aria-label={`${shortLabel}${onedit ? '. Enter edits it.' : ''}`} data-focus-key={`body:${id}`} onkeydown={contentKeydown}>
+      <div class="image-paragraph-slot" role="group" tabindex="0" aria-label={`${contentLabel ?? shortLabel}${onedit ? '. Enter edits it.' : ''}`} data-focus-key={`body:${id}`} onkeydown={contentKeydown}>
         {@render content()}
       </div>
     {:else}

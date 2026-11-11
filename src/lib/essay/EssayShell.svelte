@@ -918,7 +918,7 @@
 <svelte:window
   onkeydown={(e) => {
     // Typing inside a paragraph keeps the browser's own text undo; the history takes over everywhere else.
-    if (!readOnly && (e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "z" && !(e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]:not([data-pristine])")) {
+    if (!readOnly && (e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "z" && !(e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]:not([data-pristine]), .image-editor")) {
       e.preventDefault();
       void stepHistory(e.shiftKey);
     }
@@ -1080,7 +1080,8 @@
                 inherited={inherited.has(p.id)}
                 {handle}
                 content={imageContent}
-                onedit={() => openImageEditor(p.id)}
+                contentLabel={`Image: ${image.alt || "no alt text"}`}
+                onedit={hidden.has(p.id) || inherited.has(p.id) ? undefined : () => openImageEditor(p.id)}
                 onimage={() => openImageDraft(p.id)}
                 onzoom={() => setZoom(p.id)}
                 oncopylink={() => copyLink(p.id)}

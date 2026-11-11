@@ -126,9 +126,8 @@ describe("editing (srs-web#765)", () => {
       /^This SVG contains a script or a link to another file/
     );
     expect(imageRefusal(err("invalid-input"))).toMatch(/its type or size/);
-    expect(imageRefusal(new Error("svg-unsafe"))).toBe(
-      "The image could not be added. Nothing was changed."
-    );
+    expect(imageRefusal(err("some-other-code"))).toBe("The image could not be saved.");
+    expect(imageRefusal(new Error("Upgrade it first"))).toBe("Upgrade it first");
   });
 });
 
