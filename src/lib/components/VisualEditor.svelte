@@ -76,7 +76,9 @@
       editor.view.dom.setAttribute('aria-multiline', 'true');
       editor.view.dom.setAttribute('data-placeholder', placeholder);
       if (focusKey) editor.view.dom.setAttribute('data-focus-key', focusKey);
-      editor.commands.focus('end');
+      // Take focus only if nothing else has it: the writer may have moved on while the chunk loaded.
+      const active = document.activeElement;
+      if (!active || active === document.body) editor.commands.focus('end');
       editor.on('blur', () => {
         flush();
         onblur();

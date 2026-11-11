@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 // Visual markdown, headless checks (srs-web#749). The core's renderMarkdown is WASM and is not
 // available under vitest, so `marked` stands in as the judge here (same CommonMark rules, bare URLs
-// as links like the core). The real-core run over the typed cases is the Playwright check in e2e.
+// as links like the core). The real-core run over the typed cases is visual-markdown.wasm.test.ts.
 import { describe, expect, it } from "vitest";
 import { marked } from "marked";
 import {
@@ -65,6 +65,45 @@ describe("check on saving", () => {
     expect(savesFaithfully(e, toMarkdown(e), checker, render)).toBe(true);
     // the editor says "bold a, bold+italic b, italic c"; markdown the core reads differently must not pass
     expect(savesFaithfully(e, "different text", checker, render)).toBe(false);
+    e.destroy();
+    checker.destroy();
+  });
+
+  // Typed text: the editor holds the plain text; the saved markdown must read back the same.
+  const typedDoc = (t: string) => ({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: t }] }] });
+  it.each(["1984. A year", "- x", "# x", "---", "snake_case", "a < b & c"])(
+    "passes typed text after the escape fix: %s",
+    (t) => {
+      const checker = makeEditor("");
+      const e = makeEditor("");
+      e.commands.setContent(typedDoc(t));
+      expect(savesFaithfully(e, toMarkdown(e), checker, render)).toBe(true);
+      e.destroy();
+      checker.destroy();
+    },
+  );
+
+  it.each([
+    ["1984. A year", "1984. A year"],
+    ["- x", "- x"],
+    ["# x", "# x"],
+  ])("catches typed %s saved without the escape", (t, unescaped) => {
+    const checker = makeEditor("");
+    const e = makeEditor("");
+    e.commands.setContent(typedDoc(t));
+    expect(savesFaithfully(e, unescaped, checker, render)).toBe(false);
+    e.destroy();
+    checker.destroy();
+  });
+
+  it("catches bold on (a) inside a word", () => {
+    const checker = makeEditor("");
+    const e = makeEditor("");
+    e.commands.setContent({
+      type: "doc",
+      content: [{ type: "paragraph", content: [{ type: "text", text: "x" }, { type: "text", text: "(a)", marks: [{ type: "bold" }] }, { type: "text", text: "y" }] }],
+    });
+    expect(savesFaithfully(e, toMarkdown(e), checker, render)).toBe(false);
     e.destroy();
     checker.destroy();
   });
