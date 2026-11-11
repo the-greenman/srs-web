@@ -5,8 +5,8 @@ import { expect, it, vi } from "vitest";
 
 // Stand-in for the core: escapes everything, so the XSS case proves Block never re-injects the source.
 vi.mock("../src/lib/srs-client.js", () => ({
-  renderMarkdown: (md: string) =>
-    `<p>${md
+  renderMarkdown: (md: string, images = true) =>
+    `<p>${(images ? md : md.replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1"))
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")}</p>`,
@@ -84,4 +84,18 @@ it("renders the one ellipsis action menu and a hover strip of the primary action
       (id) => `paragraph-menu-${id}`
     )
   );
+});
+
+it("renders no image for a markdown image, and keeps the stored text (srs-web#763)", async () => {
+  const body = "see ![the alt](https://x/y.png)";
+  const onbody = vi.fn();
+  const { container } = render(Block, props(body, onbody));
+  expect(container.querySelector("img")).toBeNull();
+  expect(container.querySelector(".block__render")?.textContent).toBe("see the alt");
+  await fireEvent.focus(container.querySelector(".block__render")!);
+  await tick();
+  const ed = container.querySelector<HTMLElement>(".block__body")!;
+  expect(ed.textContent).toBe(body);
+  await fireEvent.blur(ed);
+  expect(onbody).not.toHaveBeenCalled();
 });

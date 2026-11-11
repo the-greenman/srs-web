@@ -586,11 +586,12 @@ export async function initWasm(): Promise<void> {
 
 /**
  * Markdown to sanitized HTML (srs-rust#1192): the core escapes raw HTML and restricts link/image
- * URLs, so the result is safe for `{@html}`. Repository-independent free function.
+ * URLs, so the result is safe for `{@html}`. Repository-independent free function. `images: false`
+ * (srs-rust#1616) renders an image as its alt text (srs-web#763).
  */
-export function renderMarkdown(md: string): string {
+export function renderMarkdown(md: string, images = true): string {
   requireWasm();
-  return wasm(() => wasmFree.renderMarkdown(md));
+  return wasm(() => wasmFree.renderMarkdown(md, images));
 }
 
 /** Parse an ext:registry catalog; the core owns the format. */

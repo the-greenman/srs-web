@@ -250,6 +250,7 @@
         base="block"
         label={`Paragraph text: ${shortLabel}`}
         focusKey={`body:${id}`}
+        images={false}
         oncommit={onbody}
         onkeydown={bodyKeydown}
       />

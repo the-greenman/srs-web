@@ -15,5 +15,10 @@ describe.skipIf(!haveBindings)("renderMarkdown on the real engine", () => {
     mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
     expect(mod.renderMarkdown("**a**")).toContain("<strong>a</strong>");
     expect(mod.renderMarkdown("<img src=x onerror=alert(1)>")).not.toContain("<img");
+    // srs-rust#1616: images off renders the alt text, never an <img>
+    expect(mod.renderMarkdown("![the alt](https://example.com/x.png)")).toContain("<img");
+    const off = mod.renderMarkdown("![the alt](https://example.com/x.png)", false);
+    expect(off).not.toContain("<img");
+    expect(off).toContain("the alt");
   });
 });

@@ -43,6 +43,24 @@ test("typing alone marks the document unsaved after the commit debounce (srs-web
   await expect(bodies(page).first()).toBeFocused();
 });
 
+test("a markdown image in a paragraph shows its alt text, never an <img>; the stored text is kept (srs-web#763)", async ({
+  page,
+}) => {
+  await open(page);
+  const md = "Before ![the alt](https://example.com/x.png) after";
+  await bodies(page).first().click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.type(md);
+  await bodies(page).last().click(); // blur: flush and render
+  const first = page.locator(".essay-shell__page .block__render").first();
+  await expect(first).toContainText("the alt");
+  await expect(page.locator(".essay-shell__page img")).toHaveCount(0);
+  await first.click(); // open it as source: the text is intact
+  await expect(page.locator(".essay-shell__page .block__body").first()).toHaveText(md);
+  await bodies(page).last().click(); // leave again
+  await expect(page.locator(".essay-shell__page img")).toHaveCount(0);
+});
+
 test("paragraphs render markdown until focused; click shows the source (srs-web#365)", async ({
   page,
 }) => {

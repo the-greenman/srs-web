@@ -11,9 +11,10 @@
   let {
     value,
     mark = '',
+    images = true,
     class: klass = '',
     ...rest
-  }: { value: string; mark?: string; class?: string } & HTMLAttributes<HTMLDivElement> = $props();
+  }: { value: string; mark?: string; images?: boolean; class?: string } & HTMLAttributes<HTMLDivElement> = $props();
   let root = $state<HTMLElement>();
 
   /** Highlight `words` in the rendered text: each text-node piece of the first match gets a <mark> (srs-web#525). */
@@ -52,4 +53,4 @@
   });
 </script>
 
-<div bind:this={root} class={`md-view ${klass}`} {...rest}>{@html renderMarkdown(value)}</div>
+<div bind:this={root} class={`md-view ${klass}`} {...rest}>{@html renderMarkdown(value, images)}</div>

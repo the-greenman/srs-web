@@ -17,6 +17,7 @@
     label,
     placeholder = 'Write…',
     focusKey,
+    images = true,
     oncommit,
     onkeydown,
   }: {
@@ -26,6 +27,8 @@
     label: string;
     placeholder?: string;
     focusKey?: string;
+    /** False renders a markdown image as its alt text (essay paragraphs, srs-web#763). */
+    images?: boolean;
     oncommit: (value: string) => void;
     onkeydown?: (e: KeyboardEvent, api: { flush: () => void; replace: (v: string) => void; el?: HTMLElement; rendered: boolean }) => void;
   } = $props();
@@ -36,7 +39,7 @@
   let committed = '';
   /** Nothing typed since editing began: the essay history, not the browser, owns Ctrl-Z here. */
   let typed = $state(false);
-  const html = $derived(value ? renderMarkdown(value) : '');
+  const html = $derived(value ? renderMarkdown(value, images) : '');
 
   /** Source offset of the point the writer clicked, taken on pointerdown (focus enters edit before click fires). */
   let clickedAt: number | null = null;
