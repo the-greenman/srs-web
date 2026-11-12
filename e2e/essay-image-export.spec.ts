@@ -82,7 +82,9 @@ test("Copy as HTML puts each image on the clipboard with its alt text, caption a
       return html;
     })
     .toContain("<figure");
-  expect(html).not.toContain("<svg"); // images only through <img> (D6)
+  // images only through <img> (D6): every SVG, the hostile one too, is an <img> data URL, never markup
+  expect(html).not.toMatch(/<svg|<script|<object|<iframe/i);
+  expect(html).toMatch(/<img src="data:image\/svg\+xml;base64,[^"]+" alt="A hostile drawing"/);
   expect(html).toContain("<em>A picture that was never attached</em>"); // no file: its alt text
 
   // The pasted HTML, laid out at the reading view's width, places every image the same way.
