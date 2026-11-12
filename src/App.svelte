@@ -149,6 +149,8 @@
   /** Git Save dialog (branch choice + install hint) state. */
   let gitSaveOpen = $state(false);
   let gitSaveError = $state<string | null>(null);
+  /** The commit message an agent asked to save with (ui_request_save); cleared when the dialog closes. */
+  let gitSaveMessage = $state("");
   let saveToOpen = $state(false);
   let saveToError = $state<string | null>(null);
 
@@ -539,6 +541,14 @@
       if (!availableToInstall.some((p) => p.packageId === packageId)) return { requested: false, reason: "That is not a published package this document can install: read ui_packages." };
       lastRequest = { packageId, outcome: "asking" };
       void reviewInstall(packageId, true);
+      return { requested: true };
+    },
+    requestSave(message) {
+      if (!repo || readOnlyHost || !activeDocument?.capabilities.write || !isGitBranchAware(activeDocument))
+        return { requested: false, reason: "This document isn't saved to GitHub, or can't be changed here: ask the writer to save it." };
+      if (saving || gitSaveOpen) return { requested: false, reason: "The writer is already saving." };
+      gitSaveMessage = message ?? "";
+      void handleSave();
       return { requested: true };
     },
   };
@@ -1345,6 +1355,7 @@
         );
       } else saveToast(...savedMessage(saveIsCurrent));
       gitSaveOpen = false;
+      gitSaveMessage = "";
     } catch (e: unknown) {
       // Keep the dialog open so the install hint stays visible on a permission error.
       if ((e as { code?: string } | null)?.code !== "cancelled") gitSaveError = saveErrorMessage(e);
@@ -1748,10 +1759,12 @@
     installUrl={githubInstallUrl}
     busy={saving}
     error={gitSaveError}
+    initialMessage={gitSaveMessage}
     onSave={confirmGitSave}
     onCancel={() => {
       gitSaveOpen = false;
       gitSaveError = null;
+      gitSaveMessage = "";
     }}
   />
 {/if}
