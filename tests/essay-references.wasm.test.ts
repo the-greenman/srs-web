@@ -186,6 +186,49 @@ describe.skipIf(!haveBindings)("references pool on the real engine", () => {
     expect(report.diagnostics.filter((d: { severity: string }) => d.severity === "error")).toEqual([]);
   });
 
+  it("notes list what was derived from each, and loading reads relations once, not per note or paragraph (srs-web#805)", async () => {
+    const doc = await import("../src/lib/essay/essay-document.js");
+    const client = await import("../src/lib/srs-client.js");
+    const mod = await engine();
+    let repo = mod.SrsRepository.load(fixture());
+    const essay = doc.listEssays(repo)[0].id;
+    let m = doc.loadEssay(repo, essay, { repair: true });
+    for (let i = 0; i < 3; i++) doc.addParagraph(repo, doc.loadEssay(repo, essay));
+    // Notes arrive from agents (note_create), which the bindings lack: put two into the tree.
+    const tree = client.exportTree(repo);
+    const note = (id: string) =>
+      new TextEncoder().encode(JSON.stringify({ instanceId: id, title: id, tags: [], sections: [{ name: "body", content: "said" }] }));
+    const [n1, n2] = ["0b5e0805-0000-4000-8000-000000000001", "0b5e0805-0000-4000-8000-000000000002"];
+    tree[`records/notes/${n1}.json`] = note(n1);
+    tree[`records/notes/${n2}.json`] = note(n2);
+    repo = mod.SrsRepository.load_tree(tree);
+    m = doc.loadEssay(repo, essay);
+    client.addContainerMember(repo, m.notesContainerId as string, n1);
+    client.addContainerMember(repo, m.notesContainerId as string, n2);
+    const p = m.entries.find((e) => e.instanceId !== essay)?.instanceId as string;
+    client.createRelation(repo, { relationType: "derived-from", sourceInstanceId: p, targetInstanceId: n1 });
+
+    const calls: string[] = [];
+    const counted = new Proxy(repo, {
+      get(t, k) {
+        const v = t[k];
+        if (typeof v !== "function") return v;
+        return (...a: unknown[]) => {
+          calls.push(String(k));
+          return v.apply(t, a);
+        };
+      },
+    });
+    m = doc.loadEssay(counted, essay);
+    expect(m.notes.map((n) => [n.id, n.produced.map((x) => x.id)])).toEqual([[n1, [p]], [n2, []]]);
+    expect(calls.filter((c) => c === "containers_for_instance")).toEqual([]);
+    const relationReads = calls.filter((c) => c === "list_relations").length;
+    doc.addParagraph(repo, m);
+    calls.length = 0;
+    doc.loadEssay(counted, essay);
+    expect(calls.filter((c) => c === "list_relations").length).toBe(relationReads);
+  });
+
   it("references already held don't crowd a match out of the search, whichever one is missing (srs-web#754)", async () => {
     const doc = await import("../src/lib/essay/essay-document.js");
     const repo = (await engine()).SrsRepository.load(fixture());

@@ -31,7 +31,6 @@ import { respond } from "$lib/link-proposals.js";
 import {
   addAttachment,
   addContainerMember,
-  containersForInstance,
   contextRecord,
   copyContainer,
   createContainer,
@@ -367,8 +366,8 @@ function loadContext(repo: SrsRepository, ids: string[]): ParagraphContext {
 const sharedCache = new WeakMap<object, { key: string; value: Record<string, EssaySummary[]> }>();
 
 /**
- * Which other documents hold each paragraph: the engine's reverse membership lookup
- * (`containers_for_instance`), restricted to the essays' own containers and named by essay title.
+ * Which other essays hold each paragraph: each other essay's container outline, matched against
+ * this essay's paragraph ids and named by essay title.
  */
 function loadSharedIn(
   repo: SrsRepository,
@@ -388,13 +387,16 @@ function loadSharedIn(
         title: str(r.fieldValues.title) || "Untitled essay",
       });
   }
+  // One outline per other essay (~0.1 ms), not one reverse lookup per paragraph (~9 ms on muSrs, srs-web#805).
   const out: Record<string, EssaySummary[]> = {};
-  for (const id of ids) {
-    const others = containersForInstance(repo, id)
-      .filter((c) => !own.includes(c.containerId))
-      .map((c) => byContainer.get(c.containerId))
-      .filter((e): e is EssaySummary => !!e);
-    if (others.length) out[id] = others;
+  const wanted = new Set(ids);
+  for (const [containerId, essay] of byContainer) {
+    if (own.includes(containerId)) continue;
+    for (const e of getContainerOutline(repo, containerId).entries) {
+      if (!wanted.has(e.instanceId)) continue;
+      const held = out[e.instanceId] ?? [];
+      if (!held.includes(essay)) out[e.instanceId] = [...held, essay];
+    }
   }
   sharedCache.set(repo, { key, value: out });
   return out;
@@ -702,12 +704,20 @@ const existingContainer = (repo: SrsRepository, id: string): string | null => {
 /** The notes in a container, in its order, each with the records derived from it. Read-only: notes are written by agents and chats. */
 function loadNotes(repo: SrsRepository, containerId: string): EssayNote[] {
   const out: EssayNote[] = [];
+  // One relation read for all notes, not one per note (~9 ms each on muSrs, srs-web#805).
+  const derivedFrom = new Map<string, string[]>();
+  for (const r of listRelations(repo, { relationType: "derived-from" }))
+    derivedFrom.set(r.targetInstanceId, [
+      ...(derivedFrom.get(r.targetInstanceId) ?? []),
+      r.sourceInstanceId,
+    ]);
   for (const e of getContainerOutline(repo, containerId).entries) {
     const n = getNote(repo, e.instanceId);
     if (!n) continue;
-    const produced = listRelations(repo, { relationType: "derived-from", target: n.instanceId })
-      .map((r) => r.sourceInstanceId)
-      .map((id) => ({ id, label: getRecord(repo, id)?.displayLabel || id }));
+    const produced = (derivedFrom.get(n.instanceId) ?? []).map((id) => ({
+      id,
+      label: getRecord(repo, id)?.displayLabel || id,
+    }));
     out.push({
       id: n.instanceId,
       title: n.title || n.instanceId,
