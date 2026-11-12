@@ -49,7 +49,7 @@ describe.skipIf(!haveBindings)("upgrade an editor's outdated package on the real
     const e0 = repo.write_epoch();
     const [plan] = upgradeBundles(repo, ids, { dryRun: true });
     expect(plan.dryRun).toBe(true);
-    expect([plan.previousVersion, plan.version]).toEqual(["1.2.0", "1.12.0"]);
+    expect([plan.previousVersion, plan.version]).toEqual(["1.2.0", "1.13.0"]);
     expect(plan.dependencyWarnings).toEqual(["Also installs comments 1.1.0, which it needs."]);
     expect(plan.added.length + plan.newVersions.length + plan.updated.length).toBeGreaterThan(0);
     expect(repo.write_epoch()).toBe(e0);

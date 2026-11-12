@@ -8,10 +8,10 @@
     "feature_id": "essay.images",
     "placement": "ui",
     "title": "Images",
-    "summary": "An image goes in its own paragraph. Open a paragraph's menu and choose **Add image below**, then pick or drop a PNG, JPEG, WebP or SVG of up to 1 MB. **Alt text** is required: it says what the image shows, for someone who can't see it, and it stands in for the image in a text-only copy of the essay. A **caption** is optional and shows under the image. Choose **Full width** to fill the column, or **Original size** to keep the image's own size, placed left, centre or right. Text never wraps around an image. To change one, open its menu and choose **Edit image…**: there you can replace the file or remove it, and Ctrl+Z undoes either. An SVG that contains a script or links to another file is refused, because it could run code or track readers: export it again as a plain SVG. A markdown image (`![](…)`) typed into an ordinary paragraph doesn't show: use an image paragraph instead."
+    "summary": "An image goes in its own paragraph. Open a paragraph's menu and choose **Add image below**, then pick or drop a PNG, JPEG, WebP or SVG of up to 1 MB. **Alt text** is required: it says what the image shows, for someone who can't see it. **Copy as HTML** takes the images with it. A **caption** is optional and shows under the image. Choose **Full width** to fill the column, or **Original size** to keep the image's own size, placed left, centre or right. Text never wraps around an image. To change one, open its menu and choose **Edit image…**: there you can replace the file or remove it, and Ctrl+Z undoes either. An SVG that contains a script or links to another file is refused, because it could run code or track readers: export it again as a plain SVG. A markdown image (`![](…)`) typed into an ordinary paragraph doesn't show: use an image paragraph instead."
   },
   "createdAt": "2026-11-12T18:22:04.447280170+00:00",
-  "updatedAt": "2026-11-12T18:22:04.447287952+00:00",
+  "updatedAt": "2026-11-12T18:51:07.774576632+00:00",
   "createdBy": {
     "kind": "ai",
     "id": "agent:claude-code",
