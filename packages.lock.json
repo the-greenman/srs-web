@@ -28,10 +28,10 @@
   {
     "packageId": "5b14a4d4-ec08-4e5b-be75-c183aec90c40",
     "name": "essay",
-    "version": "1.11.0",
+    "version": "1.12.0",
     "description": "Write an essay: paragraphs, sources, quotations and problems.",
-    "url": "https://github.com/the-greenman/srs-web/releases/download/packages-essay-1.11.0/essay.srspkg",
-    "sha256": "ee30d2d0625c1ae3a8c7baeac32c1a095faa85810bb7c1faf54f9ca52fc821b6",
+    "url": "https://github.com/the-greenman/srs-web/releases/download/packages-essay-1.12.0/essay.srspkg",
+    "sha256": "cf386fad904e307829ca4836c98e5d2cf93bc2a335168f3e35bf53f9b4c9d195",
     "history": [
       {
         "version": "1.5.0",
@@ -62,6 +62,11 @@
         "version": "1.9.0",
         "url": "https://github.com/the-greenman/srs-web/releases/download/packages-essay-1.9.0/essay.srspkg",
         "sha256": "e7afc1747d9f8b3d0c3157ac4a4b06b13a3127957f44d6a8b449b0ead55988af"
+      },
+      {
+        "version": "1.11.0",
+        "url": "https://github.com/the-greenman/srs-web/releases/download/packages-essay-1.11.0/essay.srspkg",
+        "sha256": "ee30d2d0625c1ae3a8c7baeac32c1a095faa85810bb7c1faf54f9ca52fc821b6"
       }
     ]
   },

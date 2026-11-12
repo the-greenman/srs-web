@@ -27,7 +27,7 @@ describe("pinned package bundles", () => {
       expect(
         priorBundleEntries(packageId).map((e) => e.version),
         packageId
-      ).toEqual(history.map((h) => h.version).sort());
+      ).toEqual(history.map((h) => h.version).sort((a, b) => a.localeCompare(b, "en", { numeric: true })));
       const pinned = PINNED.find((p) => p.packageId === packageId)!.version;
       for (const h of history)
         expect(h.version, `${packageId} history must be older than the pin`).not.toBe(pinned);
