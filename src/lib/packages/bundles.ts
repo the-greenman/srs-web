@@ -22,6 +22,6 @@ export function priorBundleEntries(packageId: string): { version: string; text: 
   const prefix = `./${packageId}@`;
   return Object.keys(BUNDLES)
     .filter((k) => k.startsWith(prefix))
-    .sort()
+    .sort((a, b) => a.localeCompare(b, "en", { numeric: true })) // 1.5.0 before 1.11.0
     .map((k) => ({ version: k.slice(prefix.length, -".srspkg".length), text: BUNDLES[k] }));
 }

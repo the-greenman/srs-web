@@ -24,6 +24,7 @@ import {
   moveContainerMemberRelative,
   removeContainerMember,
   resolveAttachments,
+  unlinkAttachment,
   updateRecord,
 } from "./srs-client.js";
 import type { OutlineEntry, OutlineShift, SrsRepository } from "./srs-client.js";
@@ -168,7 +169,7 @@ interface Held {
   typeId: string;
   typeVersion: number;
   fieldValues: unknown;
-  /** The documents it `attaches` (an image paragraph's image, srs-web#765), linked again when it is recreated. */
+  /** The documents it `attaches` (an image paragraph's image, srs-web#765): linked again when it is recreated, and relinked on undo of a replace or remove (srs-web#791). */
   attachments?: string[];
 }
 
@@ -232,17 +233,51 @@ function holdAttachments(repo: SrsRepository, records: DocumentSnapshot["records
   const ids = Object.keys(records);
   if (!ids.length) return;
   try {
-    for (const r of resolveAttachments(repo, ids).records) {
-      const docs = r.attachments.map((a) => a.documentId);
-      if (docs.length && records[r.instanceId]) records[r.instanceId].attachments = docs;
-    }
+    const found = new Map(
+      resolveAttachments(repo, ids).records.map((r) => [
+        r.instanceId,
+        r.attachments.map((a) => a.documentId),
+      ])
+    );
+    // Every held record says what it attaches, none included, so undo can take a link away again.
+    for (const id of ids) records[id].attachments = found.get(id) ?? [];
   } catch {
     /* no attachment resolution here: records are held without them */
   }
 }
 
-/** Write `target` back over the current state; the id of a recreated record is recorded in `alias`. */
-function restore(repo: SrsRepository, target: DocumentSnapshot, alias: Map<string, string>): void {
+/**
+ * Undo or redo a step's change to a record's links (an image replaced or removed, srs-web#791): only
+ * the documents that differ between the step's two snapshots are unlinked or linked, so a file
+ * someone else attached meanwhile (an agent) is never touched.
+ */
+function relink(repo: SrsRepository, instanceId: string, want: string[], had: string[]): void {
+  for (const documentId of had)
+    if (!want.includes(documentId))
+      try {
+        unlinkAttachment(repo, { instanceId, documentId });
+      } catch {
+        /* already gone */
+      }
+  for (const documentId of want)
+    if (!had.includes(documentId))
+      try {
+        linkAttachment(repo, { instanceId, documentId });
+      } catch {
+        /* the file is gone: the record stays without it */
+      }
+}
+
+/**
+ * Write `target` back over the current state; the id of a recreated record is recorded in `alias`.
+ * `from` is the step's other snapshot: links are changed only where the two differ.
+ */
+function restore(
+  repo: SrsRepository,
+  target: DocumentSnapshot,
+  alias: Map<string, string>,
+  from: DocumentSnapshot
+): void {
   const res = (id: string) => alias.get(id) ?? id;
   for (const [id, held] of Object.entries(target.records)) {
     const cur = getRecord(repo, res(id));
@@ -262,8 +297,11 @@ function restore(repo: SrsRepository, target: DocumentSnapshot, alias: Map<strin
           sourceInstanceId: res(id),
           targetInstanceId: res(r.targetInstanceId),
         });
-    } else if (!same(cur.fieldValues, held.fieldValues)) {
-      updateRecord(repo, res(id), { fieldValues });
+    } else {
+      if (!same(cur.fieldValues, held.fieldValues)) updateRecord(repo, res(id), { fieldValues });
+      const had = from.records[id]?.attachments;
+      if (held.attachments && had && !same(held.attachments, had))
+        relink(repo, res(id), held.attachments, had);
     }
   }
   const dropped: string[] = [];
@@ -345,7 +383,7 @@ export class DocumentHistory {
   undo(repo: SrsRepository): boolean {
     const step = this.undos.at(-1);
     if (!step) return false;
-    restore(repo, step.before, this.alias);
+    restore(repo, step.before, this.alias, step.after);
     this.undos.pop();
     this.redos.push(step);
     return true;
@@ -354,7 +392,7 @@ export class DocumentHistory {
   redo(repo: SrsRepository): boolean {
     const step = this.redos.at(-1);
     if (!step) return false;
-    restore(repo, step.after, this.alias);
+    restore(repo, step.after, this.alias, step.before);
     this.redos.pop();
     this.undos.push(step);
     return true;

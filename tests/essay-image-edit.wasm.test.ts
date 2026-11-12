@@ -2,7 +2,8 @@
 /**
  * Adding and editing essay image paragraphs on the REAL engine (srs-web#765): the attach, record,
  * place and link as one write; the core's `svg-unsafe` refusal writes nothing and reads in plain
- * words; undo and redo of the add bring the image back with the paragraph.
+ * words; undo and redo of the add bring the image back with the paragraph. Replacing and removing
+ * the image keep the paragraph's id, and undo and redo restore the link (srs-web#791).
  */
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -131,5 +132,88 @@ describe.skipIf(!haveBindings)("essay image paragraph editing on the real engine
     expect(back.image?.alt).toBe("A black bar");
     expect(back.image?.documentId).not.toBeNull();
     expect(repo.validate().summary.errors).toBe(0);
+  });
+  const PNG = new Uint8Array([
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d, 0x49, 0x48, 0x44, 0x52, 0, 0, 0,
+    1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 0x1f, 0x15, 0xc4, 0x89,
+  ]);
+
+  it("replaces and removes an image: the paragraph keeps its id, undo and redo restore each step", async () => {
+    const { doc, img, repo, load, history, edit } = await setup();
+    let id = "";
+    edit(() => {
+      id = doc.addImageParagraph(repo, load(), undefined, fields, {
+        name: "bar.svg",
+        type: "image/svg+xml",
+        bytes: SVG,
+      });
+    });
+    const first = load().paragraphs[id].image!.documentId!;
+    const mime = () => {
+      const d = load().paragraphs[id]?.image?.documentId;
+      return d ? img.imageMime(doc.attachmentBytes(repo, d)!) : null;
+    };
+
+    edit(() =>
+      doc.replaceImage(repo, id, first, { name: "dot.png", type: "image/png", bytes: PNG })
+    );
+    expect(load().paragraphs[id]).toBeDefined(); // same id
+    const second = load().paragraphs[id].image!.documentId!;
+    expect(second).not.toBe(first);
+    expect(mime()).toBe("image/png");
+
+    edit(() => doc.removeImage(repo, id, second));
+    expect(load().paragraphs[id].image?.documentId ?? null).toBeNull();
+    expect(load().paragraphs[id].image?.alt).toBe("A black bar");
+    expect(repo.validate().summary.errors).toBe(0);
+
+    expect(history.undo(repo)).toBe(true); // the remove
+    expect(load().paragraphs[id].image!.documentId).toBe(second);
+    expect(history.undo(repo)).toBe(true); // the replace
+    expect(load().paragraphs[id].image!.documentId).toBe(first);
+    expect(mime()).toBe("image/svg+xml");
+    expect(history.redo(repo)).toBe(true);
+    expect(load().paragraphs[id].image!.documentId).toBe(second);
+    expect(history.redo(repo)).toBe(true);
+    expect(load().paragraphs[id].image?.documentId ?? null).toBeNull();
+    expect(repo.validate().summary.errors).toBe(0);
+  });
+
+  it("a refused replacement writes nothing: the old image stays linked", async () => {
+    const { doc, repo, load } = await setup();
+    const id = doc.addImageParagraph(repo, load(), undefined, fields, {
+      name: "bar.svg",
+      type: "image/svg+xml",
+      bytes: SVG,
+    });
+    const first = load().paragraphs[id].image!.documentId!;
+    expect(() =>
+      doc.replaceImage(repo, id, first, { name: "bad.svg", type: "image/svg+xml", bytes: HOSTILE })
+    ).toThrow();
+    expect(load().paragraphs[id].image!.documentId).toBe(first);
+  });
+  it("undo leaves alone a file someone else attached in between (srs-web#791 review)", async () => {
+    const { doc, repo, load, history, edit } = await setup();
+    const first = load().entries[0].instanceId;
+    let id = "";
+    id = doc.addImageParagraph(repo, load(), undefined, fields, {
+      name: "bar.svg",
+      type: "image/svg+xml",
+      bytes: SVG,
+    });
+    edit(() => doc.setImage(repo, id, { ...fields, caption: "x" }));
+    // an agent attaches a file to the text paragraph after the step
+    const { documentId } = repo.add_attachment(
+      JSON.stringify({ fileName: "agent.md", contentType: "text/markdown" }),
+      new TextEncoder().encode("note")
+    );
+    repo.link_attachment(JSON.stringify({ instanceId: first, documentId }));
+    expect(history.undo(repo)).toBe(true);
+    const still = JSON.parse(
+      JSON.stringify(repo.resolve_composition_attachments(JSON.stringify({ instanceIds: [first] })))
+    ).records.flatMap((r: { attachments: { documentId: string }[] }) =>
+      r.attachments.map((a) => a.documentId)
+    );
+    expect(still).toContain(documentId);
   });
 });

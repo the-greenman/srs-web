@@ -2,8 +2,9 @@
   ImageParagraphEditor — add or edit one essay image paragraph (srs-web#765): the image by picker or
   drop (AttachDrop, kind="image"), alt text (required: nothing is saved without it), an optional
   plain-text caption, the size and, at original size only, the alignment (decisions b2b5c488, 72bcd83e).
-  A preview shows the result as the reader will see it. `onsave` returns the refusal to show (plain
-  words) or null; Escape or Cancel leaves without writing. Presentation only: the shell writes.
+  A preview shows the result as the reader will see it. When editing, a new file replaces the image
+  on Save and Remove image takes it out (srs-web#791). `onsave` and `onremove` return the refusal to
+  show (plain words) or null; Escape or Cancel leaves without writing. Presentation only: the shell writes.
   Wraps .image-editor (image-paragraph.css).
 -->
 <script lang="ts">
@@ -25,6 +26,7 @@
     policy,
     attachedBytes = 0,
     onsave,
+    onremove,
     oncancel,
   }: {
     /** Unique per editor, for the controls' ids. */
@@ -37,6 +39,8 @@
     policy?: AttachPolicy;
     attachedBytes?: number;
     onsave: (fields: ImageFields, file: AttachFile | null) => Promise<string | null>;
+    /** Editing an image paragraph that has an image: take the image out. */
+    onremove?: () => Promise<string | null>;
     oncancel: () => void;
   } = $props();
 
@@ -57,6 +61,12 @@
     if (!ready) return;
     busy = true;
     refusal = await onsave({ alt, caption, size, align }, file);
+    busy = false;
+  }
+  async function remove() {
+    if (!onremove) return;
+    busy = true;
+    refusal = await onremove();
     busy = false;
   }
   function choose(files: AttachFile[]) {
@@ -82,17 +92,19 @@
   {#if shown}
     <ImageParagraph alt={alt.trim() || 'Image preview'} caption={caption.trim()} {size} {align} bytes={shown} />
   {/if}
-  {#if needsFile}
-    <AttachDrop
-      kind="image"
-      label={file ? `Image: ${file.name} (choose another)` : 'Choose an image'}
-      policy={imagePolicy(policy)}
-      {attachedBytes}
-      busy={busy}
-      onfiles={choose}
-      data-testid="image-drop"
-    />
-  {/if}
+  <AttachDrop
+    kind="image"
+    label={file
+      ? `Image: ${file.name} (choose another)`
+      : bytes
+        ? 'Replace image'
+        : 'Choose an image'}
+    policy={imagePolicy(policy)}
+    {attachedBytes}
+    busy={busy}
+    onfiles={choose}
+    data-testid="image-drop"
+  />
   <Field label="Alt text" required id={`${id}-alt`} help="What the image shows, for someone who can't see it.">
     <Input id={`${id}-alt`} bind:value={alt} required autocomplete="off" data-testid="image-alt" />
   </Field>
@@ -128,6 +140,9 @@
   {#if refusal}<Notice kind="warning" data-testid="image-refusal">{refusal}</Notice>{/if}
   <div class="image-editor__actions">
     <Button type="submit" variant="primary" disabled={!ready} data-testid="image-save">{needsFile ? 'Add image' : 'Save'}</Button>
+    {#if onremove && !file}
+      <Button type="button" variant="ghost" disabled={busy} onclick={remove} data-testid="image-remove">Remove image</Button>
+    {/if}
     <Button type="button" variant="ghost" onclick={oncancel} data-testid="image-cancel">Cancel</Button>
   </div>
 </form>

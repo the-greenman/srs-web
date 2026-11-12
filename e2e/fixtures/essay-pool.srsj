@@ -1153,90 +1153,116 @@
       "version": 1
     },
     "package/vocabularies/source-kind-62de1a6e.json": {
-      "createdAt": "2026-09-08T14:36:22Z",
-      "description": "What kind of source material a problem statement or evidence record was drawn from. Open because new kinds of source material will keep turning up.",
       "id": "62de1a6e-3524-449a-ae9c-399768a598cb",
-      "mode": "closed",
-      "name": "source-kind",
+      "version": 3,
       "namespace": "com.mudemocracy.argument",
+      "name": "source-kind",
+      "mode": "closed",
       "terms": [
         {
-          "description": "Handwritten cards, photographed.",
           "id": "51dcef81-ceb2-44b9-9045-bc367978adbd",
+          "version": 1,
+          "namespace": "com.mudemocracy.argument",
           "key": "cards",
           "label": "Cards",
-          "namespace": "com.mudemocracy.argument",
-          "version": 1
+          "description": "Handwritten cards, photographed."
         },
         {
-          "description": "A dictated account.",
           "id": "e2281c3c-ab99-4a7d-aa10-fcb45865d5d1",
+          "version": 1,
+          "namespace": "com.mudemocracy.argument",
           "key": "dictation",
           "label": "Dictation",
-          "namespace": "com.mudemocracy.argument",
-          "version": 1
+          "description": "A dictated account."
         },
         {
-          "description": "A recorded conversation.",
           "id": "59d4689a-2d02-4762-8368-cab776a224d6",
+          "version": 1,
+          "namespace": "com.mudemocracy.argument",
           "key": "conversation",
           "label": "Conversation",
-          "namespace": "com.mudemocracy.argument",
-          "version": 1
+          "description": "A recorded conversation."
         },
         {
-          "description": "A written essay or article.",
           "id": "ff06e6b1-9899-41eb-a4b1-42700bca7f67",
+          "version": 1,
+          "namespace": "com.mudemocracy.argument",
           "key": "essay",
           "label": "Essay",
-          "namespace": "com.mudemocracy.argument",
-          "version": 1
+          "description": "A written essay or article."
         },
         {
-          "description": "A research or reference document.",
           "id": "4d2518b1-6449-4459-a7d0-f5055940fc96",
+          "version": 1,
+          "namespace": "com.mudemocracy.argument",
           "key": "document",
           "label": "Document",
-          "namespace": "com.mudemocracy.argument",
-          "version": 1
+          "description": "A research or reference document."
         },
         {
-          "description": "A transcript of spoken material.",
           "id": "069fe35d-6883-489a-a9ff-c29135a7244c",
+          "version": 1,
+          "namespace": "com.mudemocracy.argument",
           "key": "transcript",
           "label": "Transcript",
-          "namespace": "com.mudemocracy.argument",
-          "version": 1
+          "description": "A transcript of spoken material."
         },
         {
-          "createdAt": "2026-09-11T12:19:32.117285433+00:00",
-          "description": "An account from someone practising a remedy in a real group. The channel through which remedies are evidenced or challenged.",
           "id": "8dbfa8e5-6b2e-4a5b-a631-3a31b6ce8fb3",
+          "version": 1,
+          "namespace": "com.mudemocracy.argument",
           "key": "report",
           "label": "Report from use",
-          "namespace": "com.mudemocracy.argument",
-          "version": 1
+          "description": "An account from someone practising a remedy in a real group. The channel through which remedies are evidenced or challenged.",
+          "createdAt": "2026-09-11T12:19:32.117285433+00:00"
         },
         {
-          "createdAt": "2026-09-11T12:19:32.127139145+00:00",
-          "description": "A published book or standing body of written practice.",
           "id": "02038dc0-9b7e-4eeb-8f32-c8ffccaf1f1c",
+          "version": 1,
+          "namespace": "com.mudemocracy.argument",
           "key": "book",
           "label": "Book",
-          "namespace": "com.mudemocracy.argument",
-          "version": 1
+          "description": "A published book or standing body of written practice.",
+          "createdAt": "2026-09-11T12:19:32.127139145+00:00"
         },
         {
-          "createdAt": "2026-09-11T12:19:32.137915419+00:00",
-          "description": "A page or document published online and cited by URL.",
           "id": "da99c49a-f16f-4002-885a-9e38cc3d0d68",
+          "version": 1,
+          "namespace": "com.mudemocracy.argument",
           "key": "web",
           "label": "Web",
+          "description": "A page or document published online and cited by URL.",
+          "createdAt": "2026-09-11T12:19:32.137915419+00:00"
+        },
+        {
+          "id": "52d67dc6-c18c-485f-b4b5-311a734905dc",
+          "version": 1,
           "namespace": "com.mudemocracy.argument",
-          "version": 1
+          "key": "dataset",
+          "label": "Dataset",
+          "description": "A dataset or data table the project calculated from. Its level is computed: as strong as the dataset and the method, no stronger."
+        },
+        {
+          "id": "4e133b53-7ea6-44cb-92bd-f51b9ca31421",
+          "version": 1,
+          "namespace": "com.mudemocracy.argument",
+          "key": "paper",
+          "label": "Paper",
+          "description": "A journal article, working paper or conference paper.",
+          "createdAt": "2026-11-10T14:09:40.044837255+00:00"
+        },
+        {
+          "id": "421a7053-cb4b-4da8-ad31-69ddd2750fea",
+          "version": 1,
+          "namespace": "com.mudemocracy.argument",
+          "key": "context",
+          "label": "Context",
+          "description": "What the essay answers, such as a funding call or a brief: read for the task, not cited as evidence.",
+          "createdAt": "2026-11-12T17:30:00Z"
         }
       ],
-      "version": 1
+      "description": "What kind of source material a problem statement or evidence record was drawn from. Open because new kinds of source material will keep turning up.",
+      "createdAt": "2026-09-08T14:36:22Z"
     },
     "package/vocabularies/warrant-level-cf5ca321.json": {
       "createdAt": "2026-09-21T15:55:28Z",

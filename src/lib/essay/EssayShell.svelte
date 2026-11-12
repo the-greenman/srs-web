@@ -89,6 +89,8 @@
     removeReference,
     repoBytes,
     setHidden,
+    removeImage,
+    replaceImage,
     setImage,
     setTitle,
     transfer,
@@ -759,19 +761,40 @@
     await tick();
     document.querySelector<HTMLElement>(`[data-focus-key="body:${focusId}"]`)?.focus();
   }
-  /** Save a new image paragraph after `after`, or an edited one (`id`): one history step; the refusal, in plain words, or null. */
+  /**
+   * Save a new image paragraph after `after`, or an edited one (`id`, its image replaced when `file`
+   * is given, srs-web#791): one history step; the refusal, in plain words, or null.
+   */
   async function saveImage(id: string | null, after: string, fields: ImageFields, file: AttachFile | null): Promise<string | null> {
     let refusal: string | null = null;
     await run(() => {
       try {
-        if (id) setImage(repo, id, fields);
-        else if (file) id = addImageParagraph(repo, model!, { id: after, zone: "after" }, fields, file);
+        if (id) {
+          // The file first: a refused image leaves the alt text and layout unwritten too.
+          if (file) replaceImage(repo, id, model!.paragraphs[id]?.image?.documentId ?? null, file);
+          setImage(repo, id, fields);
+        } else if (file) id = addImageParagraph(repo, model!, { id: after, zone: "after" }, fields, file);
         return id ? `body:${id}` : undefined;
       } catch (e) {
         refusal = imageRefusal(e);
       }
     });
     if (!refusal) imageDraftAfter = imageEditing = null;
+    return refusal;
+  }
+
+  /** Take the image out of an image paragraph (srs-web#791): one history step; it keeps its id and shows its alt text. */
+  async function removeParagraphImage(id: string, documentId: string): Promise<string | null> {
+    let refusal: string | null = null;
+    await run(() => {
+      try {
+        removeImage(repo, id, documentId);
+        return `body:${id}`;
+      } catch (e) {
+        refusal = imageRefusal(e);
+      }
+    });
+    if (!refusal) imageEditing = null;
     return refusal;
   }
 
@@ -1067,7 +1090,7 @@
               {@const bytes = image.documentId ? attachmentBytes(repo, image.documentId) : null}
               {#snippet imageContent()}
                 {#if imageEditing === p.id}
-                  <ImageParagraphEditor id={`image-${p.id}`} initial={image} {bytes} {policy} attachedBytes={attached} onsave={(f) => saveImage(p.id, p.id, f, null)} oncancel={() => closeImageEditor(p.id)} />
+                  <ImageParagraphEditor id={`image-${p.id}`} initial={image} {bytes} {policy} attachedBytes={attached} onsave={(f, file) => saveImage(p.id, p.id, f, file)} onremove={image.documentId ? () => removeParagraphImage(p.id, image.documentId!) : undefined} oncancel={() => closeImageEditor(p.id)} />
                 {:else}
                   <ImageParagraph alt={image.alt} caption={image.caption} size={image.size} align={image.align} {bytes} />
                 {/if}
