@@ -236,6 +236,8 @@ export interface SrsRepository {
   add_attachment(input_json: string, file_bytes: Uint8Array): any;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in linkAttachment()
   link_attachment(input_json: string): any;
+  // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in unlinkAttachment()
+  unlink_attachment(input_json: string): any;
   get_attachment_bytes(document_id: string): Uint8Array;
   // biome-ignore lint/suspicious/noExplicitAny: WASM returns `any`; wrapped in resolveAttachments()
   resolve_composition_attachments(input_json: string): any;
@@ -530,6 +532,12 @@ export interface AddAttachmentResult {
 export interface LinkAttachmentInput {
   instanceId: string;
   documentId: string;
+}
+
+export interface UnlinkAttachmentResult {
+  instanceId: string;
+  documentId: string;
+  refsRemoved: number;
 }
 
 export interface LinkAttachmentResult {
@@ -2544,6 +2552,17 @@ export function linkAttachment(
   input: LinkAttachmentInput
 ): LinkAttachmentResult {
   return repo.link_attachment(JSON.stringify(input)) as LinkAttachmentResult;
+}
+
+/**
+ * Remove a record's `attaches` link to a document; the file stays (srs-rust#776).
+ * ADR-001: the core edits `sourceRefs`; the record keeps its id.
+ */
+export function unlinkAttachment(
+  repo: SrsRepository,
+  input: LinkAttachmentInput
+): UnlinkAttachmentResult {
+  return repo.unlink_attachment(JSON.stringify(input)) as UnlinkAttachmentResult;
 }
 
 /**

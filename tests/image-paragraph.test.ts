@@ -194,14 +194,19 @@ describe("ImageParagraphEditor (srs-web#765)", () => {
     first.unmount();
     // (a select's change is not driven here: happy-dom has no :checked; Playwright covers it)
     const initial = { ...full, size: "original" as const, align: "left" as const };
+    const onremove = vi.fn(async () => null);
     const { container, getByTestId } = render(ImageParagraphEditor, {
       id: "e",
       initial,
       bytes: PNG,
       onsave,
+      onremove,
       oncancel,
     });
-    expect(container.querySelector('input[type="file"]')).toBeNull();
+    // srs-web#791: editing offers a replacement file and Remove image; Save without a file keeps the image
+    expect(getByTestId("image-drop").textContent).toContain("Replace image");
+    await fireEvent.click(getByTestId("image-remove"));
+    expect(onremove).toHaveBeenCalledOnce();
     expect((getByTestId("image-align") as HTMLSelectElement).disabled).toBe(false);
     await fireEvent.input(getByTestId("image-alt"), { target: { value: "" } });
     expect((getByTestId("image-save") as HTMLButtonElement).disabled).toBe(true); // alt text is required

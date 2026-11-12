@@ -59,6 +59,7 @@ import {
   renderDocumentView,
   resolveAttachments,
   typeSchema,
+  unlinkAttachment,
   updateContainer,
   updateRecord,
 } from "$lib/srs-client.js";
@@ -605,8 +606,19 @@ export function addImageParagraph(
       "This essay has no image paragraphs yet: upgrade it under Document > Packages…"
     );
   }
+  const documentId = attachImage(repo, file);
+  const rec = createRecord(repo, IMAGE_PARAGRAPH_TYPE_ID, version, {
+    fieldValues: imageFieldValues(fields),
+  });
+  place(repo, m.containerId, rec.instanceId, t);
+  linkAttachment(repo, { instanceId: rec.instanceId, documentId });
+  return rec.instanceId;
+}
+
+/** Store an image file under `essay-images/` with a unique name; the core refuses it (svg-unsafe, policy) before anything is written. */
+function attachImage(repo: SrsRepository, file: AttachFile): string {
   const fileName = `${crypto.randomUUID().slice(0, 8)}-${file.name}`;
-  const { documentId } = addAttachment(
+  return addAttachment(
     repo,
     {
       fileName,
@@ -615,14 +627,29 @@ export function addImageParagraph(
       ...(file.type ? { contentType: file.type } : {}),
     },
     file.bytes
-  );
-  const rec = createRecord(repo, IMAGE_PARAGRAPH_TYPE_ID, version, {
-    fieldValues: imageFieldValues(fields),
-  });
-  place(repo, m.containerId, rec.instanceId, t);
-  linkAttachment(repo, { instanceId: rec.instanceId, documentId });
-  return rec.instanceId;
+  ).documentId;
 }
+
+/**
+ * Swap an image paragraph's image (srs-web#791): attach the new file first (a refusal writes
+ * nothing), then unlink the old document and link the new one. The paragraph keeps its id; the old
+ * file stays in the repository, so undo can link it again.
+ */
+export function replaceImage(
+  repo: SrsRepository,
+  id: string,
+  oldDocumentId: string | null,
+  file: AttachFile
+): void {
+  const documentId = attachImage(repo, file);
+  if (oldDocumentId) unlinkAttachment(repo, { instanceId: id, documentId: oldDocumentId });
+  linkAttachment(repo, { instanceId: id, documentId });
+}
+
+/** Take the image out of an image paragraph (srs-web#791): it keeps its id and shows its alt text. */
+export const removeImage = (repo: SrsRepository, id: string, documentId: string): void => {
+  unlinkAttachment(repo, { instanceId: id, documentId });
+};
 
 /** Write an image paragraph's alt text, caption and layout. */
 export const setImage = (repo: SrsRepository, id: string, fields: ImageFields): void =>

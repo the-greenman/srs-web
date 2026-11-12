@@ -24,6 +24,7 @@ import {
   moveContainerMemberRelative,
   removeContainerMember,
   resolveAttachments,
+  unlinkAttachment,
   updateRecord,
 } from "./srs-client.js";
 import type { OutlineEntry, OutlineShift, SrsRepository } from "./srs-client.js";
@@ -168,7 +169,7 @@ interface Held {
   typeId: string;
   typeVersion: number;
   fieldValues: unknown;
-  /** The documents it `attaches` (an image paragraph's image, srs-web#765), linked again when it is recreated. */
+  /** The documents it `attaches` (an image paragraph's image, srs-web#765): linked again when it is recreated, and relinked on undo of a replace or remove (srs-web#791). */
   attachments?: string[];
 }
 
@@ -232,13 +233,38 @@ function holdAttachments(repo: SrsRepository, records: DocumentSnapshot["records
   const ids = Object.keys(records);
   if (!ids.length) return;
   try {
-    for (const r of resolveAttachments(repo, ids).records) {
-      const docs = r.attachments.map((a) => a.documentId);
-      if (docs.length && records[r.instanceId]) records[r.instanceId].attachments = docs;
-    }
+    const found = new Map(
+      resolveAttachments(repo, ids).records.map((r) => [
+        r.instanceId,
+        r.attachments.map((a) => a.documentId),
+      ])
+    );
+    // Every held record says what it attaches, none included, so undo can take a link away again.
+    for (const id of ids) records[id].attachments = found.get(id) ?? [];
   } catch {
     /* no attachment resolution here: records are held without them */
   }
+}
+
+/** Make a record attach exactly `want` (an image replaced or removed, srs-web#791): unlink the rest, link the missing. */
+function relink(repo: SrsRepository, instanceId: string, want: string[]): void {
+  let have: string[];
+  try {
+    have = resolveAttachments(repo, [instanceId]).records.flatMap((r) =>
+      r.attachments.map((a) => a.documentId)
+    );
+  } catch {
+    return; // no attachment resolution here: links are left as they are
+  }
+  for (const documentId of have)
+    if (!want.includes(documentId)) unlinkAttachment(repo, { instanceId, documentId });
+  for (const documentId of want)
+    if (!have.includes(documentId))
+      try {
+        linkAttachment(repo, { instanceId, documentId });
+      } catch {
+        /* the file is gone: the record stays without it */
+      }
 }
 
 /** Write `target` back over the current state; the id of a recreated record is recorded in `alias`. */
@@ -262,8 +288,9 @@ function restore(repo: SrsRepository, target: DocumentSnapshot, alias: Map<strin
           sourceInstanceId: res(id),
           targetInstanceId: res(r.targetInstanceId),
         });
-    } else if (!same(cur.fieldValues, held.fieldValues)) {
-      updateRecord(repo, res(id), { fieldValues });
+    } else {
+      if (!same(cur.fieldValues, held.fieldValues)) updateRecord(repo, res(id), { fieldValues });
+      if (held.attachments) relink(repo, res(id), held.attachments);
     }
   }
   const dropped: string[] = [];

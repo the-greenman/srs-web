@@ -6,7 +6,7 @@ import type { Page } from "@playwright/test";
 /**
  * essay-image-edit.spec.ts — srs-web#765: adding and editing an essay image paragraph, behind its flag
  * (`srs-web.flag.essay-images`, off until srs-web#766). Fixture: essay-images.srs (srs-web#764): a text
- * paragraph, then seven image paragraphs.
+ * paragraph, then seven image paragraphs. Replace and remove: srs-web#791.
  */
 const ESSAY = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -137,6 +137,62 @@ test("refusals read in plain words, and nothing is written", async ({ page }) =>
   await expect(figures(page)).toHaveCount(7);
 });
 
+test("replaces an image by mouse and removes it by keyboard; the paragraph stays, undo restores each", async ({
+  page,
+}) => {
+  await open(page, true);
+  const second = items(page).nth(1);
+  const img = second.locator("figure img");
+  await expect(img).toBeVisible();
+  const alt = await img.getAttribute("alt");
+  const src = await img.getAttribute("src");
+
+  // mouse: open the editor, choose a new file, Save
+  await second.getByTestId("paragraph-menu").click();
+  await page.getByRole("menuitem", { name: "Edit image…" }).click();
+  await expect(editor(page).getByTestId("image-drop")).toHaveAccessibleName("Replace image");
+  await editor(page)
+    .locator('input[type="file"]')
+    .setInputFiles({ name: "dots.png", mimeType: "image/png", buffer: PNG });
+  await expect(editor(page).getByTestId("image-remove")).toHaveCount(0); // a new file is chosen
+  await editor(page).getByTestId("image-save").click();
+  await expect(editor(page)).toHaveCount(0);
+  await expect(img).not.toHaveAttribute("src", src!);
+  await expect(img).toHaveAttribute("alt", alt!);
+  await expect(figures(page)).toHaveCount(7);
+
+  // keyboard: Enter opens the editor, Tab to Remove image, Enter
+  const slot = second.locator(".image-paragraph-slot");
+  await slot.focus();
+  await page.keyboard.press("Enter");
+  await expect(editor(page).getByTestId("image-alt")).toBeFocused();
+  const remove = editor(page).getByTestId("image-remove");
+  for (let i = 0; i < 12; i++) {
+    if (await remove.evaluate((el) => el === document.activeElement)) break;
+    await page.keyboard.press("Tab");
+  }
+  await expect(remove).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(editor(page)).toHaveCount(0);
+  await expect(img).toHaveCount(0);
+  await expect(second.locator('[data-part="placeholder"]')).toHaveText(alt!);
+  await expect(items(page)).toHaveCount(8); // the paragraph stays
+
+  // undo the remove, then the replace; redo both
+  await page
+    .locator(".essay-shell__page h1, .essay-shell__page")
+    .first()
+    .click({ position: { x: 2, y: 2 } });
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(img).toBeVisible();
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(img).toBeVisible();
+  await page.keyboard.press("ControlOrMeta+Shift+z");
+  await page.keyboard.press("ControlOrMeta+Shift+z");
+  await expect(img).toHaveCount(0);
+  await expect(second.locator('[data-part="placeholder"]')).toHaveText(alt!);
+});
+
 test.describe("touch", () => {
   test.use({ hasTouch: true });
   test("edits an image paragraph from its menu by tapping", async ({ page }) => {
@@ -147,5 +203,23 @@ test.describe("touch", () => {
     await editor(page).getByTestId("image-caption").fill("Tapped caption");
     await editor(page).getByTestId("image-save").tap();
     await expect(second.locator("figcaption")).toHaveText("Tapped caption");
+  });
+  test("replaces and removes an image by tapping", async ({ page }) => {
+    await open(page, true);
+    const second = items(page).nth(1);
+    const img = second.locator("figure img");
+    const src = await img.getAttribute("src");
+    await second.getByTestId("paragraph-menu").tap();
+    await page.getByRole("menuitem", { name: "Edit image…" }).tap();
+    await editor(page)
+      .locator('input[type="file"]')
+      .setInputFiles({ name: "dots.png", mimeType: "image/png", buffer: PNG });
+    await editor(page).getByTestId("image-save").tap();
+    await expect(img).not.toHaveAttribute("src", src!);
+    await second.getByTestId("paragraph-menu").tap();
+    await page.getByRole("menuitem", { name: "Edit image…" }).tap();
+    await editor(page).getByTestId("image-remove").tap();
+    await expect(img).toHaveCount(0);
+    await expect(items(page)).toHaveCount(8);
   });
 });
