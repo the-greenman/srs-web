@@ -246,20 +246,21 @@ function holdAttachments(repo: SrsRepository, records: DocumentSnapshot["records
   }
 }
 
-/** Make a record attach exactly `want` (an image replaced or removed, srs-web#791): unlink the rest, link the missing. */
-function relink(repo: SrsRepository, instanceId: string, want: string[]): void {
-  let have: string[];
-  try {
-    have = resolveAttachments(repo, [instanceId]).records.flatMap((r) =>
-      r.attachments.map((a) => a.documentId)
-    );
-  } catch {
-    return; // no attachment resolution here: links are left as they are
-  }
-  for (const documentId of have)
-    if (!want.includes(documentId)) unlinkAttachment(repo, { instanceId, documentId });
+/**
+ * Undo or redo a step's change to a record's links (an image replaced or removed, srs-web#791): only
+ * the documents that differ between the step's two snapshots are unlinked or linked, so a file
+ * someone else attached meanwhile (an agent) is never touched.
+ */
+function relink(repo: SrsRepository, instanceId: string, want: string[], had: string[]): void {
+  for (const documentId of had)
+    if (!want.includes(documentId))
+      try {
+        unlinkAttachment(repo, { instanceId, documentId });
+      } catch {
+        /* already gone */
+      }
   for (const documentId of want)
-    if (!have.includes(documentId))
+    if (!had.includes(documentId))
       try {
         linkAttachment(repo, { instanceId, documentId });
       } catch {
@@ -267,8 +268,16 @@ function relink(repo: SrsRepository, instanceId: string, want: string[]): void {
       }
 }
 
-/** Write `target` back over the current state; the id of a recreated record is recorded in `alias`. */
-function restore(repo: SrsRepository, target: DocumentSnapshot, alias: Map<string, string>): void {
+/**
+ * Write `target` back over the current state; the id of a recreated record is recorded in `alias`.
+ * `from` is the step's other snapshot: links are changed only where the two differ.
+ */
+function restore(
+  repo: SrsRepository,
+  target: DocumentSnapshot,
+  alias: Map<string, string>,
+  from: DocumentSnapshot
+): void {
   const res = (id: string) => alias.get(id) ?? id;
   for (const [id, held] of Object.entries(target.records)) {
     const cur = getRecord(repo, res(id));
@@ -290,7 +299,9 @@ function restore(repo: SrsRepository, target: DocumentSnapshot, alias: Map<strin
         });
     } else {
       if (!same(cur.fieldValues, held.fieldValues)) updateRecord(repo, res(id), { fieldValues });
-      if (held.attachments) relink(repo, res(id), held.attachments);
+      const had = from.records[id]?.attachments;
+      if (held.attachments && had && !same(held.attachments, had))
+        relink(repo, res(id), held.attachments, had);
     }
   }
   const dropped: string[] = [];
@@ -372,7 +383,7 @@ export class DocumentHistory {
   undo(repo: SrsRepository): boolean {
     const step = this.undos.at(-1);
     if (!step) return false;
-    restore(repo, step.before, this.alias);
+    restore(repo, step.before, this.alias, step.after);
     this.undos.pop();
     this.redos.push(step);
     return true;
@@ -381,7 +392,7 @@ export class DocumentHistory {
   redo(repo: SrsRepository): boolean {
     const step = this.redos.at(-1);
     if (!step) return false;
-    restore(repo, step.after, this.alias);
+    restore(repo, step.after, this.alias, step.before);
     this.redos.pop();
     this.undos.push(step);
     return true;

@@ -134,8 +134,8 @@ describe.skipIf(!haveBindings)("essay image paragraph editing on the real engine
     expect(repo.validate().summary.errors).toBe(0);
   });
   const PNG = new Uint8Array([
-    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d, 0x49, 0x48, 0x44, 0x52, 0, 0, 0, 1,
-    0, 0, 0, 1, 8, 6, 0, 0, 0, 0x1f, 0x15, 0xc4, 0x89,
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d, 0x49, 0x48, 0x44, 0x52, 0, 0, 0,
+    1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 0x1f, 0x15, 0xc4, 0x89,
   ]);
 
   it("replaces and removes an image: the paragraph keeps its id, undo and redo restore each step", async () => {
@@ -154,7 +154,9 @@ describe.skipIf(!haveBindings)("essay image paragraph editing on the real engine
       return d ? img.imageMime(doc.attachmentBytes(repo, d)!) : null;
     };
 
-    edit(() => doc.replaceImage(repo, id, first, { name: "dot.png", type: "image/png", bytes: PNG }));
+    edit(() =>
+      doc.replaceImage(repo, id, first, { name: "dot.png", type: "image/png", bytes: PNG })
+    );
     expect(load().paragraphs[id]).toBeDefined(); // same id
     const second = load().paragraphs[id].image!.documentId!;
     expect(second).not.toBe(first);
@@ -189,5 +191,29 @@ describe.skipIf(!haveBindings)("essay image paragraph editing on the real engine
       doc.replaceImage(repo, id, first, { name: "bad.svg", type: "image/svg+xml", bytes: HOSTILE })
     ).toThrow();
     expect(load().paragraphs[id].image!.documentId).toBe(first);
+  });
+  it("undo leaves alone a file someone else attached in between (srs-web#791 review)", async () => {
+    const { doc, repo, load, history, edit } = await setup();
+    const first = load().entries[0].instanceId;
+    let id = "";
+    id = doc.addImageParagraph(repo, load(), undefined, fields, {
+      name: "bar.svg",
+      type: "image/svg+xml",
+      bytes: SVG,
+    });
+    edit(() => doc.setImage(repo, id, { ...fields, caption: "x" }));
+    // an agent attaches a file to the text paragraph after the step
+    const { documentId } = repo.add_attachment(
+      JSON.stringify({ fileName: "agent.md", contentType: "text/markdown" }),
+      new TextEncoder().encode("note")
+    );
+    repo.link_attachment(JSON.stringify({ instanceId: first, documentId }));
+    expect(history.undo(repo)).toBe(true);
+    const still = JSON.parse(
+      JSON.stringify(repo.resolve_composition_attachments(JSON.stringify({ instanceIds: [first] })))
+    ).records.flatMap((r: { attachments: { documentId: string }[] }) =>
+      r.attachments.map((a) => a.documentId)
+    );
+    expect(still).toContain(documentId);
   });
 });

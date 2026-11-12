@@ -99,9 +99,9 @@
       : bytes
         ? 'Replace image'
         : 'Choose an image'}
-      policy={imagePolicy(policy)}
-      {attachedBytes}
-      busy={busy}
+    policy={imagePolicy(policy)}
+    {attachedBytes}
+    busy={busy}
     onfiles={choose}
     data-testid="image-drop"
   />
@@ -140,7 +140,7 @@
   {#if refusal}<Notice kind="warning" data-testid="image-refusal">{refusal}</Notice>{/if}
   <div class="image-editor__actions">
     <Button type="submit" variant="primary" disabled={!ready} data-testid="image-save">{needsFile ? 'Add image' : 'Save'}</Button>
-    {#if onremove && bytes && !file}
+    {#if onremove && !file}
       <Button type="button" variant="ghost" disabled={busy} onclick={remove} data-testid="image-remove">Remove image</Button>
     {/if}
     <Button type="button" variant="ghost" onclick={oncancel} data-testid="image-cancel">Cancel</Button>
