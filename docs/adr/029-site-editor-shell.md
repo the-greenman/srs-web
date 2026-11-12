@@ -27,11 +27,11 @@ The muDemocracy site editor was a separate Vite app that reached into srs-web's 
    - `layout:<name>` (default `standard`).
 
    Writes read, modify and write back the tags, and keep every tag they do not own.
-4. **Generic core, site layer.**
-   - `src/lib/site/*.ts` (`site-views`, `site-model`, `site-export`) names no site.
-   - A site's own behaviour lives in `src/lib/site/<site>/`. For muDemocracy that is guide references, and later evidence and authorship.
-   - The core never imports a site layer. `tests/layers.test.ts` check 3 enforces this.
-   - `src/lib/site/<site>/` is a **temporary home** inside the srs-web bundle, until a site package can carry its own editor layer.
+4. **Generic core only; the site layer is retired** (amended 2026-11-12, srs-web#798).
+   - `src/lib/site/*.ts` (`site-views`, `site-model`, `site-export`) names no site, and srs-web holds no site's own layer. Owner, 2026-11-12 (vignette 5aab4a38): "srs-web contains only reusable generic code that applies to packages that are public. no code specific to any particular implementation can appear in generic srs-web code."
+   - A site's own behaviour (for muDemocracy: guide references, evidence) lives in the site's repository. It reaches the export as a `BlockExtra` that the site passes in, as muDemocracy's `markerAttributions` already does.
+   - `tests/layers.test.ts` check 4 enforces this: every name and id in `src/` resolves to a definition in a bundle pinned in `packages.lock.json`, and there is no `src/lib/site/<site>/`. `src/lib/site/mudemocracy/guides.ts` is the one remaining entry on its baseline, until it moves into muDemocracy (muDemocracy.org#244).
+   - *Superseded:* the original text gave `src/lib/site/<site>/` a "temporary home" inside the srs-web bundle. srs-web#796 showed where that leads: one implementation's rules, in the editor every other group gets.
 5. **The export is a temporary TS projection.** `exportSite` reads Views, Composition, containers and records and re-decides nothing: brief means the View's `displayHint` is `brief`. [srs-rust#1553](https://github.com/the-greenman/srs-rust/issues/1553) moves it into the core as a structured composition render. Until then it is marked `ponytail:`.
 
 ## Rejected
@@ -58,7 +58,7 @@ The `site` editor (`src/lib/site/SiteShell.svelte`, registered for the website p
 - **E6. No agent write guard** (owner ruling 2026-10-22, srs-web#601).
 - **Read-only.** `readOnlyReason` means the document cannot be saved back (it can be exported). The shell still edits, as the other shells do, but makes no open-time repair on such a document.
 
-The muDemocracy layer (evidence, authorship, comments, the agent brief, guide sections by reference) is B2, in `src/lib/site/mudemocracy/`.
+The muDemocracy layer (evidence, authorship, comments, the agent brief, guide sections by reference) was planned as B2, in `src/lib/site/mudemocracy/`. Point 4's amendment withdraws that home. Only the generic parts (authorship from `createdBy`, comments through the public comments package) can come to srs-web. muDemocracy's own rules stay in muDemocracy (srs-web#694).
 
 ## The menu (amendment, srs-web#681, 2026-11-08)
 
