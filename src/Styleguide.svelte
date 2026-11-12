@@ -19,6 +19,7 @@
   import PackagesDialog from "$lib/components/PackagesDialog.svelte";
   import InstallPlan from "$lib/components/InstallPlan.svelte";
   import MergePlan from "$lib/components/MergePlan.svelte";
+  import VisualEditor from "$lib/components/VisualEditor.svelte";
   import Landing from "$lib/components/Landing.svelte";
   import EssayHome from "$lib/components/EssayHome.svelte";
   import RecentRepos from "$lib/components/RecentRepos.svelte";
@@ -169,8 +170,8 @@
   {/if}
 {/snippet}
 
-{#snippet md(value: string, label: string)}
-  {#snippet inner()}<MarkdownText {value} base="block" {label} oncommit={noop} />{/snippet}
+{#snippet md(value: string, label: string, mode: 'source' | 'visual' = 'source')}
+  {#snippet inner()}<MarkdownText {value} base="block" {label} oncommit={noop} {mode} />{/snippet}
   {@render gated(inner)}
 {/snippet}
 
@@ -609,6 +610,15 @@
     <InlineText value={text} label="Specimen text" oncommit={(v) => (text = v)} />
     <h3>MarkdownText</h3>
     {@render md("Some **bold** and *italic* text.", "Specimen markdown")}
+    <h3>MarkdownText, visual mode</h3>
+    <p class="sg__note">mode="visual" (srs-web#749, off by default; no caller passes it yet): click to edit with a formatting-aware editor that loads on demand. A paragraph holding a table, an image or a rule opens as markdown source with a one-line note, text intact.</p>
+    {@render md("Some **bold** and *italic* text, and a [link](https://example.com).", "Specimen visual markdown", "visual")}
+    {#snippet visualEditor()}
+      <VisualEditor value="Edited **visually**, saved as markdown." base="block" label="Specimen visual editor" oncommit={noop} onfallback={noop} onblur={noop} />
+    {/snippet}
+    <p class="sg__note">VisualEditor, mounted directly: the one Tiptap instance MarkdownText uses in visual mode, destroyed on blur.</p>
+    {@render gated(visualEditor)}
+    {@render md("| a | b |\n|---|---|\n| 1 | 2 |", "Specimen table, opens as source", "visual")}
   </section>
 
   <section id="panels">

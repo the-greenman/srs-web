@@ -192,6 +192,27 @@
 :is(.block__render, .purpose__render):focus-visible {
   box-shadow: -2px 0 0 var(--color-text-strong);
 }
+/* Visual editing (srs-web#749): Tiptap's editable sits inside the body; it reads like the rendered state. */
+:is(.block__body, .purpose__body).block__body--visual,
+:is(.block__body, .purpose__body)[class*="__body--visual"] {
+  white-space: normal;
+}
+[class*="__body--visual"] .ProseMirror {
+  outline: none;
+  min-height: 1.6em;
+}
+[class*="__body--visual"] .ProseMirror > :first-child {
+  margin-top: 0;
+}
+[class*="__body--visual"] .ProseMirror > :last-child {
+  margin-bottom: 0;
+}
+/* The one-line note when a paragraph is shown as source instead of visually. */
+:is(.block__note, .purpose__note) {
+  margin: 0 0 var(--space-1);
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+}
 /* Rendered markdown (core renderMarkdown): block flow, so pre-wrap is off. Headings stay close to body size. */
 :is(.block__render, .purpose__render) {
   white-space: normal;

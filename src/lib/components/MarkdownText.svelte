@@ -10,6 +10,7 @@
   import { untrack } from 'svelte';
   import { renderMarkdown } from '$lib/srs-client.js';
   import { sourceOffset } from './source-offset.js';
+  import VisualEditor from './VisualEditor.svelte';
 
   let {
     value = '',
@@ -20,6 +21,7 @@
     images = true,
     oncommit,
     onkeydown,
+    mode = 'source',
   }: {
     value?: string;
     base: string;
@@ -30,6 +32,8 @@
     /** False renders a markdown image as its alt text (essay paragraphs, srs-web#763). */
     images?: boolean;
     oncommit: (value: string) => void;
+    /** `source` (default, every existing caller) edits plain markdown; `visual` edits with Tiptap and falls back to source when it cannot be exact (srs-web#749). */
+    mode?: 'source' | 'visual';
     onkeydown?: (e: KeyboardEvent, api: { flush: () => void; replace: (v: string) => void; el?: HTMLElement; rendered: boolean }) => void;
   } = $props();
 
@@ -39,6 +43,9 @@
   let committed = '';
   /** Nothing typed since editing began: the essay history, not the browser, owns Ctrl-Z here. */
   let typed = $state(false);
+  /** Visual mode gave this paragraph up: the one-line note says why; the source editor shows instead. */
+  let sourceNote = $state('');
+  const visual = $derived(mode === 'visual' && !sourceNote);
   const html = $derived(value ? renderMarkdown(value, images) : '');
 
   /** Source offset of the point the writer clicked, taken on pointerdown (focus enters edit before click fires). */
@@ -120,7 +127,19 @@
   }
 </script>
 
-{#if editing}
+{#if editing && visual}
+  <VisualEditor
+    {value}
+    {base}
+    {label}
+    {placeholder}
+    {focusKey}
+    {oncommit}
+    onfallback={(note) => (sourceNote = note)}
+    onblur={() => (editing = false)}
+  />
+{:else if editing}
+  {#if sourceNote}<p class={`${base}__note`} role="status">{sourceNote}</p>{/if}
   <div
     bind:this={el}
     class={`${base}__body`}
@@ -140,6 +159,7 @@
     onblur={() => {
       flush();
       editing = false;
+      sourceNote = '';
     }}
     onkeydown={(e) => onkeydown?.(e, { flush, replace, el, rendered: false })}
   ></div>
