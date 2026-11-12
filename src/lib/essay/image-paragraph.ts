@@ -53,18 +53,6 @@ export function imageMime(bytes: Uint8Array): string | null {
   return head.startsWith("<") && head.includes("<svg") ? "image/svg+xml" : null;
 }
 
-/**
- * Inserting and editing image paragraphs (srs-web#765) is OFF until srs-web#766 turns it on and
- * deletes this flag: on only where this browser has `localStorage["srs-web.flag.essay-images"] = "1"`.
- */
-export function imageParagraphsOn(): boolean {
-  try {
-    return localStorage.getItem("srs-web.flag.essay-images") === "1";
-  } catch {
-    return false;
-  }
-}
-
 /** What the writer sets on an image paragraph (decisions b2b5c488, 72bcd83e). */
 export interface ImageFields {
   alt: string;
@@ -98,4 +86,31 @@ export function imageRefusal(e: unknown): string {
   // An error of this editor's own (no code) is already in plain words.
   if (code === undefined && e instanceof Error) return e.message;
   return "The image could not be saved.";
+}
+
+/** Text made safe to put in HTML. */
+export const escapeHtml = (t: string): string =>
+  t.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+/**
+ * An image paragraph as standalone HTML for Copy as HTML (srs-web#766): the reading view's layout
+ * (D4) as inline styles, since the pasted HTML carries no stylesheet. The image is an `<img>` with a
+ * data URL (D6: never inline SVG); bytes that are missing or not an image give the alt text instead.
+ */
+export function imageFigureHtml(image: ImageSpec, bytes: Uint8Array | null): string {
+  const alt = escapeHtml(image.alt);
+  const mime = bytes ? imageMime(bytes) : null;
+  const side = image.size === "original" ? image.align : "centre";
+  const margin = { left: "0 auto 0 0", centre: "0 auto", right: "0 0 0 auto" }[side];
+  const width = image.size === "original" ? "" : "width:100%;";
+  let bin = "";
+  if (bytes && mime) for (const b of bytes) bin += String.fromCharCode(b);
+  const img =
+    bytes && mime
+      ? `<img src="data:${mime};base64,${btoa(bin)}" alt="${alt}" style="display:block;${width}max-width:100%;height:auto;margin:${margin}">`
+      : `<p><em>${alt}</em></p>`;
+  const caption = image.caption
+    ? `<figcaption style="text-align:${side === "centre" ? "center" : side}">${escapeHtml(image.caption)}</figcaption>`
+    : "";
+  return `<figure style="margin:0 0 1em">${img}${caption}</figure>`;
 }

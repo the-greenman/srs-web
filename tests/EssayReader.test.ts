@@ -4,7 +4,7 @@ import { expect, it, vi } from "vitest";
 
 vi.mock("../src/lib/srs-client.js", async (orig) => ({
   ...(await orig<object>()),
-  renderMarkdown: (s: string) => `<p>${s}</p>`,
+  renderMarkdown: (s: string, images = true) => `<p data-images="${images}">${s}</p>`,
 }));
 import EssayReader from "../src/lib/components/EssayReader.svelte";
 
@@ -45,4 +45,12 @@ it("shows an image paragraph as a figure with its bytes, between the text (srs-w
   expect(container.querySelector("figure img")?.getAttribute("alt")).toBe("A circle");
   expect(asked).toEqual(["d1"]);
   expect(container.querySelector("svg")).toBeNull();
+});
+
+it("a markdown image in a text paragraph never shows in the reading view (decision 2ec3671d, D7)", () => {
+  const { container } = render(EssayReader, {
+    reading: { title: "T", purpose: null, paragraphs: [{ id: "p", body: "See ![a cat](https://example.org/cat.png) here." }] },
+  });
+  // the core drops the image when asked (srs-web#763): the reader asks for every text paragraph
+  expect(container.querySelector(".essay-reader__paragraph p")?.getAttribute("data-images")).toBe("false");
 });

@@ -56,6 +56,7 @@ import {
   listTypes,
   removeContainerMember,
   renderDocumentView,
+  renderMarkdown,
   resolveAttachments,
   typeSchema,
   unlinkAttachment,
@@ -76,7 +77,14 @@ import { hiddenByAncestor, toggled } from "./essay-model.js";
 
 // The document foundation, re-exported where the essay shell and tests already import it from.
 export { type Target, moveEntry, shiftEntry, transfer } from "$lib/document.js";
-import { type ImageFields, type ImageSpec, imageFieldValues, toImage } from "./image-paragraph.js";
+import {
+  type ImageFields,
+  type ImageSpec,
+  escapeHtml,
+  imageFieldValues,
+  imageFigureHtml,
+  toImage,
+} from "./image-paragraph.js";
 import {
   DOCUMENT_STATE_TYPE_ID,
   ESSAY_TYPE_ID,
@@ -1211,6 +1219,26 @@ export function essayReading(m: EssayModel): EssayReading {
     return p.body.trim() ? [{ id, body: p.body }] : [];
   });
   return { title: m.title, purpose: m.purpose, paragraphs };
+}
+
+/**
+ * The reading as HTML for Copy as HTML (srs-web#766): title, purpose, then each paragraph as the
+ * reader view shows it. Text goes through the core renderMarkdown with markdown images dropped (D7);
+ * an image paragraph is its figure (imageFigureHtml), so a pasted essay keeps its pictures.
+ */
+export function essayHtml(
+  reading: EssayReading,
+  bytesOf: (documentId: string) => Uint8Array | null
+): string {
+  const parts = [`<h1>${escapeHtml(reading.title)}</h1>`];
+  if (reading.purpose) parts.push(renderMarkdown(reading.purpose));
+  for (const p of reading.paragraphs)
+    parts.push(
+      p.image
+        ? imageFigureHtml(p.image, p.image.documentId ? bytesOf(p.image.documentId) : null)
+        : renderMarkdown(p.body, false)
+    );
+  return parts.join("\n");
 }
 
 /**
