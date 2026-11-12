@@ -10,14 +10,14 @@
   import { onDestroy, onMount, tick, untrack } from "svelte";
   import type { Snippet } from "svelte";
   import { copyHtml, copyText } from "$lib/clipboard.js";
-  import { attachedBytes, attachmentPolicy, getRecord, renderMarkdown, repositoryId } from "$lib/srs-client.js";
+  import { attachedBytes, attachmentPolicy, getRecord, repositoryId } from "$lib/srs-client.js";
   import type { AgentWriteGuard, SrsRepository } from "$lib/srs-client.js";
   import AgentFeed from "$lib/components/AgentFeed.svelte";
   import Count from "$lib/components/Count.svelte";
   import EssayReader from "$lib/components/EssayReader.svelte";
   import ImageParagraph from "$lib/components/ImageParagraph.svelte";
   import ImageParagraphEditor from "$lib/components/ImageParagraphEditor.svelte";
-  import { type ImageFields, imageParagraphsOn, imageRefusal } from "./image-paragraph.js";
+  import { type ImageFields, imageRefusal } from "./image-paragraph.js";
   import AgentPresence from "$lib/components/AgentPresence.svelte";
   import { verb } from "$lib/agent-activity.js";
   import { relativeTime } from "$lib/relative-time.js";
@@ -95,7 +95,7 @@
     setTitle,
     transfer,
   } from "./essay-document.js";
-  import { attachmentBytes, essayMarkdown, essayReading, essayReferences, essaySnapshot, essayWriteGuard } from "./essay-document.js";
+  import { attachmentBytes, essayHtml, essayMarkdown, essayReading, essayReferences, essaySnapshot, essayWriteGuard } from "./essay-document.js";
   import { downloadText, triggerDownload } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { browseEssays } from "./essay-browse.js";
@@ -628,7 +628,10 @@
   async function copyEssayAs(html: boolean) {
     try {
       const md = essayMarkdown(repo, model!);
-      const ok = html ? await copyHtml(renderMarkdown(md), md) : await copyText(md);
+      // HTML from the reading view, so the pasted essay keeps its images (srs-web#766); markdown stays text.
+      const ok = html
+        ? await copyHtml(essayHtml(essayReading(model!), (d) => attachmentBytes(repo, d)), md)
+        : await copyText(md);
       if (ok) error = null;
       if (ok) notify({ kind: "success", key: "copy-essay", text: html ? "Copied as HTML" : "Copied as markdown" });
       else error = "Could not copy to the clipboard.";
@@ -738,10 +741,9 @@
   });
 
   /**
-   * Image paragraphs (srs-web#765), behind their flag until srs-web#766: the new one being added
-   * below a paragraph (its id), and the one being edited. Nothing is written until Save.
+   * Image paragraphs (srs-web#765, on since srs-web#766): the new one being added below a
+   * paragraph (its id), and the one being edited. Nothing is written until Save.
    */
-  const imagesOn = imageParagraphsOn();
   let imageDraftAfter = $state<string | null>(null);
   let imageEditing = $state<string | null>(null);
   async function openImageDraft(after: string) {
@@ -1085,7 +1087,7 @@
         <BlockStack {items} source="essay" label="Essay paragraphs" candrop={essayDrop} ondrop={(p, t) => onDrop("essay", p, t)} onfiles={dropFiles}>
           {#snippet row(item, handle)}
             {@const p = model!.paragraphs[item.id]}
-            {#if p?.image && imagesOn}
+            {#if p?.image}
               {@const image = p.image}
               {@const bytes = image.documentId ? attachmentBytes(repo, image.documentId) : null}
               {#snippet imageContent()}
@@ -1151,7 +1153,7 @@
                 oncopyagent={() => copyForAgent(p.id)}
                 onattach={(files) => attach(p.id, files)}
                 attachPolicy={policy}
-                onimage={imagesOn ? () => openImageDraft(p.id) : undefined}
+                onimage={() => openImageDraft(p.id)}
                 onbody={(v) => run(() => setBody(repo, p.id, v))}
                 ontitle={(v) => run(() => setTitle(repo, p.id, v))}
                 onhide={(h) => run(() => setHidden(repo, model!, p.id, h))}

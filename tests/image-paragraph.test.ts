@@ -91,16 +91,19 @@ describe("ImageParagraph", () => {
 });
 
 describe("editing (srs-web#765)", () => {
-  it("is off unless this browser's flag is set", async () => {
-    const { imageParagraphsOn } = await import("../src/lib/essay/image-paragraph.js");
-    const store = new Map<string, string>();
-    vi.stubGlobal("localStorage", { getItem: (k: string) => store.get(k) ?? null });
-    expect(imageParagraphsOn()).toBe(false);
-    store.set("srs-web.flag.essay-images", "1");
-    expect(imageParagraphsOn()).toBe(true);
-    vi.stubGlobal("localStorage", undefined); // storage blocked: off
-    expect(imageParagraphsOn()).toBe(false);
-    vi.unstubAllGlobals();
+  it("copies as HTML with the reading view's layout, an <img> data URL, and the alt text when bytes are missing (srs-web#766)", async () => {
+    const { imageFigureHtml } = await import("../src/lib/essay/image-paragraph.js");
+    const base = { documentId: "d", alt: 'A "dot" <b>', caption: "Under & over" };
+    const full = imageFigureHtml({ ...base, size: "full-width", align: "centre" }, PNG);
+    expect(full).toMatch(/^<figure[^>]*><img src="data:image\/png;base64,[A-Za-z0-9+/=]+" alt="A &#34;dot&#34; &#60;b&#62;" style="display:block;width:100%;/);
+    expect(full).toContain('<figcaption style="text-align:center">Under &#38; over</figcaption>');
+    const right = imageFigureHtml({ ...base, size: "original", align: "right" }, PNG);
+    expect(right).toContain('style="display:block;max-width:100%;'); // no full width
+    expect(right).toContain("margin:0 0 0 auto");
+    expect(right).toContain("text-align:right");
+    const none = imageFigureHtml({ ...base, caption: "", size: "full-width", align: "centre" }, null);
+    expect(none).toBe('<figure style="margin:0 0 1em"><p><em>A &#34;dot&#34; &#60;b&#62;</em></p></figure>');
+    expect(none).not.toContain("<img");
   });
   it("writes alt text trimmed, no empty caption, and alignment only at original size", async () => {
     const { imageFieldValues } = await import("../src/lib/essay/image-paragraph.js");

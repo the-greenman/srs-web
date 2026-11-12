@@ -24,7 +24,8 @@
     {#if p.image}
       <ImageParagraph alt={p.image.alt} caption={p.image.caption} size={p.image.size} align={p.image.align} bytes={p.image.documentId ? imageBytes(p.image.documentId) : null} />
     {:else}
-      <MarkdownView class="essay-reader__paragraph" value={p.body} />
+      <!-- A markdown image in a text paragraph never shows (decision 2ec3671d, D7). -->
+      <MarkdownView class="essay-reader__paragraph" value={p.body} images={false} />
     {/if}
   {/each}
 </article>

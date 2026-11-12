@@ -80,6 +80,7 @@
   class="image-editor"
   aria-label={needsFile ? 'New image paragraph' : 'Edit image paragraph'}
   data-testid="image-editor"
+  data-feature="essay.images"
   onsubmit={save}
   onkeydown={(e) => {
     if (e.key === 'Escape') {

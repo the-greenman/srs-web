@@ -4,8 +4,7 @@ import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
 /**
- * essay-image-edit.spec.ts — srs-web#765: adding and editing an essay image paragraph, behind its flag
- * (`srs-web.flag.essay-images`, off until srs-web#766). Fixture: essay-images.srs (srs-web#764): a text
+ * essay-image-edit.spec.ts — srs-web#765: adding and editing an essay image paragraph (on since srs-web#766). Fixture: essay-images.srs (srs-web#764): a text
  * paragraph, then seven image paragraphs. Replace and remove: srs-web#791.
  */
 const ESSAY = path.join(
@@ -13,7 +12,6 @@ const ESSAY = path.join(
   "fixtures",
   "essay-images.srs"
 );
-const FLAG = "srs-web.flag.essay-images";
 const PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAECAIAAAA8r+mnAAAAFUlEQVR42mOQC1gARx96NOCIgXoSADk8KyGfULlCAAAAAElFTkSuQmCC",
   "base64"
@@ -22,8 +20,7 @@ const HOSTILE = Buffer.from(
   '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
 );
 
-async function open(page: Page, flag: boolean) {
-  if (flag) await page.addInitScript((k) => localStorage.setItem(k, "1"), FLAG);
+async function open(page: Page) {
   page.on("dialog", (d) => {
     throw new Error(`dialog: ${d.message()}`);
   });
@@ -37,22 +34,17 @@ const items = (page: Page) => page.locator(".essay-shell__page .block-stack__ite
 const figures = (page: Page) => page.locator(".essay-shell__page .block-stack__item figure");
 const editor = (page: Page) => page.getByTestId("image-editor");
 
-test("flag off: nothing changes; no image action, and image paragraphs stay read-only", async ({
-  page,
-}) => {
-  await open(page, false);
+test("without any flag, a paragraph's menu offers Add image below (srs-web#766)", async ({ page }) => {
+  await open(page);
   await items(page).first().getByTestId("paragraph-menu").click();
-  await expect(page.getByRole("menuitem", { name: "Add paragraph below" })).toBeVisible();
-  await expect(page.getByRole("menuitem", { name: "Add image below" })).toHaveCount(0);
+  await expect(page.getByRole("menuitem", { name: "Add image below" })).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(figures(page)).toHaveCount(7);
-  await expect(items(page).nth(1).locator(".block")).toHaveCount(0);
 });
 
 test("adds an image paragraph by mouse, edits it by keyboard, and undo takes the add back", async ({
   page,
 }) => {
-  await open(page, true);
+  await open(page);
   await items(page).first().getByTestId("paragraph-menu").click();
   await page.getByRole("menuitem", { name: "Add image below" }).click();
   const ed = editor(page);
@@ -116,7 +108,7 @@ test("adds an image paragraph by mouse, edits it by keyboard, and undo takes the
 });
 
 test("refusals read in plain words, and nothing is written", async ({ page }) => {
-  await open(page, true);
+  await open(page);
   await items(page).first().getByTestId("paragraph-menu").click();
   await page.getByRole("menuitem", { name: "Add image below" }).click();
   const ed = editor(page);
@@ -140,7 +132,7 @@ test("refusals read in plain words, and nothing is written", async ({ page }) =>
 test("replaces an image by mouse and removes it by keyboard; the paragraph stays, undo restores each", async ({
   page,
 }) => {
-  await open(page, true);
+  await open(page);
   const second = items(page).nth(1);
   const img = second.locator("figure img");
   await expect(img).toBeVisible();
@@ -196,7 +188,7 @@ test("replaces an image by mouse and removes it by keyboard; the paragraph stays
 test.describe("touch", () => {
   test.use({ hasTouch: true });
   test("edits an image paragraph from its menu by tapping", async ({ page }) => {
-    await open(page, true);
+    await open(page);
     const second = items(page).nth(1);
     await second.getByTestId("paragraph-menu").tap();
     await page.getByRole("menuitem", { name: "Edit image…" }).tap();
@@ -205,7 +197,7 @@ test.describe("touch", () => {
     await expect(second.locator("figcaption")).toHaveText("Tapped caption");
   });
   test("replaces and removes an image by tapping", async ({ page }) => {
-    await open(page, true);
+    await open(page);
     const second = items(page).nth(1);
     const img = second.locator("figure img");
     const src = await img.getAttribute("src");
