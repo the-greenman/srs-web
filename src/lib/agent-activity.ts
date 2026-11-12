@@ -212,6 +212,8 @@ export interface UiHost {
   packages?(): unknown;
   /** Ask the writer to confirm an install, on screen. Returns at once: a frame can't wait for a person. */
   requestPackage?(packageId: string): { requested: boolean; reason?: string };
+  /** Open the save dialog with the agent's commit message; the writer's click saves. Returns at once. */
+  requestSave?(message?: string): { requested: boolean; reason?: string };
 }
 
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
@@ -263,6 +265,22 @@ export const UI_TOOLS = [
       readOnlyHint: false,
       destructiveHint: false,
       openWorldHint: false,
+    },
+  },
+  {
+    name: "ui_request_save",
+    description:
+      "Ask the writer to save the document to GitHub. It opens the save dialog with your commit message filled in; the writer picks the branch and confirms or cancels on screen, so you can't save yourself. It returns at once: call changes afterwards to see whether anything is still unsaved.",
+    inputSchema: {
+      type: "object",
+      properties: { message: { type: "string", description: "A one-line commit message." } },
+      additionalProperties: false,
+    },
+    annotations: {
+      title: "Ask to save",
+      readOnlyHint: false,
+      destructiveHint: false,
+      openWorldHint: true,
     },
   },
 ];
@@ -392,6 +410,13 @@ function patchResult(
 
 function callUiTool(ui: UiHost, name: string, a: Record<string, unknown>) {
   if (name === "ui_help") return { content: [{ type: "text", text: uiManual(ui) }] };
+  if (name === "ui_request_save") {
+    const answer = ui.requestSave?.(str(a.message)) ?? {
+      requested: false,
+      reason: "This screen can't save.",
+    };
+    return { content: [{ type: "text", text: JSON.stringify(answer) }] };
+  }
   if (name === "ui_packages" || name === "ui_request_package") {
     const packageId = str(a.packageId);
     const answer =

@@ -315,6 +315,16 @@ it("ui_highlight passes the target and says when it is not on screen; with no ta
   expect(none.result.isError).toBe(true);
 });
 
+it("ui_request_save passes the trimmed message and answers for a screen that can't save", () => {
+  const seen: unknown[] = [];
+  const h = withUiTools(toolEngine(), host({ requestSave: (m) => (seen.push(m), { requested: true }) }));
+  const r = JSON.parse(h.handle(call("ui_request_save", { message: " Add the intro " }))!);
+  expect(seen).toEqual(["Add the intro"]);
+  expect(JSON.parse(r.result.content[0].text)).toEqual({ requested: true });
+  const none = JSON.parse(withUiTools(toolEngine(), host()).handle(call("ui_request_save"))!);
+  expect(JSON.parse(none.result.content[0].text).requested).toBe(false);
+});
+
 it("a UI call keeps the lifecycle: before the session has answered, a ping goes first and an unknown session stands", () => {
   const seen: string[] = [];
   let unknown = true;

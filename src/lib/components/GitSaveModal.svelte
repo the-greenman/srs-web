@@ -20,15 +20,19 @@
     installUrl: string | null;
     busy: boolean;
     error: string | null;
+    /** A commit message to start from (an agent's ui_request_save). */
+    initialMessage?: string;
     onSave: (opts: { mode: "current" | "new"; newBranch: string; message: string }) => void;
     onCancel: () => void;
   }
 
-  const { repoLabel, currentBranch, installUrl, busy, error, onSave, onCancel }: Props = $props();
+  const { repoLabel, currentBranch, installUrl, busy, error, initialMessage = "", onSave, onCancel }: Props = $props();
 
   let mode = $state<"current" | "new">("current");
   let newBranch = $state("srs-web-edit");
-  let message = $state("");
+  // The starting value only; the writer edits from there.
+  // svelte-ignore state_referenced_locally
+  let message = $state(initialMessage);
 
   const canSave = $derived(!busy && (mode === "current" || newBranch.trim() !== ""));
 
