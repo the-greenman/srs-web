@@ -16,7 +16,26 @@
           "kicker": "Together.",
           "supporting_copy": "Supporting copy.",
           "presentation": "large"
-        }
+        },
+        "evidence": [
+          {
+            "relation": "evidences",
+            "kind": "quotation",
+            "id": "fc3dacfb-d877-4f02-a143-95652d2536fc",
+            "title": "The quoted words",
+            "quote": "Decisions are made together.",
+            "locator": "p. 12",
+            "level": "secondary",
+            "source": {
+              "id": "86e4e731-c21f-4bba-a8f3-35d07f99d567",
+              "title": "A verified source",
+              "url": "https://example.org/verified",
+              "citation": "Author, A verified source (2020)",
+              "level": "verified",
+              "kind": "book"
+            }
+          }
+        ]
       },
       {
         "type": "homepage-prose",
@@ -25,7 +44,26 @@
           "section_key": "why",
           "section_heading": "Why",
           "section_body": "A prose body."
-        }
+        },
+        "evidence": [
+          {
+            "relation": "evidences",
+            "kind": "source",
+            "id": "86e4e731-c21f-4bba-a8f3-35d07f99d567",
+            "title": "A verified source",
+            "level": "verified",
+            "url": "https://example.org/verified",
+            "citation": "Author, A verified source (2020)"
+          },
+          {
+            "relation": "challenges",
+            "kind": "claim",
+            "id": "063e9bfe-a2c9-483b-8eee-98efcd9a5eb1",
+            "title": "A counter-claim",
+            "code": "C-1",
+            "level": "tertiary"
+          }
+        ]
       },
       {
         "type": "faq-group",
@@ -38,7 +76,18 @@
           {
             "faq_item_key": "q1",
             "faq_question": "First?",
-            "faq_answer": "Yes."
+            "faq_answer": "Yes.",
+            "evidence": [
+              {
+                "relation": "evidences",
+                "kind": "source",
+                "id": "86e4e731-c21f-4bba-a8f3-35d07f99d567",
+                "title": "A verified source",
+                "level": "verified",
+                "url": "https://example.org/verified",
+                "citation": "Author, A verified source (2020)"
+              }
+            ]
           },
           {
             "faq_item_key": "q2",
@@ -95,7 +144,8 @@
           "eyebrow": "",
           "headline": "About.",
           "supporting_copy": "Who we are."
-        }
+        },
+        "ourReading": true
       },
       {
         "type": "homepage-prose",
@@ -104,7 +154,16 @@
           "section_key": "story",
           "section_heading": "Our story",
           "section_body": "It began."
-        }
+        },
+        "evidence": [
+          {
+            "relation": "evidences",
+            "kind": "source",
+            "id": "c90fce37-d5fa-4766-87c5-5301c6273e56",
+            "title": "A recalled source",
+            "level": "recalled"
+          }
+        ]
       }
     ]
   }

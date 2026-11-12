@@ -111,12 +111,59 @@ describe.skipIf(!haveBindings)("site core on the real engine", () => {
     const { findSite } = await import("../src/lib/site/site-views.js");
     const { exportSite } = await import("../src/lib/site/site-export.js");
     const { guideReferences } = await import("../src/lib/site/mudemocracy/guides.js");
+    const { evidenceReferences } = await import("../src/lib/site/mudemocracy/evidence.js");
     const repo = await load();
     const site = findSite(repo);
     if (!site) throw new Error("no site");
-    const text = `${JSON.stringify(exportSite(repo, site, guideReferences(repo)), null, 2)}\n`;
+    const extras = [guideReferences(repo), evidenceReferences(repo)];
+    const pages = exportSite(repo, site, (...a) => extras.forEach((x) => x(...a)));
+    const text = `${JSON.stringify(pages, null, 2)}\n`;
     if (process.env.UPDATE_GOLDEN) writeFileSync(GOLDEN, text);
     expect(text).toBe(readFileSync(GOLDEN, "utf8"));
+  });
+
+  it("attaches what backs each block and item, and finds a page's gaps as the evidence check does (#694)", async () => {
+    const { findSite } = await import("../src/lib/site/site-views.js");
+    const { exportSite } = await import("../src/lib/site/site-export.js");
+    const { evidenceReferences, pageEvidence, sourceRows, statements } = await import(
+      "../src/lib/site/mudemocracy/evidence.js"
+    );
+    const repo = await load();
+    const site = findSite(repo);
+    if (!site) throw new Error("no site");
+    const pages = exportSite(repo, site, evidenceReferences(repo));
+    const home = pages.find((p) => p.key === "home");
+    const about = pages.find((p) => p.key === "about");
+    if (!home || !about) throw new Error("fixture pages missing");
+    const block = (page: typeof home, type: string) => page.blocks.find((b) => b.type === type);
+    // a quotation carries the source it is derived from
+    expect(block(home, "hero")?.evidence).toEqual([
+      expect.objectContaining({ relation: "evidences", kind: "quotation", level: "secondary", quote: "Decisions are made together.", source: expect.objectContaining({ title: "A verified source", level: "verified" }) }),
+    ]);
+    // evidence before challenges
+    const why = block(home, "homepage-prose")?.evidence as { relation: string; kind: string; code?: string }[];
+    expect(why.map((e) => [e.relation, e.kind])).toEqual([["evidences", "source"], ["challenges", "claim"]]);
+    expect(why[1]?.code).toBe("C-1");
+    // an item carries its own
+    const faq = block(home, "faq-group");
+    expect(faq?.items?.find((i) => i.faq_item_key === "q1")?.evidence).toEqual([expect.objectContaining({ title: "A verified source" })]);
+    // one source row gathers every statement it backs
+    const rows = sourceRows(home.blocks.flatMap((b) => statements(b)));
+    const verified = rows.find((r) => r.entry.title === "A verified source");
+    expect(verified?.backs).toContain("Why");
+    expect(verified?.backs).toHaveLength(2);
+    expect(rows.map((r) => r.entry.relation)).toEqual(["evidences", "evidences", "challenges"]);
+    // the gaps: an unbacked argument, a weak one, our reading
+    const { findings, backed } = pageEvidence(about);
+    expect(backed).toBe(1);
+    expect(findings.map((f) => `${f.severity} ${f.message}`)).toEqual([
+      'WARN "About." has no evidence recorded',
+      'INFO "About." is our reading, awaiting the owner\'s decision',
+      'INFO "Our story" rests only on recalled evidence',
+    ]);
+    expect(pageEvidence({ key: "scratch", blocks: [] }).findings).toEqual([
+      { severity: "INFO", page: "scratch", message: "no evidence on this page yet (0 statements)" },
+    ]);
   });
 
   it("refuses two published pages with one key, and a guide-section that shows no guide record", async () => {

@@ -8,9 +8,11 @@
 #   about   published, draft, layout:essay: hero, prose
 #   scratch not published: prose
 #   menu    Home and About (uses their pages), Guides with one dropdown entry (nav_href)
+# Then add-site-evidence-fixture.sh: the essay package, a claim type, and what backs which block (srs-web#694).
 # srs CLI build.595 (the bindings srs-web pins).
 # Usage: gh release download packages-website-0.2.1 -R the-greenman/srs-web -p website.srspkg
-#        MU=<muDemocracy.org/muSrs> BUNDLE=website.srspkg bash build-site-fixture.sh <out.srsj>
+#        gh release download packages-essay-1.11.0 / packages-comments-1.1.0 the same way
+#        MU=<muDemocracy.org/muSrs> BUNDLE=website.srspkg ESSAY=essay.srspkg COMMENTS=comments.srspkg bash build-site-fixture.sh <out.srsj>
 set -e
 OUT=${1:?out.srsj}; rm -f "$OUT"; W=$(mktemp -d)/site; MU=${MU:?muSrs dir}; BUNDLE=${BUNDLE:?website.srspkg}
 srs repo create --repo $W --namespace org.example.site --title "Site fixture" >/dev/null
@@ -72,5 +74,6 @@ cont "{\"title\":\"Site menu\",\"tags\":[\"site-menu\"],\"memberInstanceIds\":[{
 # a container anchored on a Tier-0 note (as a conversation is in muSrs): not a page, and must not break listing
 NOTE=$(echo '{"title":"A conversation","sections":[{"name":"narrative","label":"Narrative","content":"Not a page."}]}' | srs note create --repo $W | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d["payload"]["note"]["instanceId"] if d.get("ok") else sys.exit(str(d)))')
 cont "{\"title\":\"A conversation\",\"anchorInstanceId\":\"$NOTE\",\"identityInstanceId\":\"$NOTE\",\"memberInstanceIds\":[{\"instanceId\":\"$NOTE\"}]}" >/dev/null
+MU=$MU ESSAY=${ESSAY:?essay.srspkg} COMMENTS=${COMMENTS:?comments.srspkg} bash "$(dirname "$0")/add-site-evidence-fixture.sh" $W
 srs repo validate --repo $W | python3 -c "import sys,json; s=json.load(sys.stdin)[\"payload\"][\"summary\"]; print(s); sys.exit(1 if s[\"errors\"] else 0)"
 srs repo copy --from $W --to "$OUT" >/dev/null
