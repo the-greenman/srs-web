@@ -27,10 +27,12 @@ Four layers. Each change lives in exactly one of them.
 
 ## Guard
 
-`tests/layers.test.ts` checks two things and fails on either:
+`tests/layers.test.ts` checks these things, and fails on any of them:
 
 - a headless module imports a `.svelte` file or touches `document`;
 - a shared component in `src/lib/components/` is not mounted (`<Name`) or imported by `src/Styleguide.svelte` or `src/styleguide/`.
+- the generic site core imports a site's own layer (ADR-029);
+- code in `src/` names a definition, namespace or id that no public package carries, or there is a site layer at all (ADR-029 point 4, srs-web#798).
 
 Existing offenders are the baseline, listed in the test with a reason each. The lists only shrink: an entry that is fixed is removed, and a new offender fails the test.
 
