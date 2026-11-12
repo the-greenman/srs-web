@@ -50,20 +50,38 @@
 
   /** Source offset of the point the writer clicked, taken on pointerdown (focus enters edit before click fires). */
   let clickedAt: number | null = null;
+  /** Viewport y of that click: the caret is scrolled back to it once the source shows (srs-web#807). */
+  let clickedY: number | null = null;
+
+  /** The nearest ancestor that scrolls vertically (the essay page), else the document. */
+  function scroller(from: HTMLElement): Element {
+    for (let n = from.parentElement; n; n = n.parentElement) {
+      const o = getComputedStyle(n).overflowY;
+      if ((o === 'auto' || o === 'scroll') && n.scrollHeight > n.clientHeight) return n;
+    }
+    return document.scrollingElement ?? document.documentElement;
+  }
 
   // Entering edit: show the source, keep focus; caret where the writer clicked, else at the end.
   $effect(() => {
     if (!el) return;
     typed = false;
     el.textContent = untrack(() => value);
-    el.focus();
+    el.focus({ preventScroll: true });
     const sel = getSelection();
     if (clickedAt !== null && el.firstChild) sel?.collapse(el.firstChild, Math.min(clickedAt, el.textContent.length));
     else {
       sel?.selectAllChildren(el);
       sel?.collapseToEnd();
     }
+    if (clickedY !== null && clickedAt !== null && sel?.rangeCount) {
+      // Source is taller or shorter than the render: put the caret where the writer clicked.
+      const r = sel.getRangeAt(0);
+      const rect = r.getClientRects()[0] ?? r.getBoundingClientRect();
+      scroller(el).scrollBy({ top: rect.top - clickedY, behavior: 'instant' });
+    }
     clickedAt = null;
+    clickedY = null;
   });
 
   /** The caret position under a pointer: the standard API, or WebKit's older one. */
@@ -82,6 +100,7 @@
     before.setStart(root, 0);
     before.setEnd(at.node, at.offset);
     clickedAt = sourceOffset(value, before.toString());
+    clickedY = e.clientY;
   }
 
   // Show external changes (agent writes) unless the writer is mid-edit here.
@@ -174,7 +193,10 @@
     data-focus-key={focusKey}
     onfocus={() => (editing = true)}
     onpointerdown={renderPointerdown}
-    onpointercancel={() => (clickedAt = null)}
+    onpointercancel={() => {
+      clickedAt = null;
+      clickedY = null;
+    }}
     onclick={renderClick}
     onkeydown={renderKeydown}
   >{@html html}</div>
