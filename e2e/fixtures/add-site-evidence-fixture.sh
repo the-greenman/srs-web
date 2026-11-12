@@ -7,8 +7,8 @@
 #   about hero        tagged our-reading, no evidence
 #         prose story <- evidences: a recalled source only (weak)
 # Called by build-site-fixture.sh, and run once on its own over an unpacked site.srsj, so the earlier
-# records keep their ids. Usage: MU=<muSrs> ESSAY=essay.srspkg COMMENTS=comments.srspkg bash add-site-evidence-fixture.sh <repo dir>
-set -e
+# records keep their ids; it runs once per repository (a second run finds its types already there). Usage: MU=<muSrs> ESSAY=essay.srspkg COMMENTS=comments.srspkg bash add-site-evidence-fixture.sh <repo dir>
+set -eo pipefail
 W=${1:?repo dir}; MU=${MU:?muSrs dir}; ESSAY=${ESSAY:?essay.srspkg}; COMMENTS=${COMMENTS:?comments.srspkg}
 srs package install --repo $W --bundle "$COMMENTS" >/dev/null
 srs package install --repo $W --bundle "$ESSAY" >/dev/null

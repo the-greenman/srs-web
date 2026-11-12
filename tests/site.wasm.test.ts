@@ -138,15 +138,30 @@ describe.skipIf(!haveBindings)("site core on the real engine", () => {
     const block = (page: typeof home, type: string) => page.blocks.find((b) => b.type === type);
     // a quotation carries the source it is derived from
     expect(block(home, "hero")?.evidence).toEqual([
-      expect.objectContaining({ relation: "evidences", kind: "quotation", level: "secondary", quote: "Decisions are made together.", source: expect.objectContaining({ title: "A verified source", level: "verified" }) }),
+      expect.objectContaining({
+        relation: "evidences",
+        kind: "quotation",
+        level: "secondary",
+        quote: "Decisions are made together.",
+        source: expect.objectContaining({ title: "A verified source", level: "verified" }),
+      }),
     ]);
     // evidence before challenges
-    const why = block(home, "homepage-prose")?.evidence as { relation: string; kind: string; code?: string }[];
-    expect(why.map((e) => [e.relation, e.kind])).toEqual([["evidences", "source"], ["challenges", "claim"]]);
+    const why = block(home, "homepage-prose")?.evidence as {
+      relation: string;
+      kind: string;
+      code?: string;
+    }[];
+    expect(why.map((e) => [e.relation, e.kind])).toEqual([
+      ["evidences", "source"],
+      ["challenges", "claim"],
+    ]);
     expect(why[1]?.code).toBe("C-1");
     // an item carries its own
     const faq = block(home, "faq-group");
-    expect(faq?.items?.find((i) => i.faq_item_key === "q1")?.evidence).toEqual([expect.objectContaining({ title: "A verified source" })]);
+    expect(faq?.items?.find((i) => i.faq_item_key === "q1")?.evidence).toEqual([
+      expect.objectContaining({ title: "A verified source" }),
+    ]);
     // one source row gathers every statement it backs
     const rows = sourceRows(home.blocks.flatMap((b) => statements(b)));
     const verified = rows.find((r) => r.entry.title === "A verified source");
@@ -229,5 +244,49 @@ describe.skipIf(!haveBindings)("site core on the real engine", () => {
     expect(() => exportSite(repo, site)).toThrow(
       'page "scratch": block type "com.mudemocracy/guide" has no View in the site Composition'
     );
+  });
+});
+
+describe("evidence rules on exported blocks (#694)", () => {
+  const src = (level?: string, relation: "evidences" | "challenges" = "evidences") => ({
+    relation,
+    kind: "source" as const,
+    id: `${relation}-${level}`,
+    title: `${level ?? "no"} source`,
+    level,
+  });
+  const block = (
+    type: string,
+    fields: Record<string, unknown>,
+    evidence?: ReturnType<typeof src>[],
+    items?: Record<string, unknown>[]
+  ) => ({
+    type,
+    view: "v",
+    fields,
+    evidence,
+    items,
+  });
+
+  it("a statement only challenged is weak; a missing level is reported, not weak", async () => {
+    const { gapOf, pageEvidence } = await import("../src/lib/site/mudemocracy/evidence.js");
+    expect(gapOf({ evidence: [src("verified", "challenges")] })).toBe("weak");
+    expect(gapOf({ evidence: [src(undefined)] })).toBeUndefined();
+    const { findings } = pageEvidence({
+      key: "p",
+      blocks: [block("hero", { headline: "H." }, [src(undefined)])],
+    });
+    expect(findings.map((f) => f.message)).toEqual(['source "no source" has no checked-to level']);
+  });
+
+  it("drops marks where they are not the subject, and counts a statement once per page", async () => {
+    const { pageEvidence, statements } = await import("../src/lib/site/mudemocracy/evidence.js");
+    const marks = [{ mark_key: "vote", mark_title: "Vote" }];
+    expect(statements(block("story", { story_key: "rooms" }, undefined, marks))).toEqual([]);
+    expect(statements(block("story", { story_key: "marks" }, undefined, marks))).toEqual(marks);
+    const twice = block("homepage-prose", { section_key: "why", section_body: "Why." }, [
+      src("verified"),
+    ]);
+    expect(pageEvidence({ key: "p", blocks: [twice, twice] }).statements).toHaveLength(1);
   });
 });
