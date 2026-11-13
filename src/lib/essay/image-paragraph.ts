@@ -32,11 +32,58 @@ export function toImage(r: SrsRecord, documentId: string | null): ImageSpec {
   };
 }
 
+/**
+ * The layout rule for one image option (srs-web#811): the figure's CSS classes
+ * (`image-paragraph.css`) and the equivalent inline styles used when there is no stylesheet to rely
+ * on (Copy as HTML, srs-web#766). One entry per option, read by both `imageClasses` and
+ * `imageFigureHtml` below, so the rule is authored once instead of twice.
+ */
+interface ImageLayoutRule {
+  /** The figure's classes: always a block (text never wraps); alignment only at original size. */
+  className: string;
+  /** Inline `width` for the `<img>`; "" keeps the image's own size (original size). */
+  imgWidth: string;
+  /** Inline `margin` for the `<img>`, placing it within the column the way the CSS class does. */
+  imgMargin: string;
+  /** Inline `text-align` for the `<figcaption>`, matching `image-paragraph.css`'s per-alignment rule. */
+  captionAlign: string;
+}
+
+/** The layout key a size/align pair maps to: full width ignores alignment (decision b2b5c488, D4). */
+function layoutKeyFor(size: ImageSize, align: ImageAlign): "full" | ImageAlign {
+  return size === "original" ? align : "full";
+}
+
+const IMAGE_LAYOUTS: Record<"full" | ImageAlign, ImageLayoutRule> = {
+  full: {
+    className: "image-paragraph image-paragraph--full",
+    imgWidth: "width:100%;",
+    imgMargin: "0 auto",
+    captionAlign: "center",
+  },
+  left: {
+    className: "image-paragraph image-paragraph--original image-paragraph--left",
+    imgWidth: "",
+    imgMargin: "0 auto 0 0",
+    captionAlign: "left",
+  },
+  centre: {
+    className: "image-paragraph image-paragraph--original image-paragraph--centre",
+    imgWidth: "",
+    imgMargin: "0 auto",
+    captionAlign: "center",
+  },
+  right: {
+    className: "image-paragraph image-paragraph--original image-paragraph--right",
+    imgWidth: "",
+    imgMargin: "0 0 0 auto",
+    captionAlign: "right",
+  },
+};
+
 /** The figure's classes: always a block (text never wraps); alignment only at original size. */
 export function imageClasses(size: ImageSize, align: ImageAlign): string {
-  return size === "original"
-    ? `image-paragraph image-paragraph--original image-paragraph--${align}`
-    : "image-paragraph image-paragraph--full";
+  return IMAGE_LAYOUTS[layoutKeyFor(size, align)].className;
 }
 
 /**
@@ -100,17 +147,15 @@ export const escapeHtml = (t: string): string =>
 export function imageFigureHtml(image: ImageSpec, bytes: Uint8Array | null): string {
   const alt = escapeHtml(image.alt);
   const mime = bytes ? imageMime(bytes) : null;
-  const side = image.size === "original" ? image.align : "centre";
-  const margin = { left: "0 auto 0 0", centre: "0 auto", right: "0 0 0 auto" }[side];
-  const width = image.size === "original" ? "" : "width:100%;";
+  const layout = IMAGE_LAYOUTS[layoutKeyFor(image.size, image.align)];
   let bin = "";
   if (bytes && mime) for (const b of bytes) bin += String.fromCharCode(b);
   const img =
     bytes && mime
-      ? `<img src="data:${mime};base64,${btoa(bin)}" alt="${alt}" style="display:block;${width}max-width:100%;height:auto;margin:${margin}">`
+      ? `<img src="data:${mime};base64,${btoa(bin)}" alt="${alt}" style="display:block;${layout.imgWidth}max-width:100%;height:auto;margin:${layout.imgMargin}">`
       : `<p><em>${alt}</em></p>`;
   const caption = image.caption
-    ? `<figcaption style="text-align:${side === "centre" ? "center" : side}">${escapeHtml(image.caption)}</figcaption>`
+    ? `<figcaption style="text-align:${layout.captionAlign}">${escapeHtml(image.caption)}</figcaption>`
     : "";
   return `<figure style="margin:0 0 1em">${img}${caption}</figure>`;
 }

@@ -81,31 +81,31 @@ inline margin, caption align) from one table; no behaviour change.
 
 #### Tasks
 
-- [ ] In `src/lib/essay/image-paragraph.ts`, add a private `ImageLayoutRule` interface and a
+- [x] In `src/lib/essay/image-paragraph.ts`, add a private `ImageLayoutRule` interface and a
       `IMAGE_LAYOUTS: Record<"full" | ImageAlign, ImageLayoutRule>` table with one entry per layout
       option (`full`, `left`, `centre`, `right`), each carrying: the figure's full class string (what
       `imageClasses` returns today), the inline `<img>` `width` declaration (`"width:100%;"` or `""`),
       the inline `<img>` `margin` declaration, and the caption's inline `text-align` value.
-- [ ] Add a small helper `layoutKeyFor(size: ImageSize, align: ImageAlign): "full" | ImageAlign` that
+- [x] Add a small helper `layoutKeyFor(size: ImageSize, align: ImageAlign): "full" | ImageAlign` that
       both consumers call, so the "full-width ignores align" rule is itself written once.
-- [ ] Rewrite `imageClasses()` to return `IMAGE_LAYOUTS[layoutKeyFor(size, align)].className` (name
+- [x] Rewrite `imageClasses()` to return `IMAGE_LAYOUTS[layoutKeyFor(size, align)].className` (name
       TBD during implementation to match existing style).
-- [ ] Rewrite `imageFigureHtml()` to look up the same table entry and use its `width`/`margin`/
+- [x] Rewrite `imageFigureHtml()` to look up the same table entry and use its `width`/`margin`/
       `captionAlign` fields in place of the current inline `{left:…, centre:…, right:…}` object
       literals.
-- [ ] Verify every literal value carried over unchanged (no accidental value change): full-width
+- [x] Verify every literal value carried over unchanged (no accidental value change): full-width
       width `"width:100%;"`, margin `"0 auto"`; left margin `"0 auto 0 0"`; centre margin `"0 auto"`;
       right margin `"0 0 0 auto"`; caption align `"left"`/`"center"`/`"right"` matching
       `image-paragraph.css`'s `.image-paragraph--{left,centre,right} .image-paragraph__caption` rules.
 
 #### Acceptance Criteria
 
-- [ ] All existing assertions in `tests/image-paragraph.test.ts` pass unchanged (exact class strings,
+- [x] All existing assertions in `tests/image-paragraph.test.ts` pass unchanged (exact class strings,
       exact inline style substrings).
-- [ ] `imageClasses` and `imageFigureHtml` share one table — no second hand-written copy of
+- [x] `imageClasses` and `imageFigureHtml` share one table — no second hand-written copy of
       class-suffix/width/margin literals remains in the file.
-- [ ] `npm run typecheck` passes.
-- [ ] No regression in `ImageParagraph.svelte` rendering (reading view) or Copy-as-HTML output.
+- [x] `npm run typecheck` passes.
+- [x] No regression in `ImageParagraph.svelte` rendering (reading view) or Copy-as-HTML output.
 
 #### Testing
 
