@@ -2,9 +2,8 @@
 /**
  * The essay's text export on the REAL engine (srs-web#766): on the pinned essay package (1.13.0, image
  * paragraph view v2) the markdown export says what each image shows, its alt text labelled Image, above
- * its caption, where the image paragraph sits. An essay UPGRADED from an older package still renders
- * with the old view until the core resolves an id-only view reference to the newest installed version
- * (srs-rust#1648).
+ * its caption, where the image paragraph sits. An essay UPGRADED from an older package does too: the
+ * core renders an id-only view reference with the newest installed version (srs-rust#1648, srs-web#815).
  */
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -50,6 +49,28 @@ describe.skipIf(!haveBindings)("essay image paragraphs in the markdown export", 
 
     const md = doc.essayMarkdown(repo, doc.loadEssay(repo, essayId));
     expect(md).toMatch(/Text before the picture\.\s+\*\*Image\*\*: Two dots\s+A small picture/);
+    expect(md).not.toMatch(/!\[|<img|<svg/);
+  }, 30_000);
+  it("an essay upgraded from 1.11.0 exports its image paragraphs with the new view (srs-web#815)", async () => {
+    const dir = path.resolve(__dirname, "../node_modules/.cache/srs-real-bindings");
+    mkdirSync(dir, { recursive: true });
+    copyFileSync(path.join(bindings, "srs_bindings.js"), path.join(dir, "essay-image-export-up.mjs"));
+    const mod = await import(/* @vite-ignore */ path.join(dir, "essay-image-export-up.mjs"));
+    mod.initSync({ module: readFileSync(path.join(bindings, "srs_bindings_bg.wasm")) });
+    const { upgradeBundles } = await import("../src/lib/srs-client.js");
+    const doc = await import("../src/lib/essay/essay-document.js");
+    const repo = mod.SrsRepository.load_archive(
+      new Uint8Array(readFileSync(path.resolve(__dirname, "../e2e/fixtures/essay-images.srs")))
+    );
+    const [done] = upgradeBundles(repo, [ESSAY]);
+    expect(done.conflicts).toEqual([]);
+    expect(repo.validate().summary.errors).toBe(0);
+    const [essay] = doc.listEssays(repo);
+    const md = doc.essayMarkdown(repo, doc.loadEssay(repo, essay.id));
+    expect(md).toMatch(
+      /A paragraph of text before the pictures\.\s+\*\*Image\*\*: An orange band across a blue field\s+The band at full width/
+    );
+    expect(md).toContain("**Image**: A picture that was never attached");
     expect(md).not.toMatch(/!\[|<img|<svg/);
   }, 30_000);
 });
