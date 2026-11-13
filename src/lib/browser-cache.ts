@@ -1,9 +1,11 @@
 /**
  * browser-cache.ts - recovery-copy persistence.
  *
- * The recovery copy is the `.srs` archive (`exportArchive()`, so attachment bytes survive)
- * kept in IndexedDB: one database, one object store, one key (srs-web#505). ADR-001: the
- * bytes are opaque here; only WASM produces and consumes them.
+ * The recovery copy is the exploded file tree (`exportTree()`, attachment bytes included),
+ * kept in IndexedDB: one database, one object store, one key (srs-web#505). Not the `.srs`
+ * archive: its Deflate blocked the main thread ~320 ms per save on a muSrs-size repository;
+ * the tree takes ~25 ms (srs-web#816). ADR-001: the bytes are opaque here; only WASM produces
+ * and consumes them.
  */
 
 const DB_NAME = "srs-web";
@@ -19,10 +21,15 @@ export interface WorkingCopySource {
   commitSha: string;
 }
 
-/** `bytes` is the `.srs` archive; `srsj` is set only for a migrated legacy entry. */
+/**
+ * `tree` is the exploded file tree (`load_tree` input). `bytes` is a `.srs` archive saved before
+ * srs-web#816, and `srsj` a migrated legacy entry; both are only read.
+ */
+export type WorkingCopyTree = Record<string, Uint8Array>;
 export interface WorkingCopyEntry {
   name: string;
   savedAt: string;
+  tree?: WorkingCopyTree;
   bytes?: Uint8Array;
   srsj?: string;
   source?: WorkingCopySource;
@@ -63,19 +70,19 @@ async function idb<T>(
 }
 
 /**
- * Persist the recovery copy. `exportBytes` runs inside the try, so an export throw is a
+ * Persist the recovery copy. `exportCopy` runs inside the try, so an export throw is a
  * `false`, like IndexedDB being unavailable or over quota. Never throws: autosave failure
  * must not interrupt editing.
  */
 export async function saveWorkingCopy(
   name: string,
-  exportBytes: () => Uint8Array,
+  exportCopy: () => WorkingCopyTree,
   source?: WorkingCopySource
 ): Promise<boolean> {
   try {
     const entry: WorkingCopyEntry = {
       name,
-      bytes: exportBytes(),
+      tree: exportCopy(),
       savedAt: new Date().toISOString(),
       ...(source && { source }),
     };
@@ -109,16 +116,13 @@ function loadLegacy(): WorkingCopyEntry | null {
 export async function loadWorkingCopy(): Promise<WorkingCopyEntry | null> {
   try {
     const e = (await idb("readonly", (s) => s.get(KEY))) as Partial<WorkingCopyEntry> | undefined;
-    if (
-      e &&
-      typeof e.name === "string" &&
-      typeof e.savedAt === "string" &&
-      e.bytes instanceof Uint8Array
-    ) {
+    const tree = e?.tree && typeof e.tree === "object" ? e.tree : undefined;
+    const bytes = e?.bytes instanceof Uint8Array ? e.bytes : undefined;
+    if (e && typeof e.name === "string" && typeof e.savedAt === "string" && (tree || bytes)) {
       return {
         name: e.name,
         savedAt: e.savedAt,
-        bytes: e.bytes,
+        ...(tree ? { tree } : { bytes }),
         ...(isSource(e.source) && { source: e.source }),
       };
     }

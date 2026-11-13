@@ -61,40 +61,40 @@ function setup() {
   vi.stubGlobal("localStorage", makeLocalStorageMock());
 }
 
-const BYTES = new Uint8Array([1, 2, 3]);
+const TREE = { "manifest.json": new Uint8Array([1, 2, 3]) };
 
-describe("browser-cache (.srs archive in IndexedDB, srs-web#505)", () => {
-  it("round-trips name and archive bytes; savedAt is ISO 8601", async () => {
+describe("browser-cache (exploded tree in IndexedDB, srs-web#505, #816)", () => {
+  it("round-trips name and file tree; savedAt is ISO 8601", async () => {
     setup();
-    expect(await saveWorkingCopy("my-repo", () => BYTES)).toBe(true);
+    expect(await saveWorkingCopy("my-repo", () => TREE)).toBe(true);
     const entry = await loadWorkingCopy();
     expect(entry?.name).toBe("my-repo");
-    expect(entry?.bytes).toEqual(BYTES);
+    expect(entry?.tree).toEqual(TREE);
     expect(Number.isNaN(new Date(entry?.savedAt ?? "").getTime())).toBe(false);
   });
 
   it("keeps the source a restored session saves back to (srs-web#732)", async () => {
     setup();
     const source = { kind: "github" as const, where: "o/r:main:", commitSha: "abc" };
-    await saveWorkingCopy("my-repo", () => BYTES, source);
+    await saveWorkingCopy("my-repo", () => TREE, source);
     expect((await loadWorkingCopy())?.source).toEqual(source);
   });
 
   it("restores a copy with no source or a malformed one, without a source (srs-web#732)", async () => {
     setup();
-    await saveWorkingCopy("my-repo", () => BYTES);
+    await saveWorkingCopy("my-repo", () => TREE);
     expect((await loadWorkingCopy())?.source).toBeUndefined();
     const bad = { kind: "github", where: "o/r:main:" } as never;
-    await saveWorkingCopy("my-repo", () => BYTES, bad);
+    await saveWorkingCopy("my-repo", () => TREE, bad);
     const entry = await loadWorkingCopy();
-    expect(entry?.bytes).toEqual(BYTES);
+    expect(entry?.tree).toEqual(TREE);
     expect(entry?.source).toBeUndefined();
   });
 
   it("clearWorkingCopy empties it; load returns null when nothing is stored", async () => {
     setup();
     expect(await loadWorkingCopy()).toBeNull();
-    await saveWorkingCopy("repo", () => BYTES);
+    await saveWorkingCopy("repo", () => TREE);
     await clearWorkingCopy();
     expect(await loadWorkingCopy()).toBeNull();
   });
@@ -117,7 +117,7 @@ describe("browser-cache (.srs archive in IndexedDB, srs-web#505)", () => {
         throw new DOMException("denied", "SecurityError");
       },
     });
-    expect(await saveWorkingCopy("repo", () => BYTES)).toBe(false);
+    expect(await saveWorkingCopy("repo", () => TREE)).toBe(false);
     expect(await loadWorkingCopy()).toBeNull();
     await expect(clearWorkingCopy()).resolves.toBeUndefined();
   });
@@ -127,9 +127,28 @@ describe("browser-cache (.srs archive in IndexedDB, srs-web#505)", () => {
     const legacy = { name: "old", srsj: "{}", savedAt: new Date().toISOString() };
     localStorage.setItem("srs-web:working-copy", JSON.stringify(legacy));
     expect(await loadWorkingCopy()).toEqual(legacy);
-    await saveWorkingCopy("old", () => BYTES);
+    await saveWorkingCopy("old", () => TREE);
     expect(localStorage.getItem("srs-web:working-copy")).toBeNull();
-    expect((await loadWorkingCopy())?.bytes).toEqual(BYTES);
+    expect((await loadWorkingCopy())?.tree).toEqual(TREE);
+  });
+
+  it("still restores a .srs archive copy saved before srs-web#816", async () => {
+    setup();
+    const bytes = new Uint8Array([9, 9]);
+    const db = await new Promise<IDBDatabase>((resolve) => {
+      const r = indexedDB.open("srs-web", 1);
+      r.onsuccess = () => resolve(r.result);
+    });
+    await new Promise((resolve) => {
+      const r = db
+        .transaction("working-copy", "readwrite")
+        .objectStore("working-copy")
+        .put({ name: "old", savedAt: new Date().toISOString(), bytes }, "current");
+      r.onsuccess = resolve;
+    });
+    const entry = await loadWorkingCopy();
+    expect(entry?.bytes).toEqual(bytes);
+    expect(entry?.tree).toBeUndefined();
   });
 
   it("ignores a corrupt legacy entry", async () => {

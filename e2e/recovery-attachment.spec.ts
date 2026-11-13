@@ -2,7 +2,7 @@ import path from "node:path";
 import { expect, test } from "@playwright/test";
 import { openPackageEditor, waitForRecoveryCopy } from "./helpers.js";
 
-// srs-web#505: the recovery copy is the .srs archive in IndexedDB, so it keeps updating (and
+// srs-web#505, #816: the recovery copy is the exploded tree in IndexedDB, so it keeps updating (and
 // restores) once the repository holds attachment bytes, which export_srsj refuses.
 test("recovery copy survives an attachment and restores", async ({ page }) => {
   await page.goto("/");
