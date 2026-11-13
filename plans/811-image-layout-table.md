@@ -134,21 +134,21 @@ layout rule.
 
 #### Tasks
 
-- [ ] In `tests/image-paragraph.test.ts`, add a test (e.g. `describe("imageClasses and
-      imageFigureHtml share one layout table", …)`) that, for each of the four layout options, derives
-      the expected inline `width`/`margin` from the same values asserted in the existing
-      `imageClasses` table test, and checks `imageFigureHtml`'s output contains them — i.e. a change
-      to one without the other breaks this test.
-- [ ] Confirm the pre-existing srs-web#766 "copies as HTML with the reading view's layout" test still
+- [x] In `tests/image-paragraph.test.ts`, add a test (`describe("imageClasses and imageFigureHtml
+      share one layout rule (srs-web#811)", …)`) that, for each of the four layout options, derives
+      the expected class/width/margin/caption-align from an independent table in the test and checks
+      both `imageClasses()` and `imageFigureHtml()`'s output against it — i.e. a change to one
+      without the other breaks this test.
+- [x] Confirm the pre-existing srs-web#766 "copies as HTML with the reading view's layout" test still
       passes unchanged.
 - [ ] Confirm the e2e test covering "every SVG in Copy as HTML is an `<img>` data URL" (`220c54d`)
-      still passes unchanged.
+      still passes unchanged. (Deferred to Stage 6 Final Acceptance `npm run e2e` run.)
 
 #### Acceptance Criteria
 
-- [ ] New consistency test passes.
-- [ ] All pre-existing image-paragraph unit tests pass unchanged.
-- [ ] Relevant e2e test(s) pass unchanged.
+- [x] New consistency test passes.
+- [x] All pre-existing image-paragraph unit tests pass unchanged.
+- [ ] Relevant e2e test(s) pass unchanged. (Confirmed at Stage 6.)
 
 #### Testing
 
