@@ -11,6 +11,8 @@ monorepo.
 
 Where a change lives is decided by [ADR-027](docs/adr/027-editor-layers.md): core (srs-rust, ADR-001), headless behaviour (`.ts` / `.svelte.ts` modules with no markup, no `.svelte` import, no `document`), components (tokens only, a specimen on `/styleguide`), screens (compose components, no behaviour). A change of look starts on `/styleguide`. Look: [ADR-019](docs/adr/019-ui-theming-surface-and-live-styleguide.md), [ADR-020](docs/adr/020-icon-set-and-component-token-api.md), `src/styles/README.md`. Guard: `tests/layers.test.ts`.
 
+**srs-web holds only generic code for public packages** (owner, 2026-11-12; ADR-029 point 4). A public package is one pinned in `packages.lock.json`. Code in `src/` may name only definitions (by qualified name or id) and namespaces that one of those bundles carries. An implementation's own rules (muDemocracy's evidence, a repository's private types or tags) stay in that implementation's repository, even when that means srs-web has no editor for them. There is no site layer. Guard: `tests/layers.test.ts` check 4; its baseline only shrinks.
+
 ## Editor help
 
 Help is data: the words live in the `help/` SRS repository, and components only name their feature with a `data-feature` attribute. The contract test fails when the two part ([src/lib/help/README.md](src/lib/help/README.md), decision 9441693e).
