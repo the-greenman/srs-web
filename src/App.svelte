@@ -433,7 +433,7 @@
   const workingCopy = workingCopyScheduler(() => {
     const r = repo;
     if (r && mayKeepWorkingCopy(readOnlyHost, documentMutations.dirty)) {
-      void saveWorkingCopy(repoName, () => exportArchive(r), workingCopySource(activeDocument)).then((ok) => {
+      void saveWorkingCopy(repoName, () => exportTree(r), workingCopySource(activeDocument)).then((ok) => {
         if (r === repo) workingCopySaved = ok;
       });
     }
@@ -653,7 +653,7 @@
         cachedSession = null;
         if (dirty) {
           saveToast("info", "Migrated to the current data model. Unsaved - Save to keep it.", 8000);
-          if (!readOnlyHost) void saveWorkingCopy(repoName, () => exportArchive(loaded), workingCopySource(handle));
+          if (!readOnlyHost) void saveWorkingCopy(repoName, () => exportTree(loaded), workingCopySource(handle));
         }
         const catalog = collectCatalogDiagnostics(loaded);
         if (catalog.length) {
@@ -1004,7 +1004,7 @@
         cachedSession = null;
         if (dirty) {
           saveToast("info", "Migrated to the current data model. Unsaved - export to keep it.", 8000);
-          if (!readOnlyHost) void saveWorkingCopy(repoName, () => exportArchive(loaded));
+          if (!readOnlyHost) void saveWorkingCopy(repoName, () => exportTree(loaded));
         }
         appState = "loaded";
       });
@@ -1380,7 +1380,9 @@
         const entry = cachedSession;
         if (!entry) return;
         try {
-          const restored = entry.bytes ? loadRepoFromArchive(entry.bytes) : loadRepo(entry.srsj ?? "");
+          const restored = entry.tree
+            ? loadRepoFromTree(entry.tree)
+            : entry.bytes ? loadRepoFromArchive(entry.bytes) : loadRepo(entry.srsj ?? "");
           repo = restored;
           readOnlyHost = null;
           gateOnMigration(restored, entry.name, () => {
@@ -1395,7 +1397,7 @@
             appState = "loaded";
             editorMode = "generic";
             cachedSession = null;
-            if (editable) void saveWorkingCopy(repoName, () => exportArchive(restored), workingCopySource(activeDocument));
+            if (editable) void saveWorkingCopy(repoName, () => exportTree(restored), workingCopySource(activeDocument));
           });
         } catch (e: unknown) {
           void clearWorkingCopy();

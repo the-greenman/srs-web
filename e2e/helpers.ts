@@ -294,7 +294,7 @@ export async function setWide(page: Page, on: boolean): Promise<void> {
 }
 
 /**
- * Wait until the recovery copy (the `.srs` archive in IndexedDB, srs-web#505) has been written.
+ * Wait until the recovery copy (the exploded tree in IndexedDB, srs-web#505, #816) has been written.
  * It lands at most 2 s after a change; an async IndexedDB write started by `pagehide` is not
  * guaranteed to finish, so a test that reloads right after an edit waits for it first.
  */
@@ -312,7 +312,8 @@ export async function waitForRecoveryCopy(page: Page): Promise<void> {
                   .transaction("working-copy")
                   .objectStore("working-copy")
                   .get("current");
-                get.onsuccess = () => resolve(get.result?.bytes instanceof Uint8Array);
+                get.onsuccess = () =>
+                  resolve(get.result?.tree?.["manifest.json"] instanceof Uint8Array);
                 get.onerror = () => resolve(false);
               };
             })
