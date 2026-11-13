@@ -80,7 +80,9 @@ jobs:
 
   e2e:
     name: E2E (Playwright) ${{ matrix.shard }}/3
-    runs-on: ubuntu-latest
+    # Pinned: Playwright 1.60 cannot install chromium on ubuntu-latest's ubuntu26.04 image (#813).
+    # Unpin when the @playwright/test version in use supports it.
+    runs-on: ubuntu-24.04
     # Hard backstop so a misbehaving/hanging run can never sit for 20+ minutes.
     timeout-minutes: 15
     strategy:
