@@ -90,6 +90,50 @@ describe("ImageParagraph", () => {
   });
 });
 
+describe("imageClasses and imageFigureHtml share one layout rule (srs-web#811)", () => {
+  // Each row is the layout rule the CSS (image-paragraph.css) and the Copy-as-HTML inline styles
+  // must agree on. A table like this, independent of the production IMAGE_LAYOUTS table, is what
+  // catches one of them drifting without the other.
+  it.each([
+    ["full-width", "left", "image-paragraph image-paragraph--full", "width:100%;", "0 auto", "center"],
+    ["full-width", "centre", "image-paragraph image-paragraph--full", "width:100%;", "0 auto", "center"],
+    ["full-width", "right", "image-paragraph image-paragraph--full", "width:100%;", "0 auto", "center"],
+    [
+      "original",
+      "left",
+      "image-paragraph image-paragraph--original image-paragraph--left",
+      "",
+      "0 auto 0 0",
+      "left",
+    ],
+    [
+      "original",
+      "centre",
+      "image-paragraph image-paragraph--original image-paragraph--centre",
+      "",
+      "0 auto",
+      "center",
+    ],
+    [
+      "original",
+      "right",
+      "image-paragraph image-paragraph--original image-paragraph--right",
+      "",
+      "0 0 0 auto",
+      "right",
+    ],
+  ] as const)(
+    "%s / %s: class, inline img style and caption align agree",
+    async (size, align, classes, imgWidth, imgMargin, captionAlign) => {
+      const { imageFigureHtml } = await import("../src/lib/essay/image-paragraph.js");
+      expect(imageClasses(size, align)).toBe(classes);
+      const html = imageFigureHtml({ alt: "A", caption: "C", size, align, documentId: null }, PNG);
+      expect(html).toContain(`style="display:block;${imgWidth}max-width:100%;height:auto;margin:${imgMargin}"`);
+      expect(html).toContain(`<figcaption style="text-align:${captionAlign}">`);
+    }
+  );
+});
+
 describe("editing (srs-web#765)", () => {
   it("copies as HTML with the reading view's layout, an <img> data URL, and the alt text when bytes are missing (srs-web#766)", async () => {
     const { imageFigureHtml } = await import("../src/lib/essay/image-paragraph.js");
