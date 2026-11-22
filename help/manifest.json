@@ -1,6 +1,15 @@
 {
   "rootContainerId": "c184d887-2fa2-4cbe-8528-cc5ac78a6766",
   "$schema": "https://srs.semanticops.com/schema/2.0/manifest.json",
+  "aiGuidance": {
+    "summary": "The words srs-web's editors show a person and teach an agent: one ui-feature record per feature, one container per editor or screen. Read the identity record first; it holds the purpose, the structure is below.",
+    "suggestedEntryPoints": [
+      "records/tier-2/purpose-b13399cd.json",
+      "records/tier-2/ui-feature-987cac5f.json",
+      "records/tier-2/ui-feature-d9d04bae.json"
+    ],
+    "navigationHints": "The root container has no sections; areas are the other containers, found by their name (container list, not navigation): essay, essay-home (front page), site, merge-from-file. Each is the help dialog's order for that editor. Features are com.semanticops.help/ui-feature; feature_id is a stable slug (area.name), placement ui means on screen, concept means an idea only; there are no lifecycle states or relations. shell.* records are shared and members of several containers. New features go in the editor's container and need a matching data-feature in the app; tests/help-contract.test.ts fails otherwise. Words are data: edit through record_update or the CLI, never the JSON files."
+  },
   "createdAt": "2026-10-29T14:10:00.983640150+00:00",
   "dataModelRevision": 11,
   "description": "The help each srs-web editor shows a person and teaches an agent: one record per feature, one container per editor (srs-web#639, decision 9441693e).",
