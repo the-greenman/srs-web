@@ -898,8 +898,8 @@ export function repositoryId(repo: SrsRepository): string {
 export function listRelations(repo: SrsRepository, filter: RelationListFilter = {}): SrsRelation[] {
   // biome-ignore lint/suspicious/noExplicitAny: WASM boundary
   const raw: any[] = repo.list_relations(JSON.stringify(filter));
-  // list_relations returns RelationSummary (sourceId / targetId), while the
-  // Relation entity uses sourceInstanceId / targetInstanceId — accept both.
+  // list_relations returns RelationSummary: sourceInstanceId / targetInstanceId since
+  // srs-rust#1697, sourceId / targetId before it — accept both until the pin passes it.
   return raw.map((r) => ({
     relationId: r.relationId,
     relationType: r.relationType,
@@ -2614,17 +2614,17 @@ export function getRecordAttachments(
 export interface RelationSummary {
   relationId: string;
   relationType: string;
-  sourceId: string;
-  targetId: string;
+  sourceInstanceId: string;
+  targetInstanceId: string;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: raw WASM RelationSummary has unknown field case
+// biome-ignore lint/suspicious/noExplicitAny: raw WASM RelationSummary has two field generations (srs-rust#1697)
 function normalizeRelationSummary(raw: any): RelationSummary {
   return {
     relationId: raw.relationId,
     relationType: raw.relationType,
-    sourceId: raw.sourceId,
-    targetId: raw.targetId,
+    sourceInstanceId: raw.sourceInstanceId ?? raw.sourceId,
+    targetInstanceId: raw.targetInstanceId ?? raw.targetId,
   };
 }
 
@@ -2818,8 +2818,11 @@ export interface ContextRelation {
   direction: "out" | "in";
   relationId: string;
   relationType: string;
-  sourceId: string;
-  targetId: string;
+  sourceInstanceId: string;
+  targetInstanceId: string;
+  /** Pre srs-rust#1697 names of the two endpoints; read only as a fallback, gone once the pin passes it. */
+  sourceId?: string;
+  targetId?: string;
   sourceLabel?: string;
   targetLabel?: string;
   /** srs-rust#1249 (build.457): when the relation was created, and by whom (RFC-046 testimony). */
