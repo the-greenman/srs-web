@@ -5,6 +5,7 @@
 import { Editor, type Extensions } from "@tiptap/core";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Markdown } from "@tiptap/markdown";
+import { Selection } from "@tiptap/pm/state";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Marked } from "marked";
 
@@ -102,6 +103,42 @@ export function opensVisually(md: string, render: Render): boolean {
   } finally {
     e.destroy();
   }
+}
+
+/**
+ * Ctrl/Cmd+Enter (srs-web#750): the markdown before and from `pos`, each half serialized on its
+ * own, or null unless both hold text. The source editor's rule, over the document instead of text.
+ */
+export function splitAt(editor: Editor, pos: number): [string, string] | null {
+  const { doc } = editor.state;
+  const $pos = doc.resolve(pos);
+  // At a textblock's edge, cut at the neighbouring textblock's edge: no empty list item or quote is left behind.
+  const prev = $pos.parentOffset === 0 && Selection.findFrom(doc.resolve($pos.before()), -1, true);
+  const next =
+    $pos.parentOffset === $pos.parent.content.size &&
+    Selection.findFrom(doc.resolve($pos.after()), 1, true);
+  const half = (from: number, to: number) =>
+    editor.markdown?.serialize(doc.cut(from, to).toJSON()) ?? "";
+  const before = half(0, prev ? prev.from : pos).trimEnd();
+  const after = half(next ? next.from : pos, doc.content.size).trim();
+  return before.trim() && after ? [before, after] : null;
+}
+
+/** The caret is on the document's first (up) / last (down) visual line: arrows leave the paragraph. Needs layout. */
+export function atEdge(editor: Editor, up: boolean): boolean {
+  const { view, state } = editor;
+  const { $head, empty } = state.selection;
+  if (!empty || !view.endOfTextblock(up ? "up" : "down")) return false;
+  const edge = state.doc.resolve(up ? $head.before() : $head.after());
+  return !Selection.findFrom(edge, up ? -1 : 1, true);
+}
+
+/** The caret is at the very start of the document and not in a list (there Tab indents the item). */
+export function atStart(editor: Editor): boolean {
+  const { $from, empty } = editor.state.selection;
+  if (!empty || $from.parentOffset > 0) return false;
+  for (let d = $from.depth; d > 0; d--) if ($from.node(d).type.name === "listItem") return false;
+  return !Selection.findFrom(editor.state.doc.resolve($from.before()), -1, true);
 }
 
 /**

@@ -2,7 +2,8 @@
   Block — one paragraph: a narrow gutter (drag handle and one ellipsis action menu, both always visible; the menu is the only tool on touch), a hover strip of shortcut tools (hide, zoom, copy link: the `primary` paragraph actions) inside the title row, a right margin slot (`margin`),
   a small mono title above the body (InlineText) and the body in two states: rendered markdown
   (core renderMarkdown, already sanitized) until focused, then a plain-text source editor
-  (`contenteditable="plaintext-only"`, no rich-text dependency). Hidden = collapsed in place.
+  (`contenteditable="plaintext-only"`), or with `mode="visual"` the visual editor (srs-web#750: every
+  shortcut below works in both; the editor answers the caret questions through MarkdownText's KeyApi). Hidden = collapsed in place.
   Presentation + events only; the shell commits through the engine. With `content` (an essay image
   paragraph, srs-web#765) that snippet takes the body's place in one focusable block: arrows move
   between paragraphs, Alt+Arrows move it, Ctrl/Cmd+Enter adds a paragraph after (nothing to split),
@@ -19,7 +20,7 @@
   import EyeToggle from './EyeToggle.svelte';
   import IconButton from './IconButton.svelte';
   import InlineText from './InlineText.svelte';
-  import MarkdownText from './MarkdownText.svelte';
+  import MarkdownText, { type KeyApi } from './MarkdownText.svelte';
   import AttachDrop from './AttachDrop.svelte';
   import type { AttachFile, AttachPolicy } from './attach-check.js';
   import Popover from './Popover.svelte';
@@ -55,6 +56,7 @@
     contentLabel,
     margin,
     count,
+    mode = 'source',
   }: {
     id: string;
     title?: string;
@@ -95,6 +97,8 @@
     margin?: Snippet;
     /** Under the body (the essay passes a Count). */
     count?: Snippet;
+    /** The body editor: `source` (default) or `visual` (srs-web#749, #750); every shortcut works in both. */
+    mode?: 'source' | 'visual';
   } = $props();
 
   let editingTitle = $state(false);
@@ -150,12 +154,12 @@
     return before.trim() && after.trim() ? [before, after] : null;
   }
 
-  async function split(el: HTMLElement, [before, after]: [string, string], { replace, flush }: { replace: (v: string) => void; flush: () => void }) {
-    const whole = el.innerText;
+  async function split([before, after]: [string, string], { replace, value, el }: KeyApi) {
+    const whole = value ? value() : el!.innerText;
     replace(before); // the blur that follows must not commit the whole text back
     if (await onsplit!(before, after)) return;
-    el.textContent = whole; // not written: put the text back and commit it
-    flush();
+    replace(whole); // not written: put the text back and commit it
+    onbody(whole);
   }
 
   function applyMove(m: KeyMove) {
@@ -164,10 +168,8 @@
   }
 
   /** Paragraph shortcuts, for both the rendered and the editing state of the body. */
-  function bodyKeydown(
-    e: KeyboardEvent,
-    { flush, replace, el, rendered }: { flush: () => void; replace: (v: string) => void; el?: HTMLElement; rendered: boolean },
-  ) {
+  function bodyKeydown(e: KeyboardEvent, api: KeyApi) {
+    const { flush, el, rendered } = api;
     if (rendered && plainArrow(e)) {
       e.preventDefault();
       onnavigate?.(e.key === 'ArrowUp' ? 'prev' : 'next');
@@ -176,8 +178,8 @@
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       flush();
-      const cut = !rendered && onsplit && caretSplit(el);
-      if (cut && el) void split(el, cut, { replace, flush });
+      const cut = !rendered && onsplit && (api.split ? api.split() : caretSplit(el));
+      if (cut) void split(cut, api);
       else onnew();
       return;
     }
@@ -188,7 +190,7 @@
       applyMove(m);
       return;
     }
-    if (plainArrow(e) && atEdgeLine(el, e.key === 'ArrowUp')) {
+    if (plainArrow(e) && (api.atEdge ? api.atEdge(e.key === 'ArrowUp') : atEdgeLine(el, e.key === 'ArrowUp'))) {
       e.preventDefault();
       flush();
       onnavigate?.(e.key === 'ArrowUp' ? 'prev' : 'next');
@@ -197,7 +199,7 @@
     // Tab only indents at the very start of the block, so it never traps keyboard focus.
     if (e.key === 'Tab' && !e.altKey && !e.ctrlKey && !e.metaKey) {
       const sel = getSelection();
-      if (sel?.isCollapsed && sel.anchorOffset === 0) {
+      if (api.atStart ? api.atStart() : sel?.isCollapsed && sel.anchorOffset === 0) {
         e.preventDefault();
         flush();
         onindent(e.shiftKey ? -1 : 1);
@@ -280,6 +282,7 @@
         label={`Paragraph text: ${shortLabel}`}
         focusKey={`body:${id}`}
         images={false}
+        {mode}
         oncommit={onbody}
         onkeydown={bodyKeydown}
       />

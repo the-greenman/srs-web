@@ -51,3 +51,88 @@ test("a blank line inside a paragraph is not an edge", async ({ page }) => {
   await page.keyboard.press("ArrowUp"); // blank -> line one
   await expect(body(page, 1)).toBeFocused();
 });
+
+/** srs-web#750: the same paragraph keys in the visual editor (the edit mode is per browser; source until #752). */
+test.describe("visual mode", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("srs-web.essay.edit-mode", "visual"));
+    await open(page);
+  });
+  const visual = (page: Page, n: number) => items(page).nth(n).locator(".ProseMirror");
+  const depth = (page: Page, n: number) => items(page).nth(n).evaluate((el) => (el as HTMLElement).style.getPropertyValue("--depth"));
+  /** Click just before the first occurrence of `text` in a rendered paragraph (a real pointer click). */
+  async function clickBefore(page: Page, n: number, text: string) {
+    const pt = await body(page, n).evaluate((el, t) => {
+      const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let node = walk.nextNode(); node; node = walk.nextNode()) {
+        const i = node.textContent!.indexOf(t);
+        if (i < 0) continue;
+        const r = document.createRange();
+        r.setStart(node, i);
+        r.setEnd(node, i + 1);
+        const b = r.getBoundingClientRect();
+        return { x: b.left + 1, y: b.top + b.height / 2 };
+      }
+      return null;
+    }, text);
+    await page.mouse.click(pt!.x, pt!.y);
+    await expect(visual(page, n)).toBeFocused();
+    // A click inside an open editor reaches its state on the next selectionchange; a writer is never faster.
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  }
+
+  test("the caret lands where clicked, and Ctrl+Enter splits there; Ctrl+Z joins again", async ({ page }) => {
+    await clickBefore(page, 0, "paragraph");
+    await page.keyboard.press("Control+Enter");
+    await expect(items(page)).toHaveCount(4);
+    await expect(body(page, 0)).toHaveText("First");
+    await expect(body(page, 1)).toHaveText("paragraph.");
+    await expect(visual(page, 1)).toBeFocused();
+    await expect.poll(() => caretOffset(page)).toBe(0);
+    // nothing typed in the new half: Ctrl+Z is the essay's undo, not the editor's
+    await page.keyboard.press("Control+z");
+    await expect(items(page)).toHaveCount(3);
+    await expect(body(page, 0)).toHaveText("First paragraph.");
+
+    await clickBefore(page, 1, "paragraph");
+    await page.keyboard.type("short ");
+    await page.locator("body").click({ position: { x: 5, y: 5 } });
+    await expect(body(page, 1)).toHaveText("Second short paragraph.");
+  });
+
+  test("arrows cross to the neighbouring paragraph from the first/last line", async ({ page }) => {
+    await clickBefore(page, 1, "paragraph");
+    await page.keyboard.press("ArrowUp");
+    await expect(visual(page, 0)).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(visual(page, 1)).toBeFocused();
+    await expect.poll(() => caretOffset(page)).toBe(0);
+    await page.keyboard.press("ArrowDown");
+    await expect(visual(page, 2)).toBeFocused();
+  });
+
+  test("Alt+arrows move and change level; Tab and Shift+Tab at the start indent and outdent", async ({ page }) => {
+    await clickBefore(page, 1, "paragraph");
+    await page.keyboard.press("Alt+ArrowUp");
+    await expect(body(page, 0)).toHaveText("Second paragraph.");
+    await clickBefore(page, 1, "paragraph");
+    await page.keyboard.press("Alt+ArrowRight");
+    await expect.poll(() => depth(page, 1)).toBe("1");
+    await clickBefore(page, 1, "paragraph");
+    await page.keyboard.press("Alt+ArrowLeft");
+    await expect.poll(() => depth(page, 1)).toBe("0");
+
+    await clickBefore(page, 2, "Third");
+    await page.keyboard.press("Tab");
+    await expect.poll(() => depth(page, 2)).toBe("1");
+    await clickBefore(page, 2, "Third");
+    await page.keyboard.press("Shift+Tab");
+    await expect.poll(() => depth(page, 2)).toBe("0");
+    // not at the start: Tab is left to the browser (never prevented), so focus is never trapped
+    await clickBefore(page, 2, "paragraph");
+    await page.evaluate(() => window.addEventListener("keydown", (e) => ((window as unknown as { tabTaken: boolean }).tabTaken = e.defaultPrevented)));
+    await page.keyboard.press("Tab");
+    expect(await page.evaluate(() => (window as unknown as { tabTaken: boolean }).tabTaken)).toBe(false);
+    expect(await depth(page, 2)).toBe("0");
+  });
+});

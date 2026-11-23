@@ -14,7 +14,7 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from "
 import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { Editor, JSONContent } from "@tiptap/core";
-import { makeEditor, opensVisually, savesFaithfully, toMarkdown } from "../src/lib/visual-markdown.js";
+import { makeEditor, opensVisually, savesFaithfully, splitAt, toMarkdown } from "../src/lib/visual-markdown.js";
 
 const bindings = path.resolve(__dirname, "../src/lib/srs_bindings");
 const haveBindings = existsSync(path.join(bindings, "srs_bindings_bg.wasm"));
@@ -166,5 +166,29 @@ describe.skipIf(!haveBindings)("visual markdown on the real core", () => {
     }
     expect(falseAlarms).toEqual([]);
     expect(visual).toBeGreaterThan(0);
+  });
+
+  it("a split (srs-web#750) leaves two halves the core renders as the editor shows them, on public/examples", () => {
+    const dir = path.resolve(__dirname, "../public/examples");
+    const unfaithful: string[] = [];
+    let splits = 0;
+    for (const f of readdirSync(dir).filter((f) => f.endsWith(".srsj"))) {
+      const data = JSON.parse(readFileSync(path.join(dir, f), "utf8")).data as Record<string, { fieldValues?: Record<string, unknown> }>;
+      for (const [k, r] of Object.entries(data)) {
+        const md = k.startsWith("records/") ? r.fieldValues?.body : undefined;
+        if (typeof md !== "string" || !md || !opensVisually(md, render)) continue;
+        const e = makeEditor(md);
+        const halves = splitAt(e, Math.floor(e.state.doc.content.size / 2));
+        e.destroy();
+        for (const half of halves ?? []) {
+          splits++;
+          const h = makeEditor(half);
+          if (!opensVisually(half, render) || !savesFaithfully(h, toMarkdown(h), checker, render)) unfaithful.push(half);
+          h.destroy();
+        }
+      }
+    }
+    expect(unfaithful).toEqual([]);
+    expect(splits).toBeGreaterThan(0);
   });
 });

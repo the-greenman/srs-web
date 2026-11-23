@@ -39,7 +39,8 @@
   import type { DragPayload, KeyMove } from "$lib/components/dnd.js";
   import Button from "$lib/components/Button.svelte";
   import InlineText from "$lib/components/InlineText.svelte";
-  import MarkdownText from "$lib/components/MarkdownText.svelte";
+  import MarkdownText, { openAtStart } from "$lib/components/MarkdownText.svelte";
+  import { editMode } from "./edit-mode.js";
   import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
   import HelpDialog from "$lib/components/HelpDialog.svelte";
   import { helpDismissed, helpFor, setHelpDismissed, type HelpItem } from "$lib/help/help.js";
@@ -566,12 +567,9 @@
     const rest = dir === "next" ? items.slice(at + 1) : items.slice(0, at).reverse();
     const to = rest.find((i) => !hidden.has(i.id) && !inherited.has(i.id));
     if (!to) return;
-    void focusParagraph(to.id).then(tick).then(() => {
-      const body = document.querySelector<HTMLElement>(`[data-focus-key="body:${to.id}"]`);
-      if (!body) return;
-      // Block's edit effect leaves the caret at the end; going down wants the start.
-      if (dir === "next") getSelection()?.collapse(body.firstChild ?? body, 0);
-    });
+    // Opening leaves the caret at the end; going down wants the start.
+    if (dir === "next") openAtStart(`body:${to.id}`);
+    void focusParagraph(to.id);
   }
 
   /**
@@ -800,6 +798,9 @@
     return refusal;
   }
 
+  /** Read once per shell: the switch that changes it arrives with srs-web#752. */
+  const paragraphMode = editMode();
+
   const newParagraphAfter = (id: string): string =>
     `body:${addParagraph(repo, model!, { id, zone: "after" })}`;
 
@@ -808,13 +809,11 @@
     let key = ""; // set only once both writes are done; run() swallows a throw
     await run(() => {
       setBody(repo, id, before);
-      return (key = `body:${addParagraph(repo, model!, { id, zone: "after" }, after)}`);
+      key = `body:${addParagraph(repo, model!, { id, zone: "after" }, after)}`;
+      openAtStart(key);
+      return key;
     });
-    const ok = key !== "";
-    await tick();
-    const el = document.activeElement as HTMLElement | null;
-    if (ok && el?.isContentEditable && el.dataset.focusKey === key) getSelection()?.collapse(el, 0);
-    return ok;
+    return key !== "";
   }
 
   const SHIFT = { up: "up", down: "down", in: "indent", out: "outdent" } as const;
@@ -1159,6 +1158,7 @@
                 onhide={(h) => run(() => setHidden(repo, model!, p.id, h))}
                 onnew={() => run(() => newParagraphAfter(p.id))}
                 onsplit={(before, after) => splitParagraph(p.id, before, after)}
+                mode={paragraphMode}
                 onindent={(d) => onKey(p.id, d === 1 ? "in" : "out")}
                 onmove={(dir) => onKey(p.id, dir)}
                 onnavigate={(dir) => navigate(p.id, dir)}
