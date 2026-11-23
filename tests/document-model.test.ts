@@ -42,6 +42,24 @@ function blueprintSummary(id: string): BlueprintSummary {
   };
 }
 
+/** Mimic the core's `get_type_subtypes`: the transitive closure over a child -> parent map. */
+function subtypesOf(extendsOf: Record<string, string>) {
+  return (typeId: string, includeSelf?: boolean | null) => {
+    const subtypes = new Set<string>(includeSelf ? [typeId] : []);
+    let grew = true;
+    while (grew) {
+      grew = false;
+      for (const [child, parent] of Object.entries(extendsOf)) {
+        if ((parent === typeId || subtypes.has(parent)) && !subtypes.has(child)) {
+          subtypes.add(child);
+          grew = true;
+        }
+      }
+    }
+    return { typeId, subtypes: [...subtypes].map((id) => ({ id })) };
+  };
+}
+
 /** Build a fake repo implementing only the methods document-model.ts calls. */
 function fakeRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
   const notMocked = (name: string) => () => {
@@ -55,7 +73,7 @@ function fakeRepo(overrides: Partial<SrsRepository> = {}): SrsRepository {
     list_containers: notMocked("list_containers"),
     resolve_container_view: notMocked("resolve_container_view"),
     render_composition: notMocked("render_composition"),
-    get_type: () => null,
+    get_type_subtypes: subtypesOf({}),
   };
   return { ...base, ...overrides } as unknown as SrsRepository;
 }
@@ -250,7 +268,7 @@ describe("componentTypes", () => {
         { id: ROOT_TYPE, namespace: "com.example", name: "section", version: 1 },
         { id: HERO_TYPE, namespace: "com.example", name: "hero", version: 1 },
       ],
-      get_type: (id: string) => (id === HERO_TYPE ? { id, extendsTypeId: ROOT_TYPE } : { id }),
+      get_type_subtypes: subtypesOf({ [HERO_TYPE]: ROOT_TYPE }),
     });
     expect(componentTypes(repo, blueprintSummary("bp")).map((t) => t.typeId)).toEqual([HERO_TYPE]);
   });
@@ -310,8 +328,7 @@ describe("childTypes", () => {
         { id: FEATURE_TYPE, namespace: "com.example", name: "feature", version: 1 },
         { id: CARD_SUBTYPE, namespace: "com.example", name: "feature-highlight", version: 1 },
       ],
-      get_type: (id: string) =>
-        id === CARD_SUBTYPE ? { id, extendsTypeId: FEATURE_TYPE } : { id },
+      get_type_subtypes: subtypesOf({ [CARD_SUBTYPE]: FEATURE_TYPE }),
     });
 
     const types = childTypes(repo, blueprintSummary("bp"), FEATURE_GROUP_TYPE);
@@ -327,13 +344,30 @@ describe("childTypes", () => {
       list_types: () => [
         { id: FEATURE_TYPE, namespace: "com.example", name: "feature", version: 1 },
       ],
-      get_type: (id: string) =>
-        id === GROUP_SUBTYPE ? { id, extendsTypeId: FEATURE_GROUP_TYPE } : { id },
+      get_type_subtypes: subtypesOf({ [GROUP_SUBTYPE]: FEATURE_GROUP_TYPE }),
     });
 
     // GROUP_SUBTYPE extends FEATURE_GROUP_TYPE, so it inherits the same contains spec.
     const types = childTypes(repo, blueprintSummary("bp"), GROUP_SUBTYPE);
     expect(types.map((t) => t.typeId)).toEqual([FEATURE_TYPE]);
+  });
+
+  it("expands a two-level extendsTypeId chain from the core closure", () => {
+    const LEAF = "99999999-0000-4000-8000-000000000009";
+    const CARD_SUBTYPE = "77777777-0000-4000-8000-000000000007";
+    const repo = fakeRepo({
+      list_blueprint_structure: () => [
+        { relationType: "contains", sourceTypeId: FEATURE_GROUP_TYPE, targetTypeId: FEATURE_TYPE },
+      ],
+      list_types: () => [
+        { id: FEATURE_TYPE, namespace: "com.example", name: "feature", version: 1 },
+        { id: CARD_SUBTYPE, namespace: "com.example", name: "feature-highlight", version: 1 },
+        { id: LEAF, namespace: "com.example", name: "feature-leaf", version: 1 },
+      ],
+      get_type_subtypes: subtypesOf({ [CARD_SUBTYPE]: FEATURE_TYPE, [LEAF]: CARD_SUBTYPE }),
+    });
+    const types = childTypes(repo, blueprintSummary("bp"), FEATURE_GROUP_TYPE);
+    expect(types.map((t) => t.typeId).sort()).toEqual([CARD_SUBTYPE, FEATURE_TYPE, LEAF].sort());
   });
 
   it("returns an empty list for a leaf type with no declared contains spec", () => {
