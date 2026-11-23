@@ -6,6 +6,26 @@
   key (edit and rendered state) after Enter-to-edit; Block uses it for its paragraph shortcuts.
   Classes are `<base>__render` / `<base>__body` (block.css).
 -->
+<script module lang="ts">
+  /** What `onkeydown` gets. Visual mode adds the caret questions Block cannot answer from the DOM (srs-web#750). */
+  export type KeyApi = {
+    flush: () => void;
+    replace: (v: string) => void;
+    el?: HTMLElement;
+    rendered: boolean;
+    value?: () => string;
+    split?: () => [string, string] | null;
+    atEdge?: (up: boolean) => boolean;
+    atStart?: () => boolean;
+  };
+
+  let startNext: string | undefined;
+  /** The next paragraph to open, if it has this focus key, puts its caret at the start (arrow down, a split's new half). */
+  export function openAtStart(focusKey: string) {
+    startNext = focusKey;
+  }
+</script>
+
 <script lang="ts">
   import { untrack } from 'svelte';
   import { renderMarkdown } from '$lib/srs-client.js';
@@ -34,7 +54,7 @@
     oncommit: (value: string) => void;
     /** `source` (default, every existing caller) edits plain markdown; `visual` edits with Tiptap and falls back to source when it cannot be exact (srs-web#749). */
     mode?: 'source' | 'visual';
-    onkeydown?: (e: KeyboardEvent, api: { flush: () => void; replace: (v: string) => void; el?: HTMLElement; rendered: boolean }) => void;
+    onkeydown?: (e: KeyboardEvent, api: KeyApi) => void;
   } = $props();
 
   let el = $state<HTMLElement>();
@@ -52,6 +72,21 @@
   let clickedAt: number | null = null;
   /** Viewport y of that click: the caret is scrolled back to it once the source shows (srs-web#807). */
   let clickedY: number | null = null;
+  let clickedX: number | null = null;
+  /** Open with the caret at the start (openAtStart). */
+  let atStart = false;
+  /** Where the visual editor opens its caret. */
+  let caret = $state<'start' | 'end' | { x: number; y: number }>('end');
+
+  function open() {
+    atStart = !!focusKey && startNext === focusKey;
+    startNext = undefined;
+    if (visual) {
+      caret = clickedX !== null && clickedY !== null ? { x: clickedX, y: clickedY } : atStart ? 'start' : 'end';
+      clickedAt = clickedX = clickedY = null;
+    }
+    editing = true;
+  }
 
   /** The nearest ancestor that scrolls vertically (the essay page), else the document. */
   function scroller(from: HTMLElement): Element {
@@ -70,6 +105,7 @@
     el.focus({ preventScroll: true });
     const sel = getSelection();
     if (clickedAt !== null && el.firstChild) sel?.collapse(el.firstChild, Math.min(clickedAt, el.textContent.length));
+    else if (atStart) sel?.collapse(el.firstChild ?? el, 0);
     else {
       sel?.selectAllChildren(el);
       sel?.collapseToEnd();
@@ -80,8 +116,8 @@
       const rect = r.getClientRects()[0] ?? r.getBoundingClientRect();
       scroller(el).scrollBy({ top: rect.top - clickedY, behavior: 'instant' });
     }
-    clickedAt = null;
-    clickedY = null;
+    clickedAt = clickedX = clickedY = null;
+    atStart = false;
   });
 
   /** The caret position under a pointer: the standard API, or WebKit's older one. */
@@ -101,6 +137,7 @@
     before.setEnd(at.node, at.offset);
     clickedAt = sourceOffset(value, before.toString());
     clickedY = e.clientY;
+    clickedX = e.clientX;
   }
 
   // Show external changes (agent writes) unless the writer is mid-edit here.
@@ -154,6 +191,8 @@
     {placeholder}
     {focusKey}
     {oncommit}
+    {onkeydown}
+    {caret}
     onfallback={(note) => (sourceNote = note)}
     onblur={() => (editing = false)}
   />
@@ -191,12 +230,9 @@
     aria-label={`${label}, press Enter to edit`}
     data-placeholder={placeholder}
     data-focus-key={focusKey}
-    onfocus={() => (editing = true)}
+    onfocus={open}
     onpointerdown={renderPointerdown}
-    onpointercancel={() => {
-      clickedAt = null;
-      clickedY = null;
-    }}
+    onpointercancel={() => (clickedAt = clickedX = clickedY = null)}
     onclick={renderClick}
     onkeydown={renderKeydown}
   >{@html html}</div>

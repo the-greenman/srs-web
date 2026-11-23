@@ -5,10 +5,12 @@
 import { describe, expect, it } from "vitest";
 import { marked } from "marked";
 import {
+  atStart,
   escapeBlockMarkers,
   makeEditor,
   opensVisually,
   savesFaithfully,
+  splitAt,
   toMarkdown,
   visualExtensions,
 } from "../src/lib/visual-markdown.js";
@@ -115,5 +117,56 @@ describe("no edit, no write", () => {
     const e = makeEditor(md);
     expect(toMarkdown(e)).toBe(md);
     e.destroy();
+  });
+});
+
+describe("keyboard (srs-web#750)", () => {
+  /** The document position just before the first occurrence of `text`. */
+  const posOf = (e: ReturnType<typeof makeEditor>, text: string) => {
+    let at = -1;
+    e.state.doc.descendants((n, pos) => {
+      const i = n.isText ? n.text!.indexOf(text) : -1;
+      if (at < 0 && i >= 0) at = pos + i;
+    });
+    return at;
+  };
+
+  it.each([
+    ["one **two** three", "three", ["one **two**", "three"]],
+    ["first para\n\nsecond para", "second", ["first para", "second para"]],
+    ["- a\n- b", "b", ["- a", "- b"]],
+    ["1984\\. A year then more", "then", ["1984\\. A year", "then more"]],
+  ])("splits %j at %j into two markdown halves", (md, at, halves) => {
+    const e = makeEditor(md);
+    expect(splitAt(e, posOf(e, at))).toEqual(halves);
+    e.destroy();
+  });
+
+  it("a split at the end of a list item leaves no empty item", () => {
+    const e = makeEditor("- a\n- b");
+    expect(splitAt(e, posOf(e, "a") + 1)).toEqual(["- a", "- b"]);
+    e.destroy();
+  });
+
+  it("a split with an empty half is no split", () => {
+    const e = makeEditor("only text");
+    expect(splitAt(e, 1)).toBeNull();
+    expect(splitAt(e, e.state.doc.content.size - 1)).toBeNull();
+    e.destroy();
+  });
+
+  it("start is the document's very start, never inside a list", () => {
+    const e = makeEditor("first\n\nsecond");
+    e.commands.setTextSelection(1);
+    expect(atStart(e)).toBe(true);
+    e.commands.setTextSelection(posOf(e, "second"));
+    expect(atStart(e)).toBe(false);
+    e.commands.setTextSelection(3);
+    expect(atStart(e)).toBe(false);
+    e.destroy();
+    const list = makeEditor("- a\n- b");
+    list.commands.setTextSelection(posOf(list, "a"));
+    expect(atStart(list)).toBe(false);
+    list.destroy();
   });
 });

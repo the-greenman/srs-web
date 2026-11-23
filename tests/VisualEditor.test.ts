@@ -69,3 +69,22 @@ it("an edit commits once, as markdown, when the paragraph is left", async () => 
   await tick();
   expect(oncommit).toHaveBeenCalledExactlyOnceWith("one **two**");
 });
+
+it("an agent write shows while the paragraph is not being edited (srs-web#750)", async () => {
+  const { container, rerender } = render(MarkdownText, { value: "old", base: "block", label: "Body", mode: "visual", oncommit: vi.fn() });
+  await rerender({ value: "agent **wrote**" });
+  expect(container.querySelector(".block__render strong")?.textContent).toBe("wrote");
+});
+
+it("the editor is pristine until typed in, so Ctrl-Z steps the essay history (srs-web#750)", async () => {
+  const { container } = render(MarkdownText, { value: "one", base: "block", label: "Body", mode: "visual", oncommit: vi.fn() });
+  await open(container);
+  const pm = await waitFor(() => {
+    const el = container.querySelector<HTMLElement & { editor?: { commands: { insertContent: (c: unknown) => void } } }>(".block__body--visual .ProseMirror");
+    expect(el?.editor).toBeTruthy();
+    return el!;
+  });
+  expect(pm.hasAttribute("data-pristine")).toBe(true);
+  pm.editor!.commands.insertContent(" two");
+  expect(pm.hasAttribute("data-pristine")).toBe(false);
+});
