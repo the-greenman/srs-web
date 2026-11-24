@@ -31,6 +31,7 @@
   let {
     id,
     title = '',
+    number,
     body = '',
     hidden = false,
     inherited = false,
@@ -60,6 +61,8 @@
   }: {
     id: string;
     title?: string;
+    /** Position in the document, e.g. `2.1` (srs-web#829); shown with or without a title. */
+    number?: string;
     body?: string;
     hidden?: boolean;
     /** Hidden because an ancestor is hidden. */
@@ -255,6 +258,7 @@
   </div>
   <div class="block__main" data-part="main">
     <div class="block__head" data-part="head" class:is-collapsed={!title && !editingTitle}>
+      {#if number}<span class="block__number" data-part="number" data-testid="paragraph-number"><span class="sr-only">{"Paragraph "}</span>{number}</span>{/if}
       <span class="block__title" data-part="title">
         <InlineText value={title} placeholder="Add title" label="Paragraph title" oncommit={ontitle} bind:editing={editingTitle} />
       </span>

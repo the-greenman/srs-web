@@ -560,7 +560,7 @@
       {#snippet one()}
         <div class={`sg__paragraph ${cls}`} data-testid="sg-paragraph-state" data-state={label}>
           <Block
-            id={`sg-${label}`} title={t.title} body={t.body} hidden={o.hidden}
+            id={`sg-${label}`} number="2.1" title={t.title} body={t.body} hidden={o.hidden}
             onbody={noop} ontitle={noop} onhide={noop} onnew={noop} onindent={noop} onmove={noop}
             onzoom={noop} oncopylink={noop} onpull={noop} ondelete={noop}
           />

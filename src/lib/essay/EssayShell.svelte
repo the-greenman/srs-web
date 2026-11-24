@@ -113,7 +113,7 @@
   import { annotationsFor } from "$lib/annotations.js";
   import type { Annotation } from "$lib/annotations.js";
   import { essaySource } from "./annotation-source.js";
-  import { essayCounts, hiddenByAncestor, outsideRun, plainText, visibleEntries } from "./essay-model.js";
+  import { essayCounts, hiddenByAncestor, outsideRun, paragraphNumbers, plainText, visibleEntries } from "./essay-model.js";
 
   let {
     repo,
@@ -437,6 +437,7 @@
   // ponytail: re-renders every body on each reload; cache by body if long essays feel slow.
   const counts = $derived(essayCounts(model?.entries ?? [], (id) => plainText(model?.paragraphs[id]?.body ?? "")));
   const showThread = (id: string) => isShown(openThreads, id, hidden, inherited);
+  const numbers = $derived(paragraphNumbers(model?.entries ?? []));
   const allItems = $derived((model?.entries ?? []).map((e) => ({ id: e.instanceId, depth: e.depth })));
   /** Zoomed: the paragraph and its subtree (the entries after it that are deeper). */
   const items = $derived.by(() => {
@@ -454,6 +455,7 @@
       id: e.instanceId,
       depth: e.depth,
       label: label(e.instanceId),
+      number: numbers.get(e.instanceId),
       hidden: hidden.has(e.instanceId),
       inherited: inherited.has(e.instanceId),
       hasChildren: e.hasChildren,
@@ -679,7 +681,7 @@
       referencesContainerId: m.referencesContainerId,
       notesContainerId: m.notesContainerId,
       bundleContainerId: m.bundleContainerId,
-      focus: focusId ? { id: focusId, title: m.paragraphs[focusId] ? label(focusId) : "untitled" } : undefined,
+      focus: focusId ? { id: focusId, title: m.paragraphs[focusId] ? label(focusId) : "untitled", number: numbers.get(focusId) } : undefined,
     });
   }
   // The same rules close every agent's start page (ui_help, srs-web#674), so an agent needs no copy.
@@ -1107,6 +1109,7 @@
               <Block
                 id={p.id}
                 title={p.title}
+                number={numbers.get(p.id)}
                 hidden={hidden.has(p.id)}
                 inherited={inherited.has(p.id)}
                 {handle}
@@ -1148,6 +1151,7 @@
               <Block
                 id={p.id}
                 title={p.title}
+                number={numbers.get(p.id)}
                 body={p.body}
                 hidden={hidden.has(p.id)}
                 inherited={inherited.has(p.id)}

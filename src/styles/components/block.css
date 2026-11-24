@@ -142,6 +142,10 @@
   text-transform: uppercase;
   color: var(--color-muted);
 }
+.block__number {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
 .block__title {
   min-width: 0;
   flex: 0 1 auto;

@@ -8,11 +8,11 @@
     "feature_id": "essay.layers",
     "placement": "ui",
     "title": "Layers",
-    "summary": "Layers is an outline of your essay: one row per paragraph, by its title. Click a row to jump to that paragraph. Drag rows to reorder them, or drop one onto another to put it underneath. The eye hides a paragraph (and everything under it) from the page and from the export, without deleting it.",
+    "summary": "Layers is an outline of your essay: one row per paragraph, by its number and title. The number also shows beside the paragraph's title; agents use the same one, and it changes when you move paragraphs. Click a row to jump to that paragraph. Drag rows to reorder them, or drop one onto another to put it underneath. The eye hides a paragraph (and everything under it) from the page and from the export, without deleting it.",
     "ai_guidance": "highlight the Layers panel; explain it is the same paragraphs as the page, in outline."
   },
   "createdAt": "2026-10-29T14:42:46.220007134+00:00",
-  "updatedAt": "2026-10-29T14:42:46.220014474+00:00",
+  "updatedAt": "2026-11-24T11:41:36.737675776+00:00",
   "createdBy": {
     "kind": "ai",
     "id": "agent:claude-code",

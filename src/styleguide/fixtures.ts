@@ -295,6 +295,7 @@ export const markdownComments: Comment[] = [
 export const layers: Layer[] = [
   {
     id: "l1",
+    number: "1",
     depth: 0,
     label: "Opening",
     hidden: false,
@@ -304,6 +305,7 @@ export const layers: Layer[] = [
   },
   {
     id: "l2",
+    number: "1.1",
     depth: 1,
     label: "Background",
     hidden: true,
@@ -313,6 +315,7 @@ export const layers: Layer[] = [
   },
   {
     id: "l3",
+    number: "1.2",
     depth: 1,
     label: "Detail",
     hidden: false,
@@ -322,6 +325,7 @@ export const layers: Layer[] = [
   },
   {
     id: "l4",
+    number: "2",
     depth: 0,
     label: "Conclusion",
     hidden: false,

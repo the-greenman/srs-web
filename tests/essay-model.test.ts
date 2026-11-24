@@ -4,6 +4,7 @@ import {
   essayCounts,
   hiddenByAncestor,
   outsideRun,
+  paragraphNumbers,
   toggled,
   visibleEntries,
 } from "../src/lib/essay/essay-model.js";
@@ -31,6 +32,12 @@ describe("essay-model (presentation only)", () => {
     expect(toggled(["x", "y"], "y", true)).toEqual(["x", "y"]);
     expect(toggled(["x", "y"], "y", false)).toEqual(["x"]);
   });
+});
+
+it("paragraphNumbers follows the outline and renumbers when it changes", () => {
+  expect([...paragraphNumbers(list).values()]).toEqual(["1", "2", "2.1", "2.1.1", "2.2", "3"]);
+  const moved = paragraphNumbers(e(["c"], ["a"], ["b", "a"]));
+  expect([...moved]).toEqual([["c", "1"], ["a", "2"], ["b", "2.1"]]);
 });
 
 describe("hiddenByAncestor", () => {

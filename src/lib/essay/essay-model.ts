@@ -47,6 +47,23 @@ export function hiddenByAncestor(entries: Entry[], hidden: Set<string>): Set<str
   return out;
 }
 
+/**
+ * Outline numbers (1, 2, 2.1, 2.1.1) in document order, from the core's parents (srs-web#829).
+ * A display of position: computed on every render, never stored. Give it every entry, so folding,
+ * hiding or zooming never changes a number. `agentHandoff` states the same rule to agents.
+ */
+export function paragraphNumbers(entries: Entry[]): Map<string, string> {
+  const out = new Map<string, string>();
+  const children = new Map<string, number>();
+  for (const e of entries) {
+    const prefix = out.get(e.parentInstanceId ?? "") ?? "";
+    const n = (children.get(prefix) ?? 0) + 1;
+    children.set(prefix, n);
+    out.set(e.instanceId, prefix ? `${prefix}.${n}` : `${n}`);
+  }
+  return out;
+}
+
 export interface Count {
   words: number;
   chars: number;
