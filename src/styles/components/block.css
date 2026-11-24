@@ -205,11 +205,28 @@
   outline: none;
   min-height: 1.6em;
 }
-[class*="__body--visual"] .ProseMirror > :first-child {
-  margin-top: 0;
+/* What the editor needs of its own stylesheet, which is not injected: unlayered, it would win over every rule
+   here and shift the text on click (srs-web#834). */
+[class*="__body--visual"] .ProseMirror {
+  position: relative;
+  white-space: pre-wrap; /* not break-spaces: it would wrap lines differently */
 }
-[class*="__body--visual"] .ProseMirror > :last-child {
-  margin-bottom: 0;
+[class*="__body--visual"] .ProseMirror pre {
+  white-space: pre;
+}
+[class*="__body--visual"] .ProseMirror li > p {
+  margin: 0; /* the editor wraps every item's text in a paragraph */
+}
+[class*="__body--visual"] img.ProseMirror-separator {
+  display: inline;
+  width: 0;
+  height: 0;
+}
+.ProseMirror-hideselection *::selection {
+  background: transparent;
+}
+.ProseMirror-hideselection * {
+  caret-color: transparent;
 }
 /* The formatting toolbar under the paragraph being edited visually (srs-web#751). It floats, like the
    hover strip, so opening or leaving a paragraph never moves the text below (a click there would land
@@ -243,77 +260,77 @@
   font-size: var(--size-sm);
   color: var(--color-muted);
 }
-/* Rendered markdown (core renderMarkdown): block flow, so pre-wrap is off. Headings stay close to body size. */
+/* Rendered markdown, at rest (core renderMarkdown) and in the visual editor (.ProseMirror): block flow, so pre-wrap is off. Headings stay close to body size. */
 :is(.block__render, .purpose__render) {
   white-space: normal;
   cursor: text;
 }
-:is(.block__render, .purpose__render) > :first-child {
+:is(.block__render, .purpose__render, .ProseMirror) > :first-child {
   margin-top: 0;
 }
-:is(.block__render, .purpose__render) > :last-child {
+:is(.block__render, .purpose__render, .ProseMirror) > :last-child {
   margin-bottom: 0;
 }
-:is(.block__render, .purpose__render) p,
-:is(.block__render, .purpose__render) ul,
-:is(.block__render, .purpose__render) ol,
-:is(.block__render, .purpose__render) blockquote,
-:is(.block__render, .purpose__render) pre,
-:is(.block__render, .purpose__render) table {
+:is(.block__render, .purpose__render, .ProseMirror) p,
+:is(.block__render, .purpose__render, .ProseMirror) ul,
+:is(.block__render, .purpose__render, .ProseMirror) ol,
+:is(.block__render, .purpose__render, .ProseMirror) blockquote,
+:is(.block__render, .purpose__render, .ProseMirror) pre,
+:is(.block__render, .purpose__render, .ProseMirror) table {
   margin: 0 0 var(--space-xs);
 }
-:is(.block__render, .purpose__render) h1,
-:is(.block__render, .purpose__render) h2,
-:is(.block__render, .purpose__render) h3,
-:is(.block__render, .purpose__render) h4 {
+:is(.block__render, .purpose__render, .ProseMirror) h1,
+:is(.block__render, .purpose__render, .ProseMirror) h2,
+:is(.block__render, .purpose__render, .ProseMirror) h3,
+:is(.block__render, .purpose__render, .ProseMirror) h4 {
   margin: var(--space-xs) 0;
   line-height: 1.25;
 }
-:is(.block__render, .purpose__render) h1 {
+:is(.block__render, .purpose__render, .ProseMirror) h1 {
   font-size: 1.5em;
 }
-:is(.block__render, .purpose__render) h2 {
+:is(.block__render, .purpose__render, .ProseMirror) h2 {
   font-size: 1.3em;
 }
-:is(.block__render, .purpose__render) h3 {
+:is(.block__render, .purpose__render, .ProseMirror) h3 {
   font-size: 1.15em;
 }
-:is(.block__render, .purpose__render) h4 {
+:is(.block__render, .purpose__render, .ProseMirror) h4 {
   font-size: 1em;
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
 }
-:is(.block__render, .purpose__render) ul,
-:is(.block__render, .purpose__render) ol {
+:is(.block__render, .purpose__render, .ProseMirror) ul,
+:is(.block__render, .purpose__render, .ProseMirror) ol {
   padding-left: 1.4em;
 }
-:is(.block__render, .purpose__render) blockquote {
+:is(.block__render, .purpose__render, .ProseMirror) blockquote {
   padding-left: var(--space-sm);
   border-left: 2px solid var(--color-line);
   color: var(--color-muted);
 }
-:is(.block__render, .purpose__render) code,
-:is(.block__render, .purpose__render) pre {
+:is(.block__render, .purpose__render, .ProseMirror) code,
+:is(.block__render, .purpose__render, .ProseMirror) pre {
   font-family: var(--font-mono);
   font-size: 0.9em;
 }
-:is(.block__render, .purpose__render) pre {
+:is(.block__render, .purpose__render, .ProseMirror) pre {
   overflow-x: auto;
 }
-:is(.block__render, .purpose__render) table {
+:is(.block__render, .purpose__render, .ProseMirror) table {
   border-collapse: collapse;
 }
-:is(.block__render, .purpose__render) th,
-:is(.block__render, .purpose__render) td {
+:is(.block__render, .purpose__render, .ProseMirror) th,
+:is(.block__render, .purpose__render, .ProseMirror) td {
   border: 1px solid var(--color-line-soft);
   padding: 2px 8px;
   text-align: left;
 }
-:is(.block__render, .purpose__render) a {
+:is(.block__render, .purpose__render, .ProseMirror) a {
   color: inherit;
   text-decoration: underline;
 }
-:is(.block__render, .purpose__render) del {
+:is(.block__render, .purpose__render, .ProseMirror) :is(del, s) {
   color: var(--color-muted);
 }
 .block__closed {
@@ -370,6 +387,7 @@
   }
   .block__body,
   .block__render,
+  .block__main > .visual-editor,
   .block__closed {
     grid-area: body;
   }
