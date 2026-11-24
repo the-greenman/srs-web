@@ -69,6 +69,33 @@ test("Edit as markdown shows the source and Markdown help, survives a reload, an
   await expect(visual(page, 0)).toBeFocused();
 });
 
+test("switching while a paragraph is open keeps what was typed", async ({ page }) => {
+  await openEssay(page);
+  await body(page, 0).click();
+  await expect(visual(page, 0)).toBeFocused();
+  await page.waitForTimeout(100); // the editor places its caret a frame after focus (trap 32f714fd)
+  await page.keyboard.press("End");
+  await page.keyboard.type(" More");
+  await editAsMarkdown(page);
+  await page.getByTestId("edit-markdown").click();
+  await closeMenus(page);
+  await body(page, 0).click();
+  await expect(source(page, 0)).toHaveText("First paragraph. More");
+});
+
+test("at phone width the switch is in the one overflow menu", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 }); // the package picker is hidden on a phone
+  await openEssay(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByTestId("header-menu").click();
+  await expect(page.getByTestId("edit-markdown")).toHaveAttribute("aria-checked", "false");
+  await expect(page.getByTestId("toolbar-help")).toHaveCount(0);
+  await page.getByTestId("edit-markdown").click(); // the overflow menu closes on a choice
+  await page.getByTestId("header-menu").click();
+  await expect(page.getByTestId("edit-markdown")).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByTestId("toolbar-help")).toBeVisible();
+});
+
 test("with the stored choice unreadable the essay still opens, in visual mode", async ({ page }) => {
   await page.addInitScript(() => {
     const get = Storage.prototype.getItem;
