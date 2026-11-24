@@ -10,7 +10,7 @@
   Keys (srs-web#750): every key goes to `onkeydown` before the editor (a prevented key stops
   there), with split, edge and start answered from the document. `data-pristine` until the first
   change, so the essay history owns Ctrl-Z until then and the editor's own undo after.
-  Toolbar (srs-web#751): the format buttons after the editor, each with its active state. A button
+  Toolbar (srs-web#751): the format buttons (heading is a menu) after the editor, each with its active state. A button
   takes no focus on mousedown, so a click keeps the edit and the caret; Tab reaches the buttons and
   the link field without ending the edit, which ends only when focus leaves the editor and toolbar.
 -->
@@ -26,6 +26,7 @@
   import ListOrdered from '@lucide/svelte/icons/list-ordered';
   import TextQuote from '@lucide/svelte/icons/text-quote';
   import { renderMarkdown } from '$lib/srs-client.js';
+  import ActionMenu from './ActionMenu.svelte';
   import Button from './Button.svelte';
   import IconButton from './IconButton.svelte';
   import type { IconComponent } from './icon.js';
@@ -92,11 +93,19 @@
     editor?.commands.setContent(v, { contentType: 'markdown', emitUpdate: false });
   }
 
+  /**
+   * Run `f` after the current event, unless the editor is gone by then. Svelte removing the focused
+   * editor (a fallback to source) blurs it mid-flush, where writing state throws.
+   */
+  const later = (f: () => void) => queueMicrotask(() => gone || f());
+
   /** Focus moved to `to`: the edit ends unless it stayed in the editor or its toolbar. */
   function left(to: EventTarget | null) {
     if (to instanceof Node && wrap?.contains(to)) return;
-    flush();
-    onblur();
+    later(() => {
+      flush();
+      if (!gone) onblur();
+    });
   }
 
   // The link field opens holding the link the caret is in, if any.
@@ -169,8 +178,8 @@
       const at = typeof caret === 'object' ? ed.view.posAtCoords({ left: caret.x, top: caret.y })?.pos : caret;
       if (!active || active === document.body) ed.commands.focus(at ?? 'end');
       editor.on('blur', ({ event }) => left(event.relatedTarget));
-      const states = () => (on = Object.fromEntries([...l.FORMATS.map((f) => [f.name, f.active(ed)]), ['link', ed.isActive('link')]]));
-      editor.on('transaction', states);
+      const states = () => (on = Object.fromEntries([...l.FORMATS.flatMap((f) => ('menu' in f ? [f, ...f.menu] : [f])).map((f) => [f.name, f.active(ed)]), ['link', ed.isActive('link')]]));
+      editor.on('transaction', () => later(states));
       states();
       shown = editor;
     })();
@@ -196,7 +205,19 @@
       onfocusout={(e) => left(e.relatedTarget)}
     >
       {#each lib.FORMATS as f (f.name)}
-        <IconButton icon={ICONS[f.name]} label={f.label} pressed={!!on[f.name]} onmousedown={(e) => e.preventDefault()} onclick={() => f.run(ed)} />
+        {#if 'menu' in f}
+          <ActionMenu
+            triggerIcon={ICONS[f.name]}
+            title={f.label}
+            label=""
+            testid={`format-${f.name}`}
+            pressed={!!on[f.name]}
+            onmousedown={(e) => e.preventDefault()}
+            actions={f.menu.map((m) => ({ id: m.name, label: m.label, enabled: true, checked: !!on[m.name], run: () => m.run(ed) }))}
+          />
+        {:else}
+          <IconButton icon={ICONS[f.name]} label={f.label} pressed={!!on[f.name]} onmousedown={(e) => e.preventDefault()} onclick={() => f.run(ed)} />
+        {/if}
       {/each}
       <Popover bind:open={linkOpen} label="Link" placement="bottom-start">
         {#snippet trigger({ props })}

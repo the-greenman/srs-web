@@ -32,6 +32,7 @@
     title = 'Actions',
     triggerLabel,
     triggerIcon,
+    pressed,
     keepOpenOnCheck = false,
     focusKey,
     placement,
@@ -51,10 +52,14 @@
     triggerLabel?: string;
     /** An icon-only trigger instead of the ellipsis (when `triggerLabel` is omitted). */
     triggerIcon?: IconComponent;
+    /** aria-pressed on an icon trigger: something in the menu is on. */
+    pressed?: boolean;
     keepOpenOnCheck?: boolean;
     focusKey?: string;
     placement?: Placement;
     class?: string;
+    /** On the whole menu, e.g. preventDefault so that a press takes no focus from an editor. */
+    onmousedown?: (e: MouseEvent) => void;
   } & Record<`data-${string}`, string | undefined> = $props();
 
   let open = $state(false);
@@ -94,6 +99,7 @@
           icon={triggerIcon ?? Ellipsis}
           aria-haspopup="menu"
           label={name}
+          {pressed}
           data-testid={testid}
           data-focus-key={focusKey}
           {...props}

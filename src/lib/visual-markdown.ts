@@ -83,13 +83,22 @@ export function makeEditor(md: string, element?: HTMLElement, onUpdate?: () => v
 /** Markdown out of an editor, trailing whitespace trimmed (the record holds the paragraph, not the editor's newline). */
 export const toMarkdown = (editor: Editor): string => editor.getMarkdown().replace(/\s+$/, "");
 
-/** Whitespace, empty paragraphs, hard-break spelling and split adjacent marks do not count as a difference. */
-export const norm = (h: string): string =>
-  h
-    .replace(/<p><\/p>/g, "")
+/**
+ * Whitespace, empty blocks, hard-break spelling and split adjacent marks do not count as a difference.
+ * Empty blocks: a heading, quote or list chosen before its text is typed is not a reason to fall back.
+ */
+export const norm = (h: string): string => {
+  let out = h;
+  let last: string;
+  do {
+    last = out;
+    out = out.replace(/<(p|h[1-6]|li|ul|ol|blockquote)(?: [^>]*)?>\s*<\/\1>/g, "");
+  } while (out !== last);
+  return out
     .replace(/<br[^>]*>/g, " ")
     .replace(/\s+/g, "")
     .replace(/<\/strong><strong>|<\/em><em>/g, "");
+};
 
 /**
  * Check on opening: parse the markdown, serialize it again, and let the core judge. When the
@@ -144,14 +153,35 @@ export function atStart(editor: Editor): boolean {
 /**
  * The formatting toolbar's buttons (srs-web#751), in order. Every one is a Tiptap command inside
  * the allowlist (decision c7d81c5d). Strikethrough has no button but stays editable (Ctrl+Shift+S).
- * The heading is level 2: the essay title holds level 1. Link is `setLink` (it needs a URL).
+ * Heading is a menu of levels 2 to 4 (the essay title holds level 1; any other level in the text stays
+ * editable and lights the button). Link is `setLink` (it needs a URL).
  */
-export const FORMATS: {
+export interface Format {
   name: string;
   label: string;
   active: (e: Editor) => boolean;
   run: (e: Editor) => void;
-}[] = [
+}
+
+/** The heading menu's rows. Choosing the level that is on takes the heading off. */
+const HEADINGS: Format[] = [
+  {
+    name: "paragraph",
+    label: "Normal text",
+    active: (e) => !e.isActive("heading"),
+    run: (e) => e.chain().focus().setParagraph().run(),
+  },
+  ...([2, 3, 4] as const).map(
+    (level): Format => ({
+      name: `heading${level}`,
+      label: `Heading ${level}`,
+      active: (e) => e.isActive("heading", { level }),
+      run: (e) => e.chain().focus().toggleHeading({ level }).run(),
+    })
+  ),
+];
+
+export const FORMATS: (Format | (Omit<Format, "run"> & { menu: Format[] }))[] = [
   {
     name: "bold",
     label: "Bold",
@@ -168,7 +198,7 @@ export const FORMATS: {
     name: "heading",
     label: "Heading",
     active: (e) => e.isActive("heading"),
-    run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),
+    menu: HEADINGS,
   },
   {
     name: "bulletList",

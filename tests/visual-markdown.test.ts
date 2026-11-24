@@ -84,6 +84,23 @@ describe("check on saving", () => {
     checker.destroy();
   });
 
+  it.each(["heading2", "bulletList", "orderedList", "blockquote"])(
+    "an empty %s passes: its text is not typed yet",
+    (name) => {
+      for (const md of ["", "text"]) {
+        const checker = makeEditor("");
+        const e = makeEditor(md);
+        if (md) e.chain().setTextSelection(e.state.doc.content.size - 1).splitBlock().run();
+        FORMATS.flatMap((f) => ("menu" in f ? f.menu : [f]))
+          .find((f) => f.name === name)!
+          .run(e);
+        expect(savesFaithfully(e, toMarkdown(e), checker, render)).toBe(true);
+        e.destroy();
+        checker.destroy();
+      }
+    }
+  );
+
   // Typed text: the editor holds the plain text; the saved markdown must read back the same.
   const typedDoc = (t: string) => ({
     type: "doc",
@@ -200,21 +217,34 @@ describe("formatting toolbar (srs-web#751)", () => {
   const apply = (md: string, name: string) => {
     const e = makeEditor(md);
     e.commands.selectAll();
-    FORMATS.find((f) => f.name === name)!.run(e);
-    const out = [toMarkdown(e), FORMATS.find((f) => f.name === name)!.active(e)];
+    const f = FORMATS.flatMap((f) => ("menu" in f ? f.menu : [f])).find((f) => f.name === name)!;
+    f.run(e);
+    const out = [toMarkdown(e), f.active(e)];
     e.destroy();
     return out;
   };
   it.each([
     ["bold", "**word**"],
     ["italic", "*word*"],
-    ["heading", "## word"],
+    ["heading2", "## word"],
+    ["heading3", "### word"],
+    ["heading4", "#### word"],
     ["bulletList", "- word"],
     ["orderedList", "1. word"],
     ["blockquote", "> word"],
     ["code", "`word`"],
   ])("%s reaches markdown as %s and shows active", (name, md) => {
     expect(apply("word", name)).toEqual([md, true]);
+  });
+
+  it.each([
+    ["### word", "heading2", "## word"],
+    ["### word", "heading3", "word"],
+    ["### word", "paragraph", "word"],
+    ["##### word", "paragraph", "word"],
+    ["word", "paragraph", "word"],
+  ])("%s with %s chosen becomes %s", (from, name, to) => {
+    expect(apply(from, name)[0]).toBe(to);
   });
 
   it("links the selection, inserts a bare URL with no selection, and an empty URL unlinks", () => {
