@@ -46,13 +46,19 @@ function proposalViews(
   });
 }
 
+/** The id at the far end of an edge. Falls back to the pre srs-rust#1697 names until the pin passes it. */
+const farEndId = (r: ContextRelation): string =>
+  r.direction === "out"
+    ? (r.targetInstanceId ?? r.targetId ?? "")
+    : (r.sourceInstanceId ?? r.sourceId ?? "");
+
 const neighbourTitle = (r: ContextRelation): string => {
   const outgoing = r.direction === "out";
   const n = r.neighbour;
   return (
     (outgoing ? r.targetLabel : r.sourceLabel) ||
     (n?.kind === "note" ? n.title : undefined) ||
-    (outgoing ? r.targetId : r.sourceId)
+    farEndId(r)
   );
 };
 
@@ -64,7 +70,7 @@ export function loadInstanceNotes(repo: SrsRepository, instanceId: string): Inst
       id: r.relationId,
       relationType: labels.get(r.relationType) || r.relationType,
       direction: r.direction,
-      otherId: r.direction === "out" ? r.targetId : r.sourceId,
+      otherId: farEndId(r),
       label: neighbourTitle(r),
       actor: r.createdBy,
     }));

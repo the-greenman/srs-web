@@ -739,6 +739,18 @@ describe("listRelations", () => {
     expect(result[0].targetInstanceId).toBe("inst-b");
   });
 
+  it("reads RelationSummary sourceInstanceId / targetInstanceId (srs-rust#1697)", () => {
+    const raw = [
+      { relationId: "rel-004", relationType: "precedes", sourceInstanceId: "inst-g", targetInstanceId: "inst-h" },
+    ];
+    const repo = mockRepo({ list_relations: () => raw });
+
+    const result = listRelations(repo, {});
+
+    expect(result[0].sourceInstanceId).toBe("inst-g");
+    expect(result[0].targetInstanceId).toBe("inst-h");
+  });
+
   it("accepts RelationSummary sourceId / targetId aliases", () => {
     const raw = [
       { relation_id: "rel-003", relation_type: "precedes", sourceId: "inst-e", targetId: "inst-f" },
