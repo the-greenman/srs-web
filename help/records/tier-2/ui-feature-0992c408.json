@@ -1,0 +1,22 @@
+{
+  "instanceId": "0992c408-9660-4228-b8c7-68cbe3395e26",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay.edit-markdown",
+    "placement": "ui",
+    "title": "Edit as markdown",
+    "summary": "Turn this on to type the formatting marks yourself, instead of using the toolbar. The choice is remembered in this browser. Tables, images and dividing lines can only be edited this way, so a paragraph that contains one opens this way even when this is off.",
+    "ai_guidance": "Point a writer who asks how to type markdown, or where Markdown help went, to View > Edit as markdown; it changes only how paragraphs edit in this browser, never what is stored."
+  },
+  "createdAt": "2026-11-24T11:24:37.546640146+00:00",
+  "updatedAt": "2026-11-24T11:24:37.546650274+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

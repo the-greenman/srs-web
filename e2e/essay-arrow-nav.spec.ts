@@ -52,7 +52,7 @@ test("a blank line inside a paragraph is not an edge", async ({ page }) => {
   await expect(body(page, 1)).toBeFocused();
 });
 
-/** srs-web#750: the same paragraph keys in the visual editor (the edit mode is per browser; source until #752). */
+/** srs-web#750: the same paragraph keys in the visual editor (the edit mode is per browser; the suite's storage sets source, #752). */
 test.describe("visual mode", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem("srs-web.essay.edit-mode", "visual"));

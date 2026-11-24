@@ -97,7 +97,7 @@
     margin?: Snippet;
     /** Under the body (the essay passes a Count). */
     count?: Snippet;
-    /** The body editor: `source` (default) or `visual` (srs-web#749, #750); every shortcut works in both. */
+    /** The body editor: `source` (default) or `visual` (srs-web#749, #750; the essay's default, #752); every shortcut works in both. */
     mode?: 'source' | 'visual';
   } = $props();
 

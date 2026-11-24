@@ -6,7 +6,7 @@
 
 ## Decision
 
-A writer can edit a paragraph visually and still save plain markdown. The surface is **off by default**: `MarkdownText` takes `mode` (`source` or `visual`), defaults to `source`. Block passes it on, and the essay shell reads it from a per-browser setting (`src/lib/essay/edit-mode.ts`, `srs-web.essay.edit-mode`), which is `source` unless set: nothing a writer sees turns it on until srs-web#752.
+A writer can edit a paragraph visually and still save plain markdown. `MarkdownText` takes `mode` (`source` or `visual`) and defaults to `source`, so other editors are unchanged (eb9b4530). Block passes it on. The essay shell passes it to every paragraph and to the purpose, from a per-browser setting (`src/lib/essay/edit-mode.ts`, `srs-web.essay.edit-mode`) that is **visual unless set**, also when storage is blocked (srs-web#752, decision 3f6f215c). View > **Edit as markdown** (a toggle, help feature `essay.edit-markdown`) switches it, and Markdown help is offered only while it is on.
 
 - **Library (cb1b56ec).** Tiptap 3, pinned exactly: `@tiptap/core`, `@tiptap/pm`, `@tiptap/starter-kit`, `@tiptap/markdown`, `@tiptap/extension-paragraph` (the last only to extend the paragraph with the escape fix), and `marked` (for a private instance with bare-URL autolinking off). The editor is a lazy chunk, loaded by a dynamic import when a paragraph is first edited visually, so reading an essay never loads it.
 - **Allowlist (c7d81c5d).** Paragraphs, bold, italic, strikethrough, inline code, code blocks, headings, bullet and numbered lists, quotes, links, hard breaks. Not installed: images, tables, task lists, underline, horizontal rule. Off-list content opens as source, intact.
@@ -21,7 +21,7 @@ A writer can edit a paragraph visually and still save plain markdown. The surfac
 
 - The cost is one lazy chunk, paid only by a writer who edits visually (size in the PR).
 - Two Tiptap serializer defects are known and caught by the save check, not fixed: bold on `(a)` inside a word, and overlapping bold and italic.
-- Turning the surface on is a later item of the holon (srs-web#752).
+- The surface is on for essay writers since srs-web#752; the e2e suite's shared storage state sets `source` for the specs written for the source editor, and the visual-mode specs clear or override it.
 
 ## Revisit when
 

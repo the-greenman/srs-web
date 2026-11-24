@@ -27,6 +27,7 @@ const state = {
   comments: "mixed" as const,
   saving: false,
   dirty: true,
+  markdown: true,
 };
 const actions = (s = state) => headerActions(handlers, s);
 
