@@ -1,7 +1,8 @@
 <!--
   MarkdownHelp — the markdown cheat-sheet, a Popover role="region". `open` is bindable and the host
   owns the trigger: a button with `popovertarget={id}` (the header help button) or any code that
-  sets `open` (the narrow overflow menu). Escape, an outside tap and the close button close it.
+  sets `open` (the narrow overflow menu). The essay offers it only while View > Edit as markdown is on
+  (srs-web#752), so its lead speaks of the source. Escape, an outside tap and the close button close it.
   `anchor` is the element it is placed beside. Standalone: `<MarkdownHelp open {id} {anchor} />`. Pointer wording: the
   link row says Ctrl/Cmd+click with a mouse and long-press on touch (CSS `pointer: coarse`).
   The syntax is rendered by the core (renderMarkdown); this only lists what to type.

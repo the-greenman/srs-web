@@ -34,6 +34,8 @@ beforeEach(() => {
   store.clear();
   // Writers have a name (srs-web#618): without one the essay is read-only.
   store.set("srs-web.actor", JSON.stringify({ kind: "human", id: "local:t", name: "Tess" }));
+  // These tests edit the source; the visual default (srs-web#752) is covered in e2e/essay-edit-markdown.spec.ts.
+  store.set("srs-web.essay.edit-mode", "source");
   vi.stubGlobal("localStorage", {
     getItem: (k: string) => store.get(k) ?? null,
     setItem: (k: string, v: string) => void store.set(k, v),

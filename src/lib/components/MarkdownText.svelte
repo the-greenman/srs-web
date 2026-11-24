@@ -1,7 +1,8 @@
 <!--
   MarkdownText — multi-line text that renders markdown (core renderMarkdown, already sanitized)
   until focused, then edits as plain-text source (`contenteditable="plaintext-only"`). Extracted
-  from Block (srs-web#411) so a paragraph body and the essay purpose are ONE mechanism. Commits
+  from Block (srs-web#411) so a paragraph body and the essay purpose are ONE mechanism. With
+  `mode="visual"` (the essay's default, srs-web#752) it edits with the visual editor instead. Commits
   after a 400 ms typing pause and on blur; the caller writes the value. `onkeydown` sees every
   key (edit and rendered state) after Enter-to-edit; Block uses it for its paragraph shortcuts.
   Classes are `<base>__render` / `<base>__body` (block.css).
@@ -52,7 +53,7 @@
     /** False renders a markdown image as its alt text (essay paragraphs, srs-web#763). */
     images?: boolean;
     oncommit: (value: string) => void;
-    /** `source` (default, every existing caller) edits plain markdown; `visual` edits with Tiptap and falls back to source when it cannot be exact (srs-web#749). */
+    /** `source` (the default) edits plain markdown; `visual` edits with Tiptap and falls back to source when it cannot be exact (srs-web#749). The essay passes its Edit as markdown choice (srs-web#752). */
     mode?: 'source' | 'visual';
     onkeydown?: (e: KeyboardEvent, api: KeyApi) => void;
   } = $props();

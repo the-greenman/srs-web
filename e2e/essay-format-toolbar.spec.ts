@@ -5,7 +5,7 @@ import type { Page } from "@playwright/test";
 import { openMenu } from "./helpers";
 
 /**
- * srs-web#751: the formatting toolbar in visual mode (per browser; source until #752). Every button
+ * srs-web#751: the formatting toolbar in visual mode (the default since #752; the suite's storage sets source). Every button
  * keeps the edit and the caret, and its format reaches the record as markdown (read back through
  * Export markdown). Fixture essay.srsj: "First paragraph." / "Second paragraph." / "Third paragraph.".
  */

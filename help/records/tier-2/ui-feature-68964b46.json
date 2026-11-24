@@ -8,10 +8,10 @@
     "feature_id": "essay.paragraphs",
     "placement": "ui",
     "title": "Write in paragraphs",
-    "summary": "Your essay is a list of paragraphs. Each paragraph is kept on its own, so it can be linked, commented on and moved. Give a paragraph a short title when you know what it says. Each paragraph's text is written in markdown, a simple way to format text with plain characters. Click a paragraph to see it: type `**bold**` for bold, or `# Title` at the start of a line for a heading. The rest is under **Markdown help**."
+    "summary": "Your essay is a list of paragraphs. Each paragraph is kept on its own, so it can be linked, commented on and moved. Give a paragraph a short title when you know what it says. Click a paragraph to edit it, and use the toolbar for bold, headings, lists and links. Your words are stored as plain text (markdown), so you can read them in any text editor. If you would rather type the formatting marks yourself, choose **Edit as markdown** in the View menu."
   },
   "createdAt": "2026-10-29T14:42:46.106100290+00:00",
-  "updatedAt": "2026-11-10T13:16:00.669605691+00:00",
+  "updatedAt": "2026-11-24T11:24:26.747779235+00:00",
   "createdBy": {
     "kind": "ai",
     "id": "agent:claude-code",
