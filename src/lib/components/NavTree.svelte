@@ -9,6 +9,7 @@
   Parts: data-part="tree" "filter" "row" "toggle" "label" "detail" "count" "empty".
 -->
 <script lang="ts">
+  import { safeStorage } from '../safe-storage.js';
   import { tick } from 'svelte';
   import {
     keyNavigate,
@@ -51,7 +52,7 @@
 
   // Restore once, before the first render (the host loads lazy children for the restored ids).
   if (storageKey) {
-    const restored = loadExpanded(storageKey, typeof localStorage === 'undefined' ? undefined : localStorage);
+    const restored = loadExpanded(storageKey, safeStorage());
     if (restored.size > 0) expanded = restored;
   }
 
@@ -71,7 +72,7 @@
     if (open) next.add(id);
     else next.delete(id);
     expanded = next;
-    if (storageKey) saveExpanded(storageKey, next, typeof localStorage === 'undefined' ? undefined : localStorage);
+    if (storageKey) saveExpanded(storageKey, next, safeStorage());
   }
 
   function rowEl(id: string): HTMLElement | null {

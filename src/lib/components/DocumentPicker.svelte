@@ -9,6 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from 'svelte';
+  import { safeStorage } from '../safe-storage.js';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import Check from '@lucide/svelte/icons/check';
   import Popover from './Popover.svelte';
@@ -35,7 +36,7 @@
   } = $props();
 
   const uid = $props.id();
-  const store = () => (typeof localStorage === 'undefined' ? undefined : localStorage);
+  const store = () => safeStorage();
   let open = $state(false);
   let query = $state('');
   let active = $state(-1);
