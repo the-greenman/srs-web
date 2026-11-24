@@ -39,6 +39,13 @@ span.layers__fold {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.layers__number {
+  margin-right: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted);
+}
 .layers__label:focus-visible,
 .eye:focus-visible {
   outline: var(--focus-ring);

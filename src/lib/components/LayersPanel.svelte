@@ -21,6 +21,8 @@
     id: string;
     depth: number;
     label: string;
+    /** Position in the document, e.g. `2.1`. */
+    number?: string;
     hidden: boolean;
     /** Hidden only by an ancestor (greyed eye). */
     inherited: boolean;
@@ -71,7 +73,7 @@
             type="button"
             class="layers__label"
             aria-roledescription="drag handle"
-            aria-label={`${l.label}. Enter focuses the paragraph; Alt plus arrow keys reorder and change level.`}
+            aria-label={`${l.number ? `${l.number} ` : ''}${l.label}. Enter focuses the paragraph; Alt plus arrow keys reorder and change level.`}
             data-focus-key={`layer:${l.id}`}
             onclick={() => onselect(l.id)}
             onkeydown={(e) => {
@@ -82,7 +84,7 @@
               }
             }}
             {...handle}
-          >{l.label}</button>
+          >{#if l.number}<span class="layers__number">{l.number}</span> {/if}{l.label}</button>
           <!-- Touch reorder: the same action list as Block's menu (move, indent, hide); the menu is shown on hover:none only. -->
           <ActionMenu
             class="layers__menu" placement="bottom-end"
