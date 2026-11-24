@@ -616,7 +616,7 @@
     {#snippet visualEditor()}
       <VisualEditor value="Edited **visually**, saved as markdown." base="block" label="Specimen visual editor" oncommit={noop} onfallback={noop} onblur={noop} />
     {/snippet}
-    <p class="sg__note">VisualEditor, mounted directly: the one Tiptap instance MarkdownText uses in visual mode, destroyed on blur.</p>
+    <p class="sg__note">VisualEditor, mounted directly: the one Tiptap instance MarkdownText uses in visual mode, destroyed on blur, with its formatting toolbar (srs-web#751). A button takes no focus, so a click keeps the edit and the caret.</p>
     {@render gated(visualEditor)}
     {@render md("| a | b |\n|---|---|\n| 1 | 2 |", "Specimen table, opens as source", "visual")}
   </section>

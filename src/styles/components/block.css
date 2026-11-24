@@ -207,6 +207,32 @@
 [class*="__body--visual"] .ProseMirror > :last-child {
   margin-bottom: 0;
 }
+/* The formatting toolbar under the paragraph being edited visually (srs-web#751). It floats, like the
+   hover strip, so opening or leaving a paragraph never moves the text below (a click there would land
+   off target). It wraps at phone width. */
+.visual-editor {
+  position: relative;
+}
+.visual-editor__toolbar {
+  position: absolute;
+  top: calc(100% + var(--space-2xs));
+  left: 0;
+  max-width: 100%;
+  z-index: var(--z-raised);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  background: var(--block-tools-bg);
+  border: var(--block-tools-border);
+  border-radius: 2px;
+  box-shadow: var(--block-tools-shadow);
+}
+.visual-editor__link {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-xs);
+}
 /* The one-line note when a paragraph is shown as source instead of visually. */
 :is(.block__note, .purpose__note) {
   margin: 0 0 var(--space-1);

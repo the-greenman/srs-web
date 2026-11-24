@@ -7,9 +7,11 @@ import { marked } from "marked";
 import {
   atStart,
   escapeBlockMarkers,
+  FORMATS,
   makeEditor,
   opensVisually,
   savesFaithfully,
+  setLink,
   splitAt,
   toMarkdown,
   visualExtensions,
@@ -26,7 +28,15 @@ const roundTrip = (md: string) => {
 describe("allowlist", () => {
   it("installs only the decided nodes and marks", () => {
     const names = visualExtensions().flatMap((x) => [x.name]);
-    for (const off of ["image", "table", "taskList", "underline", "horizontalRule", "dropcursor", "gapcursor"]) {
+    for (const off of [
+      "image",
+      "table",
+      "taskList",
+      "underline",
+      "horizontalRule",
+      "dropcursor",
+      "gapcursor",
+    ]) {
       expect(names).not.toContain(off);
     }
   });
@@ -50,13 +60,16 @@ describe("escape fix", () => {
 });
 
 describe("check on opening", () => {
-  it.each(["Plain **bold** and *italic* with `code`", "A [link](https://example.com) here", "# Heading", "- a\n- b", "> quote"])(
-    "opens visually: %s",
-    (md) => expect(opensVisually(md, render)).toBe(true),
-  );
+  it.each([
+    "Plain **bold** and *italic* with `code`",
+    "A [link](https://example.com) here",
+    "# Heading",
+    "- a\n- b",
+    "> quote",
+  ])("opens visually: %s", (md) => expect(opensVisually(md, render)).toBe(true));
   it.each(["| a | b |\n|---|---|\n| 1 | 2 |", "![alt](img.png)", "above\n\n---\n\nbelow"])(
     "opens as source (off the allowlist): %s",
-    (md) => expect(opensVisually(md, render)).toBe(false),
+    (md) => expect(opensVisually(md, render)).toBe(false)
   );
 });
 
@@ -72,7 +85,10 @@ describe("check on saving", () => {
   });
 
   // Typed text: the editor holds the plain text; the saved markdown must read back the same.
-  const typedDoc = (t: string) => ({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: t }] }] });
+  const typedDoc = (t: string) => ({
+    type: "doc",
+    content: [{ type: "paragraph", content: [{ type: "text", text: t }] }],
+  });
   it.each(["1984. A year", "- x", "# x", "---", "snake_case", "a < b & c"])(
     "passes typed text after the escape fix: %s",
     (t) => {
@@ -82,7 +98,7 @@ describe("check on saving", () => {
       expect(savesFaithfully(e, toMarkdown(e), checker, render)).toBe(true);
       e.destroy();
       checker.destroy();
-    },
+    }
   );
 
   it.each([
@@ -103,7 +119,16 @@ describe("check on saving", () => {
     const e = makeEditor("");
     e.commands.setContent({
       type: "doc",
-      content: [{ type: "paragraph", content: [{ type: "text", text: "x" }, { type: "text", text: "(a)", marks: [{ type: "bold" }] }, { type: "text", text: "y" }] }],
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "x" },
+            { type: "text", text: "(a)", marks: [{ type: "bold" }] },
+            { type: "text", text: "y" },
+          ],
+        },
+      ],
     });
     expect(savesFaithfully(e, toMarkdown(e), checker, render)).toBe(false);
     e.destroy();
@@ -168,5 +193,41 @@ describe("keyboard (srs-web#750)", () => {
     list.commands.setTextSelection(posOf(list, "a"));
     expect(atStart(list)).toBe(false);
     list.destroy();
+  });
+});
+
+describe("formatting toolbar (srs-web#751)", () => {
+  const apply = (md: string, name: string) => {
+    const e = makeEditor(md);
+    e.commands.selectAll();
+    FORMATS.find((f) => f.name === name)!.run(e);
+    const out = [toMarkdown(e), FORMATS.find((f) => f.name === name)!.active(e)];
+    e.destroy();
+    return out;
+  };
+  it.each([
+    ["bold", "**word**"],
+    ["italic", "*word*"],
+    ["heading", "## word"],
+    ["bulletList", "- word"],
+    ["orderedList", "1. word"],
+    ["blockquote", "> word"],
+    ["code", "`word`"],
+  ])("%s reaches markdown as %s and shows active", (name, md) => {
+    expect(apply("word", name)).toEqual([md, true]);
+  });
+
+  it("links the selection, inserts a bare URL with no selection, and an empty URL unlinks", () => {
+    const e = makeEditor("see here");
+    e.commands.setTextSelection({ from: 5, to: 9 });
+    setLink(e, " https://example.com ");
+    expect(toMarkdown(e)).toBe("see [here](https://example.com)");
+    e.commands.setTextSelection(7);
+    setLink(e, "");
+    expect(toMarkdown(e)).toBe("see here");
+    e.commands.setTextSelection(1);
+    setLink(e, "https://a.org");
+    expect(toMarkdown(e)).toBe("[https://a.org](https://a.org)see here");
+    e.destroy();
   });
 });

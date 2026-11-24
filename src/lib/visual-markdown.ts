@@ -142,6 +142,76 @@ export function atStart(editor: Editor): boolean {
 }
 
 /**
+ * The formatting toolbar's buttons (srs-web#751), in order. Every one is a Tiptap command inside
+ * the allowlist (decision c7d81c5d). Strikethrough has no button but stays editable (Ctrl+Shift+S).
+ * The heading is level 2: the essay title holds level 1. Link is `setLink` (it needs a URL).
+ */
+export const FORMATS: {
+  name: string;
+  label: string;
+  active: (e: Editor) => boolean;
+  run: (e: Editor) => void;
+}[] = [
+  {
+    name: "bold",
+    label: "Bold",
+    active: (e) => e.isActive("bold"),
+    run: (e) => e.chain().focus().toggleBold().run(),
+  },
+  {
+    name: "italic",
+    label: "Italic",
+    active: (e) => e.isActive("italic"),
+    run: (e) => e.chain().focus().toggleItalic().run(),
+  },
+  {
+    name: "heading",
+    label: "Heading",
+    active: (e) => e.isActive("heading"),
+    run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),
+  },
+  {
+    name: "bulletList",
+    label: "Bulleted list",
+    active: (e) => e.isActive("bulletList"),
+    run: (e) => e.chain().focus().toggleBulletList().run(),
+  },
+  {
+    name: "orderedList",
+    label: "Numbered list",
+    active: (e) => e.isActive("orderedList"),
+    run: (e) => e.chain().focus().toggleOrderedList().run(),
+  },
+  {
+    name: "blockquote",
+    label: "Quote",
+    active: (e) => e.isActive("blockquote"),
+    run: (e) => e.chain().focus().toggleBlockquote().run(),
+  },
+  {
+    name: "code",
+    label: "Code",
+    active: (e) => e.isActive("code"),
+    run: (e) => e.chain().focus().toggleCode().run(),
+  },
+];
+
+/**
+ * The link button: link the selection (or the link the caret is in) to `href`; an empty `href`
+ * removes the link. With nothing selected and no link here, the URL itself is inserted as the link text.
+ */
+export function setLink(e: Editor, href: string): void {
+  const url = href.trim();
+  const chain = e.chain().focus().extendMarkRange("link");
+  if (!url) chain.unsetLink().run();
+  else if (e.state.selection.empty && !e.isActive("link"))
+    chain
+      .insertContent({ type: "text", text: url, marks: [{ type: "link", attrs: { href: url } }] })
+      .run();
+  else chain.setLink({ href: url }).run();
+}
+
+/**
  * Check on saving: the core's rendering of the saved markdown, parsed back by the editor, must
  * equal the document, ignoring whitespace. `checker` is a second detached editor, reused.
  * Catches bold on `(a)` inside a word and overlapping bold and italic, both real serializer defects.
