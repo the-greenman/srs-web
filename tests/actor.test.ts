@@ -92,3 +92,18 @@ describe("signed-in actor lifecycle", () => {
     expect(seen).toEqual(["github:ada", undefined, expect.stringMatching(/^local:/)]);
   });
 });
+
+describe("browser storage blocked (srs-web#828)", () => {
+  beforeEach(() => {
+    const blocked = () => {
+      throw new DOMException("denied", "SecurityError");
+    };
+    vi.stubGlobal("localStorage", { getItem: blocked, setItem: blocked });
+  });
+
+  it("keeps a name given at the gate for the visit when it cannot be stored", () => {
+    const a = saveLocalName("Blocked Bea");
+    expect(a?.name).toBe("Blocked Bea");
+    expect(currentActor()?.name).toBe("Blocked Bea");
+  });
+});

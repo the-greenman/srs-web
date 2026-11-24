@@ -9,6 +9,8 @@ import type { Actor, SrsRepository } from "./srs-client.js";
 
 const KEY = "srs-web.actor";
 let signedIn: Actor | null = null;
+/** A name given when the browser would not store it: lasts for the visit only (srs-web#828). */
+let visitLocal: Actor | null = null;
 
 /** The actor for a login provider: id `<provider>:<id>`, name = profile name (or the login). */
 export function providerActor(provider: string, id: string, name?: string): Actor {
@@ -43,13 +45,14 @@ export async function refreshSignedInActor(
 export function localActor(): Actor | null {
   try {
     const a = JSON.parse(localStorage.getItem(KEY) ?? "null");
-    return a?.id?.startsWith("local:") && a.name ? { kind: "human", id: a.id, name: a.name } : null;
+    if (a?.id?.startsWith("local:") && a.name) return { kind: "human", id: a.id, name: a.name };
+    return visitLocal;
   } catch {
-    return null;
+    return visitLocal;
   }
 }
 
-/** Remember a display name (keeps the generated id once created). Null when blank or storage fails. */
+/** Remember a display name (keeps the generated id once created); when storage fails it lasts for the visit. Null when blank. */
 export function saveLocalName(name: string): Actor | null {
   const n = name.trim();
   if (!n) return null;
@@ -60,8 +63,9 @@ export function saveLocalName(name: string): Actor | null {
   };
   try {
     localStorage.setItem(KEY, JSON.stringify(actor));
+    visitLocal = null;
   } catch {
-    return null;
+    visitLocal = actor;
   }
   notify();
   return actor;
