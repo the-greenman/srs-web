@@ -10,12 +10,38 @@
   Keys (srs-web#750): every key goes to `onkeydown` before the editor (a prevented key stops
   there), with split, edge and start answered from the document. `data-pristine` until the first
   change, so the essay history owns Ctrl-Z until then and the editor's own undo after.
+  Toolbar (srs-web#751): the format buttons (heading is a menu) after the editor, each with its active state. A button
+  takes no focus on mousedown, so a click keeps the edit and the caret; Tab reaches the buttons and
+  the link field without ending the edit, which ends only when focus leaves the editor and toolbar.
 -->
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import type { Editor } from '@tiptap/core';
+  import Bold from '@lucide/svelte/icons/bold';
+  import Code from '@lucide/svelte/icons/code';
+  import Heading from '@lucide/svelte/icons/heading';
+  import Italic from '@lucide/svelte/icons/italic';
+  import Link from '@lucide/svelte/icons/link';
+  import List from '@lucide/svelte/icons/list';
+  import ListOrdered from '@lucide/svelte/icons/list-ordered';
+  import TextQuote from '@lucide/svelte/icons/text-quote';
   import { renderMarkdown } from '$lib/srs-client.js';
+  import ActionMenu from './ActionMenu.svelte';
+  import Button from './Button.svelte';
+  import IconButton from './IconButton.svelte';
+  import type { IconComponent } from './icon.js';
   import type { KeyApi } from './MarkdownText.svelte';
+  import Popover from './Popover.svelte';
+
+  const ICONS: Record<string, IconComponent> = {
+    bold: Bold,
+    italic: Italic,
+    heading: Heading,
+    bulletList: List,
+    orderedList: ListOrdered,
+    blockquote: TextQuote,
+    code: Code,
+  };
 
   let {
     value = '',
@@ -45,10 +71,16 @@
   } = $props();
 
   let host = $state<HTMLElement>();
+  let wrap = $state<HTMLElement>();
+  /** The editor once open, for the toolbar; `on` is each format's state at the last transaction. */
+  let shown = $state.raw<Editor>();
+  let on = $state<Record<string, boolean>>({});
+  let linkOpen = $state(false);
+  let href = $state('');
   let timer: ReturnType<typeof setTimeout> | undefined;
   let editor: Editor | undefined;
   let checker: Editor | undefined;
-  let lib: typeof import('$lib/visual-markdown.js') | undefined;
+  let lib = $state.raw<typeof import('$lib/visual-markdown.js')>();
   let committed = '';
   let dirty = false;
   let gone = false;
@@ -59,6 +91,32 @@
     dirty = false;
     committed = v;
     editor?.commands.setContent(v, { contentType: 'markdown', emitUpdate: false });
+  }
+
+  /**
+   * Run `f` after the current event, unless the editor is gone by then. Svelte removing the focused
+   * editor (a fallback to source) blurs it mid-flush, where writing state throws.
+   */
+  const later = (f: () => void) => queueMicrotask(() => gone || f());
+
+  /** Focus moved to `to`: the edit ends unless it stayed in the editor or its toolbar. */
+  function left(to: EventTarget | null) {
+    if (to instanceof Node && wrap?.contains(to)) return;
+    later(() => {
+      flush();
+      if (!gone) onblur();
+    });
+  }
+
+  // The link field opens holding the link the caret is in, if any.
+  $effect(() => {
+    if (linkOpen) href = untrack(() => shown?.getAttributes('link').href ?? '');
+  });
+
+  function submitLink(e: SubmitEvent) {
+    e.preventDefault();
+    if (shown && lib) lib.setLink(shown, href);
+    linkOpen = false;
   }
 
   function flush() {
@@ -119,10 +177,11 @@
       const active = document.activeElement;
       const at = typeof caret === 'object' ? ed.view.posAtCoords({ left: caret.x, top: caret.y })?.pos : caret;
       if (!active || active === document.body) ed.commands.focus(at ?? 'end');
-      editor.on('blur', () => {
-        flush();
-        onblur();
-      });
+      editor.on('blur', ({ event }) => left(event.relatedTarget));
+      const states = () => (on = Object.fromEntries([...l.FORMATS.flatMap((f) => ('menu' in f ? [f, ...f.menu] : [f])).map((f) => [f.name, f.active(ed)]), ['link', ed.isActive('link')]]));
+      editor.on('transaction', () => later(states));
+      states();
+      shown = editor;
     })();
     return () => {
       gone = true;
@@ -133,4 +192,42 @@
   });
 </script>
 
-<div bind:this={host} class={`${base}__body ${base}__body--visual`}></div>
+<div bind:this={wrap} class="visual-editor">
+  <div bind:this={host} class={`${base}__body ${base}__body--visual`}></div>
+  {#if shown && lib}
+    {@const ed = shown}
+    <div
+      class="visual-editor__toolbar"
+      role="toolbar"
+      aria-label="Formatting"
+      data-feature="essay.format-toolbar"
+      data-testid="format-toolbar"
+      onfocusout={(e) => left(e.relatedTarget)}
+    >
+      {#each lib.FORMATS as f (f.name)}
+        {#if 'menu' in f}
+          <ActionMenu
+            triggerIcon={ICONS[f.name]}
+            title={f.label}
+            label=""
+            testid={`format-${f.name}`}
+            pressed={!!on[f.name]}
+            onmousedown={(e) => e.preventDefault()}
+            actions={f.menu.map((m) => ({ id: m.name, label: m.label, enabled: true, checked: !!on[m.name], run: () => m.run(ed) }))}
+          />
+        {:else}
+          <IconButton icon={ICONS[f.name]} label={f.label} pressed={!!on[f.name]} onmousedown={(e) => e.preventDefault()} onclick={() => f.run(ed)} />
+        {/if}
+      {/each}
+      <Popover bind:open={linkOpen} label="Link" placement="bottom-start">
+        {#snippet trigger({ props })}
+          <IconButton icon={Link} label="Link" pressed={!!on.link} onmousedown={(e) => e.preventDefault()} {...props} />
+        {/snippet}
+        <form class="visual-editor__link" onsubmit={submitLink}>
+          <input class="input" type="url" aria-label="Link address" placeholder="https://" bind:value={href} data-autofocus />
+          <Button size="sm" type="submit">{href.trim() ? 'Apply' : 'Remove link'}</Button>
+        </form>
+      </Popover>
+    </div>
+  {/if}
+</div>

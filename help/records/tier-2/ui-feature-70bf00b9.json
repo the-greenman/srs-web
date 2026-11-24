@@ -1,0 +1,22 @@
+{
+  "instanceId": "70bf00b9-0d57-4a0d-bfa9-41f060ae6245",
+  "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
+  "typeVersion": 1,
+  "typeNamespace": "com.semanticops.help",
+  "typeName": "ui-feature",
+  "fieldValues": {
+    "feature_id": "essay.format-toolbar",
+    "placement": "ui",
+    "title": "Formatting toolbar",
+    "summary": "When a paragraph is edited visually, a row of buttons under it formats the text: bold, italic, heading, bulleted and numbered lists, quote, link and code. A lit button means the format is on where the caret is; press it again to take it off. The heading button opens a menu: normal text, or heading 2, 3 or 4. The link button asks for an address; leave it empty to remove a link. Markdown typing still works: **bold** or # at the start of a line format as you type.",
+    "ai_guidance": "Teach the buttons when the writer asks how to make text bold, a heading, a list, a quote or a link, or seems to be typing markdown by hand without knowing it. The toolbar shows only while a paragraph is edited visually; text is still saved as markdown. Point at it with ui_highlight. Never format the writer's text for them unless asked."
+  },
+  "createdAt": "2026-11-24T09:30:36.186253521+00:00",
+  "updatedAt": "2026-11-24T10:52:56.197553698+00:00",
+  "createdBy": {
+    "kind": "ai",
+    "id": "agent:claude-code",
+    "name": "Claude Code"
+  },
+  "$schema": "https://srs.semanticops.com/schema/2.0/record.json"
+}

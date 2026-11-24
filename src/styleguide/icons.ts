@@ -5,11 +5,13 @@ import ArrowDownToLine from "@lucide/svelte/icons/arrow-down-to-line";
 import ArrowLeft from "@lucide/svelte/icons/arrow-left";
 import ArrowRight from "@lucide/svelte/icons/arrow-right";
 import ArrowUp from "@lucide/svelte/icons/arrow-up";
+import Bold from "@lucide/svelte/icons/bold";
 import Bot from "@lucide/svelte/icons/bot";
 import Check from "@lucide/svelte/icons/check";
 import ChevronDown from "@lucide/svelte/icons/chevron-down";
 import ChevronRight from "@lucide/svelte/icons/chevron-right";
 import CircleQuestionMark from "@lucide/svelte/icons/circle-question-mark";
+import Code from "@lucide/svelte/icons/code";
 import Copy from "@lucide/svelte/icons/copy";
 import CornerLeftUp from "@lucide/svelte/icons/corner-left-up";
 import CornerUpLeft from "@lucide/svelte/icons/corner-up-left";
@@ -17,13 +19,18 @@ import Ellipsis from "@lucide/svelte/icons/ellipsis";
 import Eye from "@lucide/svelte/icons/eye";
 import EyeOff from "@lucide/svelte/icons/eye-off";
 import GripVertical from "@lucide/svelte/icons/grip-vertical";
+import Heading from "@lucide/svelte/icons/heading";
+import Italic from "@lucide/svelte/icons/italic";
 import Link from "@lucide/svelte/icons/link";
+import List from "@lucide/svelte/icons/list";
 import ListIndentDecrease from "@lucide/svelte/icons/list-indent-decrease";
 import ListIndentIncrease from "@lucide/svelte/icons/list-indent-increase";
+import ListOrdered from "@lucide/svelte/icons/list-ordered";
 import Maximize2 from "@lucide/svelte/icons/maximize-2";
 import Pencil from "@lucide/svelte/icons/pencil";
 import Plus from "@lucide/svelte/icons/plus";
 import RefreshCw from "@lucide/svelte/icons/refresh-cw";
+import TextQuote from "@lucide/svelte/icons/text-quote";
 import Trash from "@lucide/svelte/icons/trash";
 import Undo2 from "@lucide/svelte/icons/undo-2";
 import X from "@lucide/svelte/icons/x";
@@ -34,11 +41,13 @@ export default {
   "arrow-left": ArrowLeft,
   "arrow-right": ArrowRight,
   "arrow-up": ArrowUp,
+  bold: Bold,
   bot: Bot,
   check: Check,
   "chevron-down": ChevronDown,
   "chevron-right": ChevronRight,
   "circle-question-mark": CircleQuestionMark,
+  code: Code,
   copy: Copy,
   "corner-left-up": CornerLeftUp,
   "corner-up-left": CornerUpLeft,
@@ -46,13 +55,18 @@ export default {
   eye: Eye,
   "eye-off": EyeOff,
   "grip-vertical": GripVertical,
+  heading: Heading,
+  italic: Italic,
   link: Link,
+  list: List,
   "list-indent-decrease": ListIndentDecrease,
   "list-indent-increase": ListIndentIncrease,
+  "list-ordered": ListOrdered,
   "maximize-2": Maximize2,
   pencil: Pencil,
   plus: Plus,
   "refresh-cw": RefreshCw,
+  "text-quote": TextQuote,
   trash: Trash,
   "undo-2": Undo2,
   x: X,

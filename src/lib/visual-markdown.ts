@@ -83,13 +83,22 @@ export function makeEditor(md: string, element?: HTMLElement, onUpdate?: () => v
 /** Markdown out of an editor, trailing whitespace trimmed (the record holds the paragraph, not the editor's newline). */
 export const toMarkdown = (editor: Editor): string => editor.getMarkdown().replace(/\s+$/, "");
 
-/** Whitespace, empty paragraphs, hard-break spelling and split adjacent marks do not count as a difference. */
-export const norm = (h: string): string =>
-  h
-    .replace(/<p><\/p>/g, "")
+/**
+ * Whitespace, empty blocks, hard-break spelling and split adjacent marks do not count as a difference.
+ * Empty blocks: a heading, quote or list chosen before its text is typed is not a reason to fall back.
+ */
+export const norm = (h: string): string => {
+  let out = h;
+  let last: string;
+  do {
+    last = out;
+    out = out.replace(/<(p|h[1-6]|li|ul|ol|blockquote)(?: [^>]*)?>\s*<\/\1>/g, "");
+  } while (out !== last);
+  return out
     .replace(/<br[^>]*>/g, " ")
     .replace(/\s+/g, "")
     .replace(/<\/strong><strong>|<\/em><em>/g, "");
+};
 
 /**
  * Check on opening: parse the markdown, serialize it again, and let the core judge. When the
@@ -139,6 +148,97 @@ export function atStart(editor: Editor): boolean {
   if (!empty || $from.parentOffset > 0) return false;
   for (let d = $from.depth; d > 0; d--) if ($from.node(d).type.name === "listItem") return false;
   return !Selection.findFrom(editor.state.doc.resolve($from.before()), -1, true);
+}
+
+/**
+ * The formatting toolbar's buttons (srs-web#751), in order. Every one is a Tiptap command inside
+ * the allowlist (decision c7d81c5d). Strikethrough has no button but stays editable (Ctrl+Shift+S).
+ * Heading is a menu of levels 2 to 4 (the essay title holds level 1; any other level in the text stays
+ * editable and lights the button). Link is `setLink` (it needs a URL).
+ */
+export interface Format {
+  name: string;
+  label: string;
+  active: (e: Editor) => boolean;
+  run: (e: Editor) => void;
+}
+
+/** The heading menu's rows. Choosing the level that is on takes the heading off. */
+const HEADINGS: Format[] = [
+  {
+    name: "paragraph",
+    label: "Normal text",
+    active: (e) => !e.isActive("heading"),
+    run: (e) => e.chain().focus().setParagraph().run(),
+  },
+  ...([2, 3, 4] as const).map(
+    (level): Format => ({
+      name: `heading${level}`,
+      label: `Heading ${level}`,
+      active: (e) => e.isActive("heading", { level }),
+      run: (e) => e.chain().focus().toggleHeading({ level }).run(),
+    })
+  ),
+];
+
+export const FORMATS: (Format | (Omit<Format, "run"> & { menu: Format[] }))[] = [
+  {
+    name: "bold",
+    label: "Bold",
+    active: (e) => e.isActive("bold"),
+    run: (e) => e.chain().focus().toggleBold().run(),
+  },
+  {
+    name: "italic",
+    label: "Italic",
+    active: (e) => e.isActive("italic"),
+    run: (e) => e.chain().focus().toggleItalic().run(),
+  },
+  {
+    name: "heading",
+    label: "Heading",
+    active: (e) => e.isActive("heading"),
+    menu: HEADINGS,
+  },
+  {
+    name: "bulletList",
+    label: "Bulleted list",
+    active: (e) => e.isActive("bulletList"),
+    run: (e) => e.chain().focus().toggleBulletList().run(),
+  },
+  {
+    name: "orderedList",
+    label: "Numbered list",
+    active: (e) => e.isActive("orderedList"),
+    run: (e) => e.chain().focus().toggleOrderedList().run(),
+  },
+  {
+    name: "blockquote",
+    label: "Quote",
+    active: (e) => e.isActive("blockquote"),
+    run: (e) => e.chain().focus().toggleBlockquote().run(),
+  },
+  {
+    name: "code",
+    label: "Code",
+    active: (e) => e.isActive("code"),
+    run: (e) => e.chain().focus().toggleCode().run(),
+  },
+];
+
+/**
+ * The link button: link the selection (or the link the caret is in) to `href`; an empty `href`
+ * removes the link. With nothing selected and no link here, the URL itself is inserted as the link text.
+ */
+export function setLink(e: Editor, href: string): void {
+  const url = href.trim();
+  const chain = e.chain().focus().extendMarkRange("link");
+  if (!url) chain.unsetLink().run();
+  else if (e.state.selection.empty && !e.isActive("link"))
+    chain
+      .insertContent({ type: "text", text: url, marks: [{ type: "link", attrs: { href: url } }] })
+      .run();
+  else chain.setLink({ href: url }).run();
 }
 
 /**
