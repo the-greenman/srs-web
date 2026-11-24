@@ -143,7 +143,8 @@
 
   onMount(() => {
     committed = value;
-    standIn?.focus({ preventScroll: true });
+    // Opened by focusing the rendered text, which is gone now: take the focus on, but never from elsewhere.
+    if (!document.activeElement || document.activeElement === document.body) standIn?.focus({ preventScroll: true });
     (async () => {
       // Offline, or a tab left open across a deploy: the chunk cannot load, so edit the source instead.
       const l = await import('$lib/visual-markdown.js').catch(() => null);
@@ -222,7 +223,7 @@
       data-placeholder={placeholder}
       data-focus-key={focusKey}
       onblur={() => later(() => loading && onblur())}
-      onkeydown={(e) => onkeydown?.(e, { flush, replace, rendered: true })}
+      onkeydown={(e) => e.key !== 'Tab' && onkeydown?.(e, { flush, replace, rendered: true })}
     >{@html value ? renderMarkdown(value, images) : ''}</div>
   {/if}
   <div bind:this={host} class={`${base}__body ${base}__body--visual`} hidden={loading}></div>
