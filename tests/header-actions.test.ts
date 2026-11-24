@@ -25,6 +25,22 @@ describe("headerActions (srs-web#383)", () => {
     ]);
   });
 
+  it("View > Edit as markdown: present with its handler, checked in markdown mode; Markdown help only with its handler (#752)", () => {
+    const edit = (editMarkdown: boolean) =>
+      headerActions({ ...base, oneditmarkdown: noop }, { ...state, editMarkdown }).find(
+        (a) => a.id === "edit-markdown"
+      );
+    expect([edit(false)?.group, edit(false)?.kind, edit(false)?.feature]).toEqual([
+      "view",
+      "toggle",
+      "essay.edit-markdown",
+    ]);
+    expect([edit(false)?.checked, edit(true)?.checked]).toEqual([false, true]);
+    const ids = headerActions({ ...base, onhelp: undefined }, state).map((a) => a.id);
+    expect(ids).not.toContain("help");
+    expect(ids).not.toContain("edit-markdown");
+  });
+
   it("adds Go > Agents… only when onopenagents exists", () => {
     const go = (h: object) =>
       headerActions({ ...base, ...h }, state)

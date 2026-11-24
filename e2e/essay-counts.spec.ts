@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+import { sourceMode } from "./helpers";
 
 /** Word / character counts (srs-web#648): per paragraph, nested subtotals, essay / section total. */
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
@@ -8,6 +9,7 @@ const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures"
 test("counts follow the rendered text, include hidden paragraphs, subtotal nesting, follow zoom", async ({
   page,
 }) => {
+  await sourceMode(page);
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page.locator('input[type="file"]#srsj-file').setInputFiles(ESSAY);

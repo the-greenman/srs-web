@@ -1,15 +1,21 @@
 /**
- * How essay paragraphs edit: `visual` (srs-web#749, #750) or `source` markdown. Per browser, in
- * localStorage; source until srs-web#752 makes visual the default and adds the Edit as markdown switch.
+ * How essay text edits: `visual` (the default, decision 3f6f215c) or `source` markdown, which a writer
+ * chooses with View > Edit as markdown. Per browser, in localStorage; storage may be unavailable.
  */
 export type EditMode = "source" | "visual";
 
 const KEY = "srs-web.essay.edit-mode";
 
-export function editMode(): EditMode {
+export function loadEditMode(): EditMode {
   try {
-    return localStorage.getItem(KEY) === "visual" ? "visual" : "source";
+    return localStorage.getItem(KEY) === "source" ? "source" : "visual";
   } catch {
-    return "source";
+    return "visual";
   }
+}
+
+export function saveEditMode(mode: EditMode): void {
+  try {
+    localStorage.setItem(KEY, mode);
+  } catch {}
 }

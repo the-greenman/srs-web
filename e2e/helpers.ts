@@ -336,3 +336,7 @@ export async function openLenses(page: Page): Promise<void> {
   await page.getByTestId("open-lenses").click();
   await expect(page.getByTestId("lens-shell")).toBeVisible();
 }
+
+/** Edit the essay as markdown source (View > Edit as markdown, srs-web#752), for specs written for that editor. Before `goto`. */
+export const sourceMode = (page: Page): Promise<void> =>
+  page.addInitScript(() => localStorage.setItem("srs-web.essay.edit-mode", "source"));

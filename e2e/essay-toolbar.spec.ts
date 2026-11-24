@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { closeMenus, commentsState, menuItem, openMenu, openMenus } from "./helpers";
+import { closeMenus, commentsState, menuItem, openMenu, openMenus, sourceMode } from "./helpers";
 
 /**
  * essay-toolbar.spec.ts — srs-web#423: the essay header is the generic Toolbar. One registry, one
@@ -22,6 +22,7 @@ async function open(page: Page, width: number) {
 
 for (const width of [1440, 768]) {
   test(`${width}: Document, View, Go and Help are reachable; the bar is one row`, async ({ page }) => {
+    await sourceMode(page);
     await open(page, width);
     const bar = page.getByTestId("toolbar");
     for (const n of ["Document", "View", "Go"]) {
@@ -76,6 +77,7 @@ for (const width of [1440, 768]) {
 }
 
 test("390: the bar is title, Save and one overflow; every action is in it", async ({ page }) => {
+  await sourceMode(page);
   await open(page, 390);
   const bar = page.getByTestId("toolbar");
   // title + one overflow + the inspector trigger (the rail is a drawer on a phone) (+ Save when the document is writable; a loaded .srsj is not)
@@ -84,7 +86,7 @@ test("390: the bar is title, Save and one overflow; every action is in it", asyn
   await expect(page.getByRole("button", { name: "Document", exact: true })).toHaveCount(0);
   expect((await bar.boundingBox())!.height).toBeLessThan(72);
   await page.getByTestId("header-menu").click();
-  for (const id of ["new-document", "copy-document", "toolbar-export", "margin-variant", "comment-mode", "toolbar-other", "toolbar-help"]) {
+  for (const id of ["new-document", "copy-document", "toolbar-export", "margin-variant", "comment-mode", "edit-markdown", "toolbar-other", "toolbar-help"]) {
     await expect(page.getByTestId(id)).toBeVisible();
   }
 });
@@ -103,6 +105,7 @@ const OLD_TEN: [string, string, "Document" | "View" | "Go" | null][] = [
 ];
 for (const width of [1440, 768, 390]) {
   test(`${width}: all nine previous header actions are reachable by name`, async ({ page }) => {
+    await sourceMode(page);
     await open(page, width);
     for (const [name, testid, group] of OLD_TEN) {
       if (width === 390) await page.getByTestId("header-menu").click();
@@ -122,6 +125,7 @@ for (const width of [1440, 768, 390]) {
 }
 
 test("390: Help from the overflow opens the Help popover and keeps focus inside it", async ({ page }) => {
+  await sourceMode(page);
   await open(page, 390);
   await page.getByTestId("header-menu").click();
   await page.getByTestId("toolbar-help").click();

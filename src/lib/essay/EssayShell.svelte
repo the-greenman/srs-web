@@ -40,7 +40,7 @@
   import Button from "$lib/components/Button.svelte";
   import InlineText from "$lib/components/InlineText.svelte";
   import MarkdownText, { openAtStart } from "$lib/components/MarkdownText.svelte";
-  import { editMode } from "./edit-mode.js";
+  import { loadEditMode, saveEditMode } from "./edit-mode.js";
   import MarkdownHelp from "$lib/components/MarkdownHelp.svelte";
   import HelpDialog from "$lib/components/HelpDialog.svelte";
   import { helpDismissed, helpFor, setHelpDismissed, type HelpItem } from "$lib/help/help.js";
@@ -798,8 +798,12 @@
     return refusal;
   }
 
-  /** Read once per shell: the switch that changes it arrives with srs-web#752. */
-  const paragraphMode = editMode();
+  /** How paragraphs and the purpose edit; View > Edit as markdown switches it (srs-web#752). */
+  let editMode = $state(loadEditMode());
+  function toggleEditMode() {
+    editMode = editMode === "source" ? "visual" : "source";
+    saveEditMode(editMode);
+  }
 
   const newParagraphAfter = (id: string): string =>
     `body:${addParagraph(repo, model!, { id, zone: "after" })}`;
@@ -917,7 +921,8 @@
         onnew: readOnly ? undefined : createEssay,
         onsavecopy: readOnly ? onSaveCopy : undefined,
         oncopy: model && !readOnly ? copyDocument : undefined,
-        onhelp: () => { helpOpen = true; },
+        oneditmarkdown: readOnly ? undefined : toggleEditMode,
+        onhelp: editMode === "source" ? () => { helpOpen = true; } : undefined,
         oncomments: readOnly ? undefined : () => (openThreads = toggleAll(openThreads, shownIds)),
         onsave: onSave,
         onexport: onExport,
@@ -933,7 +938,7 @@
         onopenmerge: onOpenMerge,
         onopenanother: onOpenAnother,
       },
-      { shell, comments: summary(openThreads, shownIds), saving, dirty: documentDirty, help: { id: helpId, open: helpOpen } },
+      { shell, comments: summary(openThreads, shownIds), saving, dirty: documentDirty, editMarkdown: editMode === "source", help: { id: helpId, open: helpOpen } },
     ),
   );
 </script>
@@ -1061,6 +1066,7 @@
               label="Essay purpose"
               placeholder="Add a purpose: what this essay is for"
               focusKey="purpose"
+              mode={editMode}
               oncommit={(v) => run(() => setEssayPurpose(repo, model!.essayId, v))}
             />
           </div>
@@ -1158,7 +1164,7 @@
                 onhide={(h) => run(() => setHidden(repo, model!, p.id, h))}
                 onnew={() => run(() => newParagraphAfter(p.id))}
                 onsplit={(before, after) => splitParagraph(p.id, before, after)}
-                mode={paragraphMode}
+                mode={editMode}
                 onindent={(d) => onKey(p.id, d === 1 ? "in" : "out")}
                 onmove={(dir) => onKey(p.id, dir)}
                 onnavigate={(dir) => navigate(p.id, dir)}

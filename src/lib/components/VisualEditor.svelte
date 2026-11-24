@@ -1,8 +1,10 @@
 <!--
   VisualEditor — the one Tiptap instance, for the focused paragraph only, destroyed on blur
-  (srs-web#749, decision eb9b4530). Off unless MarkdownText is given mode="visual". The editor
+  (srs-web#749, decision eb9b4530). Used only when MarkdownText is given mode="visual" (the essay's default). The editor
   library is a lazy chunk (dynamic import): reading an essay never loads it. All judgement is
   in the headless `visual-markdown.ts`; the core's renderMarkdown decides every round trip.
+  Until the chunk is there the rendered text stays in place, focused, with the paragraph's rendered keys
+  (nothing blanks, moves or loses focus on a slow connection); leaving it then ends the edit.
   Opens: if the core renders the round trip differently, `onfallback` hands the paragraph to
   the source editor with a note, text intact. Saves: commits after a 400 ms pause and on blur,
   only after a real document change (opening and leaving writes nothing); if the save check
@@ -15,7 +17,7 @@
   the link field without ending the edit, which ends only when focus leaves the editor and toolbar.
 -->
 <script lang="ts">
-  import { onMount, untrack } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
   import type { Editor } from '@tiptap/core';
   import Bold from '@lucide/svelte/icons/bold';
   import Code from '@lucide/svelte/icons/code';
@@ -49,6 +51,7 @@
     label,
     placeholder = 'Write…',
     focusKey,
+    images = true,
     oncommit,
     onfallback,
     onblur,
@@ -60,6 +63,8 @@
     label: string;
     placeholder?: string;
     focusKey?: string;
+    /** As MarkdownText's, for the rendered text shown while the editor loads. */
+    images?: boolean;
     oncommit: (value: string) => void;
     /** The paragraph cannot be edited visually: show it as source, with this one-line note. */
     onfallback: (note: string) => void;
@@ -72,6 +77,9 @@
 
   let host = $state<HTMLElement>();
   let wrap = $state<HTMLElement>();
+  /** The rendered text, in place until the editor has loaded. */
+  let standIn = $state<HTMLElement>();
+  let loading = $state(true);
   /** The editor once open, for the toolbar; `on` is each format's state at the last transaction. */
   let shown = $state.raw<Editor>();
   let on = $state<Record<string, boolean>>({});
@@ -135,14 +143,23 @@
 
   onMount(() => {
     committed = value;
+    standIn?.focus({ preventScroll: true });
     (async () => {
-      const l = await import('$lib/visual-markdown.js');
+      // Offline, or a tab left open across a deploy: the chunk cannot load, so edit the source instead.
+      const l = await import('$lib/visual-markdown.js').catch(() => null);
       if (gone || !host) return;
+      loading = false; // the stand-in goes away now: its blur ends nothing
+      if (!l) {
+        onfallback('Shown as markdown source: the visual editor could not be loaded.');
+        return;
+      }
       lib = l;
       if (!l.opensVisually(value, renderMarkdown)) {
         onfallback('Shown as markdown source: it holds something the visual editor does not edit.');
         return;
       }
+      await tick(); // the host is laid out, so the click's point can be found in it
+      if (gone || !host) return;
       editor = l.makeEditor(value, host, () => {
         // Typed: the editor's own undo owns Ctrl-Z from here, not the essay history.
         editor?.view.dom.removeAttribute('data-pristine');
@@ -193,7 +210,22 @@
 </script>
 
 <div bind:this={wrap} class="visual-editor">
-  <div bind:this={host} class={`${base}__body ${base}__body--visual`}></div>
+  {#if loading}
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+    <div
+      bind:this={standIn}
+      class={`${base}__render`}
+      role="group"
+      tabindex="0"
+      aria-label={label}
+      aria-busy="true"
+      data-placeholder={placeholder}
+      data-focus-key={focusKey}
+      onblur={() => later(() => loading && onblur())}
+      onkeydown={(e) => onkeydown?.(e, { flush, replace, rendered: true })}
+    >{@html value ? renderMarkdown(value, images) : ''}</div>
+  {/if}
+  <div bind:this={host} class={`${base}__body ${base}__body--visual`} hidden={loading}></div>
   {#if shown && lib}
     {@const ed = shown}
     <div

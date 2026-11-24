@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { menuItem, routeRelayChannels } from "./helpers";
+import { menuItem, routeRelayChannels, sourceMode } from "./helpers";
 import type { Page } from "@playwright/test";
 
 /**
@@ -32,6 +32,7 @@ const depthOf = (page: Page, text: string) =>
 test("typing alone marks the document unsaved after the commit debounce (srs-web#345)", async ({
   page,
 }) => {
+  await sourceMode(page);
   await open(page);
   await expect(page.getByTestId("document-dirty-status")).toHaveCount(0);
   await bodies(page).first().click();
@@ -46,6 +47,7 @@ test("typing alone marks the document unsaved after the commit debounce (srs-web
 test("a markdown image in a paragraph shows its alt text, never an <img>; the stored text is kept (srs-web#763)", async ({
   page,
 }) => {
+  await sourceMode(page);
   await open(page);
   const md = "Before ![the alt](https://example.com/x.png) after";
   await bodies(page).first().click();
@@ -64,6 +66,7 @@ test("a markdown image in a paragraph shows its alt text, never an <img>; the st
 test("paragraphs render markdown until focused; click shows the source (srs-web#365)", async ({
   page,
 }) => {
+  await sourceMode(page);
   await open(page);
   await bodies(page).first().click();
   await page.keyboard.press("Control+a");
@@ -80,6 +83,7 @@ test("paragraphs render markdown until focused; click shows the source (srs-web#
 });
 
 test("write, reorder, nest, hide, draft out and back", async ({ page }) => {
+  await sourceMode(page);
   await open(page);
   await expect(bodies(page)).toHaveText([
     "First paragraph.",
@@ -357,6 +361,7 @@ test("an MCP-side write re-renders the essay", async ({ page }) => {
 });
 
 test("New essay creates the record, container, draft area and state", async ({ page }) => {
+  await sourceMode(page);
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page
@@ -555,6 +560,7 @@ test("Ctrl+Z undoes and Ctrl+Shift+Z redoes a structure edit (srs-web#570)", asy
 });
 
 test("Ctrl+Enter mid-paragraph splits it at the caret, and Ctrl+Z joins it again", async ({ page }) => {
+  await sourceMode(page);
   await open(page);
   await bodies(page).first().click();
   await page.keyboard.press("Control+a");
@@ -611,6 +617,7 @@ async function clickBefore(page: Page, index: number, text: string) {
 }
 
 test("a click puts the caret where it lands: Ctrl+Enter splits there, typing inserts there (srs-web#595)", async ({ page }) => {
+  await sourceMode(page);
   await open(page);
   await clickBefore(page, 0, "paragraph");
   await page.keyboard.press("Control+Enter");

@@ -89,6 +89,7 @@ vi.mock("../src/lib/comments.js", async (orig) => ({
 }));
 
 it("a typing commit reloads the essay once, via documentRevision (essay typing freeze)", async () => {
+  localStorage.setItem("srs-web.essay.edit-mode", "source");
   doc.loadEssay.mockReturnValue(model);
   const EssayShell = (await import("../src/lib/essay/EssayShell.svelte")).default;
   const props = { repo: {} as never, repoName: "r", onExport: () => {}, documentRevision: 1 };
@@ -109,6 +110,7 @@ it("a typing commit reloads the essay once, via documentRevision (essay typing f
   // Every reload reads the whole essay from the engine; a large repository makes each one
   // costly, so a commit must not reload twice.
   expect(doc.loadEssay).toHaveBeenCalledOnce();
+  localStorage.removeItem("srs-web.essay.edit-mode");
 });
 
 it("the essay title edits inline: commit writes through setEssayTitle, a new revision re-renders", async () => {

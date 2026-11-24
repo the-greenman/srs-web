@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { connectAgents, openMenus } from "./helpers";
+import { connectAgents, openMenus, sourceMode } from "./helpers";
 
 /**
  * popover.spec.ts — the Popover primitive (srs-web#421, ADR-020 e). Chromium only (the pinned
@@ -124,6 +124,7 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
 
   test.describe("desktop", () => {
     test("? opens, ? again closes and stays closed", async ({ page }) => {
+      await sourceMode(page);
       await openEssay(page);
       const q = page.getByRole("button", { name: "Markdown help", exact: true });
       await q.click();
@@ -137,6 +138,7 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
     });
 
     test("Escape closes it with focus on ?", async ({ page }) => {
+      await sourceMode(page);
       await openEssay(page);
       const q = page.getByRole("button", { name: "Markdown help", exact: true });
       await q.click();
@@ -147,6 +149,7 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
     });
 
     test("an outside click closes it", async ({ page }) => {
+      await sourceMode(page);
       await openEssay(page);
       await page.getByRole("button", { name: "Markdown help", exact: true }).click();
       await expect(help(page)).toBeVisible();
@@ -177,6 +180,7 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
     test("choosing help from the overflow menu opens exactly one popover; Escape returns to the menu trigger", async ({
       page,
     }) => {
+      await sourceMode(page);
       await openEssay(page, phone);
       const menu = page.getByTestId("header-menu");
       await expect(page.getByRole("button", { name: "Markdown help", exact: true })).toBeHidden(); // desktop invoker is hidden on a phone
@@ -191,6 +195,7 @@ test.describe("MarkdownHelp wiring in the essay header", () => {
     });
 
     test("an outside tap closes it", async ({ page }) => {
+      await sourceMode(page);
       await openEssay(page, phone);
       await page.getByTestId("header-menu").click();
       await page.getByTestId("toolbar-help").click();

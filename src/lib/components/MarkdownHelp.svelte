@@ -4,6 +4,7 @@
   sets `open` (the narrow overflow menu). Escape, an outside tap and the close button close it.
   `anchor` is the element it is placed beside. Standalone: `<MarkdownHelp open {id} {anchor} />`. Pointer wording: the
   link row says Ctrl/Cmd+click with a mouse and long-press on touch (CSS `pointer: coarse`).
+  The essay shows its trigger only in markdown mode (View > Edit as markdown), so the lead speaks of source.
   The syntax is rendered by the core (renderMarkdown); this only lists what to type.
   Wraps .md-help (src/styles/components/md-help.css).
   Epic: https://github.com/the-greenman/muDemocracy.org/issues/224

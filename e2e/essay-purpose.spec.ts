@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { waitForRecoveryCopy } from "./helpers.js";
+import { sourceMode, waitForRecoveryCopy } from "./helpers.js";
 
 /**
  * essay-purpose.spec.ts — srs-web#411: the essay's purpose (markdown, edited in place under the
@@ -32,6 +32,7 @@ async function open(page: Page) {
 test("purpose renders markdown until focused, persists in the working copy and survives a reload", async ({
   page,
 }) => {
+  await sourceMode(page);
   await open(page);
   await purpose(page).click();
   await page.keyboard.type("Persuade the **board**.");
@@ -51,6 +52,7 @@ test("Copy essay handoff: the Agents panel copies the whole essay, a paragraph m
   page,
   context,
 }) => {
+  await sourceMode(page);
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await open(page);
   await purpose(page).click();

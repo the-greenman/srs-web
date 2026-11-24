@@ -34,7 +34,10 @@ export interface HeaderHandlers {
   /** Document > Save a copy…: present only on a read-only document (#699). */
   onsavecopy?: () => void;
   oncopy?: () => void;
-  onhelp: () => void;
+  /** Markdown help: present only in markdown mode (decision 3f6f215c). */
+  onhelp?: () => void;
+  /** View > Edit as markdown. Absent while the document is read-only: a reader edits nothing. */
+  oneditmarkdown?: () => void;
   /** Absent while the document is read-only: a reader does not see comments (#716). */
   oncomments?: () => void;
   onsave?: () => void;
@@ -68,6 +71,8 @@ export function headerActions(
     saving: boolean;
     /** Anything to save; Save is disabled when clean (D4). */
     dirty: boolean;
+    /** Paragraphs open as markdown source (View > Edit as markdown). */
+    editMarkdown?: boolean;
     /** The Help popover's id and open state, so the Help icon stays a native invoker. */
     help?: { id: string; open: boolean };
   }
@@ -166,6 +171,17 @@ export function headerActions(
       checked: s.comments === "mixed" ? "mixed" : s.comments === "all",
       testid: "comment-mode",
     },
+    !!h.oneditmarkdown && {
+      id: "edit-markdown",
+      group: "view",
+      kind: "toggle",
+      label: "Edit as markdown",
+      run: h.oneditmarkdown,
+      enabled: true,
+      checked: !!s.editMarkdown,
+      testid: "edit-markdown",
+      feature: "essay.edit-markdown",
+    },
     !!h.onexplorer && {
       id: "explorer",
       group: "go",
@@ -187,7 +203,7 @@ export function headerActions(
       testid: "editor-help",
     },
     openAnotherAction(h.onopenanother) as HeaderAction,
-    {
+    !!h.onhelp && {
       id: "help",
       group: "help",
       kind: "action",
