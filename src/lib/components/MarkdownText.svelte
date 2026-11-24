@@ -191,6 +191,7 @@
     {label}
     {placeholder}
     {focusKey}
+    {images}
     {oncommit}
     {onkeydown}
     {caret}
