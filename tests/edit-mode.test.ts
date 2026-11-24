@@ -1,30 +1,24 @@
-import { beforeEach, expect, it, vi } from "vitest";
-import { loadEditMode, saveEditMode } from "../src/lib/essay/edit-mode.js";
+import { afterEach, expect, it, vi } from "vitest";
+import { editMode, setEditMode } from "../src/lib/essay/edit-mode.js";
 
-const store = new Map<string, string>();
-beforeEach(() => {
-  store.clear();
+afterEach(() => vi.unstubAllGlobals());
+
+it("is visual when nothing is stored, remembers the choice, and is visual when storage is blocked (srs-web#752)", () => {
+  const store = new Map<string, string>();
   vi.stubGlobal("localStorage", {
     getItem: (k: string) => store.get(k) ?? null,
     setItem: (k: string, v: string) => void store.set(k, v),
   });
-});
+  expect(editMode()).toBe("visual");
+  setEditMode("source");
+  expect(editMode()).toBe("source");
+  setEditMode("visual");
+  expect(editMode()).toBe("visual");
 
-it("is visual by default and for an unknown value, and round-trips", () => {
-  expect(loadEditMode()).toBe("visual");
-  saveEditMode("source");
-  expect(loadEditMode()).toBe("source");
-  saveEditMode("visual");
-  expect(loadEditMode()).toBe("visual");
-  store.set("srs-web.essay.edit-mode", "junk");
-  expect(loadEditMode()).toBe("visual");
-});
-
-it("is visual, and saving is harmless, when storage is blocked", () => {
   const blocked = () => {
-    throw new DOMException("blocked", "SecurityError");
+    throw new Error("SecurityError");
   };
   vi.stubGlobal("localStorage", { getItem: blocked, setItem: blocked });
-  expect(() => saveEditMode("source")).not.toThrow();
-  expect(loadEditMode()).toBe("visual");
+  expect(() => setEditMode("source")).not.toThrow();
+  expect(editMode()).toBe("visual");
 });

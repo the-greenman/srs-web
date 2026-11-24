@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { NO_ACTOR } from "../playwright.config";
+import { NO_ACTOR, VISUAL_DEFAULT } from "../playwright.config";
 import { closeMenus, openMenu, waitForRecoveryCopy } from "./helpers";
 
 /**
@@ -10,6 +10,7 @@ import { closeMenus, openMenu, waitForRecoveryCopy } from "./helpers";
  * Every test runs at desktop and at phone width. Nothing here sets the mode except the switch itself.
  * Fixture essay.srsj: "First paragraph." / "Second paragraph." / "Third paragraph.".
  */
+test.use({ storageState: VISUAL_DEFAULT });
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
 const items = (page: Page) => page.locator(".essay-shell__page .block-stack__item");
 const body = (page: Page, n: number) => items(page).nth(n).locator('[data-focus-key^="body:"]');

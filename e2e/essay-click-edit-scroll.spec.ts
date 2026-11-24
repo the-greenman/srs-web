@@ -2,7 +2,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { sourceMode } from "./helpers";
 
 /** srs-web#807: clicking a formatted paragraph to edit keeps the clicked text under the pointer. */
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
@@ -28,7 +27,6 @@ const FORMATTED = [
 ].join("\n");
 
 test("clicking a word in a long formatted paragraph keeps it under the pointer", async ({ page }) => {
-  await sourceMode(page);
   await page.setViewportSize({ width: 1100, height: 500 });
   await open(page);
   await body(page, 1).click();

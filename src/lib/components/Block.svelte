@@ -1,8 +1,8 @@
 <!--
   Block — one paragraph: a narrow gutter (drag handle and one ellipsis action menu, both always visible; the menu is the only tool on touch), a hover strip of shortcut tools (hide, zoom, copy link: the `primary` paragraph actions) inside the title row, a right margin slot (`margin`),
   a small mono title above the body (InlineText) and the body in two states: rendered markdown
-  (core renderMarkdown, already sanitized) until focused, then with `mode="visual"` (what the essay passes unless the writer chose Edit as
-  markdown) the visual editor, else a plain-text source editor (`contenteditable="plaintext-only"`) (srs-web#750: every
+  (core renderMarkdown, already sanitized) until focused, then a plain-text source editor
+  (`contenteditable="plaintext-only"`), or with `mode="visual"` the visual editor (srs-web#750: every
   shortcut below works in both; the editor answers the caret questions through MarkdownText's KeyApi). Hidden = collapsed in place.
   Presentation + events only; the shell commits through the engine. With `content` (an essay image
   paragraph, srs-web#765) that snippet takes the body's place in one focusable block: arrows move
@@ -97,7 +97,7 @@
     margin?: Snippet;
     /** Under the body (the essay passes a Count). */
     count?: Snippet;
-    /** The body editor: `source` (default) or `visual` (srs-web#749, #750); every shortcut works in both. */
+    /** The body editor: `source` (default) or `visual` (srs-web#749, #750; the essay's default, #752); every shortcut works in both. */
     mode?: 'source' | 'visual';
   } = $props();
 

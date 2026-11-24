@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { devices, expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { openInspectorDrawer, sourceMode } from "./helpers.js";
+import { openInspectorDrawer } from "./helpers.js";
 
 /**
  * essay-touch.spec.ts — srs-web#382: the per-paragraph ⋯ action menu and the end-of-page
@@ -49,7 +49,6 @@ test("touch: ⋯ is the only gutter tool, at least 44px, with 44px rows", async 
 });
 
 test("touch: add via menu and via the end button", async ({ page }) => {
-  await sourceMode(page);
   await open(page);
   await menuOf(page, 0).tap();
   await page.getByTestId("paragraph-menu-add").tap();

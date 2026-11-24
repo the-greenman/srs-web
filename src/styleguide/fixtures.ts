@@ -712,7 +712,7 @@ export const componentTokens = [
   "--srs-mark-line",
 ];
 
-/** The essay header registry with no-op handlers: Save enabled, Comments `mixed`, Margin notes off. */
+/** The essay header registry with no-op handlers: Save enabled, Comments `mixed`, Margin notes off, Edit as markdown on. */
 const nop = () => {};
 export const toolbarActions = headerActions(
   {
@@ -720,6 +720,7 @@ export const toolbarActions = headerActions(
     oncopy: nop,
     onhelp: nop,
     oncomments: nop,
+    onmarkdown: nop,
     onsave: nop,
     onexport: nop,
     onexportmd: nop,
@@ -727,7 +728,13 @@ export const toolbarActions = headerActions(
     onopenagents: nop,
     onopenanother: nop,
   },
-  { shell: new ShellState({ wideEnabled: true }), comments: "mixed", saving: false, dirty: true }
+  {
+    shell: new ShellState({ wideEnabled: true }),
+    comments: "mixed",
+    saving: false,
+    dirty: true,
+    markdown: true,
+  }
 );
 
 /** Paragraph strip specimens: one-line, titled, and a long title the strip may cover the end of. */

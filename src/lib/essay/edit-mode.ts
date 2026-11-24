@@ -1,12 +1,13 @@
 /**
- * How essay text edits: `visual` (the default, decision 3f6f215c) or `source` markdown, which a writer
- * chooses with View > Edit as markdown. Per browser, in localStorage; storage may be unavailable.
+ * How essay paragraphs edit: `visual` (srs-web#749, #750) or `source` markdown, chosen with View >
+ * Edit as markdown (srs-web#752, decision 3f6f215c). Per browser, in localStorage; visual when storage
+ * is empty or blocked.
  */
 export type EditMode = "source" | "visual";
 
 const KEY = "srs-web.essay.edit-mode";
 
-export function loadEditMode(): EditMode {
+export function editMode(): EditMode {
   try {
     return localStorage.getItem(KEY) === "source" ? "source" : "visual";
   } catch {
@@ -14,7 +15,7 @@ export function loadEditMode(): EditMode {
   }
 }
 
-export function saveEditMode(mode: EditMode): void {
+export function setEditMode(mode: EditMode): void {
   try {
     localStorage.setItem(KEY, mode);
   } catch {}

@@ -34,12 +34,11 @@ export interface HeaderHandlers {
   /** Document > Save a copy…: present only on a read-only document (#699). */
   onsavecopy?: () => void;
   oncopy?: () => void;
-  /** Markdown help: present only in markdown mode (decision 3f6f215c). */
-  onhelp?: () => void;
-  /** View > Edit as markdown. Absent while the document is read-only: a reader edits nothing. */
-  oneditmarkdown?: () => void;
+  onhelp: () => void;
   /** Absent while the document is read-only: a reader does not see comments (#716). */
   oncomments?: () => void;
+  /** View > Edit as markdown (#752): flips how paragraphs edit. Absent while the document is read-only. */
+  onmarkdown?: () => void;
   onsave?: () => void;
   onexport: () => void;
   /** Download the visible essay text as markdown. Absent while no essay is open. */
@@ -71,8 +70,8 @@ export function headerActions(
     saving: boolean;
     /** Anything to save; Save is disabled when clean (D4). */
     dirty: boolean;
-    /** Paragraphs open as markdown source (View > Edit as markdown). */
-    editMarkdown?: boolean;
+    /** Paragraphs edit as markdown source (#752): Edit as markdown is checked and Markdown help shows. */
+    markdown: boolean;
     /** The Help popover's id and open state, so the Help icon stays a native invoker. */
     help?: { id: string; open: boolean };
   }
@@ -171,14 +170,14 @@ export function headerActions(
       checked: s.comments === "mixed" ? "mixed" : s.comments === "all",
       testid: "comment-mode",
     },
-    !!h.oneditmarkdown && {
+    !!h.onmarkdown && {
       id: "edit-markdown",
       group: "view",
       kind: "toggle",
       label: "Edit as markdown",
-      run: h.oneditmarkdown,
+      run: h.onmarkdown,
       enabled: true,
-      checked: !!s.editMarkdown,
+      checked: s.markdown,
       testid: "edit-markdown",
       feature: "essay.edit-markdown",
     },
@@ -203,7 +202,7 @@ export function headerActions(
       testid: "editor-help",
     },
     openAnotherAction(h.onopenanother) as HeaderAction,
-    !!h.onhelp && {
+    s.markdown && {
       id: "help",
       group: "help",
       kind: "action",

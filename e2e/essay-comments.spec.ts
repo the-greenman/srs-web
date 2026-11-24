@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { commentsState, menuItem, routeRelayChannels, sourceMode } from "./helpers";
+import { commentsState, menuItem, routeRelayChannels } from "./helpers";
 import type { Page } from "@playwright/test";
 
 /**
@@ -256,7 +256,6 @@ test("a hidden paragraph shows no thread; unhiding brings it back", async ({ pag
 });
 
 test("hiding the parent hides a child's open thread", async ({ page }) => {
-  await sourceMode(page);
   await open(page);
   await items(page).nth(1).locator(".block__render, .block__body").first().click();
   await page.keyboard.press("Alt+ArrowRight"); // nest paragraph 2 under paragraph 1

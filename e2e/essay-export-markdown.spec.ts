@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
-import { openMenu, sourceMode } from "./helpers";
+import { openMenu } from "./helpers";
 
 /**
  * essay-export-markdown.spec.ts — srs-web#416: "Export markdown" is the visible essay only.
@@ -14,7 +14,6 @@ const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures"
 test("Export markdown: one H1, no hidden, hidden-by-parent or draft text, arranged order", async ({
   page,
 }) => {
-  await sourceMode(page);
   await page.goto("/");
   await expect(page.getByTestId("generic-file-picker")).toBeVisible({ timeout: 15000 });
   await page.locator('input[type="file"]#srsj-file').setInputFiles(ESSAY);

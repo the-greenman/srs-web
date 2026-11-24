@@ -11,7 +11,7 @@ const base = {
   onopenanother: noop,
 };
 const shell = new ShellState({ wideEnabled: true });
-const state = { shell, comments: "none" as const, saving: false, dirty: true };
+const state = { shell, comments: "none" as const, saving: false, dirty: true, markdown: true };
 
 describe("headerActions (srs-web#383)", () => {
   it("lists the always-present actions in desktop order", () => {
@@ -23,22 +23,6 @@ describe("headerActions (srs-web#383)", () => {
       "other",
       "help",
     ]);
-  });
-
-  it("View > Edit as markdown: present with its handler, checked in markdown mode; Markdown help only with its handler (#752)", () => {
-    const edit = (editMarkdown: boolean) =>
-      headerActions({ ...base, oneditmarkdown: noop }, { ...state, editMarkdown }).find(
-        (a) => a.id === "edit-markdown"
-      );
-    expect([edit(false)?.group, edit(false)?.kind, edit(false)?.feature]).toEqual([
-      "view",
-      "toggle",
-      "essay.edit-markdown",
-    ]);
-    expect([edit(false)?.checked, edit(true)?.checked]).toEqual([false, true]);
-    const ids = headerActions({ ...base, onhelp: undefined }, state).map((a) => a.id);
-    expect(ids).not.toContain("help");
-    expect(ids).not.toContain("edit-markdown");
   });
 
   it("adds Go > Agents… only when onopenagents exists", () => {
@@ -81,7 +65,7 @@ describe("headerActions (srs-web#383)", () => {
     onShell.wide = true;
     const a = headerActions(
       { ...base, onsave },
-      { shell: onShell, comments: "all" as const, saving: true, dirty: true }
+      { shell: onShell, comments: "all" as const, saving: true, dirty: true, markdown: true }
     );
     expect(a.find((x) => x.id === "wide")?.checked).toBe(true);
     expect(a.find((x) => x.id === "comments")?.checked).toBe(true);
@@ -143,6 +127,24 @@ describe("headerActions (srs-web#383)", () => {
     expect(save({ dirty: false }).enabled).toBe(false);
     expect(save({}).enabled).toBe(true);
     expect(headerActions(base, state).some((x) => x.id === "save")).toBe(false);
+  });
+});
+
+describe("View > Edit as markdown (srs-web#752)", () => {
+  it("is a View toggle, checked in markdown mode; Markdown help shows only then", () => {
+    const run = vi.fn();
+    const at = (markdown: boolean) => headerActions({ ...base, onmarkdown: run }, { ...state, markdown });
+    const t = at(false).find((x) => x.id === "edit-markdown")!;
+    expect([t.group, t.kind, t.checked, t.feature]).toEqual(["view", "toggle", false, "essay.edit-markdown"]);
+    expect(at(true).find((x) => x.id === "edit-markdown")?.checked).toBe(true);
+    expect(at(false).some((x) => x.id === "help")).toBe(false);
+    expect(at(true).some((x) => x.id === "help")).toBe(true);
+    t.run();
+    expect(run).toHaveBeenCalledOnce();
+  });
+
+  it("is absent without its handler (a read-only document)", () => {
+    expect(headerActions(base, state).some((x) => x.id === "edit-markdown")).toBe(false);
   });
 });
 

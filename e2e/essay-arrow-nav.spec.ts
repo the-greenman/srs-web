@@ -2,7 +2,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { sourceMode } from "./helpers";
 
 /** srs-web#396: ArrowDown/Up on the last/first visual line moves to the neighbouring paragraph. */
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
@@ -18,7 +17,6 @@ async function open(page: Page) {
 const caretOffset = (page: Page) => page.evaluate(() => getSelection()?.anchorOffset);
 
 test("arrows cross paragraph boundaries only on the first/last line", async ({ page }) => {
-  await sourceMode(page);
   await open(page);
   await body(page, 1).click();
   await expect(body(page, 1)).toHaveAttribute("contenteditable", "plaintext-only");
@@ -39,7 +37,6 @@ test("arrows cross paragraph boundaries only on the first/last line", async ({ p
 });
 
 test("a blank line inside a paragraph is not an edge", async ({ page }) => {
-  await sourceMode(page);
   await open(page);
   await body(page, 1).click();
   await page.keyboard.press("Control+A");
@@ -55,7 +52,7 @@ test("a blank line inside a paragraph is not an edge", async ({ page }) => {
   await expect(body(page, 1)).toBeFocused();
 });
 
-/** srs-web#750: the same paragraph keys in the visual editor. */
+/** srs-web#750: the same paragraph keys in the visual editor (the edit mode is per browser; the suite's storage sets source, #752). */
 test.describe("visual mode", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem("srs-web.essay.edit-mode", "visual"));

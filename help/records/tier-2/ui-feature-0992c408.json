@@ -1,5 +1,5 @@
 {
-  "instanceId": "0ca1106e-31c5-458b-aa5f-a205e940f424",
+  "instanceId": "0992c408-9660-4228-b8c7-68cbe3395e26",
   "typeId": "b6981a3a-d0e4-429b-9f1b-ae5090326570",
   "typeVersion": 1,
   "typeNamespace": "com.semanticops.help",
@@ -9,10 +9,10 @@
     "placement": "ui",
     "title": "Edit as markdown",
     "summary": "Turn this on to type the formatting marks yourself, instead of using the toolbar. The choice is remembered in this browser. Tables, dividing lines and images written as markdown can only be edited this way, so a paragraph that contains one opens this way even when this is off.",
-    "ai_guidance": "Teach this when the writer asks for markdown, prefers typing the marks, or asks why a paragraph opened as source; it is in the View menu (on a phone, in the one document menu), so tell them where it is: ui_highlight cannot point inside a menu."
+    "ai_guidance": "Point a writer who asks how to type markdown, or where Markdown help went, to View > Edit as markdown; it changes only how paragraphs edit in this browser, never what is stored."
   },
-  "createdAt": "2026-11-24T11:23:51.371628212+00:00",
-  "updatedAt": "2026-11-24T11:23:59.413463624+00:00",
+  "createdAt": "2026-11-24T11:24:37.546640146+00:00",
+  "updatedAt": "2026-11-24T12:05:05.460194874+00:00",
   "createdBy": {
     "kind": "ai",
     "id": "agent:claude-code",

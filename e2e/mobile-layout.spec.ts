@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { devices, expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { openInspectorDrawer, openNavDrawer, sourceMode } from "./helpers.js";
+import { openInspectorDrawer, openNavDrawer } from "./helpers.js";
 
 /** srs-web#383: phone layout of the essay editor (text width, header overflow, inline margin, thread/zoom/help). */
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay.srsj");
@@ -44,7 +44,6 @@ for (const { name, viewport } of widths) {
     });
 
     test("header fits one row; the overflow menu holds the actions", async ({ page }) => {
-      await sourceMode(page);
       await open(page);
       expect((await page.getByTestId("toolbar").boundingBox())!.height).toBeLessThan(72);
       await expect(page.getByTestId("comment-mode")).toBeHidden();
@@ -100,7 +99,6 @@ for (const { name, viewport } of widths) {
     test("thread stacks name, reply and button; zoom bar is one row; help closes", async ({
       page,
     }) => {
-      await sourceMode(page);
       await open(page);
       await page.getByTestId("header-menu").tap();
       await page.getByTestId("comment-mode").tap();

@@ -6,7 +6,7 @@
 
 ## Decision
 
-A writer can edit a paragraph visually and still save plain markdown. `MarkdownText` takes `mode` (`source` or `visual`) and defaults to `source`, so every other editor stays as it is. The essay shell alone passes `visual`, for paragraphs and the purpose, unless the writer chose **View > Edit as markdown** in this browser (`src/lib/essay/edit-mode.ts`, `srs-web.essay.edit-mode`; visual when storage is empty or blocked; decision 3f6f215c, srs-web#752). **Markdown help** shows only in markdown mode.
+A writer can edit a paragraph visually and still save plain markdown. `MarkdownText` takes `mode` (`source` or `visual`) and defaults to `source`, so other editors are unchanged (eb9b4530). Block passes it on. The essay shell passes it to every paragraph and to the purpose, from a per-browser setting (`src/lib/essay/edit-mode.ts`, `srs-web.essay.edit-mode`) that is **visual unless set**, also when storage is blocked (srs-web#752, decision 3f6f215c). View > **Edit as markdown** (a toggle, help feature `essay.edit-markdown`) switches it, and Markdown help is offered only while it is on.
 
 - **Library (cb1b56ec).** Tiptap 3, pinned exactly: `@tiptap/core`, `@tiptap/pm`, `@tiptap/starter-kit`, `@tiptap/markdown`, `@tiptap/extension-paragraph` (the last only to extend the paragraph with the escape fix), and `marked` (for a private instance with bare-URL autolinking off). The editor is a lazy chunk, loaded by a dynamic import when a paragraph is first edited visually, so reading an essay never loads it. If the chunk cannot load (offline, or a tab left open across a deploy), the paragraph opens as source with a note.
 - **Allowlist (c7d81c5d).** Paragraphs, bold, italic, strikethrough, inline code, code blocks, headings, bullet and numbered lists, quotes, links, hard breaks. Not installed: images, tables, task lists, underline, horizontal rule. Off-list content opens as source, intact.
@@ -21,6 +21,7 @@ A writer can edit a paragraph visually and still save plain markdown. `MarkdownT
 
 - The cost is one lazy chunk, paid only by a writer who edits visually (size in the PR).
 - Two Tiptap serializer defects are known and caught by the save check, not fixed: bold on `(a)` inside a word, and overlapping bold and italic.
+- The surface is on for essay writers since srs-web#752; the e2e suite's shared storage state sets `source` for the specs written for the source editor, and the visual-mode specs clear or override it.
 
 ## Revisit when
 
