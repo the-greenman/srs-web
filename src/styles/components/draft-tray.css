@@ -4,7 +4,7 @@
    Set-aside paragraphs (the body of a Panel). A dashed outline marks it as a holding area (the same
    "not yet" language as draft tags). The draft list keeps a minimum height so an empty tray is still
    a drop target. Rows are TrayRow: a truncating label plus wrapping actions, so a long label or many
-   actions never push the rail wider.
+   actions never push the rail wider. TrayEntry (references, notes) wraps its title and reads in place.
    Epic: https://github.com/the-greenman/muDemocracy.org/issues/224
    ========================================================================== */
 .tray {
@@ -53,6 +53,57 @@
 }
 .draft-tray .tray__label {
   cursor: grab;
+}
+.tray-entry {
+  padding: var(--space-xs) 0 4px;
+}
+.tray-entry__title {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--size-sm);
+  font-weight: var(--weight-bold);
+  color: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.tray-entry__title svg {
+  flex: none;
+  margin-top: 0.2em;
+}
+.tray-entry__title:hover span {
+  text-decoration: underline;
+}
+.tray-entry__preview {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 2px 0 0;
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+}
+.tray-entry__full {
+  max-height: 24rem;
+  margin: var(--space-xs) 0;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  font-size: var(--size-sm);
+}
+.tray-entry .tray__actions {
+  margin-top: 4px;
+}
+.tray__chip--wrap {
+  text-align: left;
+  white-space: normal;
 }
 .tray__preview {
   margin: 0;

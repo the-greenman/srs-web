@@ -86,7 +86,7 @@
     findExistingReferences,
     addExistingReference,
     quoteToParagraph,
-    referenceText,
+    attachedPreviews,
     removeReference,
     repoBytes,
     setHidden,
@@ -100,7 +100,7 @@
   import { downloadText, triggerDownload } from "$lib/governance/decision-export-utils.js";
   import type { EssayModel, EssaySummary } from "./essay-document.js";
   import { browseEssays } from "./essay-browse.js";
-  import { locatorFor, passageIn } from "./quote.js";
+  import { locatorFor } from "./quote.js";
   import { domainMap, listBoundaries, setBoundary } from "./essay-domain.js";
   import { formatAddress, parseAddress, pushAddress } from "$lib/address.js";
   import { HEADER_GROUPS, headerActions } from "./header-actions.js";
@@ -112,6 +112,7 @@
   import type { ResponseKind } from "$lib/link-proposals.js";
   import { annotationsFor } from "$lib/annotations.js";
   import type { Annotation } from "$lib/annotations.js";
+  import { openingWords, referenceContent, referencePreview } from "./reference-content.js";
   import { essaySource } from "./annotation-source.js";
   import { essayCounts, hiddenByAncestor, outsideRun, paragraphNumbers, plainText, visibleEntries } from "./essay-model.js";
 
@@ -333,6 +334,7 @@
   /** Domain records opened into the pinned pane (this session only; they are not attachments). */
   let openedDomain = $state<{ id: string; title: string; kind: string; text: string }[]>([]);
   function openDomainRecord(id: string) {
+    reveal = { id };
     if (openedDomain.some((o) => o.id === id)) return;
     const r = getRecord(repo, id);
     if (!r) return;
@@ -366,6 +368,7 @@
   };
   /** References pinned from the tray (by instance id, linked or not), then pinned margin attachments. */
   const pinnedRefs = $derived((model?.references ?? []).filter((r) => pinnedIds.includes(r.id)));
+  const readReference = (id: string) => referenceContent(repo, model?.references ?? [], id);
   const pinnedNotes = $derived((model?.notes ?? []).filter((n) => pinnedIds.includes(n.id)));
   const pinned = $derived([
     ...pinnedRefs.map((r) => ({
@@ -373,7 +376,7 @@
       kind: r.typeName,
       relation: r.kind || undefined,
       title: r.label,
-      text: [r.text, referenceText(repo, r.id)].filter(Boolean).join("\n\n"),
+      ...readReference(r.id),
       href: r.url || undefined,
       removable: false,
     })),
@@ -383,19 +386,10 @@
       .flat()
       .filter((a) => pinnedIds.includes(a.id) && !pinnedRefs.some((r) => r.id === a.neighbourId))
       .map((a) => {
-        const q = a.neighbourType === "quotation" ? quotationOf(a.neighbourId) : undefined;
-        return { id: a.id, kind: a.neighbourType, relation: a.relationLabel, title: a.label, text: q?.words ?? a.text, source: q?.source };
+        const q = a.neighbourType === "quotation" ? readReference(a.neighbourId) : undefined;
+        return { id: a.id, kind: a.neighbourType, relation: a.relationLabel, title: a.label, text: q?.text || a.text, source: q?.source };
       }),
   ]);
-  /** A quotation's words, and its source's text when that still holds them (the passage is highlighted there; #525). */
-  function quotationOf(id: string) {
-    const ref = model?.references.find((r) => r.id === id);
-    if (!ref?.quote) return undefined;
-    const src = ref.sourceId ? model?.references.find((r) => r.id === ref.sourceId) : undefined;
-    const text = src ? [src.text, referenceText(repo, src.id)].filter(Boolean).join("\n\n") : "";
-    return { words: ref.quote, source: src && passageIn(text, ref.quote) ? { title: src.label, text, passage: ref.quote } : undefined };
-  }
-
   /** The frame's state: Wide is the one setter (`ShellState.toggleWide`, saved through `wide.ts`); `data-margin` on `.app` carries it. */
   const shell = new ShellState({ wideEnabled: true });
   const marginVariant = $derived(shell.wide ? "expanded" : "compact");
@@ -465,6 +459,14 @@
   const binItems = $derived(
     (model?.binEntries ?? []).map((e) => ({ id: e.instanceId, label: label(e.instanceId) })),
   );
+  /** The opening of each attached file, for references whose record holds no text of its own. */
+  const attachedOpenings = $derived(
+    attachedPreviews(repo, (model?.references ?? []).filter((r) => !r.quote && !r.text).map((r) => r.id)),
+  );
+  /** How a paragraph's links to a reference read ("evidences"). */
+  const relationsTo = (paragraphId: string, referenceId: string) =>
+    [...new Set((model?.attachments[paragraphId] ?? []).filter((a) => a.neighbourId === referenceId).map((a) => a.relationLabel))].join(", ");
+  const noteItems = $derived((model?.notes ?? []).map((n) => ({ ...n, preview: openingWords(n.text) })));
   const referenceItems = $derived(
     (model?.references ?? []).map((r) => ({
       id: r.id,
@@ -476,13 +478,17 @@
       context: r.context,
       ...(r.foundBy ? { foundBy: r.foundBy.name || r.foundBy.id } : {}),
       ...(r.verdict ? { verdict: r.verdict } : {}),
-      paragraphs: r.paragraphIds.map((id) => ({ id, label: label(id) })),
+      preview: referencePreview(r, attachedOpenings.get(r.id)),
+      paragraphs: r.paragraphIds.map((id) => ({ id, label: label(id), relation: relationsTo(id, r.id) })),
     })),
   );
   const paragraphChoices = $derived((model?.entries ?? []).map((e) => ({ id: e.instanceId, label: label(e.instanceId) })));
-  /** Open a reference: pin it in the pinned pane by its own id, linked to a paragraph or not (#499). */
-  function openReference(id: string) {
+  /** The pinned item to bring into view; a new object each time, so asking again works. */
+  let reveal = $state.raw<{ id: string } | null>(null);
+  /** Pin a reference or note by its own id, linked to a paragraph or not (#499), and show where it went. */
+  function pinReference(id: string) {
     if (!pinnedIds.includes(id)) togglePin(id);
+    reveal = { id };
   }
   /** The repository's size against the browser budget: the tray's meter, a warning only. */
   const usedBytes = $derived(model ? repoBytes(repo) : 0);
@@ -1248,7 +1254,7 @@
         {/if}
         {#if model.notesContainerId}
           <Panel title="Notes" aside={model.notes.length} persistKey="essay.notes" collapseWhen={NARROW}>
-            <NotesTray items={model.notes} onopen={openReference} onopenrecord={openDomainRecord} />
+            <NotesTray items={noteItems} onpin={pinReference} onopenrecord={openDomainRecord} />
           </Panel>
         {/if}
         {#if model.referencesContainerId}
@@ -1259,7 +1265,8 @@
               {usedBytes}
               {policy}
               attachedBytes={attached}
-              onopen={openReference}
+              read={readReference}
+              onpin={pinReference}
               onfocus={(id) => focusParagraph(id)}
               onremove={dropReference}
               onfiles={(files) => addRefs({ files })}
@@ -1274,6 +1281,7 @@
         {/if}
         <PinnedPane
           items={pinned}
+          {reveal}
           onunpin={togglePin}
           onremove={(id) => run(() => removeAttachment(repo, id))}
           paragraphs={readOnly || !model.referencesContainerId ? [] : paragraphChoices}

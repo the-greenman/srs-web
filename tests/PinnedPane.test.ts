@@ -33,3 +33,14 @@ it("passageIn finds the trimmed words, or nothing once the text is gone", () => 
   expect(passageIn("a key words b", " key words ")).toEqual({ start: 2, end: 11 });
   expect(passageIn("a b", "key")).toBeNull();
 });
+
+it("reveal marks the item, scrolls to it and asks again for a new object (#787)", async () => {
+  const scroll = vi.fn();
+  Element.prototype.scrollIntoView = scroll;
+  const items = [{ id: "a", kind: "note", title: "A", text: "x" }];
+  const { container, rerender } = render(PinnedPane, { items, onunpin: vi.fn(), reveal: { id: "a" } });
+  await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
+  expect(container.querySelector(".pinned__item--revealed")).not.toBeNull();
+  await rerender({ reveal: { id: "a" } });
+  await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(2));
+});
