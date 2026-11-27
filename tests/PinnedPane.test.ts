@@ -34,11 +34,14 @@ it("passageIn finds the trimmed words, or nothing once the text is gone", () => 
   expect(passageIn("a b", "key")).toBeNull();
 });
 
-it("reveal marks the item, scrolls to it and asks again for a new object (#787)", async () => {
+it("reveal marks the item, scrolls to it and asks again for a new object, never at mount (#787)", async () => {
   const scroll = vi.fn();
   Element.prototype.scrollIntoView = scroll;
   const items = [{ id: "a", kind: "note", title: "A", text: "x" }];
   const { container, rerender } = render(PinnedPane, { items, onunpin: vi.fn(), reveal: { id: "a" } });
+  await new Promise((r) => setTimeout(r, 20));
+  expect(scroll).not.toHaveBeenCalled(); // a reveal already there at mount is old news
+  await rerender({ reveal: { id: "a" } });
   await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
   expect(container.querySelector(".pinned__item--revealed")).not.toBeNull();
   await rerender({ reveal: { id: "a" } });

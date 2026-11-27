@@ -36,7 +36,7 @@
 </script>
 
 <div class="tray-entry" data-part="row">
-  <span class="attachment-preview__kind" data-part="kind">{kind}</span>
+  <span class="tray-entry__kind" data-part="kind">{kind}</span>
   <button type="button" class="tray-entry__title" data-part="title" data-testid="entry-title" aria-expanded={open} onclick={() => (open = !open)}>
     {#if open}<ChevronDown size={14} aria-hidden="true" />{:else}<ChevronRight size={14} aria-hidden="true" />{/if}
     <span>{title}</span>
@@ -48,8 +48,8 @@
     <div class="tray-entry__full" data-part="full" data-testid="entry-full" role="region" aria-label={title} tabindex="0">
       {#if full.text}<MarkdownView value={full.text} />{:else}<p class="tray__empty">No text to show here.</p>{/if}
       {#if full.source}
-        <p class="pinned__source" data-testid="entry-source-title">From {full.source.title}</p>
-        <MarkdownView class="pinned__full" data-testid="entry-source" value={full.source.text} mark={full.source.passage} />
+        <p class="tray-entry__source" data-testid="entry-source-title">From {full.source.title}</p>
+        <MarkdownView data-testid="entry-source" value={full.source.text} mark={full.source.passage} />
       {/if}
     </div>
   {:else if preview}

@@ -181,7 +181,7 @@
   </Panel>
   <Panel title="Draft"><DraftTray items={[...fx.draftItems, ...fx.longDraftItems]} ondrop={noop} onputback={noop} /></Panel>
   <Panel title="Bin"><BinTray items={[...fx.binItems, ...fx.longBinItems]} onrestore={noop} onforget={noop} /></Panel>
-  <Panel title="References" aside={fx.referenceItems.length}><ReferencesTray items={fx.referenceItems} paragraphs={fx.referenceParagraphs} usedBytes={2.3 * fx.MB} read={(id) => ({ text: fx.referenceItems.find((r) => r.id === id)?.preview ?? "" })} onpin={noop} onfocus={noop} onremove={noop} onfiles={noop} onurls={noop} oncontext={noop} onlink={noop} onsearch={(q) => (q.trim().length < 2 ? [] : [{ id: "c1", label: "Small groups decide better", type: "claim" }])} onadd={noop} /></Panel>
+  <Panel title="References" aside={fx.referenceItems.length}><ReferencesTray items={fx.referenceItems} paragraphs={fx.referenceParagraphs} usedBytes={2.3 * fx.MB} read={(id) => ({ text: fx.referenceItems.find((r) => r.id === id)?.preview ?? "" })} onpin={noop} onanswer={noop} onfocus={noop} onremove={noop} onfiles={noop} onurls={noop} oncontext={noop} onlink={noop} onsearch={(q) => (q.trim().length < 2 ? [] : [{ id: "c1", label: "Small groups decide better", type: "claim" }])} onadd={noop} /></Panel>
   <Panel title="Reading entry"><TrayEntry kind="source · transcript" title="A long title wraps onto as many lines as it needs and is never cut" preview={fx.referenceItems[0].preview} read={() => ({ text: fx.referenceItems[0].preview ?? "" })} /></Panel>
   <Panel title="Notes" aside={fx.noteItems.length}><NotesTray items={fx.noteItems} onpin={noop} onopenrecord={noop} /></Panel>
   {#snippet pinnedPane()}<PinnedPane items={[...fx.pinned, ...fx.urlPinned, ...fx.longPinned]} onunpin={noop} onremove={noop} />{/snippet}

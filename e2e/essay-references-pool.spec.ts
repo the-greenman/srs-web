@@ -115,7 +115,7 @@ test("the writer finds a record the repository already holds, adds it back and l
   const dt = await fileDrop(page, "held-elsewhere.md", "Some text.");
   await zone.dispatchEvent("dragenter", { dataTransfer: dt });
   await zone.dispatchEvent("drop", { dataTransfer: dt });
-  await page.getByLabel("Remove held-elsewhere.md from references").click();
+  await page.getByLabel("Bin held-elsewhere.md").click();
   await expect(rows(page).filter({ hasText: "held-elsewhere.md" })).toHaveCount(0);
 
   const search = page.getByTestId("references-find");

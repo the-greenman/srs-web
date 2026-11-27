@@ -384,6 +384,23 @@ export const referenceItems = [
     paragraphs: [{ id: "p1", label: "Opening" }],
   },
   { id: "r2", label: "Nobody owns the edge", type: "claim", paragraphs: [] },
+  // vignette eb76738f: an agent's find waits for a thumbs-up or the bin; a thumbed-up one shows the thumb lit
+  {
+    id: "r7",
+    label: "Small councils outlast large ones",
+    type: "source",
+    preview: "A study of 40 village councils over 30 years.",
+    paragraphs: [{ id: "p2", label: "The second claim", relation: "evidences" }],
+    foundBy: "Research loop",
+  },
+  {
+    id: "r8",
+    label: "Ostrom on commons",
+    type: "source",
+    paragraphs: [],
+    foundBy: "Research loop",
+    verdict: "agree" as const,
+  },
   // #568: a context document, listed apart from the references
   {
     id: "r5",

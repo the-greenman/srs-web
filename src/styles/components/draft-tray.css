@@ -54,6 +54,24 @@
 .draft-tray .tray__label {
   cursor: grab;
 }
+.tray-entry__kind {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.tray-entry__source {
+  margin: var(--space-xs) 0 0;
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+}
+.tray-entry mark {
+  background: var(--color-hover);
+  color: inherit;
+  box-shadow: 0 -1px 0 var(--color-line-strong), 0 1px 0 var(--color-line-strong);
+}
 .tray-entry {
   padding: var(--space-xs) 0 4px;
 }
@@ -137,4 +155,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* A thumbed-up find: the thumb's button is inverted, so the answer reads without hovering (vignette eb76738f). */
+.refs-tray .icon-btn[aria-pressed="true"] {
+  background: var(--color-text);
+  color: var(--color-bg);
 }

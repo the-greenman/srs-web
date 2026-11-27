@@ -4,8 +4,9 @@
   source's kind), the whole label and two lines of its text (TrayEntry: the title opens all of it in
   place), a link to its `url` when it has one, and a "relation · ¶ …" chip per paragraph it is
   linked to (a chip focuses its paragraph; no chips = not linked yet). Pin keeps it in the
-  pinned pane; "Link to paragraph" picks one of `paragraphs`; Remove takes it out of the collection
-  only, never deletes the record. Shares the tray stylesheet (draft-tray.css).
+  pinned pane; an agent's find is thumbed up in place, and the bin takes any entry out (owner ruling,
+  vignette eb76738f); "Link to paragraph" picks one of `paragraphs`; the bin unlinks it from every paragraph and
+  takes it out of the collection, never deleting the record. Shares the tray stylesheet (draft-tray.css).
   With `oncontext`, context documents (the call the essay answers) are listed first with a form to add
   one by file, URL or pasted text; the rest are the ordinary references.
   With `onsearch` and `onadd`, a search adds a record the repository already holds, such as a claim.
@@ -15,7 +16,8 @@
   import ExternalLink from '@lucide/svelte/icons/external-link';
   import LinkIcon from '@lucide/svelte/icons/link';
   import Pin from '@lucide/svelte/icons/pin';
-  import X from '@lucide/svelte/icons/x';
+  import ThumbsUp from '@lucide/svelte/icons/thumbs-up';
+  import Trash from '@lucide/svelte/icons/trash-2';
   import ActionMenu from './ActionMenu.svelte';
   import AttachDrop from './AttachDrop.svelte';
   import type { AttachFile, AttachPolicy } from './attach-check.js';
@@ -48,7 +50,7 @@
     paragraphs: { id: string; label: string; relation?: string }[];
     /** Set when an agent put it in the pool: its name, so the writer sees who found it (#626). */
     foundBy?: string;
-    /** The writer's tick (`agree`) or deny (`disagree`) on an agent's find; absent = unanswered candidate. */
+    /** The writer's answer on an agent's find: `agree` = thumbed up; absent = a suggestion still waiting. */
     verdict?: 'agree' | 'disagree';
   }
 
@@ -89,8 +91,8 @@
     onfiles?: (files: AttachFile[]) => void | Promise<void>;
     onurls?: (urls: string[]) => void | Promise<void>;
     onlink?: (referenceId: string, paragraphId: string) => void;
-    /** Tick (`agree`), deny (`disagree`) or clear (`withdrawn`) an agent's find. Absent: no buttons. */
-    onanswer?: (referenceId: string, kind: 'agree' | 'disagree' | 'withdrawn') => void;
+    /** Thumb up (`agree`) or clear (`withdrawn`) an agent's find. Absent: no thumb. */
+    onanswer?: (referenceId: string, kind: 'agree' | 'withdrawn') => void;
     /** Absent: no context-document form. */
     oncontext?: (docs: { files?: AttachFile[]; urls?: string[]; texts?: { title: string; body: string }[] }) => void | Promise<void>;
     /** The repository's records matching a search, that the tray doesn't hold. Absent: no search. */
@@ -162,12 +164,8 @@
       <TrayEntry kind={`${r.type}${r.kind ? ` · ${r.kind}` : ''}`} title={r.label} preview={r.preview} read={() => read(r.id)}>
         {#snippet actions()}
           {#if r.foundBy && onanswer}
-            {#if r.verdict}
-              <Button size="sm" data-testid="reference-reset" onclick={() => onanswer(r.id, 'withdrawn')}>Undo</Button>
-            {:else}
-              <Button size="sm" data-testid="reference-tick" aria-label={`Keep ${r.label}`} onclick={() => onanswer(r.id, 'agree')}>Keep</Button>
-              <Button size="sm" data-testid="reference-deny" aria-label={`Deny ${r.label}`} onclick={() => onanswer(r.id, 'disagree')}>Deny</Button>
-            {/if}
+            {@const up = r.verdict === 'agree'}
+            <IconButton icon={ThumbsUp} variant="outline" pressed={up} data-testid="reference-up" label={`Thumbs up ${r.label}`} onclick={() => onanswer(r.id, up ? 'withdrawn' : 'agree')} />
           {/if}
           <IconButton icon={Pin} variant="outline" label={`Pin ${r.label}`} onclick={() => onpin(r.id)} />
           {#if onlink && free.length}
@@ -180,11 +178,11 @@
               itemTestid={(a) => `reference-link-${a.id}`}
             />
           {/if}
-          <IconButton icon={X} variant="outline" label={`Remove ${r.label} from references`} onclick={() => onremove(r.id)} />
+          <IconButton icon={Trash} variant="outline" data-testid="reference-bin" label={`Bin ${r.label}`} onclick={() => onremove(r.id)} />
         {/snippet}
       </TrayEntry>
-      {#if r.foundBy}
-        <p class="tray__empty" data-testid="reference-found">{r.verdict === 'agree' ? 'Kept' : r.verdict === 'disagree' ? 'Denied' : 'Suggested, not yet kept'} · found by {r.foundBy}</p>
+      {#if r.foundBy && r.verdict !== 'agree'}
+        <p class="tray__empty" data-testid="reference-found">Suggested by {r.foundBy}</p>
       {/if}
       {#if r.paragraphs.length || r.url}
         <div class="tray__chips">

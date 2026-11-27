@@ -10,7 +10,7 @@
   import IconButton from './IconButton.svelte';
   import Panel from './Panel.svelte';
   import { NARROW } from '$lib/breakpoints';
-  import { tick } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import { copyText } from '$lib/clipboard';
   import MarkdownView from './MarkdownView.svelte';
   import ActionMenu from './ActionMenu.svelte';
@@ -65,9 +65,11 @@
   let panelOpen = $state(true);
   let revealed = $state<string | null>(null);
   let list = $state<HTMLElement>();
+  /** A reveal the host still holds when this pane mounts is old news: it never reopens the panel. */
+  const stale = untrack(() => reveal);
   $effect(() => {
     const id = reveal?.id;
-    if (!id) return;
+    if (!id || reveal === stale) return;
     panelOpen = true;
     revealed = id;
     void tick().then(() =>
