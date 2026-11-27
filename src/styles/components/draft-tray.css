@@ -138,3 +138,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* A thumbed-up find: the thumb is filled, so the answer reads without hovering (vignette eb76738f). */
+.refs-tray .icon-btn[aria-pressed="true"] {
+  background: var(--color-text);
+  color: var(--color-bg);
+}

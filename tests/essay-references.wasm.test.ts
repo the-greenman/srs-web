@@ -76,6 +76,13 @@ describe.skipIf(!haveBindings)("references pool on the real engine", () => {
     expect(doc.referenceText(repo, linked)).toBe("");
     expect(doc.repoBytes(repo)).toBeGreaterThan(bytes.length);
 
+    // vignette eb76738f: the bin unlinks a reference from every paragraph and takes it out of the pool
+    doc.binReference(repo, after, pooled);
+    const binned = doc.loadEssay(repo, m.essayId);
+    expect(binned.references.some((r) => r.id === pooled)).toBe(false);
+    expect((binned.attachments[p1] ?? []).some((a) => a.neighbourId === pooled)).toBe(false);
+    expect(binned.references.find((r) => r.id === linked)?.paragraphIds).toEqual([p1]);
+
     const report = repo.validate();
     expect(report.diagnostics.filter((d: { severity: string }) => d.severity === "error")).toEqual(
       []

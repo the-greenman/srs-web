@@ -29,7 +29,7 @@ it("lists each reference with its type, a chip per linked paragraph, and none wh
   expect(getAllByTestId("reference-chip").map((c) => c.textContent)).toEqual(["¶ Opening"]);
 });
 
-it("a chip focuses its paragraph; Remove and Pin call back with the reference id; an empty tray explains itself", async () => {
+it("a chip focuses its paragraph; Bin and Pin call back with the reference id; an empty tray explains itself", async () => {
   const onfocus = vi.fn();
   const onremove = vi.fn();
   const onpin = vi.fn();
@@ -42,7 +42,7 @@ it("a chip focuses its paragraph; Remove and Pin call back with the reference id
   });
   await fireEvent.click(getByTestId("reference-chip"));
   expect(onfocus).toHaveBeenCalledWith("p1");
-  await fireEvent.click(getByLabelText("Remove Loose claim from references"));
+  await fireEvent.click(getByLabelText("Bin Loose claim"));
   expect(onremove).toHaveBeenCalledWith("r2");
   await fireEvent.click(getByLabelText("Pin Source A"));
   expect(onpin).toHaveBeenCalledWith("r1");
@@ -136,14 +136,14 @@ it("lists context documents apart from references and adds pasted text and a URL
   expect(oncontext).toHaveBeenCalledWith({ urls: ["https://example.org/call"] });
 });
 
-it("an agent's find shows who found it and is kept or denied in place; the writer's own rows have no buttons (#626)", async () => {
+it("an agent's find shows who found it and is thumbed up in place, a second press clears it; no deny (#626, vignette eb76738f)", async () => {
   const onanswer = vi.fn();
   const found = [
     { id: "c1", label: "Candidate", type: "source", paragraphs: [], foundBy: "agent:research" },
     { id: "c2", label: "Kept one", type: "source", paragraphs: [], foundBy: "agent:research", verdict: "agree" as const },
     { id: "own", label: "Mine", type: "source", paragraphs: [] },
   ];
-  const { getAllByTestId, getByTestId, getByLabelText } = render(ReferencesTray, {
+  const { getAllByTestId, getByLabelText, queryByTestId } = render(ReferencesTray, {
     items: found,
     read,
     onpin: vi.fn(),
@@ -151,15 +151,13 @@ it("an agent's find shows who found it and is kept or denied in place; the write
     onremove: vi.fn(),
     onanswer,
   });
-  expect(getAllByTestId("reference-found").map((n) => n.textContent)).toEqual([
-    "Suggested, not yet kept · found by agent:research",
-    "Kept · found by agent:research",
-  ]);
-  expect(getAllByTestId("reference-tick")).toHaveLength(1);
-  await fireEvent.click(getByLabelText("Keep Candidate"));
-  await fireEvent.click(getByLabelText("Deny Candidate"));
-  await fireEvent.click(getByTestId("reference-reset"));
-  expect(onanswer.mock.calls).toEqual([["c1", "agree"], ["c1", "disagree"], ["c2", "withdrawn"]]);
+  expect(getAllByTestId("reference-found").map((n) => n.textContent)).toEqual(["Suggested by agent:research"]);
+  expect(getAllByTestId("reference-up")).toHaveLength(2); // the writer's own reference has no thumb
+  expect(getByLabelText("Thumbs up Kept one").getAttribute("aria-pressed")).toBe("true");
+  await fireEvent.click(getByLabelText("Thumbs up Candidate"));
+  await fireEvent.click(getByLabelText("Thumbs up Kept one"));
+  expect(onanswer.mock.calls).toEqual([["c1", "agree"], ["c2", "withdrawn"]]);
+  expect(queryByTestId("reference-deny")).toBeNull();
 });
 
 it("a search lists the repository's matches and Add hands back the id; no search without the callbacks (#754)", async () => {

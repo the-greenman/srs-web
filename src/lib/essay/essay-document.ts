@@ -1036,6 +1036,20 @@ export function removeReference(repo: SrsRepository, m: EssayModel, id: string):
   removeContainerMember(repo, m.referencesContainerId, id);
 }
 
+/**
+ * Bin a reference (owner ruling, vignette eb76738f): unlink it from every paragraph and take it out of
+ * the pool. An agent's find the writer had not thumbed up also gets a thumbs-down, so the agent's tally
+ * learns it was wrong. The record itself stays in the repository.
+ */
+export function binReference(repo: SrsRepository, m: EssayModel, id: string): void {
+  const ref = m.references.find((r) => r.id === id);
+  if (ref?.foundBy && ref.verdict !== "agree")
+    respond(repo, id, "disagree", "", m.commentsContainerId);
+  for (const list of Object.values(m.attachments))
+    for (const a of list) if (a.neighbourId === id) deleteRelation(repo, a.id);
+  removeReference(repo, m, id);
+}
+
 /** Hide / show a paragraph in place: editor-only state held in the document-state record. */
 export function setHidden(repo: SrsRepository, m: EssayModel, id: string, hidden: boolean): void {
   if (!m.stateId) throw new Error("This essay has no document-state record");

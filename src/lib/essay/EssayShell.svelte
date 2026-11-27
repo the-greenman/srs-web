@@ -87,7 +87,7 @@
     addExistingReference,
     quoteToParagraph,
     attachedPreviews,
-    removeReference,
+    binReference,
     repoBytes,
     setHidden,
     removeImage,
@@ -536,7 +536,7 @@
       });
     }
   }
-  const dropReference = (id: string) => run(() => removeReference(repo, model!, id));
+  const dropReference = (id: string) => run(() => binReference(repo, model!, id));
   const findExisting = (text: string) => findExistingReferences(repo, model!, text);
   const addExisting = (id: string) => run(() => addExistingReference(repo, model!, id, hasActor));
   const draftItems = $derived(
