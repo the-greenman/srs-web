@@ -355,9 +355,12 @@ export const noteItems = [
   {
     id: "n1",
     title: "First conversation: why the call matters",
+    text: "We talked about why the call matters now, and who would carry the work after the pilot.",
+    preview:
+      "We talked about why the call matters now, and who would carry the work after the pilot.",
     produced: [{ id: "c1", label: "Funding is the constraint" }],
   },
-  { id: "n2", title: "Timeline of the pilot", produced: [] },
+  { id: "n2", title: "Timeline of the pilot", text: "", produced: [] },
 ];
 
 export const referenceItems = [
@@ -365,9 +368,11 @@ export const referenceItems = [
     id: "r1",
     label: "Boundaries as relations",
     type: "source",
+    preview:
+      "A boundary is not a wall around a thing. It is what two groups agree to keep between them, and it moves when the agreement moves.",
     paragraphs: [
-      { id: "p1", label: "Opening" },
-      { id: "p2", label: "The second claim" },
+      { id: "p1", label: "Opening", relation: "evidences" },
+      { id: "p2", label: "The second claim", relation: "counters" },
     ],
   },
   // #525: a quotation lists under its source

@@ -1,19 +1,20 @@
 <!--
   ReferencesTray — the essay's collected sources, quotations and problems, and a drop zone to add more
-  (a text file by drop, paste or picker; a URL by paste or drop). Each row shows the label, the type
-  (and a source's kind), a link to its `url` when it has one, and a "¶ …" chip per paragraph it is
-  linked to (a chip focuses its paragraph; no chips = not linked yet). Open reads the record in the
+  (a text file by drop, paste or picker; a URL by paste or drop). Each row shows the type (and a
+  source's kind), the whole label and two lines of its text (TrayEntry: the title opens all of it in
+  place), a link to its `url` when it has one, and a "relation · ¶ …" chip per paragraph it is
+  linked to (a chip focuses its paragraph; no chips = not linked yet). Pin keeps it in the
   pinned pane; "Link to paragraph" picks one of `paragraphs`; Remove takes it out of the collection
   only, never deletes the record. Shares the tray stylesheet (draft-tray.css).
   With `oncontext`, context documents (the call the essay answers) are listed first with a form to add
   one by file, URL or pasted text; the rest are the ordinary references.
   With `onsearch` and `onadd`, a search adds a record the repository already holds, such as a claim.
-  Issues: https://github.com/the-greenman/srs-web/issues/495, #519, #568, #754
+  Issues: https://github.com/the-greenman/srs-web/issues/495, #519, #568, #754, #787
 -->
 <script lang="ts">
-  import BookOpen from '@lucide/svelte/icons/book-open';
   import ExternalLink from '@lucide/svelte/icons/external-link';
   import LinkIcon from '@lucide/svelte/icons/link';
+  import Pin from '@lucide/svelte/icons/pin';
   import X from '@lucide/svelte/icons/x';
   import ActionMenu from './ActionMenu.svelte';
   import AttachDrop from './AttachDrop.svelte';
@@ -24,6 +25,8 @@
   import Input from './Input.svelte';
   import RepoSize from './RepoSize.svelte';
   import Textarea from './Textarea.svelte';
+  import TrayEntry from './TrayEntry.svelte';
+  import type { EntryText } from './TrayEntry.svelte';
   import TrayRow from './TrayRow.svelte';
 
   export interface ReferenceItem {
@@ -39,8 +42,10 @@
     sourceId?: string;
     /** A context document (the call the essay answers): listed apart from ordinary references. */
     context?: boolean;
-    /** The paragraphs it is linked to; none = not linked yet. */
-    paragraphs: { id: string; label: string }[];
+    /** Its opening words, shown under the title. */
+    preview?: string;
+    /** The paragraphs it is linked to, each with how it relates; none = not linked yet. */
+    paragraphs: { id: string; label: string; relation?: string }[];
     /** Set when an agent put it in the pool: its name, so the writer sees who found it (#626). */
     foundBy?: string;
     /** The writer's tick (`agree`) or deny (`disagree`) on an agent's find; absent = unanswered candidate. */
@@ -54,7 +59,8 @@
     maxBytes = BROWSER_BUDGET,
     policy,
     attachedBytes = 0,
-    onopen,
+    read,
+    onpin,
     onfocus,
     onremove,
     onfiles,
@@ -74,7 +80,9 @@
     /** The repository's attachment policy and the bytes already attached: they gate a drop. */
     policy?: AttachPolicy;
     attachedBytes?: number;
-    onopen: (id: string) => void;
+    /** An item's whole text, asked for when it is opened. */
+    read: (id: string) => EntryText;
+    onpin: (id: string) => void;
     onfocus: (paragraphId: string) => void;
     onremove: (id: string) => void;
     /** Absent: no drop zone (the tray only lists). */
@@ -151,7 +159,7 @@
   {#each list as r (r.id)}
     {@const free = paragraphs.filter((p) => !r.paragraphs.some((q) => q.id === p.id))}
     <div class="refs-tray__item" class:refs-tray__item--nested={nested} data-testid={nested ? 'reference-quote' : 'reference-row'}>
-      <TrayRow label={`${r.label} (${r.type}${r.kind ? ` · ${r.kind}` : ''})`}>
+      <TrayEntry kind={`${r.type}${r.kind ? ` · ${r.kind}` : ''}`} title={r.label} preview={r.preview} read={() => read(r.id)}>
         {#snippet actions()}
           {#if r.foundBy && onanswer}
             {#if r.verdict}
@@ -161,7 +169,7 @@
               <Button size="sm" data-testid="reference-deny" aria-label={`Deny ${r.label}`} onclick={() => onanswer(r.id, 'disagree')}>Deny</Button>
             {/if}
           {/if}
-          <IconButton icon={BookOpen} variant="outline" label={`Open ${r.label}`} onclick={() => onopen(r.id)} />
+          <IconButton icon={Pin} variant="outline" label={`Pin ${r.label}`} onclick={() => onpin(r.id)} />
           {#if onlink && free.length}
             <ActionMenu
               testid="reference-link"
@@ -174,7 +182,7 @@
           {/if}
           <IconButton icon={X} variant="outline" label={`Remove ${r.label} from references`} onclick={() => onremove(r.id)} />
         {/snippet}
-      </TrayRow>
+      </TrayEntry>
       {#if r.foundBy}
         <p class="tray__empty" data-testid="reference-found">{r.verdict === 'agree' ? 'Kept' : r.verdict === 'disagree' ? 'Denied' : 'Suggested, not yet kept'} · found by {r.foundBy}</p>
       {/if}
@@ -184,7 +192,7 @@
             <a class="tray__chip" data-testid="reference-url" href={r.url} target="_blank" rel="noopener noreferrer" title={`Open ${r.url}`}><ExternalLink size={12} aria-hidden="true" /> {r.url}</a>
           {/if}
           {#each r.paragraphs as p (p.id)}
-            <button type="button" class="tray__chip" data-testid="reference-chip" title={`Go to ${p.label}`} onclick={() => onfocus(p.id)}>¶ {p.label}</button>
+            <button type="button" class="tray__chip tray__chip--wrap" data-testid="reference-chip" title={`Go to ${p.label}`} onclick={() => onfocus(p.id)}>{p.relation ? `${p.relation} · ` : ''}¶ {p.label}</button>
           {/each}
         </div>
       {/if}

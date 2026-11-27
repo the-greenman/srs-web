@@ -74,6 +74,7 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `IconButton` | `icon` (a Lucide component) `label` (required: name and tooltip) `size?` `variant?` (`plain` \| `outline`) `pressed?` `ref?` | `.icon-btn` | srs-web [#421](https://github.com/the-greenman/srs-web/issues/421) |
 | `Popover` | `open?` (bindable) `label` `placement?` `mode?` (`auto` \| `manual`) `role?` `anchor?` `id?` `trigger?` snippet `onclose?` | `.popover` | #421, ADR-020 (e) |
 | `AttachmentPreview` | `kind` `title` `text?` `relation?` `clamp?` | `.attachment-preview` | #421 |
+| `TrayEntry` | `kind` `title` `preview?` `read` `actions?` snippet (the whole title, two lines of text; the title opens the rest in place) | `.tray-entry` | #787 |
 | `TrayRow` | `label` `labelProps?` `actions?` snippet | `.tray__row` | #421 |
 | `MarkdownHelp` | `open?` (bindable) `id?` `anchor?` `onclose?` | `.md-help` | srs-web [#365](https://github.com/the-greenman/srs-web/issues/365) |
 | `ActorChip` | `actor?` | `.actor-chip` | srs-web [#330](https://github.com/the-greenman/srs-web/issues/330), [#372](https://github.com/the-greenman/srs-web/issues/372) |
@@ -107,7 +108,7 @@ The `#ink-surface` SVG filter (printed-ink texture) is defined once in `index.ht
 | `ActionMenu` | `actions` (`MenuAction[]` from `menu-action.ts`, `icon` is a Lucide component; `essay/paragraph-actions.ts` builds the paragraph list) `label` `testid?` `focusKey?` `placement?` (a `Popover role="menu"`) | `.action-menu` | srs-web [#382](https://github.com/the-greenman/srs-web/issues/382) |
 | `ActionBar` | `actions` (the same `MenuAction[]` as `ActionMenu`; order marks the recommended one) `visible?` (default 2 buttons; the first is primary) `label` `testid?`; the rest in an `ActionMenu` ⋯, disabled ones keep their reason as the title | `.action-bar` | srs-web [#532](https://github.com/the-greenman/srs-web/issues/532) |
 | `DraftTray` / `BinTray` | `items` (`body?` adds a Preview chevron that expands the text in place) `available?` `ondrop` `onputback` / `items` `onrestore` `onforget` | `.tray` `.draft-tray` `.bin-tray` | #328, #397 |
-| `ReferencesTray` | `items` (`kind?` `url?` `context?`) `paragraphs?` `usedBytes?` `maxBytes?` (the whole repository against the browser budget on the meter: a warning, never a refusal; #234) `policy?` `attachedBytes?` (gate the drops) `onopen` `onfocus` `onremove` `onfiles?` `onurls?` `oncontext?` `onlink?` (the pool: a compact `AttachDrop` + `RepoSize` on top, a kind and a link per row, Open for every row, Link to paragraph menu) | `.tray` `.refs-tray` `.tray__chip` | #495, #519, #568, #234 |
+| `ReferencesTray` | `items` (`kind?` `url?` `context?`) `paragraphs?` `usedBytes?` `maxBytes?` (the whole repository against the browser budget on the meter: a warning, never a refusal; #234) `policy?` `attachedBytes?` (gate the drops) `read` `onpin` `onfocus` `onremove` `onfiles?` `onurls?` `oncontext?` `onlink?` (the pool: a compact `AttachDrop` + `RepoSize` on top, a kind and a link per row, a `TrayEntry` per row, Link to paragraph menu) | `.tray` `.refs-tray` `.tray__chip` | #495, #519, #568, #234 |
 | `EyeToggle` | `hidden?` `label?` | `.eye` | #328 |
 
 ## Icons, popovers, `data-part`

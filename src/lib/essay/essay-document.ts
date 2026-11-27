@@ -282,7 +282,8 @@ const TEXT_FIELDS = ["description", "citation", "statement"];
 function attachedText(repo: SrsRepository, documentId: string, max?: number): string {
   try {
     const b = getAttachmentBytes(repo, documentId);
-    return new TextDecoder().decode(max ? b.subarray(0, max) : b);
+    const text = new TextDecoder().decode(max ? b.subarray(0, max) : b);
+    return text.includes("\0") ? "" : text; // a binary file has no text to read
   } catch {
     return "";
   }
@@ -309,6 +310,18 @@ export function attachmentBytes(repo: SrsRepository, documentId: string): Uint8A
 export function referenceText(repo: SrsRepository, id: string): string {
   const doc = resolveAttachments(repo, [id]).records[0]?.attachments[0]?.documentId;
   return doc ? attachedText(repo, doc) : "";
+}
+
+/** The opening text of the first file attached to each of `ids`; an id with none is absent. */
+export function attachedPreviews(repo: SrsRepository, ids: string[]): Map<string, string> {
+  const out = new Map<string, string>();
+  if (!ids.length) return out;
+  for (const r of resolveAttachments(repo, ids).records) {
+    const doc = r.attachments[0]?.documentId;
+    const text = doc ? attachedText(repo, doc, PREVIEW_BYTES) : "";
+    if (text) out.set(r.instanceId, text);
+  }
+  return out;
 }
 
 /** Last context read per repository handle, keyed on the engine write epoch. */
@@ -349,13 +362,7 @@ function loadContext(repo: SrsRepository, ids: string[]): ParagraphContext {
         sources.add(r.neighbour.instanceId);
   }
   // A source holding a text file: the hover card previews the file, not the record's fields.
-  const previews = new Map<string, string>();
-  if (sources.size)
-    for (const r of resolveAttachments(repo, [...sources]).records) {
-      const doc = r.attachments[0]?.documentId;
-      const text = doc ? attachedText(repo, doc, PREVIEW_BYTES) : "";
-      if (text) previews.set(r.instanceId, text);
-    }
+  const previews = attachedPreviews(repo, [...sources]);
   for (const list of Object.values(out.attachments))
     for (const a of list) a.text = previews.get(a.neighbourId) ?? a.text;
   attachmentCache.set(repo, { key, value: out });

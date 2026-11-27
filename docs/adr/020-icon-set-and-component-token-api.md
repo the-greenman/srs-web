@@ -78,6 +78,7 @@ appended below as components gain parts.
 | `MarkdownHelp` | `close` |
 | `PinnedPane` | `actions` |
 | `Panel` | `head`, `title`, `aside`, `actions`, `body` |
+| `TrayEntry` | `row`, `kind`, `title`, `preview`, `full`, `actions` |
 | `TrayRow` | `row`, `label`, `actions` |
 | `McpConnection` | `head`, `dot`, `status`, `url`, `input`, `actions` |
 | `CommentThread` | `thread`, `item`, `meta`, `text`, `reply`, `list`, `earlier`, `more`, `time`, `summary` |

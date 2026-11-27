@@ -111,6 +111,7 @@ export { default as Panel } from "./Panel.svelte";
 export { default as Popover } from "./Popover.svelte";
 export { default as AttachmentPreview } from "./AttachmentPreview.svelte";
 export { default as TrayRow } from "./TrayRow.svelte";
+export { default as TrayEntry } from "./TrayEntry.svelte";
 export { default as DraftTray } from "./DraftTray.svelte";
 export { default as SiteBlock } from "./SiteBlock.svelte";
 export type { SiteBlockField } from "./SiteBlock.svelte";

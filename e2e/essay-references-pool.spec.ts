@@ -6,7 +6,7 @@ import type { Page } from "@playwright/test";
 /**
  * essay-references-pool.spec.ts — srs-web#519: the References panel is one pool for files and URLs.
  * Fixture essay-pool.srsj (essay 1.7.0 + the real argument/source type): a text file dropped on the tray
- * becomes a source row whose Open shows the text; a pasted URL a web row with its link; a file dropped on
+ * becomes a source row that reads in place; a pasted URL a web row with its link; a file dropped on
  * a paragraph is the same source, evidencing that paragraph (source glyph + tray chip).
  */
 const ESSAY = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "essay-pool.srsj");
@@ -31,7 +31,7 @@ const fileDrop = (page: Page, name: string, text: string) =>
     [name, text]
   );
 
-test("a text file dropped on the tray becomes a source row; Open shows its text", async ({ page }) => {
+test("a text file dropped on the tray becomes a source row that reads in place; Pin brings it into view", async ({ page }) => {
   await open(page);
   const before = await rows(page).count();
   const zone = page.getByTestId("references-drop");
@@ -43,9 +43,16 @@ test("a text file dropped on the tray becomes a source row; Open shows its text"
   await expect(row).toContainText("source · transcript");
   await expect(page.getByTestId("essay-error")).toHaveCount(0);
 
-  await page.getByLabel("Open call-transcript.md").click(); // not linked to any paragraph yet
+  // srs-web#787: readable in the panel, without pinning
+  await expect(row.getByTestId("entry-preview")).toContainText("We agreed to meet on Tuesday.");
+  await row.getByTestId("entry-title").click();
+  await expect(row.getByTestId("entry-full")).toContainText("We agreed to meet on Tuesday.");
+  await expect(page.locator(".pinned__item")).toHaveCount(0);
+
+  await page.getByLabel("Pin call-transcript.md").click(); // not linked to any paragraph yet
   const pinned = page.locator(".pinned__item").filter({ hasText: "call-transcript.md" });
   await expect(pinned).toContainText("We agreed to meet on Tuesday.");
+  await expect(pinned).toBeInViewport();
   await pinned.getByRole("button", { name: "Open" }).click();
   await expect(pinned.locator(".pinned__full")).toContainText("We agreed to meet on Tuesday.");
 });
@@ -77,6 +84,7 @@ test("a file dropped on a paragraph is a source evidencing it: glyph on the para
   await expect(target.locator('.glyph[aria-label^="source"]')).toHaveCount(1);
   const row = rows(page).filter({ hasText: "interview.md" });
   await expect(row.getByTestId("reference-chip")).toHaveCount(1);
+  await expect(row.getByTestId("reference-chip")).toContainText(/evidences · ¶/i);
   await expect(page.getByTestId("essay-error")).toHaveCount(0);
 });
 

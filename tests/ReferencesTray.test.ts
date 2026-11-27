@@ -3,6 +3,9 @@ import { fireEvent, render } from "@testing-library/svelte";
 import { expect, it, vi } from "vitest";
 import ReferencesTray from "../src/lib/components/ReferencesTray.svelte";
 
+vi.mock("$lib/srs-client.js", () => ({ renderMarkdown: (s: string) => `<p>${s}</p>` }));
+const read = (id: string) => ({ text: `All of ${id}` });
+
 const items = [
   {
     id: "r1",
@@ -16,22 +19,24 @@ const items = [
 it("lists each reference with its type, a chip per linked paragraph, and none when unlinked", () => {
   const { getAllByTestId, getByText } = render(ReferencesTray, {
     items,
-    onopen: vi.fn(),
+    read,
+    onpin: vi.fn(),
     onfocus: vi.fn(),
     onremove: vi.fn(),
   });
   expect(getAllByTestId("reference-row")).toHaveLength(2);
-  expect(getByText("Source A (source)")).toBeTruthy();
+  expect(getByText("Source A")).toBeTruthy();
   expect(getAllByTestId("reference-chip").map((c) => c.textContent)).toEqual(["¶ Opening"]);
 });
 
-it("a chip focuses its paragraph; Remove and Open call back with the reference id; an empty tray explains itself", async () => {
+it("a chip focuses its paragraph; Remove and Pin call back with the reference id; an empty tray explains itself", async () => {
   const onfocus = vi.fn();
   const onremove = vi.fn();
-  const onopen = vi.fn();
+  const onpin = vi.fn();
   const { getByTestId, getByLabelText, rerender, getByText } = render(ReferencesTray, {
     items,
-    onopen,
+    read,
+    onpin,
     onfocus,
     onremove,
   });
@@ -39,10 +44,10 @@ it("a chip focuses its paragraph; Remove and Open call back with the reference i
   expect(onfocus).toHaveBeenCalledWith("p1");
   await fireEvent.click(getByLabelText("Remove Loose claim from references"));
   expect(onremove).toHaveBeenCalledWith("r2");
-  await fireEvent.click(getByLabelText("Open Source A"));
-  expect(onopen).toHaveBeenCalledWith("r1");
-  expect(getByLabelText("Open Loose claim")).toBeTruthy(); // an unlinked reference opens too (#499)
-  await rerender({ items: [], onopen, onfocus, onremove });
+  await fireEvent.click(getByLabelText("Pin Source A"));
+  expect(onpin).toHaveBeenCalledWith("r1");
+  expect(getByLabelText("Pin Loose claim")).toBeTruthy(); // an unlinked reference pins too (#499)
+  await rerender({ items: [], read, onpin, onfocus, onremove });
   expect(getByText(/agents and attach flows collect/)).toBeTruthy();
 });
 
@@ -58,11 +63,12 @@ it("shows a source's kind and a link when it has a URL", () => {
         paragraphs: [],
       },
     ],
-    onopen: vi.fn(),
+    read,
+    onpin: vi.fn(),
     onfocus: vi.fn(),
     onremove: vi.fn(),
   });
-  expect(getByText("A page (source · web)")).toBeTruthy();
+  expect(getByText("source · web")).toBeTruthy();
   const a = getByTestId("reference-url");
   expect(a.getAttribute("href")).toBe("https://example.org/p");
   expect(a.getAttribute("target")).toBe("_blank");
@@ -80,7 +86,8 @@ it("with a drop zone: shows the repository size against the budget; Link to para
     onfiles: vi.fn(),
     onurls: vi.fn(),
     onlink,
-    onopen: vi.fn(),
+    read,
+    onpin: vi.fn(),
     onfocus: vi.fn(),
     onremove: vi.fn(),
   });
@@ -106,7 +113,8 @@ it("lists context documents apart from references and adds pasted text and a URL
       },
       ...items,
     ],
-    onopen: vi.fn(),
+    read,
+    onpin: vi.fn(),
     onfocus: vi.fn(),
     onremove: vi.fn(),
     oncontext,
@@ -137,7 +145,8 @@ it("an agent's find shows who found it and is kept or denied in place; the write
   ];
   const { getAllByTestId, getByTestId, getByLabelText } = render(ReferencesTray, {
     items: found,
-    onopen: vi.fn(),
+    read,
+    onpin: vi.fn(),
     onfocus: vi.fn(),
     onremove: vi.fn(),
     onanswer,
@@ -157,7 +166,7 @@ it("a search lists the repository's matches and Add hands back the id; no search
   const onadd = vi.fn();
   const onsearch = (q: string) =>
     q === "small" ? [{ id: "c1", label: "Small groups decide", type: "claim" }] : [];
-  const base = { items: [], onopen: vi.fn(), onfocus: vi.fn(), onremove: vi.fn() };
+  const base = { items: [], read, onpin: vi.fn(), onfocus: vi.fn(), onremove: vi.fn() };
   const { getByTestId, getByLabelText, queryByTestId, rerender } = render(ReferencesTray, { ...base, onsearch, onadd });
   const input = getByTestId("references-find");
   await fireEvent.input(input, { target: { value: "small" } });
@@ -173,7 +182,7 @@ it("a search lists the repository's matches and Add hands back the id; no search
 
 it("lists a quotation under its source, and as its own row when the source is not in the tray (srs-web#525)", () => {
   const quote = { id: "q1", label: "the words", type: "quotation", sourceId: "r1", paragraphs: [{ id: "p1", label: "Opening" }] };
-  const props = { onopen: vi.fn(), onfocus: vi.fn(), onremove: vi.fn() };
+  const props = { read, onpin: vi.fn(), onfocus: vi.fn(), onremove: vi.fn() };
   const nested = render(ReferencesTray, { ...props, items: [...items, quote] });
   expect(nested.getAllByTestId("reference-row")).toHaveLength(2);
   const under = nested.getByTestId("reference-quotes");
@@ -183,4 +192,30 @@ it("lists a quotation under its source, and as its own row when the source is no
   const orphan = render(ReferencesTray, { ...props, items: [items[1], quote] });
   expect(orphan.getAllByTestId("reference-row")).toHaveLength(2);
   expect(orphan.queryByTestId("reference-quotes")).toBeNull();
+});
+
+it("shows the opening words, opens the whole text in place, and names the relation on each chip (#787)", async () => {
+  const onpin = vi.fn();
+  const source = { title: "Paper", text: "Before the key words, after.", passage: "key words" };
+  const readQuote = vi.fn(() => ({ text: "key words", source }));
+  const { getByTestId, getByRole, queryByTestId } = render(ReferencesTray, {
+    items: [
+      { id: "q", label: "A long title", type: "quotation", preview: "key words", paragraphs: [{ id: "p1", label: "Opening", relation: "evidences" }] },
+    ],
+    read: readQuote,
+    onpin,
+    onfocus: vi.fn(),
+    onremove: vi.fn(),
+  });
+  expect(getByTestId("entry-preview").textContent).toBe("key words");
+  expect(getByTestId("reference-chip").textContent).toBe("evidences · ¶ Opening");
+  expect(readQuote).not.toHaveBeenCalled();
+  const title = getByRole("button", { name: "A long title" });
+  await fireEvent.click(title);
+  expect(title.getAttribute("aria-expanded")).toBe("true");
+  expect(getByTestId("entry-full").textContent).toContain("key words");
+  expect(getByTestId("entry-source").querySelector("mark")?.textContent).toBe("key words");
+  expect(onpin).not.toHaveBeenCalled();
+  await fireEvent.click(title);
+  expect(queryByTestId("entry-full")).toBeNull();
 });

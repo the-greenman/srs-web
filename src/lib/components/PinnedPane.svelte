@@ -10,6 +10,7 @@
   import IconButton from './IconButton.svelte';
   import Panel from './Panel.svelte';
   import { NARROW } from '$lib/breakpoints';
+  import { tick } from 'svelte';
   import { copyText } from '$lib/clipboard';
   import MarkdownView from './MarkdownView.svelte';
   import ActionMenu from './ActionMenu.svelte';
@@ -43,6 +44,7 @@
 
   let {
     items,
+    reveal = null,
     onunpin,
     onremove,
     paragraphs = [],
@@ -51,22 +53,39 @@
     /** `source`: a quotation's source text still holding the words; opened, it shows them highlighted (#525). Without it the quotation shows its words alone. */
     /** `href`: an external link (a web source). `removable: false`: no "Remove link" (not a relation). */
     items: { id: string; kind: string; relation?: string; title: string; text: string; href?: string; removable?: boolean; source?: { title: string; text: string; passage: string } }[];
+    /** Bring this item into view and mark it briefly; a new object asks again, even for the same id. */
+    reveal?: { id: string } | null;
     onunpin: (id: string) => void;
     onremove?: (id: string) => void;
     /** With `onquote`: the paragraphs a selected passage can be quoted to (srs-web#525). */
     paragraphs?: { id: string; label: string }[];
     onquote?: (itemId: string, text: string, paragraphId: string) => void;
   } = $props();
+
+  let panelOpen = $state(true);
+  let revealed = $state<string | null>(null);
+  let list = $state<HTMLElement>();
+  $effect(() => {
+    const id = reveal?.id;
+    if (!id) return;
+    panelOpen = true;
+    revealed = id;
+    void tick().then(() =>
+      Array.from(list?.children ?? []).find((el) => (el as HTMLElement).dataset.pinnedId === id)?.scrollIntoView?.({ block: 'center' }),
+    );
+    const timer = setTimeout(() => (revealed = null), 2000);
+    return () => clearTimeout(timer);
+  });
 </script>
 
-<Panel title="Pinned" aside={items.length} persistKey="essay.pinned" collapseWhen={NARROW}>
+<Panel title="Pinned" aside={items.length} bind:open={panelOpen} persistKey="essay.pinned" collapseWhen={NARROW}>
   {#if items.length === 0}
     <p class="t-muted">Pin an attachment glyph to read it here.</p>
   {:else}
-    <ul class="pinned">
+    <ul class="pinned" bind:this={list}>
       {#each items as it (it.id)}
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <li class="pinned__item" data-pinned-id={it.id} onmouseup={track} onkeyup={track}>
+        <li class="pinned__item" class:pinned__item--revealed={revealed === it.id} data-pinned-id={it.id} onmouseup={track} onkeyup={track}>
           <IconButton class="pinned__close" size="sm" icon={X} label={`Unpin ${it.title}`} onclick={() => onunpin(it.id)} />
           {#if open.has(it.id) && it.text}
             <AttachmentPreview kind={it.kind} title={it.title} relation={it.relation} />
