@@ -73,6 +73,7 @@ export function visualExtensions(): Extensions {
 export function makeEditor(md: string, element?: HTMLElement, onUpdate?: () => void): Editor {
   return new Editor({
     element,
+    injectCSS: false, // block.css holds what the editor needs (srs-web#834)
     extensions: visualExtensions(),
     content: md,
     contentType: "markdown",
