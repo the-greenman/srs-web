@@ -285,4 +285,24 @@ describe.skipIf(!haveBindings)("references pool on the real engine", () => {
     expect(byId(found)?.verdict).toBeUndefined();
     expect(byId(own)?.foundBy).toBeUndefined();
   });
+
+  it("binning an agent's find unlinks it, takes it out and records a thumbs-down that a re-add keeps (vignette eb76738f)", async () => {
+    const doc = await import("../src/lib/essay/essay-document.js");
+    const client = await import("../src/lib/comments.js");
+    const repo = (await engine()).SrsRepository.load(fixture());
+    const essay = doc.listEssays(repo)[0].id;
+    let m = doc.loadEssay(repo, essay, { repair: true });
+    const p1 = Object.keys(m.paragraphs)[0];
+    repo.set_actor(JSON.stringify({ kind: "ai", id: "agent:x", name: "X" }));
+    const [found] = doc.addReferences(repo, m, { urls: ["https://example.org/wrong"] }, p1);
+    repo.set_actor(JSON.stringify({ kind: "human", id: "human:ada", name: "Ada" }));
+    m = doc.loadEssay(repo, essay);
+    doc.binReference(repo, m, found);
+    m = doc.loadEssay(repo, essay);
+    expect(m.references.some((r) => r.id === found)).toBe(false);
+    expect((m.attachments[p1] ?? []).some((a) => a.neighbourId === found)).toBe(false);
+    doc.addExistingReference(repo, m, found, false);
+    const back = doc.loadEssay(repo, essay).references.find((r) => r.id === found);
+    expect(back?.verdict).toBe(client.kindsAvailable(repo) ? "disagree" : undefined);
+  });
 });

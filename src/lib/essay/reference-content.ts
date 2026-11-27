@@ -7,7 +7,7 @@ import { passageIn } from "./quote.js";
 export interface ReferenceContent {
   text: string;
   /** A quotation's source text, when it still holds the words (#525). */
-  source?: { title: string; text: string; passage: string };
+  source?: { id: string; title: string; text: string; passage: string };
 }
 
 /** The record's own text, then its attached file's; a quotation: its words, then its record's text. */
@@ -25,7 +25,7 @@ export function referenceContent(
   return {
     text: [ref.quote, full(ref)].filter(Boolean).join("\n\n"),
     ...(src && passageIn(srcText, ref.quote)
-      ? { source: { title: src.label, text: srcText, passage: ref.quote } }
+      ? { source: { id: src.id, title: src.label, text: srcText, passage: ref.quote } }
       : {}),
   };
 }

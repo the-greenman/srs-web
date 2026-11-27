@@ -282,8 +282,8 @@ const TEXT_FIELDS = ["description", "citation", "statement"];
 function attachedText(repo: SrsRepository, documentId: string, max?: number): string {
   try {
     const b = getAttachmentBytes(repo, documentId);
-    const text = new TextDecoder().decode(max ? b.subarray(0, max) : b);
-    return text.includes("\0") ? "" : text; // a binary file has no text to read
+    const part = max ? b.subarray(0, max) : b;
+    return part.includes(0) ? "" : new TextDecoder().decode(part); // a binary file has no text to read
   } catch {
     return "";
   }
@@ -312,9 +312,15 @@ export function referenceText(repo: SrsRepository, id: string): string {
   return doc ? attachedText(repo, doc) : "";
 }
 
+/** Last preview read per repository handle, keyed on the ids and the engine write epoch (as loadContext). */
+const previewCache = new WeakMap<object, { key: string; value: Map<string, string> }>();
 /** The opening text of the first file attached to each of `ids`; an id with none is absent. */
 export function attachedPreviews(repo: SrsRepository, ids: string[]): Map<string, string> {
+  const key = `${ids.join(",")}|${repo.write_epoch()}`;
+  const hit = previewCache.get(repo);
+  if (hit?.key === key) return hit.value;
   const out = new Map<string, string>();
+  previewCache.set(repo, { key, value: out });
   if (!ids.length) return out;
   for (const r of resolveAttachments(repo, ids).records) {
     const doc = r.attachments[0]?.documentId;
@@ -788,7 +794,7 @@ export function agentHandoff(a: {
         ]
       : []),
     "- Responses: the writer answers your comment with a comment on it (comments-on your comment): agree or disagree is their verdict, done or rejected settles your task (the text is the reason), withdrawn clears either; the latest one counts. Never propose a task again whose latest response is rejected, and never reply to a response.",
-    `- Gather: a source, quotation or problem worth having for this essay goes in references: create it${r ? ` with containerId ${r}` : ""}, or container_member_add an existing one. The repository may hold more than this essay does, such as claims: search it with find before creating a record or saying something is missing. Read references first so you don't duplicate. The writer decides what stays; you suggest.`,
+    `- Gather: a source, quotation or problem worth having for this essay goes in references: create it${r ? ` with containerId ${r}` : ""}, or container_member_add an existing one. The repository may hold more than this essay does, such as claims: search it with find before creating a record or saying something is missing. Read references first so you don't duplicate. The writer decides what stays; you suggest. Never add a record back to references when the writer's latest response on it is disagree: they binned it.`,
     "- What to create: com.mudemocracy.argument/source for a work or page (title, source_kind). com.mudemocracy.argument/quotation for exact words you have in front of you, never from memory (title, quote_text, locator, warrant_level). warrant_level is the level actually reached: secondary if copied from a summary or translation. Never invent a locator. Then add a derived-from relation from it to its source. com.mudemocracy.argument/problem for what the writing speaks to (problem_id, statement, kind, persona, scale). persona and scale must be terms of their vocabularies, which were written for muDemocracy: if none fits, say so in a comment rather than forcing one.",
     "- Missing types: on an essay older than essay 1.9.0 these types don't exist; ask the writer to upgrade under Document > Packages…. A type the repository holds is available whichever package it came from: check with find first. For a type the repository doesn't have, call ui_packages: if a published package has what the essay needs, tell the writer why and call ui_request_package. The writer confirms on screen; call ui_packages to see how it ended, then read the new type's type_schema. If no package has it, say so, and don't use another type in its place.",
     `- The writer's own material is in references too: com.mudemocracy.argument/source records (a source_url for a web page; a text file attached to the record, e.g. a transcript or paper). To read attached text: for each sourceRefs entry with sourceType repository-document, read ${uri}/attachment/<its sourceId>.`,
@@ -1037,13 +1043,14 @@ export function removeReference(repo: SrsRepository, m: EssayModel, id: string):
 }
 
 /**
- * Bin a reference (owner ruling, vignette eb76738f): unlink it from every paragraph and take it out of
- * the pool. An agent's find the writer had not thumbed up also gets a thumbs-down, so the agent's tally
- * learns it was wrong. The record itself stays in the repository.
+ * Bin a reference (owner ruling, vignette eb76738f): unlink it from every paragraph (Draft and Bin
+ * included) and take it out of the pool. An agent's find the writer had not thumbed up also gets a
+ * thumbs-down, which the agent brief says never to re-add. The record stays in the repository, but the
+ * deleted links are not in the undo history: the shell asks first when there are any.
  */
 export function binReference(repo: SrsRepository, m: EssayModel, id: string): void {
   const ref = m.references.find((r) => r.id === id);
-  if (ref?.foundBy && ref.verdict !== "agree")
+  if (ref?.foundBy && ref.verdict !== "agree" && kindsAvailable(repo))
     respond(repo, id, "disagree", "", m.commentsContainerId);
   for (const list of Object.values(m.attachments))
     for (const a of list) if (a.neighbourId === id) deleteRelation(repo, a.id);

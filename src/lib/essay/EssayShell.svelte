@@ -356,13 +356,15 @@
   const quote = (itemId: string, text: string, paragraphId: string) => {
     const item = pinned.find((p) => p.id === itemId);
     if (!model || !item) return;
+    // A quotation opened with its source: words chosen in the source quote the source, not the quotation.
+    const src = "source" in item && item.source?.text.includes(text.trim()) ? item.source : null;
     run(() => {
       quoteToParagraph(repo, model!, {
-        sourceId: itemId,
+        sourceId: src ? src.id : itemId,
         paragraphId,
         text,
-        sourceTitle: item.title,
-        locator: locatorFor(item.text, text),
+        sourceTitle: src ? src.title : item.title,
+        locator: locatorFor(src ? src.text : item.text, text),
       });
     });
   };
@@ -536,7 +538,13 @@
       });
     }
   }
-  const dropReference = (id: string) => run(() => binReference(repo, model!, id));
+    /** Bin a reference; its paragraph links cannot come back with undo, so ask first when it has any. */
+  function dropReference(id: string) {
+    const ref = model?.references.find((r) => r.id === id);
+    const n = ref?.paragraphIds.length ?? 0;
+    if (n && !confirm(`Bin "${ref?.label}"? Its links to ${n} paragraph${n === 1 ? "" : "s"} are removed, and undo cannot bring them back.`)) return;
+    void run(() => binReference(repo, model!, id));
+  }
   const findExisting = (text: string) => findExistingReferences(repo, model!, text);
   const addExisting = (id: string) => run(() => addExistingReference(repo, model!, id, hasActor));
   const draftItems = $derived(

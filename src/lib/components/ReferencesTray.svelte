@@ -5,8 +5,8 @@
   place), a link to its `url` when it has one, and a "relation · ¶ …" chip per paragraph it is
   linked to (a chip focuses its paragraph; no chips = not linked yet). Pin keeps it in the
   pinned pane; an agent's find is thumbed up in place, and the bin takes any entry out (owner ruling,
-  vignette eb76738f); "Link to paragraph" picks one of `paragraphs`; Remove takes it out of the collection
-  only, never deletes the record. Shares the tray stylesheet (draft-tray.css).
+  vignette eb76738f); "Link to paragraph" picks one of `paragraphs`; the bin unlinks it from every paragraph and
+  takes it out of the collection, never deleting the record. Shares the tray stylesheet (draft-tray.css).
   With `oncontext`, context documents (the call the essay answers) are listed first with a form to add
   one by file, URL or pasted text; the rest are the ordinary references.
   With `onsearch` and `onadd`, a search adds a record the repository already holds, such as a claim.
